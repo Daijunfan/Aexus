@@ -16,7 +16,20 @@ try{
  await expect.poll(async()=>browser.locator('#page').evaluate(async element=>{try{return await element.executeJavaScript('document.body.innerText.includes("CPU 使用率")')}catch{return false}}),{timeout:30000}).toBe(true)
  assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())),'Browser plugin window became visible')
  fs.mkdirSync(root+'/artifacts/browser-plugin',{recursive:true});await browser.screenshot({path:root+'/artifacts/browser-plugin/target.png'});
+ await browser.locator('#save-bookmark').click();await expect.poll(async()=>(await cli('plugin','call','browser','browser.bookmarks','--team','Browser test')).length).toBe(1)
+ await expect(browser.locator('#save-bookmark')).toHaveAttribute('aria-label','取消收藏当前网页')
  await cli('plugin','call','browser','browser.open','--team','Browser test','--params',JSON.stringify({url:target+'style.css'}));await expect.poll(()=>browser.locator('#address').inputValue(),{timeout:10000}).toContain('style.css')
- await browser.locator('#back').click();await expect.poll(async()=>(await cli('plugin','call','browser','browser.current','--team','Browser test')).url).toBe(target)
- await cli('plugin','dismiss',window.id);await expect.poll(()=>browser.isClosed()).toBe(true);console.log('PASS hidden native Browser window rendered real server HTML/CSS; CLI/UI navigation and workspace state agree')
+ await browser.locator('#save-bookmark').click();await expect.poll(async()=>(await cli('plugin','call','browser','browser.bookmarks','--team','Browser test')).length).toBe(2)
+ await browser.locator('#bookmarks').click();await expect(browser.locator('#bookmark-list .bookmark-row')).toHaveCount(2)
+ await browser.screenshot({path:root+'/artifacts/browser-plugin/bookmarks.png'})
+ await browser.getByRole('button',{name:'打开收藏 服务器监控'}).click();await expect.poll(async()=>(await cli('plugin','call','browser','browser.current','--team','Browser test')).url).toBe(target)
+ await cli('plugin','dismiss',window.id);await expect.poll(()=>browser.isClosed()).toBe(true)
+ const reopened=app.waitForEvent('window'),again=await cli('plugin','open','browser','--team','Browser test');browser=await reopened
+ await browser.locator('#bookmarks').click();await expect(browser.locator('#bookmark-list .bookmark-row')).toHaveCount(2)
+ const extra=await cli('plugin','call','browser','browser.bookmark.add','--team','Browser test','--params',JSON.stringify({url:'https://example.com/','title':'CLI added'}))
+ await expect.poll(()=>browser.locator('#bookmark-list .bookmark-row').count(),{timeout:10000}).toBe(3)
+ await browser.getByRole('button',{name:'移除收藏 CLI added'}).click();await expect.poll(async()=>(await cli('plugin','call','browser','browser.bookmarks','--team','Browser test')).some(item=>item.id===extra.id)).toBe(false)
+ await browser.getByRole('button',{name:'移除收藏 服务器监控'}).click();await expect.poll(async()=>(await cli('plugin','call','browser','browser.bookmarks','--team','Browser test')).length).toBe(1)
+ await cli('plugin','dismiss',again.id);await expect.poll(()=>browser.isClosed()).toBe(true)
+ console.log('PASS hidden Chromium rendering, two persistent one-click bookmarks, CLI/UI navigation and removal')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

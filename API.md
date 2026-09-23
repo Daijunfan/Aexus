@@ -724,13 +724,18 @@ Browser plugin (independent Git repository at `PlugIns/browser`):
 agents group add Web --mode work --plugin browser
 agents plugin call browser browser.open --team Web --params '{"url":"http://10.92.35.208:8000/"}'
 agents plugin call browser browser.read --team Web
+agents plugin call browser browser.bookmark.add --team Web --params '{"url":"http://10.92.35.208:8000/","title":"服务器监控"}'
+agents plugin call browser browser.bookmarks --team Web
+agents plugin call browser browser.bookmark.open --team Web --params '{"id":"BOOKMARK_ID"}'
 agents plugin open browser --team Web
 ```
 
 `browser.current`, `browser.open`, `browser.back`, `browser.forward`,
-`browser.reload` and `browser.read` use the plugin's standalone CLI/runtime
+`browser.reload`, `browser.read`, `browser.bookmarks`, `browser.bookmark.add`,
+`browser.bookmark.open` and `browser.bookmark.remove` use the plugin's standalone CLI/runtime
 and the same scoped JSON-RPC API as its UI. The managed window embeds Chromium's
 webview so page scripts and CSS render normally; the CLI returns raw HTML/text.
+Bookmarks persist in `.agents-browser/state.json` within the selected workspace.
 Only the browser plugin is allowed to attach a guest view; guest Node APIs are
 disabled and only HTTP/HTTPS navigation is accepted. See
 [`PlugIns/browser/API.md`](PlugIns/browser/API.md) for its workspace, errors and

@@ -10,8 +10,10 @@ MiniNotion and Browser repositories checked out under `PlugIns/` before packagin
 `npm run build:plugins` builds the available plugin checkouts into the App.
 
 The Browser plugin opens HTTP/HTTPS pages in its own managed Chromium window.
-Its independent CLI can open a URL, read HTML/text, move through history and
-reload without opening a window. See [Browser API](PlugIns/browser/API.md).
+Its independent CLI can open a URL, read HTML/text, move through history,
+save any number of favorite URLs, and reload without opening a window. Saved
+URLs also appear in the plugin window for one-click access. See
+[Browser API](PlugIns/browser/API.md).
 
 ## Engine controls
 
