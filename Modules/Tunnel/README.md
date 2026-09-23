@@ -50,7 +50,7 @@ agents terminal read TERMINAL_ID
 | `group add/configure --mode cloud --remote-host HOST --remote-dir PATH` | `remote:{host,directory,os,port,identityFile,knownHosts,sshConfig,jump}` |
 | `--remote-os linux\|macos\|windows` | 默认 Linux |
 | `--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST` | 可选连接设置；不接收或存储明文密码 |
-| `remote check --team NAME` | `remote.check {team}`；检查团队云端根目录 |
+| `remote check --team NAME` | `remote.check {team}`；检查团队云端根目录，返回 `info` 和包含 OS / Linux 发行版的 `environment` |
 | `remote check --employee ID` | `remote.check {employee}`；只测试连接和目录 |
 | `remote check --remote-host HOST --remote-dir PATH` | `remote.check {remote}`；不创建员工 |
 | `workspace list/read/write/mkdir/move/trash/restore --employee ID` | 同一本地/远端文件协议，限制在员工根目录内 |

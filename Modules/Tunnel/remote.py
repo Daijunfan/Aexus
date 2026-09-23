@@ -33,6 +33,17 @@ TOOLS = [
 ]
 
 
+def linux_distribution(text):
+    values = {}
+    for line in text.splitlines():
+        if '=' in line and not line.startswith('#'):
+            key, value = line.split('=', 1)
+            if key in ('ID', 'PRETTY_NAME'):
+                values[key] = value.strip().strip('"\'')
+    return {'distribution': values.get('ID', '').lower(),
+            'distributionName': values.get('PRETTY_NAME', '')}
+
+
 if "workspace_files" not in globals():
     from workspace_files import workspace_files
 
@@ -52,6 +63,11 @@ class Workspace:
         self.state = Path(state) / "cwd"
         self.info = {"os": platform.system(), "hostname": socket.gethostname(), "cwd": str(self.cwd),
                      "shell": self.shell, "pid": os.getpid()}
+        if self.info['os'] == 'Linux':
+            try:
+                self.info.update(linux_distribution(Path('/etc/os-release').read_text(encoding='utf-8')))
+            except OSError:
+                pass
 
     def path(self, value):
         return (self.cwd / Path(value).expanduser()).resolve()
@@ -180,6 +196,7 @@ def serve(config):
             if method == "initialize":
                 response["result"] = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}},
                     "serverInfo": {"name": "workspace", "version": "2.0.0"},
+                    "environment": workspace.info,
                     "instructions": "Working environment: " + json.dumps(workspace.info) +
                     ". Use these tools for ALL filesystem and command operations. Paths refer to this environment."}
             elif method == "tools/list":

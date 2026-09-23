@@ -17,6 +17,13 @@ MiniNotion source and notices are in `PlugIns/mini-notion/`. The plugin carries 
 own GPL-3.0-only LICENSE and THIRD_PARTY_NOTICES.md into its distributable package.
 It is built from source and loaded through the documented local plugin interface.
 
+## Kali Linux icon
+
+The Kali dragon square icon is from Kali Linux's official graphic-resources repository:
+https://gitlab.com/kalilinux/documentation/graphic-resources/-/blob/main/kali-icon/sqaure-2/kali-dragon-square-simple.svg.
+Kali Linux trademarks remain with their owners; the icon identifies the remote OS and
+does not imply endorsement.
+
 ## Scheduler time arithmetic
 
 `@js-temporal/polyfill` 0.5.1 (ISC) and `jsbi` 4.3.2 (Apache-2.0) provide

@@ -1,4 +1,5 @@
 import {CloneEmployeeForm} from './CloneEmployeeForm'
+import type {RemoteCheck,RemoteHealth} from '../../../shared/remote'
 import { useCallback, useEffect,useRef, useState } from 'react'
 import {teamSettings,type ActivityPreview,type TeamSettings,type Store,type StoredSession} from '../../../shared/types'
 import type {PluginDescriptor} from '../../../shared/plugins'
@@ -23,6 +24,22 @@ export function HomeView({ store, view, busyIds,activities, onOpen, act, onResiz
   const pluginId=view.pluginId??null
   const [plugins,setPlugins]=useState<PluginDescriptor[]>([])
   useEffect(()=>{const load=()=>void api.call<PluginDescriptor[]>('plugin.list').then(setPlugins).catch(()=>{});load();return api.onEvent(e=>{if(e.channel==='store:changed')load()})},[])
+  const [cloudStatus,setCloudStatus]=useState<Record<string,RemoteHealth>>({})
+  const cloudKey=JSON.stringify(store.groups.filter(name=>teamSettings(store,name).mode==='cloud').map(name=>[name,teamSettings(store,name).remote]))
+  useEffect(()=>{
+    const teams=(JSON.parse(cloudKey) as [string,unknown][]).map(([name])=>name)
+    let active=true,busy=false
+    const check=async()=>{
+      if(busy)return;busy=true
+      await Promise.all(teams.map(async name=>{
+        try{const result=await api.call<RemoteCheck>('remote.check',{team:name});if(active)setCloudStatus(previous=>({...previous,[name]:{connected:true,environment:result.environment}}))}
+        catch{if(active)setCloudStatus(previous=>({...previous,[name]:{connected:false,environment:previous[name]?.environment}}))}
+      }))
+      busy=false
+    }
+    void check();const timer=setInterval(()=>void check(),30000)
+    return()=>{active=false;clearInterval(timer)}
+  },[cloudKey])
   const camera=useRef({view:DEFAULT_VIEW,size:{x:1200,y:800}})
   const onView=useCallback((view:Viewport,size:Point)=>{camera.current={view,size}},[])
   useDialogFocus('.office-panel',!!panel||!!cloning||view.kind==='settings')
@@ -37,7 +54,7 @@ export function HomeView({ store, view, busyIds,activities, onOpen, act, onResiz
       <div className="company-brand"><span className="brand-symbol" aria-hidden="true"><i/><i/><i/><i/></span><span>Agents Company</span></div>
       <div className="company-actions"><button className="add-team" onClick={()=>void showPanel({kind:'team'})}><span>＋</span> 添加 Team</button><button className="add-employee" onClick={()=>void showPanel({kind:'employee'})}><span>＋</span> 添加员工</button></div>
     </header>
-    <div className="office-layout"><PluginDirectory plugins={plugins} active={pluginId} store={store} busyIds={busyIds} selected={view.kind==='conversation'?view.employee:undefined} onOpen={id=>void act('plugin.open',{id})} onEmployee={onOpen} onHome={()=>void act('view.open',{kind:'home'})} onSettings={()=>void act('view.open',{kind:'settings'})} onResize={onResize} act={act}/><OfficeCanvas activities={activities} store={store} busyIds={busyIds} act={act} onOpen={open} onEdit={edit} onView={onView}/></div>
+    <div className="office-layout"><PluginDirectory plugins={plugins} active={pluginId} store={store} busyIds={busyIds} selected={view.kind==='conversation'?view.employee:undefined} onOpen={id=>void act('plugin.open',{id})} onEmployee={onOpen} onHome={()=>void act('view.open',{kind:'home'})} onSettings={()=>void act('view.open',{kind:'settings'})} onResize={onResize} act={act}/><OfficeCanvas activities={activities} cloudStatus={cloudStatus} store={store} busyIds={busyIds} act={act} onOpen={open} onEdit={edit} onView={onView}/></div>
     {view.kind==='settings'&&<SettingsPanel value={{...DEFAULT_PREFERENCES,...store.preferences}} onSave={value=>act('settings.set',value)} onClose={()=>void act('view.close')}/>}
     {workspace&&<TeamWorkspace key={workspace} name={workspace} root={store.teamRoots?.[workspace]||''} settings={teamSettings(store,workspace)} onClose={()=>setWorkspace(null)} onSettings={()=>{void setPanel({kind:'team',name:workspace})}}/>}
     {cloning&&<div className="office-panel-wrap" onKeyDown={e=>{if(e.key==='Escape')void act('view.close')}}><div className="panel-backdrop" onClick={()=>void act('view.close')}/><section className="office-panel" role="dialog" aria-modal="true" aria-label="克隆员工"><header className="panel-header"><h2>克隆员工</h2><button className="panel-close" aria-label="关闭面板" onClick={()=>void act('view.close')}>×</button></header><CloneEmployeeForm source={cloning} root={store.teamRoots?.[cloning.group]??''} onCreated={card=>void act('view.open',{kind:'conversation',employee:card.id})}/></section></div>}

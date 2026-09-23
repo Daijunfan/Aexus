@@ -74,11 +74,13 @@ def serve(config):
         return process.wait()
 
 
-def doctor(config):
+def doctor(config, details=False):
     request = {"jsonrpc": "2.0", "id": 1, "method": "initialize",
                "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "tunnel-doctor", "version": "2"}}}
     result = subprocess.run(server_command(config), input=source_line(config)+json.dumps(request)+"\n", capture_output=True, text=True, timeout=20)
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "SSH tool server failed")
     response = json.loads(result.stdout)
-    return response["result"]["instructions"]
+    return ({'info': response['result']['instructions'],
+             'environment': response['result'].get('environment', {})}
+            if details else response['result']['instructions'])

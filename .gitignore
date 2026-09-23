@@ -10,6 +10,7 @@ PlugIns/*/test-results/
 PlugIns/*/release.noindex/
 PlugIns/*/.local-data/
 /PlugIns/*/
+/Agents-Managers/*/
 *.tsbuildinfo
 .DS_Store
 artifacts/

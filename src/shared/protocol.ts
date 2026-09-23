@@ -116,7 +116,7 @@ export const COMMANDS: {
   { name: 'workspace.docs', args: '--team NAME', summary: 'Refresh standardized CLI documentation in the workspace', gui: '自动准备 Agent 文档' },
   { name: 'workspace.suggest', args: '--team NAME', summary: 'Suggest an external workspace directory without changing files', gui: '默认工作目录' },
   { name: 'workspace.choose', args: '[--path PATH]', summary: 'Choose a folder in the desktop directory picker', gui: '选择文件夹' },
-  { name: 'remote.check', args: '--team NAME | --employee ID | --remote-host HOST --remote-dir PATH', summary: 'Check SSH authentication and remote working directory', gui: '测试云主机连接'},
+  { name: 'remote.check', args: '--team NAME | --employee ID | --remote-host HOST --remote-dir PATH', summary: 'Check SSH reachability and return the remote OS and Linux distribution', gui: '云主机连接灯与系统图标'},
   { name: 'terminal.open', args: '--employee ID [--cols N --rows N]', summary: 'Open a PTY in the employee working directory', gui: '新建终端'},
   { name: 'terminal.list', args: '[--employee ID]', summary: 'List employee terminals', gui: '终端标签'},
   { name: 'terminal.read', args: 'ID [--cursor N]', summary: 'Read terminal output since an offset', gui: '终端输出'},

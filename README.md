@@ -331,6 +331,10 @@ known_hosts, SSH config and jump host. Employees inherit that connection; hiring
 has no local/cloud switch or per-employee host fields. The default employee folder
 is `<remote Team root>/<employee name>`; an existing root or descendant can also
 be bound. Work plugin Teams and ordinary Build Teams remain local.
+Every Team header shows Plugin, Local or Cloud. Cloud headers use `agents remote check`
+to refresh a green/red SSH lamp every 30 seconds and display the remote OS icon;
+Linux distributions such as Kali are detected from `/etc/os-release`. An optional
+`--remote-distribution kali` keeps the Kali icon identifiable before connection.
 The original Tunnel project is integrated as the independent
 [Modules/Tunnel](Modules/Tunnel/README.md) module, not an installed software plugin.
 

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { teamSettings,type ActivityPreview,type Store,type StoredSession } from '../../../shared/types'
+import type {RemoteHealth} from '../../../shared/remote'
 import { DEFAULT_VIEW, EMPLOYEE_SIZE, fitViewport, constrainEmployee, planOffice, planRoom, snapEmployee, roomExtent, resizeRoom, type ResizeEdge, type SnapGuide, type PlannedRoom, type Point, type RoomBounds, type Viewport } from '../../../shared/canvas'
 import {DEFAULT_PREFERENCES} from '../../../shared/preferences'
 import { CanvasRoom } from './CanvasRoom'
 
 type Drag = { kind:'team'|'employee'|'resize'|'pan'; name:string; id?:string; edge?:ResizeEdge; resized?:RoomBounds; start:Point; origin:Point; room?:PlannedRoom; moved:boolean; x:number; y:number; rooms:PlannedRoom[]; sequence:number; guide?:SnapGuide;openOnClick?:boolean }
-type Props={activities:Record<string,ActivityPreview>;store:Store;busyIds:Set<string>;act:(cmd:string,args?:Record<string,unknown>)=>Promise<any>;onOpen:(card:StoredSession)=>void;onEdit:(name:string)=>void;onView:(view:Viewport,size:Point)=>void}
-export function OfficeCanvas({store,busyIds,activities,act,onOpen,onEdit,onView}:Props) {
+type Props={activities:Record<string,ActivityPreview>;cloudStatus:Record<string,RemoteHealth>;store:Store;busyIds:Set<string>;act:(cmd:string,args?:Record<string,unknown>)=>Promise<any>;onOpen:(card:StoredSession)=>void;onEdit:(name:string)=>void;onView:(view:Viewport,size:Point)=>void}
+export function OfficeCanvas({store,busyIds,activities,cloudStatus,act,onOpen,onEdit,onView}:Props) {
   const preferences={...DEFAULT_PREFERENCES,...store.preferences}
   const viewport=useRef<HTMLDivElement>(null)
   const [size,setSize]=useState({x:1200,y:800})
@@ -112,7 +113,7 @@ export function OfficeCanvas({store,busyIds,activities,act,onOpen,onEdit,onView}
       {rooms.map((room,i)=>{
         const b=roomExtent(room)
         if(draft?.name!==room.name&&(b.x+b.width<visible.x||b.y+b.height<visible.y||b.x>visible.x+visible.width||b.y>visible.y+visible.height))return null
-        return <CanvasRoom key={room.name} room={room} index={i} design={store.rooms?.[room.name]?.design} root={store.teamRoots?.[room.name]} mode={teamSettings(store,room.name).mode} activities={activities} busyIds={busyIds} draggingId={draft?.moved?draft.id:undefined} visible={visible}
+        return <CanvasRoom key={room.name} room={room} index={i} design={store.rooms?.[room.name]?.design} root={store.teamRoots?.[room.name]} mode={teamSettings(store,room.name).mode} remote={teamSettings(store,room.name).remote} health={cloudStatus[room.name]} activities={activities} busyIds={busyIds} draggingId={draft?.moved?draft.id:undefined} visible={visible}
           onOpen={onOpen} onEdit={()=>onEdit(room.name)} onStart={(kind,e,id,edge)=>begin(kind,room,e,id,edge)} />
       })}
       {draft?.moved&&draft.kind==='employee'&&(draft.guide?.x!==undefined||draft.guide?.y!==undefined)&&<div className="employee-snap-guide" aria-hidden="true" style={{left:draft.room!.bounds.x+draft.x,top:draft.room!.bounds.y+draft.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}/>}

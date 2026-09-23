@@ -633,8 +633,10 @@ locations respect `CODEX_HOME` and `CLAUDE_CONFIG_DIR` just as engine startup do
 {"name":"Backend","mode":"cloud","remote":{"host":"ubuntu@203.0.113.10","directory":"/home/ubuntu/project","os":"linux","port":22}}
 ```
 
-Optional connection fields: `identityFile`, `knownHosts`, `sshConfig`, `jump`.
-CLI flags: `--remote-host`, `--remote-dir`, `--remote-os`, `--ssh-port`, `--ssh-key`,
+Optional connection fields: `identityFile`, `knownHosts`, `sshConfig`, `jump`, and
+`distribution` for a Linux distro such as `kali` or `ubuntu` (useful before the
+first successful connection). CLI flags: `--remote-host`, `--remote-dir`,
+`--remote-os`, `--remote-distribution`, `--ssh-port`, `--ssh-key`,
 `--known-hosts`, `--ssh-config`, `--ssh-jump`, on `group add/configure --mode cloud`.
 Team creation checks and canonicalizes the existing root over SSH, without creating
 a corresponding local project directory. Work and Build Teams use local folders.
@@ -655,7 +657,13 @@ Version 0.12 per-employee connections are backed up and moved into corresponding
 cloud Teams on startup; local teammates, employee names, files and native IDs remain.
 
 `remote.check {team}`, `{employee}`, or `{remote}` tests SSH and the target folder
-without inference. Connections use SSH batch authentication and known_hosts; there
+without inference. On success it returns the existing `info` string plus a structured
+`environment` containing the remote OS and, for Linux, `distribution` and
+`distributionName` from `/etc/os-release`. The Team header checks this same CLI API
+when opened and every 30 seconds: a successful probe lights a green lamp; a failed
+probe lights red. Its icon uses the detected distribution or the Team's configured
+Linux distribution, with Windows and macOS identified by their OS setting.
+Connections use SSH batch authentication and known_hosts; there
 is no password popup or automatic trust. Model credentials remain local. Remote
 permissions are those of the SSH user; the UI never presents them as a local sandbox.
 A deleted remote working directory is reported explicitly by `remote.check`,
@@ -925,7 +933,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 |
 | <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 |
 | <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 |
-| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH authentication and remote working directory | 测试云主机连接 |
+| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH reachability and return the remote OS and Linux distribution | 云主机连接灯与系统图标 |
 | <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 |
 | <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 |
 | <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 |

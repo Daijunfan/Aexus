@@ -10,7 +10,7 @@ try:
     request = json.load(sys.stdin)
     config = commands.target(request['target'])
     if sys.argv[1] == 'check':
-        print(json.dumps({'info': transport.doctor(config)}))
+        print(json.dumps(transport.doctor(config, details=True)))
     elif sys.argv[1] == 'prepare':
         session, args, _ = adapters.prepare(request['engine'], config, [], request['session'])
         print(json.dumps({'cwd': str(session), 'args': args,

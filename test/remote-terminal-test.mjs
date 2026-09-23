@@ -39,10 +39,10 @@ let n=0;const ok=(value,label)=>{assert.ok(value,label);n++;console.log('PASS '+
 try{
  await start();await cli('group','add','Build');await cli('group','add','Work','--mode','work','--plugin','mininotion')
  await assert.rejects(()=>cli('card','create','--title','Remote Work','--group','Work','--remote-host','fixture','--remote-dir',remote))
- await cli('group','add','Cloud Team','--mode','cloud','--remote-host','fixture','--remote-dir',remote)
+ await cli('group','add','Cloud Team','--mode','cloud','--remote-host','fixture','--remote-dir',remote,'--remote-distribution','kali')
  const cloud=await cli('card','create','--title','Cloud','--group','Cloud Team','--directory-mode','bind','--cwd','.')
  const local=await cli('card','create','--title','Local','--group','Build')
- ok(cloud.remote.directory===remote&&cloud.remote.host==='fixture','cloud Team owns the connection and employees inherit it; per-employee overrides are rejected')
+ ok(cloud.remote.directory===remote&&cloud.remote.host==='fixture'&&cloud.remote.distribution==='kali','cloud Team owns its OS label and connection; employees inherit both without overrides')
  const child=await cli('card','create','--title','云端工程师','--group','Cloud Team')
  ok(child.cwd===path.join(remote,'云端工程师')&&fs.existsSync(child.cwd)&&!JSON.parse(fs.readFileSync(path.join(home,'sessions.json'))).sessions.find(c=>c.id===child.id).remote,'default cloud folders are created remotely and SSH credentials are stored only on the Team')
  await assert.rejects(()=>cli('card','create','--title','Escape','--group','Cloud Team','--directory-mode','bind','--cwd','..'))

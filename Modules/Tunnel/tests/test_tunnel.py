@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import adapters
 import commands
 import transport
+import remote
 
 
 class Client:
@@ -46,6 +47,10 @@ class Client:
 
 
 class RoutingTests(unittest.TestCase):
+    def test_linux_distribution_identifier_for_team_icon(self):
+        self.assertEqual(remote.linux_distribution('ID=kali\nPRETTY_NAME="Kali GNU/Linux Rolling"\n'),
+                         {'distribution': 'kali', 'distributionName': 'Kali GNU/Linux Rolling'})
+
     def test_local_arguments_are_unchanged(self):
         args = ['exec', '-c', 'model="test"', '--json', 'literal --tunnel-host text', '--', '--tunnel-path']
         options, native = commands.parse(args)

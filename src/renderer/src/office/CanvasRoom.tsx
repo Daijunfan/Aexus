@@ -2,9 +2,11 @@ import { useId, type CSSProperties } from 'react'
 import { roomDesign, type RoomDesign } from '../../../shared/office'
 import { DEFAULT_POLYGON, EMPLOYEE_SIZE, shapeContains, resizeEdge, type ResizeEdge, type PlannedRoom, type RoomBounds } from '../../../shared/canvas'
 import type { ActivityPreview,StoredSession } from '../../../shared/types'
+import type {RemoteHealth,RemoteTarget} from '../../../shared/remote'
 import {ActivityBubble} from './ActivityBubble'
 import { Employee } from './Employee'
 import { Bookshelf, Pendant, Plant, Poster, WindowWall } from './Furniture'
+import {TeamOSIcon} from './TeamOSIcon'
 function outline(b:RoomBounds) {
   const w=b.width,h=b.height
   if(b.shape==='ellipse')return `M ${w/2},4 A ${w/2-4},${h/2-4} 0 1 1 ${w/2-.01},4 Z`
@@ -12,7 +14,7 @@ function outline(b:RoomBounds) {
   if(points)return points.map((p,i)=>`${i?'L':'M'} ${p.x*w},${p.y*h}`).join(' ')+' Z'
   return `M 44,4 H ${w-44} Q ${w-4},4 ${w-4},44 V ${h-44} Q ${w-4},${h-4} ${w-44},${h-4} H 44 Q 4,${h-4} 4,${h-44} V 44 Q 4,4 44,4 Z`
 }
-export function CanvasRoom({room,index,design:custom,root,mode,busyIds,activities,draggingId,visible,onOpen,onEdit,onStart}:{room:PlannedRoom;index:number;design?:Partial<RoomDesign>;root?:string;mode?:'work'|'build'|'cloud';activities:Record<string,ActivityPreview>;busyIds:Set<string>;draggingId?:string;visible:{x:number;y:number;width:number;height:number};onOpen:(card:StoredSession)=>void;onEdit:()=>void;onStart:(kind:'team'|'employee'|'resize',e:React.PointerEvent,id?:string,edge?:ResizeEdge)=>void}) {
+export function CanvasRoom({room,index,design:custom,root,mode,remote,health,busyIds,activities,draggingId,visible,onOpen,onEdit,onStart}:{room:PlannedRoom;index:number;design?:Partial<RoomDesign>;root?:string;mode?:'work'|'build'|'cloud';remote?:RemoteTarget;health?:RemoteHealth;activities:Record<string,ActivityPreview>;busyIds:Set<string>;draggingId?:string;visible:{x:number;y:number;width:number;height:number};onOpen:(card:StoredSession)=>void;onEdit:()=>void;onStart:(kind:'team'|'employee'|'resize',e:React.PointerEvent,id?:string,edge?:ResizeEdge)=>void}) {
   const id=useId().replace(/:/g,''),design=roomDesign(index,custom),b=room.bounds,path=outline(b)
   const edgeAt=(e:React.PointerEvent<SVGPathElement>)=>{const rect=e.currentTarget.ownerSVGElement!.getBoundingClientRect();return resizeEdge((e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height)}
   const color=design.background,light=color?[1,3,5].reduce((sum,i,j)=>sum+parseInt(color.slice(i,i+2),16)*[.2126,.7152,.0722][j],0)>150:undefined
@@ -26,8 +28,12 @@ export function CanvasRoom({room,index,design:custom,root,mode,busyIds,activitie
     </defs><path d={path} fill={`url(#${id}-floor)`} stroke="var(--room-accent)" strokeWidth="3" strokeOpacity=".8"/><path d={path} fill={`url(#${id}-texture)`}/></svg>
     {design.scenery&&<div className="room-scenery" style={{clipPath:`path('${path}')`}} aria-hidden="true"><WindowWall wall={design.wall}/><div className="room-ceiling-glow"/>{design.shelf&&<Bookshelf/>}{design.lamp&&<Pendant/>}{design.art&&<Poster theme={design.theme}/>} {design.plants&&<><Plant className="room-plant plant-left"/><Plant className="room-plant plant-right" variant="fern"/></>}</div>}
     <svg className="room-resize-outline" width={b.width} height={b.height}><path className="room-resize-edge" d={path} fill="none" stroke="transparent" strokeWidth="18" vectorEffect="non-scaling-stroke" aria-label={`拖动 ${room.name} 边缘调整大小`} onPointerMove={e=>{e.currentTarget.style.cursor=`${edgeAt(e)}-resize`}} onPointerDown={e=>onStart('resize',e,undefined,edgeAt(e))}/></svg>
-    <button className="team-title" data-team={room.name} onPointerDown={e=>onStart('team',e)} onClick={e=>{if(e.detail===0)onEdit()}} aria-label={`打开 ${room.name||'待分配员工'} Team`} title="点击名称打开工作空间 · 拖动团队内部移动"><strong>{room.name||'待分配员工'}</strong></button>
-    <span className={`team-root-label ${root?'':'unbound'}`} title={root??'请绑定外部文件夹'}><span className="team-mode-label">{mode==='cloud'?'CLOUD':mode==='work'?'WORK':'BUILD'}</span>{root ? `⌂ ${root}` : '⌂ 先绑定 Team 外部文件夹'}</span>
+    <div className="team-header">
+      <span className={`team-kind team-kind-${mode??'build'}`}>{mode==='cloud'?'Cloud':mode==='work'?'Plugin':'Local'}</span>
+      <button className="team-title" data-team={room.name} onPointerDown={e=>onStart('team',e)} onClick={e=>{if(e.detail===0)onEdit()}} aria-label={`打开 ${room.name||'待分配员工'} Team`} title="点击名称打开工作空间 · 拖动团队内部移动"><strong>{room.name||'待分配员工'}</strong></button>
+      {mode==='cloud'&&<span className="team-cloud-meta"><span className="team-health" data-connected={health?.connected?'true':'false'} title={health?.connected?'云主机已连接':'云主机未连接'}><i/>{health?.connected?'已连接':'未连接'}</span><TeamOSIcon os={remote?.os??'linux'} distribution={health?.environment?.distribution||remote?.distribution}/></span>}
+      <span className={`team-root-label ${root?'':'unbound'}`} title={root??'请绑定外部文件夹'}>{root ? `⌂ ${root}` : '⌂ 先绑定 Team 外部文件夹'}</span>
+    </div>
     <div className="free-employees">{room.employees.map(({card,position})=>{
       const x=b.x+position.x,y=b.y+position.y
       if(x+EMPLOYEE_SIZE.width<visible.x||y+EMPLOYEE_SIZE.height<visible.y||x>visible.x+visible.width||y>visible.y+visible.height)return null

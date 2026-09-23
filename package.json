@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.26.2",
+  "version": "0.26.3",
   "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
   "main": "./out/main/index.js",
   "author": "Agents Company",
@@ -37,7 +37,7 @@
     "test:interactions": "node test/snapping-test.mjs && node test/interaction-api-test.mjs && node test/interaction-ui-test.mjs",
     "test:employee-lifecycle": "node test/employee-lifecycle-test.mjs && node test/employee-lifecycle-ui-test.mjs",
     "test:team-lifecycle": "node test/team-directories-test.mjs && node test/employee-lifecycle-test.mjs --teams && node test/team-lifecycle-ui-test.mjs",
-    "test:team-appearance": "node test/team-appearance-ui-test.mjs",
+    "test:team-appearance": "node test/team-appearance-ui-test.mjs && node test/team-header-ui-test.mjs",
     "test:remote": "python3 -m unittest discover -s Modules/Tunnel/tests -v && node test/remote-terminal-test.mjs && node test/workbench-ui-test.mjs",
     "test:ssh": "node test/ssh-integration-test.mjs",
     "test:cli-foundation": "node test/cli-foundation-test.mjs",

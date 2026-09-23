@@ -41,7 +41,7 @@ function parse(args) {
 function remoteFlags(p) {
   if(p.local)return null
   if(!p['remote-host']&&!p['remote-dir'])return undefined
-  return {host:p['remote-host'],directory:p['remote-dir'],os:p['remote-os']||'linux',port:p['ssh-port'],identityFile:p['ssh-key'],knownHosts:p['known-hosts'],sshConfig:p['ssh-config'],jump:p['ssh-jump']}
+  return {host:p['remote-host'],directory:p['remote-dir'],os:p['remote-os']||'linux',distribution:p['remote-distribution'],port:p['ssh-port'],identityFile:p['ssh-key'],knownHosts:p['known-hosts'],sshConfig:p['ssh-config'],jump:p['ssh-jump']}
 }
 
 function jsonArgument(value) {
@@ -181,14 +181,14 @@ COMMANDS
   config thinking <id> on|off
   config effort <id> <level>
   group list | add <name> [--mode work|build|cloud --plugin ID]
-      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows]
+      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows --remote-distribution kali|ubuntu|...]
       [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
       [--directory-mode default|bind --root PATH]   Build only; Work uses plugin/workspaces/Team
   group remove <name>                     delete Team, employees and native sessions; keep files
   group migrate <name>
   group root <name> <folder> [--directory-mode bind] [--create]   Build only
   group configure <name> --mode work|build|cloud [--plugin ID --directory-mode default|bind --root PATH]
-      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows]
+      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows --remote-distribution kali|ubuntu|...]
       [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
   room place <name> --col N --row N [--w N] [--h N]
   room bounds <name> [--x N] [--y N] [--width N] [--height N]
