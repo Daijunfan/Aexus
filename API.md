@@ -718,6 +718,25 @@ local and remote conversations.
 
 ## Native cloud execution and context audit
 
+Browser plugin (independent Git repository at `PlugIns/browser`):
+
+```sh
+agents group add Web --mode work --plugin browser
+agents plugin call browser browser.open --team Web --params '{"url":"http://10.92.35.208:8000/"}'
+agents plugin call browser browser.read --team Web
+agents plugin open browser --team Web
+```
+
+`browser.current`, `browser.open`, `browser.back`, `browser.forward`,
+`browser.reload` and `browser.read` use the plugin's standalone CLI/runtime
+and the same scoped JSON-RPC API as its UI. The managed window embeds Chromium's
+webview so page scripts and CSS render normally; the CLI returns raw HTML/text.
+Only the browser plugin is allowed to attach a guest view; guest Node APIs are
+disabled and only HTTP/HTTPS navigation is accepted. See
+[`PlugIns/browser/API.md`](PlugIns/browser/API.md) for its workspace, errors and
+exact command schema. The host Git repository ignores all plugin source trees;
+plugin code must be committed within each plugin directory.
+
 Full request auditing (including tool definitions) and native tool routing verification:
 `node test/native-execution-test.mjs` uses a local model fixture with no inference.
 Set `AGENTS_COMPANY_LIVE_HOST` and `AGENTS_COMPANY_LIVE_ROOT` to check an authorized SSH machine.

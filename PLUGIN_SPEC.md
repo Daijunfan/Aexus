@@ -223,7 +223,11 @@ workspace: required
 
 ## MiniNotion integration
 
-MiniNotion 是第一个内置包。源码仍在相邻的 `mini-notion` 项目中：
+MiniNotion 是第一个内置包，Browser 是第二个。两者的源码分别是
+`PlugIns/mini-notion`、`PlugIns/browser` 中的独立 Git 仓库；宿主 Git 忽略插件源码。
+每个插件在本地独立提交，再从宿主构建已检出的插件目录。
+
+MiniNotion 构建：
 
 ```sh
 npm run build:plugins

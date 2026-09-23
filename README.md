@@ -4,6 +4,15 @@ A CLI-first Codex and Claude Code office with three Team types, a plugin directo
 and animated companions on an expandable canvas. Desktop actions use the same
 backend APIs as the terminal.
 
+The host and each `PlugIns/<name>/` source directory use separate Git repositories.
+The host does not track plugin source files. A fresh host checkout needs the
+MiniNotion and Browser repositories checked out under `PlugIns/` before packaging.
+`npm run build:plugins` builds the available plugin checkouts into the App.
+
+The Browser plugin opens HTTP/HTTPS pages in its own managed Chromium window.
+Its independent CLI can open a URL, read HTML/text, move through history and
+reload without opening a window. See [Browser API](PlugIns/browser/API.md).
+
 ## Engine controls
 
 Employee conversations use each installed engine's model catalog, per-model reasoning

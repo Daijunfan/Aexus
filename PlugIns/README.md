@@ -19,3 +19,10 @@ JSON schema 和渲染入口。根目录构建脚本自动发现这些插件，�
 
 MiniNotion 保留原有独立运行代码，以便复用和测试；本项目的交付形式是宿主内插件，
 不会安装它的独立 macOS App。历史用户数据归档在应用数据目录，未混入这里。
+# Git ownership
+
+Each `PlugIns/<name>/` source directory is its own Git repository. The Agents
+Company repository ignores plugin source trees; it tracks only this integration
+guide and the shared plugin contract. Run `git -C PlugIns/<name> status` and commit
+inside that plugin when changing its code. A clean checkout of the host needs
+each plugin repository checked out at the same path before `npm run build:plugins`.
