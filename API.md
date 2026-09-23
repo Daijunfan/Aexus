@@ -722,20 +722,21 @@ Browser plugin (independent Git repository at `PlugIns/browser`):
 
 ```sh
 agents group add Web --mode work --plugin browser
-agents plugin call browser browser.open --team Web --params '{"url":"http://10.92.35.208:8000/"}'
-agents plugin call browser browser.read --team Web
-agents plugin call browser browser.bookmark.add --team Web --params '{"url":"http://10.92.35.208:8000/","title":"服务器监控"}'
-agents plugin call browser browser.bookmarks --team Web
-agents plugin call browser browser.bookmark.open --team Web --params '{"id":"BOOKMARK_ID"}'
+agents plugin call browser browser.page.add --team Web --params '{"url":"http://10.92.35.208:8000/","title":"服务器监控","note":"云主机仪表盘"}'
+agents plugin call browser browser.pages --team Web
+agents plugin call browser browser.page.open --team Web --params '{"id":"PAGE_ID"}'
 agents plugin open browser --team Web
 ```
 
-`browser.current`, `browser.open`, `browser.back`, `browser.forward`,
-`browser.reload`, `browser.read`, `browser.bookmarks`, `browser.bookmark.add`,
-`browser.bookmark.open` and `browser.bookmark.remove` use the plugin's standalone CLI/runtime
-and the same scoped JSON-RPC API as its UI. The managed window embeds Chromium's
-webview so page scripts and CSS render normally; the CLI returns raw HTML/text.
-Bookmarks persist in `.agents-browser/state.json` within the selected workspace.
+`browser.current`, `browser.home`, `browser.pages`, `browser.page.add`,
+`browser.page.open`, `browser.page.update`, `browser.page.remove`,
+`browser.page.thumbnail`, `browser.open`, `browser.back`, `browser.forward`,
+`browser.reload` and `browser.read` use one shared CLI/runtime request API.
+The two views are the saved-page home screen and the current website. The
+Chromium webview renders site scripts/CSS and saves screenshots through the
+same `browser.page.thumbnail` API available in the CLI. Names, annotations,
+URLs, thumbnails and view state persist under `.agents-browser/` in the selected
+workspace. Previous bookmark records migrate into page cards with their IDs intact.
 Only the browser plugin is allowed to attach a guest view; guest Node APIs are
 disabled and only HTTP/HTTPS navigation is accepted. See
 [`PlugIns/browser/API.md`](PlugIns/browser/API.md) for its workspace, errors and
