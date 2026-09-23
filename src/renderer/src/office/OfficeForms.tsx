@@ -1,0 +1,91 @@
+import {RemoteConnectionFields} from './RemoteConnectionFields'
+import { useEffect,useState } from 'react'
+import {api} from '../api'
+import { SELECTABLE_AVATARS,currentAvatar, AVATAR_LABELS, isSpriteAvatar, SPRITE_COLORS, ROOM_THEMES, roomDesign, employeeDirectoryName, type RoomDesign } from '../../../shared/office'
+import type { Engine, RoomLayout, StoredSession,TeamSettings } from '../../../shared/types'
+import type {PluginDescriptor} from '../../../shared/plugins'
+import { Mascot } from './Mascot'
+import { initialBounds, DEFAULT_POLYGON, type RoomBounds } from '../../../shared/canvas'
+import { PolygonEditor } from './PolygonEditor'
+import { EngineMark } from '../components/EngineMark'
+
+const COLORS = ['#8bc7b2', '#92b9df', '#d9a1b4', '#d1b27d', '#afa4d7', '#9ca9ad']
+const THEMES = ['苔绿', '海蓝', '玫瑰', '琥珀', '暮紫', '岩灰']
+export type EmployeeFields = Partial<StoredSession> & { title: string; engine: Engine; group: string; teamRoot?:string; directoryMode?:'default'|'bind' }
+export function EmployeeForm({ employee, groups, roots = {}, settings={}, onSave, onRemove }: {
+  employee?: StoredSession; groups: string[]; roots?: Record<string,string>; settings?:Record<string,TeamSettings>;onSave: (fields: EmployeeFields) => Promise<boolean>; onRemove?: () => Promise<void>
+}) {
+  const [fields, setFields] = useState<EmployeeFields>({ title: '', engine: 'codex', group: groups[0] ?? '', avatar: 'fireball', accessory: 'none', color: SPRITE_COLORS.fireball, role: '', ...employee,...(employee&&!roots[employee.group]?{cwd:settings[employee.group]?.mode==='work'?employeeDirectoryName(employee.title):'.'}:{}) })
+  const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [deleting,setDeleting]=useState(false)
+  const [folder,setFolder]=useState(''),[error,setError]=useState('')
+  const [directoryMode,setDirectoryMode]=useState<'default'|'bind'>(employee?'bind':'default')
+  const report=(error:unknown)=>setError(String((error as Error).message||error).replace(/^Error invoking remote method '[^']+': Error: /,''))
+  useEffect(()=>{let active=true;setFolder(roots[fields.group]??'');if(fields.group&&!roots[fields.group])void api.call<{path:string}>('workspace.suggest',{team:fields.group}).then(result=>{if(active)setFolder(previous=>previous||result.path)}).catch(report);return()=>{active=false}},[fields.group,roots[fields.group]])
+  const patch = (next: Partial<EmployeeFields>) => setFields((prev) => ({ ...prev, ...next }))
+  const official=true
+  const work=settings[fields.group]?.mode==='work'
+  const cloud=settings[fields.group]?.mode==='cloud'
+  const binding=!cloud&&!roots[fields.group]
+  const choose=async()=>{try{const result=await api.call<{path:string|null}>('workspace.choose',{path:roots[fields.group]||folder});if(result.path){patch({cwd:result.path});setDirectoryMode('bind');setError('')}}catch(e){report(e)}}
+  return <form className="employee-form" onSubmit={async (e) => { e.preventDefault(); setSaving(true);setError('');try { const saved=await onSave({...fields,remote:undefined,...(binding?{teamRoot:folder.trim()}:{}),directoryMode,cwd:directoryMode==='default'?undefined:fields.cwd?.trim()});if(!saved)setError('保存未完成，请检查目录配置。') } catch(error){report(error)} finally { setSaving(false) } }}>
+    <div className="employee-preview"><div className="preview-halo" /><Mascot kind={fields.avatar} accessory={fields.accessory} color={fields.color} /><span>{fields.title || 'Your next teammate'}</span><small>{fields.role || '好想法的新伙伴'}</small></div>
+    <div className="form-section"><div className="field-heading">选择你的伙伴 <span>8 款经典宠物 · 6 款社区宠物</span></div><div className="avatar-options">{SELECTABLE_AVATARS.map((avatar) => <button type="button" key={avatar} className={currentAvatar(fields.avatar??'fireball') === avatar ? 'selected' : ''} onClick={() => patch({ avatar,color:SPRITE_COLORS[avatar],accessory:'none' })} aria-label={`选择${AVATAR_LABELS[avatar]}`}><Mascot kind={avatar} accessory="none" color={currentAvatar(fields.avatar??'fireball')===avatar?fields.color:SPRITE_COLORS[avatar]} /><span>{AVATAR_LABELS[avatar]}</span></button>)}</div></div>
+    <div className="form-row"><label>名字<input name="title" required readOnly={!!employee} title={employee?'名称创建后不可修改':undefined} value={fields.title} onChange={(e) => patch({ title: e.target.value })} placeholder="例如 Codey" />{employee&&<small className="name-lock-note">创建后名称固定，与工作目录保持一致</small>}</label><label>角色<input name="role" value={fields.role} onChange={(e) => patch({ role: e.target.value })} placeholder="例如 前端工程师" /></label></div>
+    <div className="form-row"><label>所属 Team<select name="group" value={fields.group} onChange={(e) => {patch({ group: e.target.value, cwd: '',remote:undefined });setDirectoryMode('default')}}><option value="" disabled>选择 Team</option>{groups.map((g) => <option key={g} value={g}>{g}{roots[g] ? '' : '（在下方配置目录）'}</option>)}</select></label><label>配件<select name="accessory" disabled={official} title={official?'原版宠物使用自带外观':undefined} value={fields.accessory} onChange={(e) => patch({ accessory: e.target.value as StoredSession['accessory'] })}><option value="headphones">耳机</option><option value="glasses">眼镜</option><option value="none">无配件</option></select></label></div>
+    <div className="color-field"><span>专属配色</span><div className="color-options">{COLORS.map((color) => <button type="button" key={color} style={{ background: color }} className={fields.color === color ? 'selected' : ''} aria-label={`配色 ${color}`} onClick={() => patch({ color })} />)}<input type="color" aria-label="自定义员工配色" value={fields.color} onChange={(e) => patch({ color: e.target.value })} />{official&&<button type="button" className="reset-pet-color" onClick={()=>patch({color:SPRITE_COLORS[currentAvatar(fields.avatar??'fireball')]})}>原色</button>}</div></div>
+    {<><div className="engine-choices">{(['codex', 'claude'] as const).map((engine) => <button type="button" key={engine} className={engine === fields.engine ? 'selected' : ''} onClick={() => patch({ engine })}><EngineMark engine={engine} size={22} /><span>{engine === 'codex' ? 'Codex' : 'Claude Code'}<small>{employee?'可切换引擎，保留对话历史':engine === 'codex' ? 'GPT-5.6 Luna · Low' : '使用你的 Claude 配置'}</small></span></button>)}</div></>}
+    <div className="workspace-contract"><span>{cloud?'云主机':work?'WORK':'BUILD'} · TEAM 根目录</span><code>{roots[fields.group]||folder||'先选择所属 Team'}</code>{cloud&&<small className="cloud-inheritance">主机：{settings[fields.group]?.remote?.host} · 自动继承所属 Team，无需单独配置连接</small>}
+      <div className="directory-mode-options" role="group" aria-label="员工目录方式">{(['default','bind'] as const).map(mode=><button type="button" key={mode} data-directory-mode={mode} aria-pressed={directoryMode===mode} className={directoryMode===mode?'selected':''} onClick={()=>{setDirectoryMode(mode);if(mode==='bind')patch({cwd:employee?.group===fields.group?employee.cwd:''});setError('')}}>{mode==='default'?'默认生成':'绑定已有文件夹'}</button>)}</div>
+      {directoryMode==='default'?<label>默认工作目录<code className="default-employee-path" data-default-cwd>{`${roots[fields.group]||folder}/${fields.title.trim()||'填写员工名字后自动生成'}`}</code><small>保存时创建与员工同名的文件夹，保留中文、空格和大小写。</small></label>:<label>{cloud?'绑定云端文件夹':'绑定 macOS 文件夹'}<div className="folder-input"><input name="cwd" required value={fields.cwd??''} onChange={e=>patch({cwd:e.target.value})} placeholder={cloud?"团队目录内的相对路径或绝对路径":"选择已存在的物理文件夹，或输入完整路径"}/>{!cloud&&<button type="button" onClick={()=>void choose()}>选择工作目录</button>}</div></label>}
+      <small>{cloud?'目录位于云端 Team 根目录内，支持嵌套；保存时通过 SSH 创建或检查。':work?'权限范围：上方插件工作区的子文件夹，允许嵌套；不能绑定根目录、父目录或外部链接。':'默认在 Team 项目目录下生成；也可绑定任意已有的 macOS 工作文件夹。'}{employee&&' 名称创建后固定；更换绑定目录会重建引擎上下文，保留历史与文件。'}</small></div>
+    {error&&<p className="employee-form-error" role="alert">{error}</p>}
+    {removing&&<p className="workspace-note">将永久删除此员工在本软件及原 Codex / Claude Code 中的关联会话。工作文件保留。</p>}
+    <div className="form-footer">{employee && onRemove && <button type="button" className="text-danger" disabled={deleting} onClick={async () => { if (!removing) { setRemoving(true); return } setDeleting(true);try{await onRemove()}finally{setDeleting(false)} }}>{deleting ? '正在删除…' : removing ? '确认删除员工及全部会话' : '移除员工'}</button>}<button className="btn primary save-employee" disabled={saving || !fields.group || (binding&&!folder.trim())}>{saving ? '保存中…' : employee ? '保存更改' : '欢迎加入团队'} <span>↗</span></button></div>
+  </form>
+}
+
+export function TeamForm({ name, index, layout, root = '', settings={mode:'build'}, plugins=[], employeeCount=0, onSave, onRemove }: {
+  name?: string; index: number; layout?: RoomLayout; root?: string;settings?:TeamSettings;plugins?:PluginDescriptor[];employeeCount?:number;
+  onSave: (name: string, root: string, design: RoomDesign, bounds: RoomBounds,settings:TeamSettings) => Promise<boolean>; onRemove?: () => Promise<void>
+}) {
+  const [title, setTitle] = useState(name === '' ? '自由工位' : name ?? '')
+  const [design, setDesign] = useState(roomDesign(index, layout?.design))
+  const [bounds, setBounds] = useState(initialBounds(index,layout))
+  const [folder,setFolder]=useState(root)
+  const [config,setConfig]=useState<TeamSettings>(settings)
+  const directoryMode=config.directoryMode??'default'
+  const [suggested,setSuggested]=useState(''),[deleting,setDeleting]=useState(false)
+  const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [folderError,setFolderError]=useState('')
+  useEffect(()=>{let active=true;setFolderError('');if(config.mode==='cloud'){setFolder(config.remote?.directory??'');return}void api.call<{path:string}>('workspace.suggest',{team:title||'未命名项目',...config}).then(result=>{if(active){setSuggested(result.path);if(directoryMode==='default')setFolder(result.path)}}).catch(error=>{if(active){setFolder('');setFolderError((error as Error).message)}});return()=>{active=false}},[title,config.mode,config.pluginId,config.remote?.directory,directoryMode])
+  return <form className="team-form" onSubmit={async (e) => { e.preventDefault(); setSaving(true); try { await onSave(name === '' ? '' : title, folder.trim(), design, bounds,{...config,directoryMode}) } catch(error){setFolderError((error as Error).message)} finally { setSaving(false) } }}>
+    <div className={`sign-preview theme-${design.theme}`}><i /><span>{title || '新团队'}<small>{design.subtitle}</small></span><b>01</b></div>
+    <label>Team 名称<input name="team-name" required readOnly={name !== undefined} title={name!==undefined?'名称创建后不可修改':undefined} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如 Engineering" />{name!==undefined&&<small className="name-lock-note">创建后名称固定，与工作目录保持一致</small>}</label>
+    <div className="field-heading team-section-heading">工作方式 <span>员工将继承 Team 的执行环境</span></div>
+    <div className="team-mode-options" role="group" aria-label="Team 模式">{(['work','build','cloud'] as const).map(mode=><button type="button" key={mode} data-mode={mode} aria-pressed={config.mode===mode} className={config.mode===mode?'selected':''} onClick={()=>setConfig(mode==='work'?{mode,pluginId:config.pluginId??plugins[0]?.id,directoryMode}:mode==='cloud'?{mode,remote:config.remote??{host:'',directory:'',os:'linux'}}:{mode,directoryMode})}><strong>{mode==='work'?'Work · 插件':mode==='build'?'Build · 本机':'云主机 · SSH'}</strong><span>{mode==='work'?'在插件工作区处理任务':mode==='build'?'在 Mac 项目目录开发':'命令和文件操作在远端执行'}</span></button>)}</div>
+    {config.mode==='cloud'&&<RemoteConnectionFields value={config.remote??{host:'',directory:'',os:'linux'}} onChange={remote=>{setConfig({...config,remote});setFolderError('')}}/>}
+    {config.mode==='work'&&<label>工作插件<select name="team-plugin" required value={config.pluginId??''} onChange={e=>setConfig({mode:'work',pluginId:e.target.value,directoryMode})}><option value="" disabled>选择已集成的插件</option>{plugins.map(p=><option value={p.id} key={p.id}>{p.name}</option>)}</select>{!plugins.length&&<small>请先通过 CLI 安装插件，或选择 Build 模式。</small>}</label>}
+    {config.mode!=='cloud'&&<><div className="directory-mode-options" role="group" aria-label="Team 目录方式">{(['default','bind'] as const).map(mode=><button type="button" key={mode} data-team-directory-mode={mode} aria-pressed={directoryMode===mode} className={directoryMode===mode?'selected':''} onClick={()=>{setConfig({...config,directoryMode:mode});setFolder(mode==='bind'?(name!==undefined?root:''):suggested);setFolderError('')}}>{mode==='default'?'默认生成':'绑定已有文件夹'}</button>)}</div>
+    <label>{directoryMode==='default'?'自动创建工作目录':'绑定 macOS 文件夹'}<div className="folder-input"><input name="team-root" required readOnly={directoryMode==='default'} value={folder} onChange={e=>{setFolder(e.target.value);setFolderError('')}} placeholder="选择已有的物理文件夹"/>{directoryMode==='bind'&&<button type="button" onClick={async()=>{try{const chosen=await api.call<{path:string|null}>('workspace.choose',{path:folder||suggested});if(chosen.path)setFolder(chosen.path);setFolderError('')}catch(e){setFolderError((e as Error).message)}}}>选择 Team 目录</button>}</div></label>
+    {directoryMode==='bind'&&config.mode==='work'&&<p className="workspace-note">插件权限目录：{suggested}。可以选择该目录或其中的子文件夹。</p>}</>}
+    {folderError&&<p className="employee-form-error" role="alert">{folderError}</p>}
+    <p className="workspace-note">{config.mode==='cloud'?'云主机配置只在 Team 中维护。员工名称固定，工作目录在云端；不会把项目同步到本机。':directoryMode==='bind'?'直接使用已有文件夹，不搬动或清空文件；名称创建后不可修改。':config.mode==='work'?'默认使用插件工作区。员工使用 Team 根目录的子文件夹；CLI 文档会自动准备好。':'默认创建同名项目文件夹。名称创建后不可修改。'}</p>
+    <label>部门标语<input name="subtitle" value={design.subtitle} onChange={(e) => setDesign({ ...design, subtitle: e.target.value })} /></label>
+    <fieldset className="appearance-settings"><legend>团队背景与装饰</legend>
+    <div className="form-section"><div className="field-heading">空间配色</div><div className="theme-options">{ROOM_THEMES.map((theme, i) => <button type="button" key={theme} className={`theme-${theme} ${design.theme === theme ? 'selected' : ''}`} onClick={() => setDesign({ ...design, theme })}><i />{THEMES[i]}</button>)}</div></div>
+    <div className="room-background-options"><label>背景颜色<div className="room-color-picker"><input type="color" aria-label="Team 背景颜色" value={design.background||'#e5edf5'} onChange={e=>setDesign({...design,background:e.target.value})}/><code>{design.background||'跟随主题'}</code><button type="button" onClick={()=>setDesign({...design,background:''})}>跟随主题</button></div></label><label>背景纹理<select name="pattern" value={design.pattern} onChange={e=>setDesign({...design,pattern:e.target.value as RoomDesign['pattern']})}><option value="boards">木纹地板</option><option value="grid">方格地砖</option><option value="dots">点阵</option><option value="plain">纯色</option></select></label></div>
+    <label className="scenery-toggle"><input type="checkbox" name="scenery" checked={design.scenery} onChange={e=>setDesign({...design,scenery:e.target.checked})}/>显示墙面与装饰</label>
+    <div className="form-row"><label>墙面<select name="wall" value={design.wall} onChange={(e) => setDesign({ ...design, wall: e.target.value as RoomDesign['wall'] })}><option value="windows">落地窗 · 城市日落</option><option value="panels">木质护墙 · 暖调</option><option value="brick">复古砖墙 · 工作室</option></select></label><label>桌面<select name="desk" value={design.desk} onChange={(e) => setDesign({ ...design, desk: e.target.value as RoomDesign['desk'] })}><option value="walnut">胡桃木</option><option value="oak">浅橡木</option><option value="cloud">云雾白</option></select></label></div>
+    <div className="form-section"><div className="field-heading">独立装饰</div><div className="decoration-options">{([['plants','绿植'],['shelf','书架'],['lamp','吊灯'],['art','海报']] as const).map(([key, label]) => <label key={key}><input type="checkbox" name={key} checked={design[key]} onChange={(e) => setDesign({ ...design, [key]: e.target.checked })} /><span>{label}</span></label>)}</div></div>
+    </fieldset>
+    <div className="form-row"><label>外框形状<select name="shape" value={bounds.shape} onChange={e=>setBounds({...bounds,shape:e.target.value as RoomBounds['shape']})}><option value="rounded">圆角矩形</option><option value="ellipse">椭圆岛屿</option><option value="hexagon">六边形</option><option value="custom">自由多边形</option></select></label><label>员工排布<select name="arrangement" value={bounds.arrangement} onChange={e=>setBounds({...bounds,arrangement:e.target.value as RoomBounds['arrangement']})}><option value="grid">自动多行</option><option value="circle">围桌环形</option><option value="free">自由摆放</option></select></label></div>
+    {bounds.shape==='custom' && <PolygonEditor points={bounds.points??DEFAULT_POLYGON} onChange={points=>setBounds({...bounds,points})} />}
+    <div className="form-row position-row">{(['width','height'] as const).map(key=><label key={key}>{key==='width'?'空间宽度':'空间高度'}<input type="number" name={key} min={key==='width'?360:380} step="any" value={bounds[key]} onChange={e=>setBounds({...bounds,[key]:+e.target.value})} /></label>)}</div>
+    <small className="workspace-note">员工始终保持原大小，拖动员工不会改变 Team 边框。鼠标放在任意边缘即可拉伸；拖动部门牌移动 Team。</small>
+    {removing&&<p className="workspace-note">将删除 Team、其中 {employeeCount} 名员工及其全部本地与 Codex / Claude Code 原生会话。工作文件夹及文件保留。</p>}
+    <div className="form-footer">{onRemove && <button type="button" className="text-danger" disabled={deleting||saving} onClick={async () => { if (!removing) { setRemoving(true); return } setDeleting(true);try{await onRemove()}finally{setDeleting(false)} }}>{deleting?'正在清理会话…':removing ? '确认删除 Team 及全部会话' : '移除 Team'}</button>}<button className="btn primary save-team" disabled={saving||deleting||!folder||!!folderError}>{saving ? '保存中…' : name === undefined ? '创建 Team' : '保存空间'} <span>↗</span></button></div>
+  </form>
+}

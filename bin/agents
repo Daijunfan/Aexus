@@ -1,0 +1,641 @@
+#!/usr/bin/env node
+// The `agents` CLI: drives the running Agents Company app over its local
+// socket. Every command maps to the same operation the GUI performs, so this
+// is a faithful remote control rather than a parallel implementation.
+
+const { connect } = require('node:net')
+const { existsSync } = require('node:fs')
+const { join } = require('node:path')
+const { homedir } = require('node:os')
+
+const APP_HOME = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'AgentsCompany')
+const SOCKET = join(APP_HOME, 'agents.sock')
+
+const useJson = process.argv.includes('--json')
+const argv = process.argv.slice(2).filter((a) => a !== '--json')
+
+function die(msg) {
+  if (useJson) console.log(JSON.stringify({ ok: false, error: msg }))
+  else console.error(`error: ${msg}`)
+  process.exit(1)
+}
+
+/** Parse `--flag value` pairs and positional args. */
+function parse(args) {
+  const out = { _: [] }
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]
+    if (a.startsWith('--')) {
+      const key = a.slice(2)
+      const next = args[i + 1]
+      if (next === undefined || next.startsWith('--')) out[key] = true
+      else {
+        out[key] = next
+        i++
+      }
+    } else out._.push(a)
+  }
+  return out
+}
+
+function remoteFlags(p) {
+  if(p.local)return null
+  if(!p['remote-host']&&!p['remote-dir'])return undefined
+  return {host:p['remote-host'],directory:p['remote-dir'],os:p['remote-os']||'linux',port:p['ssh-port'],identityFile:p['ssh-key'],knownHosts:p['known-hosts'],sshConfig:p['ssh-config'],jump:p['ssh-jump']}
+}
+
+function jsonArgument(value) {
+  if (!value || typeof value !== 'string') throw new Error('Expected JSON or @file')
+  return JSON.parse(value.startsWith('@') ? require('node:fs').readFileSync(value.slice(1), 'utf8') : value)
+}
+function scheduleSpec(p) {
+  if (p.spec) return jsonArgument(p.spec)
+  const timezone = p.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+  if ([p.at, p['every-seconds'], p.time].filter(v => v !== undefined).length !== 1) throw new Error('Choose one: --at, --every-seconds, --time')
+  if (p.thinking !== undefined && !['on','off'].includes(p.thinking)) throw new Error('--thinking must be on|off')
+  const rule = p.at ? { kind: 'once', at: p.at }
+    : p.time ? { kind: 'weekly', time: p.time, timezone, days: (p.days || '1,2,3,4,5,6,7').split(',').map(Number) }
+    : { kind: 'interval', everySeconds: Number(p['every-seconds']), anchor: p.start || new Date(Date.now() + Number(p['every-seconds']) * 1000).toISOString() }
+  let window
+  if (p.window) {
+    if (typeof p.window !== 'string' || !/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(p.window)) throw new Error('--window must be HH:mm-HH:mm')
+    const [start,end] = p.window.split('-')
+    window = { start,end,timezone,days:p['window-days']?.split(',').map(Number) }
+  }
+  return { name:p.name,action:{type:'agent',employeeId:p.employee,prompt:p['prompt-file']?require('node:fs').readFileSync(p['prompt-file'],'utf8'):p.prompt,model:p.model,effort:p.effort,thinking:p.thinking===undefined?undefined:p.thinking==='on'},rule,window,until:p.until,
+    timeoutSeconds:p.timeout===undefined?undefined:Number(p.timeout),graceSeconds:p.grace===undefined?undefined:Number(p.grace),enabled:!p.paused,source:p.source }
+}
+
+function send(req, { stream = false } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!existsSync(SOCKET)) {
+      reject(new Error('Agents Company is not running. Run `agents serve` first.'))
+      return
+    }
+    const sock = connect(SOCKET)
+    let buf = ''
+    let first = true
+    sock.on('connect', () => sock.write(JSON.stringify(req) + '\n'))
+    sock.on('data', (chunk) => {
+      buf += chunk.toString()
+      const lines = buf.split('\n')
+      buf = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.trim()) continue
+        let msg
+        try {
+          msg = JSON.parse(line)
+        } catch {
+          continue
+        }
+        if (first) {
+          first = false
+          if (!msg.ok) {
+            sock.end()
+            reject(new Error(msg.error))
+            return
+          }
+          if (!stream) {
+            sock.end()
+            resolve(msg.data)
+            return
+          }
+          resolve({ stream: sock, initial: msg.data })
+        } else if (stream) {
+          if (msg.type === 'event') onEvent(msg)
+          else if (msg.type === 'done') sock.end()
+        }
+      }
+    })
+    sock.on('error', (e) => reject(e))
+  })
+}
+
+// ---------- output helpers ----------
+
+function table(rows, cols) {
+  if (!rows.length) return '(none)'
+  const widths = cols.map((c) =>
+    Math.max(c.label.length, ...rows.map((r) => String(r[c.key] ?? '').length))
+  )
+  const head = cols.map((c, i) => c.label.padEnd(widths[i])).join('  ')
+  const sep = widths.map((w) => '-'.repeat(w)).join('  ')
+  const body = rows
+    .map((r) => cols.map((c, i) => String(r[c.key] ?? '').padEnd(widths[i])).join('  '))
+    .join('\n')
+  return `${head}\n${sep}\n${body}`
+}
+
+function out(data, human) {
+  if (useJson) console.log(JSON.stringify({ ok: true, data }, null, 2))
+  else console.log(human ? human(data) : JSON.stringify(data, null, 2))
+}
+
+// ---------- commands ----------
+
+const HELP = `agents — drive Agents Company from the terminal
+
+USAGE
+  agents <command> [args] [--json]
+
+The app must be running; the CLI talks to it over ~/AgentsCompany/agents.sock.
+Use --json on any command for machine-readable output.
+
+COMMANDS
+  serve                                   run the CLI service without Electron
+  status                                  is the app running
+  schedule schema | status | list [--employee ID --source NAME]
+  schedule create --name NAME --employee ID --prompt TEXT | --prompt-file FILE
+      (--at ISO | --every-seconds N [--start ISO] | --time HH:mm [--days 1,2,3,4,5])
+      [--timezone Asia/Shanghai --window HH:mm-HH:mm --window-days 1,2,3,4,5]
+      [--model MODEL --effort low --thinking on|off --timeout 1800 --grace 60]
+      [--until ISO --paused --source PLUGIN_ID] | --spec @file.json
+  schedule get | pause | resume | delete | run <jobId>
+  schedule update <jobId> --patch @file.json
+  schedule preview [jobId | --spec @file.json] [--after ISO --count 5]
+  schedule history [jobId] [--employee ID --limit 50]
+  schedule cancel <runId>                 stop one active scheduled turn
+  remote check --team NAME | --employee ID | --remote-host user@HOST --remote-dir /path
+  terminal open --employee ID [--cols 100 --rows 24]
+  terminal list [--employee ID]
+  terminal read ID [--cursor N]
+  terminal input ID [--data TEXT | --file FILE] [--enter]
+  terminal resize ID --cols N --rows N
+  terminal close ID
+  session list [--live]                   stored cards, or live sessions
+  session new [--engine E] [--group G]    create a session
+  session rename <card-or-session-id> <title>  compatibility: names are immutable
+  session open <cardId>                   open a stored card (resumes context)
+  session send <id> <text>                send a message
+  session follow <id> [--raw]             stream events until the turn ends
+  session transcript <id> [--thinking]    print the conversation
+  session activity <id>                   current speech, thinking summary or tool operation
+  session info <id>                       models, commands, config
+  session snapshot <id>                   full state used by the frontend
+  session search <query>                  search employees and workspaces
+  session interrupt <id>                  stop the current turn
+  session close <id>                      close a live session
+  config engine <card-or-live-id> codex|claude
+  config model <id> <model>
+  config permission <id> <mode>
+  config thinking <id> on|off
+  config effort <id> <level>
+  group list | add <name> [--mode work|build|cloud --plugin ID]
+      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows]
+      [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
+      [--directory-mode default|bind --root PATH]
+  group remove <name>                     delete Team, employees and native sessions; keep files
+  group migrate <name>
+  group root <name> <folder> [--directory-mode bind] [--create]
+  group configure <name> --mode work|build|cloud [--plugin ID --directory-mode default|bind --root PATH]
+      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows]
+      [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
+  room place <name> --col N --row N [--w N] [--h N]
+  room bounds <name> [--x N] [--y N] [--width N] [--height N]
+      [--shape rounded|ellipse|hexagon|custom] [--arrangement grid|circle|free]
+      [--points '[[0,0],[1,0],[1,1],[0,1]]']
+  room layout <name>
+  card place <id> --x N --y N [--snap on|off] [--zoom N]
+  canvas view | set --x N --y N --zoom N
+  plugin list | describe <id> | install <directory>
+  plugin call <id> <method> --team NAME|--employee ID [--params JSON]
+  plugin open <id> [--team NAME|--employee ID]
+  plugin windows
+  plugin place <windowId> --x N --y N --width N --height N
+  plugin mode <windowId> normal|minimized|maximized|fullscreen
+  plugin dismiss <windowId>
+  plugin view <id> [--team NAME|--employee ID]
+  plugin close <viewId>
+  settings get | set [--theme THEME] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off]
+  view get | close
+  view open home|team|employee|workspace|conversation|plugin|settings|clone [--name NAME] [--employee ID]
+  view details on|off
+  workspace suggest --team NAME [--mode work|build --plugin ID]
+  workspace choose [--path PATH]
+  workspace docs --team NAME|--employee ID
+  workspace list|read <path> --team NAME
+  workspace write <path> --team NAME --content TEXT [--hash HASH]
+  workspace mkdir|trash <path> --team NAME
+  workspace move <path> --to PATH --team NAME
+  workspace restore --id ID --team NAME
+  card rename <cardId> <title>             compatibility: names are immutable
+  card move <cardId> <group> [--before id]
+  card remove <cardId>
+  card clone <id> --title NAME [--directory-mode default|bind] [--cwd PATH]
+  card create --title NAME [--engine E] [--group G] [--avatar KIND]
+    [--cwd PATH] [--directory-mode default|bind]
+  card update <cardId> [--role ROLE] [--avatar KIND]
+    [--cwd PATH] [--directory-mode default|bind]
+      [--accessory headphones|glasses|none] [--color '#rrggbb'] [--group G]
+  group rename <name> <newName>            compatibility: names are immutable
+  room design <name> [--theme sage|ocean|rose|amber|lavender|slate]
+      [--background HEX] [--pattern boards|grid|dots|plain] [--scenery on|off]
+      [--wall windows|panels|brick] [--desk walnut|oak|cloud]
+      [--plants on|off] [--shelf on|off] [--lamp on|off] [--art on|off]
+  approval list <id>
+  approval respond <id> <requestId> allow|deny
+
+  config plan <id> on|off
+  external open <https-url>
+  engine inspect <id> [capabilities|skills|mcp|account|usage|config]
+  engine skill <id> <name> [prompt]
+  session steer <id> <text>
+  session background <id>
+  session background-stop <id> [--process ID]
+  session review <id> [--base BRANCH|--commit SHA|--instructions TEXT]
+  workspace image <path> --employee ID|--team NAME
+  session send <id> [text] --images '["design.png"]'
+  session enqueue <id> <text>
+  session queue <id>
+  session dequeue <id> <messageId>
+  session export <id> [--format markdown|json] [--path RELATIVE]
+  view tools skills|mcp|account|usage|config|export|background|off
+  config fast <id> on|off                official Fast tier
+  commands run <id> /command [args]      execute a slash command
+  commands list <id> [--filter X] [--all] the slash commands available
+  commands complete <id> <name>           what Tab would insert
+  ui view                                 what is on screen
+  ui dom [--sel CSS]                      query the interface
+  ui text                                 all visible text
+  ui click <selector>                     click something
+  ui type <selector> <text>               type into an input
+  ui wait <selector> [--timeout ms]       wait for an element
+  ui style <selector>                     computed styles of an element
+  ui screenshot <path>                    save the rendered interface as PNG
+`
+
+let onEvent = (m) => {
+  if (useJson) console.log(JSON.stringify(m.payload))
+  else if (m.channel === 'session:codex') {
+    const e = m.payload.event
+    if (e.kind === 'text') process.stdout.write(e.text)
+    else if (e.kind === 'tool-start') console.log(`\n  $ ${e.command}`)
+    else if (e.kind === 'tool-end') console.log(`  → exit ${e.exitCode}`)
+  } else if (m.channel === 'session:message') {
+    const msg = m.payload.message
+    if (msg.type === 'assistant') {
+      for (const c of msg.message?.content ?? []) {
+        if (c.type === 'text') process.stdout.write(c.text)
+        else if (c.type === 'tool_use') console.log(`\n  ⚙ ${c.name}`)
+      }
+    }
+  } else if (m.channel === 'session:turn-end' || m.channel === 'session:end') {
+    console.log()
+  }
+}
+
+async function main() {
+  const [group, sub, ...rest] = argv
+  if (!group || group === 'help' || group === '--help') {
+    console.log(HELP)
+    return
+  }
+
+  const call = (cmd, args) => send({ cmd, args })
+
+  switch (`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`) {
+    case 'schedule.schema': case 'schedule.status': return out(await call(`schedule.${sub}`))
+    case 'schedule.list': { const p=parse(rest); return out(await call('schedule.list',{employee:p.employee,source:p.source})) }
+    case 'schedule.get': case 'schedule.pause': case 'schedule.resume': case 'schedule.delete': case 'schedule.run': case 'schedule.cancel': return out(await call(`schedule.${sub}`,{id:rest[0]}))
+    case 'schedule.create': { const p=parse(rest);return out(await call('schedule.create',{spec:scheduleSpec(p)})) }
+    case 'schedule.update': { const p=parse(rest);return out(await call('schedule.update',{id:p._[0],patch:jsonArgument(p.patch)})) }
+    case 'schedule.preview': { const p=parse(rest);return out(await call('schedule.preview',{id:p._[0],spec:p.spec?jsonArgument(p.spec):undefined,after:p.after,count:p.count===undefined?undefined:Number(p.count)})) }
+    case 'schedule.history': { const p=parse(rest);return out(await call('schedule.history',{id:p._[0],employee:p.employee,limit:p.limit===undefined?undefined:Number(p.limit)})) }
+    case 'session.rename': return out(await call('session.rename',{id:rest[0],title:rest[1]}))
+    case 'settings.get': return out(await call('settings.get'))
+    case 'settings.set': {
+      const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);if(p['snap-employees']!==undefined){if(!['on','off'].includes(p['snap-employees']))throw new Error('--snap-employees accepts on|off');a.snapEmployees=p['snap-employees']==='on'}return out(await call('settings.set',a))
+    }
+    case 'view.get':case 'view.close': return out(await call(`view.${sub}`))
+    case 'view.open': {
+      const p=parse(rest);return out(await call('view.open',{kind:p._[0],name:p.name,employee:p.employee,pluginId:p.plugin,settings:p.mode?{mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}:undefined,details:!!p.details}))
+    }
+    case 'view.details': return out(await call('view.details',{enabled:rest[0]==='on'}))
+    case 'remote.check': {const p=parse(rest);return out(await call('remote.check',{employee:p.employee,team:p.team,remote:remoteFlags(p)}))}
+    case 'terminal.open': {const p=parse(rest);return out(await call('terminal.open',{employee:p.employee,cols:p.cols?Number(p.cols):undefined,rows:p.rows?Number(p.rows):undefined}))}
+    case 'terminal.list': {const p=parse(rest);return out(await call('terminal.list',{employee:p.employee}))}
+    case 'terminal.read': {const p=parse(rest);return out(await call('terminal.read',{id:p._[0],cursor:Number(p.cursor??0)}),r=>r.output)}
+    case 'terminal.input': {const p=parse(rest),data=p.file?require('node:fs').readFileSync(p.file,'utf8'):p.data??p._[1]??'';return out(await call('terminal.input',{id:p._[0],data:data+(p.enter?'\r':'')}))}
+    case 'terminal.resize': {const p=parse(rest);return out(await call('terminal.resize',{id:p._[0],cols:Number(p.cols),rows:Number(p.rows)}))}
+    case 'terminal.close': return out(await call('terminal.close',{id:rest[0]}))
+    case 'workspace.suggest':case 'workspace.choose': {
+      const p=parse(rest);return out(await call(`workspace.${sub}`,{team:p.team,path:p.path,mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}))
+    }
+    case 'workspace.image':case 'workspace.list':case 'workspace.read':case 'workspace.write':case 'workspace.mkdir':case 'workspace.move':case 'workspace.trash':case 'workspace.restore': {
+      const p=parse(rest),content=p.file?require('node:fs').readFileSync(p.file,'utf8'):p.content
+      return out(await call(`workspace.${sub}`,{team:p.team,employee:p.employee,path:p._[0]??p.path,to:p.to,content,hash:p.hash,create:!!p.create,hidden:!!p.hidden,id:p.id}))
+    }
+    case 'serve':
+      require(join(__dirname, '..', 'out', 'main', 'daemon.js'))
+      return
+    case 'plugin.list':
+      return out(await call('plugin.list'))
+    case 'plugin.describe':
+      return out(await call('plugin.describe',{id:rest[0]}))
+    case 'plugin.install':
+      return out(await call('plugin.install',{path:rest[0]}))
+    case 'plugin.call': {
+      const p=parse(rest)
+      const params=p.params ? JSON.parse(String(p.params).startsWith('@')?require('node:fs').readFileSync(String(p.params).slice(1),'utf8'):String(p.params)) : {}
+      return out(await call('plugin.call',{id:p._[0],method:p._[1],team:p.team,workspace:p.workspace,employee:p.employee,params}))
+    }
+    case 'plugin.windows': return out(await call('plugin.windows'))
+    case 'plugin.dismiss': return out(await call('plugin.dismiss',{id:rest[0]}))
+    case 'plugin.mode': return out(await call('plugin.mode',{id:rest[0],mode:rest[1]}))
+    case 'plugin.place': {const p=parse(rest),bounds={};for(const key of ['x','y','width','height'])if(p[key]!==undefined)bounds[key]=Number(p[key]);return out(await call('plugin.place',{id:p._[0],bounds}))}
+    case 'plugin.open': {const p=parse(rest);return out(await call('plugin.open',{id:p._[0],team:p.team,employee:p.employee,workspace:p.workspace}))}
+    case 'plugin.view': {
+      const p=parse(rest)
+      return out(await call('plugin.view',{id:p._[0],team:p.team,workspace:p.workspace,employee:p.employee}))
+    }
+    case 'plugin.close':
+      return out(await call('plugin.close',{viewId:rest[0]}))
+    case 'workspace.docs': {
+      const p=parse(rest)
+      return out(await call('workspace.docs',{team:p.team,workspace:p.workspace,employee:p.employee}))
+    }
+    case 'status':
+      return out(await call('status'), (d) =>
+        `running   ${d.running}\nhome      ${d.home}\nteamRoots ${Object.keys(d.teamRoots ?? {}).length}\nlive      ${d.live}\nstored    ${d.stored}`
+      )
+
+    case 'session.list': {
+      const p = parse(argv.slice(1))
+      const d = await call('session.list', { live: !!p.live })
+      if (p.live)
+        return out(d, (rows) =>
+          table(rows, [
+            { key: 'id', label: 'ID' },
+            { key: 'engine', label: 'ENGINE' },
+            { key: 'busy', label: 'BUSY' }
+          ])
+        )
+      return out(d, (s) =>
+        table(s.sessions, [
+          { key: 'id', label: 'ID' },
+          { key: 'engine', label: 'ENGINE' },
+          { key: 'group', label: 'DEPARTMENT' },
+          { key: 'title', label: 'TITLE' }
+        ]) + `\n\ndepartments: ${s.groups.join(', ') || '(none)'}`
+      )
+    }
+
+    case 'session.new': {
+      const p = parse(argv.slice(1))
+      const d = await call('session.new', {
+        engine: p.engine,
+        group: p.group,
+        model: p.model,
+        cwd: p.cwd,
+        directoryMode:p['directory-mode'],remote:remoteFlags(p),
+        title: p.title,
+        seat: p.seat,
+        permissionMode: p.permission,
+        effort: p.effort,
+        thinking: p.thinking === undefined ? undefined : p.thinking === 'on'
+      })
+      return out(d, (x) => `${x.sessionId}  ${x.engine}  ${x.cwd}`)
+    }
+
+    case 'session.open':
+      return out(await call('session.open', { cardId: rest[0] }), (x) => `${x.sessionId}  open`)
+
+    case 'session.activity': return out(await call('session.activity',{id:rest[0]}))
+    case 'session.snapshot':
+      return out(await call('session.snapshot', { id: rest[0] }))
+    case 'session.search':
+      return out(await call('session.search', { query: rest.join(' ') }))
+    case 'approval.list':
+      return out(await call('approval.list', { id: rest[0] }))
+    case 'approval.respond': {const p=parse(rest);return out(await call('approval.respond',{id:p._[0],requestId:p._[1],decision:p._[2],answers:p.answers?JSON.parse(p.answers):undefined,form:p.form?JSON.parse(p.form):undefined}))}
+
+    case 'session.send': {const parts=rest.slice(1),at=parts.indexOf('--images');let images;if(at>=0){images=JSON.parse(parts[at+1]);parts.splice(at,2)}return out(await call('session.send',{id:rest[0],text:parts.join(' '),images}))}
+
+    case 'session.transcript': {
+      const p = parse(argv.slice(1))
+      return out(await call('session.transcript', { id: p._[1] ?? rest[0], thinking: !!p.thinking }), (d) => d.text)
+    }
+
+    case 'session.info':
+      return out(await call('session.info', { id: rest[0] }), (d) =>
+        [
+          `engine      ${d.engine}`,
+          `model       ${d.model ?? '(default)'}`,
+          `permission  ${d.permissionMode}`,
+          `thinking    ${d.thinkingSupported ? (d.thinking ? 'on' : 'off') : 'n/a'}`,
+          `effort      ${d.effort ?? '(default)'}`,
+          `speed       ${d.fastMode ? 'Fast' : 'Standard'}`,
+          `busy        ${d.busy}`,
+          `models      ${d.models.map((m) => m.value).join(', ') || '(none)'}`,
+          `commands    ${d.commands.length} available`
+        ].join('\n')
+      )
+
+    case 'session.interrupt':
+      return out(await call('session.interrupt', { id: rest[0] }))
+    case 'session.close':
+      return out(await call('session.close', { id: rest[0] }))
+
+    case 'session.follow': {
+      const p = parse(argv.slice(1))
+      const id = p._[1] ?? rest[0]
+      const res = await send({ cmd: 'session.follow', args: { id, raw: !!p.raw } }, { stream: true })
+      if (useJson) console.log(JSON.stringify({ type: 'snapshot', ...res.initial }))
+      else if (res.initial.text) console.log(res.initial.text)
+      // The server ends the stream on completion, failure, or close.
+      process.on('SIGINT', () => {
+        res.stream.end()
+        process.exit(0)
+      })
+      return
+    }
+
+    case 'config.engine': return out(await call('config.engine',{id:rest[0],engine:rest[1]}))
+    case 'config.model':
+      return out(await call('config.model', { id: rest[0], model: rest[1] }))
+    case 'config.permission':
+      return out(await call('config.permission', { id: rest[0], mode: rest[1] }))
+    case 'config.thinking':
+      return out(await call('config.thinking', { id: rest[0], enabled: rest[1] }))
+    case 'config.effort':
+      // 'default' clears the override, like the Default entry in the GUI menu.
+      return out(await call('config.effort', { id: rest[0], effort: rest[1] ?? 'default' }))
+
+    case 'config.plan': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.plan',{id:rest[0],enabled:rest[1]==='on'}))}
+    case 'external.open': return out(await call('external.open',{url:rest[0]}))
+    case 'engine.inspect': return out(await call('engine.inspect',{id:rest[0],section:rest[1]}))
+    case 'engine.skill': return out(await call('engine.skill',{id:rest[0],name:rest[1],prompt:rest.slice(2).join(' ')}))
+    case 'session.steer': return out(await call('session.steer',{id:rest[0],text:rest.slice(1).join(' ')}))
+    case 'session.background': return out(await call('session.background',{id:rest[0]}))
+    case 'session.background-stop': {const p=parse(rest);return out(await call('session.background-stop',{id:p._[0],processId:p.process}))}
+    case 'session.review': {const p=parse(rest);return out(await call('session.review',{id:p._[0],base:p.base,commit:p.commit,instructions:p.instructions}))}
+    case 'session.enqueue': {const parts=rest.slice(1),at=parts.indexOf('--images');let images;if(at>=0){images=JSON.parse(parts[at+1]);parts.splice(at,2)}return out(await call('session.enqueue',{id:rest[0],text:parts.join(' '),images}))}
+    case 'session.queue': return out(await call('session.queue',{id:rest[0]}))
+    case 'session.dequeue': return out(await call('session.dequeue',{id:rest[0],messageId:rest[1]}))
+    case 'session.export': {const p=parse(rest);return out(await call('session.export',{id:p._[0],format:p.format,path:p.path}),d=>d.content??JSON.stringify(d))}
+    case 'view.tools': return out(await call('view.tools',{section:rest[0]==='off'?null:rest[0]}))
+    case 'config.fast': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.fast',{id:rest[0],enabled:rest[1]==='on'}))}
+    case 'commands.run': return out(await call('commands.run',{id:rest[0],text:rest.slice(1).join(' ')}))
+    case 'commands.list': {
+      const p = parse(argv.slice(1))
+      const id = p._[1] ?? rest[0]
+      const rows = await call('commands.list', { id, filter: p.filter, all: !!p.all })
+      return out(rows, (r) =>
+        r.length
+          ? r.map((c) => `/${c.name}${c.argumentHint ? ' ' + c.argumentHint : ''}  —  ${c.description}`).join('\n')
+          : '(no matching commands)'
+      )
+    }
+
+    case 'commands.complete': {
+      const p = parse(argv.slice(1))
+      const id = p._[1] ?? rest[0]
+      const name = p._[2] ?? rest[1]
+      return out(await call('commands.complete', { id, name }), (d) => d.completion)
+    }
+
+    case 'ui.style': {
+      const p = parse(argv.slice(1))
+      const sel = p._[1] ?? rest[0]
+      return out(await call('ui.style', { selector: sel }), (d) =>
+        Object.entries(d)
+          .map(([k, v]) => `${k.padEnd(10)} ${v}`)
+          .join('\n')
+      )
+    }
+
+    case 'ui.screenshot':
+      return out(await call('ui.screenshot', { path: rest[0] }))
+    case 'ui.drag':
+    case 'ui.wheel': {
+      const p=parse(rest)
+      return out(await call(`ui.${sub}`,{selector:p._[0],dx:Number(p.dx??0),dy:Number(p.dy??0),zoom:!!p.zoom}))
+    }
+
+    case 'ui.view':
+      return out(await call('ui.view'), (d) => {
+        const lines = [`view        ${d.view}`]
+        if (d.view === 'home') {
+          lines.push(`departments ${d.departments.join(', ') || '(none)'}`)
+          lines.push(`cards       ${d.cards.length}`)
+          for (const c of d.cards) lines.push(`  · ${c.title}  [${c.engine}]  ${c.group || 'Unassigned'}`)
+        } else if (d.session) {
+          const s = d.session
+          lines.push(`session     ${s.title}`)
+          lines.push(`engine      ${s.engine}`)
+          lines.push(`model       ${s.model}`)
+          lines.push(`permission  ${s.permission}`)
+          lines.push(`thinking    ${s.thinking}`)
+          lines.push(`busy        ${s.busy}`)
+          lines.push(`turns       ${s.turns}`)
+          lines.push(`back button ${s.hasBackButton ? 'yes' : 'NO'}`)
+        }
+        return lines.join('\n')
+      })
+
+    case 'ui.text':
+      return out(await call('ui.text'), (d) => String(d))
+
+    case 'ui.dom': {
+      const p = parse(argv.slice(1))
+      const sel = p.sel || p.selector || 'body'
+      return out(await call('ui.dom', { selector: sel }), (rows) =>
+        rows.map((r) => `${r.visible ? '●' : '○'} ${r.tag}.${String(r.cls).split(' ')[0]}  ${r.text.slice(0, 70)}`).join('\n')
+      )
+    }
+
+    case 'ui.click':
+      return out(await call('ui.click', { selector: rest[0] }), (d) => `clicked ${d.clicked ?? rest[0]}`)
+
+    case 'ui.type':
+      return out(await call('ui.type', { selector: rest[0], value: rest.slice(1).join(' ') }))
+
+    case 'ui.wait': {
+      const p = parse(argv.slice(1))
+      // argv is ['ui','wait','<selector>'], so the selector is the second positional.
+      const sel = p._[1] ?? p._[0]
+      return out(await call('ui.wait', { selector: sel, timeout: p.timeout }), (d) =>
+        d.found ? 'found' : 'not found'
+      )
+    }
+
+    case 'room.place': {
+      const p = parse(argv.slice(1))
+      const name = p._[1] ?? p._[0]
+      return out(
+        await call('room.place', {
+          name,
+          col: p.col,
+          row: p.row,
+          w: p.w ?? 1,
+          h: p.h ?? 1
+        }),
+        (s) => JSON.stringify(s.rooms?.[name] ?? null)
+      )
+    }
+
+    case 'group.list':
+      {const p=parse(rest);return out(await call('group.list',{details:!!p.details}),g=>g.map(value=>typeof value==='string'?value:`${value.name} · ${value.mode}${value.remote?' · '+value.remote.host:value.pluginId?' · '+value.pluginId:''} · ${value.root??''}`).join('\n')||'(none)')}
+    case 'group.add':
+      {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],remote:remoteFlags(p) }), (s) => s.groups.join('\n'))}
+    case 'group.configure':
+      {const p=parse(rest);return out(await call('group.configure',{name:p._[0],mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],root:p.root,remote:remoteFlags(p)}))}
+    case 'group.migrate': return out(await call('group.migrate',{name:rest[0]}))
+    case 'group.root':
+      return out(await call('group.root',{name:rest[0],root:rest[1],create:!!parse(rest).create,directoryMode:parse(rest)['directory-mode']}))
+    case 'room.bounds': {
+      const p=parse(rest), bounds={}
+      for(const key of ['x','y','width','height']) if(p[key]!==undefined) bounds[key]=Number(p[key])
+      for(const key of ['shape','arrangement']) if(p[key]!==undefined) bounds[key]=p[key]
+      if(p.points) bounds.points=JSON.parse(p.points).map(v=>Array.isArray(v)?{x:v[0],y:v[1]}:v)
+      return out(await call('room.bounds',{name:p._[0],bounds}))
+    }
+    case 'room.layout':
+      return out(await call('room.layout',{name:rest[0]}))
+    case 'card.place': {
+      const p=parse(rest)
+      if(p.snap!==undefined&&!['on','off'].includes(p.snap))throw new Error('--snap accepts on|off');return out(await call('card.place',{id:p._[0],x:p.x,y:p.y,snap:p.snap===undefined?undefined:p.snap==='on',zoom:p.zoom===undefined?undefined:Number(p.zoom)}))
+    }
+    case 'canvas.view':
+      return out(await call('canvas.view'))
+    case 'canvas.set': {
+      const p=parse(rest)
+      return out(await call('canvas.set',{x:p.x,y:p.y,zoom:p.zoom}))
+    }
+    case 'group.rename':
+      return out(await call('group.rename', { name: rest[0], nextName: rest[1] }))
+    case 'group.remove':
+      return out(await call('group.remove', { name: rest[0] }), (s) => s.groups.join('\n'))
+
+    case 'card.rename':
+      return out(await call('card.rename', { cardId: rest[0], title: rest.slice(1).join(' ') }))
+    case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
+    case 'card.create': {
+      const p = parse(rest)
+      return out(await call('card.create', { ...p, directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined }))
+    }
+    case 'card.update': {
+      const p = parse(rest)
+      return out(await call('card.update', { id: p._[0], patch: { ...p, directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined } }))
+    }
+    case 'room.design': {
+      const p = parse(rest)
+      const design = { theme: p.theme, wall: p.wall, desk: p.desk, subtitle: p.subtitle, background:p.background,pattern:p.pattern }
+      for (const key of ['plants', 'shelf', 'lamp', 'art', 'scenery']) if (p[key] !== undefined) design[key] = p[key] === 'on'
+      return out(await call('room.design', { name: p._[0] ?? '', design }))
+    }
+    case 'card.move': {
+      const p = parse(argv.slice(1))
+      return out(
+        await call('card.move', { id: p._[1], group: p._[2] ?? '', before: p.before, cwd: p.cwd })
+      )
+    }
+    case 'card.remove':
+      return out(await call('card.remove', { id: rest[0] }))
+
+    default:
+      die(`unknown command: ${argv.join(' ')}\n\n${HELP}`)
+  }
+}
+
+main().catch((e) => die(e.message))

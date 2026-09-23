@@ -1,0 +1,73 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const {execFile}=require('node:child_process');
+const {promisify}=require('node:util');
+const {startServer}=require('../dist-cli/server.cjs');
+const {BackendClient}=require('../dist-cli/client.cjs');
+const run=promisify(execFile);
+async function fixture(t) {
+  const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'mn-folder-')));
+  fs.mkdirSync(path.join(root,'employee'));
+  fs.writeFileSync(path.join(root,'employee/plan.md'),'# Original\n\n- [ ] A task\n');
+  fs.writeFileSync(path.join(root,'AGENTS.md'),'Do not import me');
+  const client=new BackendClient({workspace:root,autoStart:false});
+  const server=await startServer(client.directory,root);
+  t.after(async()=>{await server.close();fs.rmSync(root,{recursive:true,force:true})});
+  return {root,client,server,call:client.call.bind(client)};
+}
+test('folder CLI, external files and structured APIs share the same durable workspace',async t=>{
+  const {root,call}=await fixture(t);
+  let pages=await call('page.list');
+  assert.ok(pages.some(p=>p.sourceFile?.path==='employee/plan.md'));
+  assert.ok(!pages.some(p=>p.title==='AGENTS.md'));
+  assert.equal(pages.filter(p=>!p.sourceFile).length,0,'no demo data');
+  const raw=await call('fs.read',{path:'employee/plan.md'});
+  await call('fs.write',{path:raw.path,hash:raw.hash,content:'# From CLI\n'});
+  assert.equal(fs.readFileSync(path.join(root,raw.path),'utf8'),'# From CLI\n');
+  await assert.rejects(call('fs.write',{path:raw.path,hash:raw.hash,content:'stale'}),e=>e.code==='FILE_CONFLICT');
+  fs.writeFileSync(path.join(root,'employee/plan.md'),'# External\n');
+  await call('fs.sync');
+  assert.equal((await call('fs.read',{path:raw.path})).content,'# External\n');
+  const page=await call('page.create',{title:'Rich plan',color:'green'});
+  await call('block.append',{pageId:page.id,text:'Shared backend'});
+  const file=path.join(root,`Documents/${page.id}.mininotion.json`);
+  assert.equal(JSON.parse(fs.readFileSync(file)).format,'mininotion.page/v1');
+  const document=JSON.parse(fs.readFileSync(file));document.page.title='File-edited title';fs.writeFileSync(file,JSON.stringify(document));
+  assert.equal((await call('page.get',{pageId:page.id})).title,'File-edited title');
+  const db=await call('database.create',{title:'Calendar',view:'calendar',color:'blue'});
+  await call('record.create',{databaseId:db.id,title:'Launch',color:'orange'});
+  assert.equal((await call('record.list',{databaseId:db.id})).length,1);
+  const output=await run(process.execPath,[path.resolve('dist-cli/cli.cjs'),'--workspace',root,'fs','read','--path',raw.path],{cwd:path.join(root,'employee')});
+  assert.equal(JSON.parse(output.stdout).content,'# External\n');
+  await call('fs.draft-write',{draft:[{id:'pending',text:'recover me'}]});
+  assert.equal((await call('fs.draft-read'))[0].text,'recover me');
+});
+test('folder trash, restore, purge and cross-workspace boundaries operate on real files',async t=>{
+  const {root,call}=await fixture(t);
+  const raw=(await call('page.list')).find(p=>p.sourceFile?.path==='employee/plan.md');
+  await call('page.trash',{pageId:raw.id});
+  assert.equal(fs.existsSync(path.join(root,'employee/plan.md')),false);
+  await call('page.restore',{pageId:raw.id});
+  assert.ok(fs.existsSync(path.join(root,'employee/plan.md')));
+  await call('fs.remove',{path:'employee/plan.md'});
+  await call('fs.restore',{path:'employee/plan.md'});
+  await call('page.purge',{pageId:raw.id,confirm:true});
+  await call('fs.sync');
+  assert.ok(!(await call('page.list')).some(p=>p.id===raw.id));
+  assert.equal(fs.existsSync(path.join(root,'employee/plan.md')),false);
+  const native=await call('page.create',{title:'Purge',color:'blue'});
+  await call('page.purge',{pageId:native.id,confirm:true});
+  await call('fs.sync');
+  assert.equal(fs.existsSync(path.join(root,`Documents/${native.id}.mininotion.json`)),false);
+  const other=await fixture(t);
+  fs.symlinkSync(other.root,path.join(root,'escape'));
+  for(const value of ['../escape.txt',path.join(other.root,'employee/plan.md'),'escape/employee/plan.md']) {
+    await assert.rejects(call('fs.write',{path:value,content:'wrong root'}),e=>e.code==='WORKSPACE_BOUNDARY');
+  }
+  assert.equal((await other.call('fs.read',{path:'employee/plan.md'})).content,'# Original\n\n- [ ] A task\n');
+  for(const method of ['agent.start','workspace.replace','backup.restore','backup.export'])assert.ok((await new BackendClient({workspace:root}).request(method,{})).error,method);
+  assert.equal((await call('status')).workspaceRoot,root);
+});

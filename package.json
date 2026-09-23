@@ -1,0 +1,148 @@
+{
+  "name": "agents-company",
+  "productName": "Agents Company",
+  "version": "0.24.0",
+  "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
+  "main": "./out/main/index.js",
+  "author": "Agents Company",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "app": "npm run build:plugins && electron-vite build && electron-builder --dir --mac",
+    "dist": "npm run build:plugins && electron-vite build && electron-builder --mac",
+    "test:cli": "node test/cli-test.mjs",
+    "test:coverage": "node test/coverage-test.mjs",
+    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:remote && npm run test:headless && npm run test:ui",
+    "dev:headless": "AGENTS_COMPANY_HEADLESS=1 electron-vite dev",
+    "test:headless": "node test/run-headless.mjs",
+    "serve": "node bin/agents serve",
+    "test:core": "node test/core-test.mjs",
+    "test:ui": "node test/ui-test.mjs",
+    "test:service": "node test/service-test.mjs",
+    "test:workspaces": "node test/workspace-test.mjs",
+    "build:plugins": "node scripts/build-plugins.mjs",
+    "test:plugins": "node test/plugin-test.mjs",
+    "test:plugin-ui": "node test/plugin-ui-test.mjs",
+    "test:plugin-live": "node test/plugin-live-test.mjs",
+    "test:plugin-sandbox": "node test/plugin-sandbox-test.cjs",
+    "test:modes": "node test/modes-test.mjs",
+    "test:modes-ui": "node test/modes-ui-test.mjs",
+    "test:directory-repair": "node test/directory-repair-test.mjs",
+    "test:managed": "node test/managed-directories-test.mjs",
+    "test:navigation-ui": "node test/navigation-ui-test.mjs",
+    "test:preferences": "node test/preferences-plugin-ui-test.mjs",
+    "build:icon": "node scripts/build-icon.mjs",
+    "test:interactions": "node test/snapping-test.mjs && node test/interaction-api-test.mjs && node test/interaction-ui-test.mjs",
+    "test:employee-lifecycle": "node test/employee-lifecycle-test.mjs && node test/employee-lifecycle-ui-test.mjs",
+    "test:team-lifecycle": "node test/team-directories-test.mjs && node test/employee-lifecycle-test.mjs --teams && node test/team-lifecycle-ui-test.mjs",
+    "test:team-appearance": "node test/team-appearance-ui-test.mjs",
+    "test:remote": "python3 -m unittest discover -s Modules/Tunnel/tests -v && node test/remote-terminal-test.mjs && node test/workbench-ui-test.mjs",
+    "test:ssh": "node test/ssh-integration-test.mjs",
+    "test:cli-foundation": "node test/cli-foundation-test.mjs",
+    "test:cloud-teams": "node test/remote-terminal-test.mjs && node test/cloud-migration-test.mjs && node test/workbench-ui-test.mjs",
+    "test:scheduler": "node test/scheduler-test.mjs",
+    "test:notion-ui": "node test/notion-ui-test.mjs",
+    "test:cloud-live": "node test/cloud-host-live-test.mjs",
+    "test:native-execution": "node test/native-execution-test.mjs",
+    "install:mac": "node scripts/install-app.mjs",
+    "test:install": "node test/install-test.mjs",
+    "test:startup": "node test/startup-recovery-test.mjs",
+    "test:plugin-windows": "node test/plugin-window-cli-test.mjs && node test/plugin-window-ui-test.mjs",
+    "test:engine-controls": "node test/engine-controls-test.mjs && node test/engine-controls-ui-test.mjs",
+    "test:employee-features": "node test/employee-clone-test.mjs && node test/approval-stream-test.mjs && node test/employee-features-ui-test.mjs",
+    "test:native-clone": "node test/native-claude-clone-test.mjs && node test/native-execution-test.mjs",
+    "test:pets-ui": "node test/pet-catalog-ui-test.mjs",
+    "test:office-boundaries": "node test/office-boundaries-test.mjs",
+    "test:cloud-hook": "node test/cloud-hook-runtime-test.mjs",
+    "test:cloud-safety-live": "node test/cloud-safety-live-test.mjs",
+    "test:model-catalog": "node test/model-catalog-test.mjs",
+    "test:model-catalog-ui": "node test/model-catalog-ui-test.mjs"
+  },
+  "build": {
+    "appId": "com.agentscompany.app",
+    "productName": "Agents Company",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json",
+      "bin/agents",
+      "API.md",
+      "PLUGIN_SPEC.md",
+      "README.md",
+      "examples/plugin-starter/**/*",
+      "THIRD_PARTY_NOTICES.md",
+      "src/renderer/src/assets/pets/sources.json",
+      "AGENTS.md",
+      "SCHEDULER.md",
+      "ENGINE_CAPABILITIES.md",
+      "src/renderer/src/assets/pets/licenses/**/*"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "identity": null,
+      "icon": "build/icon.icns"
+    },
+    "extraResources": [
+      {
+        "from": "build/plugins",
+        "to": "plugins",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/cli",
+        "to": "cli"
+      },
+      {
+        "from": "Modules/Tunnel",
+        "to": "Modules/Tunnel",
+        "filter": [
+          "*.py",
+          "README.md",
+          "profiles/*.example.json",
+          "windows/*.ps1"
+        ]
+      }
+    ],
+    "electronDist": "node_modules/electron/dist"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.272",
+    "@js-temporal/polyfill": "^0.5.1",
+    "@vscode/codicons": "0.0.46-24",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^38.1.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^4.0.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  },
+  "bin": {
+    "agents": "./bin/agents"
+  }
+}

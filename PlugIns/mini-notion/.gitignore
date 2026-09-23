@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-cli/
+release/
+release.noindex/
+build/
+test-results/
+playwright-report/
+.DS_Store
+*.tsbuildinfo
+.local-data/

@@ -1,0 +1,6 @@
+{
+  "host": "user@windows-server",
+  "directory": "C:\\Projects\\demo",
+  "os": "windows",
+  "python": "python"
+}

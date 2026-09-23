@@ -1,0 +1,81 @@
+import {createHash} from 'node:crypto'
+import {teamSettings,type Store} from '../shared/types'
+import {chooseEmployeeWorkspace,cloudDirectory,cloudRelative} from './workspaces'
+import fs from 'node:fs'
+import path from 'node:path'
+import {homedir} from 'node:os'
+import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process'
+import {createInterface} from 'node:readline'
+import {APP_HOME} from '../shared/protocol'
+import {remoteTarget,type RemoteTarget} from '../shared/remote'
+import {childEnv,resolveBinary} from './exec'
+import type {Engine} from '../shared/types'
+
+export function tunnelDirectory(){return process.env.AGENTS_COMPANY_TUNNEL_DIR||(process.resourcesPath&&fs.existsSync(path.join(process.resourcesPath,'Modules/Tunnel'))?path.join(process.resourcesPath,'Modules/Tunnel'):path.resolve(__dirname,'../../../Modules/Tunnel'))}
+export const python=()=>resolveBinary('python3',process.env.AGENTS_COMPANY_PYTHON)
+export function tunnelConfig(target:RemoteTarget){
+  const value:Record<string,unknown>={host:target.host,directory:target.directory,os:target.os,port:target.port,proxy_jump:target.jump}
+  for(const [key,field] of [['identityFile','identity_file'],['knownHosts','known_hosts'],['sshConfig','ssh_config']] as const){const file=target[key];if(file){if(!path.isAbsolute(file)&&!file.startsWith('~/'))throw new Error('SSH 文件配置必须使用绝对路径或 ~/');value[field]=file.startsWith('~/')?path.join(homedir(),file.slice(2)):file}}
+  return value
+}
+export type RemoteLaunch={cwd:string;args:string[];server:{command:string;args:string[]};instructions:string}
+function remoteError(message:string){
+  const missing=message.match(/Target working directory does not exist: ([^\r\n]+)/)
+  return new Error(missing?`云端工作目录不存在：${missing[1]}。请在员工资料中重新绑定已有目录，或恢复原目录后重试连接。重试不会自动恢复已删除的文件。`:message)
+}
+function bridge(operation:string,input:Record<string,unknown>):Promise<any>{
+  return new Promise((resolve,reject)=>{
+    const child=spawn(python(),[path.join(tunnelDirectory(),'bridge.py'),operation],{env:childEnv(),stdio:['pipe','pipe','pipe']});let out='',error=''
+    const timer=setTimeout(()=>{child.kill('SIGTERM');reject(new Error('SSH 连接超时，请检查主机、密钥和 known_hosts'))},25000)
+    child.stdout.on('data',v=>out+=v);child.stderr.on('data',v=>error+=v);child.stdin.on('error',()=>{})
+    child.on('error',e=>{clearTimeout(timer);reject(e)});child.on('close',code=>{clearTimeout(timer);if(code!==0)return reject(remoteError(error.trim()||'Tunnel 连接失败'));try{resolve(JSON.parse(out))}catch{reject(new Error('Tunnel 返回无效响应'))}})
+    child.stdin.end(JSON.stringify(input))
+  })
+}
+export function checkRemote(value:unknown){const target=remoteTarget(value);if(!target)throw new Error('请先配置云主机');return bridge('check',{target:tunnelConfig(target)})}
+export function prepareRemote(id:string,engine:Engine,target:RemoteTarget):Promise<RemoteLaunch>{
+  return bridge('prepare',{engine,target:tunnelConfig(target),session:path.join(APP_HOME,'tunnel',id)})
+}
+/** One SSH-backed RPC connection per employee's file browser, separate from agent cwd changes. */
+class RemoteFiles {
+  child:ChildProcessWithoutNullStreams
+  sequence=0;pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>}>();error='';ready:Promise<any>
+  constructor(launch:RemoteLaunch){
+    this.child=spawn(launch.server.command,launch.server.args,{env:childEnv(),stdio:['pipe','pipe','pipe'],detached:true})
+    this.child.stderr.on('data',v=>this.error=(this.error+v).slice(-4000));this.child.stdin.on('error',e=>this.fail(e))
+    this.child.on('error',e=>this.fail(e));this.child.on('close',()=>this.fail(remoteError(this.error.trim()||'SSH 连接已断开')))
+    createInterface({input:this.child.stdout}).on('line',line=>{try{const reply=JSON.parse(line),pending=this.pending.get(reply.id);if(!pending)return;clearTimeout(pending.timer);this.pending.delete(reply.id);if(reply.error)pending.reject(new Error(reply.error.message));else pending.resolve(reply.result)}catch{}})
+    this.ready=this.request('initialize',{protocolVersion:'2024-11-05',capabilities:{},clientInfo:{name:'agents-company-files',version:'1'}})
+  }
+  fail(error:Error){for(const item of this.pending.values()){clearTimeout(item.timer);item.reject(error)}this.pending.clear()}
+  request(method:string,params:Record<string,unknown>):Promise<any>{return new Promise((resolve,reject)=>{const id=++this.sequence,timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('远程文件操作超时'));this.close()},25000);this.pending.set(id,{resolve,reject,timer});this.child.stdin.write(JSON.stringify({jsonrpc:'2.0',id,method,params})+'\n')})}
+  async call(operation:string,args:Record<string,unknown>){await this.ready;return this.request('tools/call',{name:'workspace',arguments:{operation,args}})}
+  close(){if(this.child.pid)try{process.kill(-this.child.pid,'SIGTERM')}catch{}this.fail(new Error('SSH 文件连接已关闭'))}
+}
+const connections=new Map<string,{key:string;client:Promise<RemoteFiles>}>()
+export async function remoteFiles(id:string,target:RemoteTarget,operation:string,args:Record<string,unknown>){
+  const key=JSON.stringify(target);let item=connections.get(id)
+  if(item?.key!==key){closeRemote(id);const client=prepareRemote(id+'-files','codex',target).then(launch=>new RemoteFiles(launch));item={key,client};connections.set(id,item)}
+  let reply:any
+  try{reply=await (await item!.client).call(operation,args)}catch(error){closeRemote(id);throw error}
+  const value=JSON.parse(reply.content[0].text);if(reply.isError)throw remoteError(value.error||'远程文件操作失败');return value
+}
+export function closeRemote(id:string){const item=connections.get(id);connections.delete(id);if(item)void item.client.then(client=>client.close()).catch(()=>{})}
+export function closeRemoteFiles(){for(const id of connections.keys())closeRemote(id)}
+
+export const teamConnectionId=(name:string)=>'team-'+createHash('sha256').update(name).digest('hex').slice(0,20)
+/** Employee creation uses the same directory contract locally and through SSH. */
+export async function resolveEmployeeWorkspace(store:Store,group:string,title:string,input?:string,mode?:string,id?:string,preview=false):Promise<string>{
+  const config=teamSettings(store,group)
+  if(config.mode!=='cloud')return chooseEmployeeWorkspace(store,group,title,input,mode,id,preview)
+  if(!store.groups.includes(group)||!config.remote)throw new Error('请先配置云主机 Team')
+  if(mode!==undefined&&!['default','bind','create','existing'].includes(mode))throw new Error('请选择默认生成或绑定已有文件夹')
+  const generated=mode==='default'||(!mode&&!input)
+  const name=title.trim()
+  if(!generated&&!input?.trim())throw new Error('请选择云端工作文件夹，绑定团队根目录请使用 .')
+  if(generated&&(!name||name==='.'||name==='..'||/[\\/\0]/.test(name)))throw new Error('默认文件夹必须与员工同名，名字不能包含路径分隔符')
+  const target=cloudDirectory(config,generated?name:input||''),own=store.sessions.some(c=>c.id===id&&c.group===group&&c.cwd===target)
+  if(generated&&input&&cloudDirectory(config,input)!==target)throw new Error('默认工作目录由员工名字生成')
+  const result=await remoteFiles(teamConnectionId(group),config.remote,'directory',{path:cloudRelative(config,target),create:generated||mode==='create',exclusive:!own,preview})
+  return result.path
+}
