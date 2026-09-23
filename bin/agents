@@ -219,7 +219,7 @@ COMMANDS
   workspace move <path> --to PATH --team NAME
   workspace restore --id ID --team NAME
   card rename <cardId> <title>             compatibility: names are immutable
-  card move <cardId> <group> [--before id]
+  card move <cardId> <group> [--before id] [--cwd existing-path]
   card remove <cardId>
   card clone <id> --title NAME [--directory-mode default|bind] [--cwd PATH]
   card create --title NAME [--engine E] [--group G] [--avatar KIND]

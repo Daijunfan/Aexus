@@ -88,7 +88,7 @@ export const COMMANDS: {
   { name: 'group.remove', args: '<name>', summary: 'Delete a department', gui: '× beside a department' },
   { name: 'room.place', args: '<name> --col N --row N [--w N --h N]', summary: 'Position a department’s room on the floor', gui: 'Dragging a room by its sign' },
   { name: 'card.rename', args: '<cardId> <title>', summary: 'Compatibility endpoint; employee names are immutable', gui: '✎ on a card' },
-  { name: 'card.move', args: '<cardId> <group> [--before id]', summary: 'Move a card between departments', gui: 'Dragging a card' },
+  { name: 'card.move', args: '<cardId> <group> [--before id] [--cwd existing-path]', summary: 'Move an employee between Teams; --cwd binds an existing folder', gui: 'Dragging a card' },
   { name: 'card.remove', args: '<cardId>', summary: 'Remove an employee and all associated host/native conversations, keeping work files', gui: '移除员工及全部会话' },
   { name: 'card.clone', args: '<id> --title NAME [--directory-mode default|bind] [--cwd PATH]', summary: 'Clone an employee with an independent native conversation', gui: '克隆员工' },
   { name: 'card.create', args: '--title NAME [--engine E] [--avatar cat]', summary: 'Hire an idle employee without starting an engine', gui: '添加员工' },

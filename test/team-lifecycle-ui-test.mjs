@@ -35,7 +35,7 @@ try{
  await page.getByRole('button',{name:'确认删除 Team 及全部会话',exact:true}).click();await expect(page.locator('.office-panel')).toHaveCount(0)
  const removed=await cli('session','list')
  ok(!removed.groups.includes('Existing Build')&&!removed.sessions.length&&fs.existsSync(path.join(external,'Writer'))&&fs.existsSync(path.join(external,'keep.md')),'UI confirmation removes a populated Team and employees while retaining their files')
- await page.locator('.add-team').click();await page.locator('[data-mode="work"]').click();await page.locator('input[name="team-name"]').fill('Bound Work');await page.locator('[data-team-directory-mode="bind"]').click()
+ await page.locator('.add-team').click();await page.locator('[data-mode="work"]').click();await page.locator('select[name="team-plugin"]').selectOption('mininotion');await page.locator('input[name="team-name"]').fill('Bound Work');await page.locator('[data-team-directory-mode="bind"]').click()
  await page.locator('input[name="team-root"]').fill(sub);await expect(page.locator('.workspace-note').filter({hasText:'插件权限目录'})).toContainText(path.join(work,'mini-notion-workspace'))
  await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)
  ok((await cli('session','list')).teamRoots['Bound Work']===sub&&fs.existsSync(path.join(sub,'AGENTS.md')),'Work folder binding uses the selected plugin subfolder and prepares its CLI documentation')

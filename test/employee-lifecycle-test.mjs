@@ -5,6 +5,7 @@ import {spawn,execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import {createRequire} from 'node:module'
 import {randomUUID} from 'node:crypto'
+import http from 'node:http'
 import {build} from 'esbuild'
 import assert from 'node:assert/strict'
 const require=createRequire(import.meta.url),run=promisify(execFile),project=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-life-')))
@@ -17,6 +18,21 @@ await build({entryPoints:['src/main/native-sessions.ts'],bundle:true,platform:'n
 const {withCodexSessionApi}=require(path.join(temp,'native.cjs'))
 await build({entryPoints:['src/main/exec.ts'],bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'exec.cjs'),logLevel:'silent'})
 const nativeBinary=require(path.join(temp,'exec.cjs')).resolveBinary('codex',process.env.CODEX_BIN)
+const model=http.createServer(async(req,res)=>{
+ let raw='';for await(const part of req)raw+=part
+ if(!req.url?.endsWith('/responses')){res.writeHead(404).end();return}
+ const body=JSON.parse(raw);assert.equal(body.model,'gpt-6-luna');assert.equal(body.reasoning?.effort,'low')
+ const item={type:'message',id:'msg_'+randomUUID(),role:'assistant',content:[{type:'output_text',text:'Fixture context persisted.'}]}
+ res.writeHead(200,{'content-type':'text/event-stream'})
+ for(const event of [{type:'response.created',response:{id:'r_'+randomUUID(),status:'in_progress'}},{type:'response.output_item.done',output_index:0,item},{type:'response.completed',response:{id:'r_'+randomUUID(),status:'completed',output:[item],usage:{input_tokens:1,output_tokens:1,total_tokens:2}}}])res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)
+ res.end()
+})
+await new Promise(resolve=>model.listen(0,'127.0.0.1',resolve))
+const wrapper=path.join(temp,'codex-model-fixture.cjs')
+fs.writeFileSync(wrapper,`#!/usr/bin/env node
+const {spawn}=require('node:child_process'),args=process.argv.slice(2),extras=['-c','model_provider="lifecycle_fixture"','-c','model_providers.lifecycle_fixture.name="lifecycle_fixture"','-c','model_providers.lifecycle_fixture.base_url="http://127.0.0.1:${model.address().port}"','-c','model_providers.lifecycle_fixture.wire_api="responses"','-c','model_providers.lifecycle_fixture.requires_openai_auth=false','-c','model_providers.lifecycle_fixture.request_max_retries=0','-c','model_providers.lifecycle_fixture.stream_max_retries=0'];const child=spawn(${JSON.stringify(nativeBinary)},[...extras,...args],{stdio:['pipe','pipe','pipe']});process.stdin.pipe(child.stdin);child.stdout.pipe(process.stdout);child.stderr.pipe(process.stderr);child.on('exit',code=>process.exitCode=code??1);process.on('SIGTERM',()=>child.kill('SIGTERM'));
+`,{mode:0o755})
+env.CODEX_BIN=wrapper;process.env.CODEX_BIN=wrapper
 const {getSessionInfo,listSessions,renameSession}=await import('@anthropic-ai/claude-agent-sdk')
 const executable=process.env.AGENTS_COMPANY_TEST_CLI||process.execPath,prefix=process.env.AGENTS_COMPANY_TEST_CLI?[]:[path.join(project,'bin/agents')]
 let daemon,done;const cli=async(...args)=>{const response=JSON.parse((await run(executable,[...prefix,...args,'--json'],{env,timeout:35000})).stdout);assert.ok(response.ok,response.error);return response.data}
@@ -39,7 +55,8 @@ try{
  await assert.rejects(()=>cli('card','create','--title','Missing','--group','Planning','--directory-mode','bind','--cwd','missing'))
  ok(!fs.existsSync(path.join(work,'mini-notion-workspace/missing')),'default mode rejects path overrides and bind mode never creates a missing folder')
  await assert.rejects(()=>cli('card','rename',code.id,'改过的会话名'));ok((await cli('session','list')).sessions.find(c=>c.id===code.id).cwd===code.cwd,'employee renaming is rejected without moving its directory')
- const native=await withCodexSessionApi(async call=>{const ids=[];for(const name of ['old-context','current-context','unrelated-control']){const r=await call('thread/start',{model:'gpt-5.6-luna',config:{model_reasoning_effort:'low'},cwd:code.cwd,approvalPolicy:'never',sandbox:'read-only'});assert.equal(r.model,'gpt-5.6-luna');assert.equal(r.reasoningEffort,'low');await call('thread/name/set',{threadId:r.thread.id,name});if(name==='old-context')await call('thread/archive',{threadId:r.thread.id});ids.push(r.thread.id)}return ids})
+ const persist=async(call,cwd)=>{const r=await call('thread/start',{model:'gpt-6-luna',config:{model_reasoning_effort:'low'},cwd,approvalPolicy:'never',sandbox:'read-only'});assert.equal(r.model,'gpt-6-luna');assert.equal(r.reasoningEffort,'low');await call('turn/start',{threadId:r.thread.id,input:[{type:'text',text:'Persist a fixture context.'}],cwd,model:'gpt-6-luna',effort:'low',approvalPolicy:'never',sandboxPolicy:{type:'readOnly'}});for(let i=0;i<100;i++){try{const read=await call('thread/read',{threadId:r.thread.id,includeTurns:true});if(read.thread.turns?.length)return read.thread}catch{}await new Promise(resolve=>setTimeout(resolve,50))}throw new Error('Fixture thread was not persisted')}
+ const native=await withCodexSessionApi(async call=>{const ids=[];for(const name of ['old-context','current-context','unrelated-control']){const thread=await persist(call,code.cwd);await call('thread/name/set',{threadId:thread.id,name});if(name==='old-context')await call('thread/archive',{threadId:thread.id});ids.push(thread.id)}return ids})
  setCard(code.id,{threadId:native[0]})
  const moved=path.join(work,'mini-notion-workspace','Rebound');fs.mkdirSync(moved)
  await cli('card','update',code.id,'--directory-mode','bind','--cwd',moved)
@@ -81,7 +98,7 @@ try{
  await stop();await start();ok((await cli('session','list')).sessions.length===1,'deleted employees and sessions remain deleted after restarting')
  // A native writer can publish its ID during shutdown; removal waits for it.
  const busyCard=await cli('card','create','--title','Late native ID','--group','Build')
- const busyThread=await withCodexSessionApi(async call=>{const result=await call('thread/start',{model:'gpt-5.6-luna',config:{model_reasoning_effort:'low'},cwd:busyCard.cwd,approvalPolicy:'never',sandbox:'read-only'});await call('thread/name/set',{threadId:result.thread.id,name:'late-writer'});return result.thread})
+ const busyThread=await withCodexSessionApi(async call=>{const thread=await persist(call,busyCard.cwd);await call('thread/name/set',{threadId:thread.id,name:'late-writer'});return thread})
  const originalRollout=fs.readFileSync(busyThread.path,'utf8'),started=path.join(temp,'writer-started'),finished=path.join(temp,'writer-finished'),wrapper=path.join(temp,'codex-wrapper.cjs')
  fs.writeFileSync(wrapper,`#!/usr/bin/env node
 const fs=require('fs'),{spawn}=require('child_process'),readline=require('readline'),args=process.argv.slice(2);let writer=false,stopping=false;
@@ -113,4 +130,4 @@ process.stdin.on('end',()=>{if(!writer)child.stdin.end()});process.on('SIGTERM',
   ok(!(await cli('session','list')).sessions.length&&fs.existsSync(retry.cwd),'cascade retry clears all employees and preserves all workspaces')
  }
  console.log(`PASS=${n} FAIL=0 — native metadata APIs, no inference turns`)
-}finally{if(daemon?.exitCode===null)await stop();fs.rmSync(temp,{recursive:true,force:true})}
+}finally{if(daemon?.exitCode===null)await stop();await new Promise(resolve=>model.close(resolve));fs.rmSync(temp,{recursive:true,force:true})}

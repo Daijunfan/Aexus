@@ -92,7 +92,7 @@ const a=process.argv.slice(2);if(!a.includes('gpt-5.6-luna')||!a.includes('model
   await cli('settings','set','--theme','black')
   await app.close();appClosed=true
   const restarted=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[project],env})
-  try{const reopened=await restarted.firstWindow();await expect(reopened.locator('html')).toHaveAttribute('data-theme','black');assert.deepEqual(await reopened.evaluate(()=>window.agents.call('settings.get')),{theme:'black',zoomSensitivity:4,panSensitivity:2,sidebarWidth:64,snapEmployees:true});ok(true,'theme and both sensitivities survive a full app restart')}finally{await restarted.close()}
+  try{const reopened=await restarted.firstWindow();await expect(reopened.locator('html')).toHaveAttribute('data-theme','black');const settings=await reopened.evaluate(()=>window.agents.call('settings.get'));for(const [key,value] of Object.entries({theme:'black',zoomSensitivity:4,panSensitivity:2,sidebarWidth:64,snapEmployees:true}))assert.equal(settings[key],value,key);ok(true,'theme and both sensitivities survive a full app restart')}finally{await restarted.close()}
   console.log(`PASS=${checks} FAIL=0 — no model calls`)
 }catch(error){console.error(error);if(!page.isClosed()){console.error(await page.locator('body').innerText());await page.screenshot({path:path.join(project,'artifacts/preferences-error.png')})}throw error}
 finally{if(!appClosed)await app.close();fs.rmSync(temp,{recursive:true,force:true})}

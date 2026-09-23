@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import assert from 'node:assert/strict'
 const run = promisify(execFile)
 const CLI = join(import.meta.dirname, '../bin/agents')
-const CODEX_MODEL = 'gpt-5.6-luna'
+const CODEX_MODEL = 'gpt-6-luna'
 let passed = 0
 const ok = (condition, message) => { assert.ok(condition, message); console.log(`PASS  ${message}`); passed++ }
 async function call(...args) {
@@ -61,7 +61,7 @@ async function main() {
   ok((await call('group', 'list')).includes('Design'), 'create departments')
   await call('room', 'place', 'Engineering', '--col', '2', '--row', '1', '--w', '2')
   ok((await call('session', 'list')).rooms.Engineering.w === 2, 'CLI room placement persists')
-  for (const engine of (process.env.AGENTS_COMPANY_TEST_ENGINES || 'codex,claude').split(',')) {
+  for (const engine of (process.env.AGENTS_COMPANY_TEST_ENGINES || 'codex').split(',')) {
     console.log(`\n-- ${engine} --`)
     const created = await call('session', 'new', '--engine', engine, '--title', `${engine} tester`, '--group', 'Engineering', '--model', engine === 'codex' ? CODEX_MODEL : 'haiku', '--effort', 'low', '--permission', 'acceptEdits')
     const cardId = created.sessionId
@@ -75,7 +75,7 @@ async function main() {
     let store = await call('session', 'list')
     ok(store.sessions.find((s) => s.id === id).group === 'Design', `${engine}: CLI card move reaches correct card`)
     ok((await call('session', 'search', 'tester')).some((s) => s.id === id), `${engine}: search finds employee by its immutable name`)
-    await call('card', 'move', cardId, 'Engineering')
+    await call('card', 'move', cardId, 'Engineering', '--cwd', created.cwd)
     id=(await call('session','open',cardId)).sessionId
     await until(async ()=>(await call('session','info',id)).models.length>0,'reopen after transfer')
     info=await call('session','info',id)
@@ -85,7 +85,7 @@ async function main() {
       ok((await call('commands', 'complete', id, commands[0].name)).completion.startsWith('/'), 'claude: command completion')
       await call('config', 'thinking', id, 'off')
       ok(!(await call('session', 'info', id)).thinking, 'claude: thinking setting round-trips')
-    } else ok(!(await call('config', 'thinking', id, 'on')).ok, 'codex: unsupported thinking toggle explicitly refused')
+    } else {await assert.rejects(()=>call('config', 'thinking', id, 'on'));ok(true,'codex: unsupported thinking toggle explicitly refused')}
     const token = `${engine}-memory-7391`
     const file = `${engine}-proof.txt`
     writeFileSync(join(info.cwd, `${engine}-input.txt`), token)

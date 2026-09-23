@@ -1,4 +1,5 @@
 import {openExternalUrl} from './external'
+import {managerCliRoot} from './exec'
 import {inspectEngine,invokeSkill} from './engine-tools'
 import {cloneEmployee} from './employees'
 import {openPluginWindow,pluginWindows,placePluginWindow,modePluginWindow,dismissPluginWindow} from './plugins/windows'
@@ -490,7 +491,7 @@ export async function handleRequest(req: Request): Promise<any> {
       const id = newSessionId()
       const saved = patchSession(id, { ...appearance, id, title: s(a.title).trim(), engine, cwd, group: a.group ?? '', createdAt: Date.now(),
         model: a.model ?? (engine === 'codex' ? 'gpt-5.6-luna' : undefined),
-        effort: a.effort ?? 'low', permissionMode: config.mode!=='build'?'acceptEdits':'default' })
+        effort: a.effort ?? 'low', permissionMode: config.mode!=='build'||managerCliRoot(cwd)?'acceptEdits':'default' })
       return executionEmployee(saved,saved.sessions.find((c) => c.id === id)!)
     }
     case 'card.update': {
@@ -524,10 +525,10 @@ export async function handleRequest(req: Request): Promise<any> {
       const store=readStore(),card=store.sessions.find(c=>c.id===a.id)
       if(!card)throw new Error('Unknown employee')
       const input=a.cwd??(card.group===a.group?card.cwd:undefined)
-      const cwd=await resolveEmployeeWorkspace(store,s(a.group),card.title,input,undefined,card.id,true)
+      const cwd=await resolveEmployeeWorkspace(store,s(a.group),card.title,input,a.cwd?'bind':undefined,card.id,true)
       if(cwd!==card.cwd||a.group!==card.group) await closeForWorkspaceChange(card.id)
       assertTeamAvailable(card.group);assertTeamAvailable(a.group)
-      await resolveEmployeeWorkspace(readStore(),s(a.group),card.title,input,undefined,card.id)
+      await resolveEmployeeWorkspace(readStore(),s(a.group),card.title,input,a.cwd?'bind':undefined,card.id)
       return moveSession(card.id,s(a.group),a.before?s(a.before):undefined,cwd)
     }
     case 'card.remove':

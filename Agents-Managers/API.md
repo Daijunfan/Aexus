@@ -1,3 +1,44 @@
+# Agents Company Manager CLI 完整手册
+
+## 开始工作
+
+本文件由项目根目录的 `API.md`、`SCHEDULER.md` 和共享 CLI 注册表汇总生成。它是未来 Manager Team 员工的操作手册。**业务更改一律通过 CLI；不要直接编辑保存的 Team、员工或排期 JSON。**
+
+1. Manager Team 应使用本地 **Build** 模式，并将 Team 根目录绑定到本 `Agents-Managers` 文件夹。员工默认使用本目录的子文件夹。cloud 员工在远端执行，不能连接 Mac 上的本地服务。
+2. 本目录的 `agents` 启动器指向主项目 `bin/agents`，不是第二套 API。位于 Team 根目录时执行 `./agents`，位于直接子文件夹时执行 `../agents`；Agent 进程的 PATH 也会自动包含 Manager Team 根目录，因此可以直接执行 `agents`。
+3. 桌面 App 或 `agents serve` 必须有一个正在运行。先执行 `agents status --json`；再执行 `agents session list --json` 获取**稳定员工 ID**，`agents session list --live --json` 获取**当前会话 ID**。会话关闭后 live ID 会改变，员工 ID 不变。通过 `agents group list --details --json` 查看 Team 根目录与模式。
+4. 每个命令可追加 `--json`。成功返回 `{ "ok": true, "data": ... }`；失败返回 `{ "ok": false, "error": "..." }`，CLI 非零退出。读取上一条命令的结果与 ID，再执行依赖它的操作。
+
+本目录不会自动创建 Team。如果要绑定它，先从此目录执行：
+
+```sh
+./agents group add Managers --mode build --directory-mode bind --root /Users/djf/develop/CS/Agents-company/Agents-Managers --json
+./agents card create --title Director --group Managers --engine codex --directory-mode default --json
+```
+
+Team 和员工名称创建后不可更改。要修改其他员工或 Team，先读其稳定 ID、工作目录与忙碌状态；调用下文的 `card update`、`config ...`、`group configure`、`room design`、`room bounds` 等命令。删除 Team 会连带删除员工和会话，工作文件保留。Manager 权限来自运行中的本地宿主 CLI，不需要直接修改数据库。
+
+一个常见流程：
+
+```sh
+agents status --json
+agents group list --details --json
+agents session list --json
+agents group add Engineering --mode build --directory-mode default --json
+agents card create --title Reviewer --group Engineering --engine codex --model gpt-5.6-luna --effort low --json
+agents card update EMPLOYEE_ID --role 'Code reviewer' --color '#7089c4' --json
+agents session open EMPLOYEE_ID --json
+agents config model SESSION_ID gpt-5.6-luna --json
+agents session send SESSION_ID 'Review the repository and report concrete issues.' --json
+agents session follow SESSION_ID --json
+```
+
+插件领域命令先执行 `agents plugin list --json`、`agents plugin describe ID --json` 读取该插件独立的 Markdown/API schema，再用 `agents plugin call ID METHOD --team NAME --params @request.json`。Team 必须按插件契约授权。`ui.*` 只用于已有窗口的外观验收；Manager 在 `agents serve` 下仍可完成所有业务操作。目录选择器、屏幕截图等视觉行为需要窗口，CLI 管理文件夹时直接传入物理路径即可。
+
+定时任务保存并执行在宿主 Core 中。先读 `agents schedule schema --json`，创建后用 `schedule preview` 检查触发时间，再 `schedule status` 和 `schedule history` 确认执行结果；使用 `schedule run` 会立刻启动模型工作，不用于试探排期。下面附有完整的定时契约。
+
+## 根项目 API 全文
+
 # CLI and local API
 
 Start `npm run serve` (no window), or open the desktop. Both expose the same
@@ -740,7 +781,7 @@ URLs, thumbnails and view state persist under `.agents-browser/` in the selected
 workspace. Previous bookmark records migrate into page cards with their IDs intact.
 Only the browser plugin is allowed to attach a guest view; guest Node APIs are
 disabled and only HTTP/HTTPS navigation is accepted. See
-[`PlugIns/browser/API.md`](PlugIns/browser/API.md) for its workspace, errors and
+[`PlugIns/browser/API.md`](../PlugIns/browser/API.md) for its workspace, errors and
 exact command schema. The host Git repository ignores all plugin source trees;
 plugin code must be committed within each plugin directory.
 
@@ -952,3 +993,278 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 
 另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。
 <!-- END GENERATED CLI COMMAND INDEX -->
+
+## 定时任务完整规范
+
+以下为宿主调度器全文，包括一次性、间隔和按周任务、时区与工作时段、模型/思考覆盖、运行记录和取消。
+
+### Host scheduler CLI API
+
+## Purpose
+
+持久化地安排某个员工在指定时间使用指定模型、思考程度执行任务。调度器属于
+Agents Company Core，不依赖窗口或任何插件。CLI、未来的插件与 UI 使用同一个
+`schedule.*` 协议。**本版本未向 MiniNotion 接入此调度器**；MiniNotion 原有的页面
+提醒/重复事项是另一项领域功能。
+
+`action.prompt` 是发给员工的完整指令，可以包含要执行的 CLI 命令，例如
+“运行 npm test，将失败原因写入 test-report.md”。调度器不会把文本直接交给本机 shell，
+而是复用员工的 Codex/Claude Code 会话。是否成功完成业务目标仍以员工结果和工作文件为准；
+`succeeded` 表示引擎正常完成该轮，不是对测试、部署等业务结果的断言。
+
+## Workspace
+
+任务保存员工 ID，目录和权限始终由现有员工/Team 决定，执行前重新检查。
+Build 使用本地目录，cloud 使用 Team 的 SSH 连接，Work 使用插件授权目录。
+任务不会覆盖工作目录、切换引擎或提升权限。创建时记录员工当前引擎；员工后来切换
+引擎后，需要更新任务的 `action`（省略 engine 可重新推导）再运行，防止模型错配。
+
+## Quick start
+
+先保持桌面应用运行，或者在终端/自己的进程管理器中运行无窗口服务：
+
+```sh
+agents serve
+```
+
+另一个终端创建任务（替换员工 ID）：
+
+```sh
+agents schedule schema --json
+agents session list --json
+agents schedule create --name '工作日检查' --employee EMPLOYEE_ID \
+  --time 09:00 --days 1,2,3,4,5 --timezone Asia/Shanghai \
+  --window 09:00-18:00 --window-days 1,2,3,4,5 \
+  --model gpt-5.6-luna --effort low \
+  --prompt '运行项目现有的检查命令，将结果写入 daily-check.md。' \
+  --timeout 1800 --json
+agents schedule preview JOB_ID --count 5 --json
+agents schedule history JOB_ID --json
+```
+
+指定一次时间，必须带 UTC 偏移：
+
+```sh
+agents schedule create --name '一次检查' --employee EMPLOYEE_ID \
+  --at '2026-12-01T09:00:00+08:00' --prompt-file ./task.md --json
+```
+
+每小时执行，并限制在工作日夜间（跨午夜时段归属于开始的那天）：
+
+```sh
+agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
+  --every-seconds 3600 --timezone Asia/Shanghai \
+  --window 22:00-02:00 --window-days 1,2,3,4,5 \
+  --prompt '检查工作目录中的任务清单并处理待办。' --json
+```
+
+`--start ISO` 指定间隔锚点；省略则从创建后一个间隔开始。`--time` 不带 `--days`
+表示每日；不带 `--timezone` 使用当前机器时区并在创建时固定保存。`--until ISO`
+是排期和自动执行的截止时间。`--paused` 创建后暂不自动运行。`--source plugin-id`
+用于未来插件查询自己创建的任务，是调用方标签，不是权限凭证。
+
+## Commands
+
+所有命令支持 `--json`。Socket 请求为 `{cmd:"schedule.METHOD",args:{...}}`。
+返回宿主统一 `{ok:true,data:...}` 或 `{ok:false,error:"..."}`；失败 CLI 非零退出。
+
+| CLI | Socket args | 语义 |
+| --- | --- | --- |
+| `schedule schema` | `{}` | 机器可读的字段、默认值、运行策略 |
+| `schedule status` | `{}` | 是否运行、错误、活动 run ID、持久化路径 |
+| `schedule list [--employee ID --source NAME]` | `{employee?,source?}` | 查询排期 |
+| `schedule get ID` | `{id}` | 完整配置和 nextAt，null 表示没有下一次 |
+| `schedule create --spec @job.json` | `{spec}` | 创建排期；也可使用上述 flags |
+| `schedule update ID --patch @patch.json` | `{id,patch}` | 顶层部分更新；action/rule/window 提供完整对象；活动任务先取消 |
+| `schedule pause ID` | `{id}` | 暂停后续触发，不停止当前轮 |
+| `schedule resume ID` | `{id}` | 从当前时间之后重新计算，不补跑暂停期间任务 |
+| `schedule preview [ID / --spec @job.json] --after ISO --count 5` | `{id?,spec?,after?,count?}` | 只计算未来时间，不执行；count 1–100 |
+| `schedule run ID` | `{id}` | 明确立即执行一次，即使排期暂停/已结束；忽略日历和工作时段，保留超时与权限；不消耗 nextAt |
+| `schedule history [ID] --employee ID --limit 50` | `{id?,employee?,limit?}` | 最新在前；保留最近 1000 条完成记录及全部活动记录 |
+| `schedule cancel RUN_ID` | `{id:runId}` | 终止该次执行，等待引擎停止；不暂停后续排期 |
+| `schedule delete ID` | `{id}` | 先暂停并取消活动执行，再删除排期；保留审计记录 |
+
+配置例子（`engine` 创建时可省略；下例为 Claude；Codex 使用 effort，不接受 thinking）：
+
+```json
+{
+  "name": "整理工作清单",
+  "source": "my-plugin",
+  "enabled": true,
+  "action": {
+    "type": "agent",
+    "employeeId": "EMPLOYEE_ID",
+    "engine": "claude",
+    "prompt": "阅读工作目录中的任务并更新清单。",
+    "model": "YOUR_CLAUDE_MODEL_ID",
+    "effort": "low",
+    "thinking": true
+  },
+  "rule": {"kind":"weekly","time":"09:00","days":[1,2,3,4,5],"timezone":"Asia/Shanghai"},
+  "window": {"start":"09:00","end":"18:00","timezone":"Asia/Shanghai","days":[1,2,3,4,5]},
+  "timeoutSeconds": 1800,
+  "graceSeconds": 60
+}
+```
+
+`rule` 还支持 `{kind:"once",at:"ISO"}`、`{kind:"interval",everySeconds:3600,anchor:"ISO"}`。
+`window:null` 和 `until:null` 清除限制。模型 ID 原样交给员工引擎，权限和可用性由引擎检查，
+引擎拒绝会记为失败，不会偷偷切换模型。`effort` 支持 low/medium/high/xhigh/max，
+具体模型仍须支持该值。模型/思考覆盖仅用于当前轮，不写入员工持久设置，完成后恢复。
+
+## Files
+
+- `$AGENTS_COMPANY_HOME/schedules.json`：版本 1 配置与有界运行记录，原子替换写入。
+- 员工原有 transcript：包含定时任务的指令与输出，可用 `agents session transcript EMPLOYEE_ID` 读取。
+- 每次记录含 jobId、执行时的 action、scheduledAt、startedAt、finishedAt、sessionId、status、message。
+- 源码：`src/shared/scheduler.ts`、`src/main/scheduler/{time,execute,service}.ts`。
+
+## Errors
+
+- 员工忙碌或被另一任务占用：记录 `skipped`，不会打断人工对话，也不排无限队列。
+- 执行期间：可读取/查看同一会话；发送新指令、修改模型/权限/引擎或目录需要先取消任务。
+- `failed`：引擎报错、目录/引擎改变、连接失败等；不自动重试有副作用的命令。
+- `timed_out`：达到 timeoutSeconds，或自动执行时抵达 window/until 截止；终止当前轮。
+- `cancelled`：显式取消、任务删除或正常服务关闭。`interrupted`：上次进程异常结束。
+- 删除员工或 Team：关闭会话，相关任务自动停用并标记 employee_removed，不能再次运行。
+- 超过 graceSeconds（默认 60 秒）的过期触发记为 skipped，一次推进到未来；不连续补跑。
+- 先保存执行声明，再启动员工。重启后不重放已声明的任务；这不是外部命令“恰好一次”的保证。
+  崩溃、网络断开时应先检查工作文件，再决定手动重跑。
+- 时段开始包含、结束不包含；夏令时缺失时刻向后平移，重复时刻只取较早一次。
+  带窗口的未来匹配最多查找 366 天，不匹配的启用排期会被拒绝。
+- 系统休眠、关机或没有服务进程时不能执行。恢复后按 graceSeconds 跳过或执行，**不会自动唤醒 Mac**。
+  此版本不自动修改 launchd 或登录项。损坏的调度文件停止调度并通过 status 报错，不重置文件。
+
+## Compatibility
+
+契约为宿主 `schedule.*` v1；通过宿主 CLI/socket 使用，不依赖 MiniNotion 或 Electron。
+未来插件复用此接口，不能为宿主员工再创建自己的隐藏会话或绕过员工目录权限。
+插件自有的文档提醒可以继续独立存在。本次只交付基础 API，没有新增调度界面。
+
+验证：`npm run test:scheduler`。测试使用隔离数据与确定性引擎替身，Codex 参数固定
+`gpt-5.6-luna` / `low`，没有模型推理费用。
+
+## 全部 CLI 命令索引
+
+下面 116 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+
+| 命令 | 参数 | 作用 | 对应界面 |
+| --- | --- | --- | --- |
+| <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 |
+| <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 |
+| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 |
+| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 |
+| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID --prompt TEXT --at ISO</code> | Create an employee task schedule | CLI 调度基础，供插件复用 |
+| <code>agents schedule update</code> | <code>ID --patch @file.json</code> | Update a schedule while idle | CLI 调度基础，供插件复用 |
+| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 |
+| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 |
+| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 |
+| <code>agents schedule preview</code> | <code>[ID &#124; --spec @file.json] [--after ISO --count N]</code> | Preview future occurrences without executing | CLI 调度基础，供插件复用 |
+| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 |
+| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 |
+| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 |
+| <code>agents settings get</code> | <code>—</code> | Read theme and pointer sensitivity | 应用设置 |
+| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off]</code> | Persist appearance and canvas controls | 背景和灵敏度 |
+| <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 |
+| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 |
+| <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 |
+| <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 |
+| <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open |
+| <code>agents session list</code> | <code>--live</code> | List stored cards (or live sessions with --live) | The company floor |
+| <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” |
+| <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 |
+| <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
+| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a session | Typing in the composer |
+| <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
+| <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
+| <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |
+| <code>agents session close</code> | <code>&lt;id&gt;</code> | Close a live session | Leaving the session view |
+| <code>agents session info</code> | <code>&lt;id&gt;</code> | Show a live session’s engines, models, commands | The toolbar dropdowns |
+| <code>agents session activity</code> | <code>&lt;id&gt;</code> | Current speech, published thinking or tool preview; null when idle | 员工活动气泡 |
+| <code>agents session snapshot</code> | <code>&lt;id&gt;</code> | Full frontend state | The conversation and toolbar |
+| <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search |
+| <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests |
+| <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline |
+| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 |
+| <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown |
+| <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown |
+| <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle |
+| <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown |
+| <code>agents config plan</code> | <code>&lt;id&gt; on&#124;off</code> | Switch the official planning mode | 计划模式 |
+| <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 |
+| <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 |
+| <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 |
+| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 |
+| <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 |
+| <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 |
+| <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review |
+| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Queue a message after the active turn | 排队发送 |
+| <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 |
+| <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 |
+| <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 |
+| <code>agents view tools</code> | <code>&lt;skills&#124;mcp&#124;account&#124;usage&#124;config&#124;export&#124;off&gt;</code> | Open or close the engine tools panel | 引擎工具面板 |
+| <code>agents config fast</code> | <code>&lt;id&gt; on&#124;off</code> | Set the official Fast service tier | Fast 速度开关 |
+| <code>agents commands run</code> | <code>&lt;id&gt; /command [args]</code> | Execute a discovered slash command through shared Core | 斜杠命令 |
+| <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu |
+| <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu |
+| <code>agents group list</code> | <code>—</code> | List departments | Department headings |
+| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Create a Team and its shared execution environment | “+ Department” |
+| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Configure Team plugin or shared SSH connection | Team 工作方式与连接 |
+| <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department |
+| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign |
+| <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card |
+| <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card |
+| <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 |
+| <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 |
+| <code>agents card create</code> | <code>--title NAME [--engine E] [--avatar cat]</code> | Hire an idle employee without starting an engine | 添加员工 |
+| <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 |
+| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Compatibility endpoint; Team names are immutable | 部门设置 |
+| <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 |
+| <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 |
+| <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 |
+| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team |
+| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 |
+| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 |
+| <code>agents canvas view</code> | <code>—</code> | Read viewport position and zoom | 画布视野 |
+| <code>agents canvas set</code> | <code>--x N --y N --zoom N</code> | Pan and zoom the canvas | 平移、缩放画布 |
+| <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 |
+| <code>agents plugin describe</code> | <code>&lt;id&gt;</code> | Read a plugin manifest, API schema and Markdown guide | 插件信息 |
+| <code>agents plugin install</code> | <code>&lt;directory&gt;</code> | Install a compatible local plugin package | CLI 安装插件 |
+| <code>agents plugin call</code> | <code>&lt;id&gt; &lt;method&gt; --team NAME [--params JSON]</code> | Invoke a plugin API inside a Team workspace | 插件中的操作 |
+| <code>agents plugin open</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open or focus an independent plugin window | 独立插件窗口 |
+| <code>agents plugin windows</code> | <code>—</code> | List plugin window state, also in headless mode | 独立插件窗口 |
+| <code>agents plugin place</code> | <code>&lt;windowId&gt; --x N --y N --width N --height N</code> | Move and resize a plugin window | 独立插件窗口 |
+| <code>agents plugin mode</code> | <code>&lt;windowId&gt; normal&#124;minimized&#124;maximized&#124;fullscreen</code> | Change native plugin window state | 插件窗口最小化、还原与全屏 |
+| <code>agents plugin dismiss</code> | <code>&lt;windowId&gt;</code> | Save and close an independent plugin window | 独立插件窗口 |
+| <code>agents plugin view</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open a plugin view in its managed root or selected scope | Team 工作空间 |
+| <code>agents plugin close</code> | <code>&lt;viewId&gt;</code> | Close an embedded plugin view | 关闭工作空间 |
+| <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 |
+| <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 |
+| <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 |
+| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH authentication and remote working directory | 测试云主机连接 |
+| <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 |
+| <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 |
+| <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 |
+| <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 |
+| <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 |
+| <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 |
+| <code>agents workspace list</code> | <code>[path] --team NAME</code> | List real workspace files | 文件目录 |
+| <code>agents workspace image</code> | <code>&lt;path&gt; --employee ID&#124;--team NAME</code> | Read a scoped image for preview or model input | 图片预览和附件 |
+| <code>agents workspace read</code> | <code>&lt;path&gt; --team NAME</code> | Read a workspace file | 文件预览 |
+| <code>agents workspace write</code> | <code>&lt;path&gt; --team NAME --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 |
+| <code>agents workspace mkdir</code> | <code>&lt;path&gt; --team NAME</code> | Create a folder | 新建文件夹 |
+| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH --team NAME</code> | Rename or move a file | 重命名文件 |
+| <code>agents workspace trash</code> | <code>&lt;path&gt; --team NAME</code> | Move a file to recoverable workspace trash | 移到回收站 |
+| <code>agents workspace restore</code> | <code>--id ID --team NAME</code> | Restore a trashed file | 撤销删除 |
+| <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself |
+| <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself |
+| <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself |
+| <code>agents ui click</code> | <code>&lt;selector&gt;</code> | Click an element in the interface | That click |
+| <code>agents ui type</code> | <code>&lt;selector&gt; &lt;text&gt;</code> | Type into an input | That typing |
+| <code>agents ui wait</code> | <code>&lt;selector&gt; [--timeout ms]</code> | Wait for an element to appear | Waiting for the UI to catch up |
+| <code>agents ui style</code> | <code>&lt;selector&gt;</code> | Computed styles of an element | How it actually looks |
+| <code>agents ui screenshot</code> | <code>&lt;path&gt;</code> | Save a screenshot | Rendered interface |
+| <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 |
+| <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 |
+
+另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。

@@ -12,6 +12,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { transform } from 'esbuild'
+import {spawnSync} from 'node:child_process'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -62,6 +63,7 @@ const cliCommands = new Set(
   [...cli.matchAll(/case '([a-z]+\.[a-z]+)'/g)].map((m) => m[1])
 )
 const declared = new Set([...protocol.matchAll(/name: '([a-z]+\.[a-z]+)'/g)].map((m) => m[1]))
+const managerGuide=readFileSync(join(ROOT,'Agents-Managers','API.md'),'utf8')
 
 console.log('CLI / GUI coverage — static check\n')
 
@@ -85,6 +87,10 @@ ok(
   'every server command is declared in the protocol registry',
   undocumented.join(', ')
 )
+const missingInGuide=[...declared].filter(command=>!managerGuide.includes(`<code>agents ${command.replace('.', ' ')}</code>`))
+ok(missingInGuide.length===0,`Manager handbook indexes every CLI command (${declared.size})`,missingInGuide.join(', '))
+const documentation=spawnSync(process.execPath,[join(ROOT,'scripts','sync-manager-docs.mjs'),'--check'],{cwd:ROOT,encoding:'utf8'})
+ok(documentation.status===0,'Manager API, scheduler and supporting docs match their sources',documentation.stderr.trim())
 const rendererCommands = new Set([...renderer.matchAll(/(?:act|configure|api\.call(?:<[^>]+>)?)\('([a-z]+\.[a-z]+)'/g)].map((m) => m[1]))
 for (const command of rendererCommands) {
   ok(cliCommands.has(command) && serverCommands.has(command), `frontend API call → ${command}`)

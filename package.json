@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.26.0",
+  "version": "0.26.1",
   "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
   "main": "./out/main/index.js",
   "author": "Agents Company",
@@ -14,7 +14,7 @@
     "dist": "npm run build:plugins && electron-vite build && electron-builder --mac",
     "test:cli": "node test/cli-test.mjs",
     "test:coverage": "node test/coverage-test.mjs",
-    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:remote && npm run test:headless && npm run test:ui",
+    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:remote && npm run test:headless && npm run test:ui && npm run test:scheduler && npm run test:manager-docs",
     "dev:headless": "AGENTS_COMPANY_HEADLESS=1 electron-vite dev",
     "test:headless": "node test/run-headless.mjs",
     "serve": "node bin/agents serve",
@@ -59,7 +59,9 @@
     "test:cloud-safety-live": "node test/cloud-safety-live-test.mjs",
     "test:model-catalog": "node test/model-catalog-test.mjs",
     "test:model-catalog-ui": "node test/model-catalog-ui-test.mjs",
-    "test:browser-plugin": "npm --prefix PlugIns/browser test && node test/browser-plugin-ui-test.mjs"
+    "test:browser-plugin": "npm --prefix PlugIns/browser test && node test/browser-plugin-ui-test.mjs",
+    "docs:managers": "node scripts/sync-manager-docs.mjs",
+    "test:manager-docs": "node scripts/sync-manager-docs.mjs --check && node test/manager-cli-test.mjs && node test/manager-agent-test.mjs && node test/manager-claude-test.mjs"
   },
   "build": {
     "appId": "com.agentscompany.app",

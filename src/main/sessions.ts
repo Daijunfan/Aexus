@@ -20,7 +20,7 @@ import type {EffortLevel,ModelInfo,SlashCommand,ImageInput} from '../shared/type
 import {withCodexSessionApi} from './native-sessions'
 import { codexModels, allCodexModels, runCodexTurn, type SandboxMode } from './codex'
 import {deepSeekProvider,deepSeekModels,deepSeekModel,deepSeekEffort,deepSeekPicker,type DeepSeekProvider} from './claude-provider'
-import { childEnv, resolveBinary } from './exec'
+import { childEnv, managerCliRoot, resolveBinary } from './exec'
 import { prepareWorkspacePlugins } from './plugins/runtime'
 import { patchSession, readStore } from './store'
 import { conversation, forget, restoreTranscript, saveTranscript } from './transcripts'
@@ -203,6 +203,7 @@ export function buildOptions(args: {
   // on an already-running session would be refused by the engine.
   opts.allowDangerouslySkipPermissions = !args.workRoot
   if(args.workRoot)Object.assign(opts,workClaudeOptions(args.cwd,args.permissionRoot??args.workRoot))
+  if(managerCliRoot(args.cwd,args.workRoot)&&!args.remoteLaunch)opts.allowedTools=['Bash(agents *)']
   if(args.remoteLaunch){
     const launch=args.remoteLaunch,cloudSettings=cloudClaudeSettings()
     Object.assign(opts,{cwd:launch.cwd,tools:[],mcpServers:{tunnel:launch.server},strictMcpConfig:true,allowedTools:CLOUD_TOOLS,settingSources:[],env:{...cloudSettings.env,...env},settings:{permissions:cloudSettings.permissions},
@@ -286,7 +287,7 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   if (engine === 'codex') args = { ...args, model: args.model || 'gpt-5.6-luna', effort: card?args.effort:(args.effort??'low') }
   const provider=engine==='claude'?deepSeekProvider(remote?undefined:cwd):undefined
   if(provider)args={...args,model:deepSeekModel(provider,args.model),effort:deepSeekEffort(args.effort),fastMode:false}
-  const permissionMode = args.permissionMode ?? (workRoot||remote?'acceptEdits':'default')
+  const permissionMode = managerCliRoot(cwd)&&!remote&&!workRoot?'acceptEdits':args.permissionMode ?? (workRoot||remote?'acceptEdits':'default')
   if(remote&&permissionMode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限')
   if(workRoot&&permissionMode!=='acceptEdits')throw new Error('Work 模式按员工目录授权，必须使用 Workspace write 权限')
   const cardId = card?.id ?? sessionId
@@ -674,6 +675,7 @@ export async function setPermissionMode(
   if(mode==='plan')return setPlanMode(sessionId,true)
   if (!['default', 'acceptEdits', 'plan', 'auto', 'dontAsk', 'bypassPermissions'].includes(mode)) throw new Error(`Unknown permission mode: ${mode}`)
   if(s.remote&&mode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限，不能切换本地沙箱')
+  if(managerCliRoot(s.cwd)&&mode!=='acceptEdits')throw new Error('Manager 员工需要 Workspace write 才能连接宿主 CLI')
   if(s.workRoot&&mode!=='acceptEdits')throw new Error('Work 模式的目录权限不能绕过；请通过员工工作目录调整权限范围')
   // The engine decides whether this is allowed; record the change only after
   // it agrees, so the reported state can never drift from reality.
@@ -732,7 +734,10 @@ export async function interrupt(sessionId: string): Promise<boolean> {
   s.pendingMessages=[];rememberMeta(sessionId,{pendingMessages:[]})
   if (s.engine === 'codex') {
     s.queue.length = 0
-    if(s.abort)s.abort.abort();else if(hasNativeCodexSession(sessionId))await nativeCodexRequest(sessionId,'turn/interrupt')
+    if(s.abort)s.abort.abort();else if(s.running&&hasNativeCodexSession(sessionId))try{await nativeCodexRequest(sessionId,'turn/interrupt')}catch(error){
+      if(!String(error).includes('no active turn to interrupt'))throw error
+      s.running=false;rememberMeta(sessionId,{busy:false})
+    }
   } else {
     await s.q.interrupt()
   }

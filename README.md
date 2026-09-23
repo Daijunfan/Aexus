@@ -4,6 +4,12 @@ A CLI-first Codex and Claude Code office with three Team types, a plugin directo
 and animated companions on an expandable canvas. Desktop actions use the same
 backend APIs as the terminal.
 
+For CLI control of the entire company, see the self-contained
+[Manager CLI handbook](Agents-Managers/API.md). A future local Build Team can bind
+`Agents-Managers/` as its root; all of its employees then receive the `agents`
+launcher on PATH and can manage other Teams, employees, sessions, files, plugins
+and scheduled tasks through the same Core API.
+
 The host and each `PlugIns/<name>/` source directory use separate Git repositories.
 The host does not track plugin source files. A fresh host checkout needs the
 MiniNotion and Browser repositories checked out under `PlugIns/` before packaging.
