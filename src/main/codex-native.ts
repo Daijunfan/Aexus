@@ -12,6 +12,7 @@ import type {CodexEvent,SandboxMode} from './codex'
 export const nativeExecutionConfig=()=>['-c','mcp_servers={}','-c','skills.include_instructions=false','-c','skills.bundled.enabled=false',
   '-c','include_apps_instructions=false','-c','memories.use_memories=false','-c','memories.generate_memories=false','--disable','memories','--disable','apps','--disable','hooks','--disable','plugins','--disable','chronicle','--disable','multi_agent']
 type Args={connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string}
+class RemoteStartupError extends Error {}
 const sessions=new Map<string,NativeConnection>()
 type NativeConnection=Awaited<ReturnType<typeof connect>>
 export const hasNativeCodexSession=(id:string)=>sessions.get(id)?.alive()??false
@@ -29,7 +30,15 @@ export async function runNativeCodexTurn(binary:string,args:Args){
   try{
     if(session&&!session.alive()){await session.close();session=undefined}
     if(!session){session=await connect(binary,args);if(args.connectionId)sessions.set(args.connectionId,session)}
-    await session.run(args)
+    try{await session.run(args)}catch(error){
+      if(!(error instanceof RemoteStartupError)||args.signal.aborted)throw error
+      // The remote executable may start after Codex's fixed 10-second handshake
+      // limit. No turn has begun, so rebuilding the transport cannot repeat work.
+      if(args.connectionId)sessions.delete(args.connectionId)
+      await session.close();session=await connect(binary,args)
+      if(args.connectionId)sessions.set(args.connectionId,session)
+      await session.run(args)
+    }
   }catch(error){if(!args.signal.aborted)args.onEvent({kind:'notice',level:'error',text:error instanceof Error?error.message:String(error)})}
   finally{if(session&&(!args.connectionId||!session.alive())){if(args.connectionId)sessions.delete(args.connectionId);await session.close()}}
 }
@@ -108,7 +117,8 @@ async function connect(binary:string,initial:Args){
       args.signal.addEventListener('abort',abort,{once:true})
       try{
         args.signal.throwIfAborted()
-        if(args.remote)await call('environment/info',{environmentId:'remote'})
+        if(args.remote)try{await call('environment/info',{environmentId:'remote'})}
+        catch(error){throw new RemoteStartupError(error instanceof Error?error.message:String(error))}
         const environments=args.remote?[{environmentId:'remote',cwd:args.remote.directory,runtimeWorkspaceRoots:[args.remote.directory]}]:undefined
         const controlCwd=codexControlCwd(args.cwd,args.remote),windows=args.remote?.os==='windows'
         const sandbox=windows?'danger-full-access':args.sandbox

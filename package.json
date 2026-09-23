@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
   "main": "./out/main/index.js",
   "author": "Agents Company",

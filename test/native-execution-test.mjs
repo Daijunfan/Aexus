@@ -39,7 +39,15 @@ model.on('request',async(req,res)=>{
 })
 await new Promise(r=>model.listen(0,'127.0.0.1',r))
 const bin=path.join(temp,'bin');fs.mkdirSync(bin)
-if(host==='fixture')fs.writeFileSync(path.join(bin,'ssh'),`#!/usr/bin/env python3
+const retryFirstHandshake=process.env.AGENTS_COMPANY_NATIVE_RETRY==='1',slowMarker=path.join(temp,'slow-ssh-started')
+if(retryFirstHandshake)fs.writeFileSync(path.join(bin,'ssh'),`#!/bin/sh
+if [ ! -f '${slowMarker}' ]; then
+  touch '${slowMarker}'
+  sleep 12
+fi
+exec /usr/bin/ssh "$@"
+`,{mode:0o755})
+if(host==='fixture'&&!retryFirstHandshake)fs.writeFileSync(path.join(bin,'ssh'),`#!/usr/bin/env python3
 import os,sys
 os.execv('/bin/sh',['sh','-c',sys.argv[-1]])
 `,{mode:0o755})
@@ -123,6 +131,7 @@ try{
  assert.equal(requests.length,count,'Unavailable execution environment must fail before calling the model')
  assert.ok(failed.some(event=>event.kind==='notice'&&event.level==='error'))
  console.log('PASS unavailable working directory fails before any model request')
+ if(retryFirstHandshake){assert.ok(fs.existsSync(slowMarker));assert.ok(requests.length>=2,'Delayed first SSH handshake must recover before the model request');console.log('PASS 12-second first SSH start exceeds the native 10-second handshake, then reconnects before any model turn')}
  if(safety){
   assert.equal(fs.readFileSync(sentinel,'utf8'),'UNCHANGED');
   assert.ok(requests.some(r=>r.input?.some(item=>/call_output$/.test(item.type)&&JSON.stringify(item.output).includes(sentinel))),'forced local-path attempt must have a real tool result');

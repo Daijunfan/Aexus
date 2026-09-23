@@ -724,6 +724,14 @@ Set `AGENTS_COMPANY_LIVE_HOST` and `AGENTS_COMPANY_LIVE_ROOT` to check an author
 Unlike the native startup-only debug view, this captures the actual outgoing model request.
 
 Cloud Codex employees use the native execution protocol and ordinary command/file tools.
+If the remote executor misses Codex's 10-second initialization deadline, the
+host closes that failed connection and makes one fresh remote connection before
+starting any model turn. A second failure is reported; commands never fall back
+to the Mac. The retry retains the employee's native thread ID and transcript.
+Run `AGENTS_COMPANY_WINDOWS_MESSAGE_LIVE=1 node test/windows-message-live-test.mjs`
+for a single real `gpt-5.6-luna` / `low` CLI turn against an isolated Windows
+employee; the test independently checks that the tool output names its Windows
+working directory.
 Routing configuration is process-side only: no Tunnel MCP, generated routing AGENTS.md,
 or routing developer instructions are sent to the model. Host-side skills, plugins and
 memory injection/generation are disabled for these cloud turns, without editing global settings.
