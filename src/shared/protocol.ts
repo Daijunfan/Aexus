@@ -83,7 +83,7 @@ export const COMMANDS: {
   { name: 'commands.list', args: '<id> [--filter X] [--all]', summary: 'Slash commands available to a session', gui: 'The “/” menu' },
   { name: 'commands.complete', args: '<id> <name>', summary: 'What Tab would insert', gui: 'Tab/⏎ in the “/” menu' },
   { name: 'group.list', args: '', summary: 'List departments', gui: 'Department headings' },
-  { name: 'group.add', args: '<name> [--mode work|build|cloud] [--plugin ID] [--remote-host HOST --remote-dir PATH]', summary: 'Create a Team and its shared execution environment', gui: '“+ Department”' },
+  { name: 'group.add', args: '<name> [--mode work|build|cloud] [--plugin ID] [--remote-host HOST --remote-dir PATH]', summary: 'Create a Team; Work uses the fixed plugin workspace, Build may bind a folder', gui: '“+ Department”' },
   { name: 'group.configure', args: '<name> --mode work|build|cloud [--plugin ID] [--remote-host HOST --remote-dir PATH]', summary: 'Configure Team plugin or shared SSH connection', gui: 'Team 工作方式与连接' },
   { name: 'group.remove', args: '<name>', summary: 'Delete a department', gui: '× beside a department' },
   { name: 'room.place', args: '<name> --col N --row N [--w N --h N]', summary: 'Position a department’s room on the floor', gui: 'Dragging a room by its sign' },

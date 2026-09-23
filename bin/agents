@@ -183,10 +183,10 @@ COMMANDS
   group list | add <name> [--mode work|build|cloud --plugin ID]
       [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows]
       [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
-      [--directory-mode default|bind --root PATH]
+      [--directory-mode default|bind --root PATH]   Build only; Work uses plugin/workspaces/Team
   group remove <name>                     delete Team, employees and native sessions; keep files
   group migrate <name>
-  group root <name> <folder> [--directory-mode bind] [--create]
+  group root <name> <folder> [--directory-mode bind] [--create]   Build only
   group configure <name> --mode work|build|cloud [--plugin ID --directory-mode default|bind --root PATH]
       [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows]
       [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]

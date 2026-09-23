@@ -1,4 +1,0 @@
-#!/bin/sh
-# Resolve the host CLI from this repository without a global installation.
-manager_dir=$(CDPATH= cd "$(dirname "$0")" && pwd)
-exec node "$manager_dir/../bin/agents" "$@"

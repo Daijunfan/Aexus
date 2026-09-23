@@ -11,7 +11,7 @@ const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-pwin-'))),en
 const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env}),main=await app.firstWindow();main.setDefaultTimeout(20000)
 let log='';app.process().stderr.on('data',data=>log+=data)
 const cli=async(...args)=>{const reply=JSON.parse((await run(process.execPath,[path.join(root,'bin/agents'),...args,'--json'],{env,timeout:30000})).stdout);assert.ok(reply.ok,reply.error);return reply.data}
-const windows=()=>cli('plugin','windows'),plugin=(method,params={})=>cli('plugin','call','mininotion',method,'--team','Planning','--params',JSON.stringify(params))
+const windows=()=>cli('plugin','windows'),plugin=(method,params={})=>cli('plugin','call','mininotion',method,'--params',JSON.stringify(params))
 let n=0;const ok=(condition,message)=>{assert.ok(condition,message);n++;console.log('PASS '+message)}
 try{
  await main.locator('.infinite-canvas').waitFor();await cli('group','add','Planning','--mode','work','--plugin','mininotion')

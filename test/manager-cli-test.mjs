@@ -1,27 +1,35 @@
 // Isolated end-to-end Manager Team control through the real host socket, without inference or UI.
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import{spawn,execFile}from 'node:child_process';import{promisify}from 'node:util';import{createRequire}from 'node:module';import{build}from 'esbuild';import assert from 'node:assert/strict'
 const run=promisify(execFile),require=createRequire(import.meta.dirname),root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-manager-')),env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_WORKSPACES:path.join(temp,'work')};let manager=path.join(temp,'Agents-Managers');fs.mkdirSync(manager);manager=fs.realpathSync(manager)
-const quoted=value=>"'"+value.replaceAll("'","'\\''")+"'"
-fs.writeFileSync(path.join(manager,'agents'),`#!/bin/sh\nexec node ${quoted(root+'/bin/agents')} "$@"\n`,{mode:0o755});fs.writeFileSync(path.join(manager,'API.md'),'Manager test guide')
+fs.writeFileSync(path.join(manager,'.agents-company-manager'),'agents-company-manager/v1\n')
 const sdk=require.resolve('@anthropic-ai/claude-agent-sdk'),bundle=path.join(temp,'env.cjs');await build({stdin:{contents:"export {childEnv} from './src/main/exec'",resolveDir:root,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:bundle,logLevel:'silent'});const {childEnv}=require(bundle)
 const daemon=spawn(process.execPath,[root+'/bin/agents','serve'],{env,stdio:'ignore'}),done=new Promise(resolve=>daemon.once('exit',resolve));let director
 const cli=async(cwd,...args)=>{const response=JSON.parse((await run('agents',[...args,'--json'],{cwd,env:{...childEnv(cwd),...env,PATH:childEnv(cwd).PATH},timeout:25000})).stdout);assert.ok(response.ok,response.error);return response.data}
+const bootstrap=async(...args)=>{const response=JSON.parse((await run(process.execPath,[root+'/bin/agents',...args,'--json'],{env,timeout:25000})).stdout);assert.ok(response.ok,response.error);return response.data}
 try{
- for(let n=0;n<100;n++){try{if((await cli(manager,'status')).running)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
- assert.equal(childEnv(manager).PATH.split(':')[0],manager)
- await cli(manager,'group','add','Managers','--mode','build','--directory-mode','bind','--root',manager)
- director=await cli(manager,'card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low')
+ for(let n=0;n<100;n++){try{if((await bootstrap('status')).running)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
+ assert.ok(!fs.existsSync(path.join(manager,'API.md'))&&!fs.existsSync(path.join(manager,'agents')))
+ await bootstrap('group','add','Managers','--mode','build','--directory-mode','bind','--root',manager)
+ director=await bootstrap('card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low')
  assert.equal(director.permissionMode,'acceptEdits')
- assert.equal(childEnv(director.cwd).PATH.split(':')[0],manager)
+ assert.equal(childEnv(director.cwd).PATH.split(':')[0],path.join(director.cwd,'.agents-company/bin'))
+ for(const name of ['API.md','SCHEDULER.md','PLUGIN_SPEC.md','ENGINE_CAPABILITIES.md'])assert.equal(fs.readFileSync(path.join(director.cwd,'.agents-company/manager',name),'utf8'),fs.readFileSync(path.join(root,'docs/managers',name),'utf8'))
+ assert.ok(fs.readFileSync(path.join(director.cwd,'AGENTS.md'),'utf8').includes('.agents-company/manager/API.md'))
  assert.equal((await cli(director.cwd,'status')).running,true)
  const originalPath=process.env.PATH;process.env.PATH='/usr/bin:/bin';const finderEnv=childEnv(director.cwd);process.env.PATH=originalPath
- assert.equal(finderEnv.PATH.split(':')[0],manager)
+ assert.equal(finderEnv.PATH.split(':')[0],path.join(director.cwd,'.agents-company/bin'))
  assert.ok(finderEnv.PATH.split(':').some(folder=>fs.existsSync(path.join(folder,'node'))),'Finder environment must include Node for the Manager launcher')
  assert.equal(JSON.parse((await run('agents',['status','--json'],{cwd:director.cwd,env:{...finderEnv,...env,PATH:finderEnv.PATH}})).stdout).data.running,true)
  const assistant=await cli(director.cwd,'card','create','--title','Assistant','--group','Managers','--engine','codex')
  assert.equal(assistant.permissionMode,'acceptEdits')
- assert.equal(childEnv(assistant.cwd).PATH.split(':')[0],manager)
+ assert.equal(childEnv(assistant.cwd).PATH.split(':')[0],path.join(assistant.cwd,'.agents-company/bin'))
  assert.equal((await cli(assistant.cwd,'status')).running,true)
+ assert.equal(fs.readFileSync(path.join(assistant.cwd,'.agents-company/manager/API.md'),'utf8'),fs.readFileSync(path.join(director.cwd,'.agents-company/manager/API.md'),'utf8'))
+ const bound=path.join(manager,'Bound');fs.mkdirSync(bound)
+ const boundEmployee=await cli(director.cwd,'card','create','--title','Bound','--group','Managers','--directory-mode','bind','--cwd',bound)
+ assert.ok(fs.existsSync(path.join(boundEmployee.cwd,'.agents-company/manager/API.md')))
+ await cli(director.cwd,'card','remove',boundEmployee.id)
+ await assert.rejects(()=>cli(director.cwd,'card','create','--title','Outside','--group','Managers','--directory-mode','bind','--cwd',temp))
  await cli(director.cwd,'group','add','Demo','--mode','build')
  const worker=await cli(assistant.cwd,'card','create','--title','Worker','--group','Demo','--engine','codex','--model','gpt-6-luna','--effort','low')
  await cli(director.cwd,'card','update',worker.id,'--role','Reviewer','--color','#7089c4')

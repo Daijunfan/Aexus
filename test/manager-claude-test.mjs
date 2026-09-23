@@ -12,9 +12,8 @@ import assert from 'node:assert/strict'
 const run=promisify(execFile),require=createRequire(import.meta.url),root=path.resolve(import.meta.dirname,'..')
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-manager-claude-'))
 const manager=path.join(temp,'Agents-Managers'),staff=path.join(manager,'Claude-Director'),config=path.join(temp,'claude')
-fs.mkdirSync(staff,{recursive:true});fs.mkdirSync(config)
-fs.writeFileSync(path.join(manager,'API.md'),'Manager agent test')
-fs.writeFileSync(path.join(manager,'agents'),`#!/bin/sh\nexec node '${root}/bin/agents' "$@"\n`,{mode:0o755})
+fs.mkdirSync(manager,{recursive:true});fs.mkdirSync(config)
+fs.writeFileSync(path.join(manager,'.agents-company-manager'),'agents-company-manager/v1\n')
 const received=[]
 const model=http.createServer(async(req,res)=>{
   let raw='';for await(const part of req)raw+=part
@@ -42,6 +41,9 @@ const daemon=spawn(process.execPath,[root+'/bin/agents','serve'],{env,stdio:'ign
 let q,approvalRequests=0
 try{
   for(let i=0;i<100;i++){try{if(JSON.parse((await run(process.execPath,[root+'/bin/agents','status','--json'],{env,timeout:2000})).stdout).ok)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
+  await run(process.execPath,[root+'/bin/agents','group','add','Managers','--mode','build','--directory-mode','bind','--root',manager,'--json'],{env})
+  await run(process.execPath,[root+'/bin/agents','card','create','--title','Claude-Director','--group','Managers','--engine','claude','--json'],{env})
+  assert.ok(fs.existsSync(path.join(staff,'.agents-company/manager/API.md')))
   const options=buildOptions({cwd:staff,permissionMode:'acceptEdits',thinking:false,model:'claude-sonnet-4-6'})
   assert.deepEqual(options.allowedTools,['Bash(agents *)'])
   const ordinary=buildOptions({cwd:temp,permissionMode:'acceptEdits',thinking:false})

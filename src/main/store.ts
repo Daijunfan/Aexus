@@ -106,6 +106,7 @@ export function validateTeamSettings(settings:TeamSettings):TeamSettings {
   const directory=settings.directoryMode?{directoryMode:settings.directoryMode}:{}
   if(settings.mode==='build')return {mode:'build',...directory}
   if(!settings.pluginId)throw new Error('Work Team 必须选择已安装的插件')
+  if(settings.directoryMode==='bind')throw new Error('Work Team 使用插件固定工作目录，不能手动绑定 Team 文件夹')
   requirePlugin(settings.pluginId)
   return {mode:'work',pluginId:settings.pluginId,...directory}
 }
@@ -253,7 +254,7 @@ export function setTeamRoot(name:string,path?:string,_create=true):Store {
     // Old terminal paths keep working; the app stores only the new canonical paths.
     symlinkSync(destination,oldRoot,'dir')
   }
-  teamRoot(root,true)
+  teamRoot(root,true,config.mode==='work')
   for(const card of next.sessions.filter(c=>c.group===name)){employeeWorkspace(next,name,card.cwd,card.id,true);provisionWorkspace(card.cwd,config,root)}
   provisionWorkspace(root,config)
   writeStore(next);return next
@@ -262,7 +263,10 @@ export function setTeamRoot(name:string,path?:string,_create=true):Store {
 export function configureTeam(name:string,settings:TeamSettings,path?:string):Store {
   const store=readStore()
   if(!store.groups.includes(name))throw new Error('Unknown Team')
-  const previous=teamSettings(store,name),config=validateTeamSettings({...settings,directoryMode:settings.directoryMode??previous.directoryMode})
+  const previous=teamSettings(store,name)
+  if(previous.mode==='work'&&previous.directoryMode==='bind'&&settings.mode==='work'&&settings.pluginId===previous.pluginId&&settings.directoryMode===undefined&&path===undefined)return store
+  const samePlugin=settings.mode===previous.mode&&settings.pluginId===previous.pluginId
+  const config=validateTeamSettings({...settings,directoryMode:settings.directoryMode??(samePlugin?previous.directoryMode:undefined)})
   if(config.mode===previous.mode&&config.pluginId===previous.pluginId&&(config.mode!=='cloud'||JSON.stringify(config.remote)===JSON.stringify(previous.remote)))return store
   if(store.sessions.some(c=>c.group===name)&&(config.mode!==previous.mode||config.pluginId!==previous.pluginId))throw new Error('已有员工的 Team 不能切换工作区类型；请创建新的 Team')
   const root=chooseTeamRoot(name,config,config.directoryMode==='bind'?path??store.teamRoots?.[name]:undefined)

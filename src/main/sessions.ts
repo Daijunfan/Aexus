@@ -1,4 +1,5 @@
 import {activityPreview} from '../shared/activity'
+import {dirname} from 'node:path'
 import {closeNativeCodexSession,nativeCodexBusy,nativeCodexRequest,hasNativeCodexSession} from './codex-native'
 import {workspaceFiles} from './files'
 import {remoteTarget,type RemoteTarget} from '../shared/remote'
@@ -27,7 +28,7 @@ import { conversation, forget, restoreTranscript, saveTranscript } from './trans
 import { approvalHandler,nativeRequestHandler,elicitationHandler, approvalsFor, cancelApprovals } from './approvals'
 import {teamSettings,nativeSessionRefs,type Session} from '../shared/types'
 import {CLOUD_TOOLS,cloudToolAllowed,cloudClaudeSettings,workClaudeOptions} from './scope'
-import { employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName, managedTeamRoot } from './workspaces'
+import { employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName } from './workspaces'
 import { provisionEmployee } from './plugins/documents'
 
 const removingEmployees=new Set<string>(),removingTeams=new Set<string>()
@@ -272,7 +273,7 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode)
   const remote=config.mode==='cloud'?{...config.remote!,directory:cwd}:null
   if(!remote)provisionEmployee(cwd,root!,config)
-  const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?managedTeamRoot('',config):undefined
+  const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?dirname(workRoot):undefined
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!)
   const remoteLaunch=remote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',remote):undefined):undefined
   assertTeamAvailable(args.group)

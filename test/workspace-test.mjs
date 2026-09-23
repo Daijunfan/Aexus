@@ -8,10 +8,13 @@ const temp=mkdtempSync(join(tmpdir(),'agents-company-workspace-'))
 const home=join(temp,'state'),root=join(temp,'external-project'),outside=join(temp,'outside')
 for(const dir of [home,root,outside])mkdirSync(dir)
 process.env.AGENTS_COMPANY_HOME=home
+process.env.AGENTS_COMPANY_BUILTIN_PLUGINS=join(import.meta.dirname,'../build/plugins')
+const previousWorkspaces=process.env.AGENTS_COMPANY_WORKSPACES;delete process.env.AGENTS_COMPANY_WORKSPACES
 let n=0; const ok=(value,label)=>{assert.ok(value,label);console.log(`PASS  ${label}`);n++}
 try {
   await build({entryPoints:{workspaces:'src/main/workspaces.ts',canvas:'src/shared/canvas.ts'},outdir:join(temp,'lib'),bundle:true,platform:'node',format:'cjs',logLevel:'silent'})
-  const require=createRequire(import.meta.url),{teamRoot,employeeWorkspace,workspaceStatus}=require(join(temp,'lib/workspaces.js'))
+  const require=createRequire(import.meta.url),{teamRoot,employeeWorkspace,workspaceStatus,defaultTeamRoot}=require(join(temp,'lib/workspaces.js'))
+  ok(defaultTeamRoot('Planning',{mode:'work',pluginId:'mininotion'})===join(import.meta.dirname,'../PlugIns/mini-notion/workspaces/Planning')&&defaultTeamRoot('Research',{mode:'work',pluginId:'browser'})===join(import.meta.dirname,'../PlugIns/browser/workspaces/Research'),'production Work roots belong to each plugin source folder and remain separate per Team')
   const store={groups:['Engineering'],teamRoots:{Engineering:realpathSync(root)},teamSettings:{Engineering:{mode:'work',pluginId:'mininotion'}},sessions:[]}
   assert.throws(()=>teamRoot(home));assert.throws(()=>teamRoot('relative'))
   ok(true,'Team root must be an existing absolute external folder')
@@ -49,4 +52,4 @@ try {
   const all=planOffice({groups:['Engineering','Design'],sessions:cards,rooms:{}})
   ok(all[1].bounds.x>=all[0].bounds.x+all[0].bounds.width,'automatic Team placement prevents growth from crowding adjacent Teams')
   console.log(`PASS=${n} FAIL=0`)
-}finally{rmSync(temp,{recursive:true,force:true})}
+}finally{if(previousWorkspaces===undefined)delete process.env.AGENTS_COMPANY_WORKSPACES;else process.env.AGENTS_COMPANY_WORKSPACES=previousWorkspaces;rmSync(temp,{recursive:true,force:true})}

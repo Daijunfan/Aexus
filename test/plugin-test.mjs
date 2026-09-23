@@ -5,11 +5,11 @@ import os from 'node:os'
 import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const run=promisify(execFile),root=path.resolve(import.meta.dirname,'..')
-const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-plugin-'))),home=path.join(temp,'home'),workspace=path.join(temp,"Team's 工作空间",'mini-notion-workspace'),other=path.join(temp,"Team's 工作空间",'workspace-notes-workspace')
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-plugin-'))),home=path.join(temp,'home'),workspace=path.join(temp,"Team's 工作空间",'mini-notion-workspace','任意命名'),other=path.join(temp,"Team's 工作空间",'workspace-notes-workspace','Other')
 fs.mkdirSync(workspace,{recursive:true});fs.mkdirSync(other,{recursive:true})
 fs.writeFileSync(path.join(workspace,'AGENTS.md'),'# Keep user instructions\n')
 fs.writeFileSync(path.join(workspace,'CLAUDE.md'),'# Keep Claude instructions\n')
-const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.dirname(workspace)}
+const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.dirname(path.dirname(workspace))}
 const executable=process.env.AGENTS_COMPANY_TEST_CLI||process.execPath,prefix=process.env.AGENTS_COMPANY_TEST_CLI?[]:['bin/agents']
 const daemon=spawn(executable,[...prefix,'serve'],{cwd:root,env,stdio:['ignore','pipe','pipe']})
 const done=new Promise(resolve=>daemon.once('exit',resolve));let log='';daemon.stdout.on('data',d=>log+=d);daemon.stderr.on('data',d=>log+=d)
@@ -19,8 +19,8 @@ let count=0;const ok=(value,label)=>{assert.ok(value,label);count++;console.log(
 try{
   for(let i=0;i<100&&!fs.existsSync(path.join(home,'agents.sock'));i++)await new Promise(r=>setTimeout(r,50))
   ok((await cli('plugin','list')).some(p=>p.id==='mininotion'),'bundled manifest discovered without loading domain code')
-  await cli('group','add','任意命名','--root',workspace,'--mode','work','--plugin','mininotion')
-  await cli('group','add','Other','--root',workspace,'--mode','work','--plugin','mininotion')
+  await cli('group','add','任意命名','--mode','work','--plugin','mininotion')
+  await cli('group','add','Other','--mode','work','--plugin','mininotion')
   const guide=fs.readFileSync(path.join(workspace,'AGENTS.md'),'utf8')
   ok(guide.startsWith('# Keep user instructions')&&guide.includes('.agents-company/README.md'),'existing agent instructions preserved with discovery link')
   await cli('workspace','docs','--team','任意命名')
@@ -36,7 +36,7 @@ try{
   ok(fs.existsSync(path.join(workspace,`Documents/${page.id}.mininotion.json`)),'native page is an actual portable workspace file')
   await plugin('file.export',{pageId:page.id,type:'md',output:'writer/export.md'})
   ok(fs.readFileSync(path.join(workspace,'writer/export.md'),'utf8').includes('Portable note'),'packaged converter exports rich text through the CLI API')
-  ok((await plugin('page.list',{},'Other')).some(p=>p.id===page.id),'same-plugin Teams use the same managed root; employee scopes remain separate')
+  ok(!(await plugin('page.list',{},'Other')).some(p=>p.id===page.id),'same-plugin Teams have separate fixed roots')
   ok((await plugin('ui.register',{ready:false})).connected&&(await cli('plugin','describe','mininotion')).api.commands.some(c=>c.method==='ui.register'),'renderer readiness is a documented CLI API without opening a window')
   const view=await cli('plugin','view','mininotion','--team','任意命名'),base=new URL('.',view.url)
   ok((await fetch(view.url).then(r=>r.text())).includes('Mini Notion'),'plugin serves its own renderer')

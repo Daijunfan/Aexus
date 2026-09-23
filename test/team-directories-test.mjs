@@ -6,7 +6,7 @@ import {spawn,execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const run=promisify(execFile),project=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-team-')))
-const home=path.join(temp,'state'),work=path.join(temp,'work'),projects=path.join(temp,'projects'),external=path.join(temp,'Existing Project'),plugin=path.join(work,'mini-notion-workspace'),sub=path.join(plugin,'Department')
+const home=path.join(temp,'state'),work=path.join(temp,'work'),projects=path.join(temp,'projects'),external=path.join(temp,'Existing Project'),plugin=path.join(work,'mini-notion-workspace'),sub=path.join(plugin,'Scoped Work')
 for(const folder of [home,projects,external,sub])fs.mkdirSync(folder,{recursive:true})
 fs.writeFileSync(path.join(external,'keep.md'),'existing work')
 const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:work,AGENTS_COMPANY_PROJECTS:projects}
@@ -20,7 +20,7 @@ let service,done
 const cli=async(...args)=>{const reply=JSON.parse((await run(executable,[...prefix,...args,'--json'],{env,timeout:20000})).stdout);assert.ok(reply.ok,reply.error);return reply.data}
 const start=async()=>{service=spawn(executable,[...prefix,'serve'],{env,stdio:'ignore'});done=new Promise(r=>service.once('exit',r));for(let i=0;i<100;i++){try{await cli('status');return}catch{await new Promise(r=>setTimeout(r,30))}}throw new Error('Service unavailable')}
 const stop=async()=>{service.kill('SIGTERM');await done}
-const state=()=>cli('session','list'),add=(name,root,mode='build')=>cli('group','add',name,'--mode',mode,...(mode==='work'?['--plugin','mininotion']:[]),'--directory-mode','bind','--root',root)
+const state=()=>cli('session','list'),add=(name,root,mode='build')=>mode==='work'?cli('group','add',name,'--mode','work','--plugin','mininotion'):cli('group','add',name,'--mode','build','--directory-mode','bind','--root',root)
 let n=0;const ok=(value,label)=>{assert.ok(value,label);n++;console.log('PASS '+label)}
 try{
  await start();await add('Bound Build',external)
@@ -32,20 +32,22 @@ try{
  ok((await state()).groups.includes('Shared Build')&&!(await state()).sessions.some(c=>c.id===member.id)&&fs.existsSync(member.cwd),'deleting a populated bound Team preserves shared directories and other Teams')
  await add('Scoped Work',sub,'work')
  const worker=await cli('card','create','--title','Writer','--group','Scoped Work')
- ok(worker.cwd===path.join(sub,'Writer')&&fs.existsSync(path.join(worker.cwd,'AGENTS.md')),'Work Team can bind a plugin subfolder; employee defaults and docs use that root')
+ ok(worker.cwd===path.join(sub,'Writer')&&fs.existsSync(path.join(worker.cwd,'AGENTS.md')),'Work Team uses its fixed plugin folder; employee defaults and docs use that root')
  const live=await cli('session','open',worker.id);await cli('session','send',live.sessionId,'capture policy only')
  for(let i=0;i<250&&!fs.existsSync(capture);i++)await new Promise(r=>setTimeout(r,20))
  assert.ok(fs.existsSync(capture),JSON.stringify(await cli('session','snapshot',live.sessionId)))
  const invocation=JSON.parse(fs.readFileSync(capture));await cli('session','close',live.sessionId)
  ok(invocation.root===sub&&invocation.args.some(arg=>arg.includes(JSON.stringify(plugin)+'="deny"')&&arg.includes(JSON.stringify(worker.cwd)+'="write"')),'bound Work keeps its Team environment while denying native access to the entire plugin parent scope')
  await assert.rejects(()=>cli('card','create','--title','Outside','--group','Scoped Work','--directory-mode','bind','--cwd',plugin))
- fs.symlinkSync(external,path.join(plugin,'escape'))
- for(const folder of [external,path.join(plugin,'escape'),path.join(plugin,'missing')])await assert.rejects(()=>add('Invalid Work',folder,'work'))
+ fs.symlinkSync(external,path.join(sub,'escape'))
+ await assert.rejects(()=>cli('card','create','--title','Link','--group','Scoped Work','--directory-mode','bind','--cwd',path.join(sub,'escape')))
+ await assert.rejects(()=>cli('group','add','Invalid Work','--mode','work','--plugin','mininotion','--directory-mode','bind','--root',external))
+ await assert.rejects(()=>cli('group','add','Invalid Work','--mode','work','--plugin','mininotion','--root',external))
  await assert.rejects(()=>add('Missing Build',path.join(temp,'missing')))
  await assert.rejects(()=>add('App data',home))
- ok(!fs.existsSync(path.join(plugin,'missing'))&&!(await state()).groups.includes('Invalid Work'),'bindings reject missing folders, app data and Work permission escapes before writing')
+ ok(!(await state()).groups.includes('Invalid Work'),'bindings reject app data and Work Team overrides before writing')
  await add('Plugin Root',plugin,'work')
- ok((await state()).teamRoots['Plugin Root']===plugin,'Work binding also accepts the plugin permission root itself')
+ ok((await state()).teamRoots['Plugin Root']===path.join(plugin,'Plugin Root'),'another Work Team receives its own fixed plugin folder')
  await cli('group','root','Scoped Work',worker.cwd,'--directory-mode','bind').then(()=>assert.fail('employee would own Team root'),()=>{})
  ok((await state()).teamRoots['Scoped Work']===sub,'rebind rejects invalid employee ownership without changing the Team')
  await cli('group','add','Default Build')
@@ -53,10 +55,10 @@ try{
  await assert.rejects(()=>cli('group','rename','Default Build','Now Bound'))
  ok((await state()).teamRoots['Default Build']===external&&fs.existsSync(path.join(projects,'Default Build')),'existing default Team can switch to binding without moving old workfiles')
  await cli('group','add','Change mode')
- await cli('group','configure','Change mode','--mode','work','--plugin','mininotion','--directory-mode','bind','--root',sub)
- ok((await state()).teamRoots['Change mode']===sub,'empty Team mode and directory changes validate and apply together')
+ await cli('group','configure','Change mode','--mode','work','--plugin','mininotion')
+ ok((await state()).teamRoots['Change mode']===path.join(plugin,'Change mode'),'empty Team mode change selects the fixed plugin folder')
  await stop();await start()
- ok((await state()).teamSettings['Scoped Work'].directoryMode==='bind'&&(await cli('workspace','suggest','--team','Scoped Work')).path===sub,'directory binding and employee suggestions survive service restart')
+ ok((await state()).teamRoots['Scoped Work']===sub&&(await cli('workspace','suggest','--team','Scoped Work')).path===sub,'fixed Work folder and employee suggestions survive service restart')
  // References shared with an employee outside the deleted Team must be retained.
  const a=await cli('card','create','--title','A','--group','Shared Build'),b=await cli('card','create','--title','B','--group','Default Build')
  const stored=await state();for(const id of [a.id,b.id])stored.sessions.find(c=>c.id===id).threadId='11111111-1111-4111-8111-111111111111'

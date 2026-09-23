@@ -1,13 +1,28 @@
 import {remoteTarget} from '../shared/remote'
-import { existsSync, mkdirSync, realpathSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import { posix,win32,dirname, isAbsolute, relative, resolve, sep,join } from 'node:path'
 import {homedir} from 'node:os'
 import {employeeDirectoryName} from '../shared/office'
 import { APP_HOME } from '../shared/protocol'
 import {requirePlugin} from './plugins/registry'
+import {managerCliRoot} from './exec'
 import type { Store, StoredSession, TeamSettings } from '../shared/types'
 import { teamSettings } from '../shared/types'
 export { employeeDirectoryName as workspaceName } from '../shared/office'
+
+/** User files live under the persistent plugin source, never inside the packaged App. */
+export function pluginWorkspaceBase(id:string):string {
+  const plugin=requirePlugin(id),marker=join(plugin.directory,'source-location.json')
+  const source=existsSync(marker)?JSON.parse(readFileSync(marker,'utf8')).source:plugin.directory
+  if(typeof source!=='string'||!existsSync(source))throw new Error(`插件文件夹不存在：${source}`)
+  return resolve(process.env.AGENTS_COMPANY_WORKSPACES||join(realpathSync(source),'workspaces'),process.env.AGENTS_COMPANY_WORKSPACES?(plugin.workspaceDirectory||`${plugin.id}-workspace`):'')
+}
+
+/** Previous direct-plugin workspace, retained so the first open can import its files. */
+export function legacyPluginWorkspace(id:string):string {
+  const plugin=requirePlugin(id)
+  return join(process.env.AGENTS_COMPANY_WORKSPACES||join(homedir(),'develop','Agents-company-workspace'),plugin.workspaceDirectory||`${plugin.id}-workspace`)
+}
 
 export function inside(root: string, path: string): boolean {
   const part = relative(root, path)
@@ -15,42 +30,38 @@ export function inside(root: string, path: string): boolean {
 }
 
 export function defaultTeamRoot(name:string,settings:TeamSettings={mode:'build'}):string {
-  if(settings.mode==='work') {
-    const plugin=requirePlugin(settings.pluginId||'')
-    return join(process.env.AGENTS_COMPANY_WORKSPACES||join(homedir(),'develop','Agents-company-workspace'),plugin.workspaceDirectory||`${plugin.id}-workspace`)
-  }
   const clean=name.trim()
+  if(clean&& (clean==='.'||clean==='..'||/[\\/\0]/.test(clean)))throw new Error('Team 名称不能包含路径分隔符或使用 . / ..')
+  if(settings.mode==='work') {
+    return join(pluginWorkspaceBase(settings.pluginId||''),clean||'default')
+  }
   if(!clean||clean==='.'||clean==='..'||/[\\/\0]/.test(clean))throw new Error('Team 名称不能包含路径分隔符或使用 . / ..')
   return join(process.env.AGENTS_COMPANY_PROJECTS||join(homedir(),'develop','Agents-company-projects'),clean)
 }
 
 export function managedTeamRoot(name:string,settings:TeamSettings,path?:string):string {
   if(settings.mode==='cloud')throw new Error('云主机使用 Team 配置中的远端目录，不生成本机目录')
-  const suggested=defaultTeamRoot(name,settings),base=teamRoot(dirname(suggested),'preview'),expected=teamRoot(suggested,'preview')
+  const suggested=defaultTeamRoot(name,settings),base=teamRoot(dirname(suggested),'preview',settings.mode==='work'),expected=teamRoot(suggested,'preview',settings.mode==='work')
   if(!inside(base,expected))throw new Error('工作目录链接不能指向规定的目录范围以外')
-  if(path&&teamRoot(path,'preview')!==expected)throw new Error(`此 Team 的工作目录固定为 ${expected}`)
+  if(path&&teamRoot(path,'preview',settings.mode==='work')!==expected)throw new Error(`此 Team 的工作目录固定为 ${expected}`)
   return expected
 }
 
-/** Binding reuses a physical directory. Work bindings stay in the plugin's permission root. */
+/** Work Teams use one fixed plugin-owned folder; Build Teams may bind a folder. */
 export function chooseTeamRoot(name:string,settings:TeamSettings,path?:string,preview=false):string {
   if(settings.mode==='cloud'){const remote=remoteTarget(settings.remote);if(!remote)throw new Error('云主机 Team 缺少连接配置');return remote.directory}
+  if(settings.mode==='work')return teamRoot(managedTeamRoot(name,settings,path),preview?'preview':true,true)
   if(settings.directoryMode!=='bind')return teamRoot(managedTeamRoot(name,settings,path),preview?'preview':true)
-  const root=teamRoot(path||'')
-  if(settings.mode==='work'){
-    const permission=managedTeamRoot(name,settings)
-    if(root!==permission&&!inside(permission,root))throw new Error(`Work Team 必须绑定插件权限目录内的文件夹：${permission}`)
-  }
-  return root
+  return teamRoot(path||'')
 }
 
-export function teamRoot(path: string,create:boolean|'preview'=false): string {
+export function teamRoot(path: string,create:boolean|'preview'=false,pluginWorkspace=false): string {
   if (!path || !isAbsolute(path)) throw new Error('Team 必须绑定一个已存在的外部文件夹（绝对路径）')
   let ancestor=resolve(path);while(!existsSync(ancestor))ancestor=dirname(ancestor)
   if(!statSync(ancestor).isDirectory())throw new Error('Team 根目录必须是文件夹')
   const root=resolve(realpathSync(ancestor),relative(ancestor,resolve(path)))
   const appHome = existsSync(APP_HOME) ? realpathSync(APP_HOME) : resolve(APP_HOME)
-  if (root === appHome || inside(appHome, root)) throw new Error('请选择应用数据目录以外的 Team 文件夹')
+  if ((root === appHome || inside(appHome, root))&&!pluginWorkspace) throw new Error('请选择应用数据目录以外的 Team 文件夹')
   if(create==='preview')return root
   if(create)mkdirSync(root,{recursive:true})
   if(!existsSync(root))throw new Error('Team 根目录不存在，请选择文件夹或允许创建目录')
@@ -61,25 +72,26 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
   const configured = store.teamRoots?.[group]
   if (!group || !store.groups.includes(group) || !configured) throw new Error('请先为所属 Team 绑定外部根目录')
   if(teamSettings(store,group).mode==='cloud')return cloudDirectory(teamSettings(store,group),input)
-  const root = teamRoot(configured)
-  if(root!==configured)throw new Error('Team 根目录已被移动或替换，请重新绑定目录')
   const work=teamSettings(store,group).mode==='work'
+  const root = teamRoot(configured,false,work)
+  if(root!==configured)throw new Error('Team 根目录已被移动或替换，请重新绑定目录')
+  const manager=managerCliRoot(root)===root
   if (!input?.trim()) throw new Error('请选择员工的工作文件夹')
   const target = resolve(root, input)
   let ancestor = target
   while (!existsSync(ancestor)) ancestor = dirname(ancestor)
   const actualAncestor = realpathSync(ancestor)
   if(!statSync(actualAncestor).isDirectory()) throw new Error('员工工作空间必须是文件夹')
-  if (work && actualAncestor !== root && !inside(root, actualAncestor)) throw new Error('工作目录超出所属 Team 的范围，请选择 Team 根目录或其子目录')
+  if ((work||manager) && actualAncestor !== root && !inside(root, actualAncestor)) throw new Error('工作目录超出所属 Team 的范围，请选择 Team 根目录或其子目录')
   const prospective=resolve(actualAncestor,relative(ancestor,target))
-  if(work&&prospective===root)throw new Error('Work 员工必须使用插件工作区中的子文件夹，不能使用插件根目录')
-  if(work&&prospective!==root&&!inside(root,prospective))throw new Error('员工工作空间必须位于 Team 根目录或其子文件夹中')
+  if((work||manager)&&prospective===root)throw new Error('员工必须使用 Team 根目录中的子文件夹，不能直接使用 Team 根目录')
+  if((work||manager)&&prospective!==root&&!inside(root,prospective))throw new Error('员工工作空间必须位于 Team 根目录或其子文件夹中')
   const appHome=existsSync(APP_HOME)?realpathSync(APP_HOME):resolve(APP_HOME)
-  if(prospective===appHome||inside(appHome,prospective)) throw new Error('员工工作空间不能使用应用数据目录')
+  if((prospective===appHome||inside(appHome,prospective))&&!(work&&inside(pluginWorkspaceBase(teamSettings(store,group).pluginId!),prospective))) throw new Error('员工工作空间不能使用应用数据目录')
   for (const card of store.sessions) {
-    if (card.id === id||!work||teamSettings(store,card.group).mode!=='work') continue
+    if (card.id === id||!(work||manager)) continue
     const other = existsSync(card.cwd)?realpathSync(card.cwd):resolve(card.cwd)
-    if (teamSettings(store,group).mode==='work'&&teamSettings(store,card.group).mode==='work'&&other===prospective) throw new Error('Work 模式下一个文件夹对应一个员工；可以选择父目录或嵌套子目录')
+    if ((work&&teamSettings(store,card.group).mode==='work'||manager&&card.group===group)&&other===prospective) throw new Error('该 Team 的一个文件夹只能对应一名员工；可以选择父目录或嵌套子目录')
   }
   if(directoryMode&&!['create','existing'].includes(directoryMode))throw new Error('目录方式必须为 create 或 existing')
   if(directoryMode==='create'&&existsSync(target))throw new Error('这个文件夹已存在，请选择“绑定已有文件夹”')
@@ -89,7 +101,7 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
   if(!existsSync(target))throw new Error('员工工作目录已不存在，请在员工资料中重新选择目录')
   const cwd = realpathSync(target)
   if ((work&&cwd!==root&&!inside(root, cwd)) || !statSync(cwd).isDirectory()) throw new Error('工作空间必须是 Team 内部的真实文件夹')
-  if(cwd===appHome||inside(appHome,cwd)) throw new Error('员工工作空间不能使用应用数据目录')
+  if((cwd===appHome||inside(appHome,cwd))&&!(work&&inside(pluginWorkspaceBase(teamSettings(store,group).pluginId!),cwd))) throw new Error('员工工作空间不能使用应用数据目录')
   return cwd
 }
 

@@ -7,7 +7,9 @@ import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const require=createRequire(import.meta.url),{_electron:electron,expect}=require('@playwright/test'),root=path.resolve(import.meta.dirname,'..')
 const run=promisify(execFile)
-const home=fs.mkdtempSync(path.join(os.tmpdir(),'ac-start-')),env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_HIDDEN:'1'};delete env.ELECTRON_RUN_AS_NODE
+const sandbox=fs.mkdtempSync(path.join(os.tmpdir(),'ac-start-')),home=path.join(sandbox,'state'),manager=path.join(sandbox,'Agents-Managers')
+fs.mkdirSync(manager);fs.writeFileSync(path.join(manager,'.agents-company-manager'),'agents-company-manager/v1\n')
+const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_PROJECTS:path.join(sandbox,'projects'),AGENTS_COMPANY_WORKSPACES:path.join(sandbox,'work'),AGENTS_COMPANY_HIDDEN:'1'};delete env.ELECTRON_RUN_AS_NODE
 const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env})
 let closed=false
 try{
@@ -19,9 +21,19 @@ try{
  assert.equal((await cli('group','add','Packaged smoke','--mode','build')).ok,true)
  assert.ok((await cli('group','list')).data.includes('Packaged smoke'))
  console.log('PASS the hidden app serves the same CLI API and persists a Team in isolated data')
+ const browser=await cli('plugin','describe','browser');assert.equal(browser.ok,true)
+ assert.ok(fs.existsSync(path.join(browser.data.directory,'source-location.json')),'Packaged plugin lost its persistent source-folder locator')
+ assert.equal((await cli('group','add','Managers','--mode','build','--directory-mode','bind','--root',manager)).ok,true)
+ const hire=await cli('card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low')
+ assert.equal(hire.ok,true)
+ assert.ok(fs.existsSync(path.join(hire.data.cwd,'.agents-company/manager/API.md')))
+ assert.ok(!fs.existsSync(path.join(manager,'API.md')))
+ const launcher=path.join(hire.data.cwd,'.agents-company/bin/agents')
+ assert.equal(JSON.parse((await run(launcher,['status','--json'],{cwd:hire.data.cwd,env,timeout:10000})).stdout).data.running,true)
+ console.log('PASS packaged Manager employee receives its own API copy and executable host CLI without Team-root documents')
  await app.evaluate(async({BrowserWindow})=>{await BrowserWindow.getAllWindows()[0].loadURL('data:text/html;charset=utf-8,<title>Startup failed</title><p>unreadable old resource</p>')})
  await expect(page).toHaveTitle('Startup failed')
  const start=Date.now();await app.close();closed=true
  assert.ok(Date.now()-start<5000,'Startup failure must not get trapped behind an unreachable flush response')
  console.log('PASS an uninitialized/reloaded renderer can quit without a 12-second flush deadlock')
-}finally{if(!closed)await app.close();fs.rmSync(home,{recursive:true,force:true})}
+}finally{if(!closed)await app.close();fs.rmSync(sandbox,{recursive:true,force:true})}

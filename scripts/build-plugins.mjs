@@ -8,4 +8,5 @@ for(const folder of fs.readdirSync(source,{withFileTypes:true}).filter(entry=>en
   const out=path.join(root,'build/plugins',folder.name)
   const result=spawnSync('npm',['--prefix',directory,'run','build:plugin','--','--out',out],{stdio:'inherit'})
   if(result.status!==0)process.exit(result.status??1)
+  fs.writeFileSync(path.join(out,'source-location.json'),JSON.stringify({source:fs.realpathSync(directory)})+'\n')
 }

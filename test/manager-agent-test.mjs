@@ -1,7 +1,7 @@
 // Real Codex app-server and sandbox, deterministic local model fixture. No inference.
 import fs from'node:fs';import os from'node:os';import path from'node:path';import http from'node:http';import{spawn,execFile}from'node:child_process';import{promisify}from'node:util';import{createRequire}from'node:module';import{build}from'esbuild';import assert from'node:assert/strict'
-const run=promisify(execFile),require=createRequire(import.meta.url),root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-manager-agent-')),manager=path.join(temp,'Agents-Managers'),staff=path.join(manager,'Director'),codex=path.join(os.homedir(),'.npm-global/bin/codex'),events=[],requests=[];fs.mkdirSync(staff,{recursive:true});fs.mkdirSync(path.join(temp,'codex-home'));fs.mkdirSync(path.join(temp,'state'))
-fs.writeFileSync(path.join(manager,'API.md'),'Manager agent test');fs.writeFileSync(path.join(manager,'agents'),`#!/bin/sh\nexec node '${root}/bin/agents' "$@"\n`,{mode:0o755})
+const run=promisify(execFile),require=createRequire(import.meta.url),root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-manager-agent-')),manager=path.join(temp,'Agents-Managers'),staff=path.join(manager,'Director'),codex=path.join(os.homedir(),'.npm-global/bin/codex'),events=[],requests=[];fs.mkdirSync(manager,{recursive:true});fs.mkdirSync(path.join(temp,'codex-home'));fs.mkdirSync(path.join(temp,'state'))
+fs.writeFileSync(path.join(manager,'.agents-company-manager'),'agents-company-manager/v1\n')
 const model=http.createServer(async(req,res)=>{let raw='';for await(const part of req)raw+=part;if(!req.url?.endsWith('/responses')){res.writeHead(404).end();return}const body=JSON.parse(raw);requests.push(body)
  const tools=[...(body.tools??[]),...(body.input??[]).filter(x=>x.type==='additional_tools').flatMap(x=>x.tools||[])],names=tools.flatMap(t=>t.type==='namespace'?t.tools.map(x=>x.name):[t.name]);let item
  if(requests.length===1){const params={cmd:'agents group add Managed-by-agent --mode build --json',workdir:staff,max_output_tokens:500};item=names.includes('exec_command')?{type:'function_call',id:'fc_manager',call_id:'call_manager',name:'exec_command',arguments:JSON.stringify(params)}:{type:'custom_tool_call',id:'fc_manager',call_id:'call_manager',name:'exec',input:`const result=await tools.exec_command(${JSON.stringify(params)});text(result)`}}
@@ -16,6 +16,9 @@ const sdk=require.resolve('@anthropic-ai/claude-agent-sdk'),bundle=path.join(tem
 const daemon=spawn(process.execPath,[root+'/bin/agents','serve'],{env:process.env,stdio:'ignore'}),done=new Promise(resolve=>daemon.once('exit',resolve)),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000)
 try{
  for(let i=0;i<100;i++){try{const out=JSON.parse((await run(process.execPath,[root+'/bin/agents','status','--json'],{env:process.env,timeout:2000})).stdout);if(out.ok)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
+ await run(process.execPath,[root+'/bin/agents','group','add','Managers','--mode','build','--directory-mode','bind','--root',manager,'--json'],{env:process.env})
+ await run(process.execPath,[root+'/bin/agents','card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low','--json'],{env:process.env})
+ assert.ok(fs.existsSync(path.join(staff,'.agents-company/manager/API.md')))
  await runCodexTurn({cwd:staff,model:'gpt-6-luna',effort:'low',sandbox:'workspace-write',prompt:'Create a Team through the manager CLI.',signal:controller.signal,onRequest:async()=>{throw Error('Unexpected interactive request')},onEvent:event=>events.push(event)})
  assert.ok(requests.length>=2,'The sandboxed tool did not return to the model');assert.ok(requests.every(r=>r.model==='gpt-6-luna'&&r.reasoning?.effort==='low'))
  assert.ok(events.some(e=>e.kind==='tool-end'&&e.exitCode===0),JSON.stringify(events).slice(-3000))

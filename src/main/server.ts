@@ -14,7 +14,7 @@ import {openTerminal,listTerminals,readTerminal,inputTerminal,resizeTerminal,clo
 import { getView, setView } from './presentation'
 import type { ViewState } from '../shared/view'
 import { createServer, connect, type Server, type Socket } from 'node:net'
-import { existsSync, unlinkSync } from 'node:fs'
+import { existsSync, unlinkSync, cpSync, renameSync, rmSync } from 'node:fs'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { createInterface } from 'node:readline'
@@ -53,7 +53,7 @@ import {
 import { renameGroup, designRoom, updateEmployee, employeeFields, setTeamRoot, bindTeamRoot, setBounds, placeEmployee, setViewport,configureTeam,validateTeamSettings } from './store'
 import {teamSettings,nativeSessionRefs} from '../shared/types'
 import {workspaceFiles} from './files'
-import { employeeWorkspace, chooseEmployeeWorkspace, executionEmployee, cloudDirectory, cloudRelative, workspaceName, workspaceStatus, teamRoot, managedTeamRoot, chooseTeamRoot } from './workspaces'
+import { employeeWorkspace, chooseEmployeeWorkspace, executionEmployee, cloudDirectory, cloudRelative, workspaceName, workspaceStatus, teamRoot, managedTeamRoot, chooseTeamRoot, legacyPluginWorkspace, inside } from './workspaces'
 import { planOffice, DEFAULT_VIEW } from '../shared/canvas'
 import { listPlugins, requirePlugin, installPlugin, pluginFile } from './plugins/registry'
 import { callPlugin, openPluginView, closePluginView,releaseWorkspacePlugins } from './plugins/runtime'
@@ -193,7 +193,7 @@ export async function handleRequest(req: Request): Promise<any> {
       writeStore(store);return {plugin,workspaces}
     }
     case 'workspace.docs':
-      {const context=workspaceContext(a);return context.settings.mode==='cloud'?{mode:'cloud',workspace:context.root,documentation:'Modules/Tunnel/README.md'}:provisionWorkspace(context.root,context.settings,context.teamRoot)}
+      {const context=workspaceContext(a);return context.settings.mode==='cloud'?{mode:'cloud',workspace:context.root,documentation:'Modules/Tunnel/README.md'}:a.employee?provisionEmployee(context.root,context.teamRoot,context.settings):provisionWorkspace(context.root,context.settings,context.teamRoot)}
     case 'plugin.call':
       return callPlugin(s(a.id),pluginWorkspace(a),s(a.method),a.params??{})
     case 'plugin.open': {
@@ -417,6 +417,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'group.root': case 'group.migrate': {
       const store=readStore(),config=teamSettings(store,s(a.name))
       if(config.mode==='cloud')throw new Error('云主机目录请通过 group configure 更新，不会在本地迁移')
+      if(config.mode==='work'&&req.cmd==='group.root')throw new Error('Work Team 使用插件固定工作目录，不能手动绑定 Team 文件夹')
       if(req.cmd==='group.root'&&a.directoryMode==='bind'){
         const root=chooseTeamRoot(s(a.name),{...config,directoryMode:'bind'},a.root)
         const next={...store,teamRoots:{...store.teamRoots,[a.name]:root}}
@@ -564,7 +565,13 @@ async function removeEmployees(ids:string[]) {
 
 function pluginWorkspace(args:Record<string,any>):string {
   if(!args.team&&!args.employee&&!args.workspace){
-    const settings={mode:'work' as const,pluginId:String(args.id)},root=teamRoot(managedTeamRoot('',settings),true)
+    const settings={mode:'work' as const,pluginId:String(args.id)},destination=managedTeamRoot('',settings),legacy=legacyPluginWorkspace(settings.pluginId)
+    if(!existsSync(destination)&&existsSync(legacy)&&!inside(legacy,destination)){
+      mkdirSync(dirname(destination),{recursive:true})
+      const stage=destination+'.import-'+process.pid
+      try{cpSync(legacy,stage,{recursive:true,filter:file=>!file.startsWith(legacy+'/.agents-company')});renameSync(stage,destination)}finally{rmSync(stage,{recursive:true,force:true})}
+    }
+    const root=teamRoot(destination,true,true)
     provisionWorkspace(root,settings);return root
   }
   const context=workspaceContext(args)
@@ -576,11 +583,11 @@ function workspaceContext(args:Record<string,any>) {
   const store=readStore(),roots=store.teamRoots??{}
   const employee=args.employee?store.sessions.find(c=>c.id===args.employee):undefined
   if(args.employee&&!employee)throw new Error('Unknown employee')
-  const name=employee?.group??args.team??Object.entries(roots).find(([,root])=>args.workspace&&root===teamRoot(String(args.workspace)))?.[0]
+  const name=employee?.group??args.team??Object.entries(roots).find(([,root])=>args.workspace&&root===teamRoot(String(args.workspace),false,true))?.[0]
   if(!name||!roots[name])throw new Error('Choose a registered --team or --employee')
   if(employee&&args.team&&employee.group!==args.team)throw new Error('员工不属于这个 Team')
   if(teamSettings(store,name).mode==='cloud')return {name,store,teamRoot:roots[name],root:employee?employee.cwd:roots[name],settings:teamSettings(store,name)}
-  const root=teamRoot(roots[name])
+  const root=teamRoot(roots[name],false,teamSettings(store,name).mode==='work')
   if(root!==roots[name])throw new Error('Team 根目录已被移动或替换，请重新绑定目录')
   return {name,store,teamRoot:root,root:employee?employeeWorkspace(store,name,employee.cwd,employee.id):root,settings:teamSettings(store,name)}
 }

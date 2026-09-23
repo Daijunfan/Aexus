@@ -57,7 +57,7 @@ export function resolveBinary(name: string, override?: string): string {
 /** A local Manager employee can reach the host CLI from any nested workspace. */
 export function managerCliRoot(cwd?:string,workRoot?:string):string|undefined {
   if(cwd&&!workRoot)for(let folder=resolve(cwd);;folder=dirname(folder)){
-    if(basename(folder)==='Agents-Managers'&&existsSync(join(folder,'agents'))&&existsSync(join(folder,'API.md')))return folder
+    if(basename(folder)==='Agents-Managers'&&existsSync(join(folder,'.agents-company-manager')))return folder
     if(dirname(folder)===folder)break
   }
   return undefined
@@ -68,7 +68,7 @@ export function childEnv(cwd?: string,workRoot?:string): NodeJS.ProcessEnv {
   const path = process.env.PATH ?? ''
   const parts = path.split(':').filter(Boolean)
   const missing = NODE_DIRS.filter((d) => existsSync(join(d, 'node')) && !parts.includes(d))
-  const manager=managerCliRoot(cwd,workRoot)
+  const manager=managerCliRoot(cwd,workRoot)&&cwd&&existsSync(join(cwd,'.agents-company','bin','agents'))?join(cwd,'.agents-company','bin'):undefined
   const env={...process.env}
   for(const key of ['AGENTS_WORKSPACE','AGENTS_TEAM_ROOT','AGENTS_COMPANY_PLUGIN_RPC'])delete env[key]
   return { ...env, ...(workRoot&&cwd?{AGENTS_WORKSPACE:cwd,AGENTS_TEAM_ROOT:workRoot}:{}), PATH: [...(workRoot&&cwd?[join(cwd,'.agents-company','bin')]:[]),...(manager?[manager]:[]),...missing, ...parts].join(':') }

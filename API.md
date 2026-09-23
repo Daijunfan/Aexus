@@ -437,23 +437,23 @@ focusing a window.
 
 ## Workspace enforcement and existing data
 
-Work roots are auto-created under `~/develop/Agents-company-workspace` using the
-plugin manifest's `workspaceDirectory` (default `<plugin-id>-workspace`). MiniNotion
-uses `mini-notion-workspace`. Teams for the same plugin share its root by default. Employees
+New Work roots are auto-created under the plugin's persistent source folder:
+`PlugIns/<plugin>/workspaces/<exact Team name>`. Each Team has a separate fixed root;
+the App never writes new workspaces inside its own packaged resources. Existing Work
+Teams keep their registered roots until explicitly migrated. Employees
 must use strict subdirectories, which can be nested; exact directory aliases cannot
 be assigned twice in Work. Build roots are auto-created under
 `~/develop/Agents-company-projects/<Team name>` and may be shared by their employees.
 All paths are canonicalized; traversal and outward symlinks are rejected.
 
-`group.add` accepts `--directory-mode default|bind` (`directoryMode` in JSON).
-Default generation uses the managed roots above. Binding requires `--root` to be
-an existing physical folder and creates no additional Team-named directory. Work
-Teams can bind their plugin permission root or an existing descendant. Build Teams
-can bind other physical folders outside app-owned state. Employee defaults use the
-selected Team root; Work employees must remain strict descendants of that root.
-Binding preserves existing files. Team names are fixed after creation.
-`group.root NAME PATH --directory-mode bind` changes an existing binding without
-moving files; existing Work employees must still fit inside the new Team root.
+For a Work Team, `group.add NAME --mode work --plugin ID` selects that plugin's fixed
+`workspaces/NAME` folder. `--root` and `--directory-mode bind` cannot choose a Work
+Team folder. Build Teams still accept `--directory-mode default|bind` (`directoryMode`
+in JSON); binding requires `--root` to be an existing physical folder and creates
+no additional Team-named directory. `group.root NAME PATH --directory-mode bind`
+changes a Build binding without moving files. Team names are fixed after creation.
+Legacy Work roots and their files stay registered; `group.migrate NAME` is an explicit
+operation, never an automatic move during upgrade.
 
 `card.create`, `card.update` and `session.new` accept `--directory-mode default|bind`
 (`directoryMode` in JSON). `default` creates `<Team root>/<exact employee title>`;
@@ -461,7 +461,7 @@ Chinese, spaces and case are preserved. Path separators and `.` / `..` cannot be
 used as generated folder names. A default request cannot override the derived path.
 An existing employee may keep its own already-generated folder.
 
-`bind` requires an existing physical directory and never creates it. Work bindings
+Employee `bind` requires an existing physical directory and never creates it. Work employee bindings
 must remain strict descendants of their Team root, with outward symlinks and
 exact duplicate ownership rejected. Build can bind another physical folder outside
 its Team root; both modes exclude the app's data directory. A Build employee bound
@@ -520,8 +520,9 @@ Text reads return a hash for conflict-aware saves. Binary files and files above
 
 
 `workspace suggest --team NAME [--mode work|build --plugin ID]` returns the managed
-path without creating it. `AGENTS_COMPANY_WORKSPACES` and `AGENTS_COMPANY_PROJECTS`
-override their respective bases for isolated deployments/tests. `workspace choose
+path without creating it. `AGENTS_COMPANY_WORKSPACES` overrides the Work base for
+isolated deployments/tests; the plugin's `workspaceDirectory` and Team name are still
+appended. `AGENTS_COMPANY_PROJECTS` overrides the Build base. `workspace choose
 [--path PATH]` opens the desktop directory picker only on explicit request; CLI
 callers can supply `--cwd` directly. Employee forms offer create/existing choices;
 Team forms display their automatically computed directory.
@@ -891,7 +892,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu |
 | <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu |
 | <code>agents group list</code> | <code>—</code> | List departments | Department headings |
-| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Create a Team and its shared execution environment | “+ Department” |
+| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” |
 | <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Configure Team plugin or shared SSH connection | Team 工作方式与连接 |
 | <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department |
 | <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign |

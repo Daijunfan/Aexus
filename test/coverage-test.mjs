@@ -63,7 +63,7 @@ const cliCommands = new Set(
   [...cli.matchAll(/case '([a-z]+\.[a-z]+)'/g)].map((m) => m[1])
 )
 const declared = new Set([...protocol.matchAll(/name: '([a-z]+\.[a-z]+)'/g)].map((m) => m[1]))
-const managerGuide=readFileSync(join(ROOT,'Agents-Managers','API.md'),'utf8')
+const managerGuide=readFileSync(join(ROOT,'docs','managers','API.md'),'utf8')
 
 console.log('CLI / GUI coverage — static check\n')
 

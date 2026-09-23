@@ -17,6 +17,7 @@ const cli=async(...args)=>{const r=JSON.parse((await exec(process.execPath,[path
 const plugin=(method,params={})=>cli('plugin','call','mininotion',method,'--team','工作空间','--params',JSON.stringify(params))
 let checks=0;const ok=(value,label)=>{assert.ok(value,label);checks++;console.log('PASS '+label)}
 const artifacts=process.env.AGENTS_COMPANY_TEST_ARTIFACTS||path.join(root,'artifacts');fs.mkdirSync(artifacts,{recursive:true})
+let frame=page
 try{
  await page.locator('.infinite-canvas').waitFor()
  await cli('group','add','工作空间','--mode','work','--plugin','mininotion')
@@ -28,7 +29,7 @@ try{
  const notes=await plugin('page.create',{title:'会议记录',color:'white',icon:'🗒️',blocks:[{type:'paragraph',content:'周一同步 · 目标、进度与下一步'}]})
  const db=await plugin('database.create',{title:'任务清单',color:'white',view:'board'})
  for(const [title,status] of [['整理产品需求','未开始'],['完成页面设计','进行中'],['验证 CLI 接口','已完成']])await plugin('record.create',{databaseId:db.id,title,color:'white',values:{status,priority:'中'}})
- const opening=app.waitForEvent('window');await page.locator('.plugin-directory-button[data-plugin="mininotion"]').click();let frame=await opening;await frame.locator('.sidebar').waitFor()
+ const opening=app.waitForEvent('window');await cli('plugin','open','mininotion','--team','工作空间');frame=await opening;await frame.locator('.sidebar').waitFor()
  ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())),'all windows are hidden')
  ok(await page.locator('.company-header').isVisible()&&await page.locator('iframe').count()===0,'plugin opens in an independent native window')
  await plugin('page.open',{pageId:plan.id})
@@ -42,7 +43,7 @@ try{
  await frame.locator('.bn-editor').click();await frame.locator('.bn-editor').press('End');await frame.locator('.bn-editor').pressSequentially(' 可编辑正文',{delay:3})
  await cli('plugin','dismiss',(await cli('plugin','windows'))[0].id)
  ok(JSON.stringify(await plugin('page.get',{pageId:plan.id})).includes('可编辑正文'),'title and document edits persist through shared CLI data and flush on close')
- const reopened=app.waitForEvent('window');await cli('view','open','plugin','--plugin','mininotion');frame=await reopened;await frame.locator('.sidebar').waitFor()
+ const reopened=app.waitForEvent('window');await cli('plugin','open','mininotion','--team','工作空间');frame=await reopened;await frame.locator('.sidebar').waitFor()
  await frame.locator('.sidebar-nav').getByRole('button',{name:'主页',exact:true}).click()
  await expect(frame.locator('.recent-card')).toHaveCount(6)
  await expect(frame.locator('.overview')).toBeVisible()

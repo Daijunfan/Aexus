@@ -5,9 +5,9 @@ and animated companions on an expandable canvas. Desktop actions use the same
 backend APIs as the terminal.
 
 For CLI control of the entire company, see the self-contained
-[Manager CLI handbook](Agents-Managers/API.md). A future local Build Team can bind
-`Agents-Managers/` as its root; all of its employees then receive the `agents`
-launcher on PATH and can manage other Teams, employees, sessions, files, plugins
+[Manager CLI handbook](docs/managers/API.md). A future local Build Team can bind
+`Agents-Managers/` as its root; each employee receives its own copy of the handbook
+and `agents` launcher inside its Workspace, and can manage Teams, employees, sessions, files, plugins
 and scheduled tasks through the same Core API.
 
 The host and each `PlugIns/<name>/` source directory use separate Git repositories.
@@ -70,8 +70,8 @@ Work Team requires an installed plugin. Empty Teams can change mode/plugin; a Te
 with employees keeps its workspace type so existing files cannot be silently reassigned.
 Existing unclassified Teams remain Build.
 
-- Work: `~/develop/Agents-company-workspace/<plugin-workspace-directory>`.
-  MiniNotion uses `mini-notion-workspace`; all MiniNotion Teams share this root.
+- Work: `PlugIns/<plugin>/workspaces/<exact Team name>` inside the persistent plugin source folder.
+  Each Team gets its own fixed folder; Team creation does not offer a folder picker.
 - Build: `~/develop/Agents-company-projects/<exact Team name>`.
 - Cloud: an existing remote root configured on the Team; employee subfolders can be created over SSH.
 - Default local Team creation creates its directory automatically. Build Team names preserve
@@ -83,7 +83,8 @@ Existing unclassified Teams remain Build.
   another macOS folder. Cloud employees choose folders inside their Team remote root. The application's own data directory is excluded.
   CLI: `--directory-mode default|bind`; `--cwd PATH` selects the bound folder.
 
-Test/deployment overrides: `AGENTS_COMPANY_WORKSPACES` (Work base) and
+Test/deployment overrides: `AGENTS_COMPANY_WORKSPACES` (Work base, followed by the plugin's
+`workspaceDirectory` and Team name) and
 `AGENTS_COMPANY_PROJECTS` (Build base). The defaults above apply on this Mac.
 
 Work employees must use strict subfolders of the plugin root, including nested folders. There
@@ -289,16 +290,15 @@ employees must use descendants; Work rejects outward symlinks and traversal.
 Build may bind an existing physical folder outside its Team root. Binding never
 creates a missing directory.
 
-Team creation also offers **default generation** or **bind an existing folder**.
-Build can reuse an existing project anywhere outside app data. Work can bind its
-plugin's permission root or a subfolder inside it. Employees then use that Team's
-selected root. Binding creates no extra project directory and never moves files;
-Team names remain fixed after creation.
+Build Team creation offers **default generation** or **bind an existing folder**.
+Build can reuse an existing project anywhere outside app data. Work automatically
+uses the selected plugin's fixed `workspaces/<Team name>` directory and never asks
+for a Team folder. Employees may create same-name subfolders or bind existing
+subfolders within that Team. Team names remain fixed after creation.
 
 ```sh
 agents group add MyProject --directory-mode bind --root /absolute/existing-project
-agents group add Planning --mode work --plugin mininotion --directory-mode bind \
-  --root ~/develop/Agents-company-workspace/mini-notion-workspace/department
+agents group add Planning --mode work --plugin mininotion
 ```
 
 Deleting a Team also removes every employee and all their local and native
@@ -307,10 +307,10 @@ records if cleanup fails, so deletion can be retried. Working folders and files
 remain on disk.
 
 ```text
-mini-notion-workspace/     # plugin root, no employee owns this folder
-  research/               # lead: research and descendants
-    writing/              # writer: writing and descendants
-  design/                 # a sibling outside the writer's scope
+PlugIns/mini-notion/workspaces/Planning/ # fixed Team root
+  research/                           # lead: research and descendants
+    writing/                          # writer: writing and descendants
+  design/                             # a sibling outside the writer's scope
 ```
 
 Work forbids two employees from owning the exact same directory, but explicitly
@@ -319,8 +319,8 @@ permission controls. Unclassified legacy Teams default to Build. Missing legacy
 folders are reported inside the conversation with a repair button.
 `agents group migrate NAME` migrates a legacy Team to its managed location, makes
 a metadata backup, moves existing files and leaves an old-path symlink. Existing
-destinations are never overwritten. `group root NAME PATH --directory-mode bind`
-instead binds an existing folder without migration. Names remain fixed; changing scope starts fresh engine context while
+destinations are never overwritten. For Build Teams, `group root NAME PATH --directory-mode bind`
+instead binds an existing folder without migration. Work Team roots are fixed. Names remain fixed; changing scope starts fresh engine context while
 retaining conversation history. Stop active work before changing a folder or mode.
 
 ## Cloud Teams and conversation workspace

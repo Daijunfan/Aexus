@@ -8,7 +8,7 @@ import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const require=createRequire(import.meta.url)
 const {_electron:electron,expect}=require('@playwright/test'),run=promisify(execFile),project=path.resolve(import.meta.dirname,'..')
-const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-mui-'))),work=path.join(temp,'work','mini-notion-workspace'),build=path.join(temp,'projects','Build Studio'),home=path.join(temp,'state')
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-mui-'))),work=path.join(temp,'work','mini-notion-workspace','Plugin'),build=path.join(temp,'projects','Build Studio'),home=path.join(temp,'state')
 fs.mkdirSync(work,{recursive:true});fs.mkdirSync(build,{recursive:true});fs.mkdirSync(home)
 const fixture=path.join(temp,'codex-fixture')
 fs.writeFileSync(fixture,`#!/usr/bin/env node

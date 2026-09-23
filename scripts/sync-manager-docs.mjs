@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const root=path.resolve(import.meta.dirname,'..'),destination=path.join(root,'Agents-Managers'),check=process.argv.includes('--check')
+const root=path.resolve(import.meta.dirname,'..'),destination=path.join(root,'docs/managers'),check=process.argv.includes('--check')
 const read=name=>fs.readFileSync(path.join(root,name),'utf8')
 const protocol=read('src/shared/protocol.ts'),pattern=/\{\s*name:\s*'([^']+)'\s*,\s*args:\s*'([^']*)'\s*,\s*summary:\s*'([^']*)'\s*,\s*gui:\s*'([^']*)'/g
 const commands=[...protocol.matchAll(pattern)].map(([,name,args,summary,gui])=>({name,args,summary,gui}))
@@ -23,14 +23,15 @@ else fs.writeFileSync(path.join(root,'API.md'),api)
 const scheduler=read('SCHEDULER.md').replace(/^---\n[\s\S]*?\n---\n\n/,'').replace(/^# Host scheduler CLI API/m,'### Host scheduler CLI API')
 const guide=[
   '# Agents Company Manager CLI 完整手册','',
-  read('Agents-Managers/INTRO.md').trim(),'',
+  read('docs/managers/INTRO.md').trim(),'',
   '## 根项目 API 全文','',
-  api.replaceAll('(PlugIns/','(../PlugIns/').trim(),'',
+  api.replace(/\[`(PlugIns\/[^`]+)`\]\(PlugIns\/[^)]+\)/g,'`$1`').trim(),'',
   '## 定时任务完整规范','',
   '以下为宿主调度器全文，包括一次性、间隔和按周任务、时区与工作时段、模型/思考覆盖、运行记录和取消。','',
   scheduler.trim(),'',index
 ].join('\n')
 const files=new Map([['API.md',guide],...['SCHEDULER.md','PLUGIN_SPEC.md','ENGINE_CAPABILITIES.md'].map(name=>[name,read(name)])])
-if(read('Agents-Managers/AGENTS.md')!==read('Agents-Managers/CLAUDE.md'))throw Error('Manager agent instructions must match across engines')
+if(read('docs/managers/AGENTS.md')!==read('docs/managers/CLAUDE.md'))throw Error('Manager agent instructions must match across engines')
+for(const name of files.keys())if(fs.existsSync(path.join(root,'Agents-Managers',name)))throw Error('Manager Team root must not contain documentation: '+name)
 for(const [name,content] of files){const file=path.join(destination,name);if(check){if(!fs.existsSync(file)||fs.readFileSync(file,'utf8')!==content)throw Error('Manager documentation is stale: '+name)}else fs.writeFileSync(file,content)}
 console.log(`${check?'Verified':'Generated'} Manager documentation and ${commands.length} CLI entries`)

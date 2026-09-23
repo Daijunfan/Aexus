@@ -6,7 +6,7 @@ import {execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const require=createRequire(import.meta.url),{_electron:electron,expect}=require('@playwright/test'),run=promisify(execFile),project=path.resolve(import.meta.dirname,'..')
-const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-tui-'))),home=path.join(temp,'state'),work=path.join(temp,'work'),projects=path.join(temp,'projects'),external=path.join(temp,'Existing Project'),sub=path.join(work,'mini-notion-workspace','Department')
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-tui-'))),home=path.join(temp,'state'),work=path.join(temp,'work'),projects=path.join(temp,'projects'),external=path.join(temp,'Existing Project'),sub=path.join(work,'mini-notion-workspace','Bound Work')
 for(const folder of [home,external,sub])fs.mkdirSync(folder,{recursive:true})
 fs.writeFileSync(path.join(external,'keep.md'),'keep existing files')
 const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:work,AGENTS_COMPANY_PROJECTS:projects,AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1440',AGENTS_COMPANY_HEIGHT:'1100'};delete env.ELECTRON_RUN_AS_NODE
@@ -35,12 +35,12 @@ try{
  await page.getByRole('button',{name:'确认删除 Team 及全部会话',exact:true}).click();await expect(page.locator('.office-panel')).toHaveCount(0)
  const removed=await cli('session','list')
  ok(!removed.groups.includes('Existing Build')&&!removed.sessions.length&&fs.existsSync(path.join(external,'Writer'))&&fs.existsSync(path.join(external,'keep.md')),'UI confirmation removes a populated Team and employees while retaining their files')
- await page.locator('.add-team').click();await page.locator('[data-mode="work"]').click();await page.locator('select[name="team-plugin"]').selectOption('mininotion');await page.locator('input[name="team-name"]').fill('Bound Work');await page.locator('[data-team-directory-mode="bind"]').click()
- await page.locator('input[name="team-root"]').fill(sub);await expect(page.locator('.workspace-note').filter({hasText:'插件权限目录'})).toContainText(path.join(work,'mini-notion-workspace'))
+ await page.locator('.add-team').click();await page.locator('[data-mode="work"]').click();await page.locator('select[name="team-plugin"]').selectOption('mininotion');await page.locator('input[name="team-name"]').fill('Bound Work')
+ await expect(page.locator('input[name="team-root"]')).toHaveValue(sub);await expect(page.locator('input[name="team-root"]')).not.toBeEditable();assert.equal(await page.locator('[data-team-directory-mode]').count(),0)
  await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)
- ok((await cli('session','list')).teamRoots['Bound Work']===sub&&fs.existsSync(path.join(sub,'AGENTS.md')),'Work folder binding uses the selected plugin subfolder and prepares its CLI documentation')
+ ok((await cli('session','list')).teamRoots['Bound Work']===sub&&fs.existsSync(path.join(sub,'AGENTS.md')),'Work creation fixes the plugin-owned Team folder and prepares its CLI documentation')
  await page.locator('.add-employee').click();await page.locator('input[name="title"]').fill('Planner');await expect(page.locator('[data-default-cwd]')).toHaveText(path.join(sub,'Planner'));await page.locator('.panel-close').click()
- ok(true,'employee default workspace preview follows the bound Work Team root')
+ ok(true,'employee default workspace preview follows the fixed Work Team root')
  await page.screenshot({path:path.join(project,'artifacts/team-lifecycle-0.10.png')})
  ok(!errors.length,'no renderer exceptions: '+errors.join('; '));console.log(`PASS=${n} FAIL=0 — no model calls`)
 }catch(error){console.error(error);if(!page.isClosed()){console.error(await page.locator('body').innerText());await page.screenshot({path:path.join(project,'artifacts/team-lifecycle-error.png')})}throw error}

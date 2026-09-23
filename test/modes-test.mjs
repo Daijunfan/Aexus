@@ -4,7 +4,7 @@ import path from 'node:path'
 import {spawn,execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
-const run=promisify(execFile),project=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-modes-'))),home=path.join(temp,'state'),work=path.join(temp,'work','mini-notion-workspace'),build=path.join(temp,'projects','Build project')
+const run=promisify(execFile),project=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-modes-'))),home=path.join(temp,'state'),work=path.join(temp,'work','mini-notion-workspace','Planning'),build=path.join(temp,'projects','Build project')
 fs.mkdirSync(work,{recursive:true});fs.mkdirSync(build,{recursive:true})
 const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects')},server=spawn(process.execPath,['bin/agents','serve'],{cwd:project,env,stdio:['ignore','pipe','pipe']}),done=new Promise(r=>server.once('exit',r))
 let log='';server.stderr.on('data',d=>log+=d)
@@ -27,7 +27,7 @@ try{
   await cli('workspace','move','src/index.ts','--to','src/main.ts','--team','Build project')
   const removed=await cli('workspace','trash','src/main.ts','--team','Build project');await cli('workspace','restore','--id',removed.id,'--team','Build project')
   ok((await cli('workspace','read','src/main.ts','--team','Build project')).content===file.content,'Build file CRUD and conflict protection operate on real project files')
-  await cli('group','add','Planning','--root',work,'--mode','work','--plugin','mininotion')
+  await cli('group','add','Planning','--mode','work','--plugin','mininotion')
   const hire=async(title,cwd)=>cli('card','create','--title',title,'--group','Planning','--cwd',cwd)
   const owner=await hire('Owner','studio'),manager=await hire('Manager','studio/department'),worker=await hire('Writer','studio/department/writer'),other=await hire('Other','studio/other')
   await assert.rejects(()=>hire('Duplicate','studio/department/writer'))

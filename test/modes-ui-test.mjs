@@ -8,7 +8,7 @@ import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const require=createRequire(import.meta.url)
 const {_electron:electron,expect}=require('@playwright/test'),run=promisify(execFile),project=path.resolve(import.meta.dirname,'..')
-const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-mui-'))),work=path.join(temp,'work','mini-notion-workspace'),build=path.join(temp,'projects','Build Studio'),home=path.join(temp,'state')
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-mui-'))),work=path.join(temp,'work','mini-notion-workspace','计划工作室'),build=path.join(temp,'projects','Build Studio'),home=path.join(temp,'state')
 fs.mkdirSync(work,{recursive:true});fs.mkdirSync(build,{recursive:true});fs.mkdirSync(home)
 const fixture=path.join(temp,'codex-fixture')
 fs.writeFileSync(fixture,`#!/usr/bin/env node
@@ -28,9 +28,9 @@ try{
   await expect(page.locator('.plugin-directory [data-plugin="mininotion"]')).toBeVisible()
   await page.locator('.add-team').click()
   await page.locator('[data-mode="work"]').click()
+  await page.locator('select[name="team-plugin"]').selectOption('mininotion')
   await page.locator('input[name="team-name"]').fill('计划工作室')
   await expect(page.locator('input[name="team-root"]')).toHaveValue(work)
-  await page.locator('select[name="team-plugin"]').selectOption('mininotion')
   await page.locator('.save-team').click();await page.locator('.office-panel').waitFor({state:'detached'})
   ok((await cli('session','list')).teamSettings['计划工作室'].mode==='work','Team form creates Work with an installed plugin')
   await cli('group','add','Build Studio','--mode','build','--root',build)

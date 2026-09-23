@@ -8,8 +8,8 @@ const cli=async(...args)=>{const r=JSON.parse((await run(executable,[...prefix,.
   const {workCodexConfig,workClaudeOptions}=require(path.join(temp,'scope.cjs'));
   const binary=require(path.join(temp,'exec.cjs')).resolveBinary('codex',process.env.CODEX_BIN);
   while(!fs.existsSync(path.join(home,'agents.sock')))await new Promise(r=>setTimeout(r,50));
-  const bound=path.join(workspace,'Department');fs.mkdirSync(bound);
-  await cli('group','add','Sandbox','--root',bound,'--directory-mode','bind','--mode','work','--plugin','mininotion');
+  const bound=path.join(workspace,'Sandbox');
+  await cli('group','add','Sandbox','--mode','work','--plugin','mininotion');
   const employee=await cli('session','new','--engine','codex','--group','Sandbox','--cwd','worker','--model','gpt-5.6-luna','--effort','low');
   const cwd=employee.cwd,shim=path.join(cwd,'.agents-company/bin/mininotion'),args=['sandbox','-P','agents-company-work','-C',cwd,...workCodexConfig(cwd,workspace)];
   const {stdout}=await run(binary,[...args,shim,'api','fs.write','--data',JSON.stringify({path:'probe.md',content:'SCOPED_MAILBOX_OK'})],{env,timeout:15000});assert.equal(JSON.parse(stdout).content,'SCOPED_MAILBOX_OK');

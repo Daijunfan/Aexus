@@ -59,11 +59,13 @@ agents group list --details --json
 agents plugin call mininotion fs.list --employee EMPLOYEE_ID
 ```
 
-Work 根目录自动位于 `~/develop/Agents-company-workspace/<workspaceDirectory>`。
-`workspaceDirectory` 是可选的单个文件夹名称，只允许字母、数字、下划线和连字符；
-省略时使用 `<plugin-id>-workspace`。MiniNotion 声明为 `mini-notion-workspace`。
-同一插件的不同 Team 默认共用这个根目录，也可以通过 `--directory-mode bind --root PATH`
-绑定该权限目录本身或其中已有的子文件夹。绑定不额外生成 Team 文件夹，也不移动工作文件。
+新的 Work Team 根目录固定为插件源码文件夹下的 `workspaces/<Team 名称>`，例如
+`PlugIns/mini-notion/workspaces/Planning`。一个插件的多个 Team 各有独立目录；
+创建 Team 时不能使用 `--directory-mode bind --root PATH` 选择其他位置。已登记的
+旧 Team 继续使用原目录，升级不会自动移动文件。
+`workspaceDirectory` 是兼容旧目录与隔离测试的可选单个文件夹名称，只允许字母、数字、
+下划线和连字符；省略时使用 `<plugin-id>-workspace`。安装在应用数据目录中的插件则
+在其自身插件文件夹下保留 `workspaces` 子目录。
 员工必须使用所属 Team 根目录的**子目录**，支持任意层级嵌套，不能占用 Team 根目录。同一个确切目录对应一个员工；父目录员工可以操作所有子目录，子目录员工
 不能操作父目录或兄弟目录。Build 可以让多名员工共用普通项目根目录。
 Build 自动使用 `~/develop/Agents-company-projects/<Team 名称>`。创建 Team 会创建
