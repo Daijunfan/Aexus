@@ -145,9 +145,9 @@ export default function App() {
         <header className="toolbar">
           {editingEmployee&&<button className="inspector-back" onClick={()=>setEditingEmployee(false)}><Icon name="arrow-left"/> 返回会话</button>}
           <button className="back" title="收起会话，继续工作" aria-label="收起会话" onClick={closeConversation}><Icon name="close"/></button>
-          <span className="session-heading"><EngineMark engine={active.engine} size={20} /><SessionTitle title={employee?.title??active.title}/></span>
+          <span className="session-heading">{employee?.kind==='chatter'?<span className="chatter-mark">✦</span>:<EngineMark engine={active.engine} size={20} />}<SessionTitle title={employee?.title??active.title}/></span>
           <button className="employee-details" hidden={editingEmployee} onClick={() => setEditingEmployee(true)}>员工资料</button>
-          <button className="engine-tools-open" disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}>工具与额度</button>
+          {employee?.kind!=='chatter'&&<button className="engine-tools-open" disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}>工具与额度</button>}
           <button className="employee-clone" disabled={active.busy||!!active.approvals?.length||!!active.pendingMessages?.length} onClick={()=>void act('view.open',{kind:'clone',employee:employee?.id??active.cardId})}>克隆员工</button>
           <span className="session-state"><i className={active.busy ? 'working' : ''} />{active.busy ? '工作中' : '休息中'}</span>
           <button className="close-session" disabled={!liveActive} onClick={async () => { const r = await act('session.close', { id: active.id }); if (r) closeConversation() }} title="Close session; keep history">结束会话</button>
@@ -161,7 +161,12 @@ export default function App() {
           const saved=updated.sessions.find(c=>c.id===employee.id)
           if(!saved)throw new Error('员工已被移除，请重新选择员工')
           setEditingEmployee(false);await openCard(saved);return true
-        }} onRemove={async () => { await act('card.remove', { id: employee.id }) }} /></div> : <div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
+        }} onRemove={async () => { await act('card.remove', { id: employee.id }) }} /></div> : employee?.kind==='chatter'?<div className="employee-workbench chatter-workbench">
+          <div className="chatter-provider-bar"><span className="chatter-mark">✦</span><strong>{employee.chatProvider==='deepseek'?'DeepSeek':'豆包'} · 网页聊天</strong><span>通过 Browser 插件连接</span><button onClick={()=>void act('chatter.login',{id:employee.id})}>登录网页账号</button></div>
+          {openError&&<div className="conversation-repair" role="alert">{openError}</div>}
+          <div className="transcript" ref={transcript}>{!active.items.length&&<div className="conversation-empty"><span className="chatter-mark">✦</span><h1>开始聊天</h1><p>首次使用请登录网页账号，再把消息发给 {employee.title}。</p></div>}{active.items.map(item=><Turn key={item.id} item={item}/>)}{active.error&&<div className="error">{active.error}</div>}</div>
+          <div className="composer"><div className="composer-box"><textarea ref={composer} disabled={!liveActive||active.busy} value={input} rows={3} placeholder={`Message ${active.title}…`} onChange={e=>{setInput(e.target.value);drafts.current[employee.id]=e.target.value}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send()}}}/>{active.busy?<button className="send-btn stop" onClick={()=>void stop()}>■ Stop</button>:<button className="send-btn" disabled={!liveActive||!input.trim()} onClick={()=>void send()}>↑</button>}</div><div className="composer-foot">网页聊天 · Enter 发送 · Shift Enter 换行</div></div>
+        </div>:<div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
         {openError&&<div className="conversation-repair" role="alert"><span>{openError}</span><button onClick={()=>setEditingEmployee(true)}>配置工作目录</button>{!employee?.workspaceError&&<button onClick={()=>employee&&void openCard(employee)}>重试连接</button>}</div>}
         {liveActive?<div className="session-settings controls">
           <Dropdown control="engine" open={menu==='engine'} onToggle={()=>setMenu(menu==='engine'?null:'engine')} onClose={()=>setMenu(null)} label={active.engine==='codex'?'Codex':'Claude Code'} width={200}>{(['codex','claude'] as const).map(engine=><button className={`menu-item ${engine===active.engine?'sel':''}`} key={engine} disabled={active.busy} onClick={async()=>{setMenu(null);const card=await act('config.engine',{id:employee?.id??active.id,engine});if(card)await openCard(card)}}>{engine==='codex'?'Codex':'Claude Code'}</button>)}</Dropdown>

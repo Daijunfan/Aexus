@@ -136,6 +136,22 @@ See [PLUGIN_SPEC.md](PLUGIN_SPEC.md) for the package and documentation format.
 
 ## Sessions
 
+### Worker and Chatter employees
+
+An employee has exactly one kind: `worker` (the default, Codex or Claude Code) or `chatter` (a web chat). A Chatter may belong to a local Build Team or a Browser Work Team; cloud Teams and other Work plugins are for Workers. The provider is fixed at creation, as is the employee name. A Chatter's messages are sent by the Browser plugin's headless Chrome adapter; no coding engine is launched and model, effort, permissions and slash commands do not apply.
+
+```sh
+agents card create --title '豆包助手' --group Local --kind chatter --chat-provider doubao
+agents card create --title 'DeepSeek 助手' --group Local --kind chatter --chat-provider deepseek
+agents chatter status EMPLOYEE_ID
+agents chatter login EMPLOYEE_ID
+agents session open EMPLOYEE_ID
+agents session send EMPLOYEE_ID '你好'
+agents session transcript EMPLOYEE_ID
+```
+
+`chatter.login` is an explicit one-time sign-in action that opens the dedicated Chrome profile for that employee. It is never invoked by `serve`, `session.open` or `session.send`. For an explicitly exported cookie JSON array, `agents chatter import EMPLOYEE_ID --file cookies.json` imports only cookies matching the employee's provider, returning a count and never printing values. A copied Chrome default profile is not a supported authentication transfer. The Browser plugin is responsible for detecting `AUTH_REQUIRED` and site layout changes; when it cannot read an actual reply, `session.send` fails rather than synthesizing one. Web conversations and employee settings are accessible through the same CLI and GUI session commands; removing an employee removes its host transcript while keeping the workspace.
+
 ```bash
 agents status
 agents session list [--live]
@@ -879,7 +895,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 116 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 119 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 |
 | --- | --- | --- | --- |
@@ -908,6 +924,9 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 |
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
 | <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a session | Typing in the composer |
+| <code>agents chatter status</code> | <code>&lt;employee-id&gt;</code> | Check the website login state of a Chatter employee | 网页聊天账号状态 |
+| <code>agents chatter login</code> | <code>&lt;employee-id&gt;</code> | Open the employee’s dedicated Chrome profile for sign-in | 登录网页账号 |
+| <code>agents chatter import</code> | <code>&lt;employee-id&gt; --file cookies.json</code> | Import explicitly exported provider cookies into the employee profile | CLI 凭据导入 |
 | <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
 | <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
 | <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |
@@ -949,7 +968,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card |
 | <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 |
 | <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 |
-| <code>agents card create</code> | <code>--title NAME [--engine E] [--avatar cat]</code> | Hire an idle employee without starting an engine | 添加员工 |
+| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;chatter --chat-provider doubao&#124;deepseek] [--engine E] [--avatar cat]</code> | Hire a Worker or website Chatter employee | 添加员工 |
 | <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 |
 | <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Compatibility endpoint; Team names are immutable | 部门设置 |
 | <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 |
@@ -1155,7 +1174,7 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 
 ## 全部 CLI 命令索引
 
-下面 116 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 119 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 |
 | --- | --- | --- | --- |
@@ -1184,6 +1203,9 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 | <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 |
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
 | <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a session | Typing in the composer |
+| <code>agents chatter status</code> | <code>&lt;employee-id&gt;</code> | Check the website login state of a Chatter employee | 网页聊天账号状态 |
+| <code>agents chatter login</code> | <code>&lt;employee-id&gt;</code> | Open the employee’s dedicated Chrome profile for sign-in | 登录网页账号 |
+| <code>agents chatter import</code> | <code>&lt;employee-id&gt; --file cookies.json</code> | Import explicitly exported provider cookies into the employee profile | CLI 凭据导入 |
 | <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
 | <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
 | <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |
@@ -1225,7 +1247,7 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 | <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card |
 | <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 |
 | <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 |
-| <code>agents card create</code> | <code>--title NAME [--engine E] [--avatar cat]</code> | Hire an idle employee without starting an engine | 添加员工 |
+| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;chatter --chat-provider doubao&#124;deepseek] [--engine E] [--avatar cat]</code> | Hire a Worker or website Chatter employee | 添加员工 |
 | <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 |
 | <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Compatibility endpoint; Team names are immutable | 部门设置 |
 | <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 |

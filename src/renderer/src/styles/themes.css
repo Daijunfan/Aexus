@@ -164,6 +164,17 @@
 .plugin-directory .plugin-directory-button { width:44px; height:44px; padding:4px; justify-content:center; border-radius:9px; }
 .plugin-directory .plugin-directory-item.active>.plugin-directory-button { background:var(--bg-hover); border-color:var(--border); }
 .plugin-directory .plugin-monogram { width:32px; height:32px; font-size:22px; }
+
+.app-select { display:inline-block;position:relative;width:100%;min-width:0;vertical-align:middle; }
+.app-select-native { position:absolute!important;inset:0;width:100%!important;height:100%!important;opacity:0;pointer-events:none;z-index:-1; }
+.app-select-trigger { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:40px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-alt);color:var(--fg);font:inherit;font-size:14px;text-align:left;cursor:pointer; }
+.app-select-trigger:hover,.app-select-trigger[aria-expanded=true] { border-color:var(--accent);background:var(--bg-hover); }
+.app-select-trigger:focus-visible { outline:2px solid var(--accent);outline-offset:2px; }
+.app-select-trigger:disabled { opacity:.5;cursor:default; }
+.app-select-trigger>span { overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }.app-select-trigger>b { flex:none;font-size:17px;font-weight:400;color:var(--fg-dim); }
+.app-select-menu { position:fixed;z-index:10050;display:flex;flex-direction:column;overflow-y:auto;max-height:280px;padding:5px;border:1px solid var(--border);border-radius:9px;background:var(--bg-elev);color:var(--fg);box-shadow:0 14px 36px #0004; }
+.app-select-menu>button { border:0;border-radius:5px;background:none;color:inherit;padding:8px 10px;font:inherit;font-size:13px;text-align:left;cursor:pointer; }
+.app-select-menu>button:hover,.app-select-menu>button.active { background:var(--bg-hover); }.app-select-menu>button[aria-selected=true] { color:var(--accent);font-weight:650; }.app-select-menu>button:disabled { opacity:.45;cursor:default; }
 .plugin-directory .project-agents { width:100%; border-top:1px solid var(--border-soft); margin-top:14px; padding-top:10px; gap:6px!important; align-items:center; overflow-x:hidden; }
 .plugin-directory .plugin-agent-row { padding:0; width:46px; border-radius:8px; flex-shrink:0; }
 .plugin-directory .agent-avatar-button,.plugin-directory .agent-avatar-button .mascot { width:44px; height:48px; }

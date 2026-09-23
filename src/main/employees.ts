@@ -23,7 +23,7 @@ export async function cloneEmployee(id:string,args:CloneArgs){
     await resolveEmployeeWorkspace(store,source.group,args.title,args.cwd,mode,undefined,true)
     cwd=await resolveEmployeeWorkspace(readStore(),source.group,args.title,args.cwd,mode)
     created=mode==='default'
-    native=await forkEmployeeContext(executionEmployee(store,source),cwd,args.title.trim(),config.mode==='work'?dirname(store.teamRoots![source.group]):undefined)
+    if(source.kind!=='chatter')native=await forkEmployeeContext(executionEmployee(store,source),cwd,args.title.trim(),config.mode==='work'?dirname(store.teamRoots![source.group]):undefined)
     assertTeamAvailable(source.group)
     const latest=readStore(),current=latest.sessions.find(c=>c.id===id)
     if(!current||JSON.stringify(current)!==JSON.stringify(source)||JSON.stringify(teamSettings(latest,source.group))!==JSON.stringify(config))throw new Error('原员工或 Team 已变化，请重试克隆')

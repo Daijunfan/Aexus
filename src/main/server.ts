@@ -62,6 +62,7 @@ import { readFileSync } from 'node:fs'
 import {deleteNativeSessions,nativeRefsForRemoval} from './native-sessions'
 import { transcriptItems,deleteTranscript } from './transcripts'
 import { renderTranscript } from '../shared/transcript'
+import {isWebChat,openWebChat,webChatSnapshot,webChatInfo,listWebChats,sendWebChat,interruptWebChat,closeWebChat,webChatRequest} from './webchat'
 import type { EffortLevel, PermissionMode } from '@anthropic-ai/claude-agent-sdk'
 
 let beforeViewChange = async () => {}
@@ -220,22 +221,24 @@ export async function handleRequest(req: Request): Promise<any> {
       }
 
     case 'session.list': {
-      if(a.live) return listLive().map((s) => sessionSnapshot(s.id))
+      if(a.live) return [...listLive().map((s) => sessionSnapshot(s.id)),...listWebChats()]
       const store=readStore()
       return {...store,sessions:store.sessions.map(c=>workspaceStatus(store,c))}
     }
 
     case 'session.new': {
+      if(a.kind==='chatter')throw new Error('Use card.create with a Team and chat provider to create a web chat employee')
       return startSession(a as StartArgs)
     }
 
     case 'session.open': {
+      if(isWebChat(s(a.cardId)))return openWebChat(s(a.cardId))
       return startSession({ cardId: s(a.cardId) })
     }
 
-    case 'session.activity': return sessionSnapshot(s(a.id)).activityPreview??null
+    case 'session.activity': return isWebChat(s(a.id))?null:sessionSnapshot(s(a.id)).activityPreview??null
     case 'session.snapshot':
-      return sessionSnapshot(s(a.id))
+      return isWebChat(s(a.id))?webChatSnapshot(s(a.id)):sessionSnapshot(s(a.id))
     case 'approval.list':
       return approvalsFor(s(a.id))
     case 'approval.respond':
@@ -269,7 +272,11 @@ export async function handleRequest(req: Request): Promise<any> {
       return {format,content}
     }
     case 'session.send':
+      if(isWebChat(s(a.id))){if(a.images?.length)throw new Error('Web chat image attachments are not supported');return {sent:await sendWebChat(s(a.id),s(a.text??''))}}
       return { sent: await sendMessage(s(a.id), s(a.text??''),undefined,a.images) }
+
+    case 'chatter.status': case 'chatter.login': case 'chatter.import':
+      return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length) as 'status'|'login'|'import',a)
 
     case 'session.transcript': {
       const items = transcriptItems(s(a.id))
@@ -286,22 +293,24 @@ export async function handleRequest(req: Request): Promise<any> {
     }
 
     case 'session.info': {
+      if(isWebChat(s(a.id)))return webChatInfo(s(a.id))
       const info = sessionInfo(s(a.id))
       if (!info) throw new Error(`unknown session ${s(a.id)}`)
       return info
     }
 
     case 'session.interrupt':
-      return { interrupted: await interrupt(s(a.id)) }
+      return { interrupted: isWebChat(s(a.id))?await interruptWebChat(s(a.id)):await interrupt(s(a.id)) }
 
     case 'session.close': {
-      const closed = await closeSession(s(a.id))
+      const closed = isWebChat(s(a.id))?await closeWebChat(s(a.id)):await closeSession(s(a.id))
       return { closed }
     }
 
     case 'config.engine': {
       const store=readStore(),card=store.sessions.find(c=>c.id===a.id)??store.sessions.find(c=>c.id===sessionSnapshot(s(a.id)).cardId)
       if(!card)throw new Error('Unknown employee')
+      if(card.kind==='chatter')throw new Error('Web chat employees do not have a coding engine')
       employeeFields({engine:a.engine},card)
       assertTeamAvailable(card.group);assertNotRemoving(card.id)
       if(card.engine!==a.engine)await closeForEngineChange(card.id)
@@ -362,10 +371,12 @@ export async function handleRequest(req: Request): Promise<any> {
       return askRenderer('wait', { selector: s(a.selector), timeout: a.timeout ?? 5000 })
 
     case 'commands.run': {
+      if(isWebChat(s(a.id)))throw new Error('Web chat employees do not expose agent slash commands')
       const text=s(a.text);if(!text.startsWith('/'))throw new Error('Command must start with /')
       return {sent:await sendMessage(s(a.id),text)}
     }
     case 'commands.list': {
+      if(isWebChat(s(a.id)))return []
       const all = sessionCommands(s(a.id))
       const f = String(a.filter ?? '').toLowerCase()
       const hidden = new Set(sessionInfo(s(a.id))?.terminalCommands ?? [])
@@ -479,19 +490,24 @@ export async function handleRequest(req: Request): Promise<any> {
       return setViewport({x:Number(a.x),y:Number(a.y),zoom:Number(a.zoom)})
     case 'card.clone': return cloneEmployee(s(a.id),{title:s(a.title),cwd:a.cwd,directoryMode:a.directoryMode})
     case 'card.create': {
+      const kind=a.kind??'worker'
+      if(!['worker','chatter'].includes(kind))throw new Error('Employee kind must be worker or chatter')
+      if(kind==='chatter'&&!['doubao','deepseek'].includes(a.chatProvider))throw new Error('Web chat provider must be doubao or deepseek')
+      if(kind==='worker'&&a.chatProvider!==undefined)throw new Error('Only chatter employees have a web chat provider')
       const engine = a.engine ?? 'codex'
       if (!['claude', 'codex'].includes(engine)) throw new Error('Unknown engine')
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
       const appearance = employeeFields(a)
       const store=readStore(),config=teamSettings(store,s(a.group??''))
+      if(kind==='chatter'&&!(config.mode==='build'||config.mode==='work'&&config.pluginId==='browser'))throw new Error('Web chat employees require a local Build Team or Browser Work Team')
       if(a.remote!==undefined)throw new Error('云主机连接由 Team 统一配置，请创建或选择 cloud Team')
       const cwd=await resolveEmployeeWorkspace(store,s(a.group??''),s(a.title),a.cwd,a.directoryMode)
       assertTeamAvailable(a.group)
       const latest=readStore();if(!latest.groups.includes(a.group)||JSON.stringify(teamSettings(latest,a.group))!==JSON.stringify(config))throw new Error('Team 已删除或配置已变更，请重新创建员工')
       provisionEmployee(cwd,store.teamRoots![a.group],config)
       const id = newSessionId()
-      const saved = patchSession(id, { ...appearance, id, title: s(a.title).trim(), engine, cwd, group: a.group ?? '', createdAt: Date.now(),
-        model: a.model ?? (engine === 'codex' ? 'gpt-5.6-luna' : undefined),
+      const saved = patchSession(id, { ...appearance, id, title: s(a.title).trim(), engine, kind,chatProvider:kind==='chatter'?a.chatProvider:undefined,cwd, group: a.group ?? '', createdAt: Date.now(),
+        model: kind==='chatter'?undefined:a.model ?? (engine === 'codex' ? 'gpt-5.6-luna' : undefined),
         effort: a.effort ?? 'low', permissionMode: config.mode!=='build'||managerCliRoot(cwd)?'acceptEdits':'default' })
       return executionEmployee(saved,saved.sessions.find((c) => c.id === id)!)
     }
@@ -499,6 +515,10 @@ export async function handleRequest(req: Request): Promise<any> {
       const store=readStore(), card=store.sessions.find(c=>c.id===a.id)
       if(!card) throw new Error('Unknown employee')
       const patch={...a.patch}
+      if(patch.kind!==undefined&&patch.kind!==(card.kind??'worker'))throw new Error('Employee kind is fixed after creation')
+      if(patch.chatProvider!==undefined&&patch.chatProvider!==card.chatProvider)throw new Error('Web chat provider is fixed after creation')
+      if(card.kind==='chatter'&&patch.engine!==undefined&&patch.engine!==card.engine)throw new Error('Web chat employees do not have a coding engine')
+      if(card.kind==='chatter'){const target=teamSettings(store,patch.group??card.group);if(!(target.mode==='build'||target.mode==='work'&&target.pluginId==='browser'))throw new Error('Web chat employees require a local Build Team or Browser Work Team')}
       employeeFields(patch,card)
       if(patch.remote!==undefined)throw new Error('云主机连接由 Team 统一配置，员工不能覆盖主机')
       if(patch.engine!==undefined&&patch.engine!==card.engine)await closeForEngineChange(card.id)
@@ -525,6 +545,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'card.move': {
       const store=readStore(),card=store.sessions.find(c=>c.id===a.id)
       if(!card)throw new Error('Unknown employee')
+      if(card.kind==='chatter'){const target=teamSettings(store,s(a.group));if(!(target.mode==='build'||target.mode==='work'&&target.pluginId==='browser'))throw new Error('Web chat employees require a local Build Team or Browser Work Team')}
       const input=a.cwd??(card.group===a.group?card.cwd:undefined)
       const cwd=await resolveEmployeeWorkspace(store,s(a.group),card.title,input,a.cwd?'bind':undefined,card.id,true)
       if(cwd!==card.cwd||a.group!==card.group) await closeForWorkspaceChange(card.id)
@@ -551,6 +572,7 @@ async function removeEmployees(ids:string[]) {
       beginEmployeeRemoval(id);locked.push(id)
     }
     for(const id of wanted){await closeEmployeeTerminals(id);closeRemote(id)}
+    for(const id of wanted)if(isWebChat(id))await closeWebChat(id)
     for(const live of listLive())if(wanted.has(sessionSnapshot(live.id).cardId!))await closeSession(live.id)
     const latest=readStore(),refs=latest.sessions.filter(card=>wanted.has(card.id)).flatMap(nativeRefsForRemoval)
     const others=latest.sessions.filter(card=>!wanted.has(card.id)).flatMap(nativeSessionRefs)
@@ -599,6 +621,7 @@ async function closeForEngineChange(cardId:string):Promise<void> {
 
 async function closeForWorkspaceChange(cardId: string): Promise<void> {
   assertEmployeeControl(cardId)
+  if(isWebChat(cardId)){const chat=listWebChats().find(s=>s.id===cardId);if(chat?.busy)throw new Error('员工正在聊天，请先停止再更改工作空间');await closeWebChat(cardId)}
   for(const live of listLive()) {
     const state=sessionSnapshot(live.id)
     if(state.cardId!==cardId) continue
@@ -635,7 +658,7 @@ export function startServer(onListening: () => void = () => {}): void {
       // `raw: true` forwards every engine event, not just the rendered text.
       if (req.cmd === 'session.follow') {
         const sessionId = String((req.args ?? {}).id)
-        const info = sessionInfo(sessionId)
+        const info = isWebChat(sessionId)?webChatInfo(sessionId):sessionInfo(sessionId)
         if (!info) {
           sock.end(JSON.stringify({ ok: false, error: `unknown session ${sessionId}` }) + '\n')
           return

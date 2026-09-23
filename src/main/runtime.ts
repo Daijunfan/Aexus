@@ -8,6 +8,7 @@ import { closePlugins } from './plugins/runtime'
 import {setTerminalEmitter,closeTerminals} from './terminals'
 import {closeRemoteFiles} from './tunnel'
 import { markTurnEnd, markTurnStart, recordClaude, recordCodex, recordUser, recordError, saveTranscript } from './transcripts'
+import {setWebChatEmitter,closeWebChats} from './webchat'
 
 /** One event stream for the CLI, persistence, and the optional desktop shell. */
 export function startRuntime(notify: (channel: string, payload: any) => void = () => {}) {
@@ -27,10 +28,11 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
     notify(channel, payload)
   }
   setEmitter(broadcast)
+  setWebChatEmitter(broadcast)
   setTerminalEmitter(broadcast)
   const unsubscribe = onStoreChange((store) => { reconcileSchedules(); broadcast('store:changed', store) })
   const unwindows=onPluginWindows(windows=>broadcast('plugin:windows',windows))
   const unview = onViewChange(state => broadcast('view:changed', state))
   startServer(() => startScheduler(broadcast))
-  return async () => { await closePluginWindows(); unwindows(); unsubscribe(); unview(); await stopScheduler(); await closeAll(); closeRemoteFiles(); await closeTerminals(); stopServer(); await closePlugins() }
+  return async () => { await closePluginWindows(); unwindows(); unsubscribe(); unview(); await stopScheduler(); await closeWebChats(); await closeAll(); closeRemoteFiles(); await closeTerminals(); stopServer(); await closePlugins() }
 }

@@ -60,6 +60,8 @@ export const ENGINES: { value: Engine; label: string; hint: string }[] = [
 export type StoredSession = {
   id: string
   engine: Engine
+  kind?: 'worker' | 'chatter'
+  chatProvider?: 'doubao' | 'deepseek'
   title: string
   group: string
   cwd: string

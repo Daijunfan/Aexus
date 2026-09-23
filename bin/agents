@@ -167,6 +167,9 @@ COMMANDS
   session rename <card-or-session-id> <title>  compatibility: names are immutable
   session open <cardId>                   open a stored card (resumes context)
   session send <id> <text>                send a message
+  chatter status <employee-id>           check website login state
+  chatter login <employee-id>            open dedicated browser sign-in window
+  chatter import <employee-id> --file F   import exported provider cookies
   session follow <id> [--raw]             stream events until the turn ends
   session transcript <id> [--thinking]    print the conversation
   session activity <id>                   current speech, thinking summary or tool operation
@@ -410,6 +413,9 @@ async function main() {
     case 'approval.respond': {const p=parse(rest);return out(await call('approval.respond',{id:p._[0],requestId:p._[1],decision:p._[2],answers:p.answers?JSON.parse(p.answers):undefined,form:p.form?JSON.parse(p.form):undefined}))}
 
     case 'session.send': {const parts=rest.slice(1),at=parts.indexOf('--images');let images;if(at>=0){images=JSON.parse(parts[at+1]);parts.splice(at,2)}return out(await call('session.send',{id:rest[0],text:parts.join(' '),images}))}
+    case 'chatter.status': return out(await call('chatter.status',{id:rest[0]}))
+    case 'chatter.login': return out(await call('chatter.login',{id:rest[0]}))
+    case 'chatter.import': {const p=parse(rest);if(!p.file)throw new Error('Use --file cookies.json');return out(await call('chatter.import',{id:p._[0],cookies:JSON.parse(require('node:fs').readFileSync(p.file,'utf8'))}))}
 
     case 'session.transcript': {
       const p = parse(argv.slice(1))
@@ -612,11 +618,11 @@ async function main() {
     case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
     case 'card.create': {
       const p = parse(rest)
-      return out(await call('card.create', { ...p, directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined }))
+      return out(await call('card.create', { ...p, chatProvider:p['chat-provider'],directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined }))
     }
     case 'card.update': {
       const p = parse(rest)
-      return out(await call('card.update', { id: p._[0], patch: { ...p, directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined } }))
+      return out(await call('card.update', { id: p._[0], patch: { ...p, chatProvider:p['chat-provider'],directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined } }))
     }
     case 'room.design': {
       const p = parse(rest)
