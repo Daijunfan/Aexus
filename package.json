@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.26.7",
+  "version": "0.27.1",
   "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
   "main": "./out/main/index.js",
   "author": "Agents Company",
@@ -60,7 +60,7 @@
     "test:model-catalog": "node test/model-catalog-test.mjs",
     "test:model-catalog-ui": "node test/model-catalog-ui-test.mjs",
     "test:browser-plugin": "npm --prefix PlugIns/browser test && node test/browser-plugin-ui-test.mjs",
-    "test:chatter": "node test/chatter-cli-test.mjs && node test/chatter-ui-test.mjs",
+    "test:chatter": "node test/chatter-cli-test.mjs && node test/chatter-ui-test.mjs && node test/chatter-background-test.mjs",
     "docs:managers": "node scripts/sync-manager-docs.mjs",
     "test:manager-docs": "node scripts/sync-manager-docs.mjs --check && node test/manager-cli-test.mjs && node test/manager-agent-test.mjs && node test/manager-claude-test.mjs"
   },

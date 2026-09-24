@@ -138,13 +138,16 @@ See [PLUGIN_SPEC.md](PLUGIN_SPEC.md) for the package and documentation format.
 
 ### Worker and Chatter employees
 
-An employee has exactly one kind: `worker` (the default, Codex or Claude Code) or `chatter` (a web chat). A Chatter may belong to a local Build Team or a Browser Work Team; cloud Teams and other Work plugins are for Workers. The provider is fixed at creation, as is the employee name. Browser authentication is shared per provider, while every employee has its own website conversation URL and workspace. The employee page embeds the real website, so native website controls remain available. The Browser plugin also exposes CLI browser actions; no coding engine is launched and coding model, effort, permissions and slash commands do not apply.
+An employee has exactly one kind: `worker` (the default, Codex or Claude Code) or `chatter` (a web chat). A Chatter may belong to a local Build Team or a Browser Work Team; cloud Teams and other Work plugins are for Workers. The provider is fixed at creation, as is the employee name. Browser authentication is shared per provider, while every employee has its own website conversation URL, Chrome page target and workspace. **Chatter webpages open in installed Google Chrome**, in a managed native window. The Agents Company view keeps the employee and CLI conversation. No coding engine is launched and coding model, effort, permissions and slash commands do not apply.
+
+The employee form presents `Worker` and `Chatter` in its **职位** dropdown. The old free-text role and color picker are no longer shown; existing character color values are preserved. A managed Chrome window uses the installed Google Chrome binary and a plugin-owned profile. Its randomly assigned localhost debugging port is nonzero. This is the same Chrome executable the user installed, but websites can still require a fresh login or human verification; no anti-ban guarantee is possible.
 
 ```sh
 agents card create --title '豆包助手' --group Local --kind chatter --chat-provider doubao
 agents card create --title 'DeepSeek 助手' --group Local --kind chatter --chat-provider deepseek
 agents card create --title 'ChatGPT 助手' --group Local --kind chatter --chat-provider chatgpt
 agents chatter status EMPLOYEE_ID
+agents chatter open-chrome EMPLOYEE_ID
 agents chatter migrate EMPLOYEE_ID --account 'your-chrome-email@example.com'
 agents session open EMPLOYEE_ID
 agents session send EMPLOYEE_ID '你好'
@@ -154,7 +157,9 @@ agents chatter inspect EMPLOYEE_ID
 
 `chatter.migrate` imports site-scoped Chrome cookies, local storage and IndexedDB from the selected account or `--profile 'Profile 2'`; macOS may request Keychain access. The CLI returns counts, not values. Provider login data is stored under `PlugIns/browser/workspaces/.browser-auth/` and shared by that provider's employees. Check `chatter.status`: a copied login can have expired at the website. `chatter.login` explicitly opens the shared Chrome profile when a fresh website login is required. It is never invoked by `serve`, `session.open` or `session.send`. For an explicitly exported cookie JSON array, `agents chatter import EMPLOYEE_ID --file cookies.json` imports only cookies matching the provider.
 
-`chatter.current` reads the employee's bound URL and `chatter.bind EMPLOYEE_ID URL` sets it to a URL on the same provider website. The page embeds the complete provider UI. `chatter.view` prepares its persistent in-app browser partition, while `chatter.attach` connects that renderer to the CLI event flow. For headless interaction use `chatter.inspect`, `chatter.click`, `chatter.fill`, `chatter.press`, `chatter.upload`, `chatter.screenshot`, or `chatter.run EMPLOYEE_ID --steps @actions.json`. A run file contains 1–20 actions such as `[{"type":"fill","selector":"textarea","value":"hello"},{"type":"press","selector":"textarea","key":"Enter"}]`; file uploads are restricted to the employee workspace. `session.send` waits for a website reply and fails if none can be identified. Removing an employee removes its host transcript while retaining work files.
+`chatter.current` reads the employee's bound URL and `chatter.bind EMPLOYEE_ID URL` sets it to a URL on the same provider website. `chatter.open-chrome`, `chatter.chrome-status` and `chatter.close-chrome` manage the plugin-owned Chrome process; closing it affects all open employees of that provider. The website runs in a separate native Chrome window, with its normal controls. `chatter.view` now returns the URL and `mode: chrome`; the old `chatter.attach` endpoint reports that embedded Chatter was retired. CLI actions are `chatter.inspect`, `chatter.click`, `chatter.fill`, `chatter.press`, `chatter.upload`, `chatter.screenshot`, and `chatter.run EMPLOYEE_ID --steps @actions.json`. A run file contains 1–20 actions such as `[{"type":"fill","selector":"textarea","value":"hello"},{"type":"press","selector":"textarea","key":"Enter"}]`; file uploads are restricted to the employee workspace. `session.send` opens managed Chrome if needed, waits for a real website reply and fails if none can be identified. Removing an employee removes its host transcript while retaining work files.
+
+Opening a Chatter employee in the visible App also opens its Chrome page. `AGENTS_COMPANY_HIDDEN=1` defers that visible window unless a loopback website fixture is configured; this keeps background verification silent. A site's login session is saved in the managed Chrome profile, but migrating a cookie from another profile cannot guarantee that the site will accept it. When the site refuses the copied session, complete its normal login in the managed Chrome window once.
 
 ```bash
 agents status
@@ -899,7 +904,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 132 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 135 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 |
 | --- | --- | --- | --- |
@@ -929,11 +934,14 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
 | <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a session | Typing in the composer |
 | <code>agents chatter status</code> | <code>&lt;employee-id&gt;</code> | Check the website login state of a Chatter employee | 网页聊天账号状态 |
+| <code>agents chatter open-chrome</code> | <code>&lt;employee-id&gt;</code> | Open this employee’s website in installed Google Chrome with its managed profile | 在 Chrome 中打开 |
+| <code>agents chatter chrome-status</code> | <code>&lt;employee-id&gt;</code> | Check the managed Google Chrome connection for this employee | Chrome 连接状态 |
+| <code>agents chatter close-chrome</code> | <code>&lt;employee-id&gt;</code> | Close the managed Google Chrome process for this provider | 关闭 Chrome 网页 |
 | <code>agents chatter login</code> | <code>&lt;employee-id&gt;</code> | Open the employee’s dedicated Chrome profile for sign-in | 登录网页账号 |
 | <code>agents chatter import</code> | <code>&lt;employee-id&gt; --file cookies.json</code> | Import explicitly exported provider cookies into the employee profile | CLI 凭据导入 |
 | <code>agents chatter migrate</code> | <code>&lt;employee-id&gt; --account EMAIL</code> | Migrate one site login from a signed-in Chrome account after Keychain authorization | 从 Chrome 迁移登录态 |
-| <code>agents chatter view</code> | <code>&lt;employee-id&gt;</code> | Prepare the full website view and its isolated persistent session | 网页会话 |
-| <code>agents chatter attach</code> | <code>&lt;employee-id&gt; &lt;webcontents-id&gt;</code> | Bind a managed website renderer to its employee conversation | 网页会话连接 |
+| <code>agents chatter view</code> | <code>&lt;employee-id&gt;</code> | Compatibility endpoint: read the Chrome-mode website URL | Chrome 网页会话 |
+| <code>agents chatter attach</code> | <code>&lt;employee-id&gt; &lt;webcontents-id&gt;</code> | Compatibility endpoint: embedded Chatter is retired | 旧版网页会话连接 |
 | <code>agents chatter current</code> | <code>&lt;employee-id&gt;</code> | Read this employee’s bound website conversation URL | 网页会话地址 |
 | <code>agents chatter bind</code> | <code>&lt;employee-id&gt; &lt;url&gt;</code> | Bind one provider website conversation to this employee | 网页会话导航 |
 | <code>agents chatter inspect</code> | <code>&lt;employee-id&gt;</code> | Read the rendered website title and text without a window | 网页内容 |
@@ -1191,7 +1199,7 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 
 ## 全部 CLI 命令索引
 
-下面 132 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 135 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 |
 | --- | --- | --- | --- |
@@ -1221,11 +1229,14 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
 | <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a session | Typing in the composer |
 | <code>agents chatter status</code> | <code>&lt;employee-id&gt;</code> | Check the website login state of a Chatter employee | 网页聊天账号状态 |
+| <code>agents chatter open-chrome</code> | <code>&lt;employee-id&gt;</code> | Open this employee’s website in installed Google Chrome with its managed profile | 在 Chrome 中打开 |
+| <code>agents chatter chrome-status</code> | <code>&lt;employee-id&gt;</code> | Check the managed Google Chrome connection for this employee | Chrome 连接状态 |
+| <code>agents chatter close-chrome</code> | <code>&lt;employee-id&gt;</code> | Close the managed Google Chrome process for this provider | 关闭 Chrome 网页 |
 | <code>agents chatter login</code> | <code>&lt;employee-id&gt;</code> | Open the employee’s dedicated Chrome profile for sign-in | 登录网页账号 |
 | <code>agents chatter import</code> | <code>&lt;employee-id&gt; --file cookies.json</code> | Import explicitly exported provider cookies into the employee profile | CLI 凭据导入 |
 | <code>agents chatter migrate</code> | <code>&lt;employee-id&gt; --account EMAIL</code> | Migrate one site login from a signed-in Chrome account after Keychain authorization | 从 Chrome 迁移登录态 |
-| <code>agents chatter view</code> | <code>&lt;employee-id&gt;</code> | Prepare the full website view and its isolated persistent session | 网页会话 |
-| <code>agents chatter attach</code> | <code>&lt;employee-id&gt; &lt;webcontents-id&gt;</code> | Bind a managed website renderer to its employee conversation | 网页会话连接 |
+| <code>agents chatter view</code> | <code>&lt;employee-id&gt;</code> | Compatibility endpoint: read the Chrome-mode website URL | Chrome 网页会话 |
+| <code>agents chatter attach</code> | <code>&lt;employee-id&gt; &lt;webcontents-id&gt;</code> | Compatibility endpoint: embedded Chatter is retired | 旧版网页会话连接 |
 | <code>agents chatter current</code> | <code>&lt;employee-id&gt;</code> | Read this employee’s bound website conversation URL | 网页会话地址 |
 | <code>agents chatter bind</code> | <code>&lt;employee-id&gt; &lt;url&gt;</code> | Bind one provider website conversation to this employee | 网页会话导航 |
 | <code>agents chatter inspect</code> | <code>&lt;employee-id&gt;</code> | Read the rendered website title and text without a window | 网页内容 |

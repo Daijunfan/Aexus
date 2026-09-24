@@ -17,7 +17,6 @@ import type { ViewState } from '../../shared/view'
 import {SessionTitle} from './components/SessionTitle'
 import type {CSSProperties} from 'react'
 import { EmployeeForm } from './office/OfficeForms'
-import {ChatterWebPage} from './components/ChatterWebPage'
 
 export default function App() {
   useEffect(()=>api.rendererReady(),[])
@@ -30,7 +29,7 @@ export default function App() {
   const [opening,setOpening]=useState(false),[openError,setOpenError]=useState(''),[savedItems,setSavedItems]=useState<Item[]>([])
   const openSequence=useRef(0)
   const [input, setInput] = useState('')
-  const [chatterPane,setChatterPane]=useState<'web'|'cli'>('web'),[chromeAccount,setChromeAccount]=useState(''),[chatterReload,setChatterReload]=useState(0)
+  const [chatterPane,setChatterPane]=useState<'chrome'|'cli'>('chrome'),[chromeConnected,setChromeConnected]=useState(false),[chromeVersion,setChromeVersion]=useState(''),[chatterAuth,setChatterAuth]=useState<'unknown'|'signed-in'|'login'|'challenge'>('unknown')
   const [images,setImages]=useState<string[]>([])
   const imageDrafts=useRef<Record<string,string[]>>({})
   const drafts=useRef<Record<string,string>>({})
@@ -83,11 +82,14 @@ export default function App() {
   },[store.preferences?.pageZoom,act])
   const openCard = async (card: StoredSession) => {
     const sequence=++openSequence.current
-    setChatterPane('web')
+    setChatterPane('chrome');setChromeConnected(false);setChromeVersion('');setChatterAuth('unknown')
     setSelectedCardId(card.id);setActiveId(null);setInput(drafts.current[card.id]??'');setImages(imageDrafts.current[card.id]??[]);setMenu(null);setSavedItems([]);setOpenError(card.workspaceError??'');setOpening(!card.workspaceError)
     void api.call<{items:Item[]}>('session.transcript',{id:card.id}).then(data=>{if(sequence===openSequence.current)setSavedItems(data.items)}).catch(()=>{})
     if(card.workspaceError)return
-    try{const opened=await api.call('session.open',{cardId:card.id});await refresh();if(sequence===openSequence.current)setActiveId(opened.sessionId)}
+    try{const opened=await api.call('session.open',{cardId:card.id});await refresh();if(sequence===openSequence.current)setActiveId(opened.sessionId)
+      if(card.kind==='chatter'){const launch=await api.call<{deferred?:boolean}>('chatter.open-chrome',{id:card.id});const state=await api.call<{connected:boolean;version?:string}>('chatter.chrome-status',{id:card.id});if(sequence===openSequence.current){setChromeConnected(state.connected);setChromeVersion(state.version??'')}
+        if(!launch.deferred)void api.call<{authenticated?:boolean;challenge?:boolean}>('chatter.status',{id:card.id}).then(status=>{if(sequence===openSequence.current)setChatterAuth(status.challenge?'challenge':status.authenticated?'signed-in':'login')}).catch(()=>{})}
+    }
     catch(error){if(sequence===openSequence.current)setOpenError((error as Error).message)}
     finally{if(sequence===openSequence.current)setOpening(false)}
   }
@@ -109,6 +111,7 @@ export default function App() {
 
   const stop = () => active && act('session.interrupt', { id: active.id })
   const configure = (cmd: string, args: Record<string, unknown>) => active && act(cmd, { id: active.id, ...args })
+  const checkChatterAuth=async(id:string)=>{const status=await act('chatter.status',{id}) as {authenticated?:boolean;challenge?:boolean}|undefined;if(status)setChatterAuth(status.challenge?'challenge':status.authenticated?'signed-in':'login')}
   useEffect(() => {
     const el = transcript.current
     if (el) el.scrollTop = el.scrollHeight
@@ -165,9 +168,9 @@ export default function App() {
           if(!saved)throw new Error('员工已被移除，请重新选择员工')
           setEditingEmployee(false);await openCard(saved);return true
         }} onRemove={async () => { await act('card.remove', { id: employee.id }) }} /></div> : employee?.kind==='chatter'?<div className="employee-workbench chatter-workbench">
-          <div className="chatter-provider-bar"><span className="chatter-mark">✦</span><strong>{({deepseek:'DeepSeek',doubao:'豆包',chatgpt:'ChatGPT'} as const)[employee.chatProvider??'doubao']} · 网页聊天</strong><div className="chatter-pane-tabs"><button className={chatterPane==='web'?'selected':''} onClick={()=>setChatterPane('web')}>网页</button><button className={chatterPane==='cli'?'selected':''} onClick={()=>setChatterPane('cli')}>CLI 会话</button></div><input aria-label="Chrome 帐号或资料" value={chromeAccount} onChange={event=>setChromeAccount(event.target.value)} placeholder="Chrome 邮箱或 Profile 2"/><button onClick={async()=>{const source=chromeAccount.trim();if(!source){setError('请填写 Chrome 帐号邮箱或资料名');return}if(await act('chatter.migrate',{id:employee.id,...(/^Profile \d+$|^Default$/.test(source)?{profile:source}:{account:source})}))setChatterReload(value=>value+1)}}>从 Chrome 迁移</button></div>
+          <div className="chatter-provider-bar"><span className="chatter-mark">✦</span><strong>{({deepseek:'DeepSeek',doubao:'豆包',chatgpt:'ChatGPT'} as const)[employee.chatProvider??'doubao']} · Chrome 网页聊天</strong><div className="chatter-pane-tabs"><button className={chatterPane==='chrome'?'selected':''} onClick={()=>setChatterPane('chrome')}>Chrome</button><button className={chatterPane==='cli'?'selected':''} onClick={()=>setChatterPane('cli')}>CLI 会话</button></div><span className="chatter-connection"><i className={chromeConnected?'connected':''}/>{chromeConnected?`Google Chrome ${chromeVersion} 已连接`:'Chrome 未打开'}</span></div>
           {openError&&<div className="conversation-repair" role="alert">{openError}</div>}
-          <div className="chatter-pane"><ChatterWebPage employee={employee.id} reloadKey={chatterReload}/></div>
+          <div className="chatter-chrome-page" hidden={chatterPane!=='chrome'}><div className="chatter-chrome-emblem">✦</div><h1>在 Google Chrome 中继续</h1><p>{employee.title} 的网页会话使用本机安装的 Chrome。网页上的上传、语音、模型和其他功能由原网站提供；这里保留同一员工的 CLI 会话入口。</p><div className="chatter-chrome-actions"><button className="btn primary" onClick={async()=>{const launch=await act('chatter.open-chrome',{id:employee.id}) as {deferred?:boolean}|undefined;if(launch&&!launch.deferred){const state=await api.call<{connected:boolean;version?:string}>('chatter.chrome-status',{id:employee.id});setChromeConnected(state.connected);setChromeVersion(state.version??'');void checkChatterAuth(employee.id)}}}>{chromeConnected?'返回 Chrome 窗口':'在 Chrome 打开网页'} ↗</button><button className="btn" disabled={!chromeConnected} onClick={()=>void checkChatterAuth(employee.id)}>检查网站登录</button></div><small>{chatterAuth==='signed-in'?'网站已登录，此员工可以使用网页与 CLI 会话。':chatterAuth==='challenge'?'网站要求真人验证，请在 Chrome 窗口中完成。':chatterAuth==='login'?'网站当前未登录。迁入的旧会话可能已过期，请在 Chrome 窗口登录一次。':'登录或验证完成后会保存在此插件的 Chrome 资料中。'}</small></div>
           <div className="chatter-pane chatter-cli-pane" hidden={chatterPane!=='cli'}><div className="transcript" ref={transcript}>{!active.items.length&&<div className="conversation-empty"><span className="chatter-mark">✦</span><h1>开始聊天</h1><p>CLI 发出的消息会进入此员工绑定的网页会话。</p></div>}{active.items.map(item=><Turn key={item.id} item={item}/>)}{active.error&&<div className="error">{active.error}</div>}</div>
           <div className="composer"><div className="composer-box"><textarea ref={composer} disabled={!liveActive||active.busy} value={input} rows={3} placeholder={`Message ${active.title}…`} onChange={e=>{setInput(e.target.value);drafts.current[employee.id]=e.target.value}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send()}}}/>{active.busy?<button className="send-btn stop" onClick={()=>void stop()}>■ Stop</button>:<button className="send-btn" disabled={!liveActive||!input.trim()} onClick={()=>void send()}>↑</button>}</div><div className="composer-foot">CLI 与网页使用同一个会话网址 · Enter 发送</div></div></div>
         </div>:<div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>

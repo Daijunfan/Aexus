@@ -14,7 +14,7 @@ export function Employee({ employee, working, dragging = false, desk, onOpen, on
     <div className="workstation-chair" aria-hidden="true" />
     <Mascot kind={employee.avatar ?? (employee.engine === 'codex' ? 'robot' : 'cat')} accessory={employee.accessory ?? 'headphones'} color={employee.color} working={working} pose={behavior.pose} gaze={behavior.gaze} />
     <Desk material={desk} />{!working&&<Laptop working={working} />}<Mug />
-    <span className="employee-badge"><span className="badge-light" /><span className="employee-name">{employee.title}</span><span className="employee-role">{employee.role || (employee.kind==='chatter'?({deepseek:'DeepSeek',doubao:'豆包',chatgpt:'ChatGPT'}[employee.chatProvider??'doubao'])+' Chatter':employee.engine === 'codex' ? 'Codex Developer' : 'Claude Teammate')}</span><span className="employee-state">{working ? '工作中' : '休息中'}</span></span>
+    <span className="employee-badge"><span className="badge-light" /><span className="employee-name">{employee.title}</span><span className="employee-role">{employee.kind==='chatter'?`Chatter · ${{deepseek:'DeepSeek',doubao:'豆包',chatgpt:'ChatGPT'}[employee.chatProvider??'doubao']}`:`Worker · ${employee.engine==='codex'?'Codex':'Claude Code'}`}</span><span className="employee-state">{working ? '工作中' : '休息中'}</span></span>
   </button>
 }
 

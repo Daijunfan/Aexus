@@ -279,6 +279,14 @@ export async function handleRequest(req: Request): Promise<any> {
       return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length) as 'status'|'login'|'import'|'migrate',a)
     case 'chatter.view': return webChatView(s(a.id))
     case 'chatter.attach': return attachWebChat(s(a.id),Number(a.webContentsId))
+    case 'chatter.open-chrome': {
+      const provider=readStore().sessions.find(card=>card.id===a.id)?.chatProvider
+      if(!provider)return webChatRequest(s(a.id),'chrome.open')
+      if(process.env.AGENTS_COMPANY_HIDDEN==='1'&&!process.env[`AGENTS_COMPANY_CHAT_TEST_URL_${String(provider).toUpperCase()}`])return {opened:false,deferred:true}
+      return webChatRequest(s(a.id),'chrome.open')
+    }
+    case 'chatter.chrome-status': return webChatRequest(s(a.id),'chrome.status')
+    case 'chatter.close-chrome': return webChatRequest(s(a.id),'chrome.close')
     case 'chatter.current': case 'chatter.bind': case 'chatter.inspect': case 'chatter.click': case 'chatter.fill': case 'chatter.press': case 'chatter.upload': case 'chatter.screenshot': case 'chatter.run': case 'chatter.sync':
       return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length),a)
 

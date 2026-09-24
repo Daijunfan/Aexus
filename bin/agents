@@ -168,6 +168,7 @@ COMMANDS
   session open <cardId>                   open a stored card (resumes context)
   session send <id> <text>                send a message
   chatter status <employee-id>           check website login state
+  chatter open-chrome|chrome-status|close-chrome <employee-id>   control its managed Google Chrome window
   chatter login <employee-id>            open dedicated browser sign-in window
   chatter import <employee-id> --file F   import exported provider cookies
   chatter migrate <employee-id> --account EMAIL|--profile 'Profile 2'   migrate Chrome login cookies
@@ -421,6 +422,7 @@ async function main() {
 
     case 'session.send': {const parts=rest.slice(1),at=parts.indexOf('--images');let images;if(at>=0){images=JSON.parse(parts[at+1]);parts.splice(at,2)}return out(await call('session.send',{id:rest[0],text:parts.join(' '),images}))}
     case 'chatter.status': return out(await call('chatter.status',{id:rest[0]}))
+    case 'chatter.open-chrome': case 'chatter.chrome-status': case 'chatter.close-chrome':return out(await call(`chatter.${sub}`,{id:rest[0]}))
     case 'chatter.login': return out(await call('chatter.login',{id:rest[0]}))
     case 'chatter.import': {const p=parse(rest);if(!p.file)throw new Error('Use --file cookies.json');return out(await call('chatter.import',{id:p._[0],cookies:JSON.parse(require('node:fs').readFileSync(p.file,'utf8'))}))}
     case 'chatter.migrate': {const p=parse(rest);if(!p.account&&!p.profile)throw new Error('Use --account EMAIL or --profile NAME');return out(await call('chatter.migrate',{id:p._[0],account:p.account,profile:p.profile}))}

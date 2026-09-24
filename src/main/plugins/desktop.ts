@@ -41,7 +41,7 @@ export function attachPluginDesktop(main:()=>BrowserWindow|undefined,hidden:bool
           delete preferences.preload;preferences.nodeIntegration=false;preferences.contextIsolation=true;preferences.sandbox=true
         })
         win.webContents.on('did-attach-webview',(_event,guest)=>{
-          guest.setWindowOpenHandler(({url})=>{if(/^https?:\/\//i.test(url))void guest.loadURL(url);return {action:'deny'}})
+          guest.setWindowOpenHandler(({url})=>{if(/^https?:\/\//i.test(url)&&!guest.isDestroyed())void guest.loadURL(url).catch(()=>{});return {action:'deny'}})
           guest.on('will-navigate',(event,url)=>{if(!/^https?:\/\//i.test(url))event.preventDefault()})
         })
       }
