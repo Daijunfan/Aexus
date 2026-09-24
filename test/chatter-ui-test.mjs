@@ -28,6 +28,8 @@ try{
   await page.locator('.save-employee').click()
   await expect(page.locator('.office-panel')).toHaveCount(0)
   const card=(await cli('session','list')).sessions.find(c=>c.title==='Web Friend');assert.equal(card.kind,'chatter');assert.equal(card.chatProvider,'deepseek')
+  const cookieFile=path.join(temp,'cookie-fixture.json');fs.writeFileSync(cookieFile,JSON.stringify([{name:'__Host-fixture',value:'scoped',domain:'chat.deepseek.com',path:'/',secure:true}]),{mode:0o600})
+  await cli('chatter','import',card.id,'--file',cookieFile)
   await cli('view','open','conversation','--employee',card.id)
   await expect(page.locator('.chatter-workbench')).toBeVisible()
   await expect(page.locator('.chatter-web-page webview')).toBeVisible({timeout:15000})

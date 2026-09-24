@@ -15,8 +15,9 @@ export function attachChatterDesktop(){
     const jar=session.fromPartition('persist:agents-chatter-'+id).cookies
     for(const cookie of cookies){
       const domain=String(cookie.domain??'').replace(/^\./,''),path=String(cookie.path??'/')
-      await jar.set({url:`https://${domain}${path}`,name:String(cookie.name),value:String(cookie.value),domain:String(cookie.domain),path,
-        secure:!!cookie.secure,httpOnly:!!cookie.httpOnly,sameSite:cookie.sameSite==='None'?'no_restriction':cookie.sameSite==='Strict'?'strict':'lax',
+      const hostOnly=String(cookie.name??'').startsWith('__Host-')
+      await jar.set({url:`https://${domain}${hostOnly?'/':path}`,name:String(cookie.name),value:String(cookie.value),...(hostOnly?{}:{domain:String(cookie.domain)}),path:hostOnly?'/':path,
+        secure:hostOnly||String(cookie.name??'').startsWith('__Secure-')||!!cookie.secure,httpOnly:!!cookie.httpOnly,sameSite:cookie.sameSite==='None'?'no_restriction':cookie.sameSite==='Strict'?'strict':'lax',
         ...(Number(cookie.expires)>0?{expirationDate:Number(cookie.expires)}:{})})
     }
     await jar.flushStore()
