@@ -62,7 +62,7 @@ import { readFileSync } from 'node:fs'
 import {deleteNativeSessions,nativeRefsForRemoval} from './native-sessions'
 import { transcriptItems,deleteTranscript } from './transcripts'
 import { renderTranscript } from '../shared/transcript'
-import {isWebChat,openWebChat,webChatSnapshot,webChatInfo,listWebChats,sendWebChat,interruptWebChat,closeWebChat,webChatRequest} from './webchat'
+import {isWebChat,openWebChat,webChatSnapshot,webChatInfo,listWebChats,sendWebChat,interruptWebChat,closeWebChat,webChatRequest,webChatView,attachWebChat} from './webchat'
 import type { EffortLevel, PermissionMode } from '@anthropic-ai/claude-agent-sdk'
 
 let beforeViewChange = async () => {}
@@ -275,8 +275,12 @@ export async function handleRequest(req: Request): Promise<any> {
       if(isWebChat(s(a.id))){if(a.images?.length)throw new Error('Web chat image attachments are not supported');return {sent:await sendWebChat(s(a.id),s(a.text??''))}}
       return { sent: await sendMessage(s(a.id), s(a.text??''),undefined,a.images) }
 
-    case 'chatter.status': case 'chatter.login': case 'chatter.import':
-      return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length) as 'status'|'login'|'import',a)
+    case 'chatter.status': case 'chatter.login': case 'chatter.import': case 'chatter.migrate':
+      return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length) as 'status'|'login'|'import'|'migrate',a)
+    case 'chatter.view': return webChatView(s(a.id))
+    case 'chatter.attach': return attachWebChat(s(a.id),Number(a.webContentsId))
+    case 'chatter.current': case 'chatter.bind': case 'chatter.inspect': case 'chatter.click': case 'chatter.fill': case 'chatter.press': case 'chatter.upload': case 'chatter.screenshot': case 'chatter.run': case 'chatter.sync':
+      return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length),a)
 
     case 'session.transcript': {
       const items = transcriptItems(s(a.id))
@@ -492,7 +496,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'card.create': {
       const kind=a.kind??'worker'
       if(!['worker','chatter'].includes(kind))throw new Error('Employee kind must be worker or chatter')
-      if(kind==='chatter'&&!['doubao','deepseek'].includes(a.chatProvider))throw new Error('Web chat provider must be doubao or deepseek')
+      if(kind==='chatter'&&!['doubao','deepseek','chatgpt'].includes(a.chatProvider))throw new Error('Web chat provider must be doubao, deepseek or chatgpt')
       if(kind==='worker'&&a.chatProvider!==undefined)throw new Error('Only chatter employees have a web chat provider')
       const engine = a.engine ?? 'codex'
       if (!['claude', 'codex'].includes(engine)) throw new Error('Unknown engine')

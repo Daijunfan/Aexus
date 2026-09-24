@@ -1,11 +1,19 @@
 import {readStore} from './store'
 import {callPlugin} from './plugins/runtime'
+import {requirePlugin,pluginFile} from './plugins/registry'
+import {createRequire} from 'node:module'
 import {conversation,restoreTranscript,forget} from './transcripts'
 import type {Session,StoredSession} from '../shared/types'
 
-type Provider='doubao'|'deepseek'
 type Emitter=(channel:string,payload:unknown)=>void
 let emit:Emitter=()=>{}
+const requireModule=createRequire(__filename)
+let cookieSink:(id:string,cookies:Array<Record<string,unknown>>,storage:Array<{origin:string;entries:Array<[string,string]>}>)=>Promise<void>=async()=>{}
+export const setWebChatCookieSink=(sink:typeof cookieSink)=>{cookieSink=sink}
+let desktopSend:(id:string,text:string)=>Promise<{text:string;url?:string}|null>=async()=>null
+let desktopAttach:(id:string,contentsId:number)=>boolean=()=>false
+export const setWebChatDesktopDriver=(driver:{send:typeof desktopSend;attach:typeof desktopAttach})=>{desktopSend=driver.send;desktopAttach=driver.attach}
+export function attachWebChat(id:string,contentsId:number){card(id);return {attached:desktopAttach(id,contentsId)}}
 const opened=new Set<string>(),running=new Set<string>()
 export const setWebChatEmitter=(emitter:Emitter)=>{emit=emitter}
 export const isWebChat=(id:string)=>readStore().sessions.find(card=>card.id===id)?.kind==='chatter'
@@ -28,9 +36,16 @@ export function webChatSnapshot(id:string):Session{
 }
 export function webChatInfo(id:string){const c=card(id);if(!opened.has(id))throw new Error('Web chat is not open');return {id,engine:c.engine,kind:'chatter',provider:c.chatProvider,model:c.chatProvider,models:[],commands:[],busy:running.has(id)}}
 export function listWebChats(){return [...opened].map(webChatSnapshot)}
-export async function webChatRequest(id:string,method:'status'|'login'|'import',params:Record<string,unknown>={}){
+export async function webChatRequest(id:string,method:string,params:Record<string,unknown>={}){
   const c=card(id)
   return callPlugin('browser',c.cwd,'browser.chat.'+method,{...params,provider:c.chatProvider})
+}
+export async function webChatView(id:string){
+  const c=card(id),plugin=requirePlugin('browser')
+  const adapter=requireModule(pluginFile(plugin.directory,'chat.cjs')) as {cookiesForDesktop:(workspace:string,provider:string,pluginRoot:string)=>Promise<Array<Record<string,unknown>>>;storageForDesktop:(workspace:string,provider:string,pluginRoot:string)=>Promise<Array<{origin:string;entries:Array<[string,string]>}>>}
+  await cookieSink(id,await adapter.cookiesForDesktop(c.cwd,c.chatProvider!,plugin.directory),await adapter.storageForDesktop(c.cwd,c.chatProvider!,plugin.directory))
+  const current=await webChatRequest(id,'current') as {url:string}
+  return {url:current.url,partition:'persist:agents-chatter-'+id}
 }
 export async function sendWebChat(id:string,text:string){
   const c=card(id)
@@ -39,10 +54,11 @@ export async function sendWebChat(id:string,text:string){
   if(!text.trim())throw new Error('Message is required')
   running.add(id)
   conversation(id).error=undefined
-  emit('session:user',{sessionId:id,text})
   emit('session:turn-start',{sessionId:id})
   try{
-    const reply=await callPlugin('browser',c.cwd,'browser.chat.send',{provider:c.chatProvider,prompt:text}) as {text:string}
+    const reply=await desktopSend(id,text)??await callPlugin('browser',c.cwd,'browser.chat.send',{provider:c.chatProvider,prompt:text}) as {text:string;url?:string}
+    if(reply.url)await webChatRequest(id,'bind',{url:reply.url})
+    emit('session:user',{sessionId:id,text})
     emit('session:message',{sessionId:id,message:{type:'assistant',message:{content:[{type:'text',text:reply.text}]}}})
     emit('session:turn-end',{sessionId:id})
     return true

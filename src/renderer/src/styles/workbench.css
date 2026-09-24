@@ -12,6 +12,16 @@
 .chatter-provider-bar { display:flex;align-items:center;gap:10px;padding:12px 24px;border-bottom:1px solid var(--border);color:var(--fg); }
 .chatter-provider-bar>span:not(.chatter-mark) { color:var(--fg-dim);font-size:12px;margin-right:auto; }
 .chatter-provider-bar button { margin-left:auto;border:1px solid var(--border);border-radius:7px;background:var(--bg-alt);color:var(--fg);padding:8px 12px;cursor:pointer; }
+.chatter-provider-bar input { width:190px;min-width:120px;border:1px solid var(--border);border-radius:7px;background:var(--bg-alt);color:var(--fg);padding:8px 10px;font:inherit;font-size:12px; }
+.chatter-pane-tabs { display:flex;gap:3px;margin-left:auto;padding:3px;border-radius:8px;background:var(--bg-alt); }
+.chatter-pane-tabs button { margin:0;border:0;background:transparent; }
+.chatter-pane-tabs button.selected { background:var(--bg-hover);color:var(--fg); }
+.chatter-web-page { position:relative;flex:1;min-height:0;background:#fff; }
+.chatter-pane { display:flex;flex:1;min-height:0;flex-direction:column; }
+.chatter-pane[hidden] { display:none; }
+.chatter-cli-pane:not([hidden]) { flex:0 0 min(340px,40vh);border-top:1px solid var(--border); }
+.chatter-cli-pane>.transcript { flex:1;min-height:0;overflow:auto;padding:26px clamp(28px,8vw,150px);font-size:15px;line-height:1.75; }
+.chatter-web-error { position:absolute;z-index:2;top:14px;left:20px;padding:8px 12px;border-radius:7px;background:#fff4f1;color:#ae3e32; }
 .chatter-workbench>.transcript { flex:1;min-height:0;overflow:auto;padding:26px clamp(28px,8vw,150px);font-size:15px;line-height:1.75; }
 .chatter-workbench>.composer { padding:12px clamp(28px,8vw,150px) 20px; }
 .chatter-mark { display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--accent);color:white;font-size:15px; }

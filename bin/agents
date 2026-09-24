@@ -170,6 +170,13 @@ COMMANDS
   chatter status <employee-id>           check website login state
   chatter login <employee-id>            open dedicated browser sign-in window
   chatter import <employee-id> --file F   import exported provider cookies
+  chatter migrate <employee-id> --account EMAIL|--profile 'Profile 2'   migrate Chrome login cookies
+  chatter current|view|inspect|screenshot <employee-id>   inspect its website session
+  chatter attach <employee-id> <webcontents-id>   bind a managed webpage to its employee
+  chatter bind <employee-id> <url>        bind one website conversation
+  chatter click|fill|press|upload <employee-id> --selector CSS [--value TEXT|--key KEY|--path FILE]
+  chatter run <employee-id> --steps @actions.json   perform several website actions in one session
+  chatter sync <employee-id> --file state.json   import provider-scoped browser state
   session follow <id> [--raw]             stream events until the turn ends
   session transcript <id> [--thinking]    print the conversation
   session activity <id>                   current speech, thinking summary or tool operation
@@ -416,6 +423,13 @@ async function main() {
     case 'chatter.status': return out(await call('chatter.status',{id:rest[0]}))
     case 'chatter.login': return out(await call('chatter.login',{id:rest[0]}))
     case 'chatter.import': {const p=parse(rest);if(!p.file)throw new Error('Use --file cookies.json');return out(await call('chatter.import',{id:p._[0],cookies:JSON.parse(require('node:fs').readFileSync(p.file,'utf8'))}))}
+    case 'chatter.migrate': {const p=parse(rest);if(!p.account&&!p.profile)throw new Error('Use --account EMAIL or --profile NAME');return out(await call('chatter.migrate',{id:p._[0],account:p.account,profile:p.profile}))}
+    case 'chatter.current': case 'chatter.view': case 'chatter.inspect': case 'chatter.screenshot':return out(await call(`chatter.${sub}`,{id:rest[0]}))
+    case 'chatter.bind':return out(await call('chatter.bind',{id:rest[0],url:rest[1]}))
+    case 'chatter.attach':return out(await call('chatter.attach',{id:rest[0],webContentsId:Number(rest[1])}))
+    case 'chatter.click': case 'chatter.fill': case 'chatter.press': case 'chatter.upload': {const p=parse(rest);return out(await call(`chatter.${sub}`,{id:p._[0],selector:p.selector,value:p.value,key:p.key,path:p.path}))}
+    case 'chatter.run': {const p=parse(rest);return out(await call('chatter.run',{id:p._[0],steps:jsonArgument(p.steps)}))}
+    case 'chatter.sync': {const p=parse(rest);if(!p.file)throw new Error('Use --file state.json');return out(await call('chatter.sync',{id:p._[0],...JSON.parse(require('node:fs').readFileSync(p.file,'utf8'))}))}
 
     case 'session.transcript': {
       const p = parse(argv.slice(1))

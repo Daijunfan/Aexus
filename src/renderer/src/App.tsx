@@ -17,6 +17,7 @@ import type { ViewState } from '../../shared/view'
 import {SessionTitle} from './components/SessionTitle'
 import type {CSSProperties} from 'react'
 import { EmployeeForm } from './office/OfficeForms'
+import {ChatterWebPage} from './components/ChatterWebPage'
 
 export default function App() {
   useEffect(()=>api.rendererReady(),[])
@@ -29,6 +30,7 @@ export default function App() {
   const [opening,setOpening]=useState(false),[openError,setOpenError]=useState(''),[savedItems,setSavedItems]=useState<Item[]>([])
   const openSequence=useRef(0)
   const [input, setInput] = useState('')
+  const [chatterPane,setChatterPane]=useState<'web'|'cli'>('web'),[chromeAccount,setChromeAccount]=useState(''),[chatterReload,setChatterReload]=useState(0)
   const [images,setImages]=useState<string[]>([])
   const imageDrafts=useRef<Record<string,string[]>>({})
   const drafts=useRef<Record<string,string>>({})
@@ -81,6 +83,7 @@ export default function App() {
   },[store.preferences?.pageZoom,act])
   const openCard = async (card: StoredSession) => {
     const sequence=++openSequence.current
+    setChatterPane('web')
     setSelectedCardId(card.id);setActiveId(null);setInput(drafts.current[card.id]??'');setImages(imageDrafts.current[card.id]??[]);setMenu(null);setSavedItems([]);setOpenError(card.workspaceError??'');setOpening(!card.workspaceError)
     void api.call<{items:Item[]}>('session.transcript',{id:card.id}).then(data=>{if(sequence===openSequence.current)setSavedItems(data.items)}).catch(()=>{})
     if(card.workspaceError)return
@@ -162,10 +165,11 @@ export default function App() {
           if(!saved)throw new Error('员工已被移除，请重新选择员工')
           setEditingEmployee(false);await openCard(saved);return true
         }} onRemove={async () => { await act('card.remove', { id: employee.id }) }} /></div> : employee?.kind==='chatter'?<div className="employee-workbench chatter-workbench">
-          <div className="chatter-provider-bar"><span className="chatter-mark">✦</span><strong>{employee.chatProvider==='deepseek'?'DeepSeek':'豆包'} · 网页聊天</strong><span>通过 Browser 插件连接</span><button onClick={()=>void act('chatter.login',{id:employee.id})}>登录网页账号</button></div>
+          <div className="chatter-provider-bar"><span className="chatter-mark">✦</span><strong>{({deepseek:'DeepSeek',doubao:'豆包',chatgpt:'ChatGPT'} as const)[employee.chatProvider??'doubao']} · 网页聊天</strong><div className="chatter-pane-tabs"><button className={chatterPane==='web'?'selected':''} onClick={()=>setChatterPane('web')}>网页</button><button className={chatterPane==='cli'?'selected':''} onClick={()=>setChatterPane('cli')}>CLI 会话</button></div><input aria-label="Chrome 帐号或资料" value={chromeAccount} onChange={event=>setChromeAccount(event.target.value)} placeholder="Chrome 邮箱或 Profile 2"/><button onClick={async()=>{const source=chromeAccount.trim();if(!source){setError('请填写 Chrome 帐号邮箱或资料名');return}if(await act('chatter.migrate',{id:employee.id,...(/^Profile \d+$|^Default$/.test(source)?{profile:source}:{account:source})}))setChatterReload(value=>value+1)}}>从 Chrome 迁移</button></div>
           {openError&&<div className="conversation-repair" role="alert">{openError}</div>}
-          <div className="transcript" ref={transcript}>{!active.items.length&&<div className="conversation-empty"><span className="chatter-mark">✦</span><h1>开始聊天</h1><p>首次使用请登录网页账号，再把消息发给 {employee.title}。</p></div>}{active.items.map(item=><Turn key={item.id} item={item}/>)}{active.error&&<div className="error">{active.error}</div>}</div>
-          <div className="composer"><div className="composer-box"><textarea ref={composer} disabled={!liveActive||active.busy} value={input} rows={3} placeholder={`Message ${active.title}…`} onChange={e=>{setInput(e.target.value);drafts.current[employee.id]=e.target.value}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send()}}}/>{active.busy?<button className="send-btn stop" onClick={()=>void stop()}>■ Stop</button>:<button className="send-btn" disabled={!liveActive||!input.trim()} onClick={()=>void send()}>↑</button>}</div><div className="composer-foot">网页聊天 · Enter 发送 · Shift Enter 换行</div></div>
+          <div className="chatter-pane"><ChatterWebPage employee={employee.id} reloadKey={chatterReload}/></div>
+          <div className="chatter-pane chatter-cli-pane" hidden={chatterPane!=='cli'}><div className="transcript" ref={transcript}>{!active.items.length&&<div className="conversation-empty"><span className="chatter-mark">✦</span><h1>开始聊天</h1><p>CLI 发出的消息会进入此员工绑定的网页会话。</p></div>}{active.items.map(item=><Turn key={item.id} item={item}/>)}{active.error&&<div className="error">{active.error}</div>}</div>
+          <div className="composer"><div className="composer-box"><textarea ref={composer} disabled={!liveActive||active.busy} value={input} rows={3} placeholder={`Message ${active.title}…`} onChange={e=>{setInput(e.target.value);drafts.current[employee.id]=e.target.value}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send()}}}/>{active.busy?<button className="send-btn stop" onClick={()=>void stop()}>■ Stop</button>:<button className="send-btn" disabled={!liveActive||!input.trim()} onClick={()=>void send()}>↑</button>}</div><div className="composer-foot">CLI 与网页使用同一个会话网址 · Enter 发送</div></div></div>
         </div>:<div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
         {openError&&<div className="conversation-repair" role="alert"><span>{openError}</span><button onClick={()=>setEditingEmployee(true)}>配置工作目录</button>{!employee?.workspaceError&&<button onClick={()=>employee&&void openCard(employee)}>重试连接</button>}</div>}
         {liveActive?<div className="session-settings controls">

@@ -97,19 +97,23 @@ See [PLUGIN_SPEC.md](PLUGIN_SPEC.md) for the package and documentation format.
 
 ### Worker and Chatter employees
 
-An employee has exactly one kind: `worker` (the default, Codex or Claude Code) or `chatter` (a web chat). A Chatter may belong to a local Build Team or a Browser Work Team; cloud Teams and other Work plugins are for Workers. The provider is fixed at creation, as is the employee name. A Chatter's messages are sent by the Browser plugin's headless Chrome adapter; no coding engine is launched and model, effort, permissions and slash commands do not apply.
+An employee has exactly one kind: `worker` (the default, Codex or Claude Code) or `chatter` (a web chat). A Chatter may belong to a local Build Team or a Browser Work Team; cloud Teams and other Work plugins are for Workers. The provider is fixed at creation, as is the employee name. Browser authentication is shared per provider, while every employee has its own website conversation URL and workspace. The employee page embeds the real website, so native website controls remain available. The Browser plugin also exposes CLI browser actions; no coding engine is launched and coding model, effort, permissions and slash commands do not apply.
 
 ```sh
 agents card create --title '豆包助手' --group Local --kind chatter --chat-provider doubao
 agents card create --title 'DeepSeek 助手' --group Local --kind chatter --chat-provider deepseek
+agents card create --title 'ChatGPT 助手' --group Local --kind chatter --chat-provider chatgpt
 agents chatter status EMPLOYEE_ID
-agents chatter login EMPLOYEE_ID
+agents chatter migrate EMPLOYEE_ID --account 'your-chrome-email@example.com'
 agents session open EMPLOYEE_ID
 agents session send EMPLOYEE_ID '你好'
 agents session transcript EMPLOYEE_ID
+agents chatter inspect EMPLOYEE_ID
 ```
 
-`chatter.login` is an explicit one-time sign-in action that opens the dedicated Chrome profile for that employee. It is never invoked by `serve`, `session.open` or `session.send`. For an explicitly exported cookie JSON array, `agents chatter import EMPLOYEE_ID --file cookies.json` imports only cookies matching the employee's provider, returning a count and never printing values. A copied Chrome default profile is not a supported authentication transfer. The Browser plugin is responsible for detecting `AUTH_REQUIRED` and site layout changes; when it cannot read an actual reply, `session.send` fails rather than synthesizing one. Web conversations and employee settings are accessible through the same CLI and GUI session commands; removing an employee removes its host transcript while keeping the workspace.
+`chatter.migrate` imports site-scoped Chrome cookies, local storage and IndexedDB from the selected account or `--profile 'Profile 2'`; macOS may request Keychain access. The CLI returns counts, not values. Provider login data is stored under `PlugIns/browser/workspaces/.browser-auth/` and shared by that provider's employees. Check `chatter.status`: a copied login can have expired at the website. `chatter.login` explicitly opens the shared Chrome profile when a fresh website login is required. It is never invoked by `serve`, `session.open` or `session.send`. For an explicitly exported cookie JSON array, `agents chatter import EMPLOYEE_ID --file cookies.json` imports only cookies matching the provider.
+
+`chatter.current` reads the employee's bound URL and `chatter.bind EMPLOYEE_ID URL` sets it to a URL on the same provider website. The page embeds the complete provider UI. `chatter.view` prepares its persistent in-app browser partition, while `chatter.attach` connects that renderer to the CLI event flow. For headless interaction use `chatter.inspect`, `chatter.click`, `chatter.fill`, `chatter.press`, `chatter.upload`, `chatter.screenshot`, or `chatter.run EMPLOYEE_ID --steps @actions.json`. A run file contains 1–20 actions such as `[{"type":"fill","selector":"textarea","value":"hello"},{"type":"press","selector":"textarea","key":"Enter"}]`; file uploads are restricted to the employee workspace. `session.send` waits for a website reply and fails if none can be identified. Removing an employee removes its host transcript while retaining work files.
 
 ```bash
 agents status
@@ -854,7 +858,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 119 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 132 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 |
 | --- | --- | --- | --- |
@@ -886,6 +890,19 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents chatter status</code> | <code>&lt;employee-id&gt;</code> | Check the website login state of a Chatter employee | 网页聊天账号状态 |
 | <code>agents chatter login</code> | <code>&lt;employee-id&gt;</code> | Open the employee’s dedicated Chrome profile for sign-in | 登录网页账号 |
 | <code>agents chatter import</code> | <code>&lt;employee-id&gt; --file cookies.json</code> | Import explicitly exported provider cookies into the employee profile | CLI 凭据导入 |
+| <code>agents chatter migrate</code> | <code>&lt;employee-id&gt; --account EMAIL</code> | Migrate one site login from a signed-in Chrome account after Keychain authorization | 从 Chrome 迁移登录态 |
+| <code>agents chatter view</code> | <code>&lt;employee-id&gt;</code> | Prepare the full website view and its isolated persistent session | 网页会话 |
+| <code>agents chatter attach</code> | <code>&lt;employee-id&gt; &lt;webcontents-id&gt;</code> | Bind a managed website renderer to its employee conversation | 网页会话连接 |
+| <code>agents chatter current</code> | <code>&lt;employee-id&gt;</code> | Read this employee’s bound website conversation URL | 网页会话地址 |
+| <code>agents chatter bind</code> | <code>&lt;employee-id&gt; &lt;url&gt;</code> | Bind one provider website conversation to this employee | 网页会话导航 |
+| <code>agents chatter inspect</code> | <code>&lt;employee-id&gt;</code> | Read the rendered website title and text without a window | 网页内容 |
+| <code>agents chatter click</code> | <code>&lt;employee-id&gt; --selector CSS</code> | Click a website element through the browser CLI | 网页按钮 |
+| <code>agents chatter fill</code> | <code>&lt;employee-id&gt; --selector CSS --value TEXT</code> | Fill a website input through the browser CLI | 网页输入框 |
+| <code>agents chatter press</code> | <code>&lt;employee-id&gt; --selector CSS --key KEY</code> | Send a keyboard key through the browser CLI | 网页键盘操作 |
+| <code>agents chatter upload</code> | <code>&lt;employee-id&gt; --selector CSS --path FILE</code> | Upload a file from the employee workspace to the website | 网页文件上传 |
+| <code>agents chatter screenshot</code> | <code>&lt;employee-id&gt;</code> | Capture the website into the employee workspace | 网页截图 |
+| <code>agents chatter run</code> | <code>&lt;employee-id&gt; --steps @actions.json</code> | Execute a sequence of website actions in one CLI browser session | 网页连续操作 |
+| <code>agents chatter sync</code> | <code>&lt;employee-id&gt; --file state.json</code> | Synchronize provider-scoped website session data from the in-app Chromium view | 网页登录态同步 |
 | <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
 | <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
 | <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |

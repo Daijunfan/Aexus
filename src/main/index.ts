@@ -1,6 +1,7 @@
 import {openExternalUrl,setExternalOpener} from './external'
 import {attachPluginDesktop} from './plugins/desktop'
 import { app, BrowserWindow, ipcMain, shell,dialog } from 'electron'
+import {attachChatterDesktop} from './chatter-desktop'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import {getPreferences} from './store'
@@ -75,10 +76,21 @@ function createWindow() {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'), sandbox: false,
       contextIsolation: true, nodeIntegration: false, offscreen: OFFSCREEN,
-      backgroundThrottling: false
+      backgroundThrottling: false,webviewTag:true
     }
   })
   mainWindow=win
+  win.webContents.on('will-attach-webview',(event,preferences,params)=>{
+    const allowed=/^persist:agents-chatter-[a-z0-9_-]+$/i.test(params.partition)
+    let website=false
+    try{const url=new URL(params.src);website=url.protocol==='https:'&&['www.doubao.com','chat.deepseek.com','chatgpt.com'].includes(url.hostname)||url.protocol==='http:'&&['127.0.0.1','localhost'].includes(url.hostname)&&!!process.env.AGENTS_COMPANY_CHAT_TEST_URL_DEEPSEEK}catch{}
+    if(!allowed||!website){event.preventDefault();return}
+    delete preferences.preload;preferences.nodeIntegration=false;preferences.contextIsolation=true;preferences.sandbox=true
+  })
+  win.webContents.on('did-attach-webview',(_event,guest)=>{
+    guest.setWindowOpenHandler(({url})=>{if(/^https:\/\//i.test(url))void guest.loadURL(url);return {action:'deny'}})
+    guest.on('will-navigate',(event,url)=>{if(!/^https:\/\//i.test(url)&&!/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(url))event.preventDefault()})
+  })
   win.on('closed',()=>{mainWindow=undefined})
   // Page zoom is a persisted Core preference, separate from canvas navigation.
   win.webContents.on('did-finish-load', () => { win.webContents.setZoomFactor(getPreferences().pageZoom); void win.webContents.setVisualZoomLevelLimits(1,1) })
@@ -101,6 +113,7 @@ function createWindow() {
 let stop: (() => Promise<void>) | undefined
 let quitting=false,preparingQuit=false
 app.whenReady().then(() => {
+  attachChatterDesktop()
   if (HEADLESS || HIDDEN) void app.dock?.hide()
   else setExternalOpener(url=>shell.openExternal(url))
   stop = startRuntime((channel, payload) => {

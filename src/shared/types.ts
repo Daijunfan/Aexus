@@ -61,7 +61,7 @@ export type StoredSession = {
   id: string
   engine: Engine
   kind?: 'worker' | 'chatter'
-  chatProvider?: 'doubao' | 'deepseek'
+  chatProvider?: 'doubao' | 'deepseek' | 'chatgpt'
   title: string
   group: string
   cwd: string
