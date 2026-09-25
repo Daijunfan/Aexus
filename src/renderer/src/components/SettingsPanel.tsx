@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import {ModelSelect} from './ModelSelect'
 import {DEFAULT_PREFERENCES,THEMES,THEME_LABELS,type Preferences} from '../../../shared/preferences'
 export function SettingsPanel({value,onSave,onClose}:{value:Preferences;onSave:(value:Preferences)=>Promise<unknown>;onClose:()=>void}) {
   const [draft,setDraft]=useState(value),[saving,setSaving]=useState(false)
@@ -7,6 +8,10 @@ export function SettingsPanel({value,onSave,onClose}:{value:Preferences;onSave:(
     <section className="office-panel preferences-panel" role="dialog" aria-modal="true" aria-label="应用设置">
       <header className="panel-header"><div><span className="eyebrow">MAKE YOURSELF AT HOME</span><h2>你的工作环境</h2></div><button className="panel-close" aria-label="关闭设置" onClick={onClose}>×</button></header>
       <form onSubmit={async e=>{e.preventDefault();setSaving(true);try{if(await onSave(draft))onClose()}finally{setSaving(false)}}}>
+        <div className="field-heading">新员工默认模型</div>
+        <ModelSelect preference engine="codex" label="Codex 默认模型" value={draft.defaultCodexModel} onChange={value=>setDraft({...draft,defaultCodexModel:value})}/>
+        <ModelSelect preference engine="claude" label="Claude Code 默认模型" value={draft.defaultClaudeModel} onChange={value=>setDraft({...draft,defaultClaudeModel:value})}/>
+        <small>仅用于之后创建的员工；创建时仍可单独选择。初始化也使用所选模型。</small>
         <div className="field-heading">背景与界面</div><div className="theme-presets">{THEMES.map(theme=><button type="button" key={theme} data-theme-option={theme} aria-pressed={draft.theme===theme} onClick={()=>setDraft({...draft,theme})}><i className={`theme-sample sample-${theme}`}/><span>{THEME_LABELS[theme]}</span>{draft.theme===theme&&<b>✓</b>}</button>)}</div>
         <label>页面大小 <output>{Math.round(draft.pageZoom*100)}%</output><input aria-label="页面大小" type="range" min="0.75" max="1.5" step="0.05" value={draft.pageZoom} onChange={e=>setDraft({...draft,pageZoom:+e.target.value})}/><small>⌘ + 放大，⌘ − 缩小，⌘ 0 恢复。包含文字、按钮和终端。</small></label>
         <label>双指 / 滚轮缩放灵敏度 <output>{draft.zoomSensitivity.toFixed(2)}×</output><input aria-label="缩放灵敏度" name="zoomSensitivity" type="range" min="0.25" max="8" step="0.25" value={draft.zoomSensitivity} onChange={e=>setDraft({...draft,zoomSensitivity:+e.target.value})}/><small>双指捏合，或按住 ⌘ / Ctrl 滚动。数值越大，缩放越快。</small></label>

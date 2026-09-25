@@ -1,3 +1,4 @@
+import {api} from '../api'
 import {ManagementEdges} from './ManagementEdges'
 import type {ManagementAccess} from '../../../shared/management'
 import { useId, type CSSProperties } from 'react'
@@ -39,7 +40,7 @@ export function CanvasRoom({room,access,index,design:custom,root,mode,remote,hea
     <div className="free-employees">{room.employees.map(({card,position})=>{
       const x=b.x+position.x,y=b.y+position.y
       if(x+EMPLOYEE_SIZE.width<visible.x||y+EMPLOYEE_SIZE.height<visible.y||x>visible.x+visible.width||y>visible.y+visible.height)return null
-      return <div className="employee-location" key={card.id} style={{left:position.x,top:position.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}><Employee globalManager={access?.globalManagerIds.includes(card.id)} employee={card} working={busyIds.has(card.id)} disconnected={disconnectedIds.has(card.id)} dragging={draggingId===card.id} desk={design.desk} onOpen={onOpen} onStart={e=>onStart('employee',e,card.id)} />{activities[card.id]&&<ActivityBubble activity={activities[card.id]}/>}</div>
+      return <div className="employee-location" key={card.id} style={{left:position.x,top:position.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}><Employee globalManager={access?.globalManagerIds.includes(card.id)} employee={card} working={busyIds.has(card.id)} disconnected={disconnectedIds.has(card.id)} dragging={draggingId===card.id} desk={design.desk} onOpen={onOpen} onStart={e=>onStart('employee',e,card.id)} />{card.initialization?.status==='failed'&&<button className="employee-initialization-retry" onPointerDown={event=>event.stopPropagation()} onClick={()=>void api.call('view.open',{kind:'initialization',employee:card.id})}>查看初始化错误 / 重试</button>}{activities[card.id]&&<ActivityBubble activity={activities[card.id]}/>}</div>
     })}</div>
     {!room.employees.length&&<div className="empty-room-note"><span>YOUR NEXT GREAT TEAM</span><p>给好想法，留足空间。</p><small>从一位伙伴开始，随时拖动边缘扩展空间。</small></div>}
     <div className="room-dimension" aria-hidden="true">{Math.round(b.width)} × {Math.round(b.height)} <span>·</span> {room.employees.length} 伙伴</div>

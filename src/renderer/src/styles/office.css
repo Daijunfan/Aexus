@@ -145,3 +145,13 @@ input, select { color: var(--fg); }
 .employee:nth-child(3) .mascot-head { animation-delay: -2.7s; }
 .department-room:nth-child(3n + 1) .window-panes::before { opacity: .15; right: -20%; }
 .department-room:nth-child(3n + 2) .window-panes::before { opacity: .4; right: 3%; }
+
+/* Initialization uses Core status; disabled avatars cannot open or drag a conversation. */
+.employee[data-state="initializing"],.employee[data-state="initialization-failed"]{cursor:wait;opacity:.85}
+.employee-state .spinner{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:middle}
+.employee-initialization-retry{position:absolute;z-index:5;bottom:-22px;left:0;width:100%;font-size:11px;color:var(--fg-dim);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px;cursor:pointer}
+.initialization-dialog{max-width:460px}
+.initialization-status{padding:26px;line-height:1.7}
+.initialization-status>.spinner{display:inline-block;margin-right:12px}
+.initialization-status strong{font-size:18px}
+.initialization-status p,.initialization-status small{color:var(--fg-dim)}

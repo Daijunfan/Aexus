@@ -1,6 +1,12 @@
+import {queueEmployeeInitialization,retryEmployeeInitialization,cancelEmployeeInitialization} from './initialization'
+import {engineModels,defaultEmployeeModel} from './engine-models'
+import {officeLayout} from './office'
+import {acknowledgeReply} from './reply-receipts'
+import {pendingInitialization,assertEmployeeReady,assertInitializationRequest} from './initialization-state'
+import {assertManagementKind} from '../shared/management'
 import {authenticate,initializeAccessChannel,agentCredential,revokeAgentCredential,removeAgentAccessData} from './agent-access'
 import {authorize,requestContext,operatorContext,withCaller,isGlobal,callerEmployee,visibleEmployees,publicEmployee,allowedCommands,apiDocumentation,delegationFor,validateDelegation} from './authorization'
-import {managementTopology,requestManagement,decideManagement,unbindManagement,setManagementRole,setGlobalManager,creationAuthority} from './management'
+import {relayoutManagement,managementTopology,requestManagement,decideManagement,unbindManagement,setManagementRole,setGlobalManager,creationAuthority} from './management'
 import type {RequestContext} from '../shared/management'
 import {updateStore} from './store'
 import {validateCloudHostPatch,cloudHostFingerprints,trustCloudHostFingerprint,listCloudHosts,getCloudHost,createCloudHost,updateCloudHost,removeCloudHost,cloudHostTarget,cloudHostPassword,recordCloudHostHealth} from './cloud-hosts'
@@ -61,13 +67,13 @@ import {
   writeStore
 } from './store'
 import { renameGroup, designRoom, updateEmployee, employeeFields, setTeamRoot, bindTeamRoot, setBounds, placeEmployee, setViewport,configureTeam,validateTeamSettings,teamViewList,createTeamView,updateTeamView,removeTeamView,selectTeamView,canvasViewport } from './store'
-import {teamSettings,nativeSessionRefs} from '../shared/types'
+import {teamSettings,nativeSessionRefs,type StoredSession} from '../shared/types'
 import {workspaceFiles} from './files'
 import { employeeWorkspace, chooseEmployeeWorkspace, executionEmployee, cloudDirectory, cloudRelative, workspaceName, workspaceStatus, teamRoot, managedTeamRoot, chooseTeamRoot, legacyPluginWorkspace, inside } from './workspaces'
 import { planOffice } from '../shared/canvas'
 import { listPlugins, requirePlugin, installPlugin, pluginFile } from './plugins/registry'
 import { callPlugin, openPluginView, closePluginView,releaseWorkspacePlugins } from './plugins/runtime'
-import { provisionWorkspace, provisionEmployee } from './plugins/documents'
+import { provisionWorkspace, provisionEmployee,ensureEmployeeBootstrap } from './plugins/documents'
 import { readFileSync } from 'node:fs'
 import {deleteNativeSessions,nativeRefsForRemoval} from './native-sessions'
 import { transcriptItems,deleteTranscript,seedTranscript } from './transcripts'
@@ -99,7 +105,7 @@ export function publishEvent(channel: string, payload: unknown): void {
   for (const [sock, sessionId] of following) {
     if (!sock.writable) continue
     const context=followerContexts.get(sock)!
-    try{authorize('session.follow',{},employeeId(sessionId),context)}catch{sock.end(JSON.stringify({type:'done',error:'Access revoked'})+'\n');following.delete(sock);followerContexts.delete(sock);continue}
+    try{authorize('session.follow',{},employeeId(sessionId),context);assertEmployeeReady(employeeId(sessionId))}catch{sock.end(JSON.stringify({type:'done',error:'Access revoked'})+'\n');following.delete(sock);followerContexts.delete(sock);continue}
     const p = payload as { sessionId?: string }
     if(!p?.sessionId&&context.principal.kind==='agent')continue
     if (p?.sessionId && p.sessionId !== sessionId) continue
@@ -131,10 +137,12 @@ function employeeId(value:unknown){const id=String(value??'');return readStore()
 export async function handleRequest(req:Request,context?:RequestContext):Promise<any>{
   if(context)return withCaller(context,()=>handleRequest(req))
   const caller=requestContext(),a={...(req.args??{})} as Record<string,any>
-  for(const field of ['createdBy','requestedBy','approvedBy','delegation','access','globalManagerIds','deleting'])if(field in a||a.patch&&field in a.patch||a.spec&&field in a.spec)throw Error('Internal field cannot be supplied: '+field)
+  for(const field of ['createdBy','requestedBy','approvedBy','delegation','access','globalManagerIds','deleting','initialization','lastReply'])if(field in a||a.patch&&field in a.patch||a.spec&&field in a.spec)throw Error('Internal field cannot be supplied: '+field)
   if(a.patch&&'managementRole' in a.patch||a.managementRole!==undefined&&req.cmd!=='card.create')throw Error('Use card.management-role to assign roles')
+  if(req.cmd==='card.create'&&a.group===undefined&&caller.principal.kind==='agent'&&!isGlobal(caller.principal))a.group=callerEmployee(caller.principal)!.group
   let target=employeeId(a.employee??a.cardId??a.id)
   authorize(req.cmd,a,target,caller)
+  assertInitializationRequest(req.cmd,target)
   if(a.employee&&req.cmd.startsWith('session.')){
     if(req.cmd==='session.open')a.cardId=a.employee
     const live=listLive().find(item=>sessionInfo(item.id)?.cardId===a.employee)
@@ -146,7 +154,7 @@ export async function handleRequest(req:Request,context?:RequestContext):Promise
   if(isGlobal(caller.principal))return result
   if(req.cmd==='session.list'){
     const ids=new Set(visibleEmployees(caller.principal).map(card=>card.id))
-    return a.live?result.filter((item:any)=>ids.has(item.cardId)).map((item:any)=>({id:item.id,cardId:item.cardId,title:item.title,busy:item.busy,currentTask:item.currentTask})): {sessions:visibleEmployees(caller.principal).map(publicEmployee)}
+    return a.live?result.filter((item:any)=>ids.has(item.cardId)).map((item:any)=>({id:item.id,cardId:item.cardId,title:item.title,busy:item.busy,currentTask:item.currentTask,initialization:item.initialization})): {sessions:visibleEmployees(caller.principal).map(publicEmployee)}
   }
   if(result?.sessions&&result?.groups)return {sessions:visibleEmployees(caller.principal).map(publicEmployee)}
   return result
@@ -165,14 +173,18 @@ async function dispatchRequest(req: Request): Promise<any> {
     case 'api.list': return allowedCommands()
     case 'api.describe': {const command=allowedCommands().find(value=>value.name===a.command);if(!command)throw Error('API not available to this caller');return command}
     case 'api.docs': return apiDocumentation()
+    case 'office.layout': return officeLayout(a.team)
+    case 'session.acknowledge': return acknowledgeReply(s(a.employee??employeeId(a.id)),a.replyId)
     case 'management.topology': return managementTopology(a.team)
+    case 'management.relayout': return relayoutManagement(s(a.team))
     case 'management.request': return requestManagement(s(a.employee),a.manager)
     case 'management.decide': return decideManagement(s(a.id),s(a.decision))
     case 'management.unbind': return unbindManagement(s(a.id))
     case 'management.global': if(typeof a.enabled!=='boolean')throw Error('enabled must be boolean');return setGlobalManager(s(a.id),a.enabled)
+    case 'card.initialize': return retryEmployeeInitialization(s(a.id))
     case 'card.management-role': return setManagementRole(s(a.id),a.role)
     case 'card.access-mode': {const card=readStore().sessions.find(c=>c.id===a.id);if(card&&(card.threadId||card.claudeSessionId)&&card.accessMode!==a.mode)throw Error('Execution isolation is fixed once native history exists; create a new employee');if(!['trusted','isolated'].includes(a.mode))throw Error('Use trusted or isolated');await closeForEngineChange(s(a.id));return updateStore(store=>{const card=store.sessions.find(c=>c.id===a.id);if(!card)throw Error('Unknown employee');card.accessMode=a.mode})}
-    case 'session.status': {const cards=a.employee?readStore().sessions.filter(c=>c.id===a.employee):visibleEmployees();return cards.map(card=>{const live=listLive().find(item=>sessionInfo(item.id)?.cardId===card.id),state=live?sessionInfo(live.id):undefined;return {...publicEmployee(card),sessionId:live?.id,busy:state?.busy??false,currentTask:state?.currentTask,activityPreview:state?.activityPreview,waitingApproval:live?approvalsFor(live.id).length>0:false}})}
+    case 'session.status': {const cards=a.employee?readStore().sessions.filter(c=>c.id===a.employee):visibleEmployees();return cards.map(card=>{const live=listLive().find(item=>sessionInfo(item.id)?.cardId===card.id),state=live?sessionInfo(live.id):undefined;return {...publicEmployee(card),lastReply:card.lastReply,sessionId:live?.id,busy:state?.busy??false,currentTask:state?.currentTask,activityPreview:state?.activityPreview,waitingApproval:live?approvalsFor(live.id).length>0:false}})}
     case 'shared.info': return {path:sharedDirectory()}
     case 'transfer.start': return startTransfer(a.from,a.to,fileEndpoint(a.from,false),fileEndpoint(a.to,true))
     case 'transfer.list': return listTransfers()
@@ -223,14 +235,16 @@ async function dispatchRequest(req: Request): Promise<any> {
     case 'schedule.preview': case 'schedule.run': case 'schedule.history': case 'schedule.cancel':
       return scheduleRequest(req.cmd.slice('schedule.'.length), a)
     case 'settings.get': return getPreferences()
+    case 'engine.models': return engineModels(a.engine,a.kind,a.team)
     case 'settings.set': return setPreferences(a) // Includes pageZoom and pane sizes; usable without a desktop.
 
     case 'view.get': return getView()
     case 'view.open': {
       const kind=a.kind as ViewState['kind'],store=readStore()
-      if(!['home','team','employee','workspace','conversation','settings','plugin','clone'].includes(kind))throw new Error('Unknown view kind')
+      if(!['home','team','employee','workspace','conversation','initialization','settings','plugin','clone'].includes(kind))throw new Error('Unknown view kind')
       if((kind==='workspace'||(kind==='team'&&a.name))&&!store.groups.includes(a.name))throw new Error('Unknown Team')
       if((kind==='conversation'||kind==='clone'||a.employee)&&!store.sessions.some(c=>c.id===a.employee))throw new Error('Unknown employee')
+      if(a.employee&&kind!=='initialization'&&!(kind==='employee'&&store.sessions.find(card=>card.id===a.employee)?.initialization?.status==='failed'))assertEmployeeReady(s(a.employee))
       const pluginId=a.pluginId??((kind==='settings'||kind==='employee'||kind==='clone')?getView().pluginId:undefined)
       if(kind==='plugin'||pluginId)requirePlugin(s(pluginId))
       if(kind==='conversation'&&pluginId){const card=store.sessions.find(c=>c.id===a.employee)!;if(teamSettings(store,card.group).pluginId!==pluginId)throw new Error('员工不属于当前插件')}
@@ -296,7 +310,7 @@ async function dispatchRequest(req: Request): Promise<any> {
       writeStore(store);return {plugin,workspaces}
     }
     case 'workspace.docs':
-      {const context=workspaceContext(a);return context.settings.mode==='cloud'?{mode:'cloud',workspace:context.root,documentation:'Modules/Tunnel/README.md'}:a.employee?provisionEmployee(context.root,context.teamRoot,context.settings):provisionWorkspace(context.root,context.settings,context.teamRoot)}
+      {const context=workspaceContext(a);return context.settings.mode==='cloud'?{mode:'cloud',workspace:context.root,documentation:'Modules/Tunnel/README.md'}:a.employee?ensureEmployeeBootstrap(context.store.sessions.find(c=>c.id===a.employee)!,context.store):provisionWorkspace(context.root,context.settings,context.teamRoot)}
     case 'plugin.call':
       return callPlugin(s(a.id),pluginWorkspace(a),s(a.method),a.params??{})
     case 'plugin.open': {
@@ -386,7 +400,7 @@ async function dispatchRequest(req: Request): Promise<any> {
 
     case 'session.info': {
       const info = sessionInfo(s(a.id))
-      if (!info){const card=readStore().sessions.find(c=>c.id===a.id);if(card)return {...publicEmployee(card),busy:false,sessionId:null};throw new Error(`unknown session ${s(a.id)}`)}
+      if (!info){const card=readStore().sessions.find(c=>c.id===a.id);if(card)return {...publicEmployee(card),lastReply:card.lastReply,busy:false,sessionId:null};throw new Error(`unknown session ${s(a.id)}`)}
       return info
     }
 
@@ -584,7 +598,7 @@ async function dispatchRequest(req: Request): Promise<any> {
     case 'room.layout': {
       const room=planOffice(readStore()).find(r=>r.name===a.name)
       if(!room)throw new Error('Unknown Team')
-      return room
+      return isGlobal(requestContext().principal)?room:{...room,employees:room.employees.map(({card,position})=>({card:publicEmployee(card),position}))}
     }
     case 'card.place':
       if(a.snap!==undefined&&typeof a.snap!=='boolean')throw new Error('snap must be boolean')
@@ -612,10 +626,12 @@ async function dispatchRequest(req: Request): Promise<any> {
       if(a.accessMode!==undefined&&!['trusted','isolated'].includes(a.accessMode))throw Error('Invalid process access mode')
       if(a.managementRole!==undefined&&!['employee','manager'].includes(a.managementRole))throw Error('Invalid management role')
       const kind=a.kind??'worker'
+      assertManagementKind({kind,managementRole:a.managementRole??'employee'})
       if(!['worker','cloud-native-worker'].includes(kind))throw new Error('Only Local or Cloud Native Worker employees are supported')
       if(a.chatProvider!==undefined||a.chatMode!==undefined||a.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')
       const engine = a.engine ?? 'codex'
       if (!['claude', 'codex'].includes(engine)) throw new Error('Unknown engine')
+      let model=a.model||defaultEmployeeModel(engine,kind)
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
       const appearance = employeeFields(a)
       const store=readStore(),config=teamSettings(store,s(a.group??''))
@@ -624,19 +640,22 @@ async function dispatchRequest(req: Request): Promise<any> {
       if(kind==='cloud-native-worker'){
         if(config.mode!=='cloud'||!config.hostId)throw new Error('Cloud Native Worker 只能加入已绑定主机的 Cloud Team')
         await checkCloudNative(s(a.group),engine)
+        if(!a.model)model=(await engineModels(engine,kind,a.group)).defaultModel
         await resolveEmployeeWorkspace(store,s(a.group),s(a.title),a.cwd,a.directoryMode,undefined,true)
       }
       if(!isGlobal(requestContext().principal)&&config.mode==='build'&&a.cwd){const candidate=resolve(store.teamRoots![a.group],a.cwd);if(!inside(store.teamRoots![a.group],candidate))throw Error('Manager-created workspace must stay inside its Team')}
       const cwd=await resolveEmployeeWorkspace(store,s(a.group??''),s(a.title),a.cwd,a.directoryMode)
       assertTeamAvailable(a.group)
       const latest=readStore();if(!latest.groups.includes(a.group)||JSON.stringify(teamSettings(latest,a.group))!==JSON.stringify(config))throw new Error('Team 已删除或配置已变更，请重新创建员工')
-      provisionEmployee(cwd,store.teamRoots![a.group],config)
       const id = newSessionId()
       const origin=kind==='cloud-native-worker'?{kind:'cloud' as const,hostId:config.hostId!,host:config.remote!.host,os:config.remote!.os,directory:cwd}:undefined
       authorize('card.create',a);
-      const saved = patchSession(id, { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
-        model: a.model ?? (engine === 'codex' ? (kind==='cloud-native-worker'?'gpt-6-luna':'gpt-5.6-luna') : undefined),
-        effort: a.effort ?? 'low', permissionMode: config.mode!=='build'||managerCliRoot(cwd)?'acceptEdits':'default' })
+      const employee:StoredSession = { initialization:pendingInitialization(),...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
+        model,
+        effort: a.effort ?? 'low', permissionMode: config.mode!=='build'||managerCliRoot(cwd)?'acceptEdits':'default' }
+      ensureEmployeeBootstrap(employee,latest)
+      const saved=patchSession(id,employee)
+      queueEmployeeInitialization(id)
       return executionEmployee(saved,saved.sessions.find((c) => c.id === id)!)
     }
     case 'card.update': {
@@ -704,7 +723,7 @@ async function removeEmployees(ids:string[]) {
       beginEmployeeRemoval(id);locked.push(id)
     }
     updateStore(store=>{for(const card of store.sessions)if(wanted.has(card.id))card.deleting=true})
-    for(const id of wanted){revokeAgentCredential(id);await closeEmployeeTerminals(id);closeRemote(id)}
+    for(const id of wanted){await cancelEmployeeInitialization(id);revokeAgentCredential(id);await closeEmployeeTerminals(id);closeRemote(id)}
     for(const live of listLive())if(wanted.has(sessionSnapshot(live.id).cardId!))await closeSession(live.id)
     const latest=readStore(),refs=latest.sessions.filter(card=>wanted.has(card.id)).flatMap(nativeRefsForRemoval)
     const others=latest.sessions.filter(card=>!wanted.has(card.id)).flatMap(nativeSessionRefs)
@@ -760,12 +779,12 @@ function fileEndpoint(ref:FileLocation,destination:boolean):FileEndpoint {
 }
 
 async function closeForEngineChange(cardId:string):Promise<void> {
-  assertEmployeeControl(cardId)
+  assertEmployeeControl(cardId,undefined,true)
   for(const live of listLive()){const snapshot=sessionSnapshot(live.id);if(snapshot.cardId===cardId){if(snapshot.busy)throw new Error('员工正在工作，请先停止任务再切换引擎或工作空间');await closeSession(live.id)}}
 }
 
 async function closeForWorkspaceChange(cardId: string): Promise<void> {
-  assertEmployeeControl(cardId)
+  assertEmployeeControl(cardId,undefined,true)
   for(const live of listLive()) {
     const state=sessionSnapshot(live.id)
     if(state.cardId!==cardId) continue
@@ -801,14 +820,14 @@ export function startServer(onListening: () => void = () => {}): void {
       }
 
       let caller:RequestContext
-      try{caller=authenticate(req.auth)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message})+'\n');return}
+      try{caller=authenticate(req.auth)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message,...((error as {code?:string}).code?{code:(error as {code:string}).code}:{})})+'\n');return}
       // `follow` keeps the connection open and streams instead of replying.
       // `raw: true` forwards every engine event, not just the rendered text.
       if (req.cmd === 'session.follow') {
         let sessionId=String((req.args??{}).id??(req.args??{}).employee)
         const card=employeeId(sessionId)
         const found=listLive().find(item=>sessionInfo(item.id)?.cardId===card);if(found)sessionId=found.id
-        try{authorize('session.follow',req.args,card,caller)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message})+'\n');return}
+        try{authorize('session.follow',req.args,card,caller);assertEmployeeReady(card)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message,...((error as {code?:string}).code?{code:(error as {code:string}).code}:{})})+'\n');return}
         const info = sessionInfo(sessionId)
         if (!info) {
           if(card){const items=transcriptItems(card);sock.write(JSON.stringify({ok:true,data:{following:card,transcript:items,text:renderTranscript(items)}})+'\n');sock.end(JSON.stringify({type:'done'})+'\n')}
@@ -831,7 +850,7 @@ export function startServer(onListening: () => void = () => {}): void {
       try {
         res = { ok: true, data: await handleRequest(req,caller) }
       } catch (err) {
-        res = { ok: false, error: err instanceof Error ? err.message : String(err) }
+        res = { ok: false, error: err instanceof Error ? err.message : String(err), ...((err as {code?:string})?.code?{code:(err as {code:string}).code}:{}) }
       }
       if (sock.writable) sock.write(JSON.stringify(res) + '\n')
     })

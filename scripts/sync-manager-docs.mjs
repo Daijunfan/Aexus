@@ -29,7 +29,7 @@ const guide=[
   '以下为宿主调度器全文，包括一次性、间隔和按周任务、时区与工作时段、模型/思考覆盖、运行记录和取消。','',
   scheduler.trim(),'',index
 ].join('\n')
-const files=new Map([['commands.json',JSON.stringify(commands,null,2)+'\n'],['API.md',guide],...['SCHEDULER.md','PLUGIN_SPEC.md','ENGINE_CAPABILITIES.md','ARCHITECTURE.md'].map(name=>[name,read(name)])])
+const files=new Map([['commands.json',JSON.stringify(commands,null,2)+'\n'],['API.md',guide],...['SCHEDULER.md','PLUGIN_SPEC.md','ENGINE_CAPABILITIES.md','ARCHITECTURE.md','PERMISSIONS.md'].map(name=>[name,read(name)])])
 if(read('docs/managers/AGENTS.md')!==read('docs/managers/CLAUDE.md'))throw Error('Manager agent instructions must match across engines')
 for(const name of files.keys())if(fs.existsSync(path.join(root,'Agents-Managers',name)))throw Error('Manager Team root must not contain documentation: '+name)
 for(const [name,content] of files){const file=path.join(destination,name);if(check){if(!fs.existsSync(file)||fs.readFileSync(file,'utf8')!==content)throw Error('Manager documentation is stale: '+name)}else fs.writeFileSync(file,content)}

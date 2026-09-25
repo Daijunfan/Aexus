@@ -4,18 +4,18 @@ import os from 'node:os'
 import {claudeUserSettings} from './claude-provider'
 import type {Options} from '@anthropic-ai/claude-agent-sdk'
 
-export function workCodexConfig(cwd:string,teamRoot:string):string[] {
+export function workCodexConfig(cwd:string,teamRoot:string,controlSocket?:string):string[] {
   const access:Record<string,string>={}
   if(cwd!==teamRoot)access[teamRoot]='deny'
   access[cwd]='write'
   const table='{'+Object.entries(access).map(([key,value])=>`${JSON.stringify(key)}=${JSON.stringify(value)}`).join(',')+'}'
   // Stop AGENTS.md discovery at this employee's generated guide, before denied ancestors.
-  return ['-c','project_root_markers=[".agents-company"]','-c','memories.use_memories=false','-c','memories.generate_memories=false','-c','features.memories=false','-c','default_permissions="agents-company-work"','-c','approval_policy="never"','-c','permissions.agents-company-work.extends=":workspace"','-c',`permissions.agents-company-work.filesystem=${table}`]
+  return ['-c','project_root_markers=[".agents-company"]','-c','memories.use_memories=false','-c','memories.generate_memories=false','-c','features.memories=false','-c','default_permissions="agents-company-work"','-c','approval_policy="never"','-c','permissions.agents-company-work.extends=":workspace"','-c',`permissions.agents-company-work.filesystem=${table}`,...(controlSocket?['-c','permissions.agents-company-work.network.enabled=true','-c',`permissions.agents-company-work.network.unix_sockets={${JSON.stringify(controlSocket)}="allow"}`]:[])]
 }
 
-export function workClaudeOptions(cwd:string,teamRoot:string):Partial<Options> {
+export function workClaudeOptions(cwd:string,teamRoot:string,controlSocket?:string):Partial<Options> {
   return {
-    settings:{sandbox:{enabled:true,failIfUnavailable:true,allowUnsandboxedCommands:false,filesystem:{allowWrite:[cwd],denyRead:cwd===teamRoot?[]:[teamRoot],allowRead:[cwd]}}},
+    settings:{sandbox:{enabled:true,failIfUnavailable:true,allowUnsandboxedCommands:false,...(controlSocket?{network:{allowUnixSockets:[controlSocket]}}:{}),filesystem:{allowWrite:[cwd],denyRead:cwd===teamRoot?[]:[teamRoot],allowRead:[cwd]}}},
     // File tools execute in-process; the same folder boundary must apply there.
     hooks:{PreToolUse:[{hooks:[async input=>{
       if(input.hook_event_name!=='PreToolUse'||!['Read','Edit','Write','Glob','Grep','NotebookEdit'].includes(input.tool_name))return {}

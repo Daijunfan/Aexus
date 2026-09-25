@@ -141,16 +141,21 @@ request=json.load(sys.stdin)
 root=pathlib.Path(request['target']['directory']).resolve()
 for item in request['files']:
  file=pathlib.Path(item['path']); file.resolve().relative_to(root)
+ if file.is_symlink():raise ValueError('Documentation symlinks cannot be replaced')
  file.parent.mkdir(parents=True,exist_ok=True)
  file.write_text(item['content'],encoding='utf-8');file.chmod(item['mode'])
+# Only remove previously generated root-level sections; handbooks now live in the hidden employee folder.
 for name in ('AGENTS.md','CLAUDE.md'):
  file=root/name;file.resolve().relative_to(root)
- content=file.read_text(encoding='utf-8') if file.exists() else ''
+ if not file.exists():continue
+ if file.is_symlink():raise ValueError('Documentation symlinks cannot be replaced')
+ content=file.read_text(encoding='utf-8')
  begin='<!-- agents-control:'+request['employeeId']+' -->';end='<!-- /agents-control:'+request['employeeId']+' -->'
- block=begin+'\n'+request['guide']+'\n'+end
  a,b=content.find(begin),content.find(end)
- content=content[:a]+block+content[b+len(end):] if a>=0 and b>=a else content+'\n\n'+block+'\n'
- file.write_text(content,encoding='utf-8')
+ if a>=0 and b>=a:
+  content=content[:a]+content[b+len(end):]
+  if content.strip():file.write_text(content,encoding='utf-8')
+  else:file.unlink()
 print(json.dumps({'ready':True}))
 """
 

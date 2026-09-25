@@ -25,7 +25,14 @@ const trusted=(event:Electron.IpcMainEvent|Electron.IpcMainInvokeEvent)=>{
   const expected=process.env.ELECTRON_RENDERER_URL||new URL(`file://${join(__dirname,'../renderer/index.html')}`).href
   return new URL(frame.url).origin===new URL(expected).origin&&new URL(frame.url).pathname===new URL(expected).pathname
 }
-ipcMain.handle('api:request', (event, request: Request) => {if(!trusted(event))throw new Error('Untrusted IPC sender');return handleRequest(request,operatorContext())})
+const activeWindow=(win:BrowserWindow|undefined)=>!!win&&!win.isDestroyed()&&win.isVisible()&&win.isFocused()&&!win.isMinimized()&&win.webContents.isFocused()
+ipcMain.handle('api:request', (event, request: Request) => {
+  if(!trusted(event))throw new Error('Untrusted IPC sender')
+  // Chromium can report focus/visibility even for a hidden, non-throttled window.
+  // Desktop acknowledgements require the actual native window to be foregrounded.
+  if(request.cmd==='session.acknowledge'&&!activeWindow(mainWindow))return {acknowledged:false,reason:'window-not-active'}
+  return handleRequest(request,operatorContext())
+})
 ipcMain.on('renderer:ready', event => { if(trusted(event))setRendererReady(event.sender,true) })
 ipcMain.on('ui:response', (event, a) => {if(trusted(event))resolveUiRequest(a.id, a.data, a.error)})
 ipcMain.handle('shell:openExternal', async (event, url: string) => {
@@ -87,6 +94,10 @@ function createWindow() {
     }
   })
   mainWindow=win
+  const visibility=()=>{if(!win.isDestroyed())win.webContents.send('api:event',{channel:'desktop:visibility',payload:{active:activeWindow(win)}})}
+  win.on('show',visibility).on('hide',visibility).on('focus',visibility).on('blur',visibility).on('minimize',visibility).on('restore',visibility)
+  win.webContents.on('focus',visibility).on('blur',visibility)
+  win.webContents.on('did-finish-load',visibility)
   win.on('closed',()=>{mainWindow=undefined})
   // Page zoom is a persisted Core preference, separate from canvas navigation.
   win.webContents.on('did-finish-load', () => { win.webContents.setZoomFactor(getPreferences().pageZoom); void win.webContents.setVisualZoomLevelLimits(1,1) })

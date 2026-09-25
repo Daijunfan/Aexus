@@ -1,3 +1,5 @@
+import {pendingInitialization} from './initialization-state'
+import {queueEmployeeInitialization} from './initialization'
 import {requestContext,authorize} from './authorization'
 import fs from 'node:fs'
 import {dirname} from 'node:path'
@@ -7,7 +9,7 @@ import {executionEmployee,cloudRelative} from './workspaces'
 import {resolveEmployeeWorkspace,remoteFiles,teamConnectionId} from './tunnel'
 import {forkEmployeeContext,deleteNativeSessions} from './native-sessions'
 import {copyTranscript,deleteTranscript} from './transcripts'
-import {provisionEmployee} from './plugins/documents'
+import {provisionEmployee,ensureEmployeeBootstrap} from './plugins/documents'
 import {teamSettings,nativeSessionRefs,type StoredSession} from '../shared/types'
 import {checkCloudNative,cloudNativeTarget} from './cloud-native'
 
@@ -36,9 +38,11 @@ export async function cloneEmployee(id:string,args:CloneArgs){
     if(!current||JSON.stringify(current)!==JSON.stringify(stored)||JSON.stringify(teamSettings(latest,source.group))!==JSON.stringify(config))throw new Error('原员工或 Team 已变化，请重试克隆')
     provisionEmployee(cwd,store.teamRoots![source.group],config)
     copyTranscript(source.id,targetId)
-    const {threadId:_thread,claudeSessionId:_claude,nativeSessions:_history,remote:_remote,position:_position,orderIndex:_order,...settings}=stored
+    const {lastReply:_reply,threadId:_thread,claudeSessionId:_claude,nativeSessions:_history,remote:_remote,position:_position,orderIndex:_order,...settings}=stored
     authorize('card.clone',{id},id)
-    const saved=patchSession(targetId,{...settings,...native,managementRole:'employee',createdBy:requestContext().principal,deleting:undefined,id:targetId,title:args.title.trim(),cwd,nativeOrigin:source.nativeOrigin?{...source.nativeOrigin,directory:cwd}:undefined,nativeOwnership:undefined,clonedFrom:id,createdAt:Date.now()})
+    const cloned:StoredSession={...settings,...native,initialization:pendingInitialization(),managementRole:'employee',createdBy:requestContext().principal,deleting:undefined,id:targetId,title:args.title.trim(),cwd,nativeOrigin:source.nativeOrigin?{...source.nativeOrigin,directory:cwd}:undefined,nativeOwnership:undefined,clonedFrom:id,createdAt:Date.now()}
+    ensureEmployeeBootstrap(cloned,latest)
+    const saved=patchSession(targetId,cloned)
     return executionEmployee(saved,saved.sessions.find(c=>c.id===targetId)!)
   }catch(error){
     // Only the new fork can be removed; the source's native IDs never enter this set.

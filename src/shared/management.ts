@@ -6,3 +6,8 @@ export type ManagementRelation={id:string;managerId:string;employeeId:string;sta
 export type ManagementAccess={version:1;revision:number;globalManagerIds:string[];globalGrants?:Record<string,string>;relations:ManagementRelation[]}
 export type CurrentTask={messageId:string;delegation:Delegation;startedAt:number;runId?:string}
 export const emptyAccess=():ManagementAccess=>({version:1,revision:0,globalManagerIds:[],relations:[]})
+
+/** A native cloud engine must never acquire company management authority. */
+export function assertManagementKind(card:{kind?:string;managementRole?:ManagementRole},global=false){
+  if(card.kind==='cloud-native-worker'&&(card.managementRole==='manager'||global))throw new Error('Manager 必须是本地员工；云端原生员工只能担任 Employee')
+}

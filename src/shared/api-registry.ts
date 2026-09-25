@@ -11,6 +11,9 @@ const DEFINITIONS: {
   { name: 'api.list', args: '', summary: 'List caller-authorized APIs', gui: '管理与协同' },
   { name: 'api.describe', args: 'COMMAND', summary: 'Describe an authorized API and its scope', gui: '管理与协同' },
   { name: 'api.docs', args: '', summary: 'Read the caller role API handbook', gui: '管理与协同' },
+  { name: 'office.layout', args: '[--team NAME]', summary: 'Read authorized Team bounds, employee coordinates and permitted layout actions; no filesystem access', gui: 'Agent 布局工具' },
+  { name: 'session.acknowledge', args: '--employee ID --reply-id ID', summary: 'User-only acknowledgement of the exact displayed reply; stale acknowledgements do not clear newer replies', gui: '可见回复已读' },
+  { name: 'management.relayout', args: '--team NAME', summary: 'Group related employees and fit this Team without changing the viewport', gui: '整理团队拓扑' },
   { name: 'management.topology', args: '[--team NAME]', summary: 'Read employee nodes, active relations and pending requests', gui: '管理与协同' },
   { name: 'management.request', args: '--employee ID [--manager ID]', summary: 'Request a same-Team management relation', gui: '管理与协同' },
   { name: 'management.decide', args: 'ID approve|deny', summary: 'Approve or deny a pending management relation', gui: '管理与协同' },
@@ -38,10 +41,11 @@ const DEFINITIONS: {
   { name: 'schedule.run', args: 'ID', summary: 'Run once now without consuming the next scheduled occurrence', gui: 'CLI 调度基础，供插件复用' },
   { name: 'schedule.history', args: '[ID] [--employee ID --limit N]', summary: 'Read durable run status and conversation IDs', gui: 'CLI 调度基础，供插件复用' },
   { name: 'schedule.cancel', args: 'RUN_ID', summary: 'Cancel an active scheduled turn', gui: 'CLI 调度基础，供插件复用' },
-  { name: 'settings.get', args: '', summary: 'Read theme and pointer sensitivity', gui: '应用设置' },
-  { name: 'settings.set', args: '[--theme white|light|space|black|midnight|sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off]', summary: 'Persist appearance and canvas controls', gui: '背景和灵敏度' },
+  { name: 'settings.get', args: '', summary: 'Read appearance controls and per-engine default employee models', gui: '应用设置' },
+  { name: 'engine.models', args: '--engine codex|claude [--kind worker|cloud-native-worker] [--team NAME]', summary: 'List available models before employee creation, without inference; Cloud Native reads the selected host', gui: '创建员工和默认模型设置' },
+  { name: 'settings.set', args: '[--theme white|light|space|black|midnight|sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off] [--default-codex-model ID] [--default-claude-model ID]', summary: 'Persist appearance, canvas controls and default employee models', gui: '背景和灵敏度' },
   { name: 'view.get', args: '', summary: 'Read service-owned navigation, including without a window', gui: '当前面板' },
-  { name: 'view.open', args: 'home|team|employee|workspace|conversation|plugin|settings [--name NAME] [--employee ID] [--plugin ID]', summary: 'Open a form, workspace or employee conversation', gui: '打开资料或会话' },
+  { name: 'view.open', args: 'home|team|employee|workspace|conversation|initialization|plugin|settings [--name NAME] [--employee ID] [--plugin ID]', summary: 'Open a form, workspace or employee conversation', gui: '打开资料或会话' },
   { name: 'view.close', args: '', summary: 'Close the current panel after saving workspace edits; keep engines running', gui: '× / Escape / 收起面板' },
   { name: 'view.details', args: 'on|off', summary: 'Show or hide employee details inside a conversation', gui: '员工资料 / 返回会话' },
   { name: 'status', args: '', summary: 'Is the app running, and how many sessions are live', gui: 'The app window being open' },
@@ -111,7 +115,8 @@ const DEFINITIONS: {
   { name: 'card.move', args: '<cardId> <group> [--before id] [--cwd existing-path]', summary: 'Move an employee between Teams; --cwd binds an existing folder', gui: 'Dragging a card' },
   { name: 'card.remove', args: '<cardId>', summary: 'Remove an employee and all associated host/native conversations, keeping work files', gui: '移除员工及全部会话' },
   { name: 'card.clone', args: '<id> --title NAME [--directory-mode default|bind] [--cwd PATH]', summary: 'Clone an employee with an independent native conversation', gui: '克隆员工' },
-  { name: 'card.create', args: '--title NAME [--kind worker|cloud-native-worker] [--engine E] [--avatar cat]', summary: 'Hire a Local or Cloud Native Worker', gui: '添加员工' },
+  { name: 'card.initialize', args: '<employee-id>', summary: 'Retry failed hidden onboarding; pending/ready requests are idempotent', gui: '重试初始化' },
+  { name: 'card.create', args: '--title NAME [--group TEAM] [--kind worker|cloud-native-worker] [--management-role employee|manager] [--engine E] [--model ID] [--effort LEVEL] [--avatar cat]', summary: 'Hire an employee and start hidden initialization; wait for ready before interaction', gui: '添加员工' },
   { name: 'card.update', args: '<cardId> [--avatar fox] [--role ROLE] [--color HEX]', summary: 'Edit an employee and its avatar', gui: '员工资料' },
   { name: 'group.rename', args: '<name> <newName>', summary: 'Rename a Team without renaming or moving its workspace folder', gui: 'Team 名称' },
   { name: 'room.design', args: '<name> [--theme sage] [--wall windows] [--desk oak]', summary: 'Replace room surfaces and furnishings', gui: '空间设计' },
@@ -193,7 +198,7 @@ export type UiSnapshot = {
   counts: Record<string, number>
 }
 
-export type ApiPermission='operator'|'identity'|'topology'|'relation'|'employee.read'|'employee.message'|'employee.configure'|'employee.create'|'employee.delete'|'workspace'|'plugin'|'schedule';
+export type ApiPermission='layout.read'|'layout.write'|'operator'|'identity'|'topology'|'relation'|'employee.read'|'employee.message'|'employee.configure'|'employee.create'|'employee.delete'|'workspace'|'plugin'|'schedule';
 const permissions:Record<string,ApiPermission>={};
-for(const [permission,names] of Object.entries({identity:['auth.whoami','api.list','api.describe','api.docs'],topology:['management.topology'],relation:['management.request','management.unbind'], 'employee.read':['session.status','session.info','session.snapshot','session.activity','session.transcript','session.follow','session.queue','session.list'], 'employee.message':['session.open','session.send','session.enqueue','session.dequeue','session.interrupt'], 'employee.configure':['config.model','config.effort','config.thinking','config.fast','config.plan'], 'employee.create':['card.create'],'employee.delete':['card.remove'],workspace:['workspace.list','workspace.read','workspace.write','workspace.mkdir','workspace.move','workspace.trash','workspace.restore','workspace.image','workspace.docs'],plugin:['plugin.call','plugin.describe','plugin.list'],schedule:['schedule.schema','schedule.status','schedule.list','schedule.get','schedule.create','schedule.update','schedule.pause','schedule.resume','schedule.delete','schedule.preview','schedule.run','schedule.history','schedule.cancel']}))for(const name of names)permissions[name]=permission as ApiPermission;
+for(const [permission,names] of Object.entries({'layout.read':['office.layout','room.layout'],'layout.write':['room.bounds','room.place','card.place','management.relayout'],identity:['auth.whoami','api.list','api.describe','api.docs'],topology:['management.topology'],relation:['management.request','management.unbind'], 'employee.read':['session.status','session.info','session.snapshot','session.activity','session.transcript','session.follow','session.queue','session.list'], 'employee.message':['card.initialize','session.open','session.send','session.enqueue','session.dequeue','session.interrupt'], 'employee.configure':['config.model','config.effort','config.thinking','config.fast','config.plan'], 'employee.create':['card.create'],'employee.delete':['card.remove'],workspace:['workspace.list','workspace.read','workspace.write','workspace.mkdir','workspace.move','workspace.trash','workspace.restore','workspace.image','workspace.docs'],plugin:['plugin.call','plugin.describe','plugin.list'],schedule:['schedule.schema','schedule.status','schedule.list','schedule.get','schedule.create','schedule.update','schedule.pause','schedule.resume','schedule.delete','schedule.preview','schedule.run','schedule.history','schedule.cancel']}))for(const name of names)permissions[name]=permission as ApiPermission;
 export const COMMANDS=DEFINITIONS.map(command=>({...command,permission:permissions[command.name]??'operator' as ApiPermission,target:command.name.startsWith('schedule.')?'schedule':command.name.startsWith('session.')||command.name.startsWith('config.')||command.name.startsWith('card.')?'session-or-employee':'request'}));

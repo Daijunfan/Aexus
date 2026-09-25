@@ -154,7 +154,7 @@ agents config fast <id> on|off
 | Effort | Native effort control; validated against `supportedModels()` | Validated against `model/list` and sent unchanged as `model_reasoning_effort` / `turn.start.effort` |
 | Fast | Native `applyFlagSettings({fastMode})` when the model supports it | Catalog Fast tier ID passed as `service_tier` / `turn/start.serviceTier`, both local and cloud |
 
-`config.remote-admin` is an explicit opt-in for a cloud Codex employee that must administer its remote host (for example KVM devices and long-lived VM processes). Default is off. Enabled commands run with the SSH account's remote permissions instead of the remote workspace sandbox, after the remote executor handshake; this never enables a Mac fallback or changes the local Team policy. It is rejected for local/Work employees, Claude, and busy turns; moving the employee to another Team resets it. Read the effective `remoteAdmin` in `session.info/snapshot`. Use the normal workspace mode for document-only employees. A Manager may grant this when the user's task explicitly authorizes remote host administration. Do not use SSH self-login to work around a denied sandbox.
+`config.remote-admin` is an explicit opt-in for a cloud Codex employee that must administer its remote host (for example KVM devices and long-lived VM processes). Default is off. Enabled commands run with the SSH account's remote permissions instead of the remote workspace sandbox, after the remote executor handshake; this never enables a Mac fallback or changes the local Team policy. It is rejected for local/Work employees, Claude, and busy turns; moving the employee to another Team resets it. Read the effective `remoteAdmin` in `session.info/snapshot`. Use the normal workspace mode for document-only employees. Only the user or a globally authorized Agents Manager may grant this when the user's task explicitly authorizes remote host administration. Do not use SSH self-login to work around a denied sandbox.
 
 The permission table applies to Build Teams. Work fixes `acceptEdits` with a folder
 scope policy and rejects attempts to switch to Full access or another permission mode.
@@ -412,6 +412,40 @@ capture web content without opening a preview or showing the window.
 The normal workflow needs only data commands. `ui.*` is for acceptance checks
 and visual diagnostics, and is not required to run agents or manage the company.
 
+## Employee initialization and topology layout
+
+创建员工成功后直接返回看板，不自动弹出初始化提示框。`pending` / `running` 员工显示黄灯和“正在初始化”，完成后恢复正常忙闲灯；初始化失败保留错误／重试入口。
+
+创建前可查询 Coding Agent 的模型列表，不创建会话、不发送推理请求：
+
+```sh
+agents engine models --engine codex --json
+agents engine models --engine claude --json
+agents engine models --engine codex --kind cloud-native-worker --team "Cloud Team" --json
+agents settings set --default-codex-model gpt-6-luna --default-claude-model deepseek-flash
+agents card create --title "Reviewer" --group "Build Team" --engine codex --model gpt-6-luna --effort low
+```
+
+`engine.models` 返回 `{models, defaultModel}`，只允许用户／已授权全局管理者调用。Local Worker 查询本机引擎；Cloud Native Worker 必须指定 Cloud Team，并从该主机查询，失败不退回本机。Claude Code 接入 DeepSeek 时返回对应的两个模型。
+
+`settings.get/set` 的 `defaultCodexModel`、`defaultClaudeModel` 为之后创建的员工保存默认模型；空字符串恢复系统默认。`card.create --model` 优先于设置；初始化和之后的会话均使用创建时选定的模型。修改默认模型不更改已有员工。云端原生引擎未提供本机设置中的默认模型时，使用该远端模型列表的默认项。新员工表单切换 Coding Agent 时重新读取模型，不沿用另一引擎的选择。
+
+职位为 `managementRole: employee|manager`，执行位置独立为 `kind: worker|cloud-native-worker`。Manager 和全局 Agents Manager 必须是本地引擎。所有创建、赋予职位、全局授权和启动入口都拒绝 cloud-native-worker 的 Manager 组合。SSH Team 中的本地 Manager 可以继续使用 Tunnel；云端原生 Employee 不回退本机。
+
+`card.create --management-role manager --kind worker` 为用户／全局管理者创建本地 Manager。普通 Manager 使用 `card.create` 只能创建本 Team 的 Employee；省略 group 时由 Core 使用调用者所属 Team。后台在同一次状态提交中保存创建者和有效管理关系，不能由参数伪造内部字段。
+
+公司手册按照目标员工实际身份生成。文件及 `AGENTS.md` / `CLAUDE.md` 引导位于 `.agents-company/employees/<employeeId>/` 隐藏目录；用户自己已有的根目录说明保留。Work 插件手册与公司说明分区共存。`workspace docs --employee ID` 可重新生成本人的手册。首次运行、恢复和职位变更均更新指令；旧会话及原生 ID 保留。
+
+本项目 Multi-Agent 的命令是 `card.*`、`management.*`、`session.*`、`schedule.*`，不是引擎自带的 Agent / Task 或 native multi_agent。
+
+```sh
+agents management relayout --team TEAM --json
+```
+
+`management.relayout` 向用户、本 Team Manager 及拥有目标 Team 布局授权的全局员工开放。全局 Employee 只能修改其他 Team；修改自己的 Team 仍须 Manager 职位。成功返回 `{team,bounds,revision}`。招募、删除员工或同 Team 有效关系变化都会触发布局适配，把管理组和孤立员工放进合适的 Team 外框。所有坐标和关系在同次提交中保存。pending、任务输出、镜头移动和切换视图不会触发重排。
+
+箭头为水平／垂直折线加小圆角，终点方向只允许上、下、左、右。`room.layout` 返回的员工坐标仍为 UI 的依据；`team-view.*` 不改变关系或权限。完整授权矩阵见 [PERMISSIONS.md](PERMISSIONS.md)。
+
 ## Authenticated management and collaboration
 
 The operator UI/CLI retains complete control. Every employee has a distinct Core
@@ -481,7 +515,7 @@ must not be described as tamper-proof. Isolated mode currently supports local ma
 processes, private native profiles and protected host credentials. Unsupported remote
 or other-platform isolation fails closed. A workspace containing this running host's
 source is not eligible. Switching an existing native history between execution
-profiles is rejected. Cloud Managers use employee-specific SSH return gateways;
+profiles is rejected. Locally running Managers in SSH Teams use employee-specific SSH return gateways;
 remote Trusted mode still requires trusting processes that share that remote OS user.
 See `ARCHITECTURE.md` for the execution and compatibility boundaries.
 
@@ -506,6 +540,37 @@ agents team-view remove VIEW_ID
 must be unique, and unknown Teams are rejected. Renaming or deleting a Team
 updates custom views. A Team created while a custom view is active joins that
 view automatically. Deleting a view never deletes its Teams.
+
+## Agent layout tools
+
+```sh
+agents office layout --json
+agents office layout --team "Engineering" --json
+agents room bounds "Engineering" --x 100 --y 200 --width 1200 --height 900 --json
+agents card place EMPLOYEE_ID --x 430 --y 240 --snap off --json
+agents management relayout --team "Engineering" --json
+```
+
+`office.layout` returns `{revision,coordinates,rooms}`. Each room has `name`, actual
+`bounds`, `editable`, and employees with stable IDs, titles, roles, Team-relative
+positions, full-size footprints and per-target `editable`. It contains no working
+files, host credentials or conversation history. The unfiltered call returns all
+Teams to the user/global staff and only the caller's Team to a Team Manager.
+Ordinary Employees cannot call layout APIs.
+
+Geometry changes reuse `room.bounds`, `room.place`, `card.place` and
+`management.relayout`. A Team Manager may change its own frame and run automatic
+packing, and individually move itself or linked ordinary Employees. Global staff
+can edit other Teams; their own Team requires the Manager role even when globally
+authorized. All target identifiers are rechecked by Core. Renaming a folder does
+not grant layout authority. User-only `ui.click/type/drag/wheel` cannot be used by
+Agents to bypass these limits.
+
+Roster/active-topology changes refit only affected rooms in the same atomic state
+commit. Overlapping neighboring rooms move aside, including pinned rooms; this
+incidental collision displacement is not a cross-Team management grant. Existing
+overlapping layouts are repaired once on startup. Camera and view selection remain
+unchanged. Work directories, task ownership and management arrows do not change.
 
 ## Canvas and freely placed employees
 
@@ -534,8 +599,10 @@ normalized 0–1 coordinates and are editable as handles in the UI.
 `card.place` stores Team-relative coordinates, switches to free arrangement and
 freezes other employees' current positions. Employees remain 190 × 250 world
 units; deliberate manual overlaps are possible. Automatic grid/ring arrangement
-keeps workstations spaced apart. Pinning a Team position prevents automatic
-placement from changing it; other Teams flow around occupied spaces.
+keeps workstations spaced apart. A changed Team stays anchored; colliding neighbors,
+including pinned rooms, move aside with a 60-world-pixel gap. Roster changes refit the
+frame, growing or shrinking it while preserving full-size workstations. Manual dragging
+does not trigger roster re-packing. Cameras and unrelated non-colliding rooms stay fixed.
 
 The viewport uses screen-pixel translation plus zoom (0.08–3). These operations
 work from the CLI even without a desktop renderer. `ui.drag` / `ui.wheel` are
@@ -967,11 +1034,14 @@ without a window. Explorer range: 140–520 CSS px; terminal range: 120–600 CS
 The desktop constrains their displayed size on small windows. Both separators support
 pointer dragging and arrow keys; Home/End set minimum/maximum sizes.
 
-`agents session activity <id>` returns `null` while idle or before the engine emits
-content. Otherwise it returns `{kind: "speech"|"thinking"|"tool", text, tool?, detail?,
-running?}`. This is also `activityPreview` in `session snapshot` and `session list --live`.
-Only the current turn's engine-published text/thinking summary/tool input and output
-are shown; excerpts keep the most recent 360 characters. No hidden reasoning is inferred.
+`agents session activity <id>` returns current published activity while working.
+After completion it returns an unread speech preview until the exact reply is read,
+then `null`. The shape is `{kind: "speech"|"thinking"|"tool", text, tool?, detail?,
+running?, unread?, replyId?}`. This is also `activityPreview` in `session snapshot` and `session list --live`.
+Working previews use the current turn's engine-published text/thinking summary/tool
+input and output; live excerpts keep the most recent 360 characters. Idle unread
+previews use the last answer paragraph, capped at 4000 Unicode characters, while the
+full answer stays in the transcript. No hidden reasoning is inferred.
 The office uses solid speech bubbles, dashed thinking bubbles and monospace tool bubbles.
 
 `card.place` constrains the full 190×250 employee footprint to its Team's actual shape,
@@ -995,6 +1065,36 @@ agents card create --title Fireball --group 'BUPT Windows' --avatar fireball --e
 The terminal runs PowerShell. Native Codex tools execute through the selected
 Windows environment without transport instructions in model context. Authentication
 for the model stays on the Mac; no model login is needed on the Windows executor.
+
+## Unread final replies
+
+The stored employee and its `session.info/status/snapshot` expose optional
+`lastReply: {id,itemId,text,createdAt,readAt?}`. It is created only from the completed
+public assistant answer; private onboarding, thinking and tools do not create it.
+The preview is the final paragraph, bounded to the last 4000 Unicode characters
+with a leading ellipsis if truncated; complete text remains in the transcript.
+A new answer creates a new ID even if its text repeats. Closing a native session,
+switching Team views or restarting preserves unread state. Existing historical
+messages are not retroactively marked unread.
+
+```sh
+agents session status --employee EMPLOYEE_ID --json
+# Explicit user action only; an Agent cannot acknowledge for the user.
+agents session acknowledge --employee EMPLOYEE_ID --reply-id REPLY_ID --json
+```
+
+`session.acknowledge` accepts only the exact current reply ID. It returns
+`{acknowledged:true,replyId,readAt}` on success; a stale/missing current reply returns
+`{acknowledged:false,replyId?}` without clearing a newer reply. Repeated successful
+acknowledgements do not rewrite state. Directly patching `lastReply` is rejected.
+
+The desktop acknowledges after the actual last-answer marker is visible in the
+foreground conversation for 650 ms. Native window visibility/focus/minimization,
+page focus, clipping, file tabs and obscuring dialogs are checked. A background
+window can return `{acknowledged:false,reason:"window-not-active"}`. CLI queries,
+subscriptions and Manager reads never imply user-read; the CLI command above is
+an explicit user acknowledgement. Red dots and the final-speech bubble disappear
+once read; the transcript is retained.
 
 ## Shared 文件中转站与跨主机传输
 
@@ -1059,7 +1159,7 @@ agents transfer cancel TRANSFER_ID --json
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 156 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 161 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -1069,6 +1169,9 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents api list</code> | <code>—</code> | List caller-authorized APIs | 管理与协同 | identity |
 | <code>agents api describe</code> | <code>COMMAND</code> | Describe an authorized API and its scope | 管理与协同 | identity |
 | <code>agents api docs</code> | <code>—</code> | Read the caller role API handbook | 管理与协同 | identity |
+| <code>agents office layout</code> | <code>[--team NAME]</code> | Read authorized Team bounds, employee coordinates and permitted layout actions; no filesystem access | Agent 布局工具 | layout.read |
+| <code>agents session acknowledge</code> | <code>--employee ID --reply-id ID</code> | User-only acknowledgement of the exact displayed reply; stale acknowledgements do not clear newer replies | 可见回复已读 | operator |
+| <code>agents management relayout</code> | <code>--team NAME</code> | Group related employees and fit this Team without changing the viewport | 整理团队拓扑 | layout.write |
 | <code>agents management topology</code> | <code>[--team NAME]</code> | Read employee nodes, active relations and pending requests | 管理与协同 | topology |
 | <code>agents management request</code> | <code>--employee ID [--manager ID]</code> | Request a same-Team management relation | 管理与协同 | relation |
 | <code>agents management decide</code> | <code>ID approve&#124;deny</code> | Approve or deny a pending management relation | 管理与协同 | operator |
@@ -1096,10 +1199,11 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 | schedule |
 | <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 | schedule |
 | <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 | schedule |
-| <code>agents settings get</code> | <code>—</code> | Read theme and pointer sensitivity | 应用设置 | operator |
-| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off]</code> | Persist appearance and canvas controls | 背景和灵敏度 | operator |
+| <code>agents settings get</code> | <code>—</code> | Read appearance controls and per-engine default employee models | 应用设置 | operator |
+| <code>agents engine models</code> | <code>--engine codex&#124;claude [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
+| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--default-codex-model ID] [--default-claude-model ID]</code> | Persist appearance, canvas controls and default employee models | 背景和灵敏度 | operator |
 | <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
-| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 | operator |
+| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 | operator |
 | <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
 | <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 | operator |
 | <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open | operator |
@@ -1164,20 +1268,21 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” | operator |
 | <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Bind a Team to a plugin or registered cloud host and directory | Team 工作方式与连接 | operator |
 | <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department | operator |
-| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign | operator |
+| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign | layout.write |
 | <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card | operator |
 | <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card | operator |
 | <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 | employee.delete |
 | <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 | operator |
-| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;cloud-native-worker] [--engine E] [--avatar cat]</code> | Hire a Local or Cloud Native Worker | 添加员工 | employee.create |
+| <code>agents card initialize</code> | <code>&lt;employee-id&gt;</code> | Retry failed hidden onboarding; pending/ready requests are idempotent | 重试初始化 | employee.message |
+| <code>agents card create</code> | <code>--title NAME [--group TEAM] [--kind worker&#124;cloud-native-worker] [--management-role employee&#124;manager] [--engine E] [--model ID] [--effort LEVEL] [--avatar cat]</code> | Hire an employee and start hidden initialization; wait for ready before interaction | 添加员工 | employee.create |
 | <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 | operator |
 | <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 | operator |
 | <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 | operator |
 | <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 | operator |
 | <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 | operator |
-| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team | operator |
-| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 | operator |
-| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 | operator |
+| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team | layout.write |
+| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 | layout.read |
+| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 | layout.write |
 | <code>agents canvas view</code> | <code>—</code> | Read viewport position and zoom | 画布视野 | operator |
 | <code>agents canvas set</code> | <code>--x N --y N --zoom N</code> | Pan and zoom the canvas | 平移、缩放画布 | operator |
 | <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 | plugin |

@@ -1,9 +1,12 @@
-import {prepareRemoteAgentAccess,closeRemoteAgentAccess} from './remote-agent-access'
+import {assertEmployeeReady,isInitializer,pendingInitialization} from './initialization-state'
+import {assertManagementKind} from '../shared/management'
+import {SOCKET_PATH} from '../shared/protocol'
+import {prepareRemoteAgentAccess,prepareRemoteEmployeeDocuments,closeRemoteAgentAccess,remoteAgentBin} from './remote-agent-access'
 import {employeeProcessOptions,spawnEmployeeProcess} from './agent-process-isolation'
 import {delegationFor,validateDelegation,authorizeSlash,withCaller,requestContext} from './authorization'
 import type {Delegation,CurrentTask} from '../shared/management'
 import {agentEnvironment} from './agent-access'
-import {activityPreview} from '../shared/activity'
+import {activityPreview,employeeActivity} from '../shared/activity'
 import {dirname} from 'node:path'
 import {closeNativeCodexSession,nativeCodexBusy,nativeCodexRequest,hasNativeCodexSession} from './codex-native'
 import {workspaceFiles} from './files'
@@ -34,7 +37,7 @@ import { approvalHandler,nativeRequestHandler,elicitationHandler, approvalsFor, 
 import {teamSettings,nativeSessionRefs,type Session} from '../shared/types'
 import {CLOUD_TOOLS,cloudToolAllowed,cloudClaudeSettings,workClaudeOptions} from './scope'
 import { employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName,cloudRelative } from './workspaces'
-import { provisionEmployee } from './plugins/documents'
+import { provisionEmployee,ensureEmployeeBootstrap,employeeInstructions } from './plugins/documents'
 import {checkCloudNative,cloudNativeTarget} from './cloud-native'
 import {spawnRemoteAgent} from './remote-agent-process'
 
@@ -51,6 +54,8 @@ const CLAUDE_BIN = resolveBinary('claude', process.env.CLAUDE_BIN)
 export type Engine = 'claude' | 'codex'
 
 export type Live = {
+  privateInitialization?:boolean
+  bootstrapInstructions?:string
   cardId: string
   currentTask?:CurrentTask
   kind: EmployeeKind
@@ -127,15 +132,20 @@ export class AsyncQueue<T> {
 /** Broadcast an event to whoever is listening (GUI windows, CLI clients). */
 export type Emitter = (channel: string, payload: unknown) => void
 
+const privateTurns=new Map<string,Emitter>()
 let broadcast: Emitter = () => {}
 const observers = new Set<Emitter>()
 const emit: Emitter = (channel, payload) => {
+  const hidden=privateTurns.get((payload as {sessionId?:string})?.sessionId??'')
+  if(hidden)hidden(channel,payload)
+  if((hidden||live.get((payload as {sessionId?:string})?.sessionId??'')?.privateInitialization)&&channel!=='session:changed')return
   broadcast(channel, payload)
   for (const listener of observers) listener(channel, payload)
 }
 export function onSessionEvent(listener: Emitter) { observers.add(listener); return () => { observers.delete(listener) } }
 const taskOwners = new Map<string, string>()
-export function assertEmployeeControl(cardId: string, owner?: string) {
+export function assertEmployeeControl(cardId: string, owner?: string, repairFailed=false) {
+  if(!repairFailed||readStore().sessions.find(card=>card.id===cardId)?.initialization?.status!=='failed')assertEmployeeReady(cardId)
   if (taskOwners.has(cardId) && taskOwners.get(cardId) !== owner) throw new Error('Employee is reserved by a scheduled task; cancel that run first')
 }
 export function reserveEmployee(cardId: string, owner: string) {
@@ -210,7 +220,7 @@ export function buildOptions(args: {
     model: args.model,
     effort: args.effort as Options['effort'],
     resume: args.resume,
-    systemPrompt: { type: 'preset', preset: 'claude_code' },
+    systemPrompt: { type: 'preset', preset: 'claude_code',snapshot:false, ...(args.employeeId?{append:employeeInstructions(readStore().sessions.find(card=>card.id===args.employeeId)!,readStore())}:{}) },
     settingSources: ['user', 'project', 'local'],
     stderr: (data) => console.error('[claude]', data)
   }
@@ -218,13 +228,15 @@ export function buildOptions(args: {
   // capability must be present from the start — otherwise selecting "Bypass"
   // on an already-running session would be refused by the engine.
   opts.allowDangerouslySkipPermissions = !args.workRoot
-  if(args.workRoot)Object.assign(opts,workClaudeOptions(args.cwd,args.permissionRoot??args.workRoot))
-  if(args.employeeId&&!args.remoteLaunch&&!args.nativeRemote){const store=readStore(),card=store.sessions.find(c=>c.id===args.employeeId);if(card?.managementRole==='manager'||store.access?.globalManagerIds.includes(args.employeeId))opts.allowedTools=['Bash(agents *)']}
+  if(args.workRoot)Object.assign(opts,workClaudeOptions(args.cwd,args.permissionRoot??args.workRoot,args.employeeId?SOCKET_PATH:undefined))
+  // The CLI is identity-scoped in Core. Preapproving this entrypoint also keeps
+  // an already-open Employee usable after promotion, without approving arbitrary Bash.
+  if(args.employeeId&&!args.remoteLaunch&&!args.nativeRemote)opts.allowedTools=['Bash(agents *)']
   if(args.remoteLaunch){
     const launch=args.remoteLaunch,cloudSettings=cloudClaudeSettings()
     Object.assign(opts,{cwd:launch.cwd,tools:[],mcpServers:{tunnel:launch.server},strictMcpConfig:true,allowedTools:CLOUD_TOOLS,settingSources:[],env:{...cloudSettings.env,...env},settings:{permissions:cloudSettings.permissions},
       disallowedTools:['Bash','PowerShell','Read','Write','Edit','Glob','Grep','NotebookEdit','Agent','Task','Skill','WebFetch','WebSearch','EnterWorktree','ExitWorktree'],
-      systemPrompt:{type:'preset',preset:'claude_code',append:launch.instructions},allowDangerouslySkipPermissions:false,
+      systemPrompt:{type:'preset',preset:'claude_code',snapshot:false,append:[launch.instructions,args.employeeId?employeeInstructions(readStore().sessions.find(card=>card.id===args.employeeId)!,readStore()):''].filter(Boolean).join('\n\n')},allowDangerouslySkipPermissions:false,
       hooks:{PreToolUse:[{hooks:[async(input:any)=>{
         const planning=args.isPlanning?.()??args.planMode
         const allowed=cloudToolAllowed(input.tool_name,planning)
@@ -276,6 +288,7 @@ export type StartArgs = {
 
 const openingSessions=new Map<string,Promise<{sessionId:string;cwd:string;engine:Engine}>>()
 export async function startSession(args:StartArgs={},owner?:string){
+  assertEmployeeReady(args.cardId)
   if(!args.cardId)return startSessionInner(args,owner)
   const existing=openingSessions.get(args.cardId);if(existing)return existing
   const pending=startSessionInner(args,owner);openingSessions.set(args.cardId,pending)
@@ -294,6 +307,8 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
     card=next.sessions.find(c=>c.id===card!.id)!
   }
   if (card) {
+    assertManagementKind(card,!!readStore().access?.globalManagerIds.includes(card.id))
+    ensureEmployeeBootstrap(card,readStore())
     if(card.accessMode==='isolated')employeeProcessOptions(card.id)
     if(card.kind==='cloud-native-worker')cloudNativeTarget(card)
     employeeWorkspace(readStore(),card.group,card.cwd,card.id)
@@ -312,7 +327,8 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   if(!remote)provisionEmployee(cwd,root!,config)
   const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?dirname(workRoot):undefined
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!,card?.id??sessionId)
-  const controlBin=remote&&card&&(card.managementRole==='manager'||readStore().access?.globalManagerIds.includes(card.id))?await prepareRemoteAgentAccess(card.id,remote):undefined
+  const controlBin=remote&&card&&card.kind!=='cloud-native-worker'&&(card.managementRole==='manager'||readStore().access?.globalManagerIds.includes(card.id))?await prepareRemoteAgentAccess(card.id,remote):undefined
+  if(remote&&card&&!controlBin)await prepareRemoteEmployeeDocuments(card.id,remote)
   const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
   assertTeamAvailable(args.group)
   const latest=readStore(),latestConfig=teamSettings(latest,args.group??'')
@@ -332,7 +348,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const cardId = card?.id ?? sessionId
   validateDelegation(openingDelegation,cardId)
   patchSession(cardId, {
-    ...card,...(!card?{createdBy:requestContext().principal,managementRole:'employee' as const,accessMode:'trusted' as const}:{}), engine, cwd, remote:undefined, group: args.group ?? '', seat: args.seat,
+    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:'employee' as const,accessMode:'trusted' as const}:{}), engine, cwd, remote:undefined, group: args.group ?? '', seat: args.seat,
     threadId:args.threadId,claudeSessionId:args.claudeSessionId,
     title: args.title || `New ${engine === 'codex' ? 'Codex' : 'Claude'} session`,
     createdAt: card?.createdAt ?? Date.now(), model: args.model, effort: args.effort,
@@ -344,7 +360,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
 
   if (engine === 'codex') {
     const state: Live = {
-      cardId,
+      cardId,privateInitialization:!card||isInitializer(cardId),
       kind,nativeOrigin:card?.nativeOrigin,
       engine,
       q: null as never,
@@ -362,6 +378,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
       running: false,
       queue: []
     }
+    state.bootstrapInstructions=employeeInstructions(readStore().sessions.find(card=>card.id===cardId)!,readStore())
     live.set(sessionId, state)
     rememberMeta(sessionId, {
       engine,
@@ -392,12 +409,13 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
     void withCodexSessionApi(allCodexModels,nativeRemote?{nativeRemote}:{}).then(models=>{
       if(live.has(sessionId)&&models.length)rememberMeta(sessionId,{models})
     }).catch(()=>{}) // Offline engines keep the official local cache above.
+    if(!card)void import('./initialization').then(module=>module.queueEmployeeInitialization(cardId))
     return { sessionId, cwd:remote?.directory??cwd, engine }
   }
 
   const input = new AsyncQueue<SDKUserMessage>()
   const state: Live = {
-    cardId,
+    cardId,privateInitialization:!card||isInitializer(cardId),
     kind,nativeOrigin:card?.nativeOrigin,
     engine,
     provider,
@@ -416,13 +434,18 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
     queue: []
   }
 
-  const approve=approvalHandler(sessionId, () => emit('session:changed', { sessionId }))
+  const normalApproval=approvalHandler(sessionId, () => emit('session:changed', { sessionId }))
+  const approve:typeof normalApproval=async(...args)=>{
+    if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化阅读触发了额外权限请求，请检查文档可读性后重试。'});return {behavior:'deny',message:'Initialization only reads assigned documentation; interactive approvals are disabled'}}
+    return normalApproval(...args)
+  }
   const q = query({ prompt: input, options: {
     ...buildOptions({ ...args, employeeId:cardId,cwd, workRoot, permissionRoot, remote,nativeRemote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true, resume: args.claudeSessionId }),
     canUseTool: remote&&!nativeRemote?async(tool,input,context)=>cloudToolAllowed(tool,state.planMode===true)?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
-    onElicitation:elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))
+    onElicitation:async(...args)=>{if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化不能等待用户回答，请检查引擎配置后重试。'});return {action:'decline'}};return elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))(...args)}
   } })
   state.q = q
+  state.bootstrapInstructions=employeeInstructions(readStore().sessions.find(card=>card.id===cardId)!,readStore())
   live.set(sessionId, state)
   rememberMeta(sessionId, { engine, cwd, model: args.model, permissionMode,
     thinking: state.thinkingEnabled, thinkingSupported: true, planMode:state.planMode,fastMode:state.fastMode, effort: args.effort,
@@ -503,6 +526,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
     }
   })()
 
+  if(!card)void import('./initialization').then(module=>module.queueEmployeeInitialization(cardId))
   return { sessionId, cwd:remote?.directory??cwd, engine }
 }
 
@@ -528,7 +552,7 @@ async function pumpCodex(s: Live, sessionId: string) {
         serviceTier:s.fastMode?fastTier(activeModel(sessionInfo(sessionId)?.models??[],s.model))?.id:undefined,
         signal: abort.signal,
         approvalPolicy:s.workRoot||s.remote&&!s.nativeRemote||['dontAsk','bypassPermissions'].includes(s.permissionMode)?'never':'on-request',
-        onRequest:nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&(!s.remote||!!s.nativeRemote)&&!s.planMode),
+        onRequest:async(...args)=>{if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化不能申请额外权限或等待用户回答，请检查配置后重试。'});throw Error('Interactive requests are unavailable during initialization')};return nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&(!s.remote||!!s.nativeRemote)&&!s.planMode)(...args)},
         onEvent: (ev) => {
           if(ev.kind==='notice'&&ev.level==='error'&&s.nativeRemote){emit('session:error',{sessionId,message:ev.text});return}
           if(ev.kind==='child-thread'){const card=readStore().sessions.find(c=>c.id===s.cardId);if(card)patchSession(s.cardId,{nativeSessions:[...nativeSessionRefs(card),{engine:'codex',id:ev.threadId,origin:s.nativeOrigin}]});return}
@@ -682,8 +706,18 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
     finally{s.running=false;s.abort=undefined;rememberMeta(sessionId,{busy:false})}
     if(cancel.signal.aborted||!live.has(sessionId))return false
   }
+  const bootstrap=employeeInstructions(card,store)
+  if(bootstrap!==s.bootstrapInstructions){
+    ensureEmployeeBootstrap(card,store)
+    if(s.remote&&s.kind!=='cloud-native-worker'){
+      if(card.managementRole==='manager'||store.access?.globalManagerIds.includes(card.id))await prepareRemoteAgentAccess(card.id,s.remote)
+      else closeRemoteAgentAccess(card.id)
+    }
+  }
   validateDelegation(delegation,s.cardId)
-  s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner};rememberMeta(sessionId,{currentTask:s.currentTask})
+  const engineText=s.engine==='claude'&&bootstrap!==s.bootstrapInstructions?bootstrap+'\n\n[Current user request]\n'+text:text
+  s.bootstrapInstructions=bootstrap
+  if(!privateTurns.has(sessionId)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner};rememberMeta(sessionId,{currentTask:s.currentTask})}
   emit('session:user', { sessionId, text,images:imagePaths })
   if (s.engine === 'codex') {
     s.queue.push({text,images})
@@ -695,7 +729,7 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
   emit('session:turn-start', { sessionId })
   s.input.push({
     type: 'user',
-    message: { role: 'user', content:images.length?[...(text?[{type:'text',text}]:[]),...images.map(image=>({type:'image',source:{type:'base64',media_type:image.mimeType,data:image.data}}))]:text },
+    message: { role: 'user', content:images.length?[...(engineText?[{type:'text',text:engineText}]:[]),...images.map(image=>({type:'image',source:{type:'base64',media_type:image.mimeType,data:image.data}}))]:engineText },
     parent_tool_use_id: null,
     session_id: s.sessionId ?? ''
   } as SDKUserMessage)
@@ -836,6 +870,8 @@ export async function closeAll():Promise<void> {
 
 /** What a live session reported about itself, for the CLI to read back. */
 export type SessionInfo = {
+  lastReply?:Session['lastReply']
+  initialization?: import('../shared/types').EmployeeInitialization
   cardId?:string
   currentTask?:CurrentTask
   activityPreview?:Session['activityPreview']
@@ -881,14 +917,15 @@ export function rememberMeta(sessionId: string, meta: Partial<SessionInfo>): voi
 export function sessionSnapshot(sessionId: string): Session {
   const s = require_(sessionId)
   const card = readStore().sessions.find((c) => c.id === s.cardId)!
-  return { ...conversation(sessionId), ...sessionInfo(sessionId), activityPreview:activityPreview(conversation(sessionId)), cardId: s.cardId,
+  return { ...conversation(sessionId), ...sessionInfo(sessionId), cardId: s.cardId,
     cwd:s.remote?.directory??s.cwd, title: card?.title ?? '', group: card?.group ?? '', createdAt: card?.createdAt ?? 0,
     approvals: approvalsFor(sessionId) } as Session
 }
 
 export function sessionInfo(sessionId: string): SessionInfo | undefined {
   const meta=info.get(sessionId);if(!meta)return undefined
-  return {...meta,cardId:live.get(sessionId)?.cardId,currentTask:live.get(sessionId)?.currentTask,activityPreview:activityPreview(conversation(sessionId)),terminalCommands:meta.terminalCommands?.filter(name=>!engineCommands.some(c=>c.name===name||c.aliases?.includes(name))),commands:mergeCommands(meta.commands,meta.engine,activeModel(meta.models,meta.model))}
+  const card=readStore().sessions.find(card=>card.id===live.get(sessionId)?.cardId)
+  return {...meta,lastReply:card?.lastReply,cardId:live.get(sessionId)?.cardId,currentTask:privateTurns.has(sessionId)?undefined:live.get(sessionId)?.currentTask,initialization:card?.initialization,activityPreview:card?employeeActivity(card,{...conversation(sessionId),busy:meta.busy}):activityPreview(conversation(sessionId)),terminalCommands:meta.terminalCommands?.filter(name=>!engineCommands.some(c=>c.name===name||c.aliases?.includes(name))),commands:mergeCommands(meta.commands,meta.engine,activeModel(meta.models,meta.model))}
 }
 
 export function allSessionInfo(): SessionInfo[] {
@@ -907,9 +944,69 @@ export function sessionCommands(sessionId: string): {
 
 export function revokeInvalidDelegations(){
   for(const [id,state] of live){
+    if(state.privateInitialization)continue
     const valid=(delegation:Delegation|undefined)=>{try{validateDelegation(delegation,state.cardId);return true}catch{return false}}
     const previous=state.pendingMessages??[];state.pendingMessages=previous.filter(message=>valid(message.delegation))
     if(previous.length!==state.pendingMessages.length)rememberMeta(id,{pendingMessages:state.pendingMessages})
     if(state.running&&state.currentTask&&!valid(state.currentTask.delegation))void interrupt(id,true).catch(error=>emit('session:error',{sessionId:id,message:String(error)}))
+  }
+}
+
+/** Keep the native context, but intercept the entire onboarding turn BEFORE persistence or publication. */
+export async function runPrivateInitialization(employeeId:string,prompt:string,signal:AbortSignal):Promise<void>{
+  if(!isInitializer(employeeId))throw Error('Initialization requires the private Core job context')
+  signal.throwIfAborted()
+  const {sessionId}=await startSession({cardId:employeeId})
+  if(signal.aborted){await closeSession(sessionId);signal.throwIfAborted()}
+  const state=require_(sessionId)
+  state.privateInitialization=true
+  if(state.running)throw Error('Cannot initialize an active user turn')
+  let finalText='',deltaId='',deltaText=''
+  let resolve!:()=>void,reject!:(error:Error)=>void
+  const completed=new Promise<void>((yes,no)=>{resolve=yes;reject=no})
+  // A permission request can fail while sendMessage is still awaiting preparation.
+  void completed.catch(()=>{})
+  privateTurns.set(sessionId,(channel,payload:any)=>{
+    try{
+      if(channel==='session:message'){
+        const message=payload.message
+        if(message.type==='result'&&(message.is_error||String(message.subtype).startsWith('error'))){reject(Error('引擎初始化失败：'+(message.errors?.join('; ')||message.subtype)));return}
+        if(message.type==='assistant'){
+          const text=(message.message?.content??[]).filter((block:any)=>block.type==='text').map((block:any)=>block.text).join('')
+          if(text)finalText=text
+        }
+        if(message.type==='result'&&typeof message.result==='string')finalText=message.result
+      }
+      if(channel==='session:codex'){
+        if(payload.event.kind==='notice'&&payload.event.level==='error'){reject(Error(payload.event.text));return}
+        const event=payload.event
+        if(event.kind==='text')finalText=event.text
+        if(event.kind==='text-delta'){if(deltaId!==event.id){deltaId=event.id;deltaText=''};deltaText=(deltaText+event.text).slice(0,4096);finalText=deltaText}
+      }
+      if(channel==='session:error')reject(Error(payload.message))
+      if(['session:end','session:closed','session:interrupted'].includes(channel))reject(Error('初始化尚未完成，引擎连接已结束。'))
+      if(channel==='session:turn-end'){
+        // Earlier reading commentary is not the final assistant acknowledgement.
+        if(finalText.trim()==='OK')resolve();else reject(Error('初始化未收到有效的 OK 确认，请检查文档和引擎配置后重试。'))
+      }
+    }catch(error){reject(error as Error)}
+  })
+  const cancel=()=>reject(signal.reason instanceof Error?signal.reason:Error('初始化已取消。'))
+  signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel()
+  try{
+    await sendMessage(sessionId,prompt)
+    await completed
+    if(state.engine==='codex')await state.finished
+    signal.throwIfAborted()
+    if(!live.has(sessionId))throw Error('初始化连接已关闭。')
+  }catch(error){
+    await closeSession(sessionId).catch(()=>{})
+    throw error
+  }finally{
+    signal.removeEventListener('abort',cancel)
+    privateTurns.delete(sessionId)
+    state.privateInitialization=false
+    state.currentTask=undefined
+    if(live.has(sessionId))rememberMeta(sessionId,{currentTask:undefined,busy:false})
   }
 }

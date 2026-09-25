@@ -1,3 +1,6 @@
+import {employeeReady} from '../../shared/types'
+import {employeeActivity} from '../../shared/activity'
+import {useReplyRead} from './chat/useReplyRead'
 import {Icon} from './components/Icon'
 import {AgentApproval} from './components/AgentApproval'
 import {EngineTools} from './components/EngineTools'
@@ -49,6 +52,10 @@ export default function App() {
   useDialogFocus('.conversation-dialog', !!active&&!view.pluginId)
   const busyIds = useMemo(() => new Set(sessions.filter((s) => s.busy).map((s) => s.cardId ?? s.id)), [sessions])
   const disconnectedIds = useMemo(() => new Set(sessions.filter(s=>s.error&&store.sessions.some(card=>card.id===(s.cardId??s.id)&&card.kind==='cloud-native-worker')).map(s=>s.cardId??s.id)),[sessions,store.sessions])
+  const activities=useMemo(()=>{
+    const live=new Map(sessions.map(session=>[session.cardId??session.id,session]))
+    return Object.fromEntries(store.sessions.flatMap(card=>{const value=employeeActivity(card,live.get(card.id));return value?[[card.id,value]]:[]}))
+  },[sessions,store.sessions])
   const viewedSession=useRef<string|null>(null)
   const refreshSequence=useRef(0)
   const refreshPending=useRef<Promise<void>|null>(null)
@@ -72,7 +79,7 @@ export default function App() {
       if (timer) return
       timer = setTimeout(() => { timer = undefined; const full=configuration;configuration=false;void refresh(full).catch((e) => setError(String(e))) }, 35)
     }
-    const off = api.onEvent(event=>{if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&!['plugin:windows','host:health'].includes(event.channel))schedule(event.channel==='store:changed'||event.channel==='hosts:changed')})
+    const off = api.onEvent(event=>{if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&!['plugin:windows','host:health','desktop:visibility'].includes(event.channel))schedule(event.channel==='store:changed'||event.channel==='hosts:changed')})
     void api.call<ViewState>('view.get').then(showView).catch(e=>setError(String(e)))
     void refresh().catch((e) => setError(String(e)))
     return () => { off(); clearTimeout(timer) }
@@ -92,6 +99,7 @@ export default function App() {
     return()=>window.removeEventListener('keydown',key,true)
   },[store.preferences?.pageZoom,act])
   const openCard = async (card: StoredSession) => {
+    if(!employeeReady(card)){await act('view.open',{kind:'initialization',employee:card.id});return}
     const sequence=++openSequence.current
     viewedSession.current=null;setSelectedCardId(card.id);setActiveId(null);setInput(drafts.current[card.id]??'');setImages(imageDrafts.current[card.id]??[]);setMenu(null);setSavedItems([]);setOpenError(card.workspaceError??'');setOpening(!card.workspaceError)
     void api.call<{items:Item[]}>('session.transcript',{id:card.id}).then(data=>{if(sequence===openSequence.current)setSavedItems(data.items)}).catch(()=>{})
@@ -147,11 +155,12 @@ export default function App() {
   const fastAvailable=active?supportsFast(active.engine,model):false
   const modelLabel = active?.models.find((m) => m.value === active.model)?.displayName ?? active?.model ?? 'Configured model'
   const work=!!employee&&teamSettings(store,employee.group).mode==='work'
+  useReplyRead(transcript,employee?.id,employee?.lastReply,view.kind==='conversation'&&!editingEmployee&&!view.tools&&!active?.busy&&!!active?.items.some(item=>item.id===employee?.lastReply?.itemId))
   useEffect(()=>{document.querySelector('.commands [aria-selected="true"]')?.scrollIntoView({block:'nearest'})},[cmdIndex,input])
   return <div className={`app in-office ${view.pluginId?'in-plugin':''}`} data-resizing={sidebarDraft!==undefined} style={{'--shared-width':view.shared?'320px':'0px','--directory-width':`clamp(56px, ${sidebarDraft??store.preferences?.sidebarWidth??DEFAULT_PREFERENCES.sidebarWidth}px, 96px)`} as CSSProperties}>
-    <HomeView store={store} view={view} activities={Object.fromEntries(sessions.filter(s=>s.activityPreview).map(s=>[s.cardId??s.id,s.activityPreview!]))} busyIds={busyIds} disconnectedIds={disconnectedIds} onResize={setSidebarDraft} onOpen={card=>void act('view.open',{kind:'conversation',employee:card.id})} act={act} />
+    <HomeView store={store} view={view} activities={activities} busyIds={busyIds} disconnectedIds={disconnectedIds} onResize={setSidebarDraft} onOpen={card=>void act('view.open',{kind:'conversation',employee:card.id})} act={act} />
     {error && <div className="app-error" role="alert">{error}<button onClick={() => setError('')} aria-label="Dismiss error">×</button></div>}
-    {active && <div className="conversation-layer">
+    {active && (!employee||employeeReady(employee)) && <div className="conversation-layer">
       <div className="conversation-backdrop" onClick={closeConversation} />
       <section className="conversation-dialog" role="dialog" aria-modal={!view.shared&&!view.pluginId} aria-label={`${active.title} 的会话`}>
       <main className="main session-main">
@@ -198,7 +207,7 @@ export default function App() {
         {active.busy&&active.currentTask&&<div className="task-provenance" data-message-id={active.currentTask.messageId}>任务 {active.currentTask.messageId.slice(-6)} · 来自 {active.currentTask.delegation.requestedBy.kind==='operator'?'用户':store.sessions.find(card=>active.currentTask!.delegation.requestedBy.kind==='agent'&&card.id===active.currentTask!.delegation.requestedBy.employeeId)?.title??'Agent'}{active.currentTask.runId?' · 定时任务':''}</div>}
         <div className="transcript" ref={transcript}>
           {!active.items.length && <div className="conversation-empty"><EngineMark engine={active.engine} size={48} /><div className="panel-eyebrow">YOUR NEXT IDEA STARTS HERE</div><h1>What are we building?</h1><p>{liveActive?`${active.title} 已就绪，说说接下来要做什么。`:opening?'正在连接工作环境…':'检查工作目录后，就可以开始对话。'}</p></div>}
-          {active.items.map((item) => <Turn key={item.id} item={item} />)}
+          {active.items.map((item) => <Turn key={item.id} item={item} replyId={item.id===employee?.lastReply?.itemId?employee.lastReply.id:undefined} />)}
           {active.error && <div className="error">{active.error}</div>}
         </div>
         <div className="composer">

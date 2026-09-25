@@ -19,15 +19,17 @@ try{
  assert.equal((await cli('host','check',hostId)).connected,true)
  assert.equal((await host('mkdir '+quote(remote))).exit_code,0)
  await cli('group','add','Remote Test','--mode','cloud','--host-id',hostId,'--remote-dir',remote)
- card=await cli('card','create','--title','Manager','--group','Remote Test','--kind','cloud-native-worker','--model','gpt-6-luna','--effort','low')
- await cli('card','management-role',card.id,'manager');const opened=await cli('session','open',card.id)
+ await assert.rejects(()=>cli('card','create','--title','InvalidNativeManager','--group','Remote Test','--kind','cloud-native-worker','--management-role','manager'))
+ card=await cli('card','create','--title','Manager','--group','Remote Test','--kind','worker','--management-role','manager','--model','gpt-6-luna','--effort','low')
+ const opened=await cli('session','open',card.id)
  const launcher=card.cwd+'/.agents-company/employees/'+card.id+'/bin/agents'
  const result=await host(quote(launcher)+' auth whoami --json');assert.equal(result.exit_code,0,result.stderr);assert.equal(JSON.parse(result.stdout).data.principal.employeeId,card.id)
  const denied=await host(quote(launcher)+' host list --json');assert.notEqual(denied.exit_code,0);assert.match(denied.stdout,/Forbidden/)
- console.log('PASS bupt208: remote native Manager uses a private SSH return channel with its own identity; global host access denied; no model inference')
- localManager=await cli('card','create','--title','LocalManager','--group','Remote Test','--kind','worker','--model','gpt-6-luna','--effort','low');await cli('card','management-role',localManager.id,'manager');await cli('session','open',localManager.id)
- const localLauncher=localManager.cwd+'/.agents-company/employees/'+localManager.id+'/bin/agents',localIdentity=await host(quote(localLauncher)+' auth whoami --json');assert.equal(localIdentity.exit_code,0,localIdentity.stderr);assert.equal(JSON.parse(localIdentity.stdout).data.principal.employeeId,localManager.id)
- console.log('PASS bupt208: locally hosted Manager tools use a separate remote identity channel too')
+ const docs=await host('cat '+quote(card.cwd+'/.agents-company/employees/'+card.id+'/API.md'));assert.equal(docs.exit_code,0);assert.match(docs.stdout,/### card.create/);assert.ok(!docs.stdout.includes('### host.credentials'))
+ const created=await host(quote(launcher)+' card create --title CreatedOverTunnel --engine codex --model gpt-6-luna --effort low --json');assert.equal(created.exit_code,0,created.stderr)
+ localManager=JSON.parse(created.stdout).data;assert.equal(localManager.createdBy.employeeId,card.id);assert.equal(localManager.managementRole,'employee')
+ assert.ok((await cli('management','topology')).edges.some(edge=>edge.managerId===card.id&&edge.employeeId===localManager.id))
+ console.log('PASS bupt208: local Manager uses identity-bound SSH return CLI, physical scoped docs, creates a company Employee and obtains active relation; native Manager/global host access refused; no inference')
  if(process.env.AGENTS_COMPANY_LIVE_INFERENCE==='1'){
    worker=await cli('card','create','--title','Worker','--group','Remote Test','--kind','cloud-native-worker','--model','gpt-6-luna','--effort','low')
    const relation=await cli('management','request','--manager',card.id,'--employee',worker.id);await cli('management','decide',relation.id,'approve')
@@ -43,7 +45,7 @@ try{
    const snapshot=(await cli('session','list','--live')).find(session=>session.cardId===worker.id)
    assert.equal(snapshot.currentTask.delegation.requestedBy.employeeId,card.id)
    assert.equal(snapshot.currentTask.delegation.relationId,relation.id)
-   console.log('PASS GPT-6 Luna low: remote native Manager delegated through its CLI; remote native Employee wrote the verified document in its own workspace, with preserved Manager/relation task provenance')
+   console.log('PASS GPT-6 Luna low: local Manager delegated through its SSH CLI; remote native Employee wrote the verified document in its own workspace, with preserved Manager/relation task provenance')
  }
 }finally{
  try{if(card){const sessions=await cli('session','list','--live');for(const session of sessions)await cli('session','close',session.id);if(worker)await cli('card','remove',worker.id);if(localManager)await cli('card','remove',localManager.id);await cli('card','remove',card.id)}await host('rm -rf -- '+quote(remote))}finally{service.kill('SIGTERM');await ended;fs.rmSync(temp,{recursive:true,force:true})}

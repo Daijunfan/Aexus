@@ -19,3 +19,11 @@ export function activityPreview(session:Session):ActivityPreview|null {
   }
   return null
 }
+
+/** Finished unread replies survive closed native connections and app restarts. */
+export function employeeActivity(card:import('./types').StoredSession,live?:Session):ActivityPreview|null{
+  if(card.initialization&&card.initialization.status!=='ready')return null
+  if(live?.busy)return live.activityPreview??activityPreview(live)
+  const reply=card.lastReply
+  return reply&&!reply.readAt?{kind:'speech',text:reply.text,unread:true,replyId:reply.id}:null
+}

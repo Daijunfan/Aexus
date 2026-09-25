@@ -1,10 +1,11 @@
+import {employeeInstructions} from './plugins/documents'
 import {readStore} from './store'
 import {remoteAgentBin} from './remote-agent-access'
 import {spawnEmployeeProcess} from './agent-process-isolation'
 import {spawn} from 'node:child_process'
 import {createInterface} from 'node:readline'
 import {once} from 'node:events'
-import {APP_HOME} from '../shared/protocol'
+import {APP_HOME,SOCKET_PATH} from '../shared/protocol'
 import {childEnv} from './exec'
 import {workCodexConfig} from './scope'
 import {openCodexExecutor,codexControlCwd} from './codex-executor'
@@ -49,10 +50,14 @@ export async function runNativeCodexTurn(binary:string,args:Args){
 }
 async function connect(binary:string,initial:Args){
   let args=initial,threadId=initial.resumeId??'',turnId='',loaded=false,working=false,sequence=0,stderr='',dead=false,compact=false
+  let loadedInstructions='',loadedPolicy=''
   let waiting:{turnId?:string;resolve:()=>void;reject:(error:Error)=>void}|undefined,closing:Promise<void>|undefined
   const executor=args.remote&&!args.nativeRemote?await openCodexExecutor({...args.remote,cliBin:remoteAgentBin(args.employeeId)}):undefined
-  const flags=['-c',`model=${JSON.stringify(args.model||'gpt-5.6-luna')}`,...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true']
-  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'--disable','multi_agent','app-server','--listen','stdio://'],undefined,args.employeeId):spawnEmployeeProcess(args.employeeId,binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot):[]),...flags,'--disable','multi_agent','app-server'],
+  // Permit only the authenticated application socket while retaining read-only files.
+  const localControl=!!args.employeeId&&!args.remote
+  const controlFlags=localControl?[...(!args.workRoot?['-c','default_permissions="agents-company-readonly"']:[]),'-c','permissions.agents-company-readonly.extends=":read-only"','-c','permissions.agents-company-readonly.network.enabled=true','-c',`permissions.agents-company-readonly.network.unix_sockets={${JSON.stringify(SOCKET_PATH)}="allow"}`]:[]
+  const flags=[...controlFlags,'-c',`model=${JSON.stringify(args.model||'gpt-5.6-luna')}`,...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true']
+  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'--disable','multi_agent','app-server','--listen','stdio://'],undefined,args.employeeId):spawnEmployeeProcess(args.employeeId,binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot,localControl?SOCKET_PATH:undefined):[]),...flags,'--disable','multi_agent','app-server'],
     {cwd:args.remote?APP_HOME:args.cwd,env:{...childEnv(args.cwd,args.workRoot),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})}})
   const ended=once(child,'close').catch(()=>{}),lines=createInterface({input:child.stdout}),lifetime=new AbortController()
   const pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:NodeJS.Timeout}>(),incoming=new Map<string|number,AbortController>()
@@ -128,12 +133,16 @@ async function connect(binary:string,initial:Args){
         const environments=args.remote&&!args.nativeRemote?[{environmentId:'remote',cwd:args.remote.directory,runtimeWorkspaceRoots:[args.remote.directory]}]:undefined
         const controlCwd=args.nativeRemote?args.cwd:codexControlCwd(args.cwd,args.remote),windows=args.remote?.os==='windows'
         const sandbox=args.remote&&(windows||args.remoteAdmin&&!args.planMode)?'danger-full-access':args.sandbox
-        const policy=args.workRoot?{permissions:'agents-company-work'}:{sandboxPolicy:{type:sandbox==='workspace-write'?'workspaceWrite':sandbox==='read-only'?'readOnly':'dangerFullAccess',...(sandbox==='workspace-write'?{writableRoots:[controlCwd],networkAccess:true,excludeTmpdirEnvVar:true,excludeSlashTmp:true}:{})}}
+        const permissionProfile=args.workRoot?'agents-company-work':localControl&&args.sandbox==='read-only'?'agents-company-readonly':undefined
+        const policy=permissionProfile?{permissions:permissionProfile}:{sandboxPolicy:{type:sandbox==='workspace-write'?'workspaceWrite':sandbox==='read-only'?'readOnly':'dangerFullAccess',...(sandbox==='workspace-write'?{writableRoots:[controlCwd],networkAccess:true,excludeTmpdirEnvVar:true,excludeSlashTmp:true}:{})}}
+        const saved=args.employeeId?readStore().sessions.find(card=>card.id===args.employeeId):undefined
+        const bootstrap=saved?employeeInstructions(saved,readStore()):undefined
+        if(loaded&&(bootstrap!==loadedInstructions||(permissionProfile??sandbox)!==loadedPolicy))loaded=false
         if(!loaded){
-          const options={cwd:controlCwd,model:args.model||'gpt-5.6-luna',approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(args.workRoot?{permissions:'agents-company-work'}:{sandbox}),...(args.remote&&!args.nativeRemote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
+          const options={cwd:controlCwd,developerInstructions:bootstrap,model:args.model||'gpt-5.6-luna',approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(permissionProfile?{permissions:permissionProfile}:{sandbox}),...(args.remote&&!args.nativeRemote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
           // Employee clones must own their history so removing one employee cannot invalidate another.
           const started=args.resumeId?await call('thread/resume',{threadId:args.resumeId,...options}):await call('thread/start',{...options,environments,historyMode:'legacy'})
-          threadId=started.thread.id;loaded=true;args.onEvent({kind:'thread',threadId})
+          threadId=started.thread.id;loaded=true;loadedInstructions=bootstrap??'';loadedPolicy=permissionProfile??sandbox;args.onEvent({kind:'thread',threadId})
         }
         const settings={threadId,cwd:controlCwd,model:args.model||'gpt-5.6-luna',effort:args.effort??null,serviceTier:args.serviceTier??null,approvalPolicy:args.approvalPolicy??'never',collaborationMode:{mode:args.planMode?'plan':'default',settings:{model:args.model||'gpt-5.6-luna',reasoning_effort:args.effort??null,developer_instructions:null}},...policy}
         await call('thread/settings/update',settings);args.signal.throwIfAborted()

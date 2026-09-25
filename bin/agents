@@ -14,8 +14,8 @@ const SOCKET = process.env.AGENTS_COMPANY_SOCKET || join(APP_HOME, 'agents.sock'
 const useJson = process.argv.includes('--json')
 const argv = process.argv.slice(2).filter((a) => a !== '--json')
 
-function die(msg) {
-  if (useJson) console.log(JSON.stringify({ ok: false, error: msg }))
+function die(msg,code) {
+  if (useJson) console.log(JSON.stringify({ ok: false, error: msg, ...(code?{code}:{}) }))
   else console.error(`error: ${msg}`)
   process.exit(1)
 }
@@ -73,6 +73,7 @@ function send(req, { stream = false } = {}) {
       return
     }
     let auth
+    if(process.env.AGENTS_COMPANY_EMPLOYEE&&!process.env.AGENTS_COMPANY_TOKEN&&!process.env.AGENTS_COMPANY_TOKEN_FILE){reject(new Error('Agent identity missing; reopen this employee'));return}
     try{auth=process.env.AGENTS_COMPANY_TOKEN||require('node:fs').readFileSync(process.env.AGENTS_COMPANY_TOKEN_FILE||join(APP_HOME,'control.token'),'utf8').trim()}catch{reject(new Error('Cannot read control credential; use your assigned Agent CLI channel'));return}
     req={...req,auth}
     const sock = connect(process.env.AGENTS_COMPANY_PORT?{host:'127.0.0.1',port:Number(process.env.AGENTS_COMPANY_PORT)}:SOCKET)
@@ -96,7 +97,7 @@ function send(req, { stream = false } = {}) {
           first = false
           if (!msg.ok) {
             sock.end()
-            reject(new Error(msg.error))
+            reject(Object.assign(new Error(msg.error),{code:msg.code}))
             return
           }
           if (!stream) {
@@ -162,13 +163,16 @@ let onEvent = (m) => {
 async function main() {
   const [group, sub, ...rest] = argv
   if (!group || group === 'help' || group === '--help') {
-    console.log(HELP)
+    if(process.env.AGENTS_COMPANY_EMPLOYEE||process.env.AGENTS_COMPANY_TOKEN||process.env.AGENTS_COMPANY_TOKEN_FILE||process.env.AGENTS_COMPANY_PORT){
+      const commands=await send({cmd:'api.list'})
+      out(commands,items=>['Agents Company — 当前身份可调用的 CLI',...items.map(c=>'agents '+c.name.replaceAll('.',' ')+' '+c.args+'\n  '+c.summary),'完整角色手册：agents api docs'].join('\n'))
+    }else console.log(HELP)
     return
   }
 
   const call = (cmd, args) => send({ cmd, args })
 
-  if(group==='session'&&['info','snapshot','transcript','send','follow','interrupt','enqueue','queue','dequeue','open'].includes(sub)&&rest.includes('--employee')){
+  if(group==='session'&&['info','snapshot','transcript','send','steer','follow','interrupt','enqueue','queue','dequeue','open'].includes(sub)&&rest.includes('--employee')){
     const p=parse(rest),result=await send({cmd:'session.'+sub,args:{employee:p.employee,text:p.text??p._.join(' '),limit:p.limit?Number(p.limit):undefined,thinking:!!p.thinking,raw:!!p.raw,messageId:p['message-id'],expectedMessageId:p['expected-message-id']}},{stream:sub==='follow'});if(sub==='follow'){if(useJson)console.log(JSON.stringify({type:'snapshot',...result.initial}));else if(result.initial.text)console.log(result.initial.text);process.on('SIGINT',()=>{result.stream.end();process.exit(0)});return}return out(result)
   }
   switch (`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`) {
@@ -188,11 +192,14 @@ async function main() {
     case 'transfer.cancel': return out(await call('transfer.cancel',{id:rest[0]}))
     case 'settings.get': return out(await call('settings.get'))
     case 'settings.set': {
-      const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);if(p['snap-employees']!==undefined){if(!['on','off'].includes(p['snap-employees']))throw new Error('--snap-employees accepts on|off');a.snapEmployees=p['snap-employees']==='on'}return out(await call('settings.set',a))
+      const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;for(const [key,flag] of [['defaultCodexModel','default-codex-model'],['defaultClaudeModel','default-claude-model']])if(p[flag]!==undefined)a[key]=p[flag];for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);if(p['snap-employees']!==undefined){if(!['on','off'].includes(p['snap-employees']))throw new Error('--snap-employees accepts on|off');a.snapEmployees=p['snap-employees']==='on'}return out(await call('settings.set',a))
     }
     case 'auth.whoami':case 'api.list':case 'api.docs':return out(await call(group+'.'+sub),data=>sub==='docs'?data.markdown:JSON.stringify(data,null,2))
     case 'api.describe':return out(await call('api.describe',{command:rest[0]}))
     case 'auth.agent-token':case 'auth.revoke':return out(await call('auth.'+sub,{id:rest[0]}))
+    case 'office.layout': {const p=parse(rest);return out(await call('office.layout',{team:p.team}))}
+    case 'session.acknowledge': {const p=parse(rest);return out(await call('session.acknowledge',{employee:p.employee??p._[0],replyId:p['reply-id']}))}
+    case 'management.relayout': {const p=parse(rest);return out(await call('management.relayout',{team:p.team}))}
     case 'management.topology':{const p=parse(rest);return out(await call('management.topology',{team:p.team}))}
     case 'management.request':{const p=parse(rest);return out(await call('management.request',{employee:p.employee,manager:p.manager}))}
     case 'management.decide':return out(await call('management.decide',{id:rest[0],decision:rest[1]}))
@@ -363,6 +370,7 @@ async function main() {
     case 'config.plan': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.plan',{id:rest[0],enabled:rest[1]==='on'}))}
     case 'external.open': return out(await call('external.open',{url:rest[0]}))
     case 'engine.inspect': return out(await call('engine.inspect',{id:rest[0],section:rest[1]}))
+    case 'engine.models': {const p=parse(rest);return out(await call('engine.models',{engine:p.engine,kind:p.kind,team:p.team}))}
     case 'engine.skill': return out(await call('engine.skill',{id:rest[0],name:rest[1],prompt:rest.slice(2).join(' ')}))
     case 'session.steer': return out(await call('session.steer',{id:rest[0],text:rest.slice(1).join(' ')}))
     case 'session.background': return out(await call('session.background',{id:rest[0]}))
@@ -518,6 +526,7 @@ async function main() {
     case 'card.rename':
       return out(await call('card.rename', { cardId: rest[0], title: rest.slice(1).join(' ') }))
     case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
+    case 'card.initialize': return out(await call('card.initialize',{id:rest[0]}))
     case 'card.native-bind':return out(await call('card.native-bind',{id:rest[0],sessionId:rest[1]}))
     case 'card.create': {
       const p = parse(rest)
@@ -549,4 +558,4 @@ async function main() {
   }
 }
 
-main().catch((e) => die(e.message))
+main().catch((e) => die(e.message,e.code))

@@ -1,3 +1,4 @@
+import {assertEmployeeReady} from '../initialization-state'
 import {authorize,requestContext,isGlobal,delegationFor,validateDelegation} from '../authorization'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
@@ -159,6 +160,7 @@ export async function scheduleRequest(method: string, args: Record<string, any>)
     case 'list': return state.jobs.filter(visible).filter(j => (!args.employee || j.action.employeeId === args.employee) && (!args.source || j.source === args.source))
     case 'get': return job(args.id)
     case 'create': {
+      assertEmployeeReady(args.spec?.action?.employeeId)
       const spec = validate(args.spec), nextAt = future(spec), now = stamp()
       const item: ScheduledJob = { ...spec, delegation:delegationFor(spec.action.employeeId), id: `job_${randomUUID()}`, createdAt: now, updatedAt: now, nextAt }
       state.jobs.push(item); save(); return item
@@ -189,6 +191,7 @@ export async function scheduleRequest(method: string, args: Record<string, any>)
     }
     case 'run': {
       const item = job(args.id)
+      assertEmployeeReady(item.action.employeeId)
       validate(item);validateDelegation(item.delegation,item.action.employeeId)
       if (state.runs.some(r => r.status === 'running' && r.action.employeeId === item.action.employeeId)) throw new Error('Employee already has a scheduled task')
       const run = record(item, 'manual', stamp()); save(); launch(item, run); return { ...run }

@@ -1,4 +1,5 @@
-import {emptyAccess} from '../shared/management'
+import {reconcileOfficeLayout} from '../shared/office-layout'
+import {assertManagementKind,emptyAccess} from '../shared/management'
 import {cloudHostTarget,importCloudHost} from './cloud-hosts'
 import {remoteTarget} from '../shared/remote'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, symlinkSync } from 'node:fs'
@@ -57,6 +58,7 @@ export function writeStore(store: Store): void {
   mkdirSync(ROOT, { recursive: true })
   const current=existsSync(FILE)?JSON.parse(readFileSync(FILE,'utf8')):undefined
   if((current?.revision??0)!==(store.revision??0))throw new Error('State changed during operation; retry against the current state')
+  for(const card of store.sessions)assertManagementKind(card,!!store.access?.globalManagerIds.includes(card.id))
   if(store.access){
     const cards=new Map(store.sessions.map(card=>[card.id,card]))
     store.access.relations=store.access.relations.filter(relation=>{const manager=cards.get(relation.managerId),employee=cards.get(relation.employeeId);return manager&&!manager.deleting&&employee&&!employee.deleting&&manager.managementRole==='manager'&&(employee.managementRole??'employee')==='employee'&&manager.group===employee.group&&!store.access!.globalManagerIds.includes(employee.id)})
@@ -66,6 +68,7 @@ export function writeStore(store: Store): void {
     const before={...current?.access,revision:0,principals:principals(current?.sessions??[])},after={...store.access,revision:0,principals:principals(store.sessions)}
     store.access.revision=(current?.access?.revision??0)+(JSON.stringify(before)!==JSON.stringify(after)?1:0)
   }
+  reconcileOfficeLayout(store,current)
   store.revision=(current?.revision??0)+1
   const saved={...store,teamSettings:Object.fromEntries(Object.entries(store.teamSettings??{}).map(([name,config])=>[name,config.mode==='cloud'&&config.hostId?{mode:'cloud',hostId:config.hostId,directory:config.remote?.directory??config.directory}:config]))}
   const temporary=FILE+'.'+randomUUID()+'.tmp'
@@ -141,7 +144,8 @@ export function setRoom(name: string, layout: RoomLayout): Store {
   const store = readStore()
   if (!store.groups.includes(name)) throw new Error(`Unknown department: ${name}`)
   if (![layout.col, layout.row, layout.w, layout.h].every(Number.isInteger) || layout.col < 0 || layout.row < 0 || layout.w < 1 || layout.h < 1) throw new Error('Room coordinates must be non-negative integers, with positive width and height')
-  store.rooms = { ...(store.rooms ?? {}), [name]: { ...store.rooms?.[name], ...layout } }
+  applyBounds(store,name,{x:layout.col*860,y:layout.row*670,width:layout.w*760,height:layout.h*MIN_ROOM_HEIGHT})
+  store.rooms = { ...(store.rooms ?? {}), [name]: { ...store.rooms![name], ...layout } }
   writeStore(store)
   return store
 }
@@ -349,9 +353,14 @@ export function configureTeam(name:string,settings:TeamSettings,path?:string):St
 }
 
 export function setBounds(name: string, patch: Partial<RoomBounds>): Store {
-  const store=readStore(), index=store.groups.indexOf(name)
+  const store=readStore()
+  applyBounds(store,name,patch)
+  writeStore(store);return store
+}
+function applyBounds(store:Store,name:string,patch:Partial<RoomBounds>){
+  const index=store.groups.indexOf(name)
   if(index<0 && name!=='') throw new Error('Unknown Team')
-  // Manual geometry makes the current layout stable; moving one Team never reflows its neighbors.
+  // Keep the edited Team anchored; the commit pass moves only colliding neighbors.
   store.rooms??={}
   const planned=planOffice(store)
   for(const room of planned)store.rooms[room.name]={...(store.rooms[room.name]??{col:0,row:0,w:1,h:1}),bounds:{...room.bounds,pinned:true}}
@@ -367,7 +376,6 @@ export function setBounds(name: string, patch: Partial<RoomBounds>): Store {
   store.rooms={...store.rooms,[name]:{...(store.rooms?.[name]??{col:0,row:0,w:1,h:1}),bounds}}
   const adjusted=planOffice(store).find(room=>room.name===name)!
   store.sessions=store.sessions.map(card=>card.group===name&&card.position?{...card,position:adjusted.employees.find(e=>e.card.id===card.id)!.position}:card)
-  writeStore(store); return store
 }
 
 export function placeEmployee(id: string, position: Point,options:{snap?:boolean;zoom?:number}={}): Store {
@@ -403,6 +411,7 @@ export function setPreferences(patch:Partial<Preferences>):Preferences {
   if(!Number.isFinite(value.explorerWidth)||value.explorerWidth<140||value.explorerWidth>520)throw new Error('Explorer width must be between 140 and 520')
   if(!Number.isFinite(value.terminalHeight)||value.terminalHeight<120||value.terminalHeight>600)throw new Error('Terminal height must be between 120 and 600')
   if(typeof value.snapEmployees!=='boolean')throw new Error('snapEmployees must be boolean')
+  for(const key of ['defaultCodexModel','defaultClaudeModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
   const store=readStore();store.preferences=value;writeStore(store);return value
 }
 

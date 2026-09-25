@@ -59,8 +59,27 @@ export const ENGINES: { value: Engine; label: string; hint: string }[] = [
   { value: 'codex', label: 'Codex', hint: 'OpenAI Codex CLI' }
 ]
 
+/** Undefined on legacy employees: do not run paid onboarding when upgrading. */
+export type EmployeeInitialization = {
+  status: 'pending' | 'running' | 'ready' | 'failed'
+  attemptId: string
+  createdAt: number
+  startedAt?: number
+  finishedAt?: number
+  error?: string
+}
+export const employeeInitializing = (card: Pick<StoredSession,'initialization'>) =>
+  card.initialization?.status === 'pending' || card.initialization?.status === 'running'
+export const employeeReady = (card: Pick<StoredSession,'initialization'>) =>
+  !card.initialization || card.initialization.status === 'ready'
+
+/** Latest published answer and the user's exact-version read receipt. */
+export type EmployeeReply={id:string;itemId:string;text:string;createdAt:number;readAt?:number}
+
 /** A session as persisted in the app's own store. */
 export type StoredSession = {
+  lastReply?:EmployeeReply
+  initialization?: EmployeeInitialization
   managementRole?:ManagementRole
   createdBy?:PrincipalRef
   accessMode?:'trusted'|'isolated'
@@ -160,10 +179,12 @@ export type Item =
   | { role: 'assistant'; id: string; blocks: Block[] }
   | { role: 'notice'; id: string; text: string; tone: 'info' | 'error' }
 
-export type ActivityPreview={kind:'speech'|'thinking'|'tool';text:string;detail?:string;tool?:string;running?:boolean}
+export type ActivityPreview={unread?:boolean;replyId?:string;kind:'speech'|'thinking'|'tool';text:string;detail?:string;tool?:string;running?:boolean}
 
 /** A live session: everything the GUI needs to render one conversation. */
 export type Session = {
+  lastReply?:EmployeeReply
+  initialization?: EmployeeInitialization
   currentTask?:CurrentTask
 
   id: string

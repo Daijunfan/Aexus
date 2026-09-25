@@ -4,11 +4,15 @@ A CLI-first Codex and Claude Code office with three Team types, a plugin directo
 and animated companions on an expandable canvas. Desktop actions use the same
 backend APIs as the terminal.
 
-For CLI control of the entire company, see the self-contained
-[Manager CLI handbook](docs/managers/API.md). A future local Build Team can bind
-`Agents-Managers/` as its root; each employee receives its own copy of the handbook
-and `agents` launcher inside its Workspace, and can manage Teams, employees, sessions, files, plugins
-and scheduled tasks through the same Core API.
+## 阅读入口
+
+- [README.md](README.md)：产品概览、安装与基本使用。
+- [API.md](API.md)：本项目全部 CLI / Core API。
+- [PERMISSIONS.md](PERMISSIONS.md)：职位、运行位置、管理关系及 API 权限。
+
+职位为 **Manager / Employee**，运行位置为 **本地 / 云端原生**。Manager 必须在本地运行，可以在本机工作或通过已授权的 Tunnel 工作环境操作云主机。云端原生员工只能担任 Employee。Agents Manager 表示用户明确授予的全局管理范围。
+
+普通 Build 和 Work Manager 都会在自己的工作目录获得公司 API 手册、权限说明和 `agents` 启动器；Work 插件手册同时保留。通过本项目 API 创建的员工才会成为公司角色，不使用 Coding Agent 内置子 Agent 实现公司编排。
 
 The host and each `PlugIns/<name>/` source directory use separate Git repositories.
 The host does not track plugin source files. A fresh host checkout needs the
@@ -65,13 +69,13 @@ CLI operations and existing color metadata remain editable.
 | Build | A local project folder | Uses Codex/Claude Code normally; employees can bind existing physical folders |
 | Cloud | A shared SSH connection and remote root | Local Workers use Mac engines with remote tools; Cloud Native Workers run the installed Codex/Claude CLI on that host |
 
-Choose the mode in **添加 Team** or **Team 设置**. Team names are editable display names;
+在 **添加 Team** 或 **Team 设置** 选择 Work（插件）或 Build（项目）。Build 再选择本地／SSH 工作环境；为了兼容已有数据，SSH Build 的 CLI 和存储仍使用 `mode: cloud`。 Team names are editable display names;
 renaming never moves or renames the bound folder. A
 Work Team requires an installed plugin. Empty Teams can change mode/plugin; a Team
 with employees keeps its workspace type so existing files cannot be silently reassigned.
 Existing unclassified Teams remain Build.
 
-Hiring offers **Local Worker** and **Cloud Native Worker**. Existing employees remain Local Workers, including those already in Cloud Teams. Cloud Native Workers can join only a Cloud Team; creation checks that host's CLI and protocol before creating a folder. Their conversation still uses the common chat, approvals, file tree and terminal layout, with a small cloud beneath the pet to show where the engine runs. Run `agents engine remote-check --team TEAM --engine codex|claude` without a window, or see [API.md](API.md) for remote session binding and ownership rules.
+创建员工分别选择 **职位：Manager / Employee** 与 **运行位置：Local Worker / Cloud Native Worker**。云端原生运行只允许 Employee。 Existing employees remain Local Workers, including those already in Cloud Teams. Cloud Native Workers can join only a Cloud Team; creation checks that host's CLI and protocol before creating a folder. Their conversation still uses the common chat, approvals, file tree and terminal layout, with a small cloud beneath the pet to show where the engine runs. Run `agents engine remote-check --team TEAM --engine codex|claude` without a window, or see [API.md](API.md) for remote session binding and ownership rules.
 
 - Work: `PlugIns/<plugin>/workspaces/<Team name at creation>` inside the persistent plugin source folder.
   Each Team gets its own fixed folder; Team creation does not offer a folder picker.
@@ -176,7 +180,7 @@ Create a managed project folder:
 Omitting both directory mode and cwd uses default generation. Default names are
 literal folder names, not lowercased slugs; names containing separators require
 binding an existing folder or changing the name. Existing folders are selected
-with `bind`, and are never erased. Team and employee names are locked after creation to retain their folder identity.
+with `bind`, and are never erased. Team names may change without moving directories; employee names remain immutable.
 For compatibility, explicit cwd calls without a mode and legacy `create|existing`
 CLI modes retain their prior preparation behavior. These are not extra UI choices.
 
@@ -215,14 +219,35 @@ positive or negative and have no fixed floor grid or preset page dimensions.
 - Offscreen Teams and employees are omitted from rendering. Zooming changes the
   camera, never the stored size of an employee.
 
-The header has only 添加 Team and 添加员工. Clicking an employee opens their
+The header contains Team views, 添加 Team and 添加员工. Clicking an employee opens their
 conversation over the existing canvas; dragging does not also open a chat.
-Hiring creates an idle card without starting an engine. One employee corresponds
-to one avatar and one stored conversation. Its name is read-only in profiles,
+Hiring creates a card and starts its private initialization; it cannot receive tasks
+until initialization succeeds. One employee corresponds to one avatar and one stored conversation. Its name is read-only in profiles,
 the sidebar and conversation header. CLI rename attempts are rejected before
 changing directories or sessions. Switching employees retains
 unsent message drafts for each conversation.
 
+
+### Agent layout tools and unread replies
+
+Managers can adjust the office through the same CLI APIs used by the UI. Ask an
+Agent to inspect `agents office layout --json`, then use `room bounds`, `card place`
+or `management relayout`. Ordinary Team Managers adjust their own frame and linked
+employees. Explicitly authorized global staff can adjust other Teams; changing their
+own Team still requires the Manager role. Ordinary Employees do not gain cross-Team
+permissions. See [PERMISSIONS.md](PERMISSIONS.md) for the exact boundaries.
+
+Hiring/removing employees automatically refits the affected Team, including manually
+positioned rooms. Overlapping neighbors move aside with a fixed gap; unrelated rooms
+and the current camera stay in place. Active management groups remain together.
+
+When a task finishes, its last answer paragraph stays in the employee bubble with a
+red unread dot. It survives closing the native session, switching views and restarting
+the app. Opening a background window or reading via a Manager API does not clear it.
+The desktop marks the exact answer read only when the foreground conversation shows
+its end; after reading, the bubble disappears while the conversation history remains.
+Private initialization never creates unread replies. Old history is not retroactively
+marked unread because its prior read status is unknown.
 
 ## Settings
 
@@ -326,7 +351,7 @@ folders are reported inside the conversation with a repair button.
 `agents group migrate NAME` migrates a legacy Team to its managed location, makes
 a metadata backup, moves existing files and leaves an old-path symlink. Existing
 destinations are never overwritten. For Build Teams, `group root NAME PATH --directory-mode bind`
-instead binds an existing folder without migration. Work Team roots are fixed. Names remain fixed; changing scope starts fresh engine context while
+instead binds an existing folder without migration. Work Team roots are fixed. Employee names remain fixed; changing scope starts fresh engine context while
 retaining conversation history. Stop active work before changing a folder or mode.
 
 ## Cloud Teams and conversation workspace
@@ -467,6 +492,30 @@ interior area to move the Team and drag its outline to resize it.
 
 ## Multi-agent management
 
-Local Worker / Cloud Native Worker describes where the engine runs. Employee / Team Manager describes control within a Team. Set the management role in employee details, request an arrow to a same-Team Employee, and approve it as the user. Pending requests do not grant control. Global Agents Managers require a separate explicit grant. Views never change authority.
+用户创建本地员工并设置职位为 Manager 后，该员工能够通过 `agents card create` 创建本 Team 的 Employee，后台同时记录创建者和有效管理箭头。管理已有员工需要申请关系并由用户或全局 Agents Manager 批准。没有 active 箭头的员工不能被该 Manager 管理，其他 Manager 和跨 Team 员工也不属于普通管理范围。
 
-Every operation is exposed through the authenticated CLI; use `agents auth whoami`, `agents api docs` and `agents management topology`. See [ARCHITECTURE.md](ARCHITECTURE.md) for trusted versus isolated processes, remote Manager channels and revocable delegation.
+员工的工作目录包含 `AGENTS.md` / `CLAUDE.md`、`.agents-company/bin/agents`，以及按员工 ID 区分的 `.agents-company/employees/<id>/API.md` 和 `PERMISSIONS.md`。初始引擎上下文直接包含真实身份、手册路径和创建员工示例。升职、恢复会话和更新全局授权会刷新引导；不用删除原有员工或会话。
+
+```sh
+# 用户创建 Manager；运行位置为本地。
+agents card create --title Lead --group Engineering --kind worker --management-role manager --json
+# 以下命令从该员工的身份通道执行。
+agents auth whoami --json
+agents api docs
+agents card create --title Reviewer --engine codex --json
+agents management topology --json
+agents session send --employee EMPLOYEE_ID --text '检查项目并报告发现的问题' --json
+```
+
+关系生效／解除、创建关联员工或删除员工时，Core 在同一次状态提交中更新关系、员工位置和 Team 外框：管理组聚合在一起，孤立员工填入剩余空间。直线段严格水平／垂直，只有拐角使用小圆角。用户可通过 `agents management relayout --team TEAM` 重新整理。布局不改变当前镜头；各视图共享同一 Team 的真实关系和位置。
+
+[PERMISSIONS.md](PERMISSIONS.md) 说明所有授权限制；[ARCHITECTURE.md](ARCHITECTURE.md) 为开发者补充模块边界。Trusted 保留操作系统账号权限；Isolated 是独立的执行隔离选项，不改变公司管理权限。
+
+
+### 新员工初始化
+
+创建员工后，系统自动让执行引擎阅读隐藏的 `.agents-company/` 权限、API 和插件说明。界面只显示“正在初始化”，暂时不能点击员工或派发任务；最终确认 OK 后开放交互。初始化轮不显示在项目聊天历史中，后续对话保留已经读过的原生上下文。Manager 新建的员工也遵守相同规则。
+
+初始化失败可查看状态、调整配置和重试；不会伪装成就绪。该过程会使用所选模型的正常额度。旧员工升级时不会被自动批量初始化。用户已有的根目录 AGENTS.md / CLAUDE.md 自定义内容保留，宿主生成的说明改放隐藏目录。
+
+开发验证：`npm run test:initialization` 使用隔离数据目录、原生协议 fixture 和隐藏 Electron 窗口；`npm run test:initialization-engines` 使用真实 Codex / Claude 进程和本地模型响应 fixture。旧测试中创建后立即对话的步骤需要先等待初始化 ready，禁止让 fixture 测试意外调用个人模型服务。

@@ -1,3 +1,4 @@
+import {separateRooms} from '../../../shared/office-layout'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { teamSettings,type ActivityPreview,type Store,type StoredSession } from '../../../shared/types'
 import type {RemoteHealth} from '../../../shared/remote'
@@ -39,13 +40,14 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
   },[baseRooms,savedViewport,selectedView,size,updateView])
   const rooms=useMemo(()=>{
     if(!draft || draft.kind==='pan')return baseRooms
-    return draft.rooms.map(room=>{
+    const preview=draft.rooms.map(room=>{
       if(room.name!==draft.name)return room
       if(draft.kind==='team')return {...room,bounds:{...room.bounds,x:draft.x,y:draft.y,pinned:true}}
       const cards=room.employees.map(({card,position})=>({...card,position:draft.kind==='employee'&&card.id===draft.id?{x:draft.x,y:draft.y}:position}))
       const bounds=draft.kind==='resize'?draft.resized??room.bounds:{...room.bounds,arrangement:'free' as const}
       return planRoom(room.name,cards,bounds)
     })
+    return draft.kind==='employee'?preview:separateRooms(preview,[draft.name])
   },[baseRooms,draft,store])
   const zoomAt=useCallback((factor:number,x:number,y:number)=>{
     const old=viewRef.current,zoom=Math.min(3,Math.max(.08,old.zoom*factor))

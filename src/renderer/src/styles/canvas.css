@@ -37,6 +37,7 @@
 .employee-location .employee-badge { grid-template-columns:13px minmax(0,1fr); }
 .employee-location .is-working .badge-light { background:#6fff9b; border-color:#baffc9; box-shadow:0 0 0 3px #51ef9824,0 0 13px #63ff97b0; animation:work-lamp 2s ease-in-out infinite; }
 .employee-location .is-disconnected .badge-light{background:#ec7676;border-color:#ffd2c9;box-shadow:0 0 10px #e46a6a88}
+.employee-location .employee[data-state="initializing"] .badge-light{background:#f5c542;border-color:#ffe795;box-shadow:0 0 0 3px #f5c54224,0 0 13px #f5c54280;animation:none}
 @keyframes work-lamp { 50% { box-shadow:0 0 0 4px #51ef9830,0 0 18px #63ff97cc; } }
 .room-dimension { position:absolute;bottom:15px;left:50%;transform:translateX(-50%);font:10px ui-monospace,monospace;letter-spacing:1px;color:#ccdac060;pointer-events:none;white-space:nowrap; }
 .room-dimension span { padding:0 7px; }
@@ -124,3 +125,10 @@
 @container(max-width:420px){.team-badges,.team-header .team-cloud-meta{gap:6px}.team-header .team-kind,.team-header .team-health{padding-inline:7px}}
 
 .management-edges{position:absolute;inset:0;z-index:4;pointer-events:none;color:var(--accent);opacity:.8}.employee-management{grid-column:2;white-space:nowrap;display:block;color:var(--fg-dim);font-size:10px;line-height:1.3}.employee-management[data-management-role=manager],.employee-management[data-management-role=global]{color:var(--accent);font-weight:700}.management-panel{padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--bg-alt);margin:15px 0}.management-panel h3{margin:0 0 12px;font-size:15px}.management-panel p{color:var(--fg-faint);font-size:11px;line-height:1.6}.management-panel .global-manager{display:flex;align-items:center;gap:8px;font-size:12px}.management-request{display:flex;align-items:center;gap:8px;margin-top:12px}.management-panel button{padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elev);color:var(--fg);font-size:12px}.management-request>.app-select{flex:1}.management-relations>div{display:flex;align-items:center;gap:7px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft);font-size:12px}.management-relations>div>span{flex:1}.management-relations small{display:block;color:var(--fg-faint);font-size:10px;margin-top:3px}
+
+/* Completion previews persist until the user actually views the corresponding reply. */
+.unread-dot { display:inline-block;width:8px;height:8px;min-width:8px;border-radius:50%;background:#e34b55;box-shadow:0 0 0 2px var(--bg-elev); }
+.employee-unread { position:absolute;right:8px;top:9px; }
+.bubble-unread { border-color:color-mix(in srgb,#e34b55 45%,var(--border)); }
+.bubble-unread .activity-text { -webkit-line-clamp:6; }
+.reply-seen-marker { display:block;width:100%;height:1px;min-height:1px;pointer-events:none; }

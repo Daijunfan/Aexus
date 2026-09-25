@@ -8,7 +8,7 @@ import {api} from '../api'
 import type { Block, Item } from '../../../shared/types'
 import { format, summarize, truncate } from '../../../shared/transcript'
 
-export function Turn({ item }: { item: Item }) {
+export function Turn({ item,replyId }: { item: Item;replyId?:string }) {
 
   if (item.role === 'user') {
     return (
@@ -25,6 +25,7 @@ export function Turn({ item }: { item: Item }) {
       {item.blocks.map((b, i) => (
         <BlockView key={i} block={b} />
       ))}
+      {replyId&&<span className="reply-seen-marker" data-reply-id={replyId} aria-hidden="true"/>}
     </div>
   )
 }
