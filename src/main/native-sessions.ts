@@ -41,6 +41,7 @@ export async function withCodexSessionApi<T>(action:(call:Call)=>Promise<T>,opti
 
 /** Fork only the active native context. Never share deletion ownership with the source. */
 export async function forkEmployeeContext(source:StoredSession,cwd:string,title:string,workRoot?:string){
+  if(source.nativeConfigRoot)throw Error('Isolated native-history cloning is not supported by the current adapter')
   if(source.kind==='cloud-native-worker'&&source.engine==='claude')throw new Error('云端 Claude Code 会话克隆尚未提供可靠的原生复制接口；原会话保持不变')
   if(source.engine==='claude'&&source.claudeSessionId){
     const result=await forkClaudeSession(source.claudeSessionId,{title})
@@ -75,7 +76,9 @@ function removeLines(file:string,ids:Set<string>,key:string) {
 
 export async function deleteNativeSessions(refs:NativeSession[]):Promise<void> {
   for(const ref of refs)if(!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(ref.id))throw new Error(`无效的 ${ref.engine} 原生会话 ID，未移除员工`)
-  const owned=refs.filter(ref=>ref.ownership!=='external')
+  const allOwned=refs.filter(ref=>ref.ownership!=='external')
+  for(const profile of new Set(allOwned.flatMap(ref=>ref.profile?[ref.profile]:[]))){if(!path.resolve(profile).startsWith(path.join(APP_HOME,'agent-access')+path.sep))throw Error('Invalid isolated engine profile');fs.rmSync(profile,{recursive:true,force:true})}
+  const owned=allOwned.filter(ref=>!ref.profile)
   for(const ref of owned.filter(ref=>ref.origin)){
     const origin=ref.origin!,target=cloudHostTarget(origin.hostId,origin.directory)
     if(target.host!==origin.host||target.os!==origin.os)throw new Error('原生会话所属云主机已变化；未删除本机或其他主机上的会话')

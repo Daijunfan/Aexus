@@ -1,3 +1,5 @@
+import {ManagementEdges} from './ManagementEdges'
+import type {ManagementAccess} from '../../../shared/management'
 import { useId, type CSSProperties } from 'react'
 import { roomDesign, type RoomDesign } from '../../../shared/office'
 import { DEFAULT_POLYGON, EMPLOYEE_SIZE, shapeContains, resizeEdge, type ResizeEdge, type PlannedRoom, type RoomBounds } from '../../../shared/canvas'
@@ -14,7 +16,7 @@ function outline(b:RoomBounds) {
   if(points)return points.map((p,i)=>`${i?'L':'M'} ${p.x*w},${p.y*h}`).join(' ')+' Z'
   return `M 44,4 H ${w-44} Q ${w-4},4 ${w-4},44 V ${h-44} Q ${w-4},${h-4} ${w-44},${h-4} H 44 Q 4,${h-4} 4,${h-44} V 44 Q 4,4 44,4 Z`
 }
-export function CanvasRoom({room,index,design:custom,root,mode,remote,health,busyIds,disconnectedIds,activities,draggingId,visible,onOpen,onEdit,onStart}:{room:PlannedRoom;index:number;design?:Partial<RoomDesign>;root?:string;mode?:'work'|'build'|'cloud';remote?:RemoteTarget;health?:RemoteHealth;activities:Record<string,ActivityPreview>;busyIds:Set<string>;disconnectedIds:Set<string>;draggingId?:string;visible:{x:number;y:number;width:number;height:number};onOpen:(card:StoredSession)=>void;onEdit:()=>void;onStart:(kind:'team'|'employee'|'resize',e:React.PointerEvent,id?:string,edge?:ResizeEdge)=>void}) {
+export function CanvasRoom({room,access,index,design:custom,root,mode,remote,health,busyIds,disconnectedIds,activities,draggingId,visible,onOpen,onEdit,onStart}:{room:PlannedRoom;access?:ManagementAccess;index:number;design?:Partial<RoomDesign>;root?:string;mode?:'work'|'build'|'cloud';remote?:RemoteTarget;health?:RemoteHealth;activities:Record<string,ActivityPreview>;busyIds:Set<string>;disconnectedIds:Set<string>;draggingId?:string;visible:{x:number;y:number;width:number;height:number};onOpen:(card:StoredSession)=>void;onEdit:()=>void;onStart:(kind:'team'|'employee'|'resize',e:React.PointerEvent,id?:string,edge?:ResizeEdge)=>void}) {
   const id=useId().replace(/:/g,''),design=roomDesign(index,custom),b=room.bounds,path=outline(b)
   const edgeAt=(e:React.PointerEvent<SVGPathElement>)=>{const rect=e.currentTarget.ownerSVGElement!.getBoundingClientRect();return resizeEdge((e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height)}
   const color=design.background,light=color?[1,3,5].reduce((sum,i,j)=>sum+parseInt(color.slice(i,i+2),16)*[.2126,.7152,.0722][j],0)>150:undefined
@@ -33,10 +35,11 @@ export function CanvasRoom({room,index,design:custom,root,mode,remote,health,bus
       <div className="team-badges"><span className={`team-kind team-kind-${mode??'build'}`}>{mode==='cloud'?'Cloud':mode==='work'?'Plugin':'Local'}</span>{mode!=='work'&&<span className="team-cloud-meta">{mode==='cloud'&&<span className="team-health" data-connected={health?String(health.connected):'unknown'} title={health?health.connected?'云主机 SSH 已连接':'云主机 SSH 未连接':'正在检查云主机连接'}><i/>{health?health.connected?'已连接':'未连接':'检测中'}</span>}<TeamOSIcon os={mode==='cloud'?remote?.os??'linux':'macos'} distribution={health?.environment?.distribution||remote?.distribution}/></span>}</div>
       <span className={`team-root-label ${root?'':'unbound'}`} title={root??'请绑定外部文件夹'}>{root ? `⌂ ${root}` : '⌂ 先绑定 Team 外部文件夹'}</span>
     </div>
+    <ManagementEdges room={room} access={access}/>
     <div className="free-employees">{room.employees.map(({card,position})=>{
       const x=b.x+position.x,y=b.y+position.y
       if(x+EMPLOYEE_SIZE.width<visible.x||y+EMPLOYEE_SIZE.height<visible.y||x>visible.x+visible.width||y>visible.y+visible.height)return null
-      return <div className="employee-location" key={card.id} style={{left:position.x,top:position.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}><Employee employee={card} working={busyIds.has(card.id)} disconnected={disconnectedIds.has(card.id)} dragging={draggingId===card.id} desk={design.desk} onOpen={onOpen} onStart={e=>onStart('employee',e,card.id)} />{activities[card.id]&&<ActivityBubble activity={activities[card.id]}/>}</div>
+      return <div className="employee-location" key={card.id} style={{left:position.x,top:position.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}><Employee globalManager={access?.globalManagerIds.includes(card.id)} employee={card} working={busyIds.has(card.id)} disconnected={disconnectedIds.has(card.id)} dragging={draggingId===card.id} desk={design.desk} onOpen={onOpen} onStart={e=>onStart('employee',e,card.id)} />{activities[card.id]&&<ActivityBubble activity={activities[card.id]}/>}</div>
     })}</div>
     {!room.employees.length&&<div className="empty-room-note"><span>YOUR NEXT GREAT TEAM</span><p>给好想法，留足空间。</p><small>从一位伙伴开始，随时拖动边缘扩展空间。</small></div>}
     <div className="room-dimension" aria-hidden="true">{Math.round(b.width)} × {Math.round(b.height)} <span>·</span> {room.employees.length} 伙伴</div>

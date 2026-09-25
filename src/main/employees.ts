@@ -1,3 +1,4 @@
+import {requestContext,authorize} from './authorization'
 import fs from 'node:fs'
 import {dirname} from 'node:path'
 import {readStore,patchSession,employeeFields} from './store'
@@ -36,7 +37,8 @@ export async function cloneEmployee(id:string,args:CloneArgs){
     provisionEmployee(cwd,store.teamRoots![source.group],config)
     copyTranscript(source.id,targetId)
     const {threadId:_thread,claudeSessionId:_claude,nativeSessions:_history,remote:_remote,position:_position,orderIndex:_order,...settings}=stored
-    const saved=patchSession(targetId,{...settings,...native,id:targetId,title:args.title.trim(),cwd,nativeOrigin:source.nativeOrigin?{...source.nativeOrigin,directory:cwd}:undefined,nativeOwnership:undefined,clonedFrom:id,createdAt:Date.now()})
+    authorize('card.clone',{id},id)
+    const saved=patchSession(targetId,{...settings,...native,managementRole:'employee',createdBy:requestContext().principal,deleting:undefined,id:targetId,title:args.title.trim(),cwd,nativeOrigin:source.nativeOrigin?{...source.nativeOrigin,directory:cwd}:undefined,nativeOwnership:undefined,clonedFrom:id,createdAt:Date.now()})
     return executionEmployee(saved,saved.sessions.find(c=>c.id===targetId)!)
   }catch(error){
     // Only the new fork can be removed; the source's native IDs never enter this set.

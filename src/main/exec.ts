@@ -70,6 +70,6 @@ export function childEnv(cwd?: string,workRoot?:string): NodeJS.ProcessEnv {
   const missing = NODE_DIRS.filter((d) => existsSync(join(d, 'node')) && !parts.includes(d))
   const manager=managerCliRoot(cwd,workRoot)&&cwd&&existsSync(join(cwd,'.agents-company','bin','agents'))?join(cwd,'.agents-company','bin'):undefined
   const env={...process.env}
-  for(const key of ['AGENTS_WORKSPACE','AGENTS_TEAM_ROOT','AGENTS_COMPANY_PLUGIN_RPC'])delete env[key]
+  for(const key of ['AGENTS_WORKSPACE','AGENTS_TEAM_ROOT','AGENTS_COMPANY_PLUGIN_RPC','AGENTS_COMPANY_TOKEN','AGENTS_COMPANY_TOKEN_FILE','AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_PORT'])delete env[key]
   return { ...env, ...(workRoot&&cwd?{AGENTS_WORKSPACE:cwd,AGENTS_TEAM_ROOT:workRoot}:{}), PATH: [...(workRoot&&cwd?[join(cwd,'.agents-company','bin')]:[]),...(manager?[manager]:[]),...missing, ...parts].join(':') }
 }

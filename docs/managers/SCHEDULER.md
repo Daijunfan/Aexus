@@ -150,3 +150,12 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 
 验证：`npm run test:scheduler`。测试使用隔离数据与确定性引擎替身，Codex 参数固定
 `gpt-5.6-luna` / `low`，没有模型推理费用。
+
+## Management authorization
+
+Jobs and runs preserve the requesting principal and the exact active relation ID.
+Creation, manual run, resume and actual launch revalidate that authority. Revocation
+disables future jobs and cancels matching active runs; unrelated user/Manager work
+is retained. Legacy jobs without delegation remain operator-owned. `source` is only
+a label and never grants permission. Manager schedule listings include their own
+jobs and runs, not the global scheduler store.

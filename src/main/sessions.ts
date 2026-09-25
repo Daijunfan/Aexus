@@ -1,3 +1,8 @@
+import {prepareRemoteAgentAccess,closeRemoteAgentAccess} from './remote-agent-access'
+import {employeeProcessOptions,spawnEmployeeProcess} from './agent-process-isolation'
+import {delegationFor,validateDelegation,authorizeSlash,withCaller,requestContext} from './authorization'
+import type {Delegation,CurrentTask} from '../shared/management'
+import {agentEnvironment} from './agent-access'
 import {activityPreview} from '../shared/activity'
 import {dirname} from 'node:path'
 import {closeNativeCodexSession,nativeCodexBusy,nativeCodexRequest,hasNativeCodexSession} from './codex-native'
@@ -39,7 +44,7 @@ export function beginTeamRemoval(name:string){assertTeamAvailable(name);removing
 export function endTeamRemoval(name:string){removingTeams.delete(name)}
 export function beginEmployeeRemoval(id:string){if(removingEmployees.has(id))throw new Error('员工正在移除中');removingEmployees.add(id)}
 export function endEmployeeRemoval(id:string){removingEmployees.delete(id)}
-export function assertNotRemoving(id?:string){if(id&&removingEmployees.has(id))throw new Error('员工正在移除中，无法打开会话')}
+export function assertNotRemoving(id?:string){if(id&&(removingEmployees.has(id)||readStore().sessions.find(c=>c.id===id)?.deleting))throw new Error('员工正在移除中，无法打开会话')}
 
 const CLAUDE_BIN = resolveBinary('claude', process.env.CLAUDE_BIN)
 
@@ -47,6 +52,7 @@ export type Engine = 'claude' | 'codex'
 
 export type Live = {
   cardId: string
+  currentTask?:CurrentTask
   kind: EmployeeKind
   nativeOrigin?:NativeOrigin
   engine: Engine
@@ -74,7 +80,7 @@ export type Live = {
   /** Codex runs one child process per turn, so turns are queued rather than pushed. */
   running: boolean
   nativeTasks?:Record<string,{processId:string;command:string;cwd:string;status:string}>
-  pendingMessages?: {id:string;text:string;images?:string[]}[]
+  pendingMessages?: {id:string;text:string;images?:string[];delegation?:Delegation}[]
   queue: {text:string;images?:ImageInput[]}[]
   abort?: AbortController
   finished?: Promise<void>
@@ -173,6 +179,7 @@ export function codexEffort(effort?: EffortLevel): string | undefined {
 }
 
 export function buildOptions(args: {
+  employeeId?:string
   cwd: string
   workRoot?: string
   permissionRoot?: string
@@ -189,7 +196,7 @@ export function buildOptions(args: {
   fastMode?: boolean
   effort?: EffortLevel
 }): Options {
-  const env=childEnv(args.cwd,args.workRoot)
+  const env={...childEnv(args.cwd,args.workRoot),...(args.employeeId?agentEnvironment(args.employeeId):{})}
   const opts: Options = {
     cwd: args.cwd,
     // Packaged apps get a minimal PATH, so point the SDK at the real CLI
@@ -212,7 +219,7 @@ export function buildOptions(args: {
   // on an already-running session would be refused by the engine.
   opts.allowDangerouslySkipPermissions = !args.workRoot
   if(args.workRoot)Object.assign(opts,workClaudeOptions(args.cwd,args.permissionRoot??args.workRoot))
-  if(managerCliRoot(args.cwd,args.workRoot)&&!args.remoteLaunch&&!args.nativeRemote)opts.allowedTools=['Bash(agents *)']
+  if(args.employeeId&&!args.remoteLaunch&&!args.nativeRemote){const store=readStore(),card=store.sessions.find(c=>c.id===args.employeeId);if(card?.managementRole==='manager'||store.access?.globalManagerIds.includes(args.employeeId))opts.allowedTools=['Bash(agents *)']}
   if(args.remoteLaunch){
     const launch=args.remoteLaunch,cloudSettings=cloudClaudeSettings()
     Object.assign(opts,{cwd:launch.cwd,tools:[],mcpServers:{tunnel:launch.server},strictMcpConfig:true,allowedTools:CLOUD_TOOLS,settingSources:[],env:{...cloudSettings.env,...env},settings:{permissions:cloudSettings.permissions},
@@ -225,10 +232,11 @@ export function buildOptions(args: {
       }]}]}})
   }
   opts.settings={...(typeof opts.settings==='object'?opts.settings:{}),fastMode:args.fastMode??false}
+  if(args.employeeId&&readStore().sessions.find(card=>card.id===args.employeeId)?.accessMode==='isolated')opts.settings={...opts.settings,sandbox:{enabled:false}}
   if(args.nativeRemote){
     opts.pathToClaudeCodeExecutable='claude'
     opts.env={}
-    opts.spawnClaudeCodeProcess=options=>spawnRemoteAgent(args.nativeRemote!,'claude',options.args,options.signal)
+    opts.spawnClaudeCodeProcess=options=>spawnRemoteAgent(args.nativeRemote!,'claude',options.args,options.signal,args.employeeId)
   }
   const provider=args.nativeRemote?undefined:deepSeekProvider(args.remote?undefined:args.cwd)
   if(provider){
@@ -240,10 +248,12 @@ export function buildOptions(args: {
     opts.effort=(deepSeekEffort(args.effort)??'high') as Options['effort']
     opts.settings={...opts.settings,...deepSeekPicker,fastMode:false}
   }
+  if(args.employeeId){if(!args.nativeRemote)opts.spawnClaudeCodeProcess=options=>spawnEmployeeProcess(args.employeeId,options.command,options.args,{cwd:options.cwd,env:options.env,signal:options.signal});opts.disallowedTools=[...new Set([...(opts.disallowedTools??[]),'Agent','Task'])]}
   return opts
 }
 
 export type StartArgs = {
+  delegation?:Delegation
   cardId?: string
   kind?:EmployeeKind
   remote?:RemoteTarget|null
@@ -264,7 +274,15 @@ export type StartArgs = {
   threadId?: string
 }
 
-export async function startSession(args: StartArgs = {}, owner?: string): Promise<{ sessionId: string; cwd: string; engine: Engine }> {
+const openingSessions=new Map<string,Promise<{sessionId:string;cwd:string;engine:Engine}>>()
+export async function startSession(args:StartArgs={},owner?:string){
+  if(!args.cardId)return startSessionInner(args,owner)
+  const existing=openingSessions.get(args.cardId);if(existing)return existing
+  const pending=startSessionInner(args,owner);openingSessions.set(args.cardId,pending)
+  try{return await pending}finally{openingSessions.delete(args.cardId)}
+}
+async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<{ sessionId: string; cwd: string; engine: Engine }> {
+  const openingDelegation=args.delegation
   assertNotRemoving(args.cardId)
   let card = args.cardId ? readStore().sessions.find((c) => c.id === args.cardId) : undefined
   assertTeamAvailable(card?.group??args.group)
@@ -276,6 +294,7 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
     card=next.sessions.find(c=>c.id===card!.id)!
   }
   if (card) {
+    if(card.accessMode==='isolated')employeeProcessOptions(card.id)
     if(card.kind==='cloud-native-worker')cloudNativeTarget(card)
     employeeWorkspace(readStore(),card.group,card.cwd,card.id)
     const existing = [...live.entries()].find(([, s]) => s.cardId === card.id)
@@ -292,8 +311,9 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   if(nativeRemote)await checkCloudNative(card!.group,card!.engine,cloudRelative(config,cwd))
   if(!remote)provisionEmployee(cwd,root!,config)
   const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?dirname(workRoot):undefined
-  if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!)
-  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',remote):undefined):undefined
+  if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!,card?.id??sessionId)
+  const controlBin=remote&&card&&(card.managementRole==='manager'||readStore().access?.globalManagerIds.includes(card.id))?await prepareRemoteAgentAccess(card.id,remote):undefined
+  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
   assertTeamAvailable(args.group)
   const latest=readStore(),latestConfig=teamSettings(latest,args.group??'')
   if(latest.teamRoots?.[args.group??'']!==root||latestConfig.mode!==config.mode||latestConfig.pluginId!==config.pluginId||JSON.stringify(latestConfig.remote)!==JSON.stringify(config.remote))throw new Error('Team 配置已变更，请重新打开会话')
@@ -306,17 +326,20 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   if (engine === 'codex') args = { ...args, model: args.model || 'gpt-5.6-luna', effort: card?args.effort:(args.effort??'low') }
   const provider=engine==='claude'&&!nativeRemote?deepSeekProvider(remote?undefined:cwd):undefined
   if(provider)args={...args,model:deepSeekModel(provider,args.model),effort:deepSeekEffort(args.effort),fastMode:false}
-  const permissionMode = managerCliRoot(cwd)&&!remote&&!workRoot?'acceptEdits':args.permissionMode ?? (workRoot||remote?'acceptEdits':'default')
+  const permissionMode = args.permissionMode ?? (workRoot||remote?'acceptEdits':'default')
   if(remote&&!nativeRemote&&permissionMode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限')
   if(workRoot&&permissionMode!=='acceptEdits')throw new Error('Work 模式按员工目录授权，必须使用 Workspace write 权限')
   const cardId = card?.id ?? sessionId
+  validateDelegation(openingDelegation,cardId)
   patchSession(cardId, {
-    ...card, engine, cwd, remote:undefined, group: args.group ?? '', seat: args.seat,
+    ...card,...(!card?{createdBy:requestContext().principal,managementRole:'employee' as const,accessMode:'trusted' as const}:{}), engine, cwd, remote:undefined, group: args.group ?? '', seat: args.seat,
     threadId:args.threadId,claudeSessionId:args.claudeSessionId,
     title: args.title || `New ${engine === 'codex' ? 'Codex' : 'Claude'} session`,
     createdAt: card?.createdAt ?? Date.now(), model: args.model, effort: args.effort,
     permissionMode, planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false, thinking: engine === 'claude' && args.thinking !== false
   })
+  const access=employeeProcessOptions(cardId)
+  if(access.profile)patchSession(cardId,{nativeConfigRoot:engine==='codex'?access.env.CODEX_HOME:access.env.CLAUDE_CONFIG_DIR})
   restoreTranscript(sessionId, cardId, engine)
 
   if (engine === 'codex') {
@@ -395,7 +418,7 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
 
   const approve=approvalHandler(sessionId, () => emit('session:changed', { sessionId }))
   const q = query({ prompt: input, options: {
-    ...buildOptions({ ...args, cwd, workRoot, permissionRoot, remote,nativeRemote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true, resume: args.claudeSessionId }),
+    ...buildOptions({ ...args, employeeId:cardId,cwd, workRoot, permissionRoot, remote,nativeRemote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true, resume: args.claudeSessionId }),
     canUseTool: remote&&!nativeRemote?async(tool,input,context)=>cloudToolAllowed(tool,state.planMode===true)?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
     onElicitation:elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))
   } })
@@ -495,7 +518,7 @@ async function pumpCodex(s: Live, sessionId: string) {
       rememberMeta(sessionId, { busy: true })
       emit('session:turn-start', { sessionId })
       await runCodexTurn({
-        prompt: text,images,connectionId:sessionId,
+        employeeId:s.cardId,prompt: text,images,connectionId:sessionId,
         cwd: s.cwd,
         workRoot: s.workRoot,permissionRoot:s.permissionRoot,remote:s.remote,nativeRemote:s.nativeRemote,remoteAdmin:s.remoteAdmin,
         resumeId: s.threadId,planMode:s.planMode,
@@ -536,13 +559,14 @@ async function pumpCodex(s: Live, sessionId: string) {
 function dispatchQueued(s:Live,id:string){
   if(!live.has(id)||s.running||!s.pendingMessages?.length)return
   const next=s.pendingMessages.shift()!;rememberMeta(id,{pendingMessages:[...s.pendingMessages]})
-  void sendMessage(id,next.text,undefined,next.images).catch(error=>emit('session:error',{sessionId:id,message:String(error)}))
+  void sendMessage(id,next.text,undefined,next.images,next.delegation).catch(error=>emit('session:error',{sessionId:id,message:String(error)}))
 }
-export function enqueueMessage(id:string,text:string,images:string[]=[]){
+export function enqueueMessage(id:string,text:string,images:string[]=[],delegation?:Delegation){
   const s=require_(id);assertEmployeeControl(s.cardId)
   if(!Array.isArray(images)||images.some(p=>typeof p!=='string')||images.length>16)throw new Error('images 必须是最多 16 个工作目录内的图片路径')
   if(!text.trim()&&!images.length)throw new Error('Message cannot be empty')
-  const entry={id:newSessionId(),text,images};(s.pendingMessages??=[]).push(entry)
+  delegation??=delegationFor(s.cardId);validateDelegation(delegation,s.cardId);authorizeSlash(text,s.cardId,delegation)
+  const entry={id:newSessionId(),text,images,delegation};(s.pendingMessages??=[]).push(entry)
   rememberMeta(id,{pendingMessages:[...s.pendingMessages]});dispatchQueued(s,id);return entry
 }
 export async function steerMessage(id:string,text:string){
@@ -566,6 +590,7 @@ export function removeQueuedMessage(id:string,messageId:string){
 export async function setPlanMode(id:string,enabled:boolean,owner?:string){
   const s=require_(id);assertEmployeeControl(s.cardId,owner)
   if(s.running)throw new Error('请先等待当前任务结束或停止任务')
+  if(s.engine==='codex'&&readStore().sessions.find(card=>card.id===s.cardId)?.accessMode==='isolated')await closeNativeCodexSession(id)
   if(s.engine==='claude')await s.q.setPermissionMode(enabled?'plan':s.permissionMode)
   s.planMode=enabled;if(!owner)patchSession(s.cardId,{planMode:enabled});rememberMeta(id,{planMode:enabled});return true
 }
@@ -577,7 +602,7 @@ function require_(id: string): Live {
 }
 
 /** Deterministic slash commands never become model prompts. */
-async function runSessionCommand(id:string,text:string,owner?:string):Promise<boolean>{
+async function runSessionCommand(id:string,text:string,owner?:string,delegation?:Delegation):Promise<boolean>{
   const match=text.trim().match(/^\/(\S+)(?:\s+([\s\S]*))?$/);if(!match)return false
   const s=require_(id),meta=sessionInfo(id)!,name=match[1],value=match[2]?.trim()??''
   if(s.engine==='codex'&&['compact','review'].includes(name)){if(name==='compact'&&(!s.threadId||value))throw new Error('用法：/compact，需要已有会话内容');return false}
@@ -597,7 +622,7 @@ async function runSessionCommand(id:string,text:string,owner?:string):Promise<bo
       result='已开始新的上下文，员工和工作目录保持不变。';break
     }
     case 'fork':{if(!value){result='用法：/fork 新员工名称。也可点击上方「克隆员工」选择工作目录。';break}if(owner)throw new Error('请通过 card.clone 在任务外克隆员工');const clone=await import('./employees').then(m=>m.cloneEmployee(s.cardId,{title:value}));result=`已克隆员工：${clone.title}\n员工 ID：${clone.id}\n工作目录：${clone.cwd}`;break}
-    case 'plan':{await setPlanMode(id,true,owner);if(value)return sendMessage(id,value,owner);result='计划模式已开启。使用 /normal 返回执行模式。';break}
+    case 'plan':{await setPlanMode(id,true,owner);if(value)return sendMessage(id,value,owner,[],delegation);result='计划模式已开启。使用 /normal 返回执行模式。';break}
     case 'normal':await setPlanMode(id,false,owner);result='已返回执行模式。';break
     case 'ps':result=JSON.stringify(await backgroundProcesses(id),null,2);break
     case 'stop':await backgroundProcesses(id,undefined,true);result='已停止此员工的后台终端。';break
@@ -633,9 +658,10 @@ export async function setFastMode(id:string,enabled:boolean,owner?:string){
   return true
 }
 
-export async function sendMessage(sessionId: string, text: string, owner?: string,imagePaths:string[]=[]): Promise<boolean> {
+export async function sendMessage(sessionId: string, text: string, owner?: string,imagePaths:string[]=[],delegation?:Delegation): Promise<boolean> {
   const s = require_(sessionId)
   assertEmployeeControl(s.cardId, owner)
+  delegation??=delegationFor(s.cardId);validateDelegation(delegation,s.cardId);authorizeSlash(text,s.cardId,delegation)
   const store=readStore(), card=executionEmployee(store,store.sessions.find(c=>c.id===s.cardId)!)
   if(s.kind==='cloud-native-worker'&&JSON.stringify(cloudNativeTarget(card).origin)!==JSON.stringify(s.nativeOrigin))throw new Error('云主机身份已变化；不会在本机或其他云主机执行')
   if(card.engine!==s.engine)throw new Error('引擎配置已变更，请重新打开会话')
@@ -646,7 +672,7 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
   if (!text.trim()&&!imagePaths.length) throw new Error('Message cannot be empty')
   if (s.running) throw new Error('Session is busy; wait for completion or interrupt it first')
   if(imagePaths.length&&text.startsWith('/'))throw new Error('请使用普通消息发送图片附件')
-  if(text.startsWith('/')&&await runSessionCommand(sessionId,text,owner))return true
+  if(text.startsWith('/')&&await runSessionCommand(sessionId,text,owner,delegation)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner};rememberMeta(sessionId,{currentTask:s.currentTask});return true}
   let images:ImageInput[]=[]
   if(imagePaths.length){
     const modalities=activeModel(sessionInfo(sessionId)?.models??[],s.model)?.inputModalities
@@ -656,6 +682,8 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
     finally{s.running=false;s.abort=undefined;rememberMeta(sessionId,{busy:false})}
     if(cancel.signal.aborted||!live.has(sessionId))return false
   }
+  validateDelegation(delegation,s.cardId)
+  s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner};rememberMeta(sessionId,{currentTask:s.currentTask})
   emit('session:user', { sessionId, text,images:imagePaths })
   if (s.engine === 'codex') {
     s.queue.push({text,images})
@@ -712,6 +740,7 @@ export async function setPermissionMode(
   // The engine decides whether this is allowed; record the change only after
   // it agrees, so the reported state can never drift from reality.
   if (s.engine === 'codex') {
+    if(readStore().sessions.find(card=>card.id===s.cardId)?.accessMode==='isolated')await closeNativeCodexSession(sessionId)
     s.permissionMode = mode;s.planMode=false
     s.sandbox = sandboxFor(mode)
     patchSession(s.cardId, { permissionMode: mode,planMode:false })
@@ -759,11 +788,11 @@ export async function setEffort(
   return true
 }
 
-export async function interrupt(sessionId: string): Promise<boolean> {
+export async function interrupt(sessionId: string,preserveQueue=false): Promise<boolean> {
   const s = live.get(sessionId)
   if (!s) return true
   cancelApprovals(sessionId);s.abort?.abort()
-  s.pendingMessages=[];rememberMeta(sessionId,{pendingMessages:[]})
+  if(!preserveQueue)s.pendingMessages=[];rememberMeta(sessionId,{pendingMessages:[...(s.pendingMessages??[])]})
   if (s.engine === 'codex') {
     s.queue.length = 0
     if(s.abort)s.abort.abort();else if(s.running&&hasNativeCodexSession(sessionId))try{await nativeCodexRequest(sessionId,'turn/interrupt')}catch(error){
@@ -778,6 +807,8 @@ export async function interrupt(sessionId: string): Promise<boolean> {
 }
 
 export async function closeSession(sessionId: string): Promise<boolean> {
+  const employeeId=live.get(sessionId)?.cardId
+  if(employeeId)closeRemoteAgentAccess(employeeId)
   const s = live.get(sessionId)
   if (!s) return true
   cancelApprovals(sessionId)
@@ -805,6 +836,9 @@ export async function closeAll():Promise<void> {
 
 /** What a live session reported about itself, for the CLI to read back. */
 export type SessionInfo = {
+  cardId?:string
+  currentTask?:CurrentTask
+  activityPreview?:Session['activityPreview']
   id: string
   engine: Engine
   cwd: string
@@ -819,7 +853,7 @@ export type SessionInfo = {
   effort?: EffortLevel
   permissionMode: PermissionMode
   usage?:Record<string,unknown>
-  pendingMessages?:{id:string;text:string;images?:string[]}[]
+  pendingMessages?:{id:string;text:string;images?:string[];delegation?:Delegation}[]
   commands: SlashCommand[]
   /** Commands bound to a local terminal, which a GUI should hide. */
   terminalCommands?: string[]
@@ -854,7 +888,7 @@ export function sessionSnapshot(sessionId: string): Session {
 
 export function sessionInfo(sessionId: string): SessionInfo | undefined {
   const meta=info.get(sessionId);if(!meta)return undefined
-  return {...meta,terminalCommands:meta.terminalCommands?.filter(name=>!engineCommands.some(c=>c.name===name||c.aliases?.includes(name))),commands:mergeCommands(meta.commands,meta.engine,activeModel(meta.models,meta.model))}
+  return {...meta,cardId:live.get(sessionId)?.cardId,currentTask:live.get(sessionId)?.currentTask,activityPreview:activityPreview(conversation(sessionId)),terminalCommands:meta.terminalCommands?.filter(name=>!engineCommands.some(c=>c.name===name||c.aliases?.includes(name))),commands:mergeCommands(meta.commands,meta.engine,activeModel(meta.models,meta.model))}
 }
 
 export function allSessionInfo(): SessionInfo[] {
@@ -869,4 +903,13 @@ export function sessionCommands(sessionId: string): {
   aliases?: string[]
 }[] {
   return sessionInfo(sessionId)?.commands ?? []
+}
+
+export function revokeInvalidDelegations(){
+  for(const [id,state] of live){
+    const valid=(delegation:Delegation|undefined)=>{try{validateDelegation(delegation,state.cardId);return true}catch{return false}}
+    const previous=state.pendingMessages??[];state.pendingMessages=previous.filter(message=>valid(message.delegation))
+    if(previous.length!==state.pendingMessages.length)rememberMeta(id,{pendingMessages:state.pendingMessages})
+    if(state.running&&state.currentTask&&!valid(state.currentTask.delegation))void interrupt(id,true).catch(error=>emit('session:error',{sessionId:id,message:String(error)}))
+  }
 }

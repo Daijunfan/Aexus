@@ -52,22 +52,24 @@ const renderer = rendererFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
 
 const server = readFileSync(join(ROOT, 'src', 'main', 'server.ts'), 'utf8')
 const cli = readFileSync(join(ROOT, 'bin', 'agents'), 'utf8')
-const protocol = readFileSync(join(ROOT, 'src', 'shared', 'protocol.ts'), 'utf8')
+const protocol = readFileSync(join(ROOT, 'src', 'shared', 'api-registry.ts'), 'utf8')
 
 // Most commands are `case 'x.y':`, but streaming ones are `if (req.cmd === 'x.y')`.
 const serverCommands = new Set([
-  ...[...server.matchAll(/case '([a-z]+\.[a-z]+)'/g)].map((m) => m[1]),
-  ...[...server.matchAll(/req\.cmd === '([a-z]+\.[a-z]+)'/g)].map((m) => m[1])
+  ...[...server.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]),
+  ...[...server.matchAll(/req\.cmd === '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
 ])
 const cliCommands = new Set(
-  [...cli.matchAll(/case '([a-z]+\.[a-z]+)'/g)].map((m) => m[1])
+  [...cli.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
 )
-const declared = new Set([...protocol.matchAll(/name: '([a-z]+\.[a-z]+)'/g)].map((m) => m[1]))
+const declared = new Set([...protocol.matchAll(/name: '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]))
 const managerGuide=readFileSync(join(ROOT,'docs','managers','API.md'),'utf8')
 
 console.log('CLI / GUI coverage — static check\n')
 
 console.log('-- the surfaces line up --')
+const registry=JSON.parse(readFileSync(join(ROOT,'docs/managers/commands.json'),'utf8'))
+ok(registry.every(command=>typeof command.permission==='string'&&typeof command.target==='string'),'every API declares an authorization policy and resource target')
 ok(serverCommands.size > 0, `the server handles commands (${serverCommands.size})`)
 ok(cliCommands.size > 0, `the CLI exposes commands (${cliCommands.size})`)
 
@@ -91,7 +93,7 @@ const missingInGuide=[...declared].filter(command=>!managerGuide.includes(`<code
 ok(missingInGuide.length===0,`Manager handbook indexes every CLI command (${declared.size})`,missingInGuide.join(', '))
 const documentation=spawnSync(process.execPath,[join(ROOT,'scripts','sync-manager-docs.mjs'),'--check'],{cwd:ROOT,encoding:'utf8'})
 ok(documentation.status===0,'Manager API, scheduler and supporting docs match their sources',documentation.stderr.trim())
-const rendererCommands = new Set([...renderer.matchAll(/(?:act|configure|api\.call(?:<[^>]+>)?)\('([a-z]+\.[a-z]+)'/g)].map((m) => m[1]))
+const rendererCommands = new Set([...renderer.matchAll(/(?:act|configure|api\.call(?:<[^>]+>)?)\('([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]))
 for (const command of rendererCommands) {
   ok(cliCommands.has(command) && serverCommands.has(command), `frontend API call → ${command}`)
 }

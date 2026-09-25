@@ -4,13 +4,15 @@ const run=promisify(execFile),require=createRequire(import.meta.dirname),root=pa
 fs.writeFileSync(path.join(manager,'.agents-company-manager'),'agents-company-manager/v1\n')
 const sdk=require.resolve('@anthropic-ai/claude-agent-sdk'),bundle=path.join(temp,'env.cjs');await build({stdin:{contents:"export {childEnv} from './src/main/exec'",resolveDir:root,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:bundle,logLevel:'silent'});const {childEnv}=require(bundle)
 const daemon=spawn(process.execPath,[root+'/bin/agents','serve'],{env,stdio:'ignore'}),done=new Promise(resolve=>daemon.once('exit',resolve));let director
-const cli=async(cwd,...args)=>{const response=JSON.parse((await run('agents',[...args,'--json'],{cwd,env:{...childEnv(cwd),...env,PATH:childEnv(cwd).PATH},timeout:25000})).stdout);assert.ok(response.ok,response.error);return response.data}
+const credentials=new Map()
+const cli=async(cwd,...args)=>{const response=JSON.parse((await run('agents',[...args,'--json'],{cwd,env:{...childEnv(cwd),...env,PATH:childEnv(cwd).PATH,AGENTS_COMPANY_TOKEN_FILE:credentials.get(cwd)},timeout:25000})).stdout);assert.ok(response.ok,response.error);return response.data}
 const bootstrap=async(...args)=>{const response=JSON.parse((await run(process.execPath,[root+'/bin/agents',...args,'--json'],{env,timeout:25000})).stdout);assert.ok(response.ok,response.error);return response.data}
 try{
  for(let n=0;n<100;n++){try{if((await bootstrap('status')).running)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
  assert.ok(!fs.existsSync(path.join(manager,'API.md'))&&!fs.existsSync(path.join(manager,'agents')))
  await bootstrap('group','add','Managers','--mode','build','--directory-mode','bind','--root',manager)
  director=await bootstrap('card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low')
+ await bootstrap('management','global',director.id,'on');credentials.set(director.cwd,(await bootstrap('auth','agent-token',director.id)).file)
  assert.equal(director.permissionMode,'acceptEdits')
  assert.equal(childEnv(director.cwd).PATH.split(':')[0],path.join(director.cwd,'.agents-company/bin'))
  for(const name of ['API.md','SCHEDULER.md','PLUGIN_SPEC.md','ENGINE_CAPABILITIES.md'])assert.equal(fs.readFileSync(path.join(director.cwd,'.agents-company/manager',name),'utf8'),fs.readFileSync(path.join(root,'docs/managers',name),'utf8'))
@@ -19,8 +21,9 @@ try{
  const originalPath=process.env.PATH;process.env.PATH='/usr/bin:/bin';const finderEnv=childEnv(director.cwd);process.env.PATH=originalPath
  assert.equal(finderEnv.PATH.split(':')[0],path.join(director.cwd,'.agents-company/bin'))
  assert.ok(finderEnv.PATH.split(':').some(folder=>fs.existsSync(path.join(folder,'node'))),'Finder environment must include Node for the Manager launcher')
- assert.equal(JSON.parse((await run('agents',['status','--json'],{cwd:director.cwd,env:{...finderEnv,...env,PATH:finderEnv.PATH}})).stdout).data.running,true)
+ assert.equal(JSON.parse((await run('agents',['status','--json'],{cwd:director.cwd,env:{...finderEnv,...env,PATH:finderEnv.PATH,AGENTS_COMPANY_TOKEN_FILE:credentials.get(director.cwd)}})).stdout).data.running,true)
  const assistant=await cli(director.cwd,'card','create','--title','Assistant','--group','Managers','--engine','codex')
+ await bootstrap('management','global',assistant.id,'on');credentials.set(assistant.cwd,(await bootstrap('auth','agent-token',assistant.id)).file)
  assert.equal(assistant.permissionMode,'acceptEdits')
  assert.equal(childEnv(assistant.cwd).PATH.split(':')[0],path.join(assistant.cwd,'.agents-company/bin'))
  assert.equal((await cli(assistant.cwd,'status')).running,true)

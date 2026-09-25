@@ -11,7 +11,7 @@
 - 同步运行 `npm run docs:managers`，让 `docs/managers/API.md` 与根目录 API、调度规范和命令注册表一致；Manager 文档源不放在 Team 根目录，每位员工自己的 Workspace 自动获得副本和 `agents` 启动器。
 - Team 决定 Work、本地 Build 或 cloud 执行环境；云主机账号统一由 Cloud Hosts 插件通过共享 host.* Core API 管理；cloud Team 只持久化 hostId 与 directory，remote 是运行时只读投影。员工不能覆盖主机，只能选择 Team 范围内的云端工作目录。
 - 新建 Work Team 的根目录固定在所属插件文件夹的 `workspaces/<Team 名称>`；Team 不手选目录。员工可在该根目录内默认生成或绑定已有子目录，创建时复制插件 CLI 文档与启动器。已有 Work Team 的目录不自动移动。
-- Team 与员工名称创建后不可更改。切换引擎或工作目录必须保留会话历史与旧原生 ID，删除员工时再统一清理。
+- Team 名称可修改且不改变目录；员工名称创建后不可更改。切换引擎或工作目录必须保留会话历史与旧原生 ID，删除员工时再统一清理。
 
 ## 插件也必须 CLI 优先
 

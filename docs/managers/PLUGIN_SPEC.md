@@ -292,3 +292,8 @@ MiniNotion 的 `--workspace` 模式将 Markdown、代码/文本、CSV、图片�
 Cloud Hosts (`PlugIns/cloud-hosts`，独立 Git 仓库) 是此类插件：独立 CLI、runtime 和 UI 共用宿主 `host.*` Core 服务。可无窗口运行 `agents serve`；它不依赖 Electron、不导入宿主实现、不保存第二份主机库。创建 Work Team 并选择 `cloud-hosts` 后，每位 Worker 自动获得完整主机管理文档与 CLI；sandbox 内仍使用标准 mailbox。
 
 新 cloud Team 只能使用已登记 `hostId` 和现有远端 `directory`。旧 SSH 配置自动迁入主机库，数据备份后去重；新 Team 不再新建账号。连接详情与凭据通过 `host` CLI 或 Cloud Hosts UI 修改，密码默认隐藏。
+
+## 调用身份与授权
+
+宿主传入的 `requestHost({cmd,args})` 保留实际调用者身份。插件不得自行读取用户控制凭据来代替员工调用。员工 mailbox 请求携带自己的认证凭据；目录位置不是身份。
+每条允许普通员工使用的命令在 schema 声明 `agentAccess: "workspace"`，并且实现必须限制到 context.workspace；未声明的命令只向用户或显式全局 Manager 开放。应用级主机管理插件复用 host.* 的全局授权。插件内部的独立 Agent 启动入口不得向普通 Work 员工开放。

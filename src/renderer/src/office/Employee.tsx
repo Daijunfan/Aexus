@@ -4,8 +4,8 @@ import type { RoomDesign } from '../../../shared/office'
 import { Mascot } from './Mascot'
 import { Desk, Laptop, Mug } from './Furniture'
 
-export function Employee({ employee, working, disconnected=false, dragging = false, desk, onOpen, onStart }: {
-  employee: StoredSession; working: boolean; disconnected?:boolean; dragging?: boolean; onStart?: (event:React.PointerEvent)=>void; desk: RoomDesign['desk']; onOpen: (card: StoredSession) => void
+export function Employee({ employee, globalManager=false,working, disconnected=false, dragging = false, desk, onOpen, onStart }: {
+  employee: StoredSession;globalManager?:boolean; working: boolean; disconnected?:boolean; dragging?: boolean; onStart?: (event:React.PointerEvent)=>void; desk: RoomDesign['desk']; onOpen: (card: StoredSession) => void
 }) {
   const behavior=usePetBehavior(employee.id,working,dragging,employee.avatar==='panda'?'calm':employee.avatar==='fox'?'playful':'curious')
   const native=employee.kind==='cloud-native-worker'
@@ -16,7 +16,7 @@ export function Employee({ employee, working, disconnected=false, dragging = fal
     <Mascot kind={employee.avatar ?? (employee.engine === 'codex' ? 'robot' : 'cat')} accessory={employee.accessory ?? 'headphones'} color={employee.color} working={working} pose={behavior.pose} gaze={behavior.gaze} />
     {native&&<span className="cloud-native-foot" aria-hidden="true"><svg viewBox="0 0 96 32" preserveAspectRatio="none"><path d="M18 27C8 27 5 18 10 12c4-5 10-5 14-3C28 1 40-1 47 5c4 3 5 6 5 9 6-5 17-2 19 5 8-4 18 2 18 10H18Z" fill="#edf7ff" stroke="#94bbdf" strokeWidth="2"/></svg></span>}
     <Desk material={desk} />{!working&&<Laptop working={working} />}<Mug />
-    <span className="employee-badge"><span className="badge-light" /><span className="employee-name">{employee.title}</span><span className="employee-role" title={native?employee.remote?.host:undefined}>{native?'Cloud Native Worker':'Local Worker'} · {employee.engine==='codex'?'Codex':'Claude Code'}</span><span className="employee-state">{working ? '工作中' : disconnected?'连接／执行失败':'休息中'}</span></span>
+    <span className="employee-badge"><span className="badge-light" /><span className="employee-name">{employee.title}</span><span className="employee-role" title={native?employee.remote?.host:undefined}>{native?'Cloud Native Worker':'Local Worker'} · {employee.engine==='codex'?'Codex':'Claude Code'}</span><span className="employee-management" data-management-role={globalManager?'global':employee.managementRole??'employee'}>{globalManager?'Agents Manager':employee.managementRole==='manager'?'Team Manager':'Employee'}</span><span className="employee-state">{working ? '工作中' : disconnected?'连接／执行失败':'休息中'}</span></span>
   </button>
 }
 

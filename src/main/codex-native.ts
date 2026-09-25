@@ -1,3 +1,6 @@
+import {readStore} from './store'
+import {remoteAgentBin} from './remote-agent-access'
+import {spawnEmployeeProcess} from './agent-process-isolation'
 import {spawn} from 'node:child_process'
 import {createInterface} from 'node:readline'
 import {once} from 'node:events'
@@ -12,7 +15,7 @@ import type {CodexEvent,SandboxMode} from './codex'
 
 export const nativeExecutionConfig=()=>['-c','mcp_servers={}','-c','skills.include_instructions=false','-c','skills.bundled.enabled=false',
   '-c','include_apps_instructions=false','-c','memories.use_memories=false','-c','memories.generate_memories=false','--disable','memories','--disable','apps','--disable','hooks','--disable','plugins','--disable','chronicle','--disable','multi_agent']
-type Args={connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;nativeRemote?:RemoteTarget;remoteAdmin?:boolean;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string}
+type Args={employeeId?:string;connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;nativeRemote?:RemoteTarget;remoteAdmin?:boolean;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string}
 class RemoteStartupError extends Error {}
 const sessions=new Map<string,NativeConnection>()
 type NativeConnection=Awaited<ReturnType<typeof connect>>
@@ -27,6 +30,7 @@ export async function nativeCodexRequest(id:string,method:string,params:Record<s
 
 /** One native connection per employee keeps tools and background terminals alive between turns. */
 export async function runNativeCodexTurn(binary:string,args:Args){
+  if(args.employeeId&&readStore().sessions.find(card=>card.id===args.employeeId)?.accessMode==='isolated')args={...args,workRoot:undefined,sandbox:'danger-full-access'}
   let session=args.connectionId?sessions.get(args.connectionId):undefined
   try{
     if(session&&!session.alive()){await session.close();session=undefined}
@@ -46,10 +50,10 @@ export async function runNativeCodexTurn(binary:string,args:Args){
 async function connect(binary:string,initial:Args){
   let args=initial,threadId=initial.resumeId??'',turnId='',loaded=false,working=false,sequence=0,stderr='',dead=false,compact=false
   let waiting:{turnId?:string;resolve:()=>void;reject:(error:Error)=>void}|undefined,closing:Promise<void>|undefined
-  const executor=args.remote&&!args.nativeRemote?await openCodexExecutor(args.remote):undefined
+  const executor=args.remote&&!args.nativeRemote?await openCodexExecutor({...args.remote,cliBin:remoteAgentBin(args.employeeId)}):undefined
   const flags=['-c',`model=${JSON.stringify(args.model||'gpt-5.6-luna')}`,...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true']
-  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'app-server','--listen','stdio://']):spawn(binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot):[]),...flags,'app-server'],
-    {cwd:args.remote?APP_HOME:args.cwd,env:{...childEnv(args.cwd,args.workRoot),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})},stdio:['pipe','pipe','pipe']})
+  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'--disable','multi_agent','app-server','--listen','stdio://'],undefined,args.employeeId):spawnEmployeeProcess(args.employeeId,binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot):[]),...flags,'--disable','multi_agent','app-server'],
+    {cwd:args.remote?APP_HOME:args.cwd,env:{...childEnv(args.cwd,args.workRoot),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})}})
   const ended=once(child,'close').catch(()=>{}),lines=createInterface({input:child.stdout}),lifetime=new AbortController()
   const pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:NodeJS.Timeout}>(),incoming=new Map<string|number,AbortController>()
   const fail=(error:Error)=>{for(const p of pending.values()){clearTimeout(p.timer);p.reject(error)}pending.clear();waiting?.reject(error)}

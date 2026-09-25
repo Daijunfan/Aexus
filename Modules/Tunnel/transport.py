@@ -50,7 +50,7 @@ def server_command(config):
 
 
 def source_line(config):
-    target = {k: config[k] for k in ("directory", "os", "shell") if k in config}
+    target = {k: config[k] for k in ("directory", "os", "shell", "cli_bin") if k in config}
     source = "import json\nCONFIG=json.loads(" + repr(json.dumps(target)) + ")\n"
     source += (ROOT / "workspace_files.py").read_text() + "\n"
     source += (ROOT / "remote.py").read_text()

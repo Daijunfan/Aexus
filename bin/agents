@@ -9,7 +9,7 @@ const { join } = require('node:path')
 const { homedir } = require('node:os')
 
 const APP_HOME = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'AgentsCompany')
-const SOCKET = join(APP_HOME, 'agents.sock')
+const SOCKET = process.env.AGENTS_COMPANY_SOCKET || join(APP_HOME, 'agents.sock')
 
 const useJson = process.argv.includes('--json')
 const argv = process.argv.slice(2).filter((a) => a !== '--json')
@@ -68,11 +68,14 @@ function scheduleSpec(p) {
 
 function send(req, { stream = false } = {}) {
   return new Promise((resolve, reject) => {
-    if (!existsSync(SOCKET)) {
+    if (!process.env.AGENTS_COMPANY_PORT&&!existsSync(SOCKET)) {
       reject(new Error('Agents Company is not running. Run `agents serve` first.'))
       return
     }
-    const sock = connect(SOCKET)
+    let auth
+    try{auth=process.env.AGENTS_COMPANY_TOKEN||require('node:fs').readFileSync(process.env.AGENTS_COMPANY_TOKEN_FILE||join(APP_HOME,'control.token'),'utf8').trim()}catch{reject(new Error('Cannot read control credential; use your assigned Agent CLI channel'));return}
+    req={...req,auth}
+    const sock = connect(process.env.AGENTS_COMPANY_PORT?{host:'127.0.0.1',port:Number(process.env.AGENTS_COMPANY_PORT)}:SOCKET)
     sock.setEncoding('utf8')
     let buf = ''
     let first = true
@@ -134,157 +137,7 @@ function out(data, human) {
 
 // ---------- commands ----------
 
-const HELP = `agents — drive Agents Company from the terminal
-
-USAGE
-  agents <command> [args] [--json]
-
-The app must be running; the CLI talks to it over ~/AgentsCompany/agents.sock.
-Use --json on any command for machine-readable output.
-
-COMMANDS
-  serve                                   run the CLI service without Electron
-  status                                  is the app running
-  schedule schema | status | list [--employee ID --source NAME]
-  schedule create --name NAME --employee ID --prompt TEXT | --prompt-file FILE
-      (--at ISO | --every-seconds N [--start ISO] | --time HH:mm [--days 1,2,3,4,5])
-      [--timezone Asia/Shanghai --window HH:mm-HH:mm --window-days 1,2,3,4,5]
-      [--model MODEL --effort low --thinking on|off --timeout 1800 --grace 60]
-      [--until ISO --paused --source PLUGIN_ID] | --spec @file.json
-  schedule get | pause | resume | delete | run <jobId>
-  schedule update <jobId> --patch @file.json
-  schedule preview [jobId | --spec @file.json] [--after ISO --count 5]
-  schedule history [jobId] [--employee ID --limit 50]
-  schedule cancel <runId>                 stop one active scheduled turn
-  host exec ID --command COMMAND | --command-file FILE [--directory PATH --timeout SECONDS]
-  host list | get ID | check ID | credentials ID | remove ID
-  host create --data @host.json
-  host update ID --data @patch.json
-  host directories ID [--path /absolute/directory]
-  engine remote-check --team NAME --engine codex|claude [--directory PATH]
-  engine remote-sessions --team NAME --engine codex|claude
-  card native-bind <employee-id> <native-session-id>
-  host fingerprints ID
-  host trust ID --fingerprint SHA256:...
-  remote check --team NAME | --employee ID | --remote-host user@HOST --remote-dir /path
-  terminal open --employee ID [--cols 100 --rows 24]
-  terminal list [--employee ID]
-  terminal read ID [--cursor N]
-  terminal input ID [--data TEXT | --file FILE] [--enter]
-  terminal resize ID --cols N --rows N
-  terminal close ID
-  session list [--live]                   stored cards, or live sessions
-  session new [--engine E] [--group G]    create a session
-  session rename <card-or-session-id> <title>  compatibility: names are immutable
-  session open <cardId>                   open a stored card (resumes context)
-  session send <id> <text>                send a message
-  session follow <id> [--raw]             stream events until the turn ends
-  session transcript <id> [--thinking]    print the conversation
-  session activity <id>                   current speech, thinking summary or tool operation
-  session info <id>                       models, commands, config
-  session snapshot <id>                   full state used by the frontend
-  session search <query>                  search employees and workspaces
-  session interrupt <id>                  stop the current turn
-  session close <id>                      close a live session
-  config engine <card-or-live-id> codex|claude
-  config model <id> <model>
-  config permission <id> <mode>
-  config remote-admin <id> on|off           authorize remote SSH-user administration (cloud Codex only)
-  config thinking <id> on|off
-  config effort <id> <level>
-  group list | add <name> [--mode work|build|cloud --plugin ID]
-  team-view list | create --name NAME [--teams @teams.json]
-  team-view update ID --patch @patch.json | select all|ID | remove ID
-      [--host-id ID --remote-dir /existing/directory]
-      [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
-      [--directory-mode default|bind --root PATH]   Build only; Work uses plugin/workspaces/Team
-  group remove <name>                     delete Team, employees and native sessions; keep files
-  group migrate <name>
-  group root <name> <folder> [--directory-mode bind] [--create]   Build only
-  group configure <name> --mode work|build|cloud [--plugin ID --directory-mode default|bind --root PATH]
-      [--host-id ID --remote-dir /existing/directory]
-      [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
-  room place <name> --col N --row N [--w N] [--h N]
-  room bounds <name> [--x N] [--y N] [--width N] [--height N]
-      [--shape rounded|ellipse|hexagon|custom] [--arrangement grid|circle|free]
-      [--points '[[0,0],[1,0],[1,1],[0,1]]']
-  room layout <name>
-  card place <id> --x N --y N [--snap on|off] [--zoom N]
-  canvas view | set --x N --y N --zoom N
-  plugin list | describe <id> | install <directory>
-  plugin call <id> <method> --team NAME|--employee ID [--params JSON]
-  plugin open <id> [--team NAME|--employee ID]
-  plugin windows
-  plugin place <windowId> --x N --y N --width N --height N
-  plugin mode <windowId> normal|minimized|maximized|fullscreen
-  plugin dismiss <windowId>
-  plugin view <id> [--team NAME|--employee ID]
-  plugin close <viewId>
-  settings get | set [--theme THEME] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off]
-  view get | close
-  view open home|team|employee|workspace|conversation|plugin|settings|clone [--name NAME] [--employee ID]
-  view details on|off
-  shared info                              physical Shared folder in the project
-  view shared on|off                       toggle the shared drawer
-  transfer start --from JSON|@file --to JSON|@file
-      locations: {shared:true,path:"file"}, {team:"Team",path:"file"},
-                 {employee:"ID",path:"file"}, {local:true,path:"/absolute/path"}
-      source is a file/directory; destination is an existing directory; never overwrites
-  transfer list | get ID | cancel ID       byte progress, results and cancellation
-  workspace list|read|write|mkdir|move|trash|restore <path> --shared
-  workspace suggest --team NAME [--mode work|build --plugin ID]
-  workspace choose [--path PATH]
-  workspace docs --team NAME|--employee ID
-  workspace list|read <path> --team NAME
-  workspace write <path> --team NAME --content TEXT [--hash HASH]
-  workspace mkdir|trash <path> --team NAME
-  workspace move <path> --to PATH --team NAME
-  workspace restore --id ID --team NAME
-  card rename <cardId> <title>             compatibility: names are immutable
-  card move <cardId> <group> [--before id] [--cwd existing-path]
-  card remove <cardId>
-  card clone <id> --title NAME [--directory-mode default|bind] [--cwd PATH]
-  card create --title NAME [--kind worker|cloud-native-worker] [--engine E] [--group G] [--avatar KIND]
-    [--cwd PATH] [--directory-mode default|bind]
-  card update <cardId> [--role ROLE] [--avatar KIND]
-    [--cwd PATH] [--directory-mode default|bind]
-      [--accessory headphones|glasses|none] [--color '#rrggbb'] [--group G]
-  group rename <name> <newName>            change Team name; keep its folder path
-  room design <name> [--theme sage|ocean|rose|amber|lavender|slate]
-      [--background HEX] [--pattern boards|grid|dots|plain] [--scenery on|off]
-      [--wall windows|panels|brick] [--desk walnut|oak|cloud]
-      [--plants on|off] [--shelf on|off] [--lamp on|off] [--art on|off]
-  approval list <id>
-  approval respond <id> <requestId> allow|deny
-
-  config plan <id> on|off
-  external open <https-url>
-  engine inspect <id> [capabilities|skills|mcp|account|usage|config]
-  engine skill <id> <name> [prompt]
-  session steer <id> <text>
-  session background <id>
-  session background-stop <id> [--process ID]
-  session review <id> [--base BRANCH|--commit SHA|--instructions TEXT]
-  workspace image <path> --employee ID|--team NAME
-  session send <id> [text] --images '["design.png"]'
-  session enqueue <id> <text>
-  session queue <id>
-  session dequeue <id> <messageId>
-  session export <id> [--format markdown|json] [--path RELATIVE]
-  view tools skills|mcp|account|usage|config|export|background|off
-  config fast <id> on|off                official Fast tier
-  commands run <id> /command [args]      execute a slash command
-  commands list <id> [--filter X] [--all] the slash commands available
-  commands complete <id> <name>           what Tab would insert
-  ui view                                 what is on screen
-  ui dom [--sel CSS]                      query the interface
-  ui text                                 all visible text
-  ui click <selector>                     click something
-  ui type <selector> <text>               type into an input
-  ui wait <selector> [--timeout ms]       wait for an element
-  ui style <selector>                     computed styles of an element
-  ui screenshot <path>                    save the rendered interface as PNG
-`
+const HELP = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['agents — Agents Company authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','',...commands.map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})()
 
 let onEvent = (m) => {
   if (useJson) console.log(JSON.stringify(m.payload))
@@ -315,6 +168,9 @@ async function main() {
 
   const call = (cmd, args) => send({ cmd, args })
 
+  if(group==='session'&&['info','snapshot','transcript','send','follow','interrupt','enqueue','queue','dequeue','open'].includes(sub)&&rest.includes('--employee')){
+    const p=parse(rest),result=await send({cmd:'session.'+sub,args:{employee:p.employee,text:p.text??p._.join(' '),limit:p.limit?Number(p.limit):undefined,thinking:!!p.thinking,raw:!!p.raw,messageId:p['message-id'],expectedMessageId:p['expected-message-id']}},{stream:sub==='follow'});if(sub==='follow'){if(useJson)console.log(JSON.stringify({type:'snapshot',...result.initial}));else if(result.initial.text)console.log(result.initial.text);process.on('SIGINT',()=>{result.stream.end();process.exit(0)});return}return out(result)
+  }
   switch (`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`) {
     case 'schedule.schema': case 'schedule.status': return out(await call(`schedule.${sub}`))
     case 'schedule.list': { const p=parse(rest); return out(await call('schedule.list',{employee:p.employee,source:p.source})) }
@@ -334,6 +190,17 @@ async function main() {
     case 'settings.set': {
       const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);if(p['snap-employees']!==undefined){if(!['on','off'].includes(p['snap-employees']))throw new Error('--snap-employees accepts on|off');a.snapEmployees=p['snap-employees']==='on'}return out(await call('settings.set',a))
     }
+    case 'auth.whoami':case 'api.list':case 'api.docs':return out(await call(group+'.'+sub),data=>sub==='docs'?data.markdown:JSON.stringify(data,null,2))
+    case 'api.describe':return out(await call('api.describe',{command:rest[0]}))
+    case 'auth.agent-token':case 'auth.revoke':return out(await call('auth.'+sub,{id:rest[0]}))
+    case 'management.topology':{const p=parse(rest);return out(await call('management.topology',{team:p.team}))}
+    case 'management.request':{const p=parse(rest);return out(await call('management.request',{employee:p.employee,manager:p.manager}))}
+    case 'management.decide':return out(await call('management.decide',{id:rest[0],decision:rest[1]}))
+    case 'management.unbind':return out(await call('management.unbind',{id:rest[0]}))
+    case 'management.global':if(!['on','off'].includes(rest[1]))throw Error('Use on or off');return out(await call('management.global',{id:rest[0],enabled:rest[1]==='on'}))
+    case 'card.management-role':return out(await call('card.management-role',{id:rest[0],role:rest[1]}))
+    case 'card.access-mode':return out(await call('card.access-mode',{id:rest[0],mode:rest[1]}))
+    case 'session.status':{const p=parse(rest);return out(await call('session.status',{employee:p.employee}))}
     case 'view.get':case 'view.close': return out(await call(`view.${sub}`))
     case 'team-view.list': return out(await call('team-view.list'))
     case 'team-view.create': {const p=parse(rest);return out(await call('team-view.create',{name:p.name,teams:p.teams?jsonArgument(p.teams):[]}))}
@@ -655,7 +522,7 @@ async function main() {
     case 'card.create': {
       const p = parse(rest)
       if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
-      return out(await call('card.create', { ...p, directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
+      return out(await call('card.create', { ...p, managementRole:p['management-role'],accessMode:p['access-mode'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
     }
     case 'card.update': {
       const p = parse(rest)

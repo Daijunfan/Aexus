@@ -4,9 +4,9 @@
 
 本文件由项目根目录的 `API.md`、`SCHEDULER.md` 和共享 CLI 注册表汇总生成。它是未来 Manager Team 员工的操作手册。**业务更改一律通过 CLI；不要直接编辑保存的 Team、员工或排期 JSON。**
 
-1. Manager Team 应使用本地 **Build** 模式，并将 Team 根目录绑定到项目的 `Agents-Managers` 文件夹。每位员工默认使用其中与自己同名的子文件夹；手动绑定也必须留在该根目录内。cloud 员工在远端执行，不能连接 Mac 上的本地服务。
+1. Manager Team 应使用本地 **Build** 模式，并将 Team 根目录绑定到项目的 `Agents-Managers` 文件夹。每位员工默认使用其中与自己同名的子文件夹；手动绑定也必须留在该根目录内。云端 Manager 使用身份绑定的 SSH 回传 CLI 连接本机 Core；不会暴露用户控制通道。
 2. 每位员工 Workspace 都有独立复制的手册和 `.agents-company/bin/agents` 启动器。员工进程的 PATH 自动包含这个 bin 目录，可以直接执行 `agents`；终端 PATH 被重置时执行 `./.agents-company/bin/agents`。Team 根目录只用来容纳员工文件夹，不存放手册。
-3. 桌面 App 或 `agents serve` 必须有一个正在运行。先执行 `agents status --json`；再执行 `agents session list --json` 获取**稳定员工 ID**，`agents session list --live --json` 获取**当前会话 ID**。会话关闭后 live ID 会改变，员工 ID 不变。通过 `agents group list --details --json` 查看 Team 根目录与模式。
+3. 桌面 App 或 `agents serve` 必须有一个正在运行。先执行 `agents auth whoami --json` 和 `agents api docs`；再执行 `agents session list --json` 获取**稳定员工 ID**，`agents session list --live --json` 获取**当前会话 ID**。会话关闭后 live ID 会改变，员工 ID 不变。通过 `agents group list --details --json` 查看 Team 根目录与模式。
 4. 每个命令可追加 `--json`。成功返回 `{ "ok": true, "data": ... }`；失败返回 `{ "ok": false, "error": "..." }`，CLI 非零退出。读取上一条命令的结果与 ID，再执行依赖它的操作。
 
 文档源位于项目的 `docs/managers`，不会自动创建 Team。如果要绑定 Manager 根目录，从项目根目录执行：
@@ -16,7 +16,7 @@
 ./bin/agents card create --title Director --group Managers --engine codex --directory-mode default --json
 ```
 
-Team 和员工名称创建后不可更改。要修改其他员工或 Team，先读其稳定 ID、工作目录与忙碌状态；调用下文的 `card update`、`config ...`、`group configure`、`room design`、`room bounds` 等命令。删除 Team 会连带删除员工和会话，工作文件保留。Manager 权限来自运行中的本地宿主 CLI，不需要直接修改数据库。
+Team 可以通过 group rename 改名且目录不变；员工名称创建后不可更改。要修改其他员工或 Team，先读其稳定 ID、工作目录与忙碌状态；调用下文的 `card update`、`config ...`、`group configure`、`room design`、`room bounds` 等命令。删除 Team 会连带删除员工和会话，工作文件保留。Manager 权限来自服务端的显式角色、有效管理关系或全局授权，目录名和标记文件不授予权限。
 
 一个常见流程：
 
@@ -36,6 +36,8 @@ agents session follow SESSION_ID --json
 插件领域命令先执行 `agents plugin list --json`、`agents plugin describe ID --json` 读取该插件独立的 Markdown/API schema，再用 `agents plugin call ID METHOD --team NAME --params @request.json`。Team 必须按插件契约授权。`ui.*` 只用于已有窗口的外观验收；Manager 在 `agents serve` 下仍可完成所有业务操作。目录选择器、屏幕截图等视觉行为需要窗口，CLI 管理文件夹时直接传入物理路径即可。
 
 定时任务保存并执行在宿主 Core 中。先读 `agents schedule schema --json`，创建后用 `schedule preview` 检查触发时间，再 `schedule status` 和 `schedule history` 确认执行结果；使用 `schedule run` 会立刻启动模型工作，不用于试探排期。下面附有完整的定时契约。
+
+用户创建新全局 Manager 后，还需用用户 CLI 执行 `agents management global EMPLOYEE_ID on`。已有 Manager 的一次性迁移写入明确 ID，之后复制目录标记不会自动提权。
 
 ## 根项目 API 全文
 
@@ -452,6 +454,79 @@ capture web content without opening a preview or showing the window.
 
 The normal workflow needs only data commands. `ui.*` is for acceptance checks
 and visual diagnostics, and is not required to run agents or manage the company.
+
+## Authenticated management and collaboration
+
+The operator UI/CLI retains complete control. Every employee has a distinct Core
+identity; sending it a prompt never transfers the sender's identity or credential.
+Use the role-specific handbook returned by `agents api docs` inside an employee
+process. `agents help` is generated from the same command registry and is only a
+catalog, not an authorization grant.
+
+```sh
+agents auth whoami --json
+agents api list --json
+agents api describe session.send --json
+agents api docs
+agents card management-role EMPLOYEE_ID manager
+agents management topology --team TEAM --json
+agents management request --employee EMPLOYEE_ID
+# User or globally authorized Agents Manager only:
+agents management request --manager MANAGER_ID --employee EMPLOYEE_ID
+agents management decide RELATION_ID approve
+agents management unbind RELATION_ID
+# User only: global grant and credential administration
+agents management global EMPLOYEE_ID on
+agents auth agent-token EMPLOYEE_ID --json
+agents auth revoke EMPLOYEE_ID
+agents card access-mode EMPLOYEE_ID isolated
+```
+
+`auth.agent-token` explicitly returns a secret for operator-controlled integrations;
+never put it in prompts or committed files. Normal employee processes receive their
+own credential through their launcher. The user CLI reads `~/AgentsCompany/control.token`;
+raw socket requests without authentication are rejected. Caller IDs, roles, `createdBy`,
+`approvedBy`, and delegation data supplied by clients do not grant authority.
+
+Team Managers may request relations only for themselves. Pending relations give no
+control. Active control requires the Manager and an ordinary Employee to remain in
+the same Team. Creating an Employee within that Team atomically records the creator
+and an active management edge; deletion additionally requires the Manager to be that
+creator. Ordinary arrows do not grant tool approval, execution-permission changes,
+other employees' file writes, terminal input, or global host/Team/view configuration.
+Global authority is separate, explicit and never drawn as cross-Team arrows.
+
+```sh
+agents session info --employee EMPLOYEE_ID
+agents session status --employee EMPLOYEE_ID
+agents session send --employee EMPLOYEE_ID --text "检查项目并告诉我测试结果"
+agents session transcript --employee EMPLOYEE_ID --limit 100
+agents session follow --employee EMPLOYEE_ID
+agents session interrupt --employee EMPLOYEE_ID --expected-message-id MESSAGE_ID
+agents schedule create --name "复查" --employee EMPLOYEE_ID --prompt "检查最近的修改" --at 2026-10-01T09:00:00+08:00
+```
+
+Queries do not start an engine. Sending opens/resumes the single employee session
+only after authorization. An accepted send returns `messageId`; status includes the
+originating principal, relation, start time and schedule run where applicable. An
+accepted message is not a completed task. Slash commands are checked for the actual
+operation, so `/permissions` or `/fork` cannot bypass the management policy.
+
+Unbinding, demotion, a Team move, deletion or credential revocation invalidates the
+corresponding pending messages, active delegations, future schedules and subscriptions.
+Rebinding creates a new relation ID and does not resurrect old work. User tasks and
+other Managers' valid delegations are preserved. Historical schedules without an
+origin remain legacy operator tasks. Deletion persists a retryable `deleting` state
+before native cleanup; remote failures retain references and never trigger local fallback.
+
+**Process isolation:** Trusted employees run with their OS account privileges and
+must not be described as tamper-proof. Isolated mode currently supports local macOS
+processes, private native profiles and protected host credentials. Unsupported remote
+or other-platform isolation fails closed. A workspace containing this running host's
+source is not eligible. Switching an existing native history between execution
+profiles is rejected. Cloud Managers use employee-specific SSH return gateways;
+remote Trusted mode still requires trusting processes that share that remote OS user.
+See `ARCHITECTURE.md` for the execution and compatibility boundaries.
 
 ## Team views
 
@@ -1027,152 +1102,166 @@ agents transfer cancel TRANSFER_ID --json
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 142 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 156 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
-| 命令 | 参数 | 作用 | 对应界面 |
-| --- | --- | --- | --- |
-| <code>agents shared info</code> | <code>—</code> | Locate the checkout Shared directory | 共享中转站物理目录 |
-| <code>agents view shared</code> | <code>on&#124;off</code> | Show or hide the shared transfer drawer without closing the conversation | 共享中转站侧栏 |
-| <code>agents transfer start</code> | <code>--from JSON&#124;@file --to JSON&#124;@file</code> | Copy a file or directory between local, shared and Team/employee workspaces | 跨工作区拖放复制 |
-| <code>agents transfer list</code> | <code>—</code> | List transfer progress and results for this service run | 传输列表 |
-| <code>agents transfer get</code> | <code>ID</code> | Read a transfer result and byte progress | 传输进度 |
-| <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 |
-| <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 |
-| <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 |
-| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 |
-| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 |
-| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID --prompt TEXT --at ISO</code> | Create an employee task schedule | CLI 调度基础，供插件复用 |
-| <code>agents schedule update</code> | <code>ID --patch @file.json</code> | Update a schedule while idle | CLI 调度基础，供插件复用 |
-| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 |
-| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 |
-| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 |
-| <code>agents schedule preview</code> | <code>[ID &#124; --spec @file.json] [--after ISO --count N]</code> | Preview future occurrences without executing | CLI 调度基础，供插件复用 |
-| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 |
-| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 |
-| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 |
-| <code>agents settings get</code> | <code>—</code> | Read theme and pointer sensitivity | 应用设置 |
-| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off]</code> | Persist appearance and canvas controls | 背景和灵敏度 |
-| <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 |
-| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 |
-| <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 |
-| <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 |
-| <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open |
-| <code>agents session list</code> | <code>--live</code> | List stored cards (or live sessions with --live) | The company floor |
-| <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” |
-| <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 |
-| <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
-| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a Worker session | 对话输入框 |
-| <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 |
-| <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 |
-| <code>agents host exec</code> | <code>&lt;id&gt; --command COMMAND&#124;--command-file FILE [--directory PATH --timeout SECONDS]</code> | Execute a management command exclusively on the registered remote host | 远端管理命令 |
-| <code>agents host list</code> | <code>—</code> | List registered cloud hosts without passwords | Cloud Hosts 插件 |
-| <code>agents host get</code> | <code>&lt;id&gt;</code> | Read a cloud host record without its password | Cloud Hosts 插件 |
-| <code>agents host create</code> | <code>--data @host.json</code> | Create a cloud host in the shared registry | Cloud Hosts 插件 |
-| <code>agents host update</code> | <code>&lt;id&gt; --data @patch.json</code> | Edit host connection and credentials | Cloud Hosts 插件 |
-| <code>agents host remove</code> | <code>&lt;id&gt;</code> | Remove an unbound cloud host | Cloud Hosts 插件 |
-| <code>agents host check</code> | <code>&lt;id&gt;</code> | Check SSH connectivity without requiring a Team working directory | Cloud Hosts 插件与 Team 连接灯 |
-| <code>agents host directories</code> | <code>&lt;id&gt; [--path PATH]</code> | Browse existing directories on a registered cloud host | Cloud Hosts 插件 |
-| <code>agents host credentials</code> | <code>&lt;id&gt;</code> | Explicitly reveal the saved host password | Cloud Hosts 插件 |
-| <code>agents engine remote-check</code> | <code>--team NAME --engine codex&#124;claude [--directory PATH]</code> | Check a Cloud Team native CLI, protocol, authentication and workspace before hiring | Cloud Native Worker 创建前检查 |
-| <code>agents engine remote-sessions</code> | <code>--team NAME --engine codex&#124;claude</code> | List native sessions on the selected Cloud Team host | 绑定已有云端会话 |
-| <code>agents card native-bind</code> | <code>&lt;employee-id&gt; &lt;native-session-id&gt;</code> | Bind an existing remote native session without taking deletion ownership | 绑定远端原生会话 |
-| <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
-| <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
-| <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |
-| <code>agents session close</code> | <code>&lt;id&gt;</code> | Close a live session | Leaving the session view |
-| <code>agents session info</code> | <code>&lt;id&gt;</code> | Show a live session’s engines, models, commands | The toolbar dropdowns |
-| <code>agents session activity</code> | <code>&lt;id&gt;</code> | Current speech, published thinking or tool preview; null when idle | 员工活动气泡 |
-| <code>agents session snapshot</code> | <code>&lt;id&gt;</code> | Full frontend state | The conversation and toolbar |
-| <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search |
-| <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests |
-| <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline |
-| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 |
-| <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown |
-| <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 |
-| <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown |
-| <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle |
-| <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown |
-| <code>agents config plan</code> | <code>&lt;id&gt; on&#124;off</code> | Switch the official planning mode | 计划模式 |
-| <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 |
-| <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 |
-| <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 |
-| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 |
-| <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 |
-| <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 |
-| <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review |
-| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Queue a message after the active turn | 排队发送 |
-| <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 |
-| <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 |
-| <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 |
-| <code>agents view tools</code> | <code>&lt;skills&#124;mcp&#124;account&#124;usage&#124;config&#124;export&#124;off&gt;</code> | Open or close the engine tools panel | 引擎工具面板 |
-| <code>agents config fast</code> | <code>&lt;id&gt; on&#124;off</code> | Set the official Fast service tier | Fast 速度开关 |
-| <code>agents commands run</code> | <code>&lt;id&gt; /command [args]</code> | Execute a discovered slash command through shared Core | 斜杠命令 |
-| <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu |
-| <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu |
-| <code>agents group list</code> | <code>—</code> | List departments | Department headings |
-| <code>agents team-view list</code> | <code>—</code> | List All Team and saved Team views with the active selection | 顶部视图标签 |
-| <code>agents team-view create</code> | <code>--name NAME [--teams @teams.json]</code> | Create and select a named view of existing Teams | ＋ 添加视图 |
-| <code>agents team-view update</code> | <code>ID --patch @patch.json</code> | Rename a view or change its Team membership | 编辑视图 |
-| <code>agents team-view remove</code> | <code>ID</code> | Delete a custom view without deleting Teams | 删除视图 |
-| <code>agents team-view select</code> | <code>all&#124;ID</code> | Select a saved Team view and its canvas viewport | 切换视图 |
-| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” |
-| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Bind a Team to a plugin or registered cloud host and directory | Team 工作方式与连接 |
-| <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department |
-| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign |
-| <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card |
-| <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card |
-| <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 |
-| <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 |
-| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;cloud-native-worker] [--engine E] [--avatar cat]</code> | Hire a Local or Cloud Native Worker | 添加员工 |
-| <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 |
-| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 |
-| <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 |
-| <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 |
-| <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 |
-| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team |
-| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 |
-| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 |
-| <code>agents canvas view</code> | <code>—</code> | Read viewport position and zoom | 画布视野 |
-| <code>agents canvas set</code> | <code>--x N --y N --zoom N</code> | Pan and zoom the canvas | 平移、缩放画布 |
-| <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 |
-| <code>agents plugin describe</code> | <code>&lt;id&gt;</code> | Read a plugin manifest, API schema and Markdown guide | 插件信息 |
-| <code>agents plugin install</code> | <code>&lt;directory&gt;</code> | Install a compatible local plugin package | CLI 安装插件 |
-| <code>agents plugin call</code> | <code>&lt;id&gt; &lt;method&gt; --team NAME [--params JSON]</code> | Invoke a plugin API inside a Team workspace | 插件中的操作 |
-| <code>agents plugin open</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open or focus an independent plugin window | 独立插件窗口 |
-| <code>agents plugin windows</code> | <code>—</code> | List plugin window state, also in headless mode | 独立插件窗口 |
-| <code>agents plugin place</code> | <code>&lt;windowId&gt; --x N --y N --width N --height N</code> | Move and resize a plugin window | 独立插件窗口 |
-| <code>agents plugin mode</code> | <code>&lt;windowId&gt; normal&#124;minimized&#124;maximized&#124;fullscreen</code> | Change native plugin window state | 插件窗口最小化、还原与全屏 |
-| <code>agents plugin dismiss</code> | <code>&lt;windowId&gt;</code> | Save and close an independent plugin window | 独立插件窗口 |
-| <code>agents plugin view</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open a plugin view in its managed root or selected scope | Team 工作空间 |
-| <code>agents plugin close</code> | <code>&lt;viewId&gt;</code> | Close an embedded plugin view | 关闭工作空间 |
-| <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 |
-| <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 |
-| <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 |
-| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH and the target working directory; return remote OS details | 云端工作目录诊断 |
-| <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 |
-| <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 |
-| <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 |
-| <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 |
-| <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 |
-| <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 |
-| <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 |
-| <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 |
-| <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 |
-| <code>agents workspace write</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID] --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 |
-| <code>agents workspace mkdir</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Create a folder | 新建文件夹 |
-| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH [--shared&#124;--team NAME&#124;--employee ID]</code> | Rename or move a file | 重命名文件 |
-| <code>agents workspace trash</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Move a file to recoverable workspace trash | 移到回收站 |
-| <code>agents workspace restore</code> | <code>--id ID [--shared&#124;--team NAME&#124;--employee ID]</code> | Restore a trashed file | 撤销删除 |
-| <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself |
-| <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself |
-| <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself |
-| <code>agents ui click</code> | <code>&lt;selector&gt;</code> | Click an element in the interface | That click |
-| <code>agents ui type</code> | <code>&lt;selector&gt; &lt;text&gt;</code> | Type into an input | That typing |
-| <code>agents ui wait</code> | <code>&lt;selector&gt; [--timeout ms]</code> | Wait for an element to appear | Waiting for the UI to catch up |
-| <code>agents ui style</code> | <code>&lt;selector&gt;</code> | Computed styles of an element | How it actually looks |
-| <code>agents ui screenshot</code> | <code>&lt;path&gt;</code> | Save a screenshot | Rendered interface |
-| <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 |
-| <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 |
+| 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
+| --- | --- | --- | --- | --- |
+| <code>agents auth whoami</code> | <code>—</code> | Read authenticated caller and management role | 管理与协同 | identity |
+| <code>agents auth agent-token</code> | <code>ID</code> | Issue or read an employee API credential (user only) | 管理与协同 | operator |
+| <code>agents auth revoke</code> | <code>ID</code> | Revoke employee API credentials (user only) | 管理与协同 | operator |
+| <code>agents api list</code> | <code>—</code> | List caller-authorized APIs | 管理与协同 | identity |
+| <code>agents api describe</code> | <code>COMMAND</code> | Describe an authorized API and its scope | 管理与协同 | identity |
+| <code>agents api docs</code> | <code>—</code> | Read the caller role API handbook | 管理与协同 | identity |
+| <code>agents management topology</code> | <code>[--team NAME]</code> | Read employee nodes, active relations and pending requests | 管理与协同 | topology |
+| <code>agents management request</code> | <code>--employee ID [--manager ID]</code> | Request a same-Team management relation | 管理与协同 | relation |
+| <code>agents management decide</code> | <code>ID approve&#124;deny</code> | Approve or deny a pending management relation | 管理与协同 | operator |
+| <code>agents management unbind</code> | <code>ID</code> | Revoke a management relation and its delegations | 管理与协同 | relation |
+| <code>agents management global</code> | <code>ID on&#124;off</code> | Grant or revoke global management (user only) | 管理与协同 | operator |
+| <code>agents card management-role</code> | <code>ID employee&#124;manager</code> | Assign a Team management role | 管理与协同 | operator |
+| <code>agents card access-mode</code> | <code>ID trusted&#124;isolated</code> | Set trusted or isolated engine execution | 管理与协同 | operator |
+| <code>agents session status</code> | <code>[--employee ID]</code> | Read lightweight employee activity without full transcripts | 管理与协同 | employee.read |
+| <code>agents shared info</code> | <code>—</code> | Locate the checkout Shared directory | 共享中转站物理目录 | operator |
+| <code>agents view shared</code> | <code>on&#124;off</code> | Show or hide the shared transfer drawer without closing the conversation | 共享中转站侧栏 | operator |
+| <code>agents transfer start</code> | <code>--from JSON&#124;@file --to JSON&#124;@file</code> | Copy a file or directory between local, shared and Team/employee workspaces | 跨工作区拖放复制 | operator |
+| <code>agents transfer list</code> | <code>—</code> | List transfer progress and results for this service run | 传输列表 | operator |
+| <code>agents transfer get</code> | <code>ID</code> | Read a transfer result and byte progress | 传输进度 | operator |
+| <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 | operator |
+| <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID --prompt TEXT --at ISO</code> | Create an employee task schedule | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule update</code> | <code>ID --patch @file.json</code> | Update a schedule while idle | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule preview</code> | <code>[ID &#124; --spec @file.json] [--after ISO --count N]</code> | Preview future occurrences without executing | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 | schedule |
+| <code>agents settings get</code> | <code>—</code> | Read theme and pointer sensitivity | 应用设置 | operator |
+| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off]</code> | Persist appearance and canvas controls | 背景和灵敏度 | operator |
+| <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
+| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 | operator |
+| <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
+| <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 | operator |
+| <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open | operator |
+| <code>agents session list</code> | <code>[--live] [--summary]</code> | List stored cards (or live sessions with --live) | The company floor | employee.read |
+| <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” | operator |
+| <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 | operator |
+| <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card | employee.message |
+| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT</code> | Send a message to a Worker session | 对话输入框 | employee.message |
+| <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 | operator |
+| <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 | operator |
+| <code>agents host exec</code> | <code>&lt;id&gt; --command COMMAND&#124;--command-file FILE [--directory PATH --timeout SECONDS]</code> | Execute a management command exclusively on the registered remote host | 远端管理命令 | operator |
+| <code>agents host list</code> | <code>—</code> | List registered cloud hosts without passwords | Cloud Hosts 插件 | operator |
+| <code>agents host get</code> | <code>&lt;id&gt;</code> | Read a cloud host record without its password | Cloud Hosts 插件 | operator |
+| <code>agents host create</code> | <code>--data @host.json</code> | Create a cloud host in the shared registry | Cloud Hosts 插件 | operator |
+| <code>agents host update</code> | <code>&lt;id&gt; --data @patch.json</code> | Edit host connection and credentials | Cloud Hosts 插件 | operator |
+| <code>agents host remove</code> | <code>&lt;id&gt;</code> | Remove an unbound cloud host | Cloud Hosts 插件 | operator |
+| <code>agents host check</code> | <code>&lt;id&gt;</code> | Check SSH connectivity without requiring a Team working directory | Cloud Hosts 插件与 Team 连接灯 | operator |
+| <code>agents host directories</code> | <code>&lt;id&gt; [--path PATH]</code> | Browse existing directories on a registered cloud host | Cloud Hosts 插件 | operator |
+| <code>agents host credentials</code> | <code>&lt;id&gt;</code> | Explicitly reveal the saved host password | Cloud Hosts 插件 | operator |
+| <code>agents engine remote-check</code> | <code>--team NAME --engine codex&#124;claude [--directory PATH]</code> | Check a Cloud Team native CLI, protocol, authentication and workspace before hiring | Cloud Native Worker 创建前检查 | operator |
+| <code>agents engine remote-sessions</code> | <code>--team NAME --engine codex&#124;claude</code> | List native sessions on the selected Cloud Team host | 绑定已有云端会话 | operator |
+| <code>agents card native-bind</code> | <code>&lt;employee-id&gt; &lt;native-session-id&gt;</code> | Bind an existing remote native session without taking deletion ownership | 绑定远端原生会话 | operator |
+| <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript | employee.read |
+| <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane | employee.read |
+| <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button | employee.message |
+| <code>agents session close</code> | <code>&lt;id&gt;</code> | Close a live session | Leaving the session view | operator |
+| <code>agents session info</code> | <code>&lt;id&gt;</code> | Show a live session’s engines, models, commands | The toolbar dropdowns | employee.read |
+| <code>agents session activity</code> | <code>&lt;id&gt;</code> | Current speech, published thinking or tool preview; null when idle | 员工活动气泡 | employee.read |
+| <code>agents session snapshot</code> | <code>&lt;id&gt;</code> | Full frontend state | The conversation and toolbar | employee.read |
+| <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search | operator |
+| <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests | operator |
+| <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline | operator |
+| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 | operator |
+| <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown | employee.configure |
+| <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 | operator |
+| <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown | operator |
+| <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle | employee.configure |
+| <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown | employee.configure |
+| <code>agents config plan</code> | <code>&lt;id&gt; on&#124;off</code> | Switch the official planning mode | 计划模式 | employee.configure |
+| <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 | operator |
+| <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 | operator |
+| <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 | operator |
+| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 | operator |
+| <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 | operator |
+| <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 | operator |
+| <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review | operator |
+| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Queue a message after the active turn | 排队发送 | employee.message |
+| <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 | employee.read |
+| <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 | employee.message |
+| <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 | operator |
+| <code>agents view tools</code> | <code>&lt;skills&#124;mcp&#124;account&#124;usage&#124;config&#124;export&#124;off&gt;</code> | Open or close the engine tools panel | 引擎工具面板 | operator |
+| <code>agents config fast</code> | <code>&lt;id&gt; on&#124;off</code> | Set the official Fast service tier | Fast 速度开关 | employee.configure |
+| <code>agents commands run</code> | <code>&lt;id&gt; /command [args]</code> | Execute a discovered slash command through shared Core | 斜杠命令 | operator |
+| <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu | operator |
+| <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu | operator |
+| <code>agents group list</code> | <code>—</code> | List departments | Department headings | operator |
+| <code>agents team-view list</code> | <code>—</code> | List All Team and saved Team views with the active selection | 顶部视图标签 | operator |
+| <code>agents team-view create</code> | <code>--name NAME [--teams @teams.json]</code> | Create and select a named view of existing Teams | ＋ 添加视图 | operator |
+| <code>agents team-view update</code> | <code>ID --patch @patch.json</code> | Rename a view or change its Team membership | 编辑视图 | operator |
+| <code>agents team-view remove</code> | <code>ID</code> | Delete a custom view without deleting Teams | 删除视图 | operator |
+| <code>agents team-view select</code> | <code>all&#124;ID</code> | Select a saved Team view and its canvas viewport | 切换视图 | operator |
+| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” | operator |
+| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Bind a Team to a plugin or registered cloud host and directory | Team 工作方式与连接 | operator |
+| <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department | operator |
+| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign | operator |
+| <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card | operator |
+| <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card | operator |
+| <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 | employee.delete |
+| <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 | operator |
+| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;cloud-native-worker] [--engine E] [--avatar cat]</code> | Hire a Local or Cloud Native Worker | 添加员工 | employee.create |
+| <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 | operator |
+| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 | operator |
+| <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 | operator |
+| <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 | operator |
+| <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 | operator |
+| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team | operator |
+| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 | operator |
+| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 | operator |
+| <code>agents canvas view</code> | <code>—</code> | Read viewport position and zoom | 画布视野 | operator |
+| <code>agents canvas set</code> | <code>--x N --y N --zoom N</code> | Pan and zoom the canvas | 平移、缩放画布 | operator |
+| <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 | plugin |
+| <code>agents plugin describe</code> | <code>&lt;id&gt;</code> | Read a plugin manifest, API schema and Markdown guide | 插件信息 | plugin |
+| <code>agents plugin install</code> | <code>&lt;directory&gt;</code> | Install a compatible local plugin package | CLI 安装插件 | operator |
+| <code>agents plugin call</code> | <code>&lt;id&gt; &lt;method&gt; --team NAME [--params JSON]</code> | Invoke a plugin API inside a Team workspace | 插件中的操作 | plugin |
+| <code>agents plugin open</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open or focus an independent plugin window | 独立插件窗口 | operator |
+| <code>agents plugin windows</code> | <code>—</code> | List plugin window state, also in headless mode | 独立插件窗口 | operator |
+| <code>agents plugin place</code> | <code>&lt;windowId&gt; --x N --y N --width N --height N</code> | Move and resize a plugin window | 独立插件窗口 | operator |
+| <code>agents plugin mode</code> | <code>&lt;windowId&gt; normal&#124;minimized&#124;maximized&#124;fullscreen</code> | Change native plugin window state | 插件窗口最小化、还原与全屏 | operator |
+| <code>agents plugin dismiss</code> | <code>&lt;windowId&gt;</code> | Save and close an independent plugin window | 独立插件窗口 | operator |
+| <code>agents plugin view</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open a plugin view in its managed root or selected scope | Team 工作空间 | operator |
+| <code>agents plugin close</code> | <code>&lt;viewId&gt;</code> | Close an embedded plugin view | 关闭工作空间 | operator |
+| <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 | workspace |
+| <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 | operator |
+| <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 | operator |
+| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH and the target working directory; return remote OS details | 云端工作目录诊断 | operator |
+| <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 | operator |
+| <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 | operator |
+| <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 | operator |
+| <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 | operator |
+| <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 | operator |
+| <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 | operator |
+| <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 | workspace |
+| <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 | workspace |
+| <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 | workspace |
+| <code>agents workspace write</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID] --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 | workspace |
+| <code>agents workspace mkdir</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Create a folder | 新建文件夹 | workspace |
+| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH [--shared&#124;--team NAME&#124;--employee ID]</code> | Rename or move a file | 重命名文件 | workspace |
+| <code>agents workspace trash</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Move a file to recoverable workspace trash | 移到回收站 | workspace |
+| <code>agents workspace restore</code> | <code>--id ID [--shared&#124;--team NAME&#124;--employee ID]</code> | Restore a trashed file | 撤销删除 | workspace |
+| <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself | operator |
+| <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself | operator |
+| <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself | operator |
+| <code>agents ui click</code> | <code>&lt;selector&gt;</code> | Click an element in the interface | That click | operator |
+| <code>agents ui type</code> | <code>&lt;selector&gt; &lt;text&gt;</code> | Type into an input | That typing | operator |
+| <code>agents ui wait</code> | <code>&lt;selector&gt; [--timeout ms]</code> | Wait for an element to appear | Waiting for the UI to catch up | operator |
+| <code>agents ui style</code> | <code>&lt;selector&gt;</code> | Computed styles of an element | How it actually looks | operator |
+| <code>agents ui screenshot</code> | <code>&lt;path&gt;</code> | Save a screenshot | Rendered interface | operator |
+| <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 | operator |
+| <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 | operator |
 
 另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。
 <!-- END GENERATED CLI COMMAND INDEX -->
@@ -1327,153 +1416,176 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 验证：`npm run test:scheduler`。测试使用隔离数据与确定性引擎替身，Codex 参数固定
 `gpt-5.6-luna` / `low`，没有模型推理费用。
 
+## Management authorization
+
+Jobs and runs preserve the requesting principal and the exact active relation ID.
+Creation, manual run, resume and actual launch revalidate that authority. Revocation
+disables future jobs and cancels matching active runs; unrelated user/Manager work
+is retained. Legacy jobs without delegation remain operator-owned. `source` is only
+a label and never grants permission. Manager schedule listings include their own
+jobs and runs, not the global scheduler store.
+
 ## 全部 CLI 命令索引
 
-下面 142 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 156 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
-| 命令 | 参数 | 作用 | 对应界面 |
-| --- | --- | --- | --- |
-| <code>agents shared info</code> | <code>—</code> | Locate the checkout Shared directory | 共享中转站物理目录 |
-| <code>agents view shared</code> | <code>on&#124;off</code> | Show or hide the shared transfer drawer without closing the conversation | 共享中转站侧栏 |
-| <code>agents transfer start</code> | <code>--from JSON&#124;@file --to JSON&#124;@file</code> | Copy a file or directory between local, shared and Team/employee workspaces | 跨工作区拖放复制 |
-| <code>agents transfer list</code> | <code>—</code> | List transfer progress and results for this service run | 传输列表 |
-| <code>agents transfer get</code> | <code>ID</code> | Read a transfer result and byte progress | 传输进度 |
-| <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 |
-| <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 |
-| <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 |
-| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 |
-| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 |
-| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID --prompt TEXT --at ISO</code> | Create an employee task schedule | CLI 调度基础，供插件复用 |
-| <code>agents schedule update</code> | <code>ID --patch @file.json</code> | Update a schedule while idle | CLI 调度基础，供插件复用 |
-| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 |
-| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 |
-| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 |
-| <code>agents schedule preview</code> | <code>[ID &#124; --spec @file.json] [--after ISO --count N]</code> | Preview future occurrences without executing | CLI 调度基础，供插件复用 |
-| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 |
-| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 |
-| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 |
-| <code>agents settings get</code> | <code>—</code> | Read theme and pointer sensitivity | 应用设置 |
-| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off]</code> | Persist appearance and canvas controls | 背景和灵敏度 |
-| <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 |
-| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 |
-| <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 |
-| <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 |
-| <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open |
-| <code>agents session list</code> | <code>--live</code> | List stored cards (or live sessions with --live) | The company floor |
-| <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” |
-| <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 |
-| <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
-| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a Worker session | 对话输入框 |
-| <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 |
-| <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 |
-| <code>agents host exec</code> | <code>&lt;id&gt; --command COMMAND&#124;--command-file FILE [--directory PATH --timeout SECONDS]</code> | Execute a management command exclusively on the registered remote host | 远端管理命令 |
-| <code>agents host list</code> | <code>—</code> | List registered cloud hosts without passwords | Cloud Hosts 插件 |
-| <code>agents host get</code> | <code>&lt;id&gt;</code> | Read a cloud host record without its password | Cloud Hosts 插件 |
-| <code>agents host create</code> | <code>--data @host.json</code> | Create a cloud host in the shared registry | Cloud Hosts 插件 |
-| <code>agents host update</code> | <code>&lt;id&gt; --data @patch.json</code> | Edit host connection and credentials | Cloud Hosts 插件 |
-| <code>agents host remove</code> | <code>&lt;id&gt;</code> | Remove an unbound cloud host | Cloud Hosts 插件 |
-| <code>agents host check</code> | <code>&lt;id&gt;</code> | Check SSH connectivity without requiring a Team working directory | Cloud Hosts 插件与 Team 连接灯 |
-| <code>agents host directories</code> | <code>&lt;id&gt; [--path PATH]</code> | Browse existing directories on a registered cloud host | Cloud Hosts 插件 |
-| <code>agents host credentials</code> | <code>&lt;id&gt;</code> | Explicitly reveal the saved host password | Cloud Hosts 插件 |
-| <code>agents engine remote-check</code> | <code>--team NAME --engine codex&#124;claude [--directory PATH]</code> | Check a Cloud Team native CLI, protocol, authentication and workspace before hiring | Cloud Native Worker 创建前检查 |
-| <code>agents engine remote-sessions</code> | <code>--team NAME --engine codex&#124;claude</code> | List native sessions on the selected Cloud Team host | 绑定已有云端会话 |
-| <code>agents card native-bind</code> | <code>&lt;employee-id&gt; &lt;native-session-id&gt;</code> | Bind an existing remote native session without taking deletion ownership | 绑定远端原生会话 |
-| <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
-| <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
-| <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |
-| <code>agents session close</code> | <code>&lt;id&gt;</code> | Close a live session | Leaving the session view |
-| <code>agents session info</code> | <code>&lt;id&gt;</code> | Show a live session’s engines, models, commands | The toolbar dropdowns |
-| <code>agents session activity</code> | <code>&lt;id&gt;</code> | Current speech, published thinking or tool preview; null when idle | 员工活动气泡 |
-| <code>agents session snapshot</code> | <code>&lt;id&gt;</code> | Full frontend state | The conversation and toolbar |
-| <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search |
-| <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests |
-| <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline |
-| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 |
-| <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown |
-| <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 |
-| <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown |
-| <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle |
-| <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown |
-| <code>agents config plan</code> | <code>&lt;id&gt; on&#124;off</code> | Switch the official planning mode | 计划模式 |
-| <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 |
-| <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 |
-| <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 |
-| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 |
-| <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 |
-| <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 |
-| <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review |
-| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Queue a message after the active turn | 排队发送 |
-| <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 |
-| <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 |
-| <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 |
-| <code>agents view tools</code> | <code>&lt;skills&#124;mcp&#124;account&#124;usage&#124;config&#124;export&#124;off&gt;</code> | Open or close the engine tools panel | 引擎工具面板 |
-| <code>agents config fast</code> | <code>&lt;id&gt; on&#124;off</code> | Set the official Fast service tier | Fast 速度开关 |
-| <code>agents commands run</code> | <code>&lt;id&gt; /command [args]</code> | Execute a discovered slash command through shared Core | 斜杠命令 |
-| <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu |
-| <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu |
-| <code>agents group list</code> | <code>—</code> | List departments | Department headings |
-| <code>agents team-view list</code> | <code>—</code> | List All Team and saved Team views with the active selection | 顶部视图标签 |
-| <code>agents team-view create</code> | <code>--name NAME [--teams @teams.json]</code> | Create and select a named view of existing Teams | ＋ 添加视图 |
-| <code>agents team-view update</code> | <code>ID --patch @patch.json</code> | Rename a view or change its Team membership | 编辑视图 |
-| <code>agents team-view remove</code> | <code>ID</code> | Delete a custom view without deleting Teams | 删除视图 |
-| <code>agents team-view select</code> | <code>all&#124;ID</code> | Select a saved Team view and its canvas viewport | 切换视图 |
-| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” |
-| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Bind a Team to a plugin or registered cloud host and directory | Team 工作方式与连接 |
-| <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department |
-| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign |
-| <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card |
-| <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card |
-| <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 |
-| <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 |
-| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;cloud-native-worker] [--engine E] [--avatar cat]</code> | Hire a Local or Cloud Native Worker | 添加员工 |
-| <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 |
-| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 |
-| <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 |
-| <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 |
-| <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 |
-| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team |
-| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 |
-| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 |
-| <code>agents canvas view</code> | <code>—</code> | Read viewport position and zoom | 画布视野 |
-| <code>agents canvas set</code> | <code>--x N --y N --zoom N</code> | Pan and zoom the canvas | 平移、缩放画布 |
-| <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 |
-| <code>agents plugin describe</code> | <code>&lt;id&gt;</code> | Read a plugin manifest, API schema and Markdown guide | 插件信息 |
-| <code>agents plugin install</code> | <code>&lt;directory&gt;</code> | Install a compatible local plugin package | CLI 安装插件 |
-| <code>agents plugin call</code> | <code>&lt;id&gt; &lt;method&gt; --team NAME [--params JSON]</code> | Invoke a plugin API inside a Team workspace | 插件中的操作 |
-| <code>agents plugin open</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open or focus an independent plugin window | 独立插件窗口 |
-| <code>agents plugin windows</code> | <code>—</code> | List plugin window state, also in headless mode | 独立插件窗口 |
-| <code>agents plugin place</code> | <code>&lt;windowId&gt; --x N --y N --width N --height N</code> | Move and resize a plugin window | 独立插件窗口 |
-| <code>agents plugin mode</code> | <code>&lt;windowId&gt; normal&#124;minimized&#124;maximized&#124;fullscreen</code> | Change native plugin window state | 插件窗口最小化、还原与全屏 |
-| <code>agents plugin dismiss</code> | <code>&lt;windowId&gt;</code> | Save and close an independent plugin window | 独立插件窗口 |
-| <code>agents plugin view</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open a plugin view in its managed root or selected scope | Team 工作空间 |
-| <code>agents plugin close</code> | <code>&lt;viewId&gt;</code> | Close an embedded plugin view | 关闭工作空间 |
-| <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 |
-| <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 |
-| <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 |
-| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH and the target working directory; return remote OS details | 云端工作目录诊断 |
-| <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 |
-| <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 |
-| <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 |
-| <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 |
-| <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 |
-| <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 |
-| <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 |
-| <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 |
-| <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 |
-| <code>agents workspace write</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID] --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 |
-| <code>agents workspace mkdir</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Create a folder | 新建文件夹 |
-| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH [--shared&#124;--team NAME&#124;--employee ID]</code> | Rename or move a file | 重命名文件 |
-| <code>agents workspace trash</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Move a file to recoverable workspace trash | 移到回收站 |
-| <code>agents workspace restore</code> | <code>--id ID [--shared&#124;--team NAME&#124;--employee ID]</code> | Restore a trashed file | 撤销删除 |
-| <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself |
-| <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself |
-| <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself |
-| <code>agents ui click</code> | <code>&lt;selector&gt;</code> | Click an element in the interface | That click |
-| <code>agents ui type</code> | <code>&lt;selector&gt; &lt;text&gt;</code> | Type into an input | That typing |
-| <code>agents ui wait</code> | <code>&lt;selector&gt; [--timeout ms]</code> | Wait for an element to appear | Waiting for the UI to catch up |
-| <code>agents ui style</code> | <code>&lt;selector&gt;</code> | Computed styles of an element | How it actually looks |
-| <code>agents ui screenshot</code> | <code>&lt;path&gt;</code> | Save a screenshot | Rendered interface |
-| <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 |
-| <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 |
+| 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
+| --- | --- | --- | --- | --- |
+| <code>agents auth whoami</code> | <code>—</code> | Read authenticated caller and management role | 管理与协同 | identity |
+| <code>agents auth agent-token</code> | <code>ID</code> | Issue or read an employee API credential (user only) | 管理与协同 | operator |
+| <code>agents auth revoke</code> | <code>ID</code> | Revoke employee API credentials (user only) | 管理与协同 | operator |
+| <code>agents api list</code> | <code>—</code> | List caller-authorized APIs | 管理与协同 | identity |
+| <code>agents api describe</code> | <code>COMMAND</code> | Describe an authorized API and its scope | 管理与协同 | identity |
+| <code>agents api docs</code> | <code>—</code> | Read the caller role API handbook | 管理与协同 | identity |
+| <code>agents management topology</code> | <code>[--team NAME]</code> | Read employee nodes, active relations and pending requests | 管理与协同 | topology |
+| <code>agents management request</code> | <code>--employee ID [--manager ID]</code> | Request a same-Team management relation | 管理与协同 | relation |
+| <code>agents management decide</code> | <code>ID approve&#124;deny</code> | Approve or deny a pending management relation | 管理与协同 | operator |
+| <code>agents management unbind</code> | <code>ID</code> | Revoke a management relation and its delegations | 管理与协同 | relation |
+| <code>agents management global</code> | <code>ID on&#124;off</code> | Grant or revoke global management (user only) | 管理与协同 | operator |
+| <code>agents card management-role</code> | <code>ID employee&#124;manager</code> | Assign a Team management role | 管理与协同 | operator |
+| <code>agents card access-mode</code> | <code>ID trusted&#124;isolated</code> | Set trusted or isolated engine execution | 管理与协同 | operator |
+| <code>agents session status</code> | <code>[--employee ID]</code> | Read lightweight employee activity without full transcripts | 管理与协同 | employee.read |
+| <code>agents shared info</code> | <code>—</code> | Locate the checkout Shared directory | 共享中转站物理目录 | operator |
+| <code>agents view shared</code> | <code>on&#124;off</code> | Show or hide the shared transfer drawer without closing the conversation | 共享中转站侧栏 | operator |
+| <code>agents transfer start</code> | <code>--from JSON&#124;@file --to JSON&#124;@file</code> | Copy a file or directory between local, shared and Team/employee workspaces | 跨工作区拖放复制 | operator |
+| <code>agents transfer list</code> | <code>—</code> | List transfer progress and results for this service run | 传输列表 | operator |
+| <code>agents transfer get</code> | <code>ID</code> | Read a transfer result and byte progress | 传输进度 | operator |
+| <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 | operator |
+| <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID --prompt TEXT --at ISO</code> | Create an employee task schedule | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule update</code> | <code>ID --patch @file.json</code> | Update a schedule while idle | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule preview</code> | <code>[ID &#124; --spec @file.json] [--after ISO --count N]</code> | Preview future occurrences without executing | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 | schedule |
+| <code>agents settings get</code> | <code>—</code> | Read theme and pointer sensitivity | 应用设置 | operator |
+| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off]</code> | Persist appearance and canvas controls | 背景和灵敏度 | operator |
+| <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
+| <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 | operator |
+| <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
+| <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 | operator |
+| <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open | operator |
+| <code>agents session list</code> | <code>[--live] [--summary]</code> | List stored cards (or live sessions with --live) | The company floor | employee.read |
+| <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” | operator |
+| <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 | operator |
+| <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card | employee.message |
+| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT</code> | Send a message to a Worker session | 对话输入框 | employee.message |
+| <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 | operator |
+| <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 | operator |
+| <code>agents host exec</code> | <code>&lt;id&gt; --command COMMAND&#124;--command-file FILE [--directory PATH --timeout SECONDS]</code> | Execute a management command exclusively on the registered remote host | 远端管理命令 | operator |
+| <code>agents host list</code> | <code>—</code> | List registered cloud hosts without passwords | Cloud Hosts 插件 | operator |
+| <code>agents host get</code> | <code>&lt;id&gt;</code> | Read a cloud host record without its password | Cloud Hosts 插件 | operator |
+| <code>agents host create</code> | <code>--data @host.json</code> | Create a cloud host in the shared registry | Cloud Hosts 插件 | operator |
+| <code>agents host update</code> | <code>&lt;id&gt; --data @patch.json</code> | Edit host connection and credentials | Cloud Hosts 插件 | operator |
+| <code>agents host remove</code> | <code>&lt;id&gt;</code> | Remove an unbound cloud host | Cloud Hosts 插件 | operator |
+| <code>agents host check</code> | <code>&lt;id&gt;</code> | Check SSH connectivity without requiring a Team working directory | Cloud Hosts 插件与 Team 连接灯 | operator |
+| <code>agents host directories</code> | <code>&lt;id&gt; [--path PATH]</code> | Browse existing directories on a registered cloud host | Cloud Hosts 插件 | operator |
+| <code>agents host credentials</code> | <code>&lt;id&gt;</code> | Explicitly reveal the saved host password | Cloud Hosts 插件 | operator |
+| <code>agents engine remote-check</code> | <code>--team NAME --engine codex&#124;claude [--directory PATH]</code> | Check a Cloud Team native CLI, protocol, authentication and workspace before hiring | Cloud Native Worker 创建前检查 | operator |
+| <code>agents engine remote-sessions</code> | <code>--team NAME --engine codex&#124;claude</code> | List native sessions on the selected Cloud Team host | 绑定已有云端会话 | operator |
+| <code>agents card native-bind</code> | <code>&lt;employee-id&gt; &lt;native-session-id&gt;</code> | Bind an existing remote native session without taking deletion ownership | 绑定远端原生会话 | operator |
+| <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript | employee.read |
+| <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane | employee.read |
+| <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button | employee.message |
+| <code>agents session close</code> | <code>&lt;id&gt;</code> | Close a live session | Leaving the session view | operator |
+| <code>agents session info</code> | <code>&lt;id&gt;</code> | Show a live session’s engines, models, commands | The toolbar dropdowns | employee.read |
+| <code>agents session activity</code> | <code>&lt;id&gt;</code> | Current speech, published thinking or tool preview; null when idle | 员工活动气泡 | employee.read |
+| <code>agents session snapshot</code> | <code>&lt;id&gt;</code> | Full frontend state | The conversation and toolbar | employee.read |
+| <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search | operator |
+| <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests | operator |
+| <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline | operator |
+| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 | operator |
+| <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown | employee.configure |
+| <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 | operator |
+| <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown | operator |
+| <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle | employee.configure |
+| <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown | employee.configure |
+| <code>agents config plan</code> | <code>&lt;id&gt; on&#124;off</code> | Switch the official planning mode | 计划模式 | employee.configure |
+| <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 | operator |
+| <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 | operator |
+| <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 | operator |
+| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 | operator |
+| <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 | operator |
+| <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 | operator |
+| <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review | operator |
+| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Queue a message after the active turn | 排队发送 | employee.message |
+| <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 | employee.read |
+| <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 | employee.message |
+| <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 | operator |
+| <code>agents view tools</code> | <code>&lt;skills&#124;mcp&#124;account&#124;usage&#124;config&#124;export&#124;off&gt;</code> | Open or close the engine tools panel | 引擎工具面板 | operator |
+| <code>agents config fast</code> | <code>&lt;id&gt; on&#124;off</code> | Set the official Fast service tier | Fast 速度开关 | employee.configure |
+| <code>agents commands run</code> | <code>&lt;id&gt; /command [args]</code> | Execute a discovered slash command through shared Core | 斜杠命令 | operator |
+| <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu | operator |
+| <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu | operator |
+| <code>agents group list</code> | <code>—</code> | List departments | Department headings | operator |
+| <code>agents team-view list</code> | <code>—</code> | List All Team and saved Team views with the active selection | 顶部视图标签 | operator |
+| <code>agents team-view create</code> | <code>--name NAME [--teams @teams.json]</code> | Create and select a named view of existing Teams | ＋ 添加视图 | operator |
+| <code>agents team-view update</code> | <code>ID --patch @patch.json</code> | Rename a view or change its Team membership | 编辑视图 | operator |
+| <code>agents team-view remove</code> | <code>ID</code> | Delete a custom view without deleting Teams | 删除视图 | operator |
+| <code>agents team-view select</code> | <code>all&#124;ID</code> | Select a saved Team view and its canvas viewport | 切换视图 | operator |
+| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” | operator |
+| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Bind a Team to a plugin or registered cloud host and directory | Team 工作方式与连接 | operator |
+| <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department | operator |
+| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign | operator |
+| <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card | operator |
+| <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card | operator |
+| <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 | employee.delete |
+| <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 | operator |
+| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;cloud-native-worker] [--engine E] [--avatar cat]</code> | Hire a Local or Cloud Native Worker | 添加员工 | employee.create |
+| <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 | operator |
+| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 | operator |
+| <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 | operator |
+| <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 | operator |
+| <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 | operator |
+| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team | operator |
+| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 | operator |
+| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 | operator |
+| <code>agents canvas view</code> | <code>—</code> | Read viewport position and zoom | 画布视野 | operator |
+| <code>agents canvas set</code> | <code>--x N --y N --zoom N</code> | Pan and zoom the canvas | 平移、缩放画布 | operator |
+| <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 | plugin |
+| <code>agents plugin describe</code> | <code>&lt;id&gt;</code> | Read a plugin manifest, API schema and Markdown guide | 插件信息 | plugin |
+| <code>agents plugin install</code> | <code>&lt;directory&gt;</code> | Install a compatible local plugin package | CLI 安装插件 | operator |
+| <code>agents plugin call</code> | <code>&lt;id&gt; &lt;method&gt; --team NAME [--params JSON]</code> | Invoke a plugin API inside a Team workspace | 插件中的操作 | plugin |
+| <code>agents plugin open</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open or focus an independent plugin window | 独立插件窗口 | operator |
+| <code>agents plugin windows</code> | <code>—</code> | List plugin window state, also in headless mode | 独立插件窗口 | operator |
+| <code>agents plugin place</code> | <code>&lt;windowId&gt; --x N --y N --width N --height N</code> | Move and resize a plugin window | 独立插件窗口 | operator |
+| <code>agents plugin mode</code> | <code>&lt;windowId&gt; normal&#124;minimized&#124;maximized&#124;fullscreen</code> | Change native plugin window state | 插件窗口最小化、还原与全屏 | operator |
+| <code>agents plugin dismiss</code> | <code>&lt;windowId&gt;</code> | Save and close an independent plugin window | 独立插件窗口 | operator |
+| <code>agents plugin view</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open a plugin view in its managed root or selected scope | Team 工作空间 | operator |
+| <code>agents plugin close</code> | <code>&lt;viewId&gt;</code> | Close an embedded plugin view | 关闭工作空间 | operator |
+| <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 | workspace |
+| <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 | operator |
+| <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 | operator |
+| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH and the target working directory; return remote OS details | 云端工作目录诊断 | operator |
+| <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 | operator |
+| <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 | operator |
+| <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 | operator |
+| <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 | operator |
+| <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 | operator |
+| <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 | operator |
+| <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 | workspace |
+| <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 | workspace |
+| <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 | workspace |
+| <code>agents workspace write</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID] --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 | workspace |
+| <code>agents workspace mkdir</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Create a folder | 新建文件夹 | workspace |
+| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH [--shared&#124;--team NAME&#124;--employee ID]</code> | Rename or move a file | 重命名文件 | workspace |
+| <code>agents workspace trash</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Move a file to recoverable workspace trash | 移到回收站 | workspace |
+| <code>agents workspace restore</code> | <code>--id ID [--shared&#124;--team NAME&#124;--employee ID]</code> | Restore a trashed file | 撤销删除 | workspace |
+| <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself | operator |
+| <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself | operator |
+| <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself | operator |
+| <code>agents ui click</code> | <code>&lt;selector&gt;</code> | Click an element in the interface | That click | operator |
+| <code>agents ui type</code> | <code>&lt;selector&gt; &lt;text&gt;</code> | Type into an input | That typing | operator |
+| <code>agents ui wait</code> | <code>&lt;selector&gt; [--timeout ms]</code> | Wait for an element to appear | Waiting for the UI to catch up | operator |
+| <code>agents ui style</code> | <code>&lt;selector&gt;</code> | Computed styles of an element | How it actually looks | operator |
+| <code>agents ui screenshot</code> | <code>&lt;path&gt;</code> | Save a screenshot | Rendered interface | operator |
+| <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 | operator |
+| <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 | operator |
 
 另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。

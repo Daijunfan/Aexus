@@ -1,3 +1,4 @@
+import {emptyAccess} from '../shared/management'
 import {cloudHostTarget,importCloudHost} from './cloud-hosts'
 import {remoteTarget} from '../shared/remote'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, symlinkSync } from 'node:fs'
@@ -28,14 +29,15 @@ export function readStore(): Store {
     if (!existsSync(FILE)) return { ...EMPTY }
     const raw = JSON.parse(readFileSync(FILE, 'utf8'))
     return {
+      revision:raw.revision??0,access:raw.access,
       sessions: Array.isArray(raw.sessions) ? raw.sessions : [],
       groups: Array.isArray(raw.groups) ? raw.groups : [],
       teamViews:Array.isArray(raw.teamViews)?raw.teamViews:[],activeTeamViewId:raw.activeTeamViewId??ALL_TEAM_VIEW,
       rooms: raw.rooms && typeof raw.rooms === 'object' ? raw.rooms : {},
       teamRoots: raw.teamRoots ?? {}, teamSettings:Object.fromEntries(Object.entries(raw.teamSettings??{}).map(([name,value])=>{const config=value as TeamSettings;if(config.mode==='cloud'&&config.hostId){try{return [name,{...config,remote:cloudHostTarget(config.hostId,config.directory)}]}catch{return [name,{...config,remote:undefined}]}}return [name,config]})), viewport: raw.viewport, preferences:{...DEFAULT_PREFERENCES,...raw.preferences,sidebarWidth:normalizedSidebarWidth(raw.preferences?.sidebarWidth)}
     }
-  } catch {
-    return { ...EMPTY }
+  } catch (error) {
+    throw new Error('Store is unreadable; operations stopped: '+(error as Error).message)
   }
 }
 
@@ -53,16 +55,24 @@ export function onStoreChange(fn: StoreListener): () => void {
 
 export function writeStore(store: Store): void {
   mkdirSync(ROOT, { recursive: true })
-  const saved={...store,teamSettings:Object.fromEntries(Object.entries(store.teamSettings??{}).map(([name,config])=>[name,config.mode==='cloud'&&config.hostId?{mode:'cloud',hostId:config.hostId,directory:config.remote?.directory??config.directory}:config]))}
-  writeFileSync(FILE, JSON.stringify(saved, null, 2), 'utf8')
-  for (const fn of listeners) {
-    try {
-      fn(store)
-    } catch {
-      // a broken observer must not block the write
-    }
+  const current=existsSync(FILE)?JSON.parse(readFileSync(FILE,'utf8')):undefined
+  if((current?.revision??0)!==(store.revision??0))throw new Error('State changed during operation; retry against the current state')
+  if(store.access){
+    const cards=new Map(store.sessions.map(card=>[card.id,card]))
+    store.access.relations=store.access.relations.filter(relation=>{const manager=cards.get(relation.managerId),employee=cards.get(relation.employeeId);return manager&&!manager.deleting&&employee&&!employee.deleting&&manager.managementRole==='manager'&&(employee.managementRole??'employee')==='employee'&&manager.group===employee.group&&!store.access!.globalManagerIds.includes(employee.id)})
+    store.access.globalManagerIds=store.access.globalManagerIds.filter(id=>cards.has(id)&&!cards.get(id)!.deleting)
+    const principals=(cards:StoredSession[])=>cards.map(card=>({id:card.id,role:card.managementRole??'employee',group:card.group,deleting:card.deleting??false}))
+    if(store.access.globalGrants)store.access.globalGrants=Object.fromEntries(Object.entries(store.access.globalGrants).filter(([id])=>store.access!.globalManagerIds.includes(id)))
+    const before={...current?.access,revision:0,principals:principals(current?.sessions??[])},after={...store.access,revision:0,principals:principals(store.sessions)}
+    store.access.revision=(current?.access?.revision??0)+(JSON.stringify(before)!==JSON.stringify(after)?1:0)
   }
+  store.revision=(current?.revision??0)+1
+  const saved={...store,teamSettings:Object.fromEntries(Object.entries(store.teamSettings??{}).map(([name,config])=>[name,config.mode==='cloud'&&config.hostId?{mode:'cloud',hostId:config.hostId,directory:config.remote?.directory??config.directory}:config]))}
+  const temporary=FILE+'.'+randomUUID()+'.tmp'
+  writeFileSync(temporary, JSON.stringify(saved,null,2),{encoding:'utf8',mode:0o600});renameSync(temporary,FILE)
+  for(const listener of listeners)try{listener(store)}catch(error){console.error('Store listener:',error)}
 }
+export function updateStore(change:(store:Store)=>void):Store {const store=readStore();change(store);writeStore(store);return store}
 
 export function storePath(): string {
   return FILE
@@ -109,10 +119,16 @@ export function patchSession(id: string, patch: Partial<StoredSession>): Store {
   const at = store.sessions.findIndex((s) => s.id === id)
   if (at < 0) {
     store.sessions.push({ ...(patch as StoredSession), id })
+    if(patch.createdBy?.kind==='agent'){
+      const manager=store.sessions.find(c=>c.id===(patch.createdBy as {employeeId:string}).employeeId)
+      if(manager?.managementRole==='manager'&&manager.group===patch.group&&(patch.managementRole??'employee')==='employee'){
+        const access=store.access??=emptyAccess(),now=Date.now();access.relations.push({id:randomUUID(),managerId:manager.id,employeeId:id,state:'active',requestedBy:patch.createdBy,approvedBy:patch.createdBy,createdAt:now,updatedAt:now})
+      }
+    }
   } else {
     const previous=store.sessions[at]
     employeeFields(patch,previous)
-    const next={...previous,...patch}
+    const next={...previous,...patch,managementRole:previous.managementRole,createdBy:previous.createdBy,accessMode:previous.accessMode,deleting:previous.deleting}
     next.nativeSessions=nativeSessionRefs({...next,nativeSessions:[...nativeSessionRefs(previous),...(patch.nativeSessions??[])]})
     store.sessions[at] = next
   }
@@ -257,6 +273,7 @@ export function moveSession(id: string, group: string, beforeId?: string, target
   if(card.kind==='cloud-native-worker'&&group!==card.group)throw new Error('Cloud Native Worker 不能移动到另一 Team')
   if(!store.groups.includes(group))throw new Error('Unknown Team')
   const cwd=employeeWorkspace(store,group,targetCwd ?? (group===card.group?card.cwd:card.cwd.split('/').at(-1)!),id,true,directoryMode)
+  if(card.group!==group&&store.access)store.access.relations=store.access.relations.filter(r=>r.managerId!==id&&r.employeeId!==id)
   const moving = { ...card, remote:undefined, group, cwd, ...(cwd!==card.cwd||group!==card.group?{nativeSessions:nativeSessionRefs(card),threadId:undefined,claudeSessionId:undefined}:{}), ...(group!==card.group?{position:undefined,remoteAdmin:false,permissionMode:teamSettings(store,group).mode!=='build'?'acceptEdits' as const:card.permissionMode}:{}) }
   const rest = store.sessions.filter((s) => s.id !== id)
   const at = beforeId ? rest.findIndex((s) => s.id === beforeId) : -1

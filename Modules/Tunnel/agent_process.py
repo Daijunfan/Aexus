@@ -5,6 +5,8 @@ import os
 import re
 import shlex
 import sys
+import subprocess
+import zlib
 
 import transport
 
@@ -15,9 +17,10 @@ def command(config, engine, args):
     if not isinstance(args, list) or any(not isinstance(arg, str) or "\0" in arg for arg in args):
         raise ValueError("Invalid remote CLI arguments")
     directory = config["directory"]
+    cli_bin=config.get("cli_bin")
     if config["os"] == "windows":
         quote = lambda value: "'" + value.replace("'", "''") + "'"
-        script = (
+        script = (("$env:PATH="+quote(cli_bin)+"+';'+$env:PATH;" if cli_bin else "") +
             "$ErrorActionPreference='Stop';"
             "[Console]::OutputEncoding=[Text.UTF8Encoding]::new();"
             "$OutputEncoding=[Console]::OutputEncoding;"
@@ -33,6 +36,7 @@ def command(config, engine, args):
         'if [ -f "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh" >/dev/null 1>&2;'
         ' nvm use --silent default >/dev/null 1>&2 || true; fi;'
     )
+    if cli_bin: setup += "export PATH="+shlex.quote(cli_bin)+':"$PATH";'
     script = setup + f"cd {shlex.quote(directory)} || exit 98; exec {shlex.join([engine, *args])}"
     return shlex.join(["bash", "-c", script])
 
@@ -131,7 +135,36 @@ def session_command(config, session, operation):
     return shlex.join(["python3", "-c", *args])
 
 
+ACCESS_BOOTSTRAP = r"""
+import json,pathlib,os
+request=json.load(sys.stdin)
+root=pathlib.Path(request['target']['directory']).resolve()
+for item in request['files']:
+ file=pathlib.Path(item['path']); file.resolve().relative_to(root)
+ file.parent.mkdir(parents=True,exist_ok=True)
+ file.write_text(item['content'],encoding='utf-8');file.chmod(item['mode'])
+for name in ('AGENTS.md','CLAUDE.md'):
+ file=root/name;file.resolve().relative_to(root)
+ content=file.read_text(encoding='utf-8') if file.exists() else ''
+ begin='<!-- agents-control:'+request['employeeId']+' -->';end='<!-- /agents-control:'+request['employeeId']+' -->'
+ block=begin+'\n'+request['guide']+'\n'+end
+ a,b=content.find(begin),content.find(end)
+ content=content[:a]+block+content[b+len(end):] if a>=0 and b>=a else content+'\n\n'+block+'\n'
+ file.write_text(content,encoding='utf-8')
+print(json.dumps({'ready':True}))
+"""
+
 def main():
+    if sys.argv[1] == 'access-bootstrap':
+        payload=json.load(sys.stdin); config=payload['target']
+        source=base64.b64encode(zlib.compress(ACCESS_BOOTSTRAP.encode())).decode()+'\n'+json.dumps(payload)
+        result=subprocess.run(transport.server_command(config),input=source,text=True,capture_output=True,timeout=18,env=transport.ssh_env(config))
+        if result.returncode:sys.stderr.write(result.stderr)
+        sys.exit(result.returncode)
+    if sys.argv[1] == 'gateway':
+        payload=json.loads(base64.urlsafe_b64decode(sys.argv[2]+'=='));config=payload['target'];args=transport.ssh_args(config)
+        argv=args[:-1]+['-N','-o','ExitOnForwardFailure=yes','-R','0:127.0.0.1:'+str(payload['port']),args[-1]]
+        os.execvpe('ssh',argv,transport.ssh_env(config))
     operation = sys.argv[1] if sys.argv[1] in ("delete", "read", "list") else "run"
     payload = json.loads(base64.urlsafe_b64decode(sys.argv[2 if operation != "run" else 1] + "=="))
     config = payload["target"]

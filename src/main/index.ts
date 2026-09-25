@@ -1,3 +1,4 @@
+import {operatorContext} from './authorization'
 import {openExternalUrl,setExternalOpener} from './external'
 import {attachPluginDesktop} from './plugins/desktop'
 import { app, BrowserWindow, ipcMain, shell,dialog } from 'electron'
@@ -24,7 +25,7 @@ const trusted=(event:Electron.IpcMainEvent|Electron.IpcMainInvokeEvent)=>{
   const expected=process.env.ELECTRON_RENDERER_URL||new URL(`file://${join(__dirname,'../renderer/index.html')}`).href
   return new URL(frame.url).origin===new URL(expected).origin&&new URL(frame.url).pathname===new URL(expected).pathname
 }
-ipcMain.handle('api:request', (event, request: Request) => {if(!trusted(event))throw new Error('Untrusted IPC sender');return handleRequest(request)})
+ipcMain.handle('api:request', (event, request: Request) => {if(!trusted(event))throw new Error('Untrusted IPC sender');return handleRequest(request,operatorContext())})
 ipcMain.on('renderer:ready', event => { if(trusted(event))setRendererReady(event.sender,true) })
 ipcMain.on('ui:response', (event, a) => {if(trusted(event))resolveUiRequest(a.id, a.data, a.error)})
 ipcMain.handle('shell:openExternal', async (event, url: string) => {

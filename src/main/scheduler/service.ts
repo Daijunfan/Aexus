@@ -1,3 +1,4 @@
+import {authorize,requestContext,isGlobal,delegationFor,validateDelegation} from '../authorization'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -73,16 +74,18 @@ export function startScheduler(broadcast: typeof emit) {
 }
 export function reconcileSchedules() {
   if (!ready || loadError) return
-  const employees = new Set(readStore().sessions.map(card => card.id))
+  const employees = new Set(readStore().sessions.filter(card=>!card.deleting).map(card => card.id))
   let changed = false
   for (const item of state.jobs) if (!employees.has(item.action.employeeId) && item.disabledReason !== 'employee_removed') {
     Object.assign(item, { enabled: false, nextAt: null, disabledReason: 'employee_removed', updatedAt: stamp() }); changed = true
   }
   for (const run of state.runs) if (run.status === 'running' && !employees.has(run.action.employeeId)) active.get(run.id)?.controller.abort(new Error('Employee removed'))
+  for(const item of state.jobs)try{validateDelegation(item.delegation,item.action.employeeId)}catch{if(item.enabled||item.disabledReason!=='authorization_revoked'){Object.assign(item,{enabled:false,nextAt:null,disabledReason:'authorization_revoked',updatedAt:stamp()});changed=true}}
+  for(const run of state.runs)if(run.status==='running')try{validateDelegation(run.delegation,run.action.employeeId)}catch{active.get(run.id)?.controller.abort(new Error('Delegation revoked'))}
   if (changed) save()
 }
 function record(item: ScheduledJob, trigger: ScheduleRun['trigger'], scheduledAt: string): ScheduleRun {
-  const run: ScheduleRun = { id: `run_${randomUUID()}`, jobId: item.id, jobName: item.name, action: { ...item.action }, trigger, scheduledAt, startedAt: stamp(), status: 'running' }
+  const run: ScheduleRun = { id: `run_${randomUUID()}`, jobId: item.id, jobName: item.name, delegation:item.delegation, action: { ...item.action }, trigger, scheduledAt, startedAt: stamp(), status: 'running' }
   state.runs.push(run)
   return run
 }
@@ -100,7 +103,8 @@ function launch(item: ScheduledJob, run: ScheduleRun) {
   const timeout = setTimeout(() => { timedOut = true; controller.abort(new Error('Task reached its timeout or permitted time window ended')) }, Math.max(1, deadline - now))
   const done = Promise.resolve().then(async () => {
     try {
-      await executeTask(run.action, run.id, controller.signal, id => { run.sessionId = id; save() })
+      validateDelegation(run.delegation,run.action.employeeId)
+      await executeTask(run.action, run.id, controller.signal, id => { run.sessionId = id; save() },run.delegation)
       finish(run, controller.signal.aborted ? timedOut ? 'timed_out' : 'cancelled' : 'succeeded', controller.signal.aborted ? errorText(controller.signal.reason) : undefined)
     } catch (error) {
       finish(run, controller.signal.aborted ? timedOut ? 'timed_out' : 'cancelled' : /Employee is (busy|reserved)/.test(errorText(error)) ? 'skipped' : 'failed', errorText(controller.signal.aborted ? controller.signal.reason : error))
@@ -143,24 +147,31 @@ export async function scheduleRequest(method: string, args: Record<string, any>)
     policies:{busy:'skip, never interrupt manual work',late:'skip outside grace; never replay a backlog',restart:'interrupted runs are not replayed',manual:'run ignores calendar/window, keeps timeout',window:'scheduled turns stop when their window or until ends',permission:'inherits employee and Team; never escalated',overrides:'temporary model/effort/thinking, original preferences restored'},
     commands:['status','list','get','create','update','pause','resume','delete','preview','run','history','cancel'], documentation:'SCHEDULER.md'
   }
+  const context=requestContext(),global=isGlobal(context.principal)
+  const visible=(item:ScheduledJob|ScheduleRun)=>global||item.delegation?.requestedBy.kind==='agent'&&context.principal.kind==='agent'&&item.delegation.requestedBy.employeeId===context.principal.employeeId
+  const target=args.id?(method==='cancel'?state.runs.find(run=>run.id===args.id):state.jobs.find(job=>job.id===args.id)):undefined
+  if(target){if(!visible(target))throw Error('Forbidden schedule');authorize('schedule.'+method,args,target.action.employeeId,context)}
+  if(args.spec?.action?.employeeId)authorize('schedule.'+method,args,args.spec.action.employeeId,context)
+  if(method==='status'&&!global)return {running:ready&&!loadError,jobs:state.jobs.filter(visible).length,active:state.runs.filter(run=>visible(run)&&run.status==='running').map(run=>run.id)}
   if (method === 'status') return { running: ready && !loadError, error: loadError, jobs: state.jobs.length, enabled: state.jobs.filter(j => j.enabled && j.nextAt).length, active: [...active.keys()], file }
   requireReady()
   switch (method) {
-    case 'list': return state.jobs.filter(j => (!args.employee || j.action.employeeId === args.employee) && (!args.source || j.source === args.source))
+    case 'list': return state.jobs.filter(visible).filter(j => (!args.employee || j.action.employeeId === args.employee) && (!args.source || j.source === args.source))
     case 'get': return job(args.id)
     case 'create': {
       const spec = validate(args.spec), nextAt = future(spec), now = stamp()
-      const item: ScheduledJob = { ...spec, id: `job_${randomUUID()}`, createdAt: now, updatedAt: now, nextAt }
+      const item: ScheduledJob = { ...spec, delegation:delegationFor(spec.action.employeeId), id: `job_${randomUUID()}`, createdAt: now, updatedAt: now, nextAt }
       state.jobs.push(item); save(); return item
     }
     case 'update': {
       const item = job(args.id)
       if (state.runs.some(r => r.jobId === item.id && r.status === 'running')) throw new Error('Cancel the active run before updating its schedule')
       const spec = validate({ ...item, ...args.patch }), nextAt = future(spec)
-      Object.assign(item, spec, { nextAt, updatedAt: stamp(), disabledReason: undefined }); save(); return item
+      Object.assign(item, spec, { delegation:delegationFor(spec.action.employeeId),nextAt, updatedAt: stamp(), disabledReason: undefined }); save(); return item
     }
     case 'pause': { const item = job(args.id); item.enabled = false; item.updatedAt = stamp(); save(); return item }
     case 'resume': {
+      validateDelegation(job(args.id).delegation,job(args.id).action.employeeId)
       const item = job(args.id), spec = validate({ ...item, enabled: true }), nextAt = future(spec)
       Object.assign(item, spec, { nextAt, updatedAt: stamp(), disabledReason: undefined }); save(); return item
     }
@@ -178,11 +189,11 @@ export async function scheduleRequest(method: string, args: Record<string, any>)
     }
     case 'run': {
       const item = job(args.id)
-      validate(item)
+      validate(item);validateDelegation(item.delegation,item.action.employeeId)
       if (state.runs.some(r => r.status === 'running' && r.action.employeeId === item.action.employeeId)) throw new Error('Employee already has a scheduled task')
       const run = record(item, 'manual', stamp()); save(); launch(item, run); return { ...run }
     }
-    case 'history': return state.runs.filter(r => (!args.id || r.jobId === args.id) && (!args.employee || r.action.employeeId === args.employee)).slice(-(Math.max(1, Math.min(1000, Number(args.limit) || 50)))).reverse()
+    case 'history': return state.runs.filter(visible).filter(r => (!args.id || r.jobId === args.id) && (!args.employee || r.action.employeeId === args.employee)).slice(-(Math.max(1, Math.min(1000, Number(args.limit) || 50)))).reverse()
     case 'cancel': return cancel(args.id)
     default: throw new Error('Unknown scheduler method')
   }

@@ -23,4 +23,4 @@ export type PluginRuntime = {
   readAsset?(path:string):Promise<{bytes:Uint8Array;mimeType:string}>;
   close?():void|Promise<void>;
 };
-export type PluginFactory = {createPlugin(context:{workspace:string;pluginRoot:string;executable:string}):PluginRuntime|Promise<PluginRuntime>};
+export type PluginFactory = {createPlugin(context:{workspace:string;pluginRoot:string;executable:string;requestHost?:(request:{cmd:string;args?:Record<string,unknown>})=>Promise<unknown>}):PluginRuntime|Promise<PluginRuntime>};

@@ -12,10 +12,12 @@ config = json.loads(sys.stdin.readline())
 if config['os'] == 'windows':
     quote = lambda value: "'" + value.replace("'", "''") + "'"
     script = "$ErrorActionPreference = 'Stop'; Set-Location -LiteralPath " + quote(config['directory']) + "; codex exec-server --listen stdio; exit $LASTEXITCODE"
+    if config.get('cli_bin'):script="$env:PATH="+quote(config['cli_bin'])+"+';'+$env:PATH;"+script
     import base64
     command = 'powershell.exe -NoLogo -NoProfile -NonInteractive -EncodedCommand ' + base64.b64encode(script.encode('utf-16le')).decode()
 else:
     command = 'cd ' + shlex.quote(config['directory']) + ' && exec codex exec-server --listen stdio'
+if config.get('cli_bin') and config['os']!='windows':command='export PATH='+shlex.quote(config['cli_bin'])+':"$PATH"; '+command
 process = subprocess.Popen(ssh_args(config) + [command], stdin=subprocess.PIPE, env=ssh_env(config))
 
 def stop(*_):

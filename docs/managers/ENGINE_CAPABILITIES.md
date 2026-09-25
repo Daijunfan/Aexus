@@ -88,3 +88,7 @@ Controller configuration paths stay local; selected execution-environment paths
 stay Windows-native. Native tools and their outputs are unchanged. Missing remote
 directories fail before model invocation. Windows cloud execution follows the SSH
 user's permissions; it does not inherit the Mac workspace-write path policy.
+
+## Company management and process isolation
+
+Management APIs use the shared transcript/session layer and do not enable native Codex or Claude subagents. Team Manager authority is separate from engine tool permissions. Local macOS Isolated mode uses an outer Seatbelt process profile and private native-engine state; Codex's nested sandbox is disabled because macOS rejects sandbox reapplication. The outer profile enforces host-state/credential isolation and workspace writes. Work folder read boundaries remain in the outer policy; Claude keeps its file-tool scope hooks. Isolated native-history cloning is explicitly unavailable. Remote Isolated startup is rejected until an independently isolated remote OS environment is supplied; remote Trusted Managers use employee-bound SSH return channels.

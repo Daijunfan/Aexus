@@ -1,17 +1,22 @@
+import {validateDelegation,withCaller,operatorContext} from '../authorization'
+import type {Delegation} from '../../shared/management'
 import type { ScheduledAction } from '../../shared/scheduler'
 import { readStore } from '../store'
 import { startSession, getLive, reserveEmployee, onSessionEvent, sendMessage, setPlanMode, setFastMode, setModel, setEffort, setThinking, closeSession } from '../sessions'
 
 /** A scheduled turn uses the employee's one conversation and inherited scope.
  * Overrides are live-only: persisted/manual model preferences survive crashes. */
-export async function executeTask(action: ScheduledAction, owner: string, signal: AbortSignal, opened: (id: string) => void) {
+export async function executeTask(action: ScheduledAction, owner: string, signal: AbortSignal, opened: (id: string) => void,delegation?:Delegation) {
+  delegation??={requestedBy:{kind:'operator'},requestId:owner}
+  validateDelegation(delegation,action.employeeId)
   const release = reserveEmployee(action.employeeId, owner)
   let id: string | undefined, unsubscribe = () => {}, restore: (() => Promise<void>) | undefined
   let abort = () => {}
   try {
     if (readStore().sessions.find(c => c.id === action.employeeId)?.engine !== action.engine) throw new Error('Employee engine changed; update this schedule before running it')
     signal.throwIfAborted()
-    id = (await startSession({ cardId: action.employeeId }, owner)).sessionId
+    id = (await startSession({ cardId: action.employeeId,delegation }, owner)).sessionId
+    validateDelegation(delegation,action.employeeId)
     opened(id)
     if (signal.aborted) { await closeSession(id); signal.throwIfAborted() }
     const state = getLive(id)!
@@ -40,7 +45,7 @@ export async function executeTask(action: ScheduledAction, owner: string, signal
       })
       abort = () => { void closeSession(id!).then(() => reject(signal.reason), reject) }
       signal.addEventListener('abort', abort, { once: true })
-      try { signal.throwIfAborted(); void sendMessage(id!, action.prompt, owner).catch(reject) } catch (error) { reject(error) }
+      try { signal.throwIfAborted(); void sendMessage(id!, action.prompt, owner,[],delegation).catch(reject) } catch (error) { reject(error) }
     })
   } catch (error) {
     if (id && getLive(id)?.running) await closeSession(id)

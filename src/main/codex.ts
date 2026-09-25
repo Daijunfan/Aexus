@@ -77,6 +77,7 @@ export async function allCodexModels(call:(method:string,params:Record<string,un
 }
 
 export async function runCodexTurn(args: {
+  employeeId?:string
   connectionId?:string
   prompt: string
   images?:ImageInput[]

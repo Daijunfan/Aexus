@@ -42,9 +42,10 @@ let q,approvalRequests=0
 try{
   for(let i=0;i<100;i++){try{if(JSON.parse((await run(process.execPath,[root+'/bin/agents','status','--json'],{env,timeout:2000})).stdout).ok)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
   await run(process.execPath,[root+'/bin/agents','group','add','Managers','--mode','build','--directory-mode','bind','--root',manager,'--json'],{env})
-  await run(process.execPath,[root+'/bin/agents','card','create','--title','Claude-Director','--group','Managers','--engine','claude','--json'],{env})
+  const employee=JSON.parse((await run(process.execPath,[root+'/bin/agents','card','create','--title','Claude-Director','--group','Managers','--engine','claude','--json'],{env})).stdout).data
+  await run(process.execPath,[root+'/bin/agents','management','global',employee.id,'on'],{env})
   assert.ok(fs.existsSync(path.join(staff,'.agents-company/manager/API.md')))
-  const options=buildOptions({cwd:staff,permissionMode:'acceptEdits',thinking:false,model:'claude-sonnet-4-6'})
+  const options=buildOptions({employeeId:employee.id,cwd:staff,permissionMode:'acceptEdits',thinking:false,model:'claude-sonnet-4-6'})
   assert.deepEqual(options.allowedTools,['Bash(agents *)'])
   const ordinary=buildOptions({cwd:temp,permissionMode:'acceptEdits',thinking:false})
   assert.equal(ordinary.allowedTools,undefined,'Normal Build Team must not inherit Manager CLI approval')

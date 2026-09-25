@@ -1,4 +1,5 @@
 export type RemoteTarget = {
+  cliBin?:string
   host:string; directory:string; os:'linux'|'macos'|'windows'; port?:number
   credentialId?:string
   distribution?:string

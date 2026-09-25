@@ -49,26 +49,30 @@ export default function App() {
   useDialogFocus('.conversation-dialog', !!active&&!view.pluginId)
   const busyIds = useMemo(() => new Set(sessions.filter((s) => s.busy).map((s) => s.cardId ?? s.id)), [sessions])
   const disconnectedIds = useMemo(() => new Set(sessions.filter(s=>s.error&&store.sessions.some(card=>card.id===(s.cardId??s.id)&&card.kind==='cloud-native-worker')).map(s=>s.cardId??s.id)),[sessions,store.sessions])
+  const viewedSession=useRef<string|null>(null)
   const refreshSequence=useRef(0)
   const refreshPending=useRef<Promise<void>|null>(null)
-  const refresh = useCallback(():Promise<void> => {
+  const refresh = useCallback((configuration=true):Promise<void> => {
     const sequence=++refreshSequence.current
-    const pending=Promise.all([api.call<Store>('session.list'), api.call<Session[]>('session.list', { live: true })]).then(async ([saved,live])=>{
+    const pending=Promise.all([configuration?api.call<Store>('session.list'):Promise.resolve(null), api.call<Session[]>('session.list', { live: true,summary:true })]).then(async ([saved,live])=>{
+      const id=viewedSession.current;if(id&&live.some(item=>item.id===id)){const snapshot=await api.call<Session>('session.snapshot',{id});live=live.map(item=>item.id===id?snapshot:item)}
       // A save must wait for the snapshot actually published to React. Otherwise
       // a competing event refresh clears the drag preview onto stale positions.
       if(sequence!==refreshSequence.current){await refreshPending.current;return}
-      setStore(saved);setSessions(live)
+      if(saved)setStore(saved);setSessions(live)
     })
     refreshPending.current=pending
     return pending
   }, [])
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
-    const schedule = () => {
+    let configuration=false
+    const schedule = (full=false) => {
+      configuration ||= full
       if (timer) return
-      timer = setTimeout(() => { timer = undefined; void refresh().catch((e) => setError(String(e))) }, 35)
+      timer = setTimeout(() => { timer = undefined; const full=configuration;configuration=false;void refresh(full).catch((e) => setError(String(e))) }, 35)
     }
-    const off = api.onEvent(event=>{if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&!['plugin:windows','host:health'].includes(event.channel))schedule()})
+    const off = api.onEvent(event=>{if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&!['plugin:windows','host:health'].includes(event.channel))schedule(event.channel==='store:changed'||event.channel==='hosts:changed')})
     void api.call<ViewState>('view.get').then(showView).catch(e=>setError(String(e)))
     void refresh().catch((e) => setError(String(e)))
     return () => { off(); clearTimeout(timer) }
@@ -89,17 +93,17 @@ export default function App() {
   },[store.preferences?.pageZoom,act])
   const openCard = async (card: StoredSession) => {
     const sequence=++openSequence.current
-    setSelectedCardId(card.id);setActiveId(null);setInput(drafts.current[card.id]??'');setImages(imageDrafts.current[card.id]??[]);setMenu(null);setSavedItems([]);setOpenError(card.workspaceError??'');setOpening(!card.workspaceError)
+    viewedSession.current=null;setSelectedCardId(card.id);setActiveId(null);setInput(drafts.current[card.id]??'');setImages(imageDrafts.current[card.id]??[]);setMenu(null);setSavedItems([]);setOpenError(card.workspaceError??'');setOpening(!card.workspaceError)
     void api.call<{items:Item[]}>('session.transcript',{id:card.id}).then(data=>{if(sequence===openSequence.current)setSavedItems(data.items)}).catch(()=>{})
     if(card.workspaceError)return
-    try{const opened=await api.call('session.open',{cardId:card.id});await refresh();if(sequence===openSequence.current)setActiveId(opened.sessionId)
+    try{const opened=await api.call('session.open',{cardId:card.id});if(sequence===openSequence.current)viewedSession.current=opened.sessionId;await refresh(false);if(sequence===openSequence.current)setActiveId(opened.sessionId)
     }
     catch(error){if(sequence===openSequence.current)setOpenError((error as Error).message)}
     finally{if(sequence===openSequence.current)setOpening(false)}
   }
   useEffect(()=>{
     if(view.kind==='conversation'&&view.employee){const card=store.sessions.find(c=>c.id===view.employee);if(card)void openCard(card)}
-    else {openSequence.current++;setActiveId(null);setSelectedCardId(null);setOpenError('');setOpening(false);setMenu(null)}
+    else {openSequence.current++;viewedSession.current=null;setActiveId(null);setSelectedCardId(null);setOpenError('');setOpening(false);setMenu(null)}
   },[view.kind,view.employee,store.sessions.some(c=>c.id===view.employee)])
   const attachImage=(path:string)=>{if(employee){const next=[...new Set([...images,path])];setImages(next);imageDrafts.current[employee.id]=next}}
   const send = async (value=input) => {
@@ -113,7 +117,7 @@ export default function App() {
     composer.current?.focus()
   }
 
-  const stop = () => active && act('session.interrupt', { id: active.id })
+  const stop = () => active && act('session.interrupt', { id: active.id,expectedMessageId:active.currentTask?.messageId })
   const configure = (cmd: string, args: Record<string, unknown>) => active && act(cmd, { id: active.id, ...args })
   useEffect(() => {
     const el = transcript.current
@@ -191,6 +195,7 @@ export default function App() {
           {(fastAvailable||active.fastMode)&&<button className={`toggle ${active.fastMode?'on':''}`} data-control="fast" aria-label="Fast 模式" aria-pressed={!!active.fastMode} disabled={active.busy} onClick={()=>void configure('config.fast',{enabled:!active.fastMode})} title={active.fastModeDisabledReason?`Fast 状态：${active.fastModeDisabledReason}`:fastTier(model)?.description??'官方 Fast 模式，开启后用量增加'}>⚡ {active.fastMode?'Fast'+(fastTier(model)?.description.match(/(\d+(?:\.\d+)?)x/)?.[1]?' · '+fastTier(model)!.description.match(/(\d+(?:\.\d+)?)x/)![1]+'×':''):'Standard'}{active.fastModeState==='cooldown'?' · 冷却中':''}</button>}
           <span className="cwd" title={active.cwd}>{active.cwd}</span>
         </div>:<div className="session-opening">{opening?'正在连接员工…':'会话已打开，配置有效工作目录后即可开始。'}</div>}
+        {active.busy&&active.currentTask&&<div className="task-provenance" data-message-id={active.currentTask.messageId}>任务 {active.currentTask.messageId.slice(-6)} · 来自 {active.currentTask.delegation.requestedBy.kind==='operator'?'用户':store.sessions.find(card=>active.currentTask!.delegation.requestedBy.kind==='agent'&&card.id===active.currentTask!.delegation.requestedBy.employeeId)?.title??'Agent'}{active.currentTask.runId?' · 定时任务':''}</div>}
         <div className="transcript" ref={transcript}>
           {!active.items.length && <div className="conversation-empty"><EngineMark engine={active.engine} size={48} /><div className="panel-eyebrow">YOUR NEXT IDEA STARTS HERE</div><h1>What are we building?</h1><p>{liveActive?`${active.title} 已就绪，说说接下来要做什么。`:opening?'正在连接工作环境…':'检查工作目录后，就可以开始对话。'}</p></div>}
           {active.items.map((item) => <Turn key={item.id} item={item} />)}

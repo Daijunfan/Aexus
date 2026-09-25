@@ -45,7 +45,7 @@ export function cloudHostAskpass(id:string,target:RemoteTarget){
   if(!host.hasPassword)return undefined
   for(const field of ['host','os','port','identityFile','knownHosts','sshConfig','jump'] as const)if(host[field]!==target[field])throw new Error('凭据只能用于其登记的云主机连接')
   const script=path.join(directory,'askpass-'+id+'.py')
-  const source=`#!/usr/bin/env python3\nimport json,socket,sys\ns=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)\ns.settimeout(8)\ns.connect(${JSON.stringify(SOCKET_PATH)})\ns.sendall((json.dumps({'cmd':'host.credentials','args':{'id':${JSON.stringify(id)}}})+'\\n').encode())\nr=json.loads(s.makefile().readline())\ns.close()\nif not r.get('ok'):sys.exit(1)\nprint(r['data']['password'])\n`
+  const source=`#!/usr/bin/env python3\nimport json,socket,sys\nfrom pathlib import Path\ns=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)\ns.settimeout(8)\ns.connect(${JSON.stringify(SOCKET_PATH)})\ns.sendall((json.dumps({'auth':Path(${JSON.stringify(path.join(APP_HOME,'control.token'))}).read_text().strip(),'cmd':'host.credentials','args':{'id':${JSON.stringify(id)}}})+'\\n').encode())\nr=json.loads(s.makefile().readline())\ns.close()\nif not r.get('ok'):sys.exit(1)\nprint(r['data']['password'])\n`
   if(!fs.existsSync(script)||fs.readFileSync(script,'utf8')!==source)fs.writeFileSync(script,source,{mode:0o700})
   return script
 }

@@ -1,3 +1,7 @@
+import {authenticate} from '../agent-access'
+import {authorize} from '../authorization'
+import {withCaller,operatorContext,requestContext,isGlobal} from '../authorization'
+import {randomUUID as requestId} from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import http from 'node:http'
@@ -11,14 +15,14 @@ const requireModule=createRequire(__filename)
 const instances=new Map<string,Promise<{plugin:PluginDescriptor;runtime:PluginRuntime}>>()
 const views=new Map<string,{server:http.Server;close:()=>Promise<void>}>()
 const mailboxes=new Map<string,Promise<()=>void>>()
-export async function prepareWorkspacePlugins(workspace:string,pluginId:string) {
+export async function prepareWorkspacePlugins(workspace:string,pluginId:string,employeeId:string) {
   workspace=fs.realpathSync(workspace)
   const plugin=requirePlugin(pluginId)
-    const directory=path.join(workspace,'.agents-company','ipc',plugin.id)
+    const directory=path.join(workspace,'.agents-company','ipc',plugin.id,employeeId)
     let ancestor=directory;while(!fs.existsSync(ancestor))ancestor=path.dirname(ancestor)
     if(!fs.realpathSync(ancestor).startsWith(workspace+path.sep))throw new Error('Plugin mailbox escapes workspace')
     if(!mailboxes.has(directory)) {
-      const opened=pluginRuntime(plugin.id,workspace).then(({runtime})=>openMailbox(directory,runtime,workspace))
+      const opened=pluginRuntime(plugin.id,workspace).then(({runtime})=>openMailbox(directory,{...runtime,request:request=>{const context=authenticate((request as any).auth);return withCaller(context,()=>{authorize('plugin.call',{id:pluginId,employee:employeeId});return runtime.request(request)})}},workspace))
       mailboxes.set(directory,opened);opened.catch(()=>mailboxes.delete(directory))
     }
     await mailboxes.get(directory)
@@ -33,12 +37,12 @@ export async function pluginRuntime(id:string,workspace:string) {
   if(!instance){instance=(async()=>{
     const factory=requireModule(pluginFile(plugin.directory,plugin.runtime)) as PluginFactory
     if(typeof factory.createPlugin!=='function')throw new Error('Plugin must export createPlugin(context)')
-    const core=await factory.createPlugin({workspace,pluginRoot:plugin.directory,executable:process.execPath})
+    const core=await factory.createPlugin({workspace,pluginRoot:plugin.directory,executable:process.execPath,requestHost:async request=>(await import('../server')).handleRequest(request)})
     if(typeof core.request!=='function')throw new Error('Plugin must implement request()')
     const schema=JSON.parse(fs.readFileSync(pluginFile(plugin.directory,plugin.schema),'utf8')),methods=new Set(schema.commands.map((command:{method:string})=>command.method))
     // CLI, renderer HTTP and employee mailboxes all pass through this same boundary.
     const runtime:PluginRuntime={
-      request:async request=>methods.has(request.method)?core.request(request):{jsonrpc:'2.0',id:request.id,error:{code:-32601,message:'Method is not declared in the plugin CLI schema: '+request.method}},
+      request:async request=>{if(!methods.has(request.method))return {jsonrpc:'2.0',id:request.id,error:{code:-32601,message:'Method is not declared in the plugin CLI schema: '+request.method}};if(!isGlobal(requestContext().principal)&&schema.commands.find((command:any)=>command.method===request.method)?.agentAccess!=='workspace')throw Error('Plugin command requires user or global management authority');return core.request(request)},
       subscribe:core.subscribe?.bind(core),readAsset:core.readAsset?.bind(core),close:core.close?.bind(core)
     }
     return {plugin,runtime}
@@ -67,7 +71,7 @@ export async function openPluginView(id:string,workspace:string) {
         let body='';for await(const part of req){body+=part;if(body.length>64*1024*1024)throw new Error('Request too large')}
         const request=JSON.parse(body) as PluginRequest
         if(request.jsonrpc!=='2.0'||typeof request.method!=='string')throw new Error('Invalid JSON RPC request')
-        const reply=await runtime.request(request)
+        const reply=await withCaller(operatorContext(),()=>runtime.request(request))
         res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(reply));return
       }
       if(req.method!=='GET'){res.writeHead(405);res.end();return}

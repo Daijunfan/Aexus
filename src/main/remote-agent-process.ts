@@ -1,3 +1,4 @@
+import {remoteAgentBin} from './remote-agent-access'
 import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process'
 import path from 'node:path'
 import {tunnelConfig,tunnelDirectory,python} from './tunnel'
@@ -6,8 +7,8 @@ import type {RemoteTarget} from '../shared/remote'
 import type {Engine} from '../shared/types'
 
 /** The SSH child owns stdio; it never launches a local Coding Agent. */
-export function spawnRemoteAgent(target:RemoteTarget,engine:Engine,args:string[],signal?:AbortSignal):ChildProcessWithoutNullStreams{
-  const payload=Buffer.from(JSON.stringify({target:tunnelConfig(target),engine,args})).toString('base64url')
+export function spawnRemoteAgent(target:RemoteTarget,engine:Engine,args:string[],signal?:AbortSignal,employeeId?:string):ChildProcessWithoutNullStreams{
+  const payload=Buffer.from(JSON.stringify({target:tunnelConfig({...target,cliBin:remoteAgentBin(employeeId)}),engine,args})).toString('base64url')
   return spawn(python(),[path.join(tunnelDirectory(),'agent_process.py'),payload],{env:childEnv(),stdio:['pipe','pipe','pipe'],detached:true,...(signal?{signal}:{})})
 }
 

@@ -1,3 +1,8 @@
+import {authenticate,initializeAccessChannel,agentCredential,revokeAgentCredential,removeAgentAccessData} from './agent-access'
+import {authorize,requestContext,operatorContext,withCaller,isGlobal,callerEmployee,visibleEmployees,publicEmployee,allowedCommands,apiDocumentation,delegationFor,validateDelegation} from './authorization'
+import {managementTopology,requestManagement,decideManagement,unbindManagement,setManagementRole,setGlobalManager,creationAuthority} from './management'
+import type {RequestContext} from '../shared/management'
+import {updateStore} from './store'
 import {validateCloudHostPatch,cloudHostFingerprints,trustCloudHostFingerprint,listCloudHosts,getCloudHost,createCloudHost,updateCloudHost,removeCloudHost,cloudHostTarget,cloudHostPassword,recordCloudHostHealth} from './cloud-hosts'
 import {openExternalUrl} from './external'
 import {managerCliRoot} from './exec'
@@ -7,7 +12,7 @@ import type {FileLocation} from '../shared/transfers'
 import {inspectEngine,invokeSkill} from './engine-tools'
 import {cloneEmployee} from './employees'
 import {openPluginWindow,pluginWindows,placePluginWindow,modePluginWindow,dismissPluginWindow} from './plugins/windows'
-import { scheduleRequest } from './scheduler/service'
+import { scheduleRequest,reconcileSchedules } from './scheduler/service'
 import {remoteTarget} from '../shared/remote'
 import {executeRemote,checkRemote,pingRemote,remoteFiles,closeRemote,resolveEmployeeWorkspace,teamConnectionId} from './tunnel'
 import {checkCloudNative,cloudNativeTarget,listCloudNativeSessions,readCloudNativeSession} from './cloud-native'
@@ -25,7 +30,7 @@ import { dirname,basename,isAbsolute,resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { APP_HOME, SOCKET_PATH, type Request, type Response } from '../shared/protocol'
 import {
-  assertEmployeeControl,beginEmployeeRemoval,endEmployeeRemoval,beginTeamRemoval,endTeamRemoval,assertTeamAvailable,assertNotRemoving,
+  revokeInvalidDelegations,assertEmployeeControl,beginEmployeeRemoval,endEmployeeRemoval,beginTeamRemoval,endTeamRemoval,assertTeamAvailable,assertNotRemoving,
   closeSession,
   interrupt,
   listLive,
@@ -81,6 +86,7 @@ const clients = new Set<Socket>()
 
 /** Subscribers that asked to follow a session; socket -> sessionId. */
 const following = new Map<Socket, string>()
+const followerContexts=new Map<Socket,RequestContext>()
 
 /** Followers that want every engine event, not just the rendered transcript. */
 const rawFollowers = new Set<Socket>()
@@ -92,7 +98,10 @@ export function publishEvent(channel: string, payload: unknown): void {
   desktopEvent(channel,payload)
   for (const [sock, sessionId] of following) {
     if (!sock.writable) continue
+    const context=followerContexts.get(sock)!
+    try{authorize('session.follow',{},employeeId(sessionId),context)}catch{sock.end(JSON.stringify({type:'done',error:'Access revoked'})+'\n');following.delete(sock);followerContexts.delete(sock);continue}
     const p = payload as { sessionId?: string }
+    if(!p?.sessionId&&context.principal.kind==='agent')continue
     if (p?.sessionId && p.sessionId !== sessionId) continue
     // A raw follower gets every event verbatim; a normal one gets only the
     // channels needed to render a conversation.
@@ -101,6 +110,7 @@ export function publishEvent(channel: string, payload: unknown): void {
     if (['session:turn-end', 'session:end', 'session:error', 'session:closed'].includes(channel)) {
       sock.end(JSON.stringify({ type: 'done' }) + '\n')
       following.delete(sock)
+      followerContexts.delete(sock)
       rawFollowers.delete(sock)
     }
   }
@@ -117,7 +127,31 @@ const RENDERED_CHANNELS = new Set([
   'session:error'
 ])
 
-export async function handleRequest(req: Request): Promise<any> {
+function employeeId(value:unknown){const id=String(value??'');return readStore().sessions.some(card=>card.id===id)?id:sessionInfo(id)?.cardId}
+export async function handleRequest(req:Request,context?:RequestContext):Promise<any>{
+  if(context)return withCaller(context,()=>handleRequest(req))
+  const caller=requestContext(),a={...(req.args??{})} as Record<string,any>
+  for(const field of ['createdBy','requestedBy','approvedBy','delegation','access','globalManagerIds','deleting'])if(field in a||a.patch&&field in a.patch||a.spec&&field in a.spec)throw Error('Internal field cannot be supplied: '+field)
+  if(a.patch&&'managementRole' in a.patch||a.managementRole!==undefined&&req.cmd!=='card.create')throw Error('Use card.management-role to assign roles')
+  let target=employeeId(a.employee??a.cardId??a.id)
+  authorize(req.cmd,a,target,caller)
+  if(a.employee&&req.cmd.startsWith('session.')){
+    if(req.cmd==='session.open')a.cardId=a.employee
+    const live=listLive().find(item=>sessionInfo(item.id)?.cardId===a.employee)
+    a.id=live?.id??a.employee
+    if(['session.send','session.enqueue','session.steer','session.open'].includes(req.cmd)&&!live){const opened=await startSession({cardId:a.employee,delegation:delegationFor(a.employee,caller)});authorize(req.cmd,a,target,caller);a.id=opened.sessionId}
+  }
+  if(req.cmd==='session.send'||req.cmd==='session.enqueue')a.delegation=delegationFor(target??employeeId(a.id)!,caller)
+  const result=await dispatchRequest({...req,args:a})
+  if(isGlobal(caller.principal))return result
+  if(req.cmd==='session.list'){
+    const ids=new Set(visibleEmployees(caller.principal).map(card=>card.id))
+    return a.live?result.filter((item:any)=>ids.has(item.cardId)).map((item:any)=>({id:item.id,cardId:item.cardId,title:item.title,busy:item.busy,currentTask:item.currentTask})): {sessions:visibleEmployees(caller.principal).map(publicEmployee)}
+  }
+  if(result?.sessions&&result?.groups)return {sessions:visibleEmployees(caller.principal).map(publicEmployee)}
+  return result
+}
+async function dispatchRequest(req: Request): Promise<any> {
   const a = (req.args ?? {}) as Record<string, any>
   const s = (v: unknown) => String(v)
 
@@ -125,6 +159,20 @@ export async function handleRequest(req: Request): Promise<any> {
   if(['card.update','card.move','card.remove','card.rename'].includes(req.cmd))assertTeamAvailable(readStore().sessions.find(c=>c.id===(a.id??a.cardId))?.group)
   if(['card.create','card.move','card.update','session.new'].includes(req.cmd))assertTeamAvailable(a.group??a.patch?.group)
   switch (req.cmd) {
+    case 'auth.whoami': {const principal=requestContext().principal,card=callerEmployee(principal);return {principal,managementRole:card?.managementRole??'employee',team:card?.group,globalManager:isGlobal(principal),accessMode:card?.accessMode??'trusted'}}
+    case 'auth.agent-token': return agentCredential(s(a.id))
+    case 'auth.revoke': {const result=revokeAgentCredential(s(a.id));revokeInvalidDelegations();reconcileSchedules();publishEvent('access:changed',{});return result}
+    case 'api.list': return allowedCommands()
+    case 'api.describe': {const command=allowedCommands().find(value=>value.name===a.command);if(!command)throw Error('API not available to this caller');return command}
+    case 'api.docs': return apiDocumentation()
+    case 'management.topology': return managementTopology(a.team)
+    case 'management.request': return requestManagement(s(a.employee),a.manager)
+    case 'management.decide': return decideManagement(s(a.id),s(a.decision))
+    case 'management.unbind': return unbindManagement(s(a.id))
+    case 'management.global': if(typeof a.enabled!=='boolean')throw Error('enabled must be boolean');return setGlobalManager(s(a.id),a.enabled)
+    case 'card.management-role': return setManagementRole(s(a.id),a.role)
+    case 'card.access-mode': {const card=readStore().sessions.find(c=>c.id===a.id);if(card&&(card.threadId||card.claudeSessionId)&&card.accessMode!==a.mode)throw Error('Execution isolation is fixed once native history exists; create a new employee');if(!['trusted','isolated'].includes(a.mode))throw Error('Use trusted or isolated');await closeForEngineChange(s(a.id));return updateStore(store=>{const card=store.sessions.find(c=>c.id===a.id);if(!card)throw Error('Unknown employee');card.accessMode=a.mode})}
+    case 'session.status': {const cards=a.employee?readStore().sessions.filter(c=>c.id===a.employee):visibleEmployees();return cards.map(card=>{const live=listLive().find(item=>sessionInfo(item.id)?.cardId===card.id),state=live?sessionInfo(live.id):undefined;return {...publicEmployee(card),sessionId:live?.id,busy:state?.busy??false,currentTask:state?.currentTask,activityPreview:state?.activityPreview,waitingApproval:live?approvalsFor(live.id).length>0:false}})}
     case 'shared.info': return {path:sharedDirectory()}
     case 'transfer.start': return startTransfer(a.from,a.to,fileEndpoint(a.from,false),fileEndpoint(a.to,true))
     case 'transfer.list': return listTransfers()
@@ -275,7 +323,7 @@ export async function handleRequest(req: Request): Promise<any> {
       }
 
     case 'session.list': {
-      if(a.live) return listLive().map((s) => sessionSnapshot(s.id))
+      if(a.live) return listLive().map((s) => {const snapshot=sessionSnapshot(s.id);return a.summary?{...snapshot,items:[]}:snapshot})
       const store=readStore()
       return {...store,sessions:store.sessions.map(c=>workspaceStatus(store,c))}
     }
@@ -283,7 +331,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'session.new': return startSession(a as StartArgs)
 
     case 'session.open': {
-      return startSession({ cardId: s(a.cardId) })
+      return startSession({ cardId: s(a.cardId),delegation:delegationFor(s(a.cardId)) })
     }
 
     case 'session.activity': return sessionSnapshot(s(a.id)).activityPreview??null
@@ -311,7 +359,7 @@ export async function handleRequest(req: Request): Promise<any> {
       const suffix=a.base?' --base '+s(a.base):a.commit?' --commit '+s(a.commit):a.instructions?' '+s(a.instructions):''
       return {sent:await sendMessage(s(a.id),'/review'+suffix)}
     }
-    case 'session.enqueue': return enqueueMessage(s(a.id),s(a.text??''),a.images)
+    case 'session.enqueue': return enqueueMessage(s(a.id),s(a.text??''),a.images,a.delegation)
     case 'session.queue': return queuedMessages(s(a.id))
     case 'session.dequeue': return removeQueuedMessage(s(a.id),s(a.messageId))
     case 'session.export': {
@@ -320,10 +368,10 @@ export async function handleRequest(req: Request): Promise<any> {
       if(a.path){const employee=executionEmployee(readStore(),card);const args={path:s(a.path),content,create:true};return employee.remote?remoteFiles(card.id,employee.remote,'write',args):workspaceFiles(employeeWorkspace(readStore(),card.group,card.cwd,card.id),'write',args)}
       return {format,content}
     }
-    case 'session.send': return { sent: await sendMessage(s(a.id), s(a.text??''),undefined,a.images) }
+    case 'session.send': {const sent=await sendMessage(s(a.id),s(a.text??''),undefined,a.images,a.delegation);return {sent,messageId:sessionInfo(s(a.id))?.currentTask?.messageId}}
 
     case 'session.transcript': {
-      const items = transcriptItems(s(a.id))
+      const allItems=transcriptItems(s(a.id)),items=a.limit?allItems.slice(-Math.max(1,Math.min(1000,Number(a.limit)))):allItems
       // Thinking is hidden by default; `--thinking` includes it, matching
       // expanding the thinking block in the GUI.
       const shown = a.thinking
@@ -338,12 +386,17 @@ export async function handleRequest(req: Request): Promise<any> {
 
     case 'session.info': {
       const info = sessionInfo(s(a.id))
-      if (!info) throw new Error(`unknown session ${s(a.id)}`)
+      if (!info){const card=readStore().sessions.find(c=>c.id===a.id);if(card)return {...publicEmployee(card),busy:false,sessionId:null};throw new Error(`unknown session ${s(a.id)}`)}
       return info
     }
 
-    case 'session.interrupt':
-      return { interrupted: await interrupt(s(a.id)) }
+    case 'session.interrupt': {
+      const task=sessionInfo(s(a.id))?.currentTask
+      if(a.expectedMessageId&&task?.messageId!==a.expectedMessageId)throw Error('Current message changed; interruption rejected')
+      if(task?.runId)await scheduleRequest('cancel',{id:task.runId})
+      else await interrupt(s(a.id))
+      return {interrupted:true}
+    }
 
     case 'session.close': {
       const closed = await closeSession(s(a.id))
@@ -556,6 +609,8 @@ export async function handleRequest(req: Request): Promise<any> {
       catch(error){deleteTranscript(card.id);throw error}
     }
     case 'card.create': {
+      if(a.accessMode!==undefined&&!['trusted','isolated'].includes(a.accessMode))throw Error('Invalid process access mode')
+      if(a.managementRole!==undefined&&!['employee','manager'].includes(a.managementRole))throw Error('Invalid management role')
       const kind=a.kind??'worker'
       if(!['worker','cloud-native-worker'].includes(kind))throw new Error('Only Local or Cloud Native Worker employees are supported')
       if(a.chatProvider!==undefined||a.chatMode!==undefined||a.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')
@@ -571,13 +626,15 @@ export async function handleRequest(req: Request): Promise<any> {
         await checkCloudNative(s(a.group),engine)
         await resolveEmployeeWorkspace(store,s(a.group),s(a.title),a.cwd,a.directoryMode,undefined,true)
       }
+      if(!isGlobal(requestContext().principal)&&config.mode==='build'&&a.cwd){const candidate=resolve(store.teamRoots![a.group],a.cwd);if(!inside(store.teamRoots![a.group],candidate))throw Error('Manager-created workspace must stay inside its Team')}
       const cwd=await resolveEmployeeWorkspace(store,s(a.group??''),s(a.title),a.cwd,a.directoryMode)
       assertTeamAvailable(a.group)
       const latest=readStore();if(!latest.groups.includes(a.group)||JSON.stringify(teamSettings(latest,a.group))!==JSON.stringify(config))throw new Error('Team 已删除或配置已变更，请重新创建员工')
       provisionEmployee(cwd,store.teamRoots![a.group],config)
       const id = newSessionId()
       const origin=kind==='cloud-native-worker'?{kind:'cloud' as const,hostId:config.hostId!,host:config.remote!.host,os:config.remote!.os,directory:cwd}:undefined
-      const saved = patchSession(id, { ...appearance,id, title: s(a.title).trim(), engine,kind,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
+      authorize('card.create',a);
+      const saved = patchSession(id, { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
         model: a.model ?? (engine === 'codex' ? (kind==='cloud-native-worker'?'gpt-6-luna':'gpt-5.6-luna') : undefined),
         effort: a.effort ?? 'low', permissionMode: config.mode!=='build'||managerCliRoot(cwd)?'acceptEdits':'default' })
       return executionEmployee(saved,saved.sessions.find((c) => c.id === id)!)
@@ -585,7 +642,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'card.update': {
       const store=readStore(), card=store.sessions.find(c=>c.id===a.id)
       if(!card) throw new Error('Unknown employee')
-      const patch={...a.patch}
+      const patch={...a.patch};if(patch.accessMode!==undefined)throw Error('Use card.access-mode')
       if(patch.kind!==undefined&&patch.kind!==(card.kind??'worker'))throw new Error('员工职位创建后不可更改')
       if(patch.chatProvider!==undefined||patch.chatMode!==undefined||patch.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')
       employeeFields(patch,card)
@@ -604,6 +661,7 @@ export async function handleRequest(req: Request): Promise<any> {
         assertTeamAvailable(card.group);assertTeamAvailable(group)
         patch.cwd=unchanged?card.cwd:await resolveEmployeeWorkspace(readStore(),group,patch.title??card.title,input,patch.directoryMode,card.id)
       }
+      authorize('card.update',a,card.id)
       const updated=updateEmployee(card.id,patch),next=updated.sessions.find(c=>c.id===card.id)!
       provisionEmployee(next.cwd,updated.teamRoots![next.group],teamSettings(updated,next.group))
       return updated
@@ -645,13 +703,14 @@ async function removeEmployees(ids:string[]) {
       if(!/^[a-z0-9_-]+$/i.test(id))throw new Error('无效的员工 ID，未移除员工')
       beginEmployeeRemoval(id);locked.push(id)
     }
-    for(const id of wanted){await closeEmployeeTerminals(id);closeRemote(id)}
+    updateStore(store=>{for(const card of store.sessions)if(wanted.has(card.id))card.deleting=true})
+    for(const id of wanted){revokeAgentCredential(id);await closeEmployeeTerminals(id);closeRemote(id)}
     for(const live of listLive())if(wanted.has(sessionSnapshot(live.id).cardId!))await closeSession(live.id)
     const latest=readStore(),refs=latest.sessions.filter(card=>wanted.has(card.id)).flatMap(nativeRefsForRemoval)
     const others=latest.sessions.filter(card=>!wanted.has(card.id)).flatMap(nativeSessionRefs)
     if(refs.some(ref=>ref.ownership!=='external'&&others.some(other=>other.engine===ref.engine&&other.id===ref.id&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))))throw new Error('原生会话仍被其他员工引用，未移除员工')
     await deleteNativeSessions(refs)
-    for(const id of wanted)deleteTranscript(id)
+    for(const id of wanted){deleteTranscript(id);removeAgentAccessData(id)}
     const store=removeSession([...wanted]),view=getView()
     if(view.employee&&wanted.has(view.employee))setView(view.pluginId?{kind:'plugin',pluginId:view.pluginId}:{kind:'home'})
     return store
@@ -717,6 +776,7 @@ async function closeForWorkspaceChange(cardId: string): Promise<void> {
 }
 
 export function startServer(onListening: () => void = () => {}): void {
+  initializeAccessChannel()
   mkdirSync(dirname(SOCKET_PATH), { recursive: true })
 
   server = createServer((sock) => {
@@ -724,6 +784,7 @@ export function startServer(onListening: () => void = () => {}): void {
     const drop = () => {
       clients.delete(sock)
       following.delete(sock)
+      followerContexts.delete(sock)
       rawFollowers.delete(sock)
     }
     sock.on('close', drop)
@@ -739,16 +800,22 @@ export function startServer(onListening: () => void = () => {}): void {
         return
       }
 
+      let caller:RequestContext
+      try{caller=authenticate(req.auth)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message})+'\n');return}
       // `follow` keeps the connection open and streams instead of replying.
       // `raw: true` forwards every engine event, not just the rendered text.
       if (req.cmd === 'session.follow') {
-        const sessionId = String((req.args ?? {}).id)
+        let sessionId=String((req.args??{}).id??(req.args??{}).employee)
+        const card=employeeId(sessionId)
+        const found=listLive().find(item=>sessionInfo(item.id)?.cardId===card);if(found)sessionId=found.id
+        try{authorize('session.follow',req.args,card,caller)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message})+'\n');return}
         const info = sessionInfo(sessionId)
         if (!info) {
-          sock.end(JSON.stringify({ ok: false, error: `unknown session ${sessionId}` }) + '\n')
+          if(card){const items=transcriptItems(card);sock.write(JSON.stringify({ok:true,data:{following:card,transcript:items,text:renderTranscript(items)}})+'\n');sock.end(JSON.stringify({type:'done'})+'\n')}
+          else sock.end(JSON.stringify({ ok: false, error: `unknown session ${sessionId}` }) + '\n')
           return
         }
-        following.set(sock, sessionId)
+        following.set(sock, sessionId);followerContexts.set(sock,caller)
         if ((req.args ?? {}).raw) rawFollowers.add(sock)
         sock.write(
           JSON.stringify({
@@ -762,7 +829,7 @@ export function startServer(onListening: () => void = () => {}): void {
 
       let res: Response
       try {
-        res = { ok: true, data: await handleRequest(req) }
+        res = { ok: true, data: await handleRequest(req,caller) }
       } catch (err) {
         res = { ok: false, error: err instanceof Error ? err.message : String(err) }
       }

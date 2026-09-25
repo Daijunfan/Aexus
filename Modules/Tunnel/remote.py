@@ -54,6 +54,8 @@ class Workspace:
         if not self.cwd.is_dir():
             raise ValueError("Target working directory does not exist: " + str(self.cwd))
         self.root = self.cwd
+        self.env=dict(os.environ)
+        if config.get("cli_bin"):self.env["PATH"]=config["cli_bin"]+os.pathsep+self.env.get("PATH","")
         self.process = None
         self.closed = False
         self.windows = os.name == "nt"
@@ -109,7 +111,7 @@ class Workspace:
         else:
             trap = "pwd -P > " + shlex.quote(str(self.state))
             args = [self.shell, "-c", "trap " + shlex.quote(trap) + " EXIT\n" + command]
-        process = subprocess.Popen(args, cwd=self.cwd, stdin=subprocess.DEVNULL,
+        process = subprocess.Popen(args, cwd=self.cwd, stdin=subprocess.DEVNULL,env=self.env,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=not self.windows)
         self.process = process

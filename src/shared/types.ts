@@ -1,10 +1,11 @@
+import type {ManagementRole,ManagementAccess,PrincipalRef,CurrentTask,Delegation} from './management'
 // Plain data shared by the GUI and the CLI. Nothing here may import Electron,
 // React, or any browser API — the CLI runs it in plain Node.
 
 export type Engine = 'claude' | 'codex'
 export type EmployeeKind = 'worker' | 'cloud-native-worker'
 export type NativeOrigin = {kind:'cloud';hostId:string;host:string;os:'linux'|'macos'|'windows';directory:string}
-export type NativeSession = {engine:Engine;id:string;origin?:NativeOrigin;ownership?:'external'}
+export type NativeSession = {engine:Engine;id:string;profile?:string;origin?:NativeOrigin;ownership?:'external'}
 export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; hostId?:string; directory?:string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind' }
 export const teamSettings = (store: Pick<Store,'teamSettings'>, name: string): TeamSettings => store.teamSettings?.[name] ?? {mode:'build'}
 import type { Accessory, AvatarKind, RoomDesign } from './office'
@@ -60,6 +61,11 @@ export const ENGINES: { value: Engine; label: string; hint: string }[] = [
 
 /** A session as persisted in the app's own store. */
 export type StoredSession = {
+  managementRole?:ManagementRole
+  createdBy?:PrincipalRef
+  accessMode?:'trusted'|'isolated'
+  deleting?:boolean
+
   id: string
   engine: Engine
   kind?: EmployeeKind
@@ -72,6 +78,7 @@ export type StoredSession = {
   claudeSessionId?: string
   threadId?: string
   nativeSessions?: NativeSession[]
+  nativeConfigRoot?:string
   nativeOrigin?: NativeOrigin
   nativeOwnership?: 'external'
   /** Native cloud execution uses a clean engine context; host history is preserved. */
@@ -82,7 +89,7 @@ export type StoredSession = {
   model?: string
   planMode?: boolean
   usage?: Record<string,unknown>
-  pendingMessages?: {id:string;text:string;images?:string[]}[]
+  pendingMessages?: {id:string;text:string;images?:string[];delegation?:Delegation}[]
   remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
@@ -117,6 +124,9 @@ export const ALL_TEAM_VIEW='all'
 export type TeamView={id:string;name:string;teams:string[];viewport?:Viewport}
 
 export type Store = {
+  revision?:number
+  access?:ManagementAccess
+
   sessions: StoredSession[]
   groups: string[]
   teamViews?:TeamView[]
@@ -154,6 +164,8 @@ export type ActivityPreview={kind:'speech'|'thinking'|'tool';text:string;detail?
 
 /** A live session: everything the GUI needs to render one conversation. */
 export type Session = {
+  currentTask?:CurrentTask
+
   id: string
   /** The stored card this session represents (equals id for a new session). */
   cardId?: string
@@ -247,7 +259,7 @@ export function groupSessions(
 /** Old native IDs survive workspace/context changes until the employee is removed. */
 export function nativeSessionRefs(card:StoredSession):NativeSession[] {
   const refs=[...(card.nativeSessions??[])]
-  if(card.threadId)refs.push({engine:'codex',id:card.threadId,origin:card.nativeOrigin,ownership:card.nativeOwnership})
-  if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId,origin:card.nativeOrigin,ownership:card.nativeOwnership})
+  if(card.threadId)refs.push({engine:'codex',id:card.threadId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
+  if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   return refs.filter((ref,i)=>refs.findIndex(other=>other.engine===ref.engine&&other.id===ref.id&&other.ownership===ref.ownership&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))===i)
 }

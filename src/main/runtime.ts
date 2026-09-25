@@ -1,7 +1,8 @@
+import {initializeManagement} from './management'
 import {closeTransfers} from './transfers'
 import {onPluginWindows,closePluginWindows} from './plugins/windows'
 import { startScheduler, stopScheduler, reconcileSchedules } from './scheduler/service'
-import { setEmitter, closeAll } from './sessions'
+import { setEmitter, closeAll,revokeInvalidDelegations } from './sessions'
 import { onStoreChange,migrateCloudTeams,migrateCloudHostBindings } from './store'
 import { onViewChange } from './presentation'
 import { publishEvent, setDesktopEvent, startServer, stopServer } from './server'
@@ -15,6 +16,7 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
   setDesktopEvent(notify)
   migrateCloudTeams()
   migrateCloudHostBindings()
+  initializeManagement()
   const broadcast = (channel: string, payload: any) => {
     const id = payload?.sessionId
     if (id) {
@@ -30,7 +32,7 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
   }
   setEmitter(broadcast)
   setTerminalEmitter(broadcast)
-  const unsubscribe = onStoreChange((store) => { reconcileSchedules(); broadcast('store:changed', store) })
+  const unsubscribe = onStoreChange((store) => { reconcileSchedules();revokeInvalidDelegations(); broadcast('store:changed', store) })
   const unwindows=onPluginWindows(windows=>broadcast('plugin:windows',windows))
   const unview = onViewChange(state => broadcast('view:changed', state))
   startServer(() => startScheduler(broadcast))

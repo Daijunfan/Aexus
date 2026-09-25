@@ -464,3 +464,9 @@ N --terminal-height N`. Working employees show live speech, published thinking
 summaries or tool previews on the office canvas, also available through
 `agents session activity ID`. Team titles are plain centered text; drag any blank
 interior area to move the Team and drag its outline to resize it.
+
+## Multi-agent management
+
+Local Worker / Cloud Native Worker describes where the engine runs. Employee / Team Manager describes control within a Team. Set the management role in employee details, request an arrow to a same-Team Employee, and approve it as the user. Pending requests do not grant control. Global Agents Managers require a separate explicit grant. Views never change authority.
+
+Every operation is exposed through the authenticated CLI; use `agents auth whoami`, `agents api docs` and `agents management topology`. See [ARCHITECTURE.md](ARCHITECTURE.md) for trusted versus isolated processes, remote Manager channels and revocable delegation.

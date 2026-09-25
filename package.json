@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.36.0",
+  "version": "0.37.1",
   "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
   "main": "./out/main/index.js",
   "author": "Agents Company",
@@ -10,11 +10,11 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "app": "npm run build:plugins && electron-vite build && electron-builder --dir --mac",
-    "dist": "npm run build:plugins && electron-vite build && electron-builder --mac",
+    "app": "npm run build:icon && npm run build:plugins && electron-vite build && electron-builder --dir --mac",
+    "dist": "npm run build:icon && npm run build:plugins && electron-vite build && electron-builder --mac",
     "test:cli": "node test/cli-test.mjs",
     "test:coverage": "node test/coverage-test.mjs",
-    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:cloud-hosts && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:team-views && npm run test:remote && npm run test:cloud-native && npm run test:headless && npm run test:ui && npm run test:scheduler && npm run test:manager-docs",
+    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:cloud-hosts && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:team-views && npm run test:remote && npm run test:cloud-native && npm run test:headless && npm run test:ui && npm run test:scheduler && npm run test:manager-docs && npm run test:management",
     "dev:headless": "AGENTS_COMPANY_HEADLESS=1 electron-vite dev",
     "test:headless": "node test/run-headless.mjs",
     "serve": "node bin/agents serve",
@@ -69,7 +69,9 @@
     "test:cli-utf8": "node test/cli-utf8-test.mjs",
     "test:transfers": "node test/transfers-test.mjs",
     "test:shared-ui": "node test/shared-ui-test.mjs",
-    "test:team-views": "node test/team-views-test.mjs && node test/team-views-ui-test.mjs"
+    "test:team-views": "node test/team-views-test.mjs && node test/team-views-ui-test.mjs",
+    "test:management": "node test/management-test.mjs && node test/management-state-test.mjs && node test/agent-isolation-test.mjs && node test/management-ui-test.mjs && node test/isolated-desktop-test.mjs",
+    "test:management-live": "node test/management-remote-live-test.mjs"
   },
   "build": {
     "appId": "com.agentscompany.app",
@@ -91,7 +93,8 @@
       "AGENTS.md",
       "SCHEDULER.md",
       "ENGINE_CAPABILITIES.md",
-      "src/renderer/src/assets/pets/licenses/**/*"
+      "src/renderer/src/assets/pets/licenses/**/*",
+      "ARCHITECTURE.md"
     ],
     "mac": {
       "target": [

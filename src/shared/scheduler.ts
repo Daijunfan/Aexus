@@ -1,3 +1,4 @@
+import type {Delegation} from './management'
 /** Host-owned scheduling contract. No renderer or plugin dependencies. */
 export type ScheduleRule =
   | { kind: 'once'; at: string }
@@ -27,8 +28,9 @@ export type ScheduleSpec = {
   /** Optional caller namespace, e.g. a future plugin ID. Does not grant permission. */
   source?: string
 }
-export type ScheduledJob = ScheduleSpec & { id: string; createdAt: string; updatedAt: string; nextAt: string | null; disabledReason?: string }
+export type ScheduledJob = ScheduleSpec & { delegation?:Delegation; id: string; createdAt: string; updatedAt: string; nextAt: string | null; disabledReason?: string }
 export type ScheduleRun = {
+  delegation?:Delegation
   id: string
   jobId: string
   jobName: string

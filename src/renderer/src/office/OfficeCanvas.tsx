@@ -116,7 +116,7 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
       {rooms.map((room,i)=>{
         const b=roomExtent(room)
         if(draft?.name!==room.name&&(b.x+b.width<visible.x||b.y+b.height<visible.y||b.x>visible.x+visible.width||b.y>visible.y+visible.height))return null
-        return <CanvasRoom key={room.name} room={room} index={i} design={store.rooms?.[room.name]?.design} root={store.teamRoots?.[room.name]} mode={teamSettings(store,room.name).mode} remote={teamSettings(store,room.name).remote} health={cloudStatus[room.name]} activities={activities} busyIds={busyIds} disconnectedIds={disconnectedIds} draggingId={draft?.moved?draft.id:undefined} visible={visible}
+        return <CanvasRoom key={room.name} room={room} access={store.access} index={i} design={store.rooms?.[room.name]?.design} root={store.teamRoots?.[room.name]} mode={teamSettings(store,room.name).mode} remote={teamSettings(store,room.name).remote} health={cloudStatus[room.name]} activities={activities} busyIds={busyIds} disconnectedIds={disconnectedIds} draggingId={draft?.moved?draft.id:undefined} visible={visible}
           onOpen={onOpen} onEdit={()=>onEdit(room.name)} onStart={(kind,e,id,edge)=>begin(kind,room,e,id,edge)} />
       })}
       {draft?.moved&&draft.kind==='employee'&&(draft.guide?.x!==undefined||draft.guide?.y!==undefined)&&<div className="employee-snap-guide" aria-hidden="true" style={{left:draft.room!.bounds.x+draft.x,top:draft.room!.bounds.y+draft.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}/>}

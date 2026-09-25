@@ -15,7 +15,7 @@ import type {Engine} from '../shared/types'
 export function tunnelDirectory(){return process.env.AGENTS_COMPANY_TUNNEL_DIR||(process.resourcesPath&&fs.existsSync(path.join(process.resourcesPath,'Modules/Tunnel'))?path.join(process.resourcesPath,'Modules/Tunnel'):path.resolve(__dirname,'../../../Modules/Tunnel'))}
 export const python=()=>resolveBinary('python3',process.env.AGENTS_COMPANY_PYTHON)
 export function tunnelConfig(target:RemoteTarget){
-  const value:Record<string,unknown>={host:target.host,directory:target.directory,os:target.os,port:target.port,proxy_jump:target.jump}
+  const value:Record<string,unknown>={host:target.host,directory:target.directory,os:target.os,cli_bin:target.cliBin,port:target.port,proxy_jump:target.jump}
   for(const [key,field] of [['identityFile','identity_file'],['knownHosts','known_hosts'],['sshConfig','ssh_config']] as const){const file=target[key];if(file){if(!path.isAbsolute(file)&&!file.startsWith('~/'))throw new Error('SSH 文件配置必须使用绝对路径或 ~/');value[field]=file.startsWith('~/')?path.join(homedir(),file.slice(2)):file}}
   if(target.credentialId)value.askpass=cloudHostAskpass(target.credentialId,target)
   return value

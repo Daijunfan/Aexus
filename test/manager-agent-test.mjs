@@ -17,11 +17,12 @@ const daemon=spawn(process.execPath,[root+'/bin/agents','serve'],{env:process.en
 try{
  for(let i=0;i<100;i++){try{const out=JSON.parse((await run(process.execPath,[root+'/bin/agents','status','--json'],{env:process.env,timeout:2000})).stdout);if(out.ok)break}catch{}await new Promise(resolve=>setTimeout(resolve,100))}
  await run(process.execPath,[root+'/bin/agents','group','add','Managers','--mode','build','--directory-mode','bind','--root',manager,'--json'],{env:process.env})
- await run(process.execPath,[root+'/bin/agents','card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low','--json'],{env:process.env})
+ const employee=JSON.parse((await run(process.execPath,[root+'/bin/agents','card','create','--title','Director','--group','Managers','--engine','codex','--model','gpt-6-luna','--effort','low','--access-mode','isolated','--json'],{env:process.env})).stdout).data
+ await run(process.execPath,[root+'/bin/agents','management','global',employee.id,'on'],{env:process.env})
  assert.ok(fs.existsSync(path.join(staff,'.agents-company/manager/API.md')))
- await runCodexTurn({cwd:staff,model:'gpt-6-luna',effort:'low',sandbox:'workspace-write',prompt:'Create a Team through the manager CLI.',signal:controller.signal,onRequest:async()=>{throw Error('Unexpected interactive request')},onEvent:event=>events.push(event)})
+ await runCodexTurn({employeeId:employee.id,cwd:staff,model:'gpt-6-luna',effort:'low',sandbox:'workspace-write',prompt:'Create a Team through the manager CLI.',signal:controller.signal,onRequest:async()=>{throw Error('Unexpected interactive request')},onEvent:event=>events.push(event)})
  assert.ok(requests.length>=2,'The sandboxed tool did not return to the model');assert.ok(requests.every(r=>r.model==='gpt-6-luna'&&r.reasoning?.effort==='low'))
- assert.ok(events.some(e=>e.kind==='tool-end'&&e.exitCode===0),JSON.stringify(events).slice(-3000))
+ assert.ok(events.some(e=>e.kind==='tool-end'&&e.exitCode===0),JSON.stringify({events,input:requests.at(-1)?.input?.filter(item=>['function_call_output','custom_tool_call_output'].includes(item.type))}).slice(-5000))
  const saved=JSON.parse((await run(process.execPath,[root+'/bin/agents','group','list','--json'],{env:process.env})).stdout)
  assert.ok(saved.ok&&saved.data.includes('Managed-by-agent'),'The sandboxed Manager command did not create the Team')
  console.log('PASS real workspace-write sandboxed Manager agent created another Team through the host CLI; GPT-6-Luna/low wire fixture, no inference')
