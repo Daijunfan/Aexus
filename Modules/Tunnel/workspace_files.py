@@ -3,6 +3,10 @@ import hashlib
 import json
 from pathlib import Path
 import uuid
+import base64
+import os
+import re
+import shutil
 
 
 def workspace_files(root, operation, args):
@@ -20,6 +24,48 @@ def workspace_files(root, operation, args):
         return hashlib.sha256(file.read_bytes()).hexdigest()
     value = args.get('path') or '.'
     file = locate(value, operation in ['write', 'mkdir', 'move', 'trash'])
+    if operation == 'copy-info':
+        original = root / value
+        if not original.exists() and not original.is_symlink():
+            return dict(exists=False)
+        stat = original.lstat()
+        return dict(exists=True, directory=original.is_dir(), regular=original.is_file(), symlink=original.is_symlink(), bytes=stat.st_size, modifiedAt=stat.st_mtime*1000, mode=stat.st_mode & 0o777)
+    if operation == 'copy-read':
+        offset, length = args['offset'], args['length']
+        if type(offset) is not int or offset < 0 or type(length) is not int or not 0 < length <= 262144:
+            raise ValueError('Invalid transfer range')
+        if (root / value).is_symlink() or not file.is_file():
+            raise ValueError('只能传输普通文件')
+        with file.open('rb') as stream:
+            stream.seek(offset)
+            data = stream.read(length)
+        return dict(data=base64.b64encode(data).decode(), bytes=len(data))
+    if operation in ['copy-write', 'copy-commit', 'copy-remove']:
+        locate(value, True)
+        if not any(re.fullmatch(r'\.agents-transfer-[a-f0-9-]{36}', p) for p in file.relative_to(root).parts):
+            raise ValueError('Invalid transfer staging path')
+        if operation == 'copy-remove':
+            if file.is_dir(): shutil.rmtree(file)
+            elif file.exists(): file.unlink()
+            return dict(removed=True)
+        if operation == 'copy-commit':
+            target = locate(args['to'], True)
+            if target.exists(): raise ValueError('目标已有同名文件，未覆盖')
+            if file.is_dir(): file.rename(target)
+            else:
+                os.link(file, target)
+                file.unlink()
+            return dict(path=args['to'])
+        offset, encoded = args['offset'], args['data']
+        if type(offset) is not int or offset < 0 or not isinstance(encoded, str) or len(encoded) > 349528:
+            raise ValueError('Invalid transfer chunk')
+        data = base64.b64decode(encoded, validate=True)
+        with file.open('xb' if offset == 0 else 'r+b') as stream:
+            if os.fstat(stream.fileno()).st_size != offset: raise ValueError('Transfer offset mismatch')
+            stream.seek(offset)
+            stream.write(data)
+        if args.get('final') and os.name != 'nt': file.chmod(args.get('mode') or 0o600)
+        return dict(bytes=len(data))
     if operation == 'remove-empty-directory':
         if file == root:
             raise ValueError('Cannot remove the workspace root')
@@ -45,7 +91,6 @@ def workspace_files(root, operation, args):
                                 symlink=child.is_symlink(), bytes=stat.st_size, modifiedAt=stat.st_mtime*1000))
         return dict(root=str(root), path=file.relative_to(root).as_posix(), entries=sorted(entries, key=lambda e:(not e['directory'], e['name'])))
     if operation == 'read-image':
-        import base64
         if file.stat().st_size > 10 * 1024 * 1024:
             raise ValueError('图片不能超过 10 MB')
         data = file.read_bytes()

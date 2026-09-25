@@ -1,11 +1,16 @@
+import {validateCloudHostPatch,cloudHostFingerprints,trustCloudHostFingerprint,listCloudHosts,getCloudHost,createCloudHost,updateCloudHost,removeCloudHost,cloudHostTarget,cloudHostPassword,recordCloudHostHealth} from './cloud-hosts'
 import {openExternalUrl} from './external'
 import {managerCliRoot} from './exec'
+import {sharedDirectory} from './shared-directory'
+import {startTransfer,listTransfers,getTransfer,cancelTransfer,type FileEndpoint} from './transfers'
+import type {FileLocation} from '../shared/transfers'
 import {inspectEngine,invokeSkill} from './engine-tools'
 import {cloneEmployee} from './employees'
 import {openPluginWindow,pluginWindows,placePluginWindow,modePluginWindow,dismissPluginWindow} from './plugins/windows'
 import { scheduleRequest } from './scheduler/service'
 import {remoteTarget} from '../shared/remote'
-import {checkRemote,remoteFiles,closeRemote,resolveEmployeeWorkspace,teamConnectionId} from './tunnel'
+import {executeRemote,checkRemote,pingRemote,remoteFiles,closeRemote,resolveEmployeeWorkspace,teamConnectionId} from './tunnel'
+import {checkCloudNative,cloudNativeTarget,listCloudNativeSessions,readCloudNativeSession} from './cloud-native'
 import {openTerminal,listTerminals,readTerminal,inputTerminal,resizeTerminal,closeTerminal,closeEmployeeTerminals} from './terminals'
 // A unix-socket server so the whole app can be driven from a terminal. Every
 // command maps onto the same operations the GUI uses, which is what makes
@@ -14,9 +19,9 @@ import {openTerminal,listTerminals,readTerminal,inputTerminal,resizeTerminal,clo
 import { getView, setView } from './presentation'
 import type { ViewState } from '../shared/view'
 import { createServer, connect, type Server, type Socket } from 'node:net'
-import { existsSync, unlinkSync, cpSync, renameSync, rmSync } from 'node:fs'
+import { existsSync, unlinkSync, cpSync, renameSync, rmSync, chmodSync,realpathSync,statSync } from 'node:fs'
 import { mkdirSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { dirname,basename,isAbsolute,resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { APP_HOME, SOCKET_PATH, type Request, type Response } from '../shared/protocol'
 import {
@@ -28,7 +33,7 @@ import {
   sessionCommands,
   sessionInfo,
   setEffort,
-  setFastMode,
+  setFastMode,setRemoteAdmin,
   setPlanMode,steerMessage,backgroundProcesses,enqueueMessage,queuedMessages,removeQueuedMessage,
   setModel,
   setPermissionMode,
@@ -50,19 +55,18 @@ import {
   setRoom,
   writeStore
 } from './store'
-import { renameGroup, designRoom, updateEmployee, employeeFields, setTeamRoot, bindTeamRoot, setBounds, placeEmployee, setViewport,configureTeam,validateTeamSettings } from './store'
+import { renameGroup, designRoom, updateEmployee, employeeFields, setTeamRoot, bindTeamRoot, setBounds, placeEmployee, setViewport,configureTeam,validateTeamSettings,teamViewList,createTeamView,updateTeamView,removeTeamView,selectTeamView,canvasViewport } from './store'
 import {teamSettings,nativeSessionRefs} from '../shared/types'
 import {workspaceFiles} from './files'
 import { employeeWorkspace, chooseEmployeeWorkspace, executionEmployee, cloudDirectory, cloudRelative, workspaceName, workspaceStatus, teamRoot, managedTeamRoot, chooseTeamRoot, legacyPluginWorkspace, inside } from './workspaces'
-import { planOffice, DEFAULT_VIEW } from '../shared/canvas'
+import { planOffice } from '../shared/canvas'
 import { listPlugins, requirePlugin, installPlugin, pluginFile } from './plugins/registry'
 import { callPlugin, openPluginView, closePluginView,releaseWorkspacePlugins } from './plugins/runtime'
 import { provisionWorkspace, provisionEmployee } from './plugins/documents'
 import { readFileSync } from 'node:fs'
 import {deleteNativeSessions,nativeRefsForRemoval} from './native-sessions'
-import { transcriptItems,deleteTranscript } from './transcripts'
+import { transcriptItems,deleteTranscript,seedTranscript } from './transcripts'
 import { renderTranscript } from '../shared/transcript'
-import {isWebChat,openWebChat,webChatSnapshot,webChatInfo,listWebChats,sendWebChat,interruptWebChat,closeWebChat,webChatRequest,webChatView,attachWebChat} from './webchat'
 import type { EffortLevel, PermissionMode } from '@anthropic-ai/claude-agent-sdk'
 
 let beforeViewChange = async () => {}
@@ -80,9 +84,12 @@ const following = new Map<Socket, string>()
 
 /** Followers that want every engine event, not just the rendered transcript. */
 const rawFollowers = new Set<Socket>()
+let desktopEvent:(channel:string,payload:unknown)=>void=()=>{}
+export function setDesktopEvent(handler:typeof desktopEvent){desktopEvent=handler}
 
 /** Fan an event out to CLI clients. Wired from main's broadcast. */
 export function publishEvent(channel: string, payload: unknown): void {
+  desktopEvent(channel,payload)
   for (const [sock, sessionId] of following) {
     if (!sock.writable) continue
     const p = payload as { sessionId?: string }
@@ -118,6 +125,51 @@ export async function handleRequest(req: Request): Promise<any> {
   if(['card.update','card.move','card.remove','card.rename'].includes(req.cmd))assertTeamAvailable(readStore().sessions.find(c=>c.id===(a.id??a.cardId))?.group)
   if(['card.create','card.move','card.update','session.new'].includes(req.cmd))assertTeamAvailable(a.group??a.patch?.group)
   switch (req.cmd) {
+    case 'shared.info': return {path:sharedDirectory()}
+    case 'transfer.start': return startTransfer(a.from,a.to,fileEndpoint(a.from,false),fileEndpoint(a.to,true))
+    case 'transfer.list': return listTransfers()
+    case 'transfer.get': return getTransfer(s(a.id))
+    case 'transfer.cancel': return cancelTransfer(s(a.id))
+    case 'view.shared': return setView({...getView(),shared:!!a.enabled})
+    case 'host.fingerprints': return (await cloudHostFingerprints(s(a.id))).map(({line,...key})=>key)
+    case 'host.trust': return handleRequest({cmd:'host.update',args:{id:a.id,patch:{knownHosts:await trustCloudHostFingerprint(s(a.id),s(a.fingerprint))}}})
+    case 'host.exec': return executeRemote(cloudHostTarget(s(a.id),a.directory),s(a.command),a.timeout===undefined?120:Number(a.timeout))
+    case 'host.list': return listCloudHosts()
+    case 'host.get': return getCloudHost(s(a.id))
+    case 'host.credentials': return {id:s(a.id),password:cloudHostPassword(s(a.id))}
+    case 'host.create': {const host=createCloudHost(a);writeStore(readStore());publishEvent('hosts:changed',{});return host}
+    case 'host.update': {
+      const store=readStore(),teams=store.groups.filter(name=>teamSettings(store,name).hostId===a.id)
+      const candidate=validateCloudHostPatch(s(a.id),a.patch??{})
+      if(store.sessions.some(card=>card.kind==='cloud-native-worker'&&teams.includes(card.group))){
+        const previous=getCloudHost(s(a.id))
+        if(['host','os','port','identityFile','sshConfig','jump'].some(key=>JSON.stringify((previous as any)[key]??null)!==JSON.stringify((candidate as any)[key]??null)))throw new Error('Cloud Native Worker 正在使用此主机；不能把原生会话改绑到另一台主机')
+      }
+      for(const name of teams)remoteTarget({...candidate,directory:teamSettings(store,name).remote?.directory})
+      for(const card of store.sessions.filter(c=>teams.includes(c.group)))await closeForWorkspaceChange(card.id)
+      const host=updateCloudHost(s(a.id),a.patch??{})
+      for(const name of teams)closeRemote(teamConnectionId(name))
+      writeStore(readStore());publishEvent('hosts:changed',{});return host
+    }
+    case 'host.remove': {
+      const store=readStore(),teams=store.groups.filter(name=>teamSettings(store,name).hostId===a.id)
+      if(teams.length)throw new Error('云主机仍被 Team 绑定：'+teams.join('、'))
+      const result=removeCloudHost(s(a.id));closeRemote('host-'+s(a.id));publishEvent('hosts:changed',{});return result
+    }
+    case 'host.check': {
+      const id=s(a.id),host=getCloudHost(id)
+      let status:ReturnType<typeof recordCloudHostHealth>
+      try{await pingRemote(cloudHostTarget(id));status={connected:true,checkedAt:Date.now(),environment:{os:host.os,distribution:host.distribution}}}
+      catch(error){status={connected:false,checkedAt:Date.now(),error:(error as Error).message}}
+      recordCloudHostHealth(id,status);publishEvent('host:health',{id,status});return status
+    }
+    case 'host.directories': {
+      const target=cloudHostTarget(s(a.id),a.path),result=await remoteFiles('host-'+s(a.id),target,'list',{path:'.'})
+      return {path:result.root,entries:result.entries.filter((entry:any)=>entry.directory)}
+    }
+    case 'engine.remote-check': return checkCloudNative(s(a.team),s(a.engine) as 'codex'|'claude',a.directory)
+    case 'engine.remote-sessions': return listCloudNativeSessions(s(a.team),s(a.engine) as 'codex'|'claude')
+
     case 'schedule.schema': case 'schedule.status': case 'schedule.list': case 'schedule.get': case 'schedule.create':
     case 'schedule.update': case 'schedule.pause': case 'schedule.resume': case 'schedule.delete':
     case 'schedule.preview': case 'schedule.run': case 'schedule.history': case 'schedule.cancel':
@@ -131,12 +183,12 @@ export async function handleRequest(req: Request): Promise<any> {
       if(!['home','team','employee','workspace','conversation','settings','plugin','clone'].includes(kind))throw new Error('Unknown view kind')
       if((kind==='workspace'||(kind==='team'&&a.name))&&!store.groups.includes(a.name))throw new Error('Unknown Team')
       if((kind==='conversation'||kind==='clone'||a.employee)&&!store.sessions.some(c=>c.id===a.employee))throw new Error('Unknown employee')
-      const pluginId=a.pluginId??((kind==='conversation'||kind==='settings'||kind==='employee'||kind==='clone')?getView().pluginId:undefined)
+      const pluginId=a.pluginId??((kind==='settings'||kind==='employee'||kind==='clone')?getView().pluginId:undefined)
       if(kind==='plugin'||pluginId)requirePlugin(s(pluginId))
       if(kind==='conversation'&&pluginId){const card=store.sessions.find(c=>c.id===a.employee)!;if(teamSettings(store,card.group).pluginId!==pluginId)throw new Error('员工不属于当前插件')}
       await beforeViewChange()
       if(kind==='plugin'){await openPluginWindow(s(pluginId),pluginWorkspace({id:pluginId}));return setView({kind:'home',pluginId})}
-      return setView({kind,name:a.name,employee:a.employee,settings:a.settings,pluginId,details:!!a.details})
+      return setView({kind,name:a.name,employee:a.employee,settings:a.settings,pluginId,details:!!a.details,shared:getView().shared})
     }
     case 'view.close':
       await beforeViewChange()
@@ -155,6 +207,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'workspace.suggest': {
       const store=readStore(),config=teamSettings(store,s(a.team))
       if(a.mode==='cloud'||(!a.mode&&config.mode==='cloud')){const remote=remoteTarget(a.remote??config.remote);if(!remote)throw new Error('请在云主机 Team 中填写远端工作目录');return {path:remote.directory}}
+      if(!a.mode&&store.groups.includes(a.team)&&store.teamRoots?.[a.team])return {path:store.teamRoots[a.team]}
       return {path:!a.mode&&config.directoryMode==='bind'?store.teamRoots?.[a.team]:managedTeamRoot(s(a.team||'workspace'),a.mode?{mode:a.mode,pluginId:a.pluginId}:config)}
     }
     case 'workspace.choose':
@@ -177,6 +230,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'terminal.resize': return resizeTerminal(s(a.id),Number(a.cols),Number(a.rows))
     case 'terminal.close': return closeTerminal(s(a.id))
     case 'workspace.image':case 'workspace.list':case 'workspace.read':case 'workspace.write':case 'workspace.mkdir':case 'workspace.move':case 'workspace.trash':case 'workspace.restore': {
+      if(a.shared){if(a.team||a.employee)throw Error('共享文件夹不能同时指定 Team 或员工');return workspaceFiles(sharedDirectory(),req.cmd==='workspace.image'?'read-image':req.cmd.split('.')[1],a)}
       const store=readStore(),saved=a.employee?store.sessions.find(c=>c.id===a.employee):undefined,card=saved?executionEmployee(store,saved):undefined
       if(card?.remote){if(a.team&&a.team!==card.group)throw new Error('员工不属于这个 Team');return remoteFiles(card.id,card.remote,req.cmd==='workspace.image'?'read-image':req.cmd.split('.')[1],a)}
       if(!a.employee&&a.team&&teamSettings(store,a.team).mode==='cloud')return remoteFiles(teamConnectionId(a.team),teamSettings(store,a.team).remote!,req.cmd==='workspace.image'?'read-image':req.cmd.split('.')[1],a)
@@ -221,24 +275,19 @@ export async function handleRequest(req: Request): Promise<any> {
       }
 
     case 'session.list': {
-      if(a.live) return [...listLive().map((s) => sessionSnapshot(s.id)),...listWebChats()]
+      if(a.live) return listLive().map((s) => sessionSnapshot(s.id))
       const store=readStore()
       return {...store,sessions:store.sessions.map(c=>workspaceStatus(store,c))}
     }
 
-    case 'session.new': {
-      if(a.kind==='chatter')throw new Error('Use card.create with a Team and chat provider to create a web chat employee')
-      return startSession(a as StartArgs)
-    }
+    case 'session.new': return startSession(a as StartArgs)
 
     case 'session.open': {
-      if(isWebChat(s(a.cardId)))return openWebChat(s(a.cardId))
       return startSession({ cardId: s(a.cardId) })
     }
 
-    case 'session.activity': return isWebChat(s(a.id))?null:sessionSnapshot(s(a.id)).activityPreview??null
-    case 'session.snapshot':
-      return isWebChat(s(a.id))?webChatSnapshot(s(a.id)):sessionSnapshot(s(a.id))
+    case 'session.activity': return sessionSnapshot(s(a.id)).activityPreview??null
+    case 'session.snapshot': return sessionSnapshot(s(a.id))
     case 'approval.list':
       return approvalsFor(s(a.id))
     case 'approval.respond':
@@ -271,24 +320,7 @@ export async function handleRequest(req: Request): Promise<any> {
       if(a.path){const employee=executionEmployee(readStore(),card);const args={path:s(a.path),content,create:true};return employee.remote?remoteFiles(card.id,employee.remote,'write',args):workspaceFiles(employeeWorkspace(readStore(),card.group,card.cwd,card.id),'write',args)}
       return {format,content}
     }
-    case 'session.send':
-      if(isWebChat(s(a.id))){if(a.images?.length)throw new Error('Web chat image attachments are not supported');return {sent:await sendWebChat(s(a.id),s(a.text??''))}}
-      return { sent: await sendMessage(s(a.id), s(a.text??''),undefined,a.images) }
-
-    case 'chatter.status': case 'chatter.login': case 'chatter.import': case 'chatter.migrate':
-      return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length) as 'status'|'login'|'import'|'migrate',a)
-    case 'chatter.view': return webChatView(s(a.id))
-    case 'chatter.attach': return attachWebChat(s(a.id),Number(a.webContentsId))
-    case 'chatter.open-chrome': {
-      const provider=readStore().sessions.find(card=>card.id===a.id)?.chatProvider
-      if(!provider)return webChatRequest(s(a.id),'chrome.open')
-      if(process.env.AGENTS_COMPANY_HIDDEN==='1'&&!process.env[`AGENTS_COMPANY_CHAT_TEST_URL_${String(provider).toUpperCase()}`])return {opened:false,deferred:true}
-      return webChatRequest(s(a.id),'chrome.open')
-    }
-    case 'chatter.chrome-status': return webChatRequest(s(a.id),'chrome.status')
-    case 'chatter.close-chrome': return webChatRequest(s(a.id),'chrome.close')
-    case 'chatter.current': case 'chatter.bind': case 'chatter.inspect': case 'chatter.click': case 'chatter.fill': case 'chatter.press': case 'chatter.upload': case 'chatter.screenshot': case 'chatter.run': case 'chatter.sync':
-      return webChatRequest(s(a.id),req.cmd.slice('chatter.'.length),a)
+    case 'session.send': return { sent: await sendMessage(s(a.id), s(a.text??''),undefined,a.images) }
 
     case 'session.transcript': {
       const items = transcriptItems(s(a.id))
@@ -305,32 +337,34 @@ export async function handleRequest(req: Request): Promise<any> {
     }
 
     case 'session.info': {
-      if(isWebChat(s(a.id)))return webChatInfo(s(a.id))
       const info = sessionInfo(s(a.id))
       if (!info) throw new Error(`unknown session ${s(a.id)}`)
       return info
     }
 
     case 'session.interrupt':
-      return { interrupted: isWebChat(s(a.id))?await interruptWebChat(s(a.id)):await interrupt(s(a.id)) }
+      return { interrupted: await interrupt(s(a.id)) }
 
     case 'session.close': {
-      const closed = isWebChat(s(a.id))?await closeWebChat(s(a.id)):await closeSession(s(a.id))
+      const closed = await closeSession(s(a.id))
       return { closed }
     }
 
     case 'config.engine': {
       const store=readStore(),card=store.sessions.find(c=>c.id===a.id)??store.sessions.find(c=>c.id===sessionSnapshot(s(a.id)).cardId)
       if(!card)throw new Error('Unknown employee')
-      if(card.kind==='chatter')throw new Error('Web chat employees do not have a coding engine')
       employeeFields({engine:a.engine},card)
       assertTeamAvailable(card.group);assertNotRemoving(card.id)
+      if(card.kind==='cloud-native-worker'&&card.engine!==a.engine)await checkCloudNative(card.group,a.engine)
       if(card.engine!==a.engine)await closeForEngineChange(card.id)
       const next=updateEmployee(card.id,{engine:a.engine})
       return executionEmployee(next,next.sessions.find(c=>c.id===card.id)!)
     }
     case 'config.model':
       return { ok: await setModel(s(a.id), a.model ? s(a.model) : undefined) }
+    case 'config.remote-admin':
+      if(typeof a.enabled!=='boolean')throw new Error('enabled 必须为布尔值')
+      return {ok:await setRemoteAdmin(s(a.id),a.enabled)}
     case 'config.permission':
       return { ok: await setPermissionMode(s(a.id), a.mode as PermissionMode) }
     case 'config.plan':
@@ -383,12 +417,10 @@ export async function handleRequest(req: Request): Promise<any> {
       return askRenderer('wait', { selector: s(a.selector), timeout: a.timeout ?? 5000 })
 
     case 'commands.run': {
-      if(isWebChat(s(a.id)))throw new Error('Web chat employees do not expose agent slash commands')
       const text=s(a.text);if(!text.startsWith('/'))throw new Error('Command must start with /')
       return {sent:await sendMessage(s(a.id),text)}
     }
     case 'commands.list': {
-      if(isWebChat(s(a.id)))return []
       const all = sessionCommands(s(a.id))
       const f = String(a.filter ?? '').toLowerCase()
       const hidden = new Set(sessionInfo(s(a.id))?.terminalCommands ?? [])
@@ -414,18 +446,24 @@ export async function handleRequest(req: Request): Promise<any> {
 
     case 'group.list':
       {const store=readStore();return a.details?store.groups.map(name=>({name,root:store.teamRoots?.[name],...teamSettings(store,name)})):store.groups}
+    case 'team-view.list': return teamViewList()
+    case 'team-view.create': return createTeamView(s(a.name),a.teams??[])
+    case 'team-view.update': return updateTeamView(s(a.id),a.patch??{})
+    case 'team-view.remove': return removeTeamView(s(a.id))
+    case 'team-view.select': return selectTeamView(s(a.id))
     case 'group.add': {
       const name=s(a.name??'').trim();if(!name)throw new Error('Team 名称不能为空')
-      const config=validateTeamSettings({mode:a.mode??'build',pluginId:a.pluginId,directoryMode:a.directoryMode,remote:a.remote})
+      const config=validateTeamSettings({mode:a.mode??'build',pluginId:a.pluginId,directoryMode:a.directoryMode,hostId:a.hostId,directory:a.directory,remote:a.remote})
       if(config.mode==='cloud')config.remote={...config.remote!,directory:(await remoteFiles(teamConnectionId(s(a.name)),config.remote!,'directory',{path:'.'})).path}
       assertTeamAvailable(a.name)
       return addGroup(name,config.mode==='cloud'?config.remote!.directory:a.root,config)
     }
     case 'group.configure': {
       const store=readStore();if(!store.groups.includes(a.name))throw new Error('Unknown Team')
-      const previous=teamSettings(store,s(a.name)),config=validateTeamSettings({mode:a.mode,pluginId:a.pluginId,directoryMode:a.directoryMode,remote:a.mode==='cloud'?a.remote??previous.remote:a.remote})
+      const previous=teamSettings(store,s(a.name)),config=validateTeamSettings({mode:a.mode,pluginId:a.pluginId,directoryMode:a.directoryMode,hostId:a.mode==='cloud'?a.hostId??previous.hostId:undefined,directory:a.directory??(a.hostId&&a.hostId!==previous.hostId?undefined:previous.remote?.directory),remote:a.mode==='cloud'?a.remote??previous.remote:a.remote})
       const members=store.sessions.filter(card=>card.group===a.name)
       if(members.length&&(config.mode!==previous.mode||config.pluginId!==previous.pluginId))throw new Error('已有员工的 Team 不能切换工作区类型；请创建新的 Team')
+      if(members.some(card=>card.kind==='cloud-native-worker')&&(config.mode!=='cloud'||config.hostId!==previous.hostId||config.remote?.directory!==previous.remote?.directory))throw new Error('Cloud Native Worker 的主机和 Team 根目录不能通过普通配置更换')
       if(config.mode==='cloud'&&JSON.stringify(config.remote)!==JSON.stringify(previous.remote)){
         config.remote={...config.remote!,directory:(await remoteFiles(teamConnectionId(a.name),config.remote!,'directory',{path:'.'})).path}
         for(const card of members)await remoteFiles(teamConnectionId(a.name),config.remote,'directory',{path:cloudRelative(previous,card.cwd)})
@@ -455,8 +493,11 @@ export async function handleRequest(req: Request): Promise<any> {
       assertTeamAvailable(a.name)
       return setTeamRoot(s(a.name),root,!!a.create)
     }
-    case 'group.rename':
-      return renameGroup(s(a.name), s(a.nextName))
+    case 'group.rename': {
+      const old=s(a.name),next=String(a.nextName??'').trim(),store=renameGroup(old,next)
+      if(old!==next){closeRemote(teamConnectionId(old));const view=getView();if(view.name===old)setView({...view,name:next})}
+      return store
+    }
     case 'group.remove': {
       const name=s(a.name)
       if(!readStore().groups.includes(name))throw new Error('Unknown Team')
@@ -497,29 +538,47 @@ export async function handleRequest(req: Request): Promise<any> {
       if(a.zoom!==undefined&&(!Number.isFinite(a.zoom)||a.zoom<.08||a.zoom>3))throw new Error('Invalid canvas zoom')
       return placeEmployee(s(a.id),{x:Number(a.x),y:Number(a.y)},{snap:a.snap,zoom:a.zoom})
     case 'canvas.view':
-      return readStore().viewport ?? DEFAULT_VIEW
+      return canvasViewport()
     case 'canvas.set':
       return setViewport({x:Number(a.x),y:Number(a.y),zoom:Number(a.zoom)})
     case 'card.clone': return cloneEmployee(s(a.id),{title:s(a.title),cwd:a.cwd,directoryMode:a.directoryMode})
+    case 'card.native-bind': {
+      const card=readStore().sessions.find(value=>value.id===a.id),sessionId=s(a.sessionId)
+      if(!card||card.kind!=='cloud-native-worker')throw new Error('只有 Cloud Native Worker 可以绑定远端原生会话')
+      if(card.threadId||card.claudeSessionId||transcriptItems(card.id).length)throw new Error('员工已有会话，不能覆盖；请新建员工绑定另一条会话')
+      const {origin}=cloudNativeTarget(card)
+      await checkCloudNative(card.group,card.engine,cloudRelative(teamSettings(readStore(),card.group),card.cwd))
+      if(readStore().sessions.some(other=>other.id!==card.id&&nativeSessionRefs(other).some(ref=>ref.engine===card.engine&&ref.id===sessionId&&JSON.stringify(ref.origin??null)===JSON.stringify(origin))))throw new Error('此远端原生会话已属于另一名员工')
+      const items=await readCloudNativeSession(card,sessionId)
+      await closeForEngineChange(card.id)
+      seedTranscript(card.id,items)
+      try{const store=patchSession(card.id,{...(card.engine==='codex'?{threadId:sessionId}:{claudeSessionId:sessionId}),nativeOwnership:'external'});return {card:store.sessions.find(value=>value.id===card.id),imported:items.length}}
+      catch(error){deleteTranscript(card.id);throw error}
+    }
     case 'card.create': {
       const kind=a.kind??'worker'
-      if(!['worker','chatter'].includes(kind))throw new Error('Employee kind must be worker or chatter')
-      if(kind==='chatter'&&!['doubao','deepseek','chatgpt'].includes(a.chatProvider))throw new Error('Web chat provider must be doubao, deepseek or chatgpt')
-      if(kind==='worker'&&a.chatProvider!==undefined)throw new Error('Only chatter employees have a web chat provider')
+      if(!['worker','cloud-native-worker'].includes(kind))throw new Error('Only Local or Cloud Native Worker employees are supported')
+      if(a.chatProvider!==undefined||a.chatMode!==undefined||a.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')
       const engine = a.engine ?? 'codex'
       if (!['claude', 'codex'].includes(engine)) throw new Error('Unknown engine')
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
       const appearance = employeeFields(a)
       const store=readStore(),config=teamSettings(store,s(a.group??''))
-      if(kind==='chatter'&&!(config.mode==='build'||config.mode==='work'&&config.pluginId==='browser'))throw new Error('Web chat employees require a local Build Team or Browser Work Team')
+      if(!store.groups.includes(a.group))throw new Error('Unknown Team')
       if(a.remote!==undefined)throw new Error('云主机连接由 Team 统一配置，请创建或选择 cloud Team')
+      if(kind==='cloud-native-worker'){
+        if(config.mode!=='cloud'||!config.hostId)throw new Error('Cloud Native Worker 只能加入已绑定主机的 Cloud Team')
+        await checkCloudNative(s(a.group),engine)
+        await resolveEmployeeWorkspace(store,s(a.group),s(a.title),a.cwd,a.directoryMode,undefined,true)
+      }
       const cwd=await resolveEmployeeWorkspace(store,s(a.group??''),s(a.title),a.cwd,a.directoryMode)
       assertTeamAvailable(a.group)
       const latest=readStore();if(!latest.groups.includes(a.group)||JSON.stringify(teamSettings(latest,a.group))!==JSON.stringify(config))throw new Error('Team 已删除或配置已变更，请重新创建员工')
       provisionEmployee(cwd,store.teamRoots![a.group],config)
       const id = newSessionId()
-      const saved = patchSession(id, { ...appearance, id, title: s(a.title).trim(), engine, kind,chatProvider:kind==='chatter'?a.chatProvider:undefined,cwd, group: a.group ?? '', createdAt: Date.now(),
-        model: kind==='chatter'?undefined:a.model ?? (engine === 'codex' ? 'gpt-5.6-luna' : undefined),
+      const origin=kind==='cloud-native-worker'?{kind:'cloud' as const,hostId:config.hostId!,host:config.remote!.host,os:config.remote!.os,directory:cwd}:undefined
+      const saved = patchSession(id, { ...appearance,id, title: s(a.title).trim(), engine,kind,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
+        model: a.model ?? (engine === 'codex' ? (kind==='cloud-native-worker'?'gpt-6-luna':'gpt-5.6-luna') : undefined),
         effort: a.effort ?? 'low', permissionMode: config.mode!=='build'||managerCliRoot(cwd)?'acceptEdits':'default' })
       return executionEmployee(saved,saved.sessions.find((c) => c.id === id)!)
     }
@@ -527,12 +586,15 @@ export async function handleRequest(req: Request): Promise<any> {
       const store=readStore(), card=store.sessions.find(c=>c.id===a.id)
       if(!card) throw new Error('Unknown employee')
       const patch={...a.patch}
-      if(patch.kind!==undefined&&patch.kind!==(card.kind??'worker'))throw new Error('Employee kind is fixed after creation')
-      if(patch.chatProvider!==undefined&&patch.chatProvider!==card.chatProvider)throw new Error('Web chat provider is fixed after creation')
-      if(card.kind==='chatter'&&patch.engine!==undefined&&patch.engine!==card.engine)throw new Error('Web chat employees do not have a coding engine')
-      if(card.kind==='chatter'){const target=teamSettings(store,patch.group??card.group);if(!(target.mode==='build'||target.mode==='work'&&target.pluginId==='browser'))throw new Error('Web chat employees require a local Build Team or Browser Work Team')}
+      if(patch.kind!==undefined&&patch.kind!==(card.kind??'worker'))throw new Error('员工职位创建后不可更改')
+      if(patch.chatProvider!==undefined||patch.chatMode!==undefined||patch.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')
       employeeFields(patch,card)
       if(patch.remote!==undefined)throw new Error('云主机连接由 Team 统一配置，员工不能覆盖主机')
+      if(card.kind==='cloud-native-worker'){
+        cloudNativeTarget(card)
+        if(patch.group!==undefined&&patch.group!==card.group)throw new Error('Cloud Native Worker 不能移动到另一 Team')
+        if(patch.engine!==undefined&&patch.engine!==card.engine)await checkCloudNative(card.group,patch.engine)
+      }
       if(patch.engine!==undefined&&patch.engine!==card.engine)await closeForEngineChange(card.id)
       if(patch.group!==undefined || patch.cwd!==undefined || patch.directoryMode!==undefined) {
         const group=patch.group??card.group,input=patch.directoryMode==='default'?patch.cwd:patch.cwd??card.cwd
@@ -557,7 +619,7 @@ export async function handleRequest(req: Request): Promise<any> {
     case 'card.move': {
       const store=readStore(),card=store.sessions.find(c=>c.id===a.id)
       if(!card)throw new Error('Unknown employee')
-      if(card.kind==='chatter'){const target=teamSettings(store,s(a.group));if(!(target.mode==='build'||target.mode==='work'&&target.pluginId==='browser'))throw new Error('Web chat employees require a local Build Team or Browser Work Team')}
+      if(card.kind==='cloud-native-worker'&&a.group!==card.group)throw new Error('Cloud Native Worker 不能移动到另一 Team')
       const input=a.cwd??(card.group===a.group?card.cwd:undefined)
       const cwd=await resolveEmployeeWorkspace(store,s(a.group),card.title,input,a.cwd?'bind':undefined,card.id,true)
       if(cwd!==card.cwd||a.group!==card.group) await closeForWorkspaceChange(card.id)
@@ -584,11 +646,10 @@ async function removeEmployees(ids:string[]) {
       beginEmployeeRemoval(id);locked.push(id)
     }
     for(const id of wanted){await closeEmployeeTerminals(id);closeRemote(id)}
-    for(const id of wanted)if(isWebChat(id))await closeWebChat(id)
     for(const live of listLive())if(wanted.has(sessionSnapshot(live.id).cardId!))await closeSession(live.id)
     const latest=readStore(),refs=latest.sessions.filter(card=>wanted.has(card.id)).flatMap(nativeRefsForRemoval)
     const others=latest.sessions.filter(card=>!wanted.has(card.id)).flatMap(nativeSessionRefs)
-    if(refs.some(ref=>others.some(other=>other.engine===ref.engine&&other.id===ref.id)))throw new Error('原生会话仍被其他员工引用，未移除员工')
+    if(refs.some(ref=>ref.ownership!=='external'&&others.some(other=>other.engine===ref.engine&&other.id===ref.id&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))))throw new Error('原生会话仍被其他员工引用，未移除员工')
     await deleteNativeSessions(refs)
     for(const id of wanted)deleteTranscript(id)
     const store=removeSession([...wanted]),view=getView()
@@ -626,6 +687,19 @@ function workspaceContext(args:Record<string,any>) {
   return {name,store,teamRoot:root,root:employee?employeeWorkspace(store,name,employee.cwd,employee.id):root,settings:teamSettings(store,name)}
 }
 
+function fileEndpoint(ref:FileLocation,destination:boolean):FileEndpoint {
+  if(!ref||typeof ref.path!=='string'||[!!ref.shared,!!ref.team,!!ref.employee,!!ref.local].filter(Boolean).length!==1)throw Error('文件位置必须指定一个 shared/team/employee/local 和 path')
+  if(ref.shared)return {root:sharedDirectory(),path:ref.path||'.'}
+  if(ref.local){
+    if(!isAbsolute(ref.path))throw Error('本地路径必须为绝对路径')
+    if(destination){const root=realpathSync(ref.path);if(!statSync(root).isDirectory())throw Error('目标必须是文件夹');return {root,path:'.'}}
+    const file=resolve(ref.path);return {root:realpathSync(dirname(file)),path:basename(file)}
+  }
+  const context=workspaceContext(ref),root=context.settings.mode==='cloud'?cloudDirectory(context.settings,context.root):context.root
+  const remote=context.settings.mode==='cloud'?{...context.settings.remote!,directory:root}:undefined
+  return {root,path:ref.path||'.',remote}
+}
+
 async function closeForEngineChange(cardId:string):Promise<void> {
   assertEmployeeControl(cardId)
   for(const live of listLive()){const snapshot=sessionSnapshot(live.id);if(snapshot.cardId===cardId){if(snapshot.busy)throw new Error('员工正在工作，请先停止任务再切换引擎或工作空间');await closeSession(live.id)}}
@@ -633,7 +707,6 @@ async function closeForEngineChange(cardId:string):Promise<void> {
 
 async function closeForWorkspaceChange(cardId: string): Promise<void> {
   assertEmployeeControl(cardId)
-  if(isWebChat(cardId)){const chat=listWebChats().find(s=>s.id===cardId);if(chat?.busy)throw new Error('员工正在聊天，请先停止再更改工作空间');await closeWebChat(cardId)}
   for(const live of listLive()) {
     const state=sessionSnapshot(live.id)
     if(state.cardId!==cardId) continue
@@ -670,7 +743,7 @@ export function startServer(onListening: () => void = () => {}): void {
       // `raw: true` forwards every engine event, not just the rendered text.
       if (req.cmd === 'session.follow') {
         const sessionId = String((req.args ?? {}).id)
-        const info = isWebChat(sessionId)?webChatInfo(sessionId):sessionInfo(sessionId)
+        const info = sessionInfo(sessionId)
         if (!info) {
           sock.end(JSON.stringify({ ok: false, error: `unknown session ${sessionId}` }) + '\n')
           return
@@ -697,7 +770,7 @@ export function startServer(onListening: () => void = () => {}): void {
     })
   })
 
-  const listen = () => server!.listen(SOCKET_PATH, () => { ownsSocket = true; onListening() })
+  const listen = () => server!.listen(SOCKET_PATH, () => { chmodSync(SOCKET_PATH,0o600); ownsSocket = true; onListening() })
   server.on('error', (err) => { console.error('[socket]', err.message); process.exitCode = 1 })
   if (!existsSync(SOCKET_PATH)) { listen(); return }
   // Probe before removing a stale socket; never detach another running service.

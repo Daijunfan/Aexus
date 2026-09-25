@@ -1,4 +1,5 @@
-import {createHash} from 'node:crypto'
+import {cloudHostAskpass} from './cloud-hosts'
+import {createHash,randomUUID} from 'node:crypto'
 import {teamSettings,type Store} from '../shared/types'
 import {chooseEmployeeWorkspace,cloudDirectory,cloudRelative} from './workspaces'
 import fs from 'node:fs'
@@ -16,6 +17,7 @@ export const python=()=>resolveBinary('python3',process.env.AGENTS_COMPANY_PYTHO
 export function tunnelConfig(target:RemoteTarget){
   const value:Record<string,unknown>={host:target.host,directory:target.directory,os:target.os,port:target.port,proxy_jump:target.jump}
   for(const [key,field] of [['identityFile','identity_file'],['knownHosts','known_hosts'],['sshConfig','ssh_config']] as const){const file=target[key];if(file){if(!path.isAbsolute(file)&&!file.startsWith('~/'))throw new Error('SSH 文件配置必须使用绝对路径或 ~/');value[field]=file.startsWith('~/')?path.join(homedir(),file.slice(2)):file}}
+  if(target.credentialId)value.askpass=cloudHostAskpass(target.credentialId,target)
   return value
 }
 export type RemoteLaunch={cwd:string;args:string[];server:{command:string;args:string[]};instructions:string}
@@ -33,6 +35,7 @@ function bridge(operation:string,input:Record<string,unknown>):Promise<any>{
   })
 }
 export function checkRemote(value:unknown){const target=remoteTarget(value);if(!target)throw new Error('请先配置云主机');return bridge('check',{target:tunnelConfig(target)})}
+export function pingRemote(value:unknown){const target=remoteTarget(value);if(!target)throw new Error('请先配置云主机');return bridge('ping',{target:tunnelConfig(target)})}
 export function prepareRemote(id:string,engine:Engine,target:RemoteTarget):Promise<RemoteLaunch>{
   return bridge('prepare',{engine,target:tunnelConfig(target),session:path.join(APP_HOME,'tunnel',id)})
 }
@@ -48,7 +51,7 @@ class RemoteFiles {
     this.ready=this.request('initialize',{protocolVersion:'2024-11-05',capabilities:{},clientInfo:{name:'agents-company-files',version:'1'}})
   }
   fail(error:Error){for(const item of this.pending.values()){clearTimeout(item.timer);item.reject(error)}this.pending.clear()}
-  request(method:string,params:Record<string,unknown>):Promise<any>{return new Promise((resolve,reject)=>{const id=++this.sequence,timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('远程文件操作超时'));this.close()},25000);this.pending.set(id,{resolve,reject,timer});this.child.stdin.write(JSON.stringify({jsonrpc:'2.0',id,method,params})+'\n')})}
+  request(method:string,params:Record<string,unknown>,timeout=25000):Promise<any>{return new Promise((resolve,reject)=>{const id=++this.sequence,timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('远程文件操作超时'));this.close()},timeout);this.pending.set(id,{resolve,reject,timer});this.child.stdin.write(JSON.stringify({jsonrpc:'2.0',id,method,params})+'\n')})}
   async call(operation:string,args:Record<string,unknown>){await this.ready;return this.request('tools/call',{name:'workspace',arguments:{operation,args}})}
   close(){if(this.child.pid)try{process.kill(-this.child.pid,'SIGTERM')}catch{}this.fail(new Error('SSH 文件连接已关闭'))}
 }
@@ -78,4 +81,15 @@ export async function resolveEmployeeWorkspace(store:Store,group:string,title:st
   if(generated&&input&&cloudDirectory(config,input)!==target)throw new Error('默认工作目录由员工名字生成')
   const result=await remoteFiles(teamConnectionId(group),config.remote,'directory',{path:cloudRelative(config,target),create:generated||mode==='create',exclusive:!own,preview})
   return result.path
+}
+
+/** A fresh remote MCP connection per management command; no local shell or fallback. */
+export async function executeRemote(target:RemoteTarget,command:string,timeout=120){
+  if(!command.trim()||!Number.isFinite(timeout)||timeout<.1||timeout>600)throw new Error('command 非空，timeout 必须为 0.1–600 秒')
+  const id='host-command-'+randomUUID();let client:RemoteFiles|undefined
+  try{
+    client=new RemoteFiles(await prepareRemote(id,'codex',target));await client.ready
+    const reply=await client.request('tools/call',{name:'execute',arguments:{command,timeout}},(timeout+10)*1000)
+    const result=JSON.parse(reply.content[0].text);if(reply.isError&&typeof result.exit_code!=='number')throw remoteError(result.error||'远程命令失败');return result
+  }finally{client?.close();fs.rmSync(path.join(APP_HOME,'tunnel',id),{recursive:true,force:true})}
 }

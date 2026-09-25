@@ -14,6 +14,32 @@ export function workspacePath(root:string,value='.',write=false) {
 const hash=(value:Buffer)=>createHash('sha256').update(value).digest('hex')
 export function workspaceFiles(root:string,operation:string,args:Record<string,any>) {
   const file=workspacePath(root,args.path||'.',['write','mkdir','move','trash'].includes(operation))
+  if(operation==='copy-info'){
+    if(!fs.existsSync(file))return {exists:false}
+    const stat=fs.lstatSync(file);return {exists:true,directory:stat.isDirectory(),regular:stat.isFile(),symlink:stat.isSymbolicLink(),bytes:stat.size,modifiedAt:stat.mtimeMs,mode:stat.mode&0o777}
+  }
+  if(operation==='copy-read'){
+    const {offset,length}=args
+    if(!Number.isSafeInteger(offset)||offset<0||!Number.isInteger(length)||length<1||length>262144)throw Error('Invalid transfer range')
+    const stat=fs.lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink())throw Error('只能传输普通文件')
+    const fd=fs.openSync(file,'r'),buffer=Buffer.alloc(length)
+    try{const bytes=fs.readSync(fd,buffer,0,length,offset);return {data:buffer.subarray(0,bytes).toString('base64'),bytes}}finally{fs.closeSync(fd)}
+  }
+  if(['copy-write','copy-commit','copy-remove'].includes(operation)){
+    workspacePath(root,args.path,true)
+    if(!path.relative(root,file).split(path.sep).some(p=>/^\.agents-transfer-[a-f0-9-]{36}$/.test(p)))throw Error('Invalid transfer staging path')
+    if(operation==='copy-remove'){fs.rmSync(file,{recursive:true,force:true});return {removed:true}}
+    if(operation==='copy-commit'){
+      const to=workspacePath(root,String(args.to),true)
+      if(fs.existsSync(to))throw Error('目标已有同名文件，未覆盖')
+      if(fs.statSync(file).isDirectory())fs.renameSync(file,to)
+      else{fs.linkSync(file,to);fs.unlinkSync(file)}
+      return {path:args.to}
+    }
+    if(!Number.isSafeInteger(args.offset)||args.offset<0||typeof args.data!=='string'||args.data.length>349528)throw Error('Invalid transfer chunk')
+    const data=Buffer.from(args.data,'base64'),fd=fs.openSync(file,args.offset===0?'wx':'r+',(Number(args.mode)||0o600)|0o600)
+    try{if(fs.fstatSync(fd).size!==args.offset)throw Error('Transfer offset mismatch');let done=0;while(done<data.length)done+=fs.writeSync(fd,data,done,data.length-done,args.offset+done);if(args.final)fs.fchmodSync(fd,Number(args.mode)||0o600);return {bytes:data.length}}finally{fs.closeSync(fd)}
+  }
   if(operation==='list')return {root,path:path.relative(root,file),entries:fs.readdirSync(file,{withFileTypes:true}).filter(e=>args.hidden||!e.name.startsWith('.')).map(e=>{const child=path.join(file,e.name),stat=fs.lstatSync(child);return {name:e.name,path:path.relative(root,child),directory:e.isDirectory(),symlink:e.isSymbolicLink(),bytes:stat.size,modifiedAt:stat.mtimeMs}}).sort((a,b)=>Number(b.directory)-Number(a.directory)||a.name.localeCompare(b.name))}
   if(operation==='read-image'){
     if(fs.statSync(file).size>10*1024*1024)throw new Error('图片不能超过 10 MB')

@@ -32,7 +32,7 @@ pid, master = pty.fork()
 if pid == 0:
     os.chdir(config['cwd'])
     os.environ['TERM'] = 'xterm-256color'
-    os.execvpe(args[0], args, os.environ)
+    os.execvpe(args[0], args, transport.ssh_env(target) if target else os.environ)
 
 def send(value):
     print(json.dumps(value), flush=True)

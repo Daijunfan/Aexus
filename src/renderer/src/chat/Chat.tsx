@@ -1,7 +1,10 @@
 // Rendering one conversation: turns, and the blocks inside them.
 
 import { useState } from 'react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import {EngineData,RawData} from '../components/EngineData'
+import {api} from '../api'
 import type { Block, Item } from '../../../shared/types'
 import { format, summarize, truncate } from '../../../shared/transcript'
 
@@ -32,7 +35,7 @@ export function BlockView({ block }: { block: Block }) {
     let data:unknown
     try { if(block.text.trim().startsWith('{'))data=JSON.parse(block.text) } catch {}
     if(data&&typeof data==='object')return <details className="command-data" open><summary>返回结果</summary><EngineData data={data}/><RawData data={data}/></details>
-    return <div className="text">{block.text}</div>
+    return <div className="text markdown"><Markdown remarkPlugins={[remarkGfm]} components={{a:({href,children})=>href&&/^https?:\/\//i.test(href)?<a href={href} onClick={event=>{event.preventDefault();void api.call('external.open',{url:href})}}>{children}</a>:<span>{children}</span>}}>{block.text}</Markdown></div>
   }
   if (block.kind === 'thinking') return <Thinking text={block.text} done={block.done} />
   return <ToolCall block={block} />

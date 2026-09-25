@@ -2,8 +2,10 @@
 // React, or any browser API — the CLI runs it in plain Node.
 
 export type Engine = 'claude' | 'codex'
-export type NativeSession = {engine:Engine;id:string}
-export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind' }
+export type EmployeeKind = 'worker' | 'cloud-native-worker'
+export type NativeOrigin = {kind:'cloud';hostId:string;host:string;os:'linux'|'macos'|'windows';directory:string}
+export type NativeSession = {engine:Engine;id:string;origin?:NativeOrigin;ownership?:'external'}
+export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; hostId?:string; directory?:string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind' }
 export const teamSettings = (store: Pick<Store,'teamSettings'>, name: string): TeamSettings => store.teamSettings?.[name] ?? {mode:'build'}
 import type { Accessory, AvatarKind, RoomDesign } from './office'
 import type { Point, RoomBounds, Viewport } from './canvas'
@@ -60,8 +62,7 @@ export const ENGINES: { value: Engine; label: string; hint: string }[] = [
 export type StoredSession = {
   id: string
   engine: Engine
-  kind?: 'worker' | 'chatter'
-  chatProvider?: 'doubao' | 'deepseek' | 'chatgpt'
+  kind?: EmployeeKind
   title: string
   group: string
   cwd: string
@@ -71,6 +72,8 @@ export type StoredSession = {
   claudeSessionId?: string
   threadId?: string
   nativeSessions?: NativeSession[]
+  nativeOrigin?: NativeOrigin
+  nativeOwnership?: 'external'
   /** Native cloud execution uses a clean engine context; host history is preserved. */
   codexExecution?: 'native-v1'
   createdAt: number
@@ -80,6 +83,7 @@ export type StoredSession = {
   planMode?: boolean
   usage?: Record<string,unknown>
   pendingMessages?: {id:string;text:string;images?:string[]}[]
+  remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
   fastModeDisabledReason?: string
@@ -109,9 +113,14 @@ export type RoomLayout = {
   bounds?: RoomBounds
 }
 
+export const ALL_TEAM_VIEW='all'
+export type TeamView={id:string;name:string;teams:string[];viewport?:Viewport}
+
 export type Store = {
   sessions: StoredSession[]
   groups: string[]
+  teamViews?:TeamView[]
+  activeTeamViewId?:string
   /** Layout per department name; a missing entry means "not placed yet". */
   rooms?: Record<string, RoomLayout>
   teamRoots?: Record<string, string>
@@ -166,6 +175,7 @@ export type Session = {
   planMode?: boolean
   usage?: Record<string,unknown>
   pendingMessages?: {id:string;text:string;images?:string[]}[]
+  remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
   fastModeDisabledReason?: string
@@ -195,6 +205,7 @@ export type SessionMeta = {
   planMode?: boolean
   usage?: Record<string,unknown>
   pendingMessages?: {id:string;text:string;images?:string[]}[]
+  remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
   fastModeDisabledReason?: string
@@ -236,7 +247,7 @@ export function groupSessions(
 /** Old native IDs survive workspace/context changes until the employee is removed. */
 export function nativeSessionRefs(card:StoredSession):NativeSession[] {
   const refs=[...(card.nativeSessions??[])]
-  if(card.threadId)refs.push({engine:'codex',id:card.threadId})
-  if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId})
-  return refs.filter((ref,i)=>refs.findIndex(other=>other.engine===ref.engine&&other.id===ref.id)===i)
+  if(card.threadId)refs.push({engine:'codex',id:card.threadId,origin:card.nativeOrigin,ownership:card.nativeOwnership})
+  if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId,origin:card.nativeOrigin,ownership:card.nativeOwnership})
+  return refs.filter((ref,i)=>refs.findIndex(other=>other.engine===ref.engine&&other.id===ref.id&&other.ownership===ref.ownership&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))===i)
 }

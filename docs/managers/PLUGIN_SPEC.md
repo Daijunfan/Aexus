@@ -48,7 +48,7 @@ agents workspace docs --team '任意 Team 名称'
 
 ## Workspace contract
 
-Team 有三种类型：**Work** 绑定已安装插件，**Build** 使用本机项目文件夹，**cloud** 使用 Team 统一配置的 SSH 主机和远端根目录。cloud 员工继承连接，只选择工作子目录；Work 插件保持本地运行。
+Team 有三种类型：**Work** 绑定已安装插件，**Build** 使用本机项目文件夹，**cloud** 绑定 Cloud Hosts 登记的 SSH 主机 ID 和远端根目录。cloud 员工继承连接，只选择工作子目录；Work 插件保持本地运行。
 Build 不自动注入插件；`autoAttach` 作为旧 manifest 字段保留兼容，0.5 起以 Work
 Team 明确选择的 `pluginId` 为准。左侧目录展示所有已安装插件。点击直接打开其完整页面，不创建 Team，不弹出 Team 菜单。
 
@@ -59,7 +59,7 @@ agents group list --details --json
 agents plugin call mininotion fs.list --employee EMPLOYEE_ID
 ```
 
-新的 Work Team 根目录固定为插件源码文件夹下的 `workspaces/<Team 名称>`，例如
+新的 Work Team 根目录固定为插件源码文件夹下的 `workspaces/<创建时的 Team 名称>`，例如
 `PlugIns/mini-notion/workspaces/Planning`。一个插件的多个 Team 各有独立目录；
 创建 Team 时不能使用 `--directory-mode bind --root PATH` 选择其他位置。已登记的
 旧 Team 继续使用原目录，升级不会自动移动文件。
@@ -68,8 +68,8 @@ agents plugin call mininotion fs.list --employee EMPLOYEE_ID
 在其自身插件文件夹下保留 `workspaces` 子目录。
 员工必须使用所属 Team 根目录的**子目录**，支持任意层级嵌套，不能占用 Team 根目录。同一个确切目录对应一个员工；父目录员工可以操作所有子目录，子目录员工
 不能操作父目录或兄弟目录。Build 可以让多名员工共用普通项目根目录。
-Build 自动使用 `~/develop/Agents-company-projects/<Team 名称>`。创建 Team 会创建
-对应目录；也可绑定其他已有的物理文件夹。Team 与员工名称在创建后固定，UI 与 CLI 均不可改名；绑定目录始终留在原处。员工支持新建文件夹
+Build 自动使用 `~/develop/Agents-company-projects/<创建时的 Team 名称>`。创建 Team 会创建
+对应目录；也可绑定其他已有的物理文件夹。Team 可在 UI 与 CLI 中改名，但原工作目录与员工目录不变；员工名称仍在创建后固定。员工支持新建文件夹
 （`--directory-mode default`，与员工同名）或绑定已有物理文件夹（`bind`）。
 旧版本未指定模式的 Team 按 Build 兼容。`group migrate NAME` 保留文件迁入新目录，
 保存元数据备份。已有员工的 Team 不可切换模式/插件，空 Team 可以更改。
@@ -284,3 +284,11 @@ MiniNotion 的 `--workspace` 模式将 Markdown、代码/文本、CSV、图片�
 完整规范见 [SCHEDULER.md](SCHEDULER.md)。`source` 可保存插件 ID 以便过滤；它不授予权限。
 模型、思考覆盖是临时的，目录和引擎身份来自已有员工；不要另启隐藏会话或私自提升权限。
 宿主运行才会触发，插件必须呈现真实的失败、跳过、取消结果。本版本没有把它接入 MiniNotion。
+
+## Application service plugins
+
+`scope: "application"` 表示插件通过宿主公开 API 管理跨 Team 的平台资源；默认为 `workspace`。这是显式的管理能力，员工文档入口会说明这一点。工作文件仍限定在员工目录内，插件不得通过读取父目录偷偷扩大文件权限。应用级业务能力通过文档和 schema 明确列出，不通过私有 IPC。
+
+Cloud Hosts (`PlugIns/cloud-hosts`，独立 Git 仓库) 是此类插件：独立 CLI、runtime 和 UI 共用宿主 `host.*` Core 服务。可无窗口运行 `agents serve`；它不依赖 Electron、不导入宿主实现、不保存第二份主机库。创建 Work Team 并选择 `cloud-hosts` 后，每位 Worker 自动获得完整主机管理文档与 CLI；sandbox 内仍使用标准 mailbox。
+
+新 cloud Team 只能使用已登记 `hostId` 和现有远端 `directory`。旧 SSH 配置自动迁入主机库，数据备份后去重；新 Team 不再新建账号。连接详情与凭据通过 `host` CLI 或 Cloud Hosts UI 修改，密码默认隐藏。

@@ -29,7 +29,6 @@ export default function App() {
   const [opening,setOpening]=useState(false),[openError,setOpenError]=useState(''),[savedItems,setSavedItems]=useState<Item[]>([])
   const openSequence=useRef(0)
   const [input, setInput] = useState('')
-  const [chatterPane,setChatterPane]=useState<'chrome'|'cli'>('chrome'),[chromeConnected,setChromeConnected]=useState(false),[chromeVersion,setChromeVersion]=useState(''),[chatterAuth,setChatterAuth]=useState<'unknown'|'signed-in'|'login'|'challenge'>('unknown')
   const [images,setImages]=useState<string[]>([])
   const imageDrafts=useRef<Record<string,string[]>>({})
   const drafts=useRef<Record<string,string>>({})
@@ -49,11 +48,19 @@ export default function App() {
   const closeConversation=()=>void act('view.close')
   useDialogFocus('.conversation-dialog', !!active&&!view.pluginId)
   const busyIds = useMemo(() => new Set(sessions.filter((s) => s.busy).map((s) => s.cardId ?? s.id)), [sessions])
+  const disconnectedIds = useMemo(() => new Set(sessions.filter(s=>s.error&&store.sessions.some(card=>card.id===(s.cardId??s.id)&&card.kind==='cloud-native-worker')).map(s=>s.cardId??s.id)),[sessions,store.sessions])
   const refreshSequence=useRef(0)
-  const refresh = useCallback(async () => {
+  const refreshPending=useRef<Promise<void>|null>(null)
+  const refresh = useCallback(():Promise<void> => {
     const sequence=++refreshSequence.current
-    const [saved, live] = await Promise.all([api.call<Store>('session.list'), api.call<Session[]>('session.list', { live: true })])
-    if(sequence===refreshSequence.current){setStore(saved); setSessions(live)}
+    const pending=Promise.all([api.call<Store>('session.list'), api.call<Session[]>('session.list', { live: true })]).then(async ([saved,live])=>{
+      // A save must wait for the snapshot actually published to React. Otherwise
+      // a competing event refresh clears the drag preview onto stale positions.
+      if(sequence!==refreshSequence.current){await refreshPending.current;return}
+      setStore(saved);setSessions(live)
+    })
+    refreshPending.current=pending
+    return pending
   }, [])
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -61,7 +68,7 @@ export default function App() {
       if (timer) return
       timer = setTimeout(() => { timer = undefined; void refresh().catch((e) => setError(String(e))) }, 35)
     }
-    const off = api.onEvent(event=>{if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&event.channel!=='plugin:windows')schedule()})
+    const off = api.onEvent(event=>{if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&!['plugin:windows','host:health'].includes(event.channel))schedule()})
     void api.call<ViewState>('view.get').then(showView).catch(e=>setError(String(e)))
     void refresh().catch((e) => setError(String(e)))
     return () => { off(); clearTimeout(timer) }
@@ -82,13 +89,10 @@ export default function App() {
   },[store.preferences?.pageZoom,act])
   const openCard = async (card: StoredSession) => {
     const sequence=++openSequence.current
-    setChatterPane('chrome');setChromeConnected(false);setChromeVersion('');setChatterAuth('unknown')
     setSelectedCardId(card.id);setActiveId(null);setInput(drafts.current[card.id]??'');setImages(imageDrafts.current[card.id]??[]);setMenu(null);setSavedItems([]);setOpenError(card.workspaceError??'');setOpening(!card.workspaceError)
     void api.call<{items:Item[]}>('session.transcript',{id:card.id}).then(data=>{if(sequence===openSequence.current)setSavedItems(data.items)}).catch(()=>{})
     if(card.workspaceError)return
     try{const opened=await api.call('session.open',{cardId:card.id});await refresh();if(sequence===openSequence.current)setActiveId(opened.sessionId)
-      if(card.kind==='chatter'){const launch=await api.call<{deferred?:boolean}>('chatter.open-chrome',{id:card.id});const state=await api.call<{connected:boolean;version?:string}>('chatter.chrome-status',{id:card.id});if(sequence===openSequence.current){setChromeConnected(state.connected);setChromeVersion(state.version??'')}
-        if(!launch.deferred)void api.call<{authenticated?:boolean;challenge?:boolean}>('chatter.status',{id:card.id}).then(status=>{if(sequence===openSequence.current)setChatterAuth(status.challenge?'challenge':status.authenticated?'signed-in':'login')}).catch(()=>{})}
     }
     catch(error){if(sequence===openSequence.current)setOpenError((error as Error).message)}
     finally{if(sequence===openSequence.current)setOpening(false)}
@@ -111,7 +115,6 @@ export default function App() {
 
   const stop = () => active && act('session.interrupt', { id: active.id })
   const configure = (cmd: string, args: Record<string, unknown>) => active && act(cmd, { id: active.id, ...args })
-  const checkChatterAuth=async(id:string)=>{const status=await act('chatter.status',{id}) as {authenticated?:boolean;challenge?:boolean}|undefined;if(status)setChatterAuth(status.challenge?'challenge':status.authenticated?'signed-in':'login')}
   useEffect(() => {
     const el = transcript.current
     if (el) el.scrollTop = el.scrollHeight
@@ -141,21 +144,21 @@ export default function App() {
   const modelLabel = active?.models.find((m) => m.value === active.model)?.displayName ?? active?.model ?? 'Configured model'
   const work=!!employee&&teamSettings(store,employee.group).mode==='work'
   useEffect(()=>{document.querySelector('.commands [aria-selected="true"]')?.scrollIntoView({block:'nearest'})},[cmdIndex,input])
-  return <div className={`app in-office ${view.pluginId?'in-plugin':''}`} data-resizing={sidebarDraft!==undefined} style={{'--directory-width':`clamp(56px, ${sidebarDraft??store.preferences?.sidebarWidth??DEFAULT_PREFERENCES.sidebarWidth}px, 96px)`} as CSSProperties}>
-    <HomeView store={store} view={view} activities={Object.fromEntries(sessions.filter(s=>s.activityPreview).map(s=>[s.cardId??s.id,s.activityPreview!]))} busyIds={busyIds} onResize={setSidebarDraft} onOpen={card=>void act('view.open',{kind:'conversation',employee:card.id,...(view.pluginId?{pluginId:view.pluginId}:{})})} act={act} />
+  return <div className={`app in-office ${view.pluginId?'in-plugin':''}`} data-resizing={sidebarDraft!==undefined} style={{'--shared-width':view.shared?'320px':'0px','--directory-width':`clamp(56px, ${sidebarDraft??store.preferences?.sidebarWidth??DEFAULT_PREFERENCES.sidebarWidth}px, 96px)`} as CSSProperties}>
+    <HomeView store={store} view={view} activities={Object.fromEntries(sessions.filter(s=>s.activityPreview).map(s=>[s.cardId??s.id,s.activityPreview!]))} busyIds={busyIds} disconnectedIds={disconnectedIds} onResize={setSidebarDraft} onOpen={card=>void act('view.open',{kind:'conversation',employee:card.id})} act={act} />
     {error && <div className="app-error" role="alert">{error}<button onClick={() => setError('')} aria-label="Dismiss error">×</button></div>}
     {active && <div className="conversation-layer">
       <div className="conversation-backdrop" onClick={closeConversation} />
-      <section className="conversation-dialog" role="dialog" aria-modal={!view.pluginId} aria-label={`${active.title} 的会话`}>
+      <section className="conversation-dialog" role="dialog" aria-modal={!view.shared&&!view.pluginId} aria-label={`${active.title} 的会话`}>
       <main className="main session-main">
         <header className="toolbar">
           {editingEmployee&&<button className="inspector-back" onClick={()=>setEditingEmployee(false)}><Icon name="arrow-left"/> 返回会话</button>}
           <button className="back" title="收起会话，继续工作" aria-label="收起会话" onClick={closeConversation}><Icon name="close"/></button>
-          <span className="session-heading">{employee?.kind==='chatter'?<span className="chatter-mark">✦</span>:<EngineMark engine={active.engine} size={20} />}<SessionTitle title={employee?.title??active.title}/></span>
+          <span className="session-heading"><EngineMark engine={active.engine} size={20} /><SessionTitle title={employee?.title??active.title}/><small className="execution-badge" title={employee?.remote?.host}>{employee?.kind==='cloud-native-worker'?'Cloud Native Worker':'Local Worker'}</small></span>
           <button className="employee-details" hidden={editingEmployee} onClick={() => setEditingEmployee(true)}>员工资料</button>
-          {employee?.kind!=='chatter'&&<button className="engine-tools-open" disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}>工具与额度</button>}
+          <button className="engine-tools-open" disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}>工具与额度</button>
           <button className="employee-clone" disabled={active.busy||!!active.approvals?.length||!!active.pendingMessages?.length} onClick={()=>void act('view.open',{kind:'clone',employee:employee?.id??active.cardId})}>克隆员工</button>
-          <span className="session-state"><i className={active.busy ? 'working' : ''} />{active.busy ? '工作中' : '休息中'}</span>
+          <span className="session-state"><i className={active.busy?'working':employee?.kind==='cloud-native-worker'&&active.error?'disconnected':''} />{active.busy?'工作中':employee?.kind==='cloud-native-worker'&&active.error?'连接／执行失败':'休息中'}</span>
           <button className="close-session" disabled={!liveActive} onClick={async () => { const r = await act('session.close', { id: active.id }); if (r) closeConversation() }} title="Close session; keep history">结束会话</button>
         </header>
         {!!active.approvals?.length&&<div className="agent-requests">{active.approvals?.map(p=><AgentApproval key={p.id} approval={p} respond={async(decision,answers,form)=>{await api.call('approval.respond',{id:active.id,requestId:p.id,decision,answers,form});await refresh()}}/>)}</div>}
@@ -167,13 +170,7 @@ export default function App() {
           const saved=updated.sessions.find(c=>c.id===employee.id)
           if(!saved)throw new Error('员工已被移除，请重新选择员工')
           setEditingEmployee(false);await openCard(saved);return true
-        }} onRemove={async () => { await act('card.remove', { id: employee.id }) }} /></div> : employee?.kind==='chatter'?<div className="employee-workbench chatter-workbench">
-          <div className="chatter-provider-bar"><span className="chatter-mark">✦</span><strong>{({deepseek:'DeepSeek',doubao:'豆包',chatgpt:'ChatGPT'} as const)[employee.chatProvider??'doubao']} · Chrome 网页聊天</strong><div className="chatter-pane-tabs"><button className={chatterPane==='chrome'?'selected':''} onClick={()=>setChatterPane('chrome')}>Chrome</button><button className={chatterPane==='cli'?'selected':''} onClick={()=>setChatterPane('cli')}>CLI 会话</button></div><span className="chatter-connection"><i className={chromeConnected?'connected':''}/>{chromeConnected?`Google Chrome ${chromeVersion} 已连接`:'Chrome 未打开'}</span></div>
-          {openError&&<div className="conversation-repair" role="alert">{openError}</div>}
-          <div className="chatter-chrome-page" hidden={chatterPane!=='chrome'}><div className="chatter-chrome-emblem">✦</div><h1>在 Google Chrome 中继续</h1><p>{employee.title} 的网页会话使用本机安装的 Chrome。网页上的上传、语音、模型和其他功能由原网站提供；这里保留同一员工的 CLI 会话入口。</p><div className="chatter-chrome-actions"><button className="btn primary" onClick={async()=>{const launch=await act('chatter.open-chrome',{id:employee.id}) as {deferred?:boolean}|undefined;if(launch&&!launch.deferred){const state=await api.call<{connected:boolean;version?:string}>('chatter.chrome-status',{id:employee.id});setChromeConnected(state.connected);setChromeVersion(state.version??'');void checkChatterAuth(employee.id)}}}>{chromeConnected?'返回 Chrome 窗口':'在 Chrome 打开网页'} ↗</button><button className="btn" disabled={!chromeConnected} onClick={()=>void checkChatterAuth(employee.id)}>检查网站登录</button></div><small>{chatterAuth==='signed-in'?'网站已登录，此员工可以使用网页与 CLI 会话。':chatterAuth==='challenge'?'网站要求真人验证，请在 Chrome 窗口中完成。':chatterAuth==='login'?'网站当前未登录。迁入的旧会话可能已过期，请在 Chrome 窗口登录一次。':'登录或验证完成后会保存在此插件的 Chrome 资料中。'}</small></div>
-          <div className="chatter-pane chatter-cli-pane" hidden={chatterPane!=='cli'}><div className="transcript" ref={transcript}>{!active.items.length&&<div className="conversation-empty"><span className="chatter-mark">✦</span><h1>开始聊天</h1><p>CLI 发出的消息会进入此员工绑定的网页会话。</p></div>}{active.items.map(item=><Turn key={item.id} item={item}/>)}{active.error&&<div className="error">{active.error}</div>}</div>
-          <div className="composer"><div className="composer-box"><textarea ref={composer} disabled={!liveActive||active.busy} value={input} rows={3} placeholder={`Message ${active.title}…`} onChange={e=>{setInput(e.target.value);drafts.current[employee.id]=e.target.value}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send()}}}/>{active.busy?<button className="send-btn stop" onClick={()=>void stop()}>■ Stop</button>:<button className="send-btn" disabled={!liveActive||!input.trim()} onClick={()=>void send()}>↑</button>}</div><div className="composer-foot">CLI 与网页使用同一个会话网址 · Enter 发送</div></div></div>
-        </div>:<div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
+        }} onBound={async saved=>{await refresh();setEditingEmployee(false);await openCard(saved)}} onRemove={async () => { await act('card.remove', { id: employee.id }) }} /></div> : <div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
         {openError&&<div className="conversation-repair" role="alert"><span>{openError}</span><button onClick={()=>setEditingEmployee(true)}>配置工作目录</button>{!employee?.workspaceError&&<button onClick={()=>employee&&void openCard(employee)}>重试连接</button>}</div>}
         {liveActive?<div className="session-settings controls">
           <Dropdown control="engine" open={menu==='engine'} onToggle={()=>setMenu(menu==='engine'?null:'engine')} onClose={()=>setMenu(null)} label={active.engine==='codex'?'Codex':'Claude Code'} width={200}>{(['codex','claude'] as const).map(engine=><button className={`menu-item ${engine===active.engine?'sel':''}`} key={engine} disabled={active.busy} onClick={async()=>{setMenu(null);const card=await act('config.engine',{id:employee?.id??active.id,engine});if(card)await openCard(card)}}>{engine==='codex'?'Codex':'Claude Code'}</button>)}</Dropdown>
@@ -181,7 +178,7 @@ export default function App() {
             {active.models.map((m) => <button className={`menu-item col ${m.value === active.model ? 'sel' : ''}`} key={m.value} disabled={active.busy} onClick={() => { setMenu(null); void configure('config.model', { model: m.value }) }}><span className="menu-name">{m.value === active.model ? '✓ ' : ''}{m.displayName}</span><span className="menu-desc">{m.description||m.value}</span></button>)}
             {!active.models.length && <div className="menu-item">Loading models…</div>}
           </Dropdown>
-          {work||employee?.remote?<span className="work-permission" title={active.cwd}>{employee?.remote?`SSH · ${employee.remote.host}`:'Work · 当前目录及子目录'}</span>:<Dropdown control="perm" open={menu === 'perm'} onToggle={() => setMenu(menu === 'perm' ? null : 'perm')} onClose={() => setMenu(null)} label={permissions.find((p) => p.value === active.permissionMode)?.label ?? active.permissionMode} width={310}>
+          {work||employee?.remote&&employee.kind!=='cloud-native-worker'?<span className="work-permission" title={active.cwd}>{employee?.remote?`SSH · ${employee.remote.host}`:'Work · 当前目录及子目录'}</span>:<Dropdown control="perm" open={menu === 'perm'} onToggle={() => setMenu(menu === 'perm' ? null : 'perm')} onClose={() => setMenu(null)} label={permissions.find((p) => p.value === active.permissionMode)?.label ?? active.permissionMode} width={310}>
             {permissions.map((p) => <button key={p.value} className={`menu-item col ${p.value === active.permissionMode ? 'sel' : ''}`} onClick={() => { setMenu(null); void configure('config.permission', { mode: p.value }) }}><span className="menu-name">{p.label}</span><span className="menu-desc">{p.hint}</span></button>)}
           </Dropdown>}
           <Dropdown control="effort" open={menu === 'effort'} onToggle={() => setMenu(menu === 'effort' ? null : 'effort')} onClose={() => setMenu(null)} label={`思考 · ${active.effort ?? 'Default'}`} width={190}>
@@ -190,6 +187,7 @@ export default function App() {
           </Dropdown>
           {active.engine==='claude'&&<button className={`toggle ${active.thinking?'on':''}`} disabled={active.busy||!active.thinkingSupported} onClick={()=>void configure('config.thinking',{enabled:!active.thinking})}>Thinking {active.thinking?'on':'off'}</button>}
           <button className={`toggle ${active.planMode?'on':''}`} data-control="plan" aria-pressed={!!active.planMode} disabled={active.busy} onClick={()=>void configure('config.plan',{enabled:!active.planMode})}>{active.planMode?'计划模式':'执行模式'}</button>
+          {employee?.remote&&employee.kind!=='cloud-native-worker'&&active.engine==='codex'&&<button className={`toggle ${active.remoteAdmin?'on':''}`} data-control="remote-admin" aria-pressed={!!active.remoteAdmin} disabled={active.busy} title="仅在远端使用 SSH 用户权限访问硬件和管理服务；不会授权本机执行" onClick={()=>void configure('config.remote-admin',{enabled:!active.remoteAdmin})}>{active.remoteAdmin?'远端主机管理：已授权':'远端主机管理：关闭'}</button>}
           {(fastAvailable||active.fastMode)&&<button className={`toggle ${active.fastMode?'on':''}`} data-control="fast" aria-label="Fast 模式" aria-pressed={!!active.fastMode} disabled={active.busy} onClick={()=>void configure('config.fast',{enabled:!active.fastMode})} title={active.fastModeDisabledReason?`Fast 状态：${active.fastModeDisabledReason}`:fastTier(model)?.description??'官方 Fast 模式，开启后用量增加'}>⚡ {active.fastMode?'Fast'+(fastTier(model)?.description.match(/(\d+(?:\.\d+)?)x/)?.[1]?' · '+fastTier(model)!.description.match(/(\d+(?:\.\d+)?)x/)![1]+'×':''):'Standard'}{active.fastModeState==='cooldown'?' · 冷却中':''}</button>}
           <span className="cwd" title={active.cwd}>{active.cwd}</span>
         </div>:<div className="session-opening">{opening?'正在连接员工…':'会话已打开，配置有效工作目录后即可开始。'}</div>}

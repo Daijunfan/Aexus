@@ -214,6 +214,7 @@ export function applyCodex(s: Session, ev: any): Session {
       if(ev.level!=='error')return {...s,items:[...s.items,{role:'notice',id:uid(),text:String(ev.text),tone:'info'}]}
       return {
         ...s,
+        error: String(ev.text),
         items: [
           ...s.items,
           { role: 'notice', id: uid(), text: String(ev.text), tone: 'error' as const }

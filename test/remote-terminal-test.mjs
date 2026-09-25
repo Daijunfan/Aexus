@@ -22,7 +22,7 @@ readline.createInterface({input:process.stdin}).on('line',line=>{
  const req=JSON.parse(line),p=req.params??{};if(req.id===undefined)return;
  if(req.method==='model/list'){emit({id:req.id,result:{data:[{id:'luna',model:'gpt-5.6-luna',displayName:'Luna',supportedReasoningEfforts:[{reasoningEffort:'low'}],defaultReasoningEffort:'low',serviceTiers:[{id:'priority',name:'Fast',description:'Fast'}]}]}});return}\n if(req.method==='thread/start'||req.method==='thread/resume'){if(!process.env.CODEX_EXEC_SERVER_URL?.startsWith('ws://127.0.0.1:'))process.exit(5);emit({id:req.id,result:{thread:{id:threadId}}});return}
  if(req.method==='turn/start'){\n  if(p.serviceTier!=='priority'||p.effort!=='low'||p.model!=='gpt-5.6-luna')process.exit(7);
-  const cwd=p.environments[0].cwd;
+  require('fs').writeFileSync(${JSON.stringify(path.join(temp,'remote-policy.json'))},JSON.stringify(p.sandboxPolicy));const cwd=p.environments[0].cwd;
   const output=execFileSync('ssh',['fixture',"cd '"+cwd.replaceAll("'","'\\''")+"' && printf AGENT_REMOTE_OK > routed-by-agent.txt; pwd"],{encoding:'utf8'});
   emit({id:req.id,result:{turn:{id:'turn1'}}});emit({method:'turn/started',params:{turn:{id:'turn1'}}});
   emit({method:'item/completed',params:{item:{type:'commandExecution',id:'cmd1',command:'write proof',aggregatedOutput:output,exitCode:0}}});emit({method:'turn/completed',params:{turn:{id:'turn1',status:'completed'}}});return
@@ -39,7 +39,8 @@ let n=0;const ok=(value,label)=>{assert.ok(value,label);n++;console.log('PASS '+
 try{
  await start();await cli('group','add','Build');await cli('group','add','Work','--mode','work','--plugin','mininotion')
  await assert.rejects(()=>cli('card','create','--title','Remote Work','--group','Work','--remote-host','fixture','--remote-dir',remote))
- await cli('group','add','Cloud Team','--mode','cloud','--remote-host','fixture','--remote-dir',remote,'--remote-distribution','kali')
+ const host=await cli('host','create','--data',JSON.stringify({name:'Fixture',host:'fixture',os:'linux',defaultDirectory:remote,distribution:'kali'}))
+ await cli('group','add','Cloud Team','--mode','cloud','--host-id',host.id,'--remote-dir',remote)
  const cloud=await cli('card','create','--title','Cloud','--group','Cloud Team','--directory-mode','bind','--cwd','.')
  const local=await cli('card','create','--title','Local','--group','Build')
  ok(cloud.remote.directory===remote&&cloud.remote.host==='fixture'&&cloud.remote.distribution==='kali','cloud Team owns its OS label and connection; employees inherit both without overrides')
@@ -49,11 +50,11 @@ try{
  await assert.rejects(()=>cli('card','update',child.id,'--remote-host','other','--remote-dir',remote))
  ok((await cli('workspace','list','.','--team','Cloud Team')).entries.some(e=>e.name==='云端工程师'),'Team file APIs use the remote root and employee host overrides are rejected')
  const otherRoot=path.join(temp,'other-cloud');fs.mkdirSync(otherRoot)
- await assert.rejects(()=>cli('group','configure','Cloud Team','--mode','cloud','--remote-host','fixture','--remote-dir',otherRoot))
+ await assert.rejects(()=>cli('group','configure','Cloud Team','--mode','cloud','--host-id',host.id,'--remote-dir',otherRoot))
  ok((await cli('group','list','--details')).find(g=>g.name==='Cloud Team').remote.directory===remote,'cloud Team reconfiguration validates every employee folder before changing metadata')
- fs.mkdirSync(path.join(otherRoot,'云端工程师'));await cli('group','configure','Cloud Team','--mode','cloud','--remote-host','fixture','--remote-dir',otherRoot)
+ fs.mkdirSync(path.join(otherRoot,'云端工程师'));await cli('group','configure','Cloud Team','--mode','cloud','--host-id',host.id,'--remote-dir',otherRoot)
  ok((await cli('session','list')).sessions.find(c=>c.id===child.id).cwd===path.join(otherRoot,'云端工程师')&&fs.existsSync(path.join(remote,'proof.txt')),'changing a cloud Team rebinds its employees without moving or deleting remote files')
- await cli('group','configure','Cloud Team','--mode','cloud','--remote-host','fixture','--remote-dir',remote)
+ await cli('group','configure','Cloud Team','--mode','cloud','--host-id',host.id,'--remote-dir',remote)
  await cli('remote','check','--employee',cloud.id)
  ok((await cli('workspace','read','proof.txt','--employee',cloud.id)).content==='cloud initial','the file API reads the remote folder instead of the local bookkeeping folder')
  const imageBytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP+kAAAAASUVORK5CYII=','base64');fs.writeFileSync(path.join(remote,'remote.png'),imageBytes)
@@ -73,11 +74,12 @@ try{
  stored.sessions.find(c=>c.id===cloud.id).threadId=legacyThread
  fs.writeFileSync(path.join(home,'sessions.json'),JSON.stringify(stored))
  fs.mkdirSync(path.join(home,'transcripts'),{recursive:true});fs.writeFileSync(path.join(home,'transcripts',cloud.id+'.json'),JSON.stringify([{role:'user',id:'old',text:'Earlier conversation'}]))
- const opened=await cli('session','open',cloud.id);ok(opened.cwd===remote,'employee conversation reports the remote working directory')
+ const opened=await cli('session','open',cloud.id);await cli('config','remote-admin',opened.sessionId,'on');assert.equal((await cli('session','info',opened.sessionId)).remoteAdmin,true);ok(opened.cwd===remote,'employee conversation reports the remote working directory')
  await until(async()=>(await cli('session','info',opened.sessionId)).models[0]?.displayName==='Luna');await cli('config','fast',opened.sessionId,'on')
  await cli('session','send',opened.sessionId,'fixture routing, no inference');await until(()=>fs.existsSync(path.join(remote,'routed-by-agent.txt')))
  await until(async()=>!(await cli('session','snapshot',opened.sessionId)).busy)
  ok(fs.readFileSync(path.join(remote,'routed-by-agent.txt'),'utf8')==='AGENT_REMOTE_OK'&&!fs.existsSync(path.join(home,'tunnel',cloud.id,'routed-by-agent.txt')),'cloud native turn receives Luna/low/Fast and selects the Team environment without local work artifacts')
+ assert.equal(JSON.parse(fs.readFileSync(path.join(temp,'remote-policy.json'))).type,'dangerFullAccess');await cli('config','remote-admin',opened.sessionId,'off');assert.equal((await cli('session','info',opened.sessionId)).remoteAdmin,false)
  const migrated=(await cli('session','list')).sessions.find(c=>c.id===cloud.id)
  ok(migrated.codexExecution==='native-v1'&&migrated.threadId!==legacyThread&&migrated.nativeSessions.some(ref=>ref.id===legacyThread),'old model context is replaced once while retaining its native cleanup reference')
  ok((await cli('session','transcript',cloud.id)).text.includes('Earlier conversation'),'cleaning the model context preserves the visible conversation')
@@ -97,6 +99,7 @@ try{
  ok((await cli('session','list')).sessions.find(c=>c.id===cloud.id).threadId===migrated.threadId,'subsequent opens retain the clean native thread')
  opened.sessionId=resumed.sessionId
  await assert.rejects(()=>cli('config','permission',opened.sessionId,'bypassPermissions'))
+ const localLive=await cli('session','open',local.id);await assert.rejects(()=>cli('config','remote-admin',localLive.sessionId,'on'));
  const native=await cli('terminal','open','--employee',local.id,'--cols','100','--rows','24')
  await cli('terminal','input',native.id,'--data','pwd > terminal-cwd.txt; mkdir -p shell-folder; cd shell-folder; export EMPLOYEE_TEST=kept','--enter')
  await until(()=>fs.existsSync(path.join(local.cwd,'terminal-cwd.txt')))
@@ -113,12 +116,16 @@ try{
  ok(fs.readFileSync(path.join(remote,'terminal-remote.txt'),'utf8').trim()===remote&&!fs.existsSync(path.join(home,'tunnel',cloud.id,'terminal-remote.txt')),'cloud PTY uses SSH and starts directly in the remote employee folder')
  await cli('card','update',cloud.id,'--role','Remote builder')
  ok((await cli('terminal','list','--employee',cloud.id)).length===1,'saving unchanged remote settings preserves the active terminal')
- const before=JSON.parse(fs.readFileSync(path.join(home,'sessions.json'))),offline=structuredClone(before);offline.teamSettings['Cloud Team'].remote.host='offline';fs.writeFileSync(path.join(home,'sessions.json'),JSON.stringify(offline))
+ await cli('group','rename','Cloud Team','Cloud Renamed')
+ const renamedCloud=await cli('session','list')
+ ok(renamedCloud.teamRoots['Cloud Renamed']===remote&&renamedCloud.sessions.find(c=>c.id===cloud.id).group==='Cloud Renamed'&&(await cli('session','snapshot',opened.sessionId)).group==='Cloud Renamed'&&(await cli('workspace','list','.','--team','Cloud Renamed')).entries.some(e=>e.name==='云端工程师')&&(await cli('terminal','list','--employee',cloud.id)).length===1,'cloud Team rename preserves host, remote folder, live session and active terminal')
+ await assert.rejects(()=>cli('group','rename','Cloud Renamed','Build'))
+ const hostFile=path.join(home,'cloud-hosts/hosts.json'),before=JSON.parse(fs.readFileSync(hostFile)),offline=structuredClone(before);offline.find(h=>h.id===host.id).host='offline';fs.writeFileSync(hostFile,JSON.stringify(offline))
  await cli('session','close',opened.sessionId)
  await assert.rejects(()=>cli('session','open',cloud.id));await assert.rejects(()=>cli('workspace','write','must-not-exist.txt','--employee',cloud.id,'--content','x'))
  ok(!fs.existsSync(path.join(remote,'must-not-exist.txt')),'SSH failure is reported and never falls back to local file writes')
- fs.writeFileSync(path.join(home,'sessions.json'),JSON.stringify(before))
+ fs.writeFileSync(hostFile,JSON.stringify(before))
  await cli('card','remove',local.id);ok(!(await cli('terminal','list','--employee',local.id)).length&&fs.existsSync(local.cwd),'employee removal closes its terminals but keeps work files')
- await cli('group','remove','Build');await cli('group','remove','Cloud Team');ok(!(await cli('terminal','list')).length&&fs.existsSync(remote),'Team removal closes all remaining terminals without removing remote files')
+ await cli('group','remove','Build');await cli('group','remove','Cloud Renamed');ok(!(await cli('terminal','list')).length&&fs.existsSync(remote),'Team removal closes all remaining terminals without removing remote files')
  console.log(`PASS=${n} FAIL=0 — actual PTYs and SSH transport fixture, no model calls`)
 }finally{if(service?.exitCode===null){service.kill('SIGTERM');await done}fs.rmSync(temp,{recursive:true,force:true})}

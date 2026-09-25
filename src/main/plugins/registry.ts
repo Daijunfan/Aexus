@@ -15,6 +15,7 @@ export function readPlugin(directory:string):PluginDescriptor {
   const manifest=JSON.parse(fs.readFileSync(path.join(directory,PLUGIN_MANIFEST),'utf8')) as PluginManifest
   if(manifest.schemaVersion!==1)throw new Error('Unsupported plugin schemaVersion')
   if(!/^[a-z][a-z0-9-]*$/.test(manifest.id)||!manifest.name||!manifest.version)throw new Error('Invalid plugin identity')
+  if(manifest.scope&&!['workspace','application'].includes(manifest.scope))throw new Error('Invalid plugin scope')
   if(manifest.workspaceDirectory&&!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(manifest.workspaceDirectory))throw new Error('Invalid plugin workspaceDirectory')
   for(const key of ['runtime','renderer','cli','documentation','schema'] as const)pluginFile(directory,manifest[key])
   const schema=JSON.parse(fs.readFileSync(pluginFile(directory,manifest.schema),'utf8'))

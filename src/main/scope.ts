@@ -9,7 +9,8 @@ export function workCodexConfig(cwd:string,teamRoot:string):string[] {
   if(cwd!==teamRoot)access[teamRoot]='deny'
   access[cwd]='write'
   const table='{'+Object.entries(access).map(([key,value])=>`${JSON.stringify(key)}=${JSON.stringify(value)}`).join(',')+'}'
-  return ['-c','default_permissions="agents-company-work"','-c','approval_policy="never"','-c','permissions.agents-company-work.extends=":workspace"','-c',`permissions.agents-company-work.filesystem=${table}`]
+  // Stop AGENTS.md discovery at this employee's generated guide, before denied ancestors.
+  return ['-c','project_root_markers=[".agents-company"]','-c','memories.use_memories=false','-c','memories.generate_memories=false','-c','features.memories=false','-c','default_permissions="agents-company-work"','-c','approval_policy="never"','-c','permissions.agents-company-work.extends=":workspace"','-c',`permissions.agents-company-work.filesystem=${table}`]
 }
 
 export function workClaudeOptions(cwd:string,teamRoot:string):Partial<Options> {

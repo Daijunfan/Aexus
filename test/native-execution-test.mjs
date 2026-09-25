@@ -75,7 +75,7 @@ const bundle=path.join(temp,'core.cjs');await build({stdin:{contents:"export * f
 const {runCodexTurn}=require(bundle),target={host,directory:remote,os:windows?'windows':host==='fixture'?'macos':'linux'}
 const forks=[];const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),60000)
 try{
- await runCodexTurn({connectionId:'native-persistent-test',cwd:remote,remote:target,model:'gpt-5.6-luna',effort:'low',serviceTier:'priority',sandbox:'workspace-write',prompt:'查看当前电脑的环境是什么？CPU是什么？GPU是什么？操作系统是什么？',signal:abort.signal,onEvent:event=>events.push(event)})
+ await runCodexTurn({connectionId:'native-persistent-test',cwd:remote,remote:target,remoteAdmin:process.env.AGENTS_COMPANY_NATIVE_ADMIN==='1',model:'gpt-5.6-luna',effort:'low',serviceTier:'priority',sandbox:'workspace-write',prompt:'查看当前电脑的环境是什么？CPU是什么？GPU是什么？操作系统是什么？',signal:abort.signal,onEvent:event=>events.push(event)})
  fs.writeFileSync(path.join(artifact,'native-protocol-events.json'),JSON.stringify(events,null,2))
  assert.ok(requests.length>=2,'native tool must return a result and continue the conversation')
  assert.ok(requests.every(r=>r.model==='gpt-5.6-luna'&&r.reasoning?.effort==='low'&&r.service_tier==='priority'),'Native Responses requests must use the chosen Luna/low/Fast tier')

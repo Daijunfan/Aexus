@@ -27,7 +27,8 @@ try{
  const reopened=app.waitForEvent('window'),again=await cli('plugin','open','browser','--team','Browser test');browser=await reopened
  await expect(browser.locator('.browser-app')).toHaveAttribute('data-view','home');await expect(browser.locator('.card')).toHaveCount(2);await expect(browser.locator('.card-copy').filter({hasText:'Cloud dashboard'})).toContainText('GPU host monitor')
  await browser.getByRole('button',{name:'移除网页 Cloud dashboard'}).click();await expect.poll(async()=>(await pages()).length).toBe(1)
- const protectedPage=await browser.evaluate(()=>{render({view:'page',url:'https://chatgpt.com/',title:'ChatGPT',status:200,pageId:null,canGoBack:false,canGoForward:false},false);const result={native:!document.querySelector('#native-page').hidden,embedded:!document.querySelector('#page').hidden};render({view:'home',url:null,title:null,status:null,pageId:null,canGoBack:false,canGoForward:false},false);return result});assert.deepEqual(protectedPage,{native:true,embedded:false})
+ const providerPage=await browser.evaluate(()=>{render({view:'page',url:'https://chatgpt.com/',title:'ChatGPT',status:200,pageId:null,canGoBack:false,canGoForward:false},false);const result={nativePanel:document.querySelectorAll('#native-page').length,embedded:!document.querySelector('#page').hidden};render({view:'home',url:null,title:null,status:null,pageId:null,canGoBack:false,canGoForward:false},false);return result});assert.deepEqual(providerPage,{nativePanel:0,embedded:true})
+ await assert.rejects(()=>cli('plugin','call','browser','browser.chat.status','--team','Browser test'))
  await cli('plugin','dismiss',again.id);await expect.poll(()=>browser.isClosed()).toBe(true)
- console.log('PASS two views, page cards, persistence and native Chrome handoff for protected chat sites')
+ console.log('PASS B plugin keeps saved cards, thumbnails and its Chromium page; removed chat methods are unavailable')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

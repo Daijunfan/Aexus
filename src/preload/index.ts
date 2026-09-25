@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer,webUtils } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 import type { Request } from '../shared/protocol'
 
@@ -9,6 +9,7 @@ function on(channel: string, handler: (payload: any) => void) {
 }
 
 contextBridge.exposeInMainWorld('agents', {
+  filePath: (file:File) => webUtils.getPathForFile(file),
   rendererReady: () => ipcRenderer.send('renderer:ready'),
   call: (cmd: Request['cmd'], args?: Request['args']) => ipcRenderer.invoke('api:request', { cmd, args }),
   onEvent: (handler: (event: any) => void) => on('api:event', handler),

@@ -62,6 +62,25 @@
   word-break: break-word;
 }
 
+.turn.assistant .markdown { white-space:normal;overflow-wrap:anywhere;line-height:1.7; }
+.turn.assistant .markdown > :first-child { margin-top:0; }
+.turn.assistant .markdown > :last-child { margin-bottom:0; }
+.turn.assistant .markdown p { margin:0 0 .8em; }
+.turn.assistant .markdown h1,.turn.assistant .markdown h2,.turn.assistant .markdown h3,.turn.assistant .markdown h4 { margin:1em 0 .4em;line-height:1.35;font-weight:650; }
+.turn.assistant .markdown h1 { font-size:1.45em; }.turn.assistant .markdown h2 { font-size:1.25em; }.turn.assistant .markdown h3 { font-size:1.1em; }
+.turn.assistant .markdown ul,.turn.assistant .markdown ol { margin:.35em 0 .9em;padding-left:1.7em; }
+.turn.assistant .markdown li { margin:.22em 0; }.turn.assistant .markdown li>p { margin:0; }
+.turn.assistant .markdown blockquote { margin:.8em 0;padding:.2em 0 .2em 1em;border-left:3px solid var(--border);color:var(--fg-dim); }
+.turn.assistant .markdown blockquote p { margin:0; }
+.turn.assistant .markdown code { padding:.12em .35em;border-radius:4px;background:var(--bg-hover);font: .92em/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; }
+.turn.assistant .markdown pre { max-width:100%;margin:.8em 0;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-alt);overflow:auto;white-space:pre; }
+.turn.assistant .markdown pre code { padding:0;background:none;font-size:12px; }
+.turn.assistant .markdown table { display:block;max-width:100%;margin:.8em 0;border-collapse:collapse;overflow-x:auto; }
+.turn.assistant .markdown th,.turn.assistant .markdown td { padding:6px 10px;border:1px solid var(--border);text-align:left; }
+.turn.assistant .markdown th { background:var(--bg-alt); }
+.turn.assistant .markdown a { color:var(--accent);text-decoration:underline;text-underline-offset:2px; }
+.turn.assistant .markdown hr { border:0;border-top:1px solid var(--border);margin:1em 0; }
+
 /* ---------- thinking ---------- */ 
 
 .thinking {

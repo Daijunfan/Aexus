@@ -20,3 +20,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+/Shared/*
+!/Shared/.gitkeep

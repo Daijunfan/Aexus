@@ -6,7 +6,7 @@ import signal
 import subprocess
 import sys
 import threading
-from transport import ssh_args
+from transport import ssh_args, ssh_env
 
 config = json.loads(sys.stdin.readline())
 if config['os'] == 'windows':
@@ -16,7 +16,7 @@ if config['os'] == 'windows':
     command = 'powershell.exe -NoLogo -NoProfile -NonInteractive -EncodedCommand ' + base64.b64encode(script.encode('utf-16le')).decode()
 else:
     command = 'cd ' + shlex.quote(config['directory']) + ' && exec codex exec-server --listen stdio'
-process = subprocess.Popen(ssh_args(config) + [command], stdin=subprocess.PIPE)
+process = subprocess.Popen(ssh_args(config) + [command], stdin=subprocess.PIPE, env=ssh_env(config))
 
 def stop(*_):
     process.terminate()

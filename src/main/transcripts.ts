@@ -31,6 +31,13 @@ export function copyTranscript(source:string,target:string){
   writeFileSync(join(directory,`${target}.json`),JSON.stringify(transcriptItems(source).map(item=>item.role==='assistant'?{...item,blocks:item.blocks.map(block=>block.kind==='tool'?{...block,running:false}:block.kind==='thinking'?{...block,done:true}:block)}:item)),'utf8')
 }
 
+/** Import a read-only native history once; ordinary turns continue through the same reducer. */
+export function seedTranscript(cardId:string,items:Item[]){
+  if(transcriptItems(cardId).length)throw new Error('员工已有会话历史，不能覆盖为另一条原生会话')
+  mkdirSync(directory,{recursive:true})
+  writeFileSync(join(directory,`${cardId}.json`),JSON.stringify(items),{encoding:'utf8',mode:0o600})
+}
+
 export function conversation(id: string): Session { return conv(id) }
 
 export function recordError(id: string, message: string): void {

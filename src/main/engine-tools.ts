@@ -14,11 +14,11 @@ export async function inspectEngine(id:string,section:string){
     if(section==='account')return s.q.accountInfo()
     if(section==='usage')return {usage:meta.usage??null,command:'/usage',note:'输入 /usage 获取 Claude Code 的原生上下文与额度视图'}
   }else{
-    if(s.remote&&['skills','mcp'].includes(section))return {data:[],note:'云端员工不加载本机 Skills 或 MCP 配置，避免本机工具混入云端执行环境。'}
+    if(s.remote&&!s.nativeRemote&&['skills','mcp'].includes(section))return {data:[],note:'云端员工不加载本机 Skills 或 MCP 配置，避免本机工具混入云端执行环境。'}
     const methods:Record<string,[string,Record<string,unknown>]>={skills:['skills/list',{cwds:[s.cwd],forceReload:true}],mcp:['mcpServerStatus/list',{limit:100}],account:['account/read',{refreshToken:false}],usage:['account/rateLimits/read',{}]}
     const request=methods[section];if(!request)throw new Error('Unknown engine section')
     let result:any
-    try{result=hasNativeCodexSession(id)?await nativeCodexRequest(id,...request):await withCodexSessionApi(call=>call(...request),{cwd:s.remote?undefined:s.cwd,configArgs:s.workRoot?workCodexConfig(s.cwd,s.permissionRoot??s.workRoot):[]})}
+    try{result=hasNativeCodexSession(id)?await nativeCodexRequest(id,...request):await withCodexSessionApi(call=>call(...request),{cwd:s.remote?undefined:s.cwd,nativeRemote:s.nativeRemote,configArgs:s.workRoot?workCodexConfig(s.cwd,s.permissionRoot??s.workRoot):[]})}
     catch(error){if(section==='usage')return {usage:meta.usage??null,rateLimitsUnavailable:String(error)};throw error}
     if(section==='skills')return {data:(result.data??[]).flatMap((entry:any)=>entry.skills??[]).filter((skill:any)=>skill.enabled&&(!s.workRoot||skill.path.startsWith(s.cwd+'/'))),errors:(result.data??[]).flatMap((entry:any)=>entry.errors??[])}
     if(section==='usage')return {...result,usage:meta.usage??null}

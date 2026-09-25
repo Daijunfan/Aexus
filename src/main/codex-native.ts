@@ -5,13 +5,14 @@ import {APP_HOME} from '../shared/protocol'
 import {childEnv} from './exec'
 import {workCodexConfig} from './scope'
 import {openCodexExecutor,codexControlCwd} from './codex-executor'
+import {spawnRemoteAgent} from './remote-agent-process'
 import type {RemoteTarget} from '../shared/remote'
 import type {ImageInput} from '../shared/types'
 import type {CodexEvent,SandboxMode} from './codex'
 
 export const nativeExecutionConfig=()=>['-c','mcp_servers={}','-c','skills.include_instructions=false','-c','skills.bundled.enabled=false',
   '-c','include_apps_instructions=false','-c','memories.use_memories=false','-c','memories.generate_memories=false','--disable','memories','--disable','apps','--disable','hooks','--disable','plugins','--disable','chronicle','--disable','multi_agent']
-type Args={connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string}
+type Args={connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;nativeRemote?:RemoteTarget;remoteAdmin?:boolean;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string}
 class RemoteStartupError extends Error {}
 const sessions=new Map<string,NativeConnection>()
 type NativeConnection=Awaited<ReturnType<typeof connect>>
@@ -45,8 +46,9 @@ export async function runNativeCodexTurn(binary:string,args:Args){
 async function connect(binary:string,initial:Args){
   let args=initial,threadId=initial.resumeId??'',turnId='',loaded=false,working=false,sequence=0,stderr='',dead=false,compact=false
   let waiting:{turnId?:string;resolve:()=>void;reject:(error:Error)=>void}|undefined,closing:Promise<void>|undefined
-  const executor=args.remote?await openCodexExecutor(args.remote):undefined
-  const child=spawn(binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot):[]),'-c',`model=${JSON.stringify(args.model||'gpt-5.6-luna')}`,...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true','app-server'],
+  const executor=args.remote&&!args.nativeRemote?await openCodexExecutor(args.remote):undefined
+  const flags=['-c',`model=${JSON.stringify(args.model||'gpt-5.6-luna')}`,...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true']
+  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'app-server','--listen','stdio://']):spawn(binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot):[]),...flags,'app-server'],
     {cwd:args.remote?APP_HOME:args.cwd,env:{...childEnv(args.cwd,args.workRoot),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})},stdio:['pipe','pipe','pipe']})
   const ended=once(child,'close').catch(()=>{}),lines=createInterface({input:child.stdout}),lifetime=new AbortController()
   const pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:NodeJS.Timeout}>(),incoming=new Map<string|number,AbortController>()
@@ -117,14 +119,14 @@ async function connect(binary:string,initial:Args){
       args.signal.addEventListener('abort',abort,{once:true})
       try{
         args.signal.throwIfAborted()
-        if(args.remote)try{await call('environment/info',{environmentId:'remote'})}
+        if(args.remote&&!args.nativeRemote)try{await call('environment/info',{environmentId:'remote'})}
         catch(error){throw new RemoteStartupError(error instanceof Error?error.message:String(error))}
-        const environments=args.remote?[{environmentId:'remote',cwd:args.remote.directory,runtimeWorkspaceRoots:[args.remote.directory]}]:undefined
-        const controlCwd=codexControlCwd(args.cwd,args.remote),windows=args.remote?.os==='windows'
-        const sandbox=windows?'danger-full-access':args.sandbox
+        const environments=args.remote&&!args.nativeRemote?[{environmentId:'remote',cwd:args.remote.directory,runtimeWorkspaceRoots:[args.remote.directory]}]:undefined
+        const controlCwd=args.nativeRemote?args.cwd:codexControlCwd(args.cwd,args.remote),windows=args.remote?.os==='windows'
+        const sandbox=args.remote&&(windows||args.remoteAdmin&&!args.planMode)?'danger-full-access':args.sandbox
         const policy=args.workRoot?{permissions:'agents-company-work'}:{sandboxPolicy:{type:sandbox==='workspace-write'?'workspaceWrite':sandbox==='read-only'?'readOnly':'dangerFullAccess',...(sandbox==='workspace-write'?{writableRoots:[controlCwd],networkAccess:true,excludeTmpdirEnvVar:true,excludeSlashTmp:true}:{})}}
         if(!loaded){
-          const options={cwd:controlCwd,model:args.model||'gpt-5.6-luna',approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(args.workRoot?{permissions:'agents-company-work'}:{sandbox}),...(args.remote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
+          const options={cwd:controlCwd,model:args.model||'gpt-5.6-luna',approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(args.workRoot?{permissions:'agents-company-work'}:{sandbox}),...(args.remote&&!args.nativeRemote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
           // Employee clones must own their history so removing one employee cannot invalidate another.
           const started=args.resumeId?await call('thread/resume',{threadId:args.resumeId,...options}):await call('thread/start',{...options,environments,historyMode:'legacy'})
           threadId=started.thread.id;loaded=true;args.onEvent({kind:'thread',threadId})

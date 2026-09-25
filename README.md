@@ -63,16 +63,19 @@ CLI operations and existing color metadata remain editable.
 | --- | --- | --- |
 | Work | Binds one installed plugin, such as MiniNotion | Uses that plugin's CLI/API within the employee's own folder and descendants |
 | Build | A local project folder | Uses Codex/Claude Code normally; employees can bind existing physical folders |
-| Cloud | A shared SSH connection and remote root | Employees inherit the host and use remote root/subfolders |
+| Cloud | A shared SSH connection and remote root | Local Workers use Mac engines with remote tools; Cloud Native Workers run the installed Codex/Claude CLI on that host |
 
-Choose the mode in **添加 Team** or **Team 设置**. Team names are arbitrary. A
+Choose the mode in **添加 Team** or **Team 设置**. Team names are editable display names;
+renaming never moves or renames the bound folder. A
 Work Team requires an installed plugin. Empty Teams can change mode/plugin; a Team
 with employees keeps its workspace type so existing files cannot be silently reassigned.
 Existing unclassified Teams remain Build.
 
-- Work: `PlugIns/<plugin>/workspaces/<exact Team name>` inside the persistent plugin source folder.
+Hiring offers **Local Worker** and **Cloud Native Worker**. Existing employees remain Local Workers, including those already in Cloud Teams. Cloud Native Workers can join only a Cloud Team; creation checks that host's CLI and protocol before creating a folder. Their conversation still uses the common chat, approvals, file tree and terminal layout, with a small cloud beneath the pet to show where the engine runs. Run `agents engine remote-check --team TEAM --engine codex|claude` without a window, or see [API.md](API.md) for remote session binding and ownership rules.
+
+- Work: `PlugIns/<plugin>/workspaces/<Team name at creation>` inside the persistent plugin source folder.
   Each Team gets its own fixed folder; Team creation does not offer a folder picker.
-- Build: `~/develop/Agents-company-projects/<exact Team name>`.
+- Build: `~/develop/Agents-company-projects/<Team name at creation>`.
 - Cloud: an existing remote root configured on the Team; employee subfolders can be created over SSH.
 - Default local Team creation creates its directory automatically. Build Team names preserve
   case, spaces and Unicode, but cannot contain path separators.
@@ -113,6 +116,9 @@ the same scope focuses its existing window. Window controls and geometry are als
 flushes pending edits; save failures preserve the window. The resizable icon rail provides home, plugin, employee-portrait and settings
 buttons. Names appear on hover; visible descriptions are omitted. The office header is 52px high. No Team is required and no Team is auto-created.
 The sidebar never opens a Team-creation menu; use the two add buttons at the top.
+The top bar also has **All Team** and custom Team views. Use **＋** to name a view
+and choose its Teams, or edit the selected view to change membership. Each view
+remembers its own canvas position and zoom; Teams and employees remain shared.
 Clicking any Team nameplate opens its scoped file browser (Work, Build or Cloud). Clicking any employee
 opens the conversation directly. If a legacy folder is missing, the conversation
 shows a repair action; fixing the folder returns to chat without losing history.
@@ -294,7 +300,7 @@ Build Team creation offers **default generation** or **bind an existing folder**
 Build can reuse an existing project anywhere outside app data. Work automatically
 uses the selected plugin's fixed `workspaces/<Team name>` directory and never asks
 for a Team folder. Employees may create same-name subfolders or bind existing
-subfolders within that Team. Team names remain fixed after creation.
+subfolders within that Team. Later Team renames keep this original folder path.
 
 ```sh
 agents group add MyProject --directory-mode bind --root /absolute/existing-project
@@ -331,10 +337,12 @@ known_hosts, SSH config and jump host. Employees inherit that connection; hiring
 has no local/cloud switch or per-employee host fields. The default employee folder
 is `<remote Team root>/<employee name>`; an existing root or descendant can also
 be bound. Work plugin Teams and ordinary Build Teams remain local.
-Every Team header shows Plugin, Local or Cloud. Cloud headers use `agents remote check`
-to refresh a green/red SSH lamp every 30 seconds and display the remote OS icon;
-Linux distributions such as Kali are detected from `/etc/os-release`. An optional
-`--remote-distribution kali` keeps the Kali icon identifiable before connection.
+Every Team header shows Plugin, Local or Cloud. Cloud headers use `agents host check`
+to refresh the SSH lamp every 10 seconds and immediately after a manual host check;
+the initial state is neutral until the first probe finishes. This check does not
+require the Team working directory. `agents remote check --team NAME` separately
+validates that directory and detects Linux distributions from `/etc/os-release`.
+The host's configured distribution selects icons such as Kali even before connection.
 The original Tunnel project is integrated as the independent
 [Modules/Tunnel](Modules/Tunnel/README.md) module, not an installed software plugin.
 

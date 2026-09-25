@@ -9,7 +9,9 @@ import transport
 try:
     request = json.load(sys.stdin)
     config = commands.target(request['target'])
-    if sys.argv[1] == 'check':
+    if sys.argv[1] == 'ping':
+        print(json.dumps(transport.ping(config)))
+    elif sys.argv[1] == 'check':
         print(json.dumps(transport.doctor(config, details=True)))
     elif sys.argv[1] == 'prepare':
         session, args, _ = adapters.prepare(request['engine'], config, [], request['session'])

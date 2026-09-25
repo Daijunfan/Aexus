@@ -1,6 +1,7 @@
 import type { Request } from '../../shared/protocol'
 
 export type AgentsApi = {
+  filePath(file:File):string
   rendererReady(): void
   call<T = any>(cmd: Request['cmd'], args?: Request['args']): Promise<T>
   onEvent(handler: (event: { channel: string; payload: any }) => void): () => void

@@ -30,6 +30,11 @@ does not imply endorsement.
 calendar/timezone arithmetic. Their package license files ship with the runtime
 dependencies. The scheduler itself is implemented in the host Core.
 
+## Conversation Markdown
+
+`react-markdown` and `remark-gfm` (MIT) render assistant replies in the desktop
+conversation. Their license files ship with the runtime dependencies.
+
 ## Native execution transport
 
 The `ws` package (MIT) provides the private loopback WebSocket endpoint. Native Codex execution uses the installed OpenAI CLI on each machine; no model credentials are copied to the execution host.
@@ -52,3 +57,7 @@ File-tree, navigation and terminal icons use `@vscode/codicons` 0.0.46-24 by
 Microsoft and contributors: https://github.com/microsoft/vscode-codicons.
 Artwork is CC BY 4.0; code is MIT. Icons are unmodified, styled for size and color.
 Full licenses ship with the dependency. https://creativecommons.org/licenses/by/4.0/
+
+### macOS Finder system icon
+
+`src/renderer/src/assets/os/macos.png` is the macOS Finder system icon from `/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/FinderIcon.icns`, used to identify local macOS Teams. Apple retains ownership of its system artwork.

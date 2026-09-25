@@ -17,7 +17,7 @@ import type {
   SDKUserMessage
 } from '@anthropic-ai/claude-agent-sdk'
 import {activeModel,modelEfforts,fastTier,supportsFast,mergeCommands,engineCommands} from '../shared/engine-commands'
-import type {EffortLevel,ModelInfo,SlashCommand,ImageInput} from '../shared/types'
+import type {EffortLevel,ModelInfo,SlashCommand,ImageInput,EmployeeKind,NativeOrigin} from '../shared/types'
 import {withCodexSessionApi} from './native-sessions'
 import { codexModels, allCodexModels, runCodexTurn, type SandboxMode } from './codex'
 import {deepSeekProvider,deepSeekModels,deepSeekModel,deepSeekEffort,deepSeekPicker,type DeepSeekProvider} from './claude-provider'
@@ -28,8 +28,10 @@ import { conversation, forget, restoreTranscript, saveTranscript } from './trans
 import { approvalHandler,nativeRequestHandler,elicitationHandler, approvalsFor, cancelApprovals } from './approvals'
 import {teamSettings,nativeSessionRefs,type Session} from '../shared/types'
 import {CLOUD_TOOLS,cloudToolAllowed,cloudClaudeSettings,workClaudeOptions} from './scope'
-import { employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName } from './workspaces'
+import { employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName,cloudRelative } from './workspaces'
 import { provisionEmployee } from './plugins/documents'
+import {checkCloudNative,cloudNativeTarget} from './cloud-native'
+import {spawnRemoteAgent} from './remote-agent-process'
 
 const removingEmployees=new Set<string>(),removingTeams=new Set<string>()
 export function assertTeamAvailable(name?:string){if(name&&removingTeams.has(name))throw new Error('Team 正在删除中，暂时不能创建或调整员工')}
@@ -45,6 +47,8 @@ export type Engine = 'claude' | 'codex'
 
 export type Live = {
   cardId: string
+  kind: EmployeeKind
+  nativeOrigin?:NativeOrigin
   engine: Engine
   q: Query
   input: AsyncQueue<SDKUserMessage>
@@ -55,11 +59,13 @@ export type Live = {
   workRoot?: string
   permissionRoot?: string
   remote?:RemoteTarget|null
+  nativeRemote?:RemoteTarget
   remoteLaunch?:RemoteLaunch
   provider?:DeepSeekProvider
   model?: string
   thinkingEnabled: boolean
   planMode?: boolean
+  remoteAdmin?: boolean
   fastMode?: boolean
   effort?: EffortLevel
   sandbox: SandboxMode
@@ -171,6 +177,7 @@ export function buildOptions(args: {
   workRoot?: string
   permissionRoot?: string
   remote?:RemoteTarget|null
+  nativeRemote?:RemoteTarget
   remoteLaunch?:RemoteLaunch
   model?: string
   resume?: string
@@ -178,6 +185,7 @@ export function buildOptions(args: {
   thinking?: boolean
   planMode?: boolean
   isPlanning?:()=>boolean
+  remoteAdmin?: boolean
   fastMode?: boolean
   effort?: EffortLevel
 }): Options {
@@ -204,7 +212,7 @@ export function buildOptions(args: {
   // on an already-running session would be refused by the engine.
   opts.allowDangerouslySkipPermissions = !args.workRoot
   if(args.workRoot)Object.assign(opts,workClaudeOptions(args.cwd,args.permissionRoot??args.workRoot))
-  if(managerCliRoot(args.cwd,args.workRoot)&&!args.remoteLaunch)opts.allowedTools=['Bash(agents *)']
+  if(managerCliRoot(args.cwd,args.workRoot)&&!args.remoteLaunch&&!args.nativeRemote)opts.allowedTools=['Bash(agents *)']
   if(args.remoteLaunch){
     const launch=args.remoteLaunch,cloudSettings=cloudClaudeSettings()
     Object.assign(opts,{cwd:launch.cwd,tools:[],mcpServers:{tunnel:launch.server},strictMcpConfig:true,allowedTools:CLOUD_TOOLS,settingSources:[],env:{...cloudSettings.env,...env},settings:{permissions:cloudSettings.permissions},
@@ -217,7 +225,12 @@ export function buildOptions(args: {
       }]}]}})
   }
   opts.settings={...(typeof opts.settings==='object'?opts.settings:{}),fastMode:args.fastMode??false}
-  const provider=deepSeekProvider(args.remote?undefined:args.cwd)
+  if(args.nativeRemote){
+    opts.pathToClaudeCodeExecutable='claude'
+    opts.env={}
+    opts.spawnClaudeCodeProcess=options=>spawnRemoteAgent(args.nativeRemote!,'claude',options.args,options.signal)
+  }
+  const provider=args.nativeRemote?undefined:deepSeekProvider(args.remote?undefined:args.cwd)
   if(provider){
     // The installed system CLI may predate custom model capabilities. Use the SDK's paired runtime.
     opts.pathToClaudeCodeExecutable=__filename.includes('.asar/')
@@ -232,6 +245,7 @@ export function buildOptions(args: {
 
 export type StartArgs = {
   cardId?: string
+  kind?:EmployeeKind
   remote?:RemoteTarget|null
   title?: string
   directoryMode?: string
@@ -243,6 +257,7 @@ export type StartArgs = {
   permissionMode?: PermissionMode
   thinking?: boolean
   planMode?: boolean
+  remoteAdmin?: boolean
   fastMode?: boolean
   effort?: EffortLevel
   claudeSessionId?: string
@@ -254,16 +269,17 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   let card = args.cardId ? readStore().sessions.find((c) => c.id === args.cardId) : undefined
   assertTeamAvailable(card?.group??args.group)
   if (args.cardId && !card) throw new Error(`no such card ${args.cardId}`)
-  if (card && card.engine === 'codex' && teamSettings(readStore(),card.group).mode === 'cloud' && card.codexExecution !== 'native-v1') {
+  if (card && card.kind!=='cloud-native-worker' && card.engine === 'codex' && teamSettings(readStore(),card.group).mode === 'cloud' && card.codexExecution !== 'native-v1') {
     // Old MCP instructions/tools are already in native history. Start a clean context,
     // retaining the original native ID for deletion and the host's visible transcript.
     const next=patchSession(card.id,{nativeSessions:nativeSessionRefs(card),threadId:undefined,codexExecution:'native-v1'})
     card=next.sessions.find(c=>c.id===card!.id)!
   }
   if (card) {
+    if(card.kind==='cloud-native-worker')cloudNativeTarget(card)
     employeeWorkspace(readStore(),card.group,card.cwd,card.id)
     const existing = [...live.entries()].find(([, s]) => s.cardId === card.id)
-    if(existing){if(existing[1].engine===card.engine&&JSON.stringify(existing[1].remote??null)===JSON.stringify(executionEmployee(readStore(),card).remote))return {sessionId:existing[0],cwd:existing[1].remote?.directory??existing[1].cwd,engine:existing[1].engine};await closeSession(existing[0])}
+    if(existing){if(existing[1].engine===card.engine&&existing[1].kind===(card.kind??'worker')&&JSON.stringify(existing[1].remote??null)===JSON.stringify(executionEmployee(readStore(),card).remote))return {sessionId:existing[0],cwd:existing[1].remote?.directory??existing[1].cwd,engine:existing[1].engine};await closeSession(existing[0])}
     assertEmployeeControl(card.id, owner)
     args = { ...card, cardId: card.id }
   }
@@ -272,10 +288,12 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   if(args.remote!==undefined&&args.remote!==null)throw new Error('云主机连接由 Team 统一配置')
   const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode)
   const remote=config.mode==='cloud'?{...config.remote!,directory:cwd}:null
+  const kind=card?.kind??'worker',nativeRemote=kind==='cloud-native-worker'?cloudNativeTarget(card!).target:undefined
+  if(nativeRemote)await checkCloudNative(card!.group,card!.engine,cloudRelative(config,cwd))
   if(!remote)provisionEmployee(cwd,root!,config)
   const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?dirname(workRoot):undefined
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!)
-  const remoteLaunch=remote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',remote):undefined):undefined
+  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',remote):undefined):undefined
   assertTeamAvailable(args.group)
   const latest=readStore(),latestConfig=teamSettings(latest,args.group??'')
   if(latest.teamRoots?.[args.group??'']!==root||latestConfig.mode!==config.mode||latestConfig.pluginId!==config.pluginId||JSON.stringify(latestConfig.remote)!==JSON.stringify(config.remote))throw new Error('Team 配置已变更，请重新打开会话')
@@ -286,10 +304,10 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   const engine: Engine = args.engine ?? 'claude'
   if (engine !== 'claude' && engine !== 'codex') throw new Error(`Unknown engine: ${engine}`)
   if (engine === 'codex') args = { ...args, model: args.model || 'gpt-5.6-luna', effort: card?args.effort:(args.effort??'low') }
-  const provider=engine==='claude'?deepSeekProvider(remote?undefined:cwd):undefined
+  const provider=engine==='claude'&&!nativeRemote?deepSeekProvider(remote?undefined:cwd):undefined
   if(provider)args={...args,model:deepSeekModel(provider,args.model),effort:deepSeekEffort(args.effort),fastMode:false}
   const permissionMode = managerCliRoot(cwd)&&!remote&&!workRoot?'acceptEdits':args.permissionMode ?? (workRoot||remote?'acceptEdits':'default')
-  if(remote&&permissionMode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限')
+  if(remote&&!nativeRemote&&permissionMode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限')
   if(workRoot&&permissionMode!=='acceptEdits')throw new Error('Work 模式按员工目录授权，必须使用 Workspace write 权限')
   const cardId = card?.id ?? sessionId
   patchSession(cardId, {
@@ -297,23 +315,24 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
     threadId:args.threadId,claudeSessionId:args.claudeSessionId,
     title: args.title || `New ${engine === 'codex' ? 'Codex' : 'Claude'} session`,
     createdAt: card?.createdAt ?? Date.now(), model: args.model, effort: args.effort,
-    permissionMode, planMode:args.planMode??false,fastMode:args.fastMode??false, thinking: engine === 'claude' && args.thinking !== false
+    permissionMode, planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false, thinking: engine === 'claude' && args.thinking !== false
   })
   restoreTranscript(sessionId, cardId, engine)
 
   if (engine === 'codex') {
     const state: Live = {
       cardId,
+      kind,nativeOrigin:card?.nativeOrigin,
       engine,
       q: null as never,
       input: null as never,
       sessionId: null,
       threadId: args.threadId,
       cwd,
-      workRoot,permissionRoot,remote,remoteLaunch,
+      workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,
       model: args.model,
       thinkingEnabled: false,
-      planMode:args.planMode??false,fastMode:args.fastMode??false,
+      planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
       effort: args.effort,
       sandbox: sandboxFor(permissionMode),
       permissionMode,
@@ -328,18 +347,18 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
       model: args.model,
       thinking: false,
       thinkingSupported: false,
-      planMode:args.planMode??false,fastMode:args.fastMode??false,
+      planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
       effort: args.effort,
       permissionMode,
       commands: [],
-      models: codexModels(),
+      models: nativeRemote?[]:codexModels(),
       busy: false
     })
     emit('session:meta', {
       sessionId,
       engine,
       commands: [],
-      models: codexModels(),
+      models: nativeRemote?[]:codexModels(),
       requestedModel: args.model,
       permissionMode,
       thinking: false,
@@ -347,7 +366,7 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
       effort: args.effort
     })
     // Ask the installed CLI for current account/model capabilities without inference.
-    void withCodexSessionApi(allCodexModels).then(models=>{
+    void withCodexSessionApi(allCodexModels,nativeRemote?{nativeRemote}:{}).then(models=>{
       if(live.has(sessionId)&&models.length)rememberMeta(sessionId,{models})
     }).catch(()=>{}) // Offline engines keep the official local cache above.
     return { sessionId, cwd:remote?.directory??cwd, engine }
@@ -356,16 +375,17 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
   const input = new AsyncQueue<SDKUserMessage>()
   const state: Live = {
     cardId,
+    kind,nativeOrigin:card?.nativeOrigin,
     engine,
     provider,
     q: null as never,
     input,
     sessionId: null,
     cwd,
-    workRoot,permissionRoot,remote,remoteLaunch,
+    workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,
     model: args.model,
     thinkingEnabled: args.thinking !== false,
-    planMode:args.planMode??false,fastMode:args.fastMode??false,
+    planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
     effort: args.effort,
     sandbox: sandboxFor(permissionMode),
     permissionMode,
@@ -375,8 +395,8 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
 
   const approve=approvalHandler(sessionId, () => emit('session:changed', { sessionId }))
   const q = query({ prompt: input, options: {
-    ...buildOptions({ ...args, cwd, workRoot, permissionRoot, remote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true, resume: args.claudeSessionId }),
-    canUseTool: remote?async(tool,input,context)=>cloudToolAllowed(tool,state.planMode===true)?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
+    ...buildOptions({ ...args, cwd, workRoot, permissionRoot, remote,nativeRemote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true, resume: args.claudeSessionId }),
+    canUseTool: remote&&!nativeRemote?async(tool,input,context)=>cloudToolAllowed(tool,state.planMode===true)?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
     onElicitation:elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))
   } })
   state.q = q
@@ -437,7 +457,7 @@ export async function startSession(args: StartArgs = {}, owner?: string): Promis
         if(msg.type==='conversation_reset'){
           const saved=readStore().sessions.find(c=>c.id===cardId)!
           state.sessionId=msg.new_conversation_id
-          patchSession(cardId,{nativeSessions:nativeSessionRefs(saved),claudeSessionId:state.sessionId})
+          patchSession(cardId,{nativeSessions:nativeSessionRefs(saved),claudeSessionId:state.sessionId,nativeOwnership:undefined})
           rememberMeta(sessionId,{claudeSessionId:state.sessionId})
           emit('session:resolved',{sessionId,claudeSessionId:state.sessionId})
         }
@@ -477,22 +497,24 @@ async function pumpCodex(s: Live, sessionId: string) {
       await runCodexTurn({
         prompt: text,images,connectionId:sessionId,
         cwd: s.cwd,
-        workRoot: s.workRoot,permissionRoot:s.permissionRoot,remote:s.remote,
+        workRoot: s.workRoot,permissionRoot:s.permissionRoot,remote:s.remote,nativeRemote:s.nativeRemote,remoteAdmin:s.remoteAdmin,
         resumeId: s.threadId,planMode:s.planMode,
         model: s.model,
         sandbox: s.sandbox,
         effort: codexEffort(s.effort)??activeModel(sessionInfo(sessionId)?.models??[],s.model)?.defaultEffort,
         serviceTier:s.fastMode?fastTier(activeModel(sessionInfo(sessionId)?.models??[],s.model))?.id:undefined,
         signal: abort.signal,
-        approvalPolicy:s.workRoot||s.remote||['dontAsk','bypassPermissions'].includes(s.permissionMode)?'never':'on-request',
-        onRequest:nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&!s.remote&&!s.planMode),
+        approvalPolicy:s.workRoot||s.remote&&!s.nativeRemote||['dontAsk','bypassPermissions'].includes(s.permissionMode)?'never':'on-request',
+        onRequest:nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&(!s.remote||!!s.nativeRemote)&&!s.planMode),
         onEvent: (ev) => {
-          if(ev.kind==='child-thread'){const card=readStore().sessions.find(c=>c.id===s.cardId);if(card)patchSession(s.cardId,{nativeSessions:[...nativeSessionRefs(card),{engine:'codex',id:ev.threadId}]});return}
+          if(ev.kind==='notice'&&ev.level==='error'&&s.nativeRemote){emit('session:error',{sessionId,message:ev.text});return}
+          if(ev.kind==='child-thread'){const card=readStore().sessions.find(c=>c.id===s.cardId);if(card)patchSession(s.cardId,{nativeSessions:[...nativeSessionRefs(card),{engine:'codex',id:ev.threadId,origin:s.nativeOrigin}]});return}
           if(ev.kind==='background-turn'){if(!live.has(sessionId))return;s.running=ev.busy;rememberMeta(sessionId,{busy:ev.busy});emit(ev.busy?'session:turn-start':'session:turn-end',{sessionId});if(!ev.busy)dispatchQueued(s,sessionId);return}
           if(ev.kind==='usage'){rememberMeta(sessionId,{usage:ev.usage});return}
           if (ev.kind === 'thread') {
+            const prior=readStore().sessions.find(card=>card.id===s.cardId)
             s.threadId = ev.threadId
-            patchSession(s.cardId, { threadId: ev.threadId })
+            patchSession(s.cardId, prior?.nativeOwnership==='external'&&prior.threadId&&prior.threadId!==ev.threadId?{nativeSessions:nativeSessionRefs(prior),threadId:ev.threadId,nativeOwnership:undefined}:{threadId:ev.threadId})
             rememberMeta(sessionId, { threadId: ev.threadId })
             emit('session:resolved', { sessionId, threadId: ev.threadId })
             return
@@ -570,7 +592,7 @@ async function runSessionCommand(id:string,text:string,owner?:string):Promise<bo
     case 'new':{
       if(value)throw new Error('用法：/new 或 /clear')
       const card=readStore().sessions.find(c=>c.id===s.cardId)!
-      await closeNativeCodexSession(id);patchSession(s.cardId,{nativeSessions:nativeSessionRefs(card),threadId:undefined});s.threadId=undefined;s.running=false;rememberMeta(id,{threadId:undefined,busy:false})
+      await closeNativeCodexSession(id);patchSession(s.cardId,{nativeSessions:nativeSessionRefs(card),threadId:undefined,nativeOwnership:undefined});s.threadId=undefined;s.running=false;rememberMeta(id,{threadId:undefined,busy:false})
       emit('session:message',{sessionId:id,message:{type:'conversation_reset'}})
       result='已开始新的上下文，员工和工作目录保持不变。';break
     }
@@ -615,6 +637,7 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
   const s = require_(sessionId)
   assertEmployeeControl(s.cardId, owner)
   const store=readStore(), card=executionEmployee(store,store.sessions.find(c=>c.id===s.cardId)!)
+  if(s.kind==='cloud-native-worker'&&JSON.stringify(cloudNativeTarget(card).origin)!==JSON.stringify(s.nativeOrigin))throw new Error('云主机身份已变化；不会在本机或其他云主机执行')
   if(card.engine!==s.engine)throw new Error('引擎配置已变更，请重新打开会话')
   if(JSON.stringify(card.remote??null)!==JSON.stringify(s.remote??null))throw new Error('云主机配置已变更，请重新打开会话')
   const cwd=card.remote?card.cwd:employeeWorkspace(store,card.group,card.cwd,card.id)
@@ -666,6 +689,14 @@ export async function setModel(sessionId: string, model?: string, owner?: string
   return true
 }
 
+/** Explicit platform authorization for hardware/admin commands on the remote host only. */
+export async function setRemoteAdmin(id:string,enabled:boolean){
+  const s=require_(id);assertEmployeeControl(s.cardId)
+  if(!s.remote||s.nativeRemote||s.workRoot||s.engine!=='codex')throw new Error('远端主机管理开关仅适用于本地运行、通过 Tunnel 工作的 Codex 员工')
+  if(s.running)throw new Error('请等待当前任务结束后再更改远端权限')
+  s.remoteAdmin=enabled;patchSession(s.cardId,{remoteAdmin:enabled});rememberMeta(id,{remoteAdmin:enabled});return true
+}
+
 export async function setPermissionMode(
   sessionId: string,
   mode: PermissionMode
@@ -675,7 +706,7 @@ export async function setPermissionMode(
   if (s.running)throw new Error('请等待当前任务结束后再切换权限')
   if(mode==='plan')return setPlanMode(sessionId,true)
   if (!['default', 'acceptEdits', 'plan', 'auto', 'dontAsk', 'bypassPermissions'].includes(mode)) throw new Error(`Unknown permission mode: ${mode}`)
-  if(s.remote&&mode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限，不能切换本地沙箱')
+  if(s.remote&&!s.nativeRemote&&mode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限，不能切换本地沙箱')
   if(managerCliRoot(s.cwd)&&mode!=='acceptEdits')throw new Error('Manager 员工需要 Workspace write 才能连接宿主 CLI')
   if(s.workRoot&&mode!=='acceptEdits')throw new Error('Work 模式的目录权限不能绕过；请通过员工工作目录调整权限范围')
   // The engine decides whether this is allowed; record the change only after
@@ -781,6 +812,7 @@ export type SessionInfo = {
   thinking: boolean
   thinkingSupported: boolean
   planMode?: boolean
+  remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
   fastModeDisabledReason?: string

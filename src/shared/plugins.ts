@@ -11,6 +11,7 @@ export type PluginManifest = {
   schema: string;
   autoAttach?: boolean;
   workspaceDirectory?: string;
+  scope?: 'workspace'|'application';
   license?: string;
 };
 export type PluginDescriptor = PluginManifest & { directory: string };

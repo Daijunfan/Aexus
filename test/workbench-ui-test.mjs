@@ -21,6 +21,7 @@ let failed=false,n=0;const ok=(value,label)=>{assert.ok(value,label);n++;console
 try{
  await page.locator('.infinite-canvas').waitFor();ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())),'windows remain hidden')
  await cli('group','add','Build');await cli('group','add','Work','--mode','work','--plugin','mininotion')
+ const host=await cli('host','create','--data',JSON.stringify({name:'Fixture',host:'fixture',os:'linux',defaultDirectory:remote}))
  await page.locator('.add-team').click();await page.locator('input[name="team-name"]').fill('Cloud Team');await page.locator('[data-mode="cloud"]').click()
  const contrast=async selector=>page.locator(selector).evaluate(element=>{const surface=element.closest('.sign-preview'),rgb=value=>value.match(/[\d.]+/g).slice(0,3).map(Number),l=value=>{const c=rgb(value).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4});return .2126*c[0]+.7152*c[1]+.0722*c[2]},a=l(getComputedStyle(element).color),b=l(getComputedStyle(surface).backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)})
  for(const theme of ['white','light','space','black','midnight','sage']){await cli('settings','set','--theme',theme);await expect(page.locator('html')).toHaveAttribute('data-theme',theme);assert.ok(await contrast('.sign-preview>span')>=4.5);assert.ok(await contrast('.sign-preview small')>=4.5)}
@@ -28,15 +29,21 @@ try{
  await page.screenshot({path:path.join(project,'artifacts/team-create-0.13-light.png')})
  ok(true,'Team creation exposes three environments and readable preview text across all six themes')
 
- await page.locator('input[name="remote-host"]').fill('fixture');await page.locator('input[name="remote-directory"]').fill(remote)
- await page.getByRole('button',{name:'测试连接',exact:true}).click();await expect(page.getByRole('status')).toContainText('连接成功')
+ await page.locator('select[name="cloud-host-id"]').selectOption(host.id);await expect(page.locator('input[name="remote-directory"]')).toHaveValue(remote)
+ assert.equal((await cli('host','check',host.id)).connected,true)
  await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)
  await page.locator('.add-employee').click();await page.locator('select[name="group"]').selectOption('Cloud Team');await page.locator('input[name="title"]').fill('Cloud engineer')
  await expect(page.locator('input[name="remote-host"],.execution-target')).toHaveCount(0);await expect(page.locator('.cloud-inheritance')).toContainText('fixture');await expect(page.locator('.engine-choices .codex-mark path')).toHaveAttribute('fill','#111111');assert.equal(await page.locator('.engine-choices .codex-mark').evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(17, 17, 17)')
- await page.locator('[data-directory-mode="bind"]').click();await page.locator('input[name="cwd"]').fill('.')
+ await page.locator('[data-directory-mode="bind"]').click();await expect(page.locator('.employee-directory-picker')).toBeVisible()
+ await page.getByRole('option',{name:'使用当前文件夹'}).click();await expect(page.locator('input[name="cwd"]')).toHaveValue(remote)
  await page.locator('.save-employee').click();await expect(page.locator('.office-panel')).toHaveCount(0)
  const employee=(await cli('session','list')).sessions.find(c=>c.title==='Cloud engineer')
  ok(employee.remote.directory===remote,'Team creation configures SSH once and hiring only inherits its cloud environment')
+ await page.locator('.add-employee').click();await page.locator('select[name="group"]').selectOption('Cloud Team');await page.locator('input[name="title"]').fill('Cloud nested');await page.locator('[data-directory-mode="bind"]').click()
+ await page.getByRole('option',{name:/nested/}).focus();await page.getByRole('option',{name:/nested/}).press('Enter')
+ await expect(page.locator('input[name="cwd"]')).toHaveValue(path.join(remote,'nested'))
+ await page.locator('.save-employee').click();await expect(page.locator('.office-panel')).toHaveCount(0)
+ ok((await cli('session','list')).sessions.some(c=>c.title==='Cloud nested'&&c.cwd===path.join(remote,'nested')),'Enter selects a nested cloud folder without typing a path')
  await cli('view','open','conversation','--employee',employee.id);await expect(page.locator('.composer textarea')).toBeEnabled();await expect(page.locator('.employee-terminal')).toBeVisible()
  await expect.poll(async()=>(await cli('terminal','list','--employee',employee.id)).length).toBe(1)
  await page.getByRole('button',{name:'新建文件',exact:true}).click();await page.getByRole('textbox',{name:'文件名称'}).fill('cancel-me.txt');await page.getByRole('button',{name:'会话',exact:true}).click();await expect(page.getByRole('textbox',{name:'文件名称'})).toHaveCount(0);assert.ok(!fs.existsSync(path.join(remote,'cancel-me.txt')));

@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.27.1",
+  "version": "0.36.0",
   "description": "CLI-first Codex and Claude Code workspace with an illustrated company office",
   "main": "./out/main/index.js",
   "author": "Agents Company",
@@ -14,7 +14,7 @@
     "dist": "npm run build:plugins && electron-vite build && electron-builder --mac",
     "test:cli": "node test/cli-test.mjs",
     "test:coverage": "node test/coverage-test.mjs",
-    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:remote && npm run test:headless && npm run test:ui && npm run test:scheduler && npm run test:manager-docs",
+    "test": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:cloud-hosts && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:team-views && npm run test:remote && npm run test:cloud-native && npm run test:headless && npm run test:ui && npm run test:scheduler && npm run test:manager-docs",
     "dev:headless": "AGENTS_COMPANY_HEADLESS=1 electron-vite dev",
     "test:headless": "node test/run-headless.mjs",
     "serve": "node bin/agents serve",
@@ -34,7 +34,7 @@
     "test:navigation-ui": "node test/navigation-ui-test.mjs",
     "test:preferences": "node test/preferences-plugin-ui-test.mjs",
     "build:icon": "node scripts/build-icon.mjs",
-    "test:interactions": "node test/snapping-test.mjs && node test/interaction-api-test.mjs && node test/interaction-ui-test.mjs",
+    "test:interactions": "node test/snapping-test.mjs && node test/interaction-api-test.mjs && node test/interaction-ui-test.mjs && npm run test:canvas-stability",
     "test:employee-lifecycle": "node test/employee-lifecycle-test.mjs && node test/employee-lifecycle-ui-test.mjs",
     "test:team-lifecycle": "node test/team-directories-test.mjs && node test/employee-lifecycle-test.mjs --teams && node test/team-lifecycle-ui-test.mjs",
     "test:team-appearance": "node test/team-appearance-ui-test.mjs && node test/team-header-ui-test.mjs",
@@ -60,9 +60,16 @@
     "test:model-catalog": "node test/model-catalog-test.mjs",
     "test:model-catalog-ui": "node test/model-catalog-ui-test.mjs",
     "test:browser-plugin": "npm --prefix PlugIns/browser test && node test/browser-plugin-ui-test.mjs",
-    "test:chatter": "node test/chatter-cli-test.mjs && node test/chatter-ui-test.mjs && node test/chatter-background-test.mjs",
     "docs:managers": "node scripts/sync-manager-docs.mjs",
-    "test:manager-docs": "node scripts/sync-manager-docs.mjs --check && node test/manager-cli-test.mjs && node test/manager-agent-test.mjs && node test/manager-claude-test.mjs"
+    "test:manager-docs": "node scripts/sync-manager-docs.mjs --check && node test/manager-cli-test.mjs && node test/manager-agent-test.mjs && node test/manager-claude-test.mjs",
+    "test:canvas-stability": "node test/canvas-stability-test.mjs",
+    "test:cloud-hosts": "npm --prefix PlugIns/cloud-hosts test && node test/cloud-hosts-test.mjs && node test/cloud-hosts-ui-test.mjs",
+    "test:cloud-native": "python3 -m unittest Modules/Tunnel/tests/test_agent_process.py && node test/cloud-native-worker-test.mjs && node test/cloud-native-worker-ui-test.mjs",
+    "test:work-scope": "node test/work-scope-startup-test.mjs",
+    "test:cli-utf8": "node test/cli-utf8-test.mjs",
+    "test:transfers": "node test/transfers-test.mjs",
+    "test:shared-ui": "node test/shared-ui-test.mjs",
+    "test:team-views": "node test/team-views-test.mjs && node test/team-views-ui-test.mjs"
   },
   "build": {
     "appId": "com.agentscompany.app",
@@ -97,7 +104,11 @@
       ],
       "category": "public.app-category.developer-tools",
       "identity": null,
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "允许网页聊天在你同意后使用麦克风。",
+        "NSCameraUsageDescription": "允许网页聊天在你同意后使用摄像头。"
+      }
     },
     "extraResources": [
       {
@@ -130,6 +141,8 @@
     "@vscode/codicons": "0.0.46-24",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "ws": "^8.21.3"
   },
   "devDependencies": {
@@ -139,7 +152,7 @@
     "@types/react-dom": "^19.1.7",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.0",
-    "electron": "^38.1.0",
+    "electron": "44.4.4",
     "electron-builder": "^26.15.3",
     "electron-vite": "^4.0.0",
     "react": "^19.1.1",

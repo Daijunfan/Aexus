@@ -83,6 +83,8 @@ export async function runCodexTurn(args: {
   cwd: string
   workRoot?: string
   remote?:RemoteTarget|null
+  nativeRemote?:RemoteTarget
+  remoteAdmin?:boolean
   permissionRoot?: string
   resumeId?: string
   model?: string
@@ -95,7 +97,7 @@ export async function runCodexTurn(args: {
   onEvent: (e: CodexEvent) => void
   signal: AbortSignal
 }): Promise<void> {
-  if(args.onRequest||args.remote||args.planMode||args.images?.length||/^\/(compact|review)(?:\s|$)/.test(args.prompt))return runNativeCodexTurn(CODEX_BIN,args)
+  if(args.onRequest||args.remote||args.nativeRemote||args.planMode||args.images?.length||/^\/(compact|review)(?:\s|$)/.test(args.prompt))return runNativeCodexTurn(CODEX_BIN,args)
   const cwd=args.cwd
   const cmd = ['exec', '--json', '--skip-git-repo-check',...(args.remote?[]:['-C', args.cwd])]
   const env=childEnv(args.cwd,args.workRoot)

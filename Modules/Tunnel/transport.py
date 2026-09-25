@@ -13,17 +13,26 @@ ROOT = Path(__file__).resolve().parent
 
 
 def ssh_args(config):
-    args = ["ssh", "-T", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes",
+    args = ["ssh", "-T", "-o", "BatchMode=no" if config.get("askpass") else "BatchMode=yes", "-o", "StrictHostKeyChecking=yes",
             "-o", "ConnectTimeout=10", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=2"]
     for field, flag in (("port", "-p"), ("user", "-l"), ("proxy_jump", "-J"),
                         ("identity_file", "-i"), ("ssh_config", "-F")):
         if config.get(field):
             args += [flag, str(config[field])]
+    if config.get("askpass"):
+        args += ["-o", "NumberOfPasswordPrompts=1"]
     if config.get("identity_file"):
         args += ["-o", "IdentitiesOnly=yes"]
     if config.get("known_hosts"):
         args += ["-o", "UserKnownHostsFile=" + config["known_hosts"]]
     return args + [config["host"]]
+
+
+def ssh_env(config):
+    env = os.environ.copy()
+    if config.get("askpass"):
+        env.update(SSH_ASKPASS=config["askpass"], SSH_ASKPASS_REQUIRE="force", DISPLAY="agents-company")
+    return env
 
 
 def server_command(config):
@@ -49,7 +58,7 @@ def source_line(config):
 
 
 def serve(config):
-    process = subprocess.Popen(server_command(config), stdin=subprocess.PIPE)
+    process = subprocess.Popen(server_command(config), stdin=subprocess.PIPE, env=ssh_env(config))
     process.stdin.write(source_line(config).encode())
     process.stdin.flush()
     def pump():
@@ -77,10 +86,18 @@ def serve(config):
 def doctor(config, details=False):
     request = {"jsonrpc": "2.0", "id": 1, "method": "initialize",
                "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "tunnel-doctor", "version": "2"}}}
-    result = subprocess.run(server_command(config), input=source_line(config)+json.dumps(request)+"\n", capture_output=True, text=True, timeout=20)
+    result = subprocess.run(server_command(config), input=source_line(config)+json.dumps(request)+"\n", capture_output=True, text=True, timeout=20, env=ssh_env(config))
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "SSH tool server failed")
     response = json.loads(result.stdout)
     return ({'info': response['result']['instructions'],
              'environment': response['result'].get('environment', {})}
             if details else response['result']['instructions'])
+
+
+def ping(config):
+    result = subprocess.run(ssh_args(config) + ["echo __AGENTS_COMPANY_ALIVE__"],
+                            capture_output=True, text=True, timeout=20, env=ssh_env(config))
+    if result.returncode or "__AGENTS_COMPANY_ALIVE__" not in result.stdout.splitlines():
+        raise RuntimeError(result.stderr.strip() or "SSH connection failed")
+    return {"connected": True}

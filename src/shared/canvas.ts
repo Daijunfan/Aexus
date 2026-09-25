@@ -9,6 +9,9 @@ export type RoomBounds = Point & {
   arrangement: typeof ARRANGEMENTS[number]; points?: Point[]
   pinned?: boolean
 }
+export const ROOM_HEADER_HEIGHT = 170
+export const EMPLOYEE_TOP = ROOM_HEADER_HEIGHT + 12
+export const MIN_ROOM_HEIGHT = 520
 export const EMPLOYEE_SIZE = { width: 190, height: 250 }
 export const DEFAULT_VIEW: Viewport = { x: 70, y: 125, zoom: 0.8 }
 export const DEFAULT_POLYGON: Point[] = [{x:0.08,y:0},{x:0.92,y:0},{x:1,y:0.25},{x:0.93,y:1},{x:0.08,y:0.96},{x:0,y:0.28}]
@@ -22,9 +25,9 @@ export function resizeEdge(x:number,y:number):ResizeEdge {
 export function resizeRoom(bounds:RoomBounds,edge:ResizeEdge,delta:Point):RoomBounds {
   const next={...bounds}
   if(edge.includes('e'))next.width=Math.max(360,bounds.width+delta.x)
-  if(edge.includes('s'))next.height=Math.max(380,bounds.height+delta.y)
+  if(edge.includes('s'))next.height=Math.max(MIN_ROOM_HEIGHT,bounds.height+delta.y)
   if(edge.includes('w')){next.width=Math.max(360,bounds.width-delta.x);next.x=bounds.x+bounds.width-next.width}
-  if(edge.includes('n')){next.height=Math.max(380,bounds.height-delta.y);next.y=bounds.y+bounds.height-next.height}
+  if(edge.includes('n')){next.height=Math.max(MIN_ROOM_HEIGHT,bounds.height-delta.y);next.y=bounds.y+bounds.height-next.height}
   return next
 }
 export function roomExtent(room:PlannedRoom) {
@@ -33,7 +36,7 @@ export function roomExtent(room:PlannedRoom) {
 
 export function initialBounds(index: number, room?: RoomLayout): RoomBounds {
   return { x: (room?.col ?? index % 3) * 860, y: (room?.row ?? Math.floor(index / 3)) * 670,
-    width: (room?.w ?? 1) * 760, height: (room?.h ?? 1) * 500,
+    width: (room?.w ?? 1) * 760, height: (room?.h ?? 1) * MIN_ROOM_HEIGHT,
     shape: 'rounded', arrangement: 'grid', ...room?.bounds }
 }
 export function pointInPolygon(p: Point, points: Point[]): boolean {
@@ -56,7 +59,7 @@ const cornersFit = (b:RoomBounds,p:Point) => [p,{x:p.x+EMPLOYEE_SIZE.width,y:p.y
 
 /** Full employee footprint must fit, including concave custom-outline notches. */
 export function employeeFits(b:RoomBounds,p:Point):boolean {
-  if(p.x<18||p.y<56||p.x+EMPLOYEE_SIZE.width>b.width-18||p.y+EMPLOYEE_SIZE.height>b.height-18||!cornersFit(b,p))return false
+  if(p.x<18||p.y<EMPLOYEE_TOP||p.x+EMPLOYEE_SIZE.width>b.width-18||p.y+EMPLOYEE_SIZE.height>b.height-18||!cornersFit(b,p))return false
   if(b.shape!=='custom')return true
   const polygon=(b.points??DEFAULT_POLYGON).map(v=>({x:v.x*b.width,y:v.y*b.height}))
   // A polygon boundary entering the rectangle means part of the footprint is outside.
@@ -74,13 +77,13 @@ export function employeeFits(b:RoomBounds,p:Point):boolean {
 const fits=employeeFits
 /** Project a drag onto the legal footprint area; used identically by Core and preview. */
 export function constrainEmployee(b:RoomBounds,point:Point,previous?:Point):Point {
-  const p={x:Math.max(18,Math.min(b.width-EMPLOYEE_SIZE.width-18,point.x)),y:Math.max(56,Math.min(b.height-EMPLOYEE_SIZE.height-18,point.y))}
+  const p={x:Math.max(18,Math.min(b.width-EMPLOYEE_SIZE.width-18,point.x)),y:Math.max(EMPLOYEE_TOP,Math.min(b.height-EMPLOYEE_SIZE.height-18,point.y))}
   if(fits(b,p))return p
   let anchor=previous&&fits(b,previous)?previous:undefined
   if(!anchor){
     let distance=Infinity
     for(let y=0;y<=20;y++)for(let x=0;x<=20;x++){
-      const candidate={x:18+(b.width-EMPLOYEE_SIZE.width-36)*x/20,y:56+(b.height-EMPLOYEE_SIZE.height-74)*y/20}
+      const candidate={x:18+(b.width-EMPLOYEE_SIZE.width-36)*x/20,y:EMPLOYEE_TOP+(b.height-EMPLOYEE_SIZE.height-EMPLOYEE_TOP-18)*y/20}
       const d=(candidate.x-p.x)**2+(candidate.y-p.y)**2
       if(d<distance&&fits(b,candidate)){anchor=candidate;distance=d}
     }
@@ -104,7 +107,7 @@ export function snapEmployee(room:PlannedRoom,id:string,point:Point,zoom=1,previ
     const closest=anchors.reduce((a,b)=>Math.abs(b-point[axis])<Math.abs(a-point[axis])?b:a)
     return Math.abs(closest-point[axis])*zoom<=13?closest:undefined
   }
-  const x=choose('x',48,225),y=choose('y',62,285)
+  const x=choose('x',48,225),y=choose('y',EMPLOYEE_TOP,285)
   const bounds=room.bounds
   const options:SnapGuide[]=[{x,y},{x},{y}]
   for(const guide of options){
@@ -118,14 +121,14 @@ export function snapEmployee(room:PlannedRoom,id:string,point:Point,zoom=1,previ
 /** New automatic seats may expand a room; manual positions never resize its frame. */
 export function planRoom(name: string, cards: StoredSession[], requested: RoomBounds): PlannedRoom {
   const manual=cards.filter(c=>c.position)
-  let bounds={...requested, width:Math.max(360,requested.width),height:Math.max(380,requested.height)}
+  let bounds={...requested, width:Math.max(360,requested.width),height:Math.max(MIN_ROOM_HEIGHT,requested.height)}
   if(manual.length===cards.length)return {name,bounds,employees:cards.map(card=>({card,position:constrainEmployee(bounds,card.position!)}))}
   const count=cards.length
   const columns=Math.max(2,Math.ceil(Math.sqrt(count)))
   if (!manual.length && count>4) bounds.width=Math.max(bounds.width,columns*225+100)
-  bounds.height=Math.max(bounds.height,Math.ceil(count/Math.max(1,Math.floor((bounds.width-263)/225)+1))*285+110)
+  bounds.height=Math.max(bounds.height,Math.ceil(count/Math.max(1,Math.floor((bounds.width-263)/225)+1))*285+EMPLOYEE_TOP+48)
   if(count===1&&!manual.length) {
-    const position={x:(bounds.width-EMPLOYEE_SIZE.width)/2,y:(bounds.height-EMPLOYEE_SIZE.height)/2}
+    const position={x:(bounds.width-EMPLOYEE_SIZE.width)/2,y:ROOM_HEADER_HEIGHT+(bounds.height-ROOM_HEADER_HEIGHT-EMPLOYEE_SIZE.height)/2}
     if(fits(bounds,position))return {name,bounds,employees:[{card:cards[0],position}]}
   }
   for (let attempt=0; attempt<80; attempt++) {
@@ -139,7 +142,7 @@ export function planRoom(name: string, cards: StoredSession[], requested: RoomBo
       if ([...positions.values()].every(p=>fits(bounds,p))) return {name,bounds,employees:cards.map(card=>({card,position:positions.get(card.id)!}))}
     } else {
       let at=0
-      for (let y=62; y+EMPLOYEE_SIZE.height<bounds.height-30 && at<free.length; y+=285) {
+      for (let y=EMPLOYEE_TOP; y+EMPLOYEE_SIZE.height<bounds.height-30 && at<free.length; y+=285) {
         for (let x=48; x+EMPLOYEE_SIZE.width<bounds.width-25 && at<free.length; x+=225) {
           const p={x,y}
           if (!fits(bounds,p) || [...positions.values()].some(other=>overlaps(p,other))) continue

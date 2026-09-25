@@ -95,30 +95,9 @@ See [PLUGIN_SPEC.md](PLUGIN_SPEC.md) for the package and documentation format.
 
 ## Sessions
 
-### Worker and Chatter employees
+### Worker employees
 
-An employee has exactly one kind: `worker` (the default, Codex or Claude Code) or `chatter` (a web chat). A Chatter may belong to a local Build Team or a Browser Work Team; cloud Teams and other Work plugins are for Workers. The provider is fixed at creation, as is the employee name. Browser authentication is shared per provider, while every employee has its own website conversation URL, Chrome page target and workspace. **Chatter webpages open in installed Google Chrome**, in a managed native window. The Agents Company view keeps the employee and CLI conversation. No coding engine is launched and coding model, effort, permissions and slash commands do not apply.
-
-The employee form presents `Worker` and `Chatter` in its **职位** dropdown. The old free-text role and color picker are no longer shown; existing character color values are preserved. A managed Chrome window uses the installed Google Chrome binary and a plugin-owned profile. Its randomly assigned localhost debugging port is nonzero. This is the same Chrome executable the user installed, but websites can still require a fresh login or human verification; no anti-ban guarantee is possible.
-
-```sh
-agents card create --title '豆包助手' --group Local --kind chatter --chat-provider doubao
-agents card create --title 'DeepSeek 助手' --group Local --kind chatter --chat-provider deepseek
-agents card create --title 'ChatGPT 助手' --group Local --kind chatter --chat-provider chatgpt
-agents chatter status EMPLOYEE_ID
-agents chatter open-chrome EMPLOYEE_ID
-agents chatter migrate EMPLOYEE_ID --account 'your-chrome-email@example.com'
-agents session open EMPLOYEE_ID
-agents session send EMPLOYEE_ID '你好'
-agents session transcript EMPLOYEE_ID
-agents chatter inspect EMPLOYEE_ID
-```
-
-`chatter.migrate` imports site-scoped Chrome cookies, local storage and IndexedDB from the selected account or `--profile 'Profile 2'`; macOS may request Keychain access. The CLI returns counts, not values. Provider login data is stored under `PlugIns/browser/workspaces/.browser-auth/` and shared by that provider's employees. Check `chatter.status`: a copied login can have expired at the website. `chatter.login` explicitly opens the shared Chrome profile when a fresh website login is required. It is never invoked by `serve`, `session.open` or `session.send`. For an explicitly exported cookie JSON array, `agents chatter import EMPLOYEE_ID --file cookies.json` imports only cookies matching the provider.
-
-`chatter.current` reads the employee's bound URL and `chatter.bind EMPLOYEE_ID URL` sets it to a URL on the same provider website. `chatter.open-chrome`, `chatter.chrome-status` and `chatter.close-chrome` manage the plugin-owned Chrome process; closing it affects all open employees of that provider. The website runs in a separate native Chrome window, with its normal controls. `chatter.view` now returns the URL and `mode: chrome`; the old `chatter.attach` endpoint reports that embedded Chatter was retired. CLI actions are `chatter.inspect`, `chatter.click`, `chatter.fill`, `chatter.press`, `chatter.upload`, `chatter.screenshot`, and `chatter.run EMPLOYEE_ID --steps @actions.json`. A run file contains 1–20 actions such as `[{"type":"fill","selector":"textarea","value":"hello"},{"type":"press","selector":"textarea","key":"Enter"}]`; file uploads are restricted to the employee workspace. `session.send` opens managed Chrome if needed, waits for a real website reply and fails if none can be identified. Removing an employee removes its host transcript while retaining work files.
-
-Opening a Chatter employee in the visible App also opens its Chrome page. `AGENTS_COMPANY_HIDDEN=1` defers that visible window unless a loopback website fixture is configured; this keeps background verification silent. A site's login session is saved in the managed Chrome profile, but migrating a cookie from another profile cannot guarantee that the site will accept it. When the site refuses the copied session, complete its normal login in the managed Chrome window once.
+Every employee uses Codex or Claude Code and the same `session.*`, `config.*`, file and terminal UI/CLI. An omitted `kind` or `kind:worker` means **Local Worker**: the Coding Agent process runs on the Mac. A Local Worker in a Cloud Team still uses the existing local engine and remote Tunnel tools. `kind:cloud-native-worker` means **Cloud Native Worker**: the Coding Agent executable, auth/configuration, tools and native session records live on that Team's registered SSH host. The Team owns `hostId` and remote root; the employee cannot specify a different host or leave the Team's remote directory. Existing employees are never converted automatically. Browser is a separate saved-webpage plugin under the **B** icon and does not create employees.
 
 ```bash
 agents status
@@ -161,6 +140,7 @@ field is retained for compatibility but is no longer needed for placing an emplo
 ```bash
 agents config model <id> <model>
 agents config permission <id> <mode>
+agents config remote-admin <cloud-codex-session-id> on|off
 agents config thinking <id> on|off
 agents config effort <id> <supported-level|default>
 agents config fast <id> on|off
@@ -173,6 +153,8 @@ agents config fast <id> on|off
 | Thinking | Native thinking toggle | Uses the model’s supported reasoning efforts; no separate boolean toggle |
 | Effort | Native effort control; validated against `supportedModels()` | Validated against `model/list` and sent unchanged as `model_reasoning_effort` / `turn.start.effort` |
 | Fast | Native `applyFlagSettings({fastMode})` when the model supports it | Catalog Fast tier ID passed as `service_tier` / `turn/start.serviceTier`, both local and cloud |
+
+`config.remote-admin` is an explicit opt-in for a cloud Codex employee that must administer its remote host (for example KVM devices and long-lived VM processes). Default is off. Enabled commands run with the SSH account's remote permissions instead of the remote workspace sandbox, after the remote executor handshake; this never enables a Mac fallback or changes the local Team policy. It is rejected for local/Work employees, Claude, and busy turns; moving the employee to another Team resets it. Read the effective `remoteAdmin` in `session.info/snapshot`. Use the normal workspace mode for document-only employees. A Manager may grant this when the user's task explicitly authorizes remote host administration. Do not use SSH self-login to work around a denied sandbox.
 
 The permission table applies to Build Teams. Work fixes `acceptEdits` with a folder
 scope policy and rejects attempts to switch to Full access or another permission mode.
@@ -386,10 +368,15 @@ world-space bounds and employee positions below; it has no fixed column limit.
 engine or conversation. `session.open` starts or resumes that employee's engine.
 `card.update` saves appearance and workspace fields; a directory change resets engine resume IDs and keeps visible conversation history.
 Saving appearance within the same department does not change workstation order.
-Team and employee names are immutable after creation, including bound folders.
-`group.rename`, `card.rename`, `session.rename` and a changed `card.update.title`
-return an error before creating/moving folders or stopping engines. Supplying
-the same name is an idempotent no-op. Role, appearance and directory bindings remain editable.
+Employee names remain immutable after creation. `group.rename OLD NEW` changes
+the Team's display name and all employee membership references while keeping its
+registered workspace root, employee directories, files, room layout, plugin and
+cloud host binding unchanged. The folder originally generated from the Team name
+is **not** renamed. The old Team name becomes available for reuse, but creation
+still rejects an existing workspace root. Empty or duplicate new names are
+rejected; the same name is an idempotent no-op. `card.rename`, `session.rename`
+and a changed `card.update.title` still reject employee renaming. Role,
+appearance and directory bindings remain editable.
 `room.design` stores a partial design patch; its JSON API uses booleans for the
 decoration and scenery switches. An empty department name customizes the Unassigned room.
 
@@ -424,6 +411,28 @@ capture web content without opening a preview or showing the window.
 
 The normal workflow needs only data commands. `ui.*` is for acceptance checks
 and visual diagnostics, and is not required to run agents or manage the company.
+
+## Team views
+
+The built-in `All Team` view always contains every Team and cannot be edited or
+deleted. Custom views contain selected existing Teams and have independent canvas
+pan/zoom. Switching views only changes what the board displays; employees, folders,
+sessions and Team positions remain shared.
+
+```bash
+agents team-view list --json
+agents team-view create --name '云端项目' --teams '["BUPT Linux VMs","BUPT Windows"]'
+agents team-view update VIEW_ID --patch '{"name":"服务器","teams":["BUPT Linux VMs"]}'
+agents team-view select VIEW_ID
+agents team-view select all
+agents team-view remove VIEW_ID
+```
+
+`--teams` and `--patch` also accept `@file.json`. Creating a view selects it;
+`team-view.list` returns `{activeId,views:[{id,name,teams,viewport?}]}`. Names
+must be unique, and unknown Teams are rejected. Renaming or deleting a Team
+updates custom views. A Team created while a custom view is active joins that
+view automatically. Deleting a view never deletes its Teams.
 
 ## Canvas and freely placed employees
 
@@ -463,12 +472,12 @@ focusing a window.
 ## Workspace enforcement and existing data
 
 New Work roots are auto-created under the plugin's persistent source folder:
-`PlugIns/<plugin>/workspaces/<exact Team name>`. Each Team has a separate fixed root;
+`PlugIns/<plugin>/workspaces/<Team name at creation>`. Each Team has a separate fixed root;
 the App never writes new workspaces inside its own packaged resources. Existing Work
 Teams keep their registered roots until explicitly migrated. Employees
 must use strict subdirectories, which can be nested; exact directory aliases cannot
 be assigned twice in Work. Build roots are auto-created under
-`~/develop/Agents-company-projects/<Team name>` and may be shared by their employees.
+`~/develop/Agents-company-projects/<Team name at creation>` and may be shared by their employees.
 All paths are canonicalized; traversal and outward symlinks are rejected.
 
 For a Work Team, `group.add NAME --mode work --plugin ID` selects that plugin's fixed
@@ -476,7 +485,8 @@ For a Work Team, `group.add NAME --mode work --plugin ID` selects that plugin's 
 Team folder. Build Teams still accept `--directory-mode default|bind` (`directoryMode`
 in JSON); binding requires `--root` to be an existing physical folder and creates
 no additional Team-named directory. `group.root NAME PATH --directory-mode bind`
-changes a Build binding without moving files. Team names are fixed after creation.
+changes a Build binding without moving files. Team names may change later;
+the registered folder path remains the one chosen or generated at creation.
 Legacy Work roots and their files stay registered; `group.migrate NAME` is an explicit
 operation, never an automatic move during upgrade.
 
@@ -506,7 +516,7 @@ A pre-existing destination rejects migration without overwriting it. Without
 computed managed path; bound directories cannot be automatically migrated. A first binding
 repairs unbound employees; the old unbound application workspace is left untouched.
 
-Team names remain fixed. Empty Teams may change mode/plugin. Teams with
+Team names may change without moving their directories. Empty Teams may change mode/plugin. Teams with
 employees reject mode/plugin changes to preserve existing directory assignments.
 Busy engines block folder changes. Idle engines are closed and resume IDs are
 cleared; saved conversation history remains. `workspaceError` reports invalid old
@@ -550,7 +560,13 @@ isolated deployments/tests; the plugin's `workspaceDirectory` and Team name are 
 appended. `AGENTS_COMPANY_PROJECTS` overrides the Build base. `workspace choose
 [--path PATH]` opens the desktop directory picker only on explicit request; CLI
 callers can supply `--cwd` directly. Employee forms offer create/existing choices;
-Team forms display their automatically computed directory.
+Team forms display their automatically computed directory. In the employee form,
+the binding path is read-only: Build uses the macOS folder chooser; Work and Cloud
+use a Team-scoped directory browser backed by `workspace.list --team NAME`.
+Clicking a folder selects it, double-clicking selects and enters it, and Enter
+confirms the focused folder. Work cannot select its Team root; Cloud may select
+its root to grant the employee access to the whole Team tree. CLI agents may still
+pass a path explicitly through `card.create/update`, under the same Core scope checks.
 
 ## Navigation, including closing panels
 
@@ -652,17 +668,39 @@ locations respect `CODEX_HOME` and `CLAUDE_CONFIG_DIR` just as engine startup do
 
 ## Cloud Team configuration and inheritance
 
-`group.add` and `group.configure` accept `mode:"cloud"` and a `remote` object:
+Create and manage hosts in **Cloud Hosts** (`cloud-hosts`) first. New cloud Teams can only bind an existing host ID and existing remote directory:
 
-```json
-{"name":"Backend","mode":"cloud","remote":{"host":"ubuntu@203.0.113.10","directory":"/home/ubuntu/project","os":"linux","port":22}}
+```sh
+agents host create --data @host.json
+# host.json: {"name":"GPU Server","host":"djf@10.92.35.208","os":"linux","defaultDirectory":"/home/djf"}
+agents host list --json
+agents host check HOST_ID --json
+agents host directories HOST_ID --path /home/djf --json
+agents group add Backend --mode cloud --host-id HOST_ID --remote-dir /home/djf/develop
 ```
 
-Optional connection fields: `identityFile`, `knownHosts`, `sshConfig`, `jump`, and
-`distribution` for a Linux distro such as `kali` or `ubuntu` (useful before the
-first successful connection). CLI flags: `--remote-host`, `--remote-dir`,
-`--remote-os`, `--remote-distribution`, `--ssh-port`, `--ssh-key`,
-`--known-hosts`, `--ssh-config`, `--ssh-jump`, on `group add/configure --mode cloud`.
+JSON API: `group.add {name,mode:"cloud",hostId,directory}` and `group.configure {name,mode:"cloud",hostId,directory}`. Connection fields no longer create a host inside a Team. `host.create` accepts `name,host,os,defaultDirectory` and optional `port,identityFile,knownHosts,sshConfig,jump,distribution,password`; use `host.update ID --data @patch.json` for changes. Password omitted means unchanged; an empty string removes it. `host.list/get` expose `hasPassword`, never the secret; `host.credentials ID` explicitly returns `{id,password}`. Passwords use AES-256-GCM at rest under `~/AgentsCompany/cloud-hosts`, with a separate 0600 local key; they are obtained by SSH askpass via a 0600 local socket, never automatically passed in command arguments or model context. An explicit `host.credentials` response does contain the password, so a management Agent invoking that API can see it. This does not protect against another process with the same OS-user privileges.
+
+`host.fingerprints ID` reads SSH server fingerprints. After independently checking with the host provider, `host.trust ID --fingerprint SHA256:...` rescans, requires an exact match, and saves the key to this host's managed known_hosts. It never disables SSH host key checks. Jump/HostKeyAlias configurations use their existing SSH trust setup.
+
+`host.check` tests authenticated SSH reachability without requiring the host's default directory or a Team workspace. It returns `{connected,checkedAt,environment?,error?}`, stores the latest state, and immediately updates bound Team connection lamps; failure is `connected:false`. The operating system and distribution in `environment` come from the registered host configuration. `host.directories` returns `{path,entries}` containing existing child folders, not files. The Team picker can navigate to an existing directory; it does not create one. `host.remove ID` is rejected while Teams reference it. Editing connection settings closes idle employee sessions/terminals; busy workers block changes. No cloud work falls back to the Mac.
+
+The separate Cloud Hosts plugin exposes these same commands as `hosts.list/get/create/update/remove/check/directories/credentials/fingerprints/trust` through its own CLI, schema and runtime. It is an application-scope service plugin: a Work employee receives its own document/launcher/mailbox, but its documented API manages the shared host registry across Teams. To prepare a management team:
+
+```sh
+agents group add 'Cloud Managers' --mode work --plugin cloud-hosts
+agents card create --title Operator --group 'Cloud Managers'
+# In that employee's generated Workspace:
+./.agents-company/bin/cloud-hosts hosts.list
+./.agents-company/bin/cloud-hosts hosts.update --data '{"id":"HOST_ID","patch":{"name":"GPU Lab"}}'
+```
+
+`host.exec ID --command COMMAND|--command-file FILE [--directory PATH --timeout SECONDS]` executes exclusively through the registered host's Tunnel, with no local fallback. JSON API: `{id,command,directory?,timeout?}`; returns `{stdout,stderr,exit_code,cwd}`. Each call has an independent remote working directory; timeout is 0.1–600 seconds. Check exit_code, not only the RPC envelope.
+
+VMs can be registered with `host.create/update` using `vm:{hypervisorId,name,projectDirectory,state,access,notes?}`. State is running/stopped/paused/unknown; access is ssh/serial/rdp/unconfigured. These are actual observed asset properties, not proof of SSH reachability. Non-SSH assets remain visible but cannot masquerade as usable cloud execution hosts. Use host.exec on the hypervisor to call its existing management CLI and inspect the real VM inventory. Registration does not start, stop or reconfigure VMs. Partial vm updates merge existing properties, duplicate VM identity is rejected, and hypervisors with registered VM children cannot be removed.
+
+Full plugin reference: `PlugIns/cloud-hosts/API.md`. Existing cloud Teams migrate automatically with backup and connection deduplication. They persist only `{mode:"cloud",hostId,directory}`; API replies hydrate the read-only `remote` projection from the registry.
+
 Team creation checks and canonicalizes the existing root over SSH, without creating
 a corresponding local project directory. Work and Build Teams use local folders.
 
@@ -672,7 +710,29 @@ creates a same-name cloud child folder; `bind` checks an existing root or descen
 Relative paths are based on the cloud Team root. Traversal and outward symlinks are
 rejected. An explicit `--cwd . --directory-mode bind` can bind the Team root.
 Persisted employees store their actual `cwd`; API replies include a read-only
-`remote` projection from the Team. SSH settings are stored only on the Team.
+`remote` projection from the Team. SSH accounts are stored in the shared host registry; Team stores only its host ID and directory.
+The employee form lists only folders under the cloud Team root; it never asks
+users to type a remote path. Browsing and selection use `workspace.list` through
+the Team's remote file API, while the final `bind` call checks the selected
+directory again before saving.
+
+Cloud Native Worker uses the **remote** Codex `app-server` or Claude Code CLI through a persistent, bidirectional SSH stdio channel. It never starts the Mac Coding Agent or registers the Local Worker's Tunnel command executor. Preflight and launch share the same SSH user, host-key policy, directory and executable lookup. The CLI remains usable without any desktop window:
+
+```sh
+agents engine remote-check --team 'BUPT Linux VMs' --engine codex
+agents engine remote-check --team 'BUPT Linux VMs' --engine claude
+agents card create --title 'Remote engineer' --group 'BUPT Linux VMs' \
+  --kind cloud-native-worker --engine codex --model gpt-6-luna --effort low \
+  --directory-mode default
+agents session open EMPLOYEE_ID
+agents session send SESSION_ID '请查看当前工作目录，并简要说明项目结构。'
+agents engine remote-sessions --team 'BUPT Linux VMs' --engine codex
+agents card native-bind EMPLOYEE_ID REMOTE_NATIVE_SESSION_UUID
+```
+
+`engine.remote-check` checks SSH connectivity, the real remote folder, CLI version, Codex app-server or Claude stream-json support, and login status without sending a model prompt. `authentication` is `configured` or `unknown`; a definite sign-out is an error. It cannot prove remaining quota. The employee form runs this check after choosing the Cloud Team or engine and disables creation until it succeeds. `card.create` repeats the check **before** creating a default folder or employee record. Missing CLI, host failures or an out-of-scope path fail closed. The session page reuses the existing streaming/approval/file/terminal UI; a small cloud beneath the pet marks the process location, independently of its busy lamp.
+
+`engine.remote-sessions` lists native histories on that host under the Team root. `card.native-bind` accepts an existing native UUID only when its remote cwd exactly matches the employee cwd and the employee has no prior conversation. It imports readable messages into the host transcript, then resumes through the remote CLI. A manually bound history is marked `external`: removing the employee removes its host view, **not** the remote original. Native histories created by Agents Company retain remote deletion ownership. Both types carry `hostId`, SSH endpoint/OS and original directory with every reference, so deletion or cloning cannot target a Mac record or another host. Codex remote cloning uses `thread/fork`; Claude remote cloning is explicitly rejected until a reliable native fork interface is available, leaving the source untouched. An existing running terminal process is not taken over; only its persisted history can be resumed. SSH disconnects never retry a model turn or fall back to the Mac.
 
 Changing a cloud connection validates all employee directories at the destination,
 closes idle engines/terminals and rebinds their relative paths. It does not move files.
@@ -684,10 +744,12 @@ cloud Teams on startup; local teammates, employee names, files and native IDs re
 `remote.check {team}`, `{employee}`, or `{remote}` tests SSH and the target folder
 without inference. On success it returns the existing `info` string plus a structured
 `environment` containing the remote OS and, for Linux, `distribution` and
-`distributionName` from `/etc/os-release`. The Team header checks this same CLI API
-when opened and every 30 seconds: a successful probe lights a green lamp; a failed
-probe lights red. Its icon uses the detected distribution or the Team's configured
-Linux distribution, with Windows and macOS identified by their OS setting.
+`distributionName` from `/etc/os-release`. The Team header instead calls
+`host.check` when opened, every 10 seconds, on window focus and after a manual
+host check. The lamp is neutral until the first result, green for a reachable SSH
+host and red otherwise. A missing Team directory can therefore leave the lamp
+green while `remote.check` and workspace operations correctly report that error.
+Its icon uses the registered Linux distribution or OS setting.
 Connections use SSH batch authentication and known_hosts; there
 is no password popup or automatic trust. Model credentials remain local. Remote
 permissions are those of the SSH user; the UI never presents them as a local sandbox.
@@ -840,19 +902,20 @@ are shown; excerpts keep the most recent 360 characters. No hidden reasoning is 
 The office uses solid speech bubbles, dashed thinking bubbles and monospace tool bubbles.
 
 `card.place` constrains the full 190×250 employee footprint to its Team's actual shape,
-even with snapping off. The frame never grows from a manual drag. Resizing/changing a
+even with snapping off. The full wall region above the floor is a 170px Team header; employees start below it (y ≥ 182), and rooms are at least 520px high. The frame never grows from a manual drag. Resizing/changing a
 Team repositions existing employees inside it, and unusably narrow shapes are rejected.
 Legacy out-of-bounds seats are normalized by the shared layout and saved on the next
 placement/resize. Team interiors drag the whole Team; the plain top-center name remains
 the click/keyboard entry to its workspace. Resizing uses the outline, without a corner button.
 
-Windows cloud Teams use `--remote-os windows` and a drive-qualified working path,
+Windows hosts use `os:"windows"` in Cloud Hosts and a drive-qualified working path,
 for example `C:\Users\djf\AgentsCompany`. RDP bookmarks do not replace SSH
 connectivity. With a configured SSH alias:
 
 ```sh
 agents remote check --remote-host bupt-windows --remote-os windows --remote-dir 'C:\Users\djf\AgentsCompany'
-agents group add 'BUPT Windows' --mode cloud --remote-host bupt-windows --remote-os windows --remote-dir 'C:\Users\djf\AgentsCompany'
+agents host create --data '{"name":"BUPT Windows","host":"bupt-windows","os":"windows","defaultDirectory":"C:\\Users\\djf\\AgentsCompany"}'
+agents group add 'BUPT Windows' --mode cloud --host-id HOST_ID --remote-dir 'C:\Users\djf\AgentsCompany'
 agents card create --title Fireball --group 'BUPT Windows' --avatar fireball --engine codex --model gpt-5.6-luna --effort low
 ```
 
@@ -860,13 +923,79 @@ The terminal runs PowerShell. Native Codex tools execute through the selected
 Windows environment without transport instructions in model context. Authentication
 for the model stays on the Mac; no model login is needed on the Windows executor.
 
+## Shared 文件中转站与跨主机传输
+
+`Shared/` 是当前项目根目录下的真实本机文件夹。安装版仍指向构建时的项目目录，不把用户文件存进 App 包；文件不纳入 Git。`agents shared info --json` 返回实际路径。隔离测试或独立部署可在服务启动前设置 `AGENTS_COMPANY_SHARED_DIR`。
+
+```sh
+agents shared info --json
+agents view shared on
+agents workspace list . --shared --json
+agents workspace mkdir incoming --shared
+agents workspace write incoming/readme.md --shared --content 'Hello'
+agents workspace read incoming/readme.md --shared
+agents workspace move incoming/readme.md --to incoming/notes.md --shared
+agents workspace trash incoming/notes.md --shared --json
+agents workspace restore --id TRASH_ID --shared
+agents view shared off
+```
+
+`workspace.list/read/image/write/mkdir/move/trash/restore` 均支持 `--shared`，与 `--team`、`--employee` 互斥。删除进入可恢复回收站；收起中转站不关闭员工会话，也不取消传输。
+
+### transfer.start：复制文件或目录
+
+业务 API 接受 `{from: FileLocation, to: FileLocation}`。CLI 的 `--from` 和 `--to` 接受 JSON 字符串或 `@文件.json`。源是文件或文件夹；目标是已有文件夹，结果使用源名称。每个位置必须指定 `path` 和下列一种范围：
+
+| 范围 | FileLocation 示例 | 路径规则 |
+| --- | --- | --- |
+| 共享目录 | `{"shared":true,"path":"incoming/report.pdf"}` | 相对 Shared 根目录 |
+| Team 工作区 | `{"team":"Linux","path":"reports/report.pdf"}` | 相对 Team 根目录，自动选择本地或 SSH |
+| 员工工作区 | `{"employee":"EMPLOYEE_ID","path":"report.pdf"}` | 相对员工工作目录，不越过所属权限范围 |
+| Mac 物理路径 | `{"local":true,"path":"/Users/me/Downloads/report.pdf"}` | 明确的本机绝对路径 |
+
+```sh
+# 本地 → Shared
+agents transfer start --from '{"local":true,"path":"/Users/me/Downloads/archive.zip"}' --to '{"shared":true,"path":"incoming"}' --json
+# 云端员工 → Shared
+agents transfer start --from '{"employee":"EMPLOYEE_ID","path":"results"}' --to '{"shared":true,"path":"."}' --json
+# Shared → 另一个云端 Team 的已有文件夹
+agents transfer start --from '{"shared":true,"path":"results"}' --to '{"team":"Windows","path":"imports"}' --json
+# 也可直接跨工作区复制；两个云端之间由本机分块转发
+agents transfer start --from '{"team":"Linux","path":"data.bin"}' --to '{"team":"Windows","path":"incoming"}' --json
+# 导出到任意已有本机文件夹
+agents transfer start --from '{"shared":true,"path":"results"}' --to '{"local":true,"path":"/Users/me/Downloads"}' --json
+agents transfer list --json
+agents transfer get TRANSFER_ID --json
+agents transfer cancel TRANSFER_ID --json
+```
+
+返回任务对象包含 `id/from/to/name/state/bytes/totalBytes/files/totalFiles/createdAt`。初始状态为 `queued` 或 `running`，终态为 `completed`、`failed`、`cancelled`。成功后 `destination` 为目标范围内的结果路径；失败时查看 `error`。必须通过 `transfer.get/list` 等到终态，不能把 `start` 返回成功误认为传输完成。扫描目录时 total 数值会增长。
+
+复制规则：
+
+- 保留源文件；同名目标失败，绝不自动覆盖、改名或删除。
+- 支持二进制、空文件、多层目录、中文名和超过编辑器 4 MB 预览上限的大文件；使用 256 KiB 分块，内存不随整个文件大小增长。
+- POSIX 之间保留文件执行/只读权限；Windows 使用本机属性，复制回 POSIX 时采用普通文件权限。
+- 不复制软链接或特殊设备；目录中的 `.agents-company` 和本产品传输暂存目录跳过。路径及软链接不能越出指定工作区。
+- 目标目录中的独立暂存树复制完成后才提交；失败、取消会清理暂存，源文件保持原样。断线导致清理失败时，`error` 会列出待清理路径。
+- 同时最多两个任务，其余排队；最近约 100 条任务状态保留在本次服务运行内，不支持跨服务重启续传。已完成文件是永久物理文件；强制关闭应用可能中断尚未完成的任务。
+- SSH 失败不会退回读取或写入 Mac 上的同名路径。
+
+界面与这些 API 共用实现：侧栏文件夹图标展开共享中转站，员工会话可同时显示；从 Finder 或任意工作区文件栏拖入保存，再从中转站拖到另一个工作区文件夹或文件栏空白处上传。也可点击“上传本地文件”。传输列表提供路径方向、字节进度、结果、错误和取消。所有业务操作均可在 `agents serve` 无窗口完成，不需要模型推理。
+
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 135 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 142 项来自共享协议 `src/shared/protocol.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 |
 | --- | --- | --- | --- |
+| <code>agents shared info</code> | <code>—</code> | Locate the checkout Shared directory | 共享中转站物理目录 |
+| <code>agents view shared</code> | <code>on&#124;off</code> | Show or hide the shared transfer drawer without closing the conversation | 共享中转站侧栏 |
+| <code>agents transfer start</code> | <code>--from JSON&#124;@file --to JSON&#124;@file</code> | Copy a file or directory between local, shared and Team/employee workspaces | 跨工作区拖放复制 |
+| <code>agents transfer list</code> | <code>—</code> | List transfer progress and results for this service run | 传输列表 |
+| <code>agents transfer get</code> | <code>ID</code> | Read a transfer result and byte progress | 传输进度 |
+| <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 |
 | <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 |
 | <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 |
 | <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 |
@@ -891,26 +1020,21 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” |
 | <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | 会话名称 / 员工名牌 |
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card |
-| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a session | Typing in the composer |
-| <code>agents chatter status</code> | <code>&lt;employee-id&gt;</code> | Check the website login state of a Chatter employee | 网页聊天账号状态 |
-| <code>agents chatter open-chrome</code> | <code>&lt;employee-id&gt;</code> | Open this employee’s website in installed Google Chrome with its managed profile | 在 Chrome 中打开 |
-| <code>agents chatter chrome-status</code> | <code>&lt;employee-id&gt;</code> | Check the managed Google Chrome connection for this employee | Chrome 连接状态 |
-| <code>agents chatter close-chrome</code> | <code>&lt;employee-id&gt;</code> | Close the managed Google Chrome process for this provider | 关闭 Chrome 网页 |
-| <code>agents chatter login</code> | <code>&lt;employee-id&gt;</code> | Open the employee’s dedicated Chrome profile for sign-in | 登录网页账号 |
-| <code>agents chatter import</code> | <code>&lt;employee-id&gt; --file cookies.json</code> | Import explicitly exported provider cookies into the employee profile | CLI 凭据导入 |
-| <code>agents chatter migrate</code> | <code>&lt;employee-id&gt; --account EMAIL</code> | Migrate one site login from a signed-in Chrome account after Keychain authorization | 从 Chrome 迁移登录态 |
-| <code>agents chatter view</code> | <code>&lt;employee-id&gt;</code> | Compatibility endpoint: read the Chrome-mode website URL | Chrome 网页会话 |
-| <code>agents chatter attach</code> | <code>&lt;employee-id&gt; &lt;webcontents-id&gt;</code> | Compatibility endpoint: embedded Chatter is retired | 旧版网页会话连接 |
-| <code>agents chatter current</code> | <code>&lt;employee-id&gt;</code> | Read this employee’s bound website conversation URL | 网页会话地址 |
-| <code>agents chatter bind</code> | <code>&lt;employee-id&gt; &lt;url&gt;</code> | Bind one provider website conversation to this employee | 网页会话导航 |
-| <code>agents chatter inspect</code> | <code>&lt;employee-id&gt;</code> | Read the rendered website title and text without a window | 网页内容 |
-| <code>agents chatter click</code> | <code>&lt;employee-id&gt; --selector CSS</code> | Click a website element through the browser CLI | 网页按钮 |
-| <code>agents chatter fill</code> | <code>&lt;employee-id&gt; --selector CSS --value TEXT</code> | Fill a website input through the browser CLI | 网页输入框 |
-| <code>agents chatter press</code> | <code>&lt;employee-id&gt; --selector CSS --key KEY</code> | Send a keyboard key through the browser CLI | 网页键盘操作 |
-| <code>agents chatter upload</code> | <code>&lt;employee-id&gt; --selector CSS --path FILE</code> | Upload a file from the employee workspace to the website | 网页文件上传 |
-| <code>agents chatter screenshot</code> | <code>&lt;employee-id&gt;</code> | Capture the website into the employee workspace | 网页截图 |
-| <code>agents chatter run</code> | <code>&lt;employee-id&gt; --steps @actions.json</code> | Execute a sequence of website actions in one CLI browser session | 网页连续操作 |
-| <code>agents chatter sync</code> | <code>&lt;employee-id&gt; --file state.json</code> | Synchronize provider-scoped website session data from the in-app Chromium view | 网页登录态同步 |
+| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Send a message to a Worker session | 对话输入框 |
+| <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 |
+| <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 |
+| <code>agents host exec</code> | <code>&lt;id&gt; --command COMMAND&#124;--command-file FILE [--directory PATH --timeout SECONDS]</code> | Execute a management command exclusively on the registered remote host | 远端管理命令 |
+| <code>agents host list</code> | <code>—</code> | List registered cloud hosts without passwords | Cloud Hosts 插件 |
+| <code>agents host get</code> | <code>&lt;id&gt;</code> | Read a cloud host record without its password | Cloud Hosts 插件 |
+| <code>agents host create</code> | <code>--data @host.json</code> | Create a cloud host in the shared registry | Cloud Hosts 插件 |
+| <code>agents host update</code> | <code>&lt;id&gt; --data @patch.json</code> | Edit host connection and credentials | Cloud Hosts 插件 |
+| <code>agents host remove</code> | <code>&lt;id&gt;</code> | Remove an unbound cloud host | Cloud Hosts 插件 |
+| <code>agents host check</code> | <code>&lt;id&gt;</code> | Check SSH connectivity without requiring a Team working directory | Cloud Hosts 插件与 Team 连接灯 |
+| <code>agents host directories</code> | <code>&lt;id&gt; [--path PATH]</code> | Browse existing directories on a registered cloud host | Cloud Hosts 插件 |
+| <code>agents host credentials</code> | <code>&lt;id&gt;</code> | Explicitly reveal the saved host password | Cloud Hosts 插件 |
+| <code>agents engine remote-check</code> | <code>--team NAME --engine codex&#124;claude [--directory PATH]</code> | Check a Cloud Team native CLI, protocol, authentication and workspace before hiring | Cloud Native Worker 创建前检查 |
+| <code>agents engine remote-sessions</code> | <code>--team NAME --engine codex&#124;claude</code> | List native sessions on the selected Cloud Team host | 绑定已有云端会话 |
+| <code>agents card native-bind</code> | <code>&lt;employee-id&gt; &lt;native-session-id&gt;</code> | Bind an existing remote native session without taking deletion ownership | 绑定远端原生会话 |
 | <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript |
 | <code>agents session transcript</code> | <code>&lt;id&gt; [--thinking]</code> | Print a session’s conversation as text | The transcript pane |
 | <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button |
@@ -923,6 +1047,7 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline |
 | <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 |
 | <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown |
+| <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 |
 | <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown |
 | <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle |
 | <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown |
@@ -944,17 +1069,22 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu |
 | <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu |
 | <code>agents group list</code> | <code>—</code> | List departments | Department headings |
-| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” |
-| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--remote-host HOST --remote-dir PATH]</code> | Configure Team plugin or shared SSH connection | Team 工作方式与连接 |
+| <code>agents team-view list</code> | <code>—</code> | List All Team and saved Team views with the active selection | 顶部视图标签 |
+| <code>agents team-view create</code> | <code>--name NAME [--teams @teams.json]</code> | Create and select a named view of existing Teams | ＋ 添加视图 |
+| <code>agents team-view update</code> | <code>ID --patch @patch.json</code> | Rename a view or change its Team membership | 编辑视图 |
+| <code>agents team-view remove</code> | <code>ID</code> | Delete a custom view without deleting Teams | 删除视图 |
+| <code>agents team-view select</code> | <code>all&#124;ID</code> | Select a saved Team view and its canvas viewport | 切换视图 |
+| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Create a Team; Work uses the fixed plugin workspace, Build may bind a folder | “+ Department” |
+| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Bind a Team to a plugin or registered cloud host and directory | Team 工作方式与连接 |
 | <code>agents group remove</code> | <code>&lt;name&gt;</code> | Delete a department | × beside a department |
 | <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign |
 | <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Compatibility endpoint; employee names are immutable | ✎ on a card |
 | <code>agents card move</code> | <code>&lt;cardId&gt; &lt;group&gt; [--before id] [--cwd existing-path]</code> | Move an employee between Teams; --cwd binds an existing folder | Dragging a card |
 | <code>agents card remove</code> | <code>&lt;cardId&gt;</code> | Remove an employee and all associated host/native conversations, keeping work files | 移除员工及全部会话 |
 | <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 |
-| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;chatter --chat-provider doubao&#124;deepseek] [--engine E] [--avatar cat]</code> | Hire a Worker or website Chatter employee | 添加员工 |
+| <code>agents card create</code> | <code>--title NAME [--kind worker&#124;cloud-native-worker] [--engine E] [--avatar cat]</code> | Hire a Local or Cloud Native Worker | 添加员工 |
 | <code>agents card update</code> | <code>&lt;cardId&gt; [--avatar fox] [--role ROLE] [--color HEX]</code> | Edit an employee and its avatar | 员工资料 |
-| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Compatibility endpoint; Team names are immutable | 部门设置 |
+| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 |
 | <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 |
 | <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 |
 | <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind an external Team root | Team 外部文件夹 |
@@ -977,21 +1107,21 @@ for the model stays on the Mac; no model login is needed on the Windows executor
 | <code>agents workspace docs</code> | <code>--team NAME</code> | Refresh standardized CLI documentation in the workspace | 自动准备 Agent 文档 |
 | <code>agents workspace suggest</code> | <code>--team NAME</code> | Suggest an external workspace directory without changing files | 默认工作目录 |
 | <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 |
-| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH reachability and return the remote OS and Linux distribution | 云主机连接灯与系统图标 |
+| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH and the target working directory; return remote OS details | 云端工作目录诊断 |
 | <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 |
 | <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 |
 | <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 |
 | <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 |
 | <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 |
 | <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 |
-| <code>agents workspace list</code> | <code>[path] --team NAME</code> | List real workspace files | 文件目录 |
-| <code>agents workspace image</code> | <code>&lt;path&gt; --employee ID&#124;--team NAME</code> | Read a scoped image for preview or model input | 图片预览和附件 |
-| <code>agents workspace read</code> | <code>&lt;path&gt; --team NAME</code> | Read a workspace file | 文件预览 |
-| <code>agents workspace write</code> | <code>&lt;path&gt; --team NAME --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 |
-| <code>agents workspace mkdir</code> | <code>&lt;path&gt; --team NAME</code> | Create a folder | 新建文件夹 |
-| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH --team NAME</code> | Rename or move a file | 重命名文件 |
-| <code>agents workspace trash</code> | <code>&lt;path&gt; --team NAME</code> | Move a file to recoverable workspace trash | 移到回收站 |
-| <code>agents workspace restore</code> | <code>--id ID --team NAME</code> | Restore a trashed file | 撤销删除 |
+| <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 |
+| <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 |
+| <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 |
+| <code>agents workspace write</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID] --content TEXT [--hash HASH]</code> | Save a workspace file | 保存文件 |
+| <code>agents workspace mkdir</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Create a folder | 新建文件夹 |
+| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH [--shared&#124;--team NAME&#124;--employee ID]</code> | Rename or move a file | 重命名文件 |
+| <code>agents workspace trash</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Move a file to recoverable workspace trash | 移到回收站 |
+| <code>agents workspace restore</code> | <code>--id ID [--shared&#124;--team NAME&#124;--employee ID]</code> | Restore a trashed file | 撤销删除 |
 | <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself |
 | <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself |
 | <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself |

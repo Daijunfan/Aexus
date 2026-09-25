@@ -1,5 +1,6 @@
 export type RemoteTarget = {
   host:string; directory:string; os:'linux'|'macos'|'windows'; port?:number
+  credentialId?:string
   distribution?:string
   identityFile?:string; knownHosts?:string; sshConfig?:string; jump?:string
 }
@@ -14,6 +15,7 @@ export function remoteTarget(value:unknown):RemoteTarget|null {
   if(!['linux','macos','windows'].includes(os))throw new Error('请选择 Linux、macOS 或 Windows')
   if(/[\0\r\n]/.test(directory)||!(os==='windows'?/^[a-z]:[\\/]/i.test(directory):directory.startsWith('/')))throw new Error('请填写云主机工作文件夹的绝对路径')
   const result:RemoteTarget={host,directory,os:os as RemoteTarget['os']}
+  if(input.credentialId){if(!/^[a-z0-9-]+$/i.test(String(input.credentialId)))throw new Error('无效凭据引用');result.credentialId=String(input.credentialId)}
   if(input.distribution){
     const distribution=String(input.distribution).trim().toLowerCase()
     if(os!=='linux'||!/^[a-z0-9][a-z0-9._-]*$/.test(distribution))throw new Error('Linux 发行版标识无效')
@@ -24,3 +26,6 @@ export function remoteTarget(value:unknown):RemoteTarget|null {
   if(result.jump&&(!/^(?:[\w.-]+@)?[\w[\].:-]+$/.test(result.jump)||result.jump.startsWith('-')))throw new Error('无效的跳板机地址')
   return result
 }
+
+export type VirtualMachine = {hypervisorId:string;name:string;projectDirectory:string;state:'running'|'stopped'|'paused'|'unknown';access:'ssh'|'serial'|'rdp'|'unconfigured';notes?:string}
+export type CloudHost = Omit<RemoteTarget,'directory'|'credentialId'> & {id:string;name:string;vm?:VirtualMachine;defaultDirectory:string;hasPassword:boolean;createdAt:number;updatedAt:number;status?:RemoteHealth&{checkedAt:number;error?:string}}

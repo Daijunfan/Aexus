@@ -19,7 +19,7 @@ try{
  await cli('group','add','Studio');await cli('room','bounds','Studio','--x','0','--y','0','--width','760','--height','700')
  const first=await cli('card','create','--title','Alice','--group','Studio'),second=await cli('card','create','--title','Bob','--group','Studio')
  await cli('canvas','set','--x','80','--y','120','--zoom','.8');await expect(page.locator('.infinite-canvas')).toHaveAttribute('data-zoom','0.800')
- await cli('view','open','team','--name','Studio');await expect(page.locator('input[name="team-name"]')).not.toBeEditable();await assert.rejects(()=>cli('ui','type','input[name="team-name"]','Renamed'))
+ await cli('view','open','team','--name','Studio');await expect(page.locator('input[name="team-name"]')).toBeEditable()
  await expect(page.locator('.appearance-settings')).toBeVisible()
  await page.locator('input[aria-label="Team 背景颜色"]').fill('#d8e9f3');await page.locator('select[name="pattern"]').selectOption('grid');await page.locator('input[name="scenery"]').uncheck()
  await page.locator('input[name="subtitle"]').fill('DESIGN & BUILD');await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)

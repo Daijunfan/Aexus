@@ -90,8 +90,12 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
   if((prospective===appHome||inside(appHome,prospective))&&!(work&&inside(pluginWorkspaceBase(teamSettings(store,group).pluginId!),prospective))) throw new Error('员工工作空间不能使用应用数据目录')
   for (const card of store.sessions) {
     if (card.id === id||!(work||manager)) continue
+    const needsComparison =
+      (work && teamSettings(store, card.group).mode === 'work') ||
+      (manager && card.group === group)
+    if (!needsComparison) continue
     const other = existsSync(card.cwd)?realpathSync(card.cwd):resolve(card.cwd)
-    if ((work&&teamSettings(store,card.group).mode==='work'||manager&&card.group===group)&&other===prospective) throw new Error('该 Team 的一个文件夹只能对应一名员工；可以选择父目录或嵌套子目录')
+    if (other===prospective) throw new Error('该 Team 的一个文件夹只能对应一名员工；可以选择父目录或嵌套子目录')
   }
   if(directoryMode&&!['create','existing'].includes(directoryMode))throw new Error('目录方式必须为 create 或 existing')
   if(directoryMode==='create'&&existsSync(target))throw new Error('这个文件夹已存在，请选择“绑定已有文件夹”')

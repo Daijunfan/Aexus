@@ -3,6 +3,10 @@
 .official-pet.pose-land { animation:pet-land .7s ease both; }
 @keyframes official-snooze { 0%,100% { transform:translateY(5px) rotate(-5deg); } 50% { transform:translateY(8px) rotate(-7deg) scale(1.01,.99); } }
 .with-official-pet.is-working .mascot { z-index:5; }
+.cloud-native-foot{position:absolute;left:19px;top:159px;width:150px;height:31px;z-index:5;pointer-events:none;filter:drop-shadow(0 3px 5px #557a9a55);animation:cloud-native-float 3.8s ease-in-out infinite}
+.cloud-native-foot svg{display:block;width:100%;height:100%}.cloud-native-pet .mascot{z-index:6}
+@keyframes cloud-native-float{50%{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.cloud-native-foot{animation:none}}
 .official-colors { opacity:.45; }
 @media(prefers-reduced-motion:reduce){.official-pet,.official-pet * { animation:none!important; }}
 

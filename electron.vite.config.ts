@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   main: {
+    define: {__AGENTS_PROJECT_ROOT__:JSON.stringify(resolve(__dirname))},
     plugins: [externalizeDepsPlugin()],
     build: {
       rollupOptions: {

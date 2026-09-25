@@ -63,6 +63,7 @@ export async function openPluginView(id:string,workspace:string) {
       if(!url.pathname.startsWith(base)){res.writeHead(404);res.end();return}
       const target=decodeURIComponent(url.pathname.slice(base.length))
       if(target==='rpc'&&req.method==='POST') {
+        req.setEncoding('utf8')
         let body='';for await(const part of req){body+=part;if(body.length>64*1024*1024)throw new Error('Request too large')}
         const request=JSON.parse(body) as PluginRequest
         if(request.jsonrpc!=='2.0'||typeof request.method!=='string')throw new Error('Invalid JSON RPC request')

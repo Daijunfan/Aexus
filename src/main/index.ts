@@ -18,10 +18,17 @@ if (process.env.AGENTS_COMPANY_HOME) app.setPath('userData', join(process.env.AG
 let mainWindow:BrowserWindow|undefined
 let pluginDesktop:ReturnType<typeof attachPluginDesktop>|undefined
 setPrimaryWindow(()=>mainWindow)
-ipcMain.handle('api:request', (_e, request: Request) => handleRequest(request))
-ipcMain.on('renderer:ready', event => { if(event.senderFrame===event.sender.mainFrame){setRendererReady(event.sender,true)} })
-ipcMain.on('ui:response', (_e, a) => resolveUiRequest(a.id, a.data, a.error))
-ipcMain.handle('shell:openExternal', async (_e, url: string) => {
+const trusted=(event:Electron.IpcMainEvent|Electron.IpcMainInvokeEvent)=>{
+  const contents=mainWindow?.webContents,frame=event.senderFrame
+  if(!contents||contents!==event.sender||!frame||frame!==contents.mainFrame)return false
+  const expected=process.env.ELECTRON_RENDERER_URL||new URL(`file://${join(__dirname,'../renderer/index.html')}`).href
+  return new URL(frame.url).origin===new URL(expected).origin&&new URL(frame.url).pathname===new URL(expected).pathname
+}
+ipcMain.handle('api:request', (event, request: Request) => {if(!trusted(event))throw new Error('Untrusted IPC sender');return handleRequest(request)})
+ipcMain.on('renderer:ready', event => { if(trusted(event))setRendererReady(event.sender,true) })
+ipcMain.on('ui:response', (event, a) => {if(trusted(event))resolveUiRequest(a.id, a.data, a.error)})
+ipcMain.handle('shell:openExternal', async (event, url: string) => {
+  if(!trusted(event))throw new Error('Untrusted IPC sender')
   if (!/^https?:\/\//.test(url)) throw new Error('Only web links are supported')
   await openExternalUrl(url)
 })
@@ -88,6 +95,7 @@ function createWindow() {
   win.webContents.on('did-start-navigation', details => { if(details.isMainFrame&&!details.isSameDocument)setRendererReady(win.webContents,false) })
   win.webContents.on('render-process-gone', () => setRendererReady(win.webContents,false))
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate',(event,url)=>{const expected=process.env.ELECTRON_RENDERER_URL||new URL(`file://${join(__dirname,'../renderer/index.html')}`).href;if(url!==expected)event.preventDefault()})
   let closing=false
   win.on('close',event=>{
     if(quitting||closing||!rendererReady(win.webContents))return

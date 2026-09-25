@@ -73,6 +73,7 @@ function send(req, { stream = false } = {}) {
       return
     }
     const sock = connect(SOCKET)
+    sock.setEncoding('utf8')
     let buf = ''
     let first = true
     sock.on('connect', () => sock.write(JSON.stringify(req) + '\n'))
@@ -155,6 +156,16 @@ COMMANDS
   schedule preview [jobId | --spec @file.json] [--after ISO --count 5]
   schedule history [jobId] [--employee ID --limit 50]
   schedule cancel <runId>                 stop one active scheduled turn
+  host exec ID --command COMMAND | --command-file FILE [--directory PATH --timeout SECONDS]
+  host list | get ID | check ID | credentials ID | remove ID
+  host create --data @host.json
+  host update ID --data @patch.json
+  host directories ID [--path /absolute/directory]
+  engine remote-check --team NAME --engine codex|claude [--directory PATH]
+  engine remote-sessions --team NAME --engine codex|claude
+  card native-bind <employee-id> <native-session-id>
+  host fingerprints ID
+  host trust ID --fingerprint SHA256:...
   remote check --team NAME | --employee ID | --remote-host user@HOST --remote-dir /path
   terminal open --employee ID [--cols 100 --rows 24]
   terminal list [--employee ID]
@@ -167,17 +178,6 @@ COMMANDS
   session rename <card-or-session-id> <title>  compatibility: names are immutable
   session open <cardId>                   open a stored card (resumes context)
   session send <id> <text>                send a message
-  chatter status <employee-id>           check website login state
-  chatter open-chrome|chrome-status|close-chrome <employee-id>   control its managed Google Chrome window
-  chatter login <employee-id>            open dedicated browser sign-in window
-  chatter import <employee-id> --file F   import exported provider cookies
-  chatter migrate <employee-id> --account EMAIL|--profile 'Profile 2'   migrate Chrome login cookies
-  chatter current|view|inspect|screenshot <employee-id>   inspect its website session
-  chatter attach <employee-id> <webcontents-id>   bind a managed webpage to its employee
-  chatter bind <employee-id> <url>        bind one website conversation
-  chatter click|fill|press|upload <employee-id> --selector CSS [--value TEXT|--key KEY|--path FILE]
-  chatter run <employee-id> --steps @actions.json   perform several website actions in one session
-  chatter sync <employee-id> --file state.json   import provider-scoped browser state
   session follow <id> [--raw]             stream events until the turn ends
   session transcript <id> [--thinking]    print the conversation
   session activity <id>                   current speech, thinking summary or tool operation
@@ -189,17 +189,20 @@ COMMANDS
   config engine <card-or-live-id> codex|claude
   config model <id> <model>
   config permission <id> <mode>
+  config remote-admin <id> on|off           authorize remote SSH-user administration (cloud Codex only)
   config thinking <id> on|off
   config effort <id> <level>
   group list | add <name> [--mode work|build|cloud --plugin ID]
-      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows --remote-distribution kali|ubuntu|...]
+  team-view list | create --name NAME [--teams @teams.json]
+  team-view update ID --patch @patch.json | select all|ID | remove ID
+      [--host-id ID --remote-dir /existing/directory]
       [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
       [--directory-mode default|bind --root PATH]   Build only; Work uses plugin/workspaces/Team
   group remove <name>                     delete Team, employees and native sessions; keep files
   group migrate <name>
   group root <name> <folder> [--directory-mode bind] [--create]   Build only
   group configure <name> --mode work|build|cloud [--plugin ID --directory-mode default|bind --root PATH]
-      [--remote-host user@HOST --remote-dir /path --remote-os linux|macos|windows --remote-distribution kali|ubuntu|...]
+      [--host-id ID --remote-dir /existing/directory]
       [--ssh-port N --ssh-key FILE --known-hosts FILE --ssh-config FILE --ssh-jump HOST]
   room place <name> --col N --row N [--w N] [--h N]
   room bounds <name> [--x N] [--y N] [--width N] [--height N]
@@ -221,6 +224,14 @@ COMMANDS
   view get | close
   view open home|team|employee|workspace|conversation|plugin|settings|clone [--name NAME] [--employee ID]
   view details on|off
+  shared info                              physical Shared folder in the project
+  view shared on|off                       toggle the shared drawer
+  transfer start --from JSON|@file --to JSON|@file
+      locations: {shared:true,path:"file"}, {team:"Team",path:"file"},
+                 {employee:"ID",path:"file"}, {local:true,path:"/absolute/path"}
+      source is a file/directory; destination is an existing directory; never overwrites
+  transfer list | get ID | cancel ID       byte progress, results and cancellation
+  workspace list|read|write|mkdir|move|trash|restore <path> --shared
   workspace suggest --team NAME [--mode work|build --plugin ID]
   workspace choose [--path PATH]
   workspace docs --team NAME|--employee ID
@@ -233,12 +244,12 @@ COMMANDS
   card move <cardId> <group> [--before id] [--cwd existing-path]
   card remove <cardId>
   card clone <id> --title NAME [--directory-mode default|bind] [--cwd PATH]
-  card create --title NAME [--engine E] [--group G] [--avatar KIND]
+  card create --title NAME [--kind worker|cloud-native-worker] [--engine E] [--group G] [--avatar KIND]
     [--cwd PATH] [--directory-mode default|bind]
   card update <cardId> [--role ROLE] [--avatar KIND]
     [--cwd PATH] [--directory-mode default|bind]
       [--accessory headphones|glasses|none] [--color '#rrggbb'] [--group G]
-  group rename <name> <newName>            compatibility: names are immutable
+  group rename <name> <newName>            change Team name; keep its folder path
   room design <name> [--theme sage|ocean|rose|amber|lavender|slate]
       [--background HEX] [--pattern boards|grid|dots|plain] [--scenery on|off]
       [--wall windows|panels|brick] [--desk walnut|oak|cloud]
@@ -313,11 +324,21 @@ async function main() {
     case 'schedule.preview': { const p=parse(rest);return out(await call('schedule.preview',{id:p._[0],spec:p.spec?jsonArgument(p.spec):undefined,after:p.after,count:p.count===undefined?undefined:Number(p.count)})) }
     case 'schedule.history': { const p=parse(rest);return out(await call('schedule.history',{id:p._[0],employee:p.employee,limit:p.limit===undefined?undefined:Number(p.limit)})) }
     case 'session.rename': return out(await call('session.rename',{id:rest[0],title:rest[1]}))
+    case 'shared.info': return out(await call('shared.info'))
+    case 'view.shared': {if(!['on','off'].includes(rest[0]))throw Error('view shared accepts on|off');return out(await call('view.shared',{enabled:rest[0]==='on'}))}
+    case 'transfer.start': {const p=parse(rest);return out(await call('transfer.start',{from:jsonArgument(p.from),to:jsonArgument(p.to)}))}
+    case 'transfer.list': return out(await call('transfer.list'))
+    case 'transfer.get': return out(await call('transfer.get',{id:rest[0]}))
+    case 'transfer.cancel': return out(await call('transfer.cancel',{id:rest[0]}))
     case 'settings.get': return out(await call('settings.get'))
     case 'settings.set': {
       const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);if(p['snap-employees']!==undefined){if(!['on','off'].includes(p['snap-employees']))throw new Error('--snap-employees accepts on|off');a.snapEmployees=p['snap-employees']==='on'}return out(await call('settings.set',a))
     }
     case 'view.get':case 'view.close': return out(await call(`view.${sub}`))
+    case 'team-view.list': return out(await call('team-view.list'))
+    case 'team-view.create': {const p=parse(rest);return out(await call('team-view.create',{name:p.name,teams:p.teams?jsonArgument(p.teams):[]}))}
+    case 'team-view.update': {const p=parse(rest);return out(await call('team-view.update',{id:p._[0],patch:jsonArgument(p.patch)}))}
+    case 'team-view.remove':case 'team-view.select': return out(await call(`team-view.${sub}`,{id:rest[0]}))
     case 'view.open': {
       const p=parse(rest);return out(await call('view.open',{kind:p._[0],name:p.name,employee:p.employee,pluginId:p.plugin,settings:p.mode?{mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}:undefined,details:!!p.details}))
     }
@@ -334,7 +355,7 @@ async function main() {
     }
     case 'workspace.image':case 'workspace.list':case 'workspace.read':case 'workspace.write':case 'workspace.mkdir':case 'workspace.move':case 'workspace.trash':case 'workspace.restore': {
       const p=parse(rest),content=p.file?require('node:fs').readFileSync(p.file,'utf8'):p.content
-      return out(await call(`workspace.${sub}`,{team:p.team,employee:p.employee,path:p._[0]??p.path,to:p.to,content,hash:p.hash,create:!!p.create,hidden:!!p.hidden,id:p.id}))
+      return out(await call(`workspace.${sub}`,{shared:!!p.shared,team:p.team,employee:p.employee,path:p._[0]??p.path,to:p.to,content,hash:p.hash,create:!!p.create,hidden:!!p.hidden,id:p.id}))
     }
     case 'serve':
       require(join(__dirname, '..', 'out', 'main', 'daemon.js'))
@@ -398,7 +419,7 @@ async function main() {
         group: p.group,
         model: p.model,
         cwd: p.cwd,
-        directoryMode:p['directory-mode'],remote:remoteFlags(p),
+        directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p),
         title: p.title,
         seat: p.seat,
         permissionMode: p.permission,
@@ -421,18 +442,6 @@ async function main() {
     case 'approval.respond': {const p=parse(rest);return out(await call('approval.respond',{id:p._[0],requestId:p._[1],decision:p._[2],answers:p.answers?JSON.parse(p.answers):undefined,form:p.form?JSON.parse(p.form):undefined}))}
 
     case 'session.send': {const parts=rest.slice(1),at=parts.indexOf('--images');let images;if(at>=0){images=JSON.parse(parts[at+1]);parts.splice(at,2)}return out(await call('session.send',{id:rest[0],text:parts.join(' '),images}))}
-    case 'chatter.status': return out(await call('chatter.status',{id:rest[0]}))
-    case 'chatter.open-chrome': case 'chatter.chrome-status': case 'chatter.close-chrome':return out(await call(`chatter.${sub}`,{id:rest[0]}))
-    case 'chatter.login': return out(await call('chatter.login',{id:rest[0]}))
-    case 'chatter.import': {const p=parse(rest);if(!p.file)throw new Error('Use --file cookies.json');return out(await call('chatter.import',{id:p._[0],cookies:JSON.parse(require('node:fs').readFileSync(p.file,'utf8'))}))}
-    case 'chatter.migrate': {const p=parse(rest);if(!p.account&&!p.profile)throw new Error('Use --account EMAIL or --profile NAME');return out(await call('chatter.migrate',{id:p._[0],account:p.account,profile:p.profile}))}
-    case 'chatter.current': case 'chatter.view': case 'chatter.inspect': case 'chatter.screenshot':return out(await call(`chatter.${sub}`,{id:rest[0]}))
-    case 'chatter.bind':return out(await call('chatter.bind',{id:rest[0],url:rest[1]}))
-    case 'chatter.attach':return out(await call('chatter.attach',{id:rest[0],webContentsId:Number(rest[1])}))
-    case 'chatter.click': case 'chatter.fill': case 'chatter.press': case 'chatter.upload': {const p=parse(rest);return out(await call(`chatter.${sub}`,{id:p._[0],selector:p.selector,value:p.value,key:p.key,path:p.path}))}
-    case 'chatter.run': {const p=parse(rest);return out(await call('chatter.run',{id:p._[0],steps:jsonArgument(p.steps)}))}
-    case 'chatter.sync': {const p=parse(rest);if(!p.file)throw new Error('Use --file state.json');return out(await call('chatter.sync',{id:p._[0],...JSON.parse(require('node:fs').readFileSync(p.file,'utf8'))}))}
-
     case 'session.transcript': {
       const p = parse(argv.slice(1))
       return out(await call('session.transcript', { id: p._[1] ?? rest[0], thinking: !!p.thinking }), (d) => d.text)
@@ -475,6 +484,7 @@ async function main() {
     case 'config.engine': return out(await call('config.engine',{id:rest[0],engine:rest[1]}))
     case 'config.model':
       return out(await call('config.model', { id: rest[0], model: rest[1] }))
+    case 'config.remote-admin': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.remote-admin',{id:rest[0],enabled:rest[1]==='on'}))}
     case 'config.permission':
       return out(await call('config.permission', { id: rest[0], mode: rest[1] }))
     case 'config.thinking':
@@ -598,10 +608,19 @@ async function main() {
 
     case 'group.list':
       {const p=parse(rest);return out(await call('group.list',{details:!!p.details}),g=>g.map(value=>typeof value==='string'?value:`${value.name} · ${value.mode}${value.remote?' · '+value.remote.host:value.pluginId?' · '+value.pluginId:''} · ${value.root??''}`).join('\n')||'(none)')}
+    case 'host.exec': {const p=parse(rest);return out(await call('host.exec',{id:p._[0],directory:p.directory,command:p['command-file']?require('node:fs').readFileSync(p['command-file'],'utf8'):p.command,timeout:p.timeout?Number(p.timeout):undefined}))}
+    case 'host.list': return out(await call('host.list'))
+    case 'host.fingerprints': case 'host.get': case 'host.remove': case 'host.check': case 'host.credentials': return out(await call(`host.${sub}`,{id:rest[0]}))
+    case 'host.trust': {const p=parse(rest);return out(await call('host.trust',{id:p._[0],fingerprint:p.fingerprint}))}
+    case 'host.create': {const p=parse(rest);return out(await call('host.create',jsonArgument(p.data||'{}')))}
+    case 'host.update': {const p=parse(rest);return out(await call('host.update',{id:p._[0],patch:jsonArgument(p.data||'{}')}))}
+    case 'host.directories': {const p=parse(rest);return out(await call('host.directories',{id:p._[0],path:p.path}))}
+    case 'engine.remote-check': {const p=parse(rest);return out(await call('engine.remote-check',{team:p.team,engine:p.engine,directory:p.directory}))}
+    case 'engine.remote-sessions': {const p=parse(rest);return out(await call('engine.remote-sessions',{team:p.team,engine:p.engine}))}
     case 'group.add':
-      {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],remote:remoteFlags(p) }), (s) => s.groups.join('\n'))}
+      {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p) }), (s) => s.groups.join('\n'))}
     case 'group.configure':
-      {const p=parse(rest);return out(await call('group.configure',{name:p._[0],mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],root:p.root,remote:remoteFlags(p)}))}
+      {const p=parse(rest);return out(await call('group.configure',{name:p._[0],mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],root:p.root,hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p)}))}
     case 'group.migrate': return out(await call('group.migrate',{name:rest[0]}))
     case 'group.root':
       return out(await call('group.root',{name:rest[0],root:rest[1],create:!!parse(rest).create,directoryMode:parse(rest)['directory-mode']}))
@@ -632,13 +651,16 @@ async function main() {
     case 'card.rename':
       return out(await call('card.rename', { cardId: rest[0], title: rest.slice(1).join(' ') }))
     case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
+    case 'card.native-bind':return out(await call('card.native-bind',{id:rest[0],sessionId:rest[1]}))
     case 'card.create': {
       const p = parse(rest)
-      return out(await call('card.create', { ...p, chatProvider:p['chat-provider'],directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined }))
+      if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
+      return out(await call('card.create', { ...p, directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
     }
     case 'card.update': {
       const p = parse(rest)
-      return out(await call('card.update', { id: p._[0], patch: { ...p, chatProvider:p['chat-provider'],directoryMode:p['directory-mode'],remote:remoteFlags(p), _: undefined } }))
+      if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
+      return out(await call('card.update', { id: p._[0], patch: { ...p, directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined } }))
     }
     case 'room.design': {
       const p = parse(rest)

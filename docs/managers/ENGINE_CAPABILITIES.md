@@ -1,4 +1,4 @@
-# 引擎能力核对 · 0.19.0
+# 引擎能力核对
 
 核对本机 Codex CLI 0.145.0、Claude Code 2.1.233 及安装的官方 Agent SDK。
 操作共用 Core、Unix socket CLI API 和桌面界面，不通过模拟点击执行业务。
@@ -31,15 +31,21 @@
 | 人工终端 | 当前员工目录的 PTY/SSH | 当前员工目录的 PTY/SSH | 会话下方 |
 | 持久定时任务 | 共享 Core，模型/思考覆盖与执行记录 | 共享 Core，模型/思考覆盖与执行记录 | `agents schedule` |
 
+## Local Worker 与 Cloud Native Worker
+
+旧员工及 `kind:worker` 是 Local Worker。即使所属 Team 在云主机上，Coding Agent 进程仍运行在 Mac，命令通过既有 Tunnel 工具或 Codex 远程执行环境到云端。`kind:cloud-native-worker` 只允许 Cloud Team，Codex app-server 或 Claude CLI 进程通过 SSH 在该 Team 主机上原生启动；不会把 Mac 的认证、Skills、MCP 或 Claude/DeepSeek 环境注入远端，也不会在断线后退回本机执行。
+
+创建和切换引擎前使用 `engine.remote-check` 验证远端 CLI、结构化协议、认证状态及目录；提交创建时 Core 再检查一次。远端 Codex 的模型、账号和技能取自远端 app-server；Claude 使用远端 SDK 进程。员工和原生会话引用保存执行来源。Codex 云端克隆通过远端 `thread/fork`；云端 Claude 的克隆暂时明确拒绝，避免误克隆本机记录。手动绑定的外部原生历史可恢复和显示，但删除员工默认不删除外部原件。
+
 ## 宿主约定
 
 - 克隆复制当前原生上下文及宿主可见历史，不复制工作文件、后台进程或排队消息。
   原件和副本都有独立会话 ID。Build 绑定同一目录时共享文件；Work 不能共用同一员工目录。
 - 名称创建后固定；`/fork` 映射为员工克隆，避免产生没有员工归属的会话。
-- Work / cloud 的目录边界保留，原生审批不会扩大其文件范围。云端不加载本机 Skills/MCP，
+- Work / cloud 的目录边界保留；远端原生 CLI 的系统权限仍由 SSH 用户和远端沙箱决定，Team 目录绑定本身不是完整沙箱。Local Worker 云端模式不加载本机 Skills/MCP，
   避免本机工具和目录信息混入云端模型上下文。
 - 原生 CLI 的账户登录、全局 MCP/插件配置继续由官方 CLI 管理；本地员工使用其原生配置。
-  云端 Claude 仅继承供应商认证、模型别名及网络环境，不加载本机配置中的 Hooks、插件或权限规则；
+  Local Worker 的云端 Claude 仅继承供应商认证、模型别名及网络环境，不加载本机配置中的 Hooks、插件或权限规则；
   工具白名单、PreToolUse Hook 和权限回调共同禁止本机工具，禁止 bypass 模式。
   原生终端的主题、状态栏、快捷键编辑等 TUI 页面不在会话中模拟；宿主有自己的主题、角色和终端界面。
 - 图片必须在员工工作目录范围内，PNG/JPEG/GIF/WebP 单张最多 10 MB，每条消息最多 16 张。

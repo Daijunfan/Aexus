@@ -33,7 +33,6 @@ function validate(input: ScheduleSpec): ScheduleSpec {
   if (!input || typeof input.name !== 'string' || !input.name.trim()) throw new Error('Schedule name is required')
   const a = input.action, card = readStore().sessions.find(card => card.id === a?.employeeId)
   if (!card) throw new Error('Unknown employee')
-  if (card.kind==='chatter') throw new Error('Scheduled coding tasks require a Worker employee')
   if (a.type !== 'agent') throw new Error('action.type must be agent; prompt contains the instruction or CLI command for the employee')
   if (a.engine && a.engine !== card.engine) throw new Error('Schedule engine must match the employee')
   if (typeof a.prompt !== 'string' || !a.prompt.trim()) throw new Error('action.prompt is required')

@@ -10,4 +10,5 @@ export type ViewState = {
   settings?: TeamSettings
   tools?:'skills'|'mcp'|'account'|'usage'|'config'|'export'|'background'
   details?: boolean
+  shared?: boolean
 }
