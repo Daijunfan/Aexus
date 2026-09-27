@@ -8,21 +8,17 @@ const suites={
   engines:['manager-bootstrap-engine:codex:build','manager-bootstrap-engine:codex:work','manager-bootstrap-engine:claude:build','manager-bootstrap-engine:claude:work','employee-initialization-engine:codex:build','employee-initialization-engine:codex:work','employee-initialization-engine:claude:build','employee-initialization-engine:claude:work']
 }
 if(!suites[suite])throw Error('Choose core, ui or engines')
-// Hosted Ubuntu runners need Chromium's official setuid helper configured before UI tests.
-// Never change helper permissions on a contributor's machine or disable renderer sandboxing.
-if(suite==='ui'&&process.platform==='linux'&&process.env.GITHUB_ACTIONS==='true'){
-  const helper=path.join(root,'node_modules/electron/dist/chrome-sandbox')
-  for(const args of [['-n','chown','root:root',helper],['-n','chmod','4755',helper]]){
-    const child=spawn('sudo',args,{stdio:'inherit'}),status=await new Promise(resolve=>child.once('close',resolve).once('error',()=>resolve(-1)))
-    if(status!==0)throw Error('Could not configure the hosted runner Electron sandbox helper')
-  }
+// Release cases: macOS/Windows desktop, or Linux Core with a browser on another computer.
+if(suite==='ui'&&process.platform==='linux'){
+  suites.ui=['web-ui','web-vnc-ui']
+  console.log('Linux release validation covers Core/Web; native desktop is outside the release scope.')
 }
 const directory=path.join(root,'artifacts','release-tests',suite);fs.mkdirSync(directory,{recursive:true})
 const results=[]
 for(const entry of suites[suite]){
   const [name,...args]=entry.split(':'),file=path.join(root,'test',name+'-test.mjs')
   const started=Date.now(),log=path.join(directory,entry.replaceAll(':','-')+'.log'),output=fs.openSync(log,'w')
-  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...process.env,...(suite==='ui'&&process.platform==='linux'?{DEBUG:'pw:browser'}:{}),...(suite==='ui'&&process.platform==='win32'?{AGENTS_COMPANY_OFFSCREEN:'1'}:{})},stdio:['ignore',output,output]})
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...process.env,...(suite==='ui'&&process.platform==='win32'?{AGENTS_COMPANY_OFFSCREEN:'1'}:{})},stdio:['ignore',output,output]})
   const timer=setTimeout(()=>child.kill('SIGTERM'),180000)
   const status=await new Promise(resolve=>{child.once('error',error=>{fs.writeSync(output,error.stack);resolve(-1)});child.once('close',resolve)})
   clearTimeout(timer);fs.closeSync(output)

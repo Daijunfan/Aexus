@@ -14,7 +14,7 @@ npm run test:release-core
 npm run dev
 ```
 
-Keep Node/npm within the supported versions in `package.json`. Windows/Linux execution and packaging must be tested on those platforms; a remote Windows host test is not equivalent to testing a Windows Core.
+Keep Node/npm within the supported versions in `package.json`. Validate Mac and Windows desktop packages on their respective systems. Linux validation covers the Core/Web backend and a browser client on another computer; a remote Windows host test is not equivalent to testing a Windows Core.
 
 All three bundled plugin source trees are versioned with this repository. Change the plugin in `PlugIns/<name>`, preserve its license and update `plugins.lock.json` when its version changes. Use `examples/plugin-starter` for a new plugin. Do not include working documents, credentials, browser profiles, dependency directories or generated runtime state.
 
@@ -27,7 +27,7 @@ For a new API, update the registry, Core, CLI, documentation and behavior tests 
 The test groups are separate:
 
 - `test:release-core`: isolated Core/CLI and geometry/authorization tests with protocol fixtures; no billed inference.
-- `test:release-ui`: hidden desktop and browser end-to-end checks. Browser tests need Playwright Chromium or `AGENTS_BROWSER_CHANNEL=chrome`.
+- `test:release-ui`: hidden Mac/Windows desktop and browser end-to-end checks; Linux runs the browser suite. Browser tests need Playwright Chromium or `AGENTS_BROWSER_CHANNEL=chrome`.
 - `test:release-engines`: actual installed engine processes against a local deterministic model fixture. Codex can be selected with `AGENTS_TEST_CODEX_BIN`.
 - Tests named `*-live*`: opt-in only. Read each test's required authorization, execution host, model and cleanup before running. Never let an ordinary CI run use paid models or real user workspaces.
 

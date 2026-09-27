@@ -48,7 +48,7 @@
     },
     {
       "file": "CONTRIBUTING.md",
-      "sha256": "a4dcc79a8198a72d852c86e5f21ce7c5ea7a4ca4f57f591af098ecad41b3c382"
+      "sha256": "728fe61e256e07b6fdd5b9039a4652a1a90dab73d7c8307dc3005a0bb902ad49"
     },
     {
       "file": "COVERAGE.md",
@@ -2704,7 +2704,7 @@
     },
     {
       "file": "README.md",
-      "sha256": "656da4a245706f71b255c9c5fa6c3e5378891aac38c15a0f9a4065874d276819"
+      "sha256": "b2d499617a189bc072aaccbb8c958ef876f76e8e88f70455698a6df5a24ded7c"
     },
     {
       "file": "SCHEDULER.md",
@@ -2740,7 +2740,7 @@
     },
     {
       "file": "docs/DEPLOYMENT.md",
-      "sha256": "c1468828142e001089e6c404445f3eaa42945afdf17653d645406c6de70207cb"
+      "sha256": "a0e0e9ada21946f459f16e69ad634a51578c9cacde24b8c4f571234d26c827c2"
     },
     {
       "file": "docs/ENGINE_ADAPTERS.md",
@@ -2912,11 +2912,11 @@
     },
     {
       "file": "scripts/run-tests.mjs",
-      "sha256": "ea6b894e829b5d3ba58d8f5e1c6a0a2c7fa19e0f31a3d51ef5415d0256e2525e"
+      "sha256": "fc54e422b5587620b96af08c6c18ab4025428cc4f7a4e2c44cee7055a5280778"
     },
     {
       "file": "scripts/setup.mjs",
-      "sha256": "be39996b7c3128b15634ba7f2ef1e5208879e3a5c3cc65866f96ff18f312ca48"
+      "sha256": "a84432a97a290fed34d67998023ed9643046b3c3b37a0f6994b528ada59e82ab"
     },
     {
       "file": "scripts/source-files.mjs",

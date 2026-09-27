@@ -77,11 +77,11 @@ node bin/agents serve --web --port 5151
 
 | 使用方式 | 说明 |
 | --- | --- |
-| macOS 桌面 | 原生桌面、Core、文件、终端与插件；发布验证以 Apple Silicon 为主 |
-| Windows / Linux 桌面与 Core | 对应平台构建，使用平台化 IPC、程序启动和终端；每个平台分别验收 |
-| 浏览器连接 Linux 后端 | 界面在浏览器，任务、文件和引擎在 Linux；浏览器断开不停止后端任务 |
-| SSH 工作区 | 主机由 Cloud Hosts 管理，团队保存 hostId 与目录；员工不会覆盖团队主机 |
-| 严格进程隔离 | 当前只声明 macOS 的受支持适配；其他平台明确拒绝，不自动降级为 Trusted |
+| Mac 本地桌面 | 主要开发与日常测试环境；当前安装包为 Apple Silicon |
+| Windows 本地桌面 | 在 Windows x64 上运行桌面、Core、引擎、文件、终端与插件 |
+| Linux 后端 + 另一台电脑的浏览器 | Core、任务和文件运行在 Linux x64；另一台电脑通过浏览器操作，断开浏览器不停止后端任务 |
+
+本次发布只覆盖以上三种使用方式。SSH 工作区仍由 Cloud Hosts 统一管理，团队绑定实际主机和目录。严格进程隔离目前只支持 macOS，其他平台明确拒绝该模式，不会自动降级。
 
 这是**单用户、自托管、多设备访问**的软件，不是用于隔离互不信任租户的平台。新员工权限可选择 Ask、Workspace write 或 Full access；升级不会自动提高已有员工的权限。
 

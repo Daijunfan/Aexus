@@ -1,5 +1,13 @@
 # Deployment
 
+## Supported deployment cases
+
+1. Mac desktop with a local Core (Apple Silicon release package; primary development/test machine).
+2. Windows x64 desktop with a local Core.
+3. Linux x64 Core/Web backend, operated from another computer’s browser.
+
+Linux native desktop is outside this release. Source setup on Linux installs the backend/plugin toolchain without downloading a native Electron shell. The shared Core still supports local and SSH execution environments.
+
 ## Runtime boundary
 
 One Node Core owns one data directory. The same React office runs in Electron or a browser. In Web mode, “local” means the Core host, not the computer displaying the page. An employee's working directory, engine installation and credentials are resolved on its execution host.
@@ -20,7 +28,7 @@ npm run build:web
 
 The source distribution includes Cloud Hosts, MiniNotion and Margin Reader. `plugins.lock.json` pins the required plugin versions. Missing plugin source fails the build; it is never silently omitted.
 
-## Desktop
+## Mac and Windows desktop
 
 ```sh
 npm run dev
@@ -146,6 +154,3 @@ sudo install -d -o agents -g agents /var/lib/agents-company /var/lib/agents-comp
 
 Build Team projects are deliberately outside the private Core state directory; the template sets `AGENTS_COMPANY_PROJECTS=/var/lib/agents-company-projects`. Plugin Work spaces remain in their dedicated managed data subtree.
 
-### Linux desktop sandbox
-
-The Debian installer configures Electron's `chrome-sandbox` helper. When running from a source checkout on a Linux system that requires the setuid helper, follow Electron's startup diagnostic: the verified helper must be owned by root and have mode 4755. Keep renderer sandboxing enabled; do not use `--no-sandbox` as a deployment workaround. The test runner configures this helper only inside GitHub's temporary Linux Actions runner, not on contributor machines.
