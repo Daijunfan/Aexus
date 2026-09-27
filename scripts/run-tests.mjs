@@ -13,13 +13,13 @@ const results=[]
 for(const entry of suites[suite]){
   const [name,...args]=entry.split(':'),file=path.join(root,'test',name+'-test.mjs')
   const started=Date.now(),log=path.join(directory,entry.replaceAll(':','-')+'.log'),output=fs.openSync(log,'w')
-  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...process.env,...(suite==='ui'&&process.platform==='win32'?{AGENTS_COMPANY_OFFSCREEN:'1'}:{})},stdio:['ignore',output,output]})
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...process.env,...(suite==='ui'&&process.platform==='linux'?{DEBUG:'pw:browser'}:{}),...(suite==='ui'&&process.platform==='win32'?{AGENTS_COMPANY_OFFSCREEN:'1'}:{})},stdio:['ignore',output,output]})
   const timer=setTimeout(()=>child.kill('SIGTERM'),180000)
   const status=await new Promise(resolve=>{child.once('error',error=>{fs.writeSync(output,error.stack);resolve(-1)});child.once('close',resolve)})
   clearTimeout(timer);fs.closeSync(output)
   const result={test:entry,status,ms:Date.now()-started,log:path.relative(root,log)};results.push(result)
   console.log(`${status===0?'PASS':'FAIL'} ${entry} ${result.ms}ms`)
-  if(status!==0)console.log(fs.readFileSync(log,'utf8').split('\n').slice(-22).join('\n'))
+  if(status!==0)console.log(fs.readFileSync(log,'utf8').split('\n').slice(-80).join('\n'))
 }
 fs.writeFileSync(path.join(directory,'results.json'),JSON.stringify(results,null,2)+'\n')
 console.log(`${suite}: ${results.filter(r=>r.status===0).length}/${results.length} passed`)

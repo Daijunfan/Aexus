@@ -17,7 +17,9 @@ try{
   await page.getByRole('button',{name:'进入工作空间'}).click();await expect(page.locator('.infinite-canvas')).toBeVisible()
   await page.locator('.plugin-directory [data-plugin="cloud-hosts"]').click()
   const frame=page.frameLocator('.web-plugin-window iframe')
-  await frame.locator('[data-view="desktop"]').click();await frame.locator('#desktop-connect').click()
+  await expect(frame.locator('.detail-heading h2')).toHaveText('Browser VNC')
+  await frame.locator('[data-view="desktop"]').click();await expect(frame.locator('[data-view="desktop"]')).toHaveClass(/active/)
+  try{await frame.locator('#desktop-connect').click()}catch(error){throw Error(error.message+'; plugin body: '+await frame.locator('body').innerText()+'; renderer errors: '+JSON.stringify(errors))}
   await expect(frame.locator('#desktop-status')).toHaveText('桌面已连接',{timeout:15000})
   const canvas=frame.locator('#desktop-screen canvas');await expect(canvas).toBeVisible()
   await canvas.click({position:{x:110,y:110}});await page.keyboard.press('a')

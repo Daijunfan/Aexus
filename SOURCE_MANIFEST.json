@@ -2912,7 +2912,7 @@
     },
     {
       "file": "scripts/run-tests.mjs",
-      "sha256": "865ab20ae66296a1de4993a8a6e7a1a1eac21594834e624168f066874c369f54"
+      "sha256": "6fb9c28c7addbb30bb389a71569df0cd0180978db95abb94b93797eac3ed3d31"
     },
     {
       "file": "scripts/setup.mjs",
@@ -4348,7 +4348,7 @@
     },
     {
       "file": "test/web-vnc-ui-test.mjs",
-      "sha256": "e082ccf3e78fdeb639ec0e66769378a01da580ab0b291dec496164c90d478bff"
+      "sha256": "f080f53433e06c050862429eac37175990d7dab6b61ccd481b7234d116284dba"
     },
     {
       "file": "test/windows-message-live-test.mjs",
