@@ -1013,7 +1013,7 @@ agents host list --summary --json
 agents host list --os linux --distribution ubuntu --summary --json
 agents host check HOST_ID --json
 agents host directories HOST_ID --path /home/user --json
-agents group add Backend --mode cloud --host-id HOST_ID --remote-dir /home/djf/develop
+agents group add Backend --mode cloud --host-id HOST_ID --remote-dir /home/agent/projects
 agents group add Ubuntu-Team --mode cloud --host-id HOST_ID --directory-mode default --os linux --distribution ubuntu --json
 ```
 
