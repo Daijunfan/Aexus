@@ -412,7 +412,7 @@
     },
     {
       "file": "PlugIns/margin-reader/scripts/build.cjs",
-      "sha256": "ad89db11d08e863121abd457f3b9f4d6acc9a8116a630ec1a27c2a36bd2450cc"
+      "sha256": "ea6ddbea12b52dca5d630352003ef3c3d1aab9e73296f633e3042119c037ea02"
     },
     {
       "file": "PlugIns/margin-reader/scripts/check.cjs",

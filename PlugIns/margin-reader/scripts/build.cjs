@@ -19,7 +19,7 @@ for (const [source, destination] of [['build/pdf.mjs','pdf.mjs'], ['build/pdf.wo
 }
 const katex=path.dirname(require.resolve('katex/package.json'));fs.cpSync(path.join(katex,'dist'),path.join(vendor,'katex'),{recursive:true});
 fs.mkdirSync(out, { recursive: true });
-for (const name of ['agents-company.plugin.json','schema.json','runtime.cjs','cli.cjs','API.md','README.md','VERIFICATION.md','LOCAL_PARITY.md','REPAIR_STATUS.md','LICENSE','THIRD_PARTY_NOTICES.md','package.json','package-lock.json','lib','ui']) fs.cpSync(path.join(root, name), path.join(out, name), { recursive: true });
+for (const name of ['agents-company.plugin.json','schema.json','runtime.cjs','cli.cjs','API.md','README.md','LOCAL_PARITY.md','LICENSE','THIRD_PARTY_NOTICES.md','package.json','package-lock.json','lib','ui']) fs.cpSync(path.join(root, name), path.join(out, name), { recursive: true });
 // Runtime dependencies are carried with the package; the host does not install or supply them.
 fs.cpSync(path.join(root, 'node_modules'), path.join(out, 'node_modules'), { recursive: true, dereference: true, filter: source => path.basename(source) !== '.bin' && path.basename(source) !== '.cache' });
 fs.chmodSync(path.join(out, 'cli.cjs'), 0o755);
