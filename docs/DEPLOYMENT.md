@@ -145,3 +145,7 @@ sudo install -d -o agents -g agents /var/lib/agents-company /var/lib/agents-comp
 ```
 
 Build Team projects are deliberately outside the private Core state directory; the template sets `AGENTS_COMPANY_PROJECTS=/var/lib/agents-company-projects`. Plugin Work spaces remain in their dedicated managed data subtree.
+
+### Linux desktop sandbox
+
+The Debian installer configures Electron's `chrome-sandbox` helper. When running from a source checkout on a Linux system that requires the setuid helper, follow Electron's startup diagnostic: the verified helper must be owned by root and have mode 4755. Keep renderer sandboxing enabled; do not use `--no-sandbox` as a deployment workaround. The test runner configures this helper only inside GitHub's temporary Linux Actions runner, not on contributor machines.

@@ -2740,7 +2740,7 @@
     },
     {
       "file": "docs/DEPLOYMENT.md",
-      "sha256": "bb9a5db045ea3f3de32d8a84c41ed354d1e9d201f605c150519ad70b7ed44062"
+      "sha256": "c1468828142e001089e6c404445f3eaa42945afdf17653d645406c6de70207cb"
     },
     {
       "file": "docs/ENGINE_ADAPTERS.md",
@@ -2912,7 +2912,7 @@
     },
     {
       "file": "scripts/run-tests.mjs",
-      "sha256": "6fb9c28c7addbb30bb389a71569df0cd0180978db95abb94b93797eac3ed3d31"
+      "sha256": "ea6b894e829b5d3ba58d8f5e1c6a0a2c7fa19e0f31a3d51ef5415d0256e2525e"
     },
     {
       "file": "scripts/setup.mjs",
