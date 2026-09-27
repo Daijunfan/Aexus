@@ -2868,7 +2868,7 @@
     },
     {
       "file": "package.json",
-      "sha256": "134fef1df0b05a6e22bf42c2450ead2e1e2fda7d87a4bc1bb0979959c2fc46ce"
+      "sha256": "2d12ee65f2b7928e4b838130a2baaf5358adfa2062bf4b1ef6f6e324093fcc91"
     },
     {
       "file": "plugins.lock.json",
@@ -4052,7 +4052,7 @@
     },
     {
       "file": "test/management-activity-test.mjs",
-      "sha256": "1ad6cd3a62791b254db1bd08b3c9dab472a299f095e2ae6eb0e3c362e71e65f9"
+      "sha256": "ceee782e6179b4790b183e001d416311a63bcf0806dd5cd4fac7341159e18bb2"
     },
     {
       "file": "test/management-layout-test.mjs",
