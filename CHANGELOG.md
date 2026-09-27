@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.49.2
+
+- Refine active management-line endpoints: compact connection ports with a steady terminal lead, while the line body continues to flow. Avoid overlapping triangle and dashed stroke shapes; keep canonical paths, editing and employee layout unchanged.
+- Add isolated visual checks at overview, normal and enlarged canvas zooms.
+
 ## 0.49.1
 
 - Management activity is tracked per sender/recipient; rapid notifications and completed Manager turns no longer erase other delivery pulses. Active links are thicker, directional flowing dashes with reduced-motion support.

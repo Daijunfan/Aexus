@@ -1,5 +1,5 @@
 {
-  "version": "0.49.1",
+  "version": "0.49.2",
   "plugins": [
     {
       "directory": "cloud-hosts",
@@ -44,7 +44,7 @@
     },
     {
       "file": "CHANGELOG.md",
-      "sha256": "c8bec85e0fa12ab17934ba9ad65d6a9c65221aca247c7253aa6467a1d842d79e"
+      "sha256": "74d7298d8c2b6e0047b2c55c872b0325ed36874cf88991dea060a70d3cd11726"
     },
     {
       "file": "CONTRIBUTING.md",
@@ -2752,7 +2752,7 @@
     },
     {
       "file": "docs/images/cover.png",
-      "sha256": "4087d607eb9c18ee93e2a3e226442b9e8c55f034d8dcf515a1f90c286eb061dd"
+      "sha256": "3ec2c0ba49e0da1ad3b1b3cc818145e872426699825e485505111702910104db"
     },
     {
       "file": "docs/managers/AGENTS.md",
@@ -2864,11 +2864,11 @@
     },
     {
       "file": "package-lock.json",
-      "sha256": "13cefdd7a68fb5aec78739e827e280ae09906d8d0563e8c8d4d60368ebe984c0"
+      "sha256": "cc6382bc5ed7be79c8e6fec5fd77650eab7ebb4295d07e02f3cec42055085b52"
     },
     {
       "file": "package.json",
-      "sha256": "2d12ee65f2b7928e4b838130a2baaf5358adfa2062bf4b1ef6f6e324093fcc91"
+      "sha256": "1e820b7865c987c2b80cf673b8f369beb93bc3032bdb792d2aff5c9e32807d23"
     },
     {
       "file": "plugins.lock.json",
@@ -2912,7 +2912,7 @@
     },
     {
       "file": "scripts/run-tests.mjs",
-      "sha256": "1dc2232767d692abc03755c26a6fcd3ee84b56a022156fe04eb0317465d0c2f8"
+      "sha256": "0c21eca624eda5c6f3b9695ab7467482fe21dbebf0498552d6bd8dba1e899da8"
     },
     {
       "file": "scripts/setup.mjs",
@@ -3488,7 +3488,7 @@
     },
     {
       "file": "src/renderer/src/office/ConnectionLayer.tsx",
-      "sha256": "5b5896f3cf6b9240012b264e5e1f4fef85e4022be1ae54bd8f551df660681cdb"
+      "sha256": "40f0e569359ef14ed9a53447a37087b629374f5100fd3506848bd9b0e733aee7"
     },
     {
       "file": "src/renderer/src/office/ConnectorEditor.tsx",
@@ -3869,6 +3869,10 @@
     {
       "file": "test/connector-segments-ui-test.mjs",
       "sha256": "e646f18a13918095af435583ae4dd2de7d1238c98797756c8ffafc0652886929"
+    },
+    {
+      "file": "test/connector-terminals-ui-test.mjs",
+      "sha256": "f008ab3d607ea122a3cf4dd4a828361a48a023fad6ffdb1652e9c71acf050a91"
     },
     {
       "file": "test/connector-ui-test.mjs",
