@@ -43,7 +43,10 @@ try{
     const win=page.locator('.web-plugin-window').last();await expect(win).toBeVisible({timeout:25000})
     const frame=win.frameLocator('iframe');await expect(frame.locator('body')).not.toBeEmpty({timeout:25000})
     const frameHandle=await win.locator('iframe').elementHandle(),content=await frameHandle.contentFrame()
-    await content.waitForTimeout(800)
+    const ready={
+      'cloud-hosts':'#detail .view-tabs',mininotion:'.app-shell','margin-reader':'#library-view'
+    }[id]
+    await expect(content.locator(ready)).toBeVisible({timeout:25000})
     const body=await content.locator('body').innerText();assert.ok(body.length>20,id+' content missing: '+body)
     console.log('PLUGIN',id,body.slice(0,160))
     await page.screenshot({path:path.join(out,'web-plugin-'+id+'.png')})

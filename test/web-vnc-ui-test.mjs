@@ -18,8 +18,8 @@ try{
   await page.locator('.plugin-directory [data-plugin="cloud-hosts"]').click()
   const frame=page.frameLocator('.web-plugin-window iframe')
   await expect(frame.locator('.detail-heading h2')).toHaveText('Browser VNC')
-  // Focus the sandboxed frame via keyboard before verifying real viewer mouse/key input.
-  const desktopTab=frame.locator('[data-view="desktop"]');await desktopTab.focus();await desktopTab.press('Enter');await expect(desktopTab).toHaveClass(/active/)
+  // Activate navigation without OS focus; real viewer mouse/key input is verified below.
+  const desktopTab=frame.locator('[data-view="desktop"]');await desktopTab.dispatchEvent('click');await expect(desktopTab).toHaveClass(/active/)
   try{await frame.locator('#desktop-connect').click()}catch(error){throw Error(error.message+'; plugin body: '+await frame.locator('body').innerText()+'; renderer errors: '+JSON.stringify(errors))}
   await expect(frame.locator('#desktop-status')).toHaveText('桌面已连接',{timeout:15000})
   const canvas=frame.locator('#desktop-screen canvas');await expect(canvas).toBeVisible()
