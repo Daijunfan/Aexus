@@ -24,7 +24,11 @@ for(const entry of suites[suite]){
   clearTimeout(timer);fs.closeSync(output)
   const result={test:entry,status,ms:Date.now()-started,log:path.relative(root,log)};results.push(result)
   console.log(`${status===0?'PASS':'FAIL'} ${entry} ${result.ms}ms`)
-  if(status!==0)console.log(fs.readFileSync(log,'utf8').split('\n').slice(-80).join('\n'))
+  if(status!==0){
+    const detail=fs.readFileSync(log,'utf8').split('\n').slice(-80).join('\n')
+    console.log(detail)
+    if(process.env.GITHUB_ACTIONS==='true')console.log('::error title='+entry+'::'+detail.slice(-6000).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'))
+  }
 }
 fs.writeFileSync(path.join(directory,'results.json'),JSON.stringify(results,null,2)+'\n')
 console.log(`${suite}: ${results.filter(r=>r.status===0).length}/${results.length} passed`)

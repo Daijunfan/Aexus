@@ -2912,7 +2912,7 @@
     },
     {
       "file": "scripts/run-tests.mjs",
-      "sha256": "fc54e422b5587620b96af08c6c18ab4025428cc4f7a4e2c44cee7055a5280778"
+      "sha256": "1dc2232767d692abc03755c26a6fcd3ee84b56a022156fe04eb0317465d0c2f8"
     },
     {
       "file": "scripts/setup.mjs",
