@@ -18,6 +18,7 @@ import { EmployeeForm, TeamForm } from '../office/OfficeForms'
 import { SharedDrawer } from './SharedDrawer'
 import { TeamWorkspace } from './TeamWorkspace'
 import {TeamViews} from './TeamViews'
+import companyIcon from '../../../../app_icon.png'
 
 type Action = (cmd: string, args?: Record<string, unknown>) => Promise<any>
 type HostHealth=RemoteHealth&{checkedAt?:number;error?:string}
@@ -81,7 +82,7 @@ export const HomeView=memo(function HomeView({ store, view, busyIds,disconnected
   const lastTeam=store.groups.at(-1)
   return <div className="home office-home">
     <header className="company-header">
-      <div className="company-brand"><span className="brand-symbol" aria-hidden="true"><i/><i/><i/><i/></span><span>Agents Company</span></div>
+      <div className="company-brand"><img className="brand-symbol" src={companyIcon} alt="" aria-hidden="true"/><span>Agents Company</span></div>
       <TeamViews store={store} act={act}/>
       <div className="company-actions"><button className="add-team" onClick={()=>void showPanel({kind:'team'})}><span>＋</span> 添加 Team</button><button className="add-employee" onClick={()=>void showPanel({kind:'employee'})}><span>＋</span> 添加员工</button></div>
     </header>

@@ -1,5 +1,6 @@
 import {useEffect,useState,type ReactNode} from 'react'
 import {initializeWeb,onWebState,loginWeb,logoutWeb} from './transport'
+import companyIcon from '../../../../app_icon.png'
 export function WebGate({children}:{children:ReactNode}){
   const [state,setState]=useState({authenticated:false,checking:true,connected:false})
   const [opened,setOpened]=useState(false),[token,setToken]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
@@ -16,7 +17,7 @@ export function WebGate({children}:{children:ReactNode}){
     {state.authenticated?
       <div className="web-connection" role="status">{state.connected?'已连接后端':'正在重新连接 · 任务仍在后端运行'}<button onClick={()=>void logoutWeb()}>退出登录</button></div>:
       <div className="web-login-overlay"><form className="web-login" onSubmit={submit}>
-        <div className="brand-symbol" aria-hidden="true"><i/><i/><i/><i/></div>
+        <img className="brand-symbol" src={companyIcon} alt="" aria-hidden="true"/>
         <h1>Agents Company</h1><p>连接自己的 Agent 工作空间。</p>
         {state.checking?<p>正在连接…</p>:<>
           <label>访问令牌<input type="password" autoComplete="off" value={token} onChange={event=>setToken(event.target.value)} autoFocus required/></label>

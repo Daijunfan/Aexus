@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.49.3
+
+- Use the current application icon in the company header, browser login and favicon, all from the same source artwork.
+- Add the public GitHub URL to every promotional image and refresh the shared cover.
+
 ## 0.49.2
 
 - Refine active management-line endpoints: compact connection ports with a steady terminal lead, while the line body continues to flow. Avoid overlapping triangle and dashed stroke shapes; keep canonical paths, editing and employee layout unchanged.

@@ -154,7 +154,7 @@
 .app.in-office { --company-header-height:52px; }
 .company-header { gap:16px; }
 .company-header .company-brand { font-size:16px; line-height:1.2; gap:9px; white-space:nowrap; }
-.company-header .brand-symbol { width:24px; height:24px; gap:2px; }
+.company-header .brand-symbol { width:28px; height:28px; }
 .company-header .company-actions { gap:8px; }
 .company-header .company-actions button { min-height:30px; padding:5px 10px; font-size:11px; border-radius:6px; }
 .company-header .company-actions button span { margin-right:2px; font-size:15px; }
