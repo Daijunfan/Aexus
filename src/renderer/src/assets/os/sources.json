@@ -1,0 +1,17 @@
+{
+  "local-computer.svg": {
+    "source": "Original Agents Company vector artwork",
+    "license": "Apache-2.0",
+    "sha256": "2bd589196faffe7077638efe814404d024fb6b76355fc9813bb78c8b4cfba390"
+  },
+  "macos-device.svg": {
+    "source": "Original Agents Company vector artwork",
+    "license": "Apache-2.0",
+    "sha256": "e1812fcc621150fe1f97a223971e38c70a7d8609af7a581e7408ccc5c84e7fcd"
+  },
+  "security-linux.svg": {
+    "source": "Original Agents Company vector artwork",
+    "license": "Apache-2.0",
+    "description": "Generic security shield used to identify the Kali workspace; not the Kali dragon"
+  }
+}

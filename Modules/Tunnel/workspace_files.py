@@ -1,0 +1,168 @@
+"""The same scoped editor protocol as Agents Company's local workspace API."""
+import hashlib
+import json
+from pathlib import Path
+import uuid
+import base64
+import os
+import re
+import shutil
+
+
+def workspace_files(root, operation, args):
+    root = Path(root).resolve()
+    def locate(value='.', write=False):
+        file = (root / value).resolve()
+        try:
+            relative = file.relative_to(root)
+        except ValueError:
+            raise ValueError('文件路径或软链接超出工作目录')
+        if write and (file == root or '.agents-company' in relative.parts):
+            raise ValueError('不能修改工作目录本身或宿主管理文件')
+        return file
+    def digest(file):
+        return hashlib.sha256(file.read_bytes()).hexdigest()
+    value = args.get('path') or '.'
+    file = locate(value, operation in ['write', 'mkdir', 'move', 'trash'])
+    if operation == 'copy-info':
+        original = root / value
+        if not original.exists() and not original.is_symlink():
+            return dict(exists=False)
+        stat = original.lstat()
+        return dict(exists=True, directory=original.is_dir(), regular=original.is_file(), symlink=original.is_symlink(), bytes=stat.st_size, modifiedAt=stat.st_mtime*1000, mode=stat.st_mode & 0o777)
+    if operation == 'copy-read':
+        offset, length = args['offset'], args['length']
+        if type(offset) is not int or offset < 0 or type(length) is not int or not 0 < length <= 262144:
+            raise ValueError('Invalid transfer range')
+        if (root / value).is_symlink() or not file.is_file():
+            raise ValueError('只能传输普通文件')
+        with file.open('rb') as stream:
+            stream.seek(offset)
+            data = stream.read(length)
+        return dict(data=base64.b64encode(data).decode(), bytes=len(data))
+    if operation in ['copy-write', 'copy-commit', 'copy-remove']:
+        locate(value, True)
+        if not any(re.fullmatch(r'\.agents-transfer-[a-f0-9-]{36}', p) for p in file.relative_to(root).parts):
+            raise ValueError('Invalid transfer staging path')
+        if operation == 'copy-remove':
+            if file.is_dir(): shutil.rmtree(file)
+            elif file.exists(): file.unlink()
+            return dict(removed=True)
+        if operation == 'copy-commit':
+            target = locate(args['to'], True)
+            if target.exists(): raise ValueError('目标已有同名文件，未覆盖')
+            if file.is_dir(): file.rename(target)
+            else:
+                os.link(file, target)
+                file.unlink()
+            return dict(path=args['to'])
+        offset, encoded = args['offset'], args['data']
+        if type(offset) is not int or offset < 0 or not isinstance(encoded, str) or len(encoded) > 349528:
+            raise ValueError('Invalid transfer chunk')
+        data = base64.b64decode(encoded, validate=True)
+        with file.open('xb' if offset == 0 else 'r+b') as stream:
+            if os.fstat(stream.fileno()).st_size != offset: raise ValueError('Transfer offset mismatch')
+            stream.seek(offset)
+            stream.write(data)
+        if args.get('final') and os.name != 'nt': file.chmod(args.get('mode') or 0o600)
+        return dict(bytes=len(data))
+    if operation == 'remove-empty-directory':
+        if file == root:
+            raise ValueError('Cannot remove the workspace root')
+        file.rmdir()
+        return {'removed': True}
+    if operation == 'remove-directory':
+        if file == Path(file.anchor) or file == Path.home().resolve():
+            raise ValueError('不能删除主机根目录或用户主目录')
+        if file != root or args.get('allowRoot') is not True:
+            locate(value, True)
+        protected = [Path(p).resolve() for p in args.get('protectedPaths', [])]
+        if any(p == file or file in p.parents for p in protected):
+            raise ValueError('工作文件夹仍被其他员工或 Team 使用，请选择 only employee')
+        if (root / value).is_symlink() or (file.exists() and not file.is_dir()):
+            raise ValueError('工作目录不是普通文件夹，请选择 only employee')
+        if not args.get('preview') and file.exists():
+            shutil.rmtree(file)
+        return {'removed': not args.get('preview', False), 'path': str(file)}
+    if operation == 'directory':
+        if args.get('create'):
+            locate(value, True)
+            if args.get('exclusive') and file.exists():
+                raise ValueError('这个文件夹已存在，请选择绑定已有文件夹')
+            if not args.get('preview'):
+                file.mkdir(parents=True, exist_ok=not args.get('exclusive'))
+        if (not args.get('create') or file.exists()) and not file.is_dir():
+            raise ValueError('所选云端文件夹不存在或不是文件夹')
+        return dict(path=str(file), root=str(root))
+    if operation == 'list':
+        entries = []
+        for child in file.iterdir():
+            if not args.get('hidden') and child.name.startswith('.'):
+                continue
+            stat = child.lstat()
+            entries.append(dict(name=child.name, path=child.relative_to(root).as_posix(), directory=child.is_dir() and not child.is_symlink(),
+                                symlink=child.is_symlink(), bytes=stat.st_size, modifiedAt=stat.st_mtime*1000))
+        return dict(root=str(root), path=file.relative_to(root).as_posix(), entries=sorted(entries, key=lambda e:(not e['directory'], e['name'])))
+    if operation == 'read-image':
+        if file.stat().st_size > 10 * 1024 * 1024:
+            raise ValueError('图片不能超过 10 MB')
+        data = file.read_bytes()
+        mime = 'image/png' if data.startswith(b'\x89PNG\r\n\x1a\n') else 'image/jpeg' if data.startswith(b'\xff\xd8\xff') else 'image/gif' if data[:6] in (b'GIF87a', b'GIF89a') else 'image/webp' if data[:4] == b'RIFF' and data[8:12] == b'WEBP' else None
+        if not mime:
+            raise ValueError('请选择 PNG、JPEG、GIF 或 WebP 图片')
+        return dict(path=value, mimeType=mime, data=base64.b64encode(data).decode(), bytes=len(data), binary=True)
+    if operation == 'read':
+        if not file.is_file():
+            raise ValueError('请选择一个文件')
+        if file.stat().st_size > 4*1024*1024:
+            return dict(path=value, bytes=file.stat().st_size, binary=True)
+        data = file.read_bytes()
+        try:
+            content = data.decode('utf-8') if b'\0' not in data else None
+        except UnicodeDecodeError:
+            content = None
+        return dict(path=value, bytes=len(data), binary=content is None, content=content, hash=hashlib.sha256(data).hexdigest())
+    if operation == 'write':
+        if args.get('hash') and (not file.exists() or digest(file) != args['hash']):
+            raise ValueError('文件已被其他操作修改，请重新读取后保存')
+        if args.get('create') and file.exists():
+            raise ValueError('同名文件已存在')
+        if args.get('contentBase64') is not None:
+            encoded = args['contentBase64']
+            if not isinstance(encoded, str) or len(encoded) > 14 * 1024 * 1024:
+                raise ValueError('图片不能超过 10 MB')
+            data = base64.b64decode(encoded, validate=True)
+            if len(data) > 10 * 1024 * 1024 or not (data.startswith(b'\x89PNG\r\n\x1a\n') or data.startswith(b'\xff\xd8\xff') or data[:6] in (b'GIF87a', b'GIF89a') or data[:4] == b'RIFF' and data[8:12] == b'WEBP'):
+                raise ValueError('请选择 10 MB 以内的 PNG、JPEG、GIF 或 WebP 图片')
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_bytes(data)
+            return dict(path=value, saved=True)
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text(args.get('content', ''), encoding='utf-8')
+        return dict(path=value, saved=True)
+    if operation == 'mkdir':
+        file.mkdir()
+        return dict(path=value, created=True)
+    if operation == 'move':
+        target = locate(args['to'], True)
+        if target.exists():
+            raise ValueError('目标路径已存在')
+        file.rename(target)
+        return dict(path=args['to'])
+    trash = locate('.agents-company/trash')
+    if operation == 'trash':
+        identity = str(uuid.uuid4())
+        trash.mkdir(parents=True, exist_ok=True)
+        file.rename(trash / identity)
+        (trash/(identity+'.json')).write_text(json.dumps({'path':value}))
+        return dict(id=identity, path=value)
+    if operation == 'restore':
+        identity = str(uuid.UUID(args['id']))
+        info = json.loads((trash/(identity+'.json')).read_text(encoding='utf-8'))
+        target = locate(info['path'], True)
+        if target.exists():
+            raise ValueError('原路径已有文件')
+        (trash/identity).rename(target)
+        (trash/(identity+'.json')).unlink()
+        return dict(path=info['path'])
+    raise ValueError('Unknown file operation')

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "reviews": [
+    {
+      "id": "official-pet-art",
+      "status": "approved",
+      "scope": "src/renderer/src/assets/pets — official OpenAI sprites",
+      "required": "Record an explicit redistribution license/permission or replace these sprites with clearly licensed alternatives. Source attribution alone is insufficient.",
+      "evidence": [
+        "licenses/artwork-review.md",
+        "src/renderer/src/assets/pets/sources.json",
+        "src/renderer/src/assets/pets/licenses",
+        "src/renderer/src/assets/plugin-icons/sources.json"
+      ],
+      "resolution": "Replaced or excluded unverified artwork; approval applies to the current public source snapshot, not private historical assets."
+    },
+    {
+      "id": "vendor-system-icons",
+      "status": "approved",
+      "scope": "Finder/Apple artwork and extracted MarginNote application icon",
+      "required": "Verify permitted redistribution and trademark presentation or replace with original generic icons.",
+      "evidence": [
+        "licenses/artwork-review.md",
+        "src/renderer/src/assets/pets/sources.json",
+        "src/renderer/src/assets/pets/licenses",
+        "src/renderer/src/assets/plugin-icons/sources.json"
+      ],
+      "resolution": "Replaced or excluded unverified artwork; approval applies to the current public source snapshot, not private historical assets."
+    },
+    {
+      "id": "mininotion-gpl-distribution",
+      "status": "approved",
+      "scope": "MiniNotion GPL-3.0-only, BlockNote Multi-column, host/plugin integration and matching source",
+      "required": "Review the actual combined distribution and provide corresponding source in the required form; host Apache licensing does not override GPL obligations.",
+      "evidence": [
+        "LICENSE",
+        "NOTICE",
+        "LICENSING.md",
+        "licenses/distribution-review.md",
+        "licenses/upstream/blocknote-source.json",
+        "scripts/source-files.mjs"
+      ],
+      "resolution": "GPL-3.0-only combined distribution; complete plugin and matching upstream preferred source included, with retained permissive notices."
+    },
+    {
+      "id": "claude-runtime-redistribution",
+      "status": "approved",
+      "scope": "Claude Agent SDK and paired native runtime included in application/dependency distribution",
+      "required": "Confirm the selected distribution and API-key integration comply with current Anthropic terms; the application does not offer claude.ai subscription login.",
+      "evidence": [
+        "licenses/distribution-review.md",
+        "LICENSING.md",
+        "package.json",
+        "PlugIns/mini-notion/package.json",
+        "src/main/engines/claude-sdk.ts",
+        "src/main/engines/installer.ts",
+        "test/engine-install-test.mjs"
+      ],
+      "resolution": "Vendor SDK/native runtime excluded from distributed dependencies and plugin resources; separately installed by the user from checksum-pinned official packages. Public integration uses Claude Agent API-key flow."
+    }
+  ]
+}

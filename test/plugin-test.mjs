@@ -1,0 +1,66 @@
+import {spawn,execFile} from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import {promisify} from 'node:util'
+import assert from 'node:assert/strict'
+const run=promisify(execFile),root=path.resolve(import.meta.dirname,'..')
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-plugin-'))),home=path.join(temp,'home'),workspace=path.join(temp,"Team's 工作空间",'mini-notion-workspace','任意命名'),other=path.join(temp,"Team's 工作空间",'workspace-notes-workspace','Other')
+fs.mkdirSync(workspace,{recursive:true});fs.mkdirSync(other,{recursive:true})
+fs.writeFileSync(path.join(workspace,'AGENTS.md'),'# Keep user instructions\n')
+fs.writeFileSync(path.join(workspace,'CLAUDE.md'),'# Keep Claude instructions\n')
+const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.dirname(path.dirname(workspace))}
+const executable=process.env.AGENTS_COMPANY_TEST_CLI||process.execPath,prefix=process.env.AGENTS_COMPANY_TEST_CLI?[]:['bin/agents']
+const daemon=spawn(executable,[...prefix,'serve'],{cwd:root,env,stdio:['ignore','pipe','pipe']})
+const done=new Promise(resolve=>daemon.once('exit',resolve));let log='';daemon.stdout.on('data',d=>log+=d);daemon.stderr.on('data',d=>log+=d)
+const cli=async(...args)=>{const response=JSON.parse((await run(executable,[...prefix,...args,'--json'],{cwd:root,env,timeout:30000})).stdout);assert.ok(response.ok,response.error);return response.data}
+const plugin=(method,params={},team='任意命名')=>cli('plugin','call','mininotion',method,'--team',team,'--params',JSON.stringify(params))
+let count=0;const ok=(value,label)=>{assert.ok(value,label);count++;console.log('PASS '+label)}
+try{
+  for(let i=0;i<100&&!fs.existsSync(path.join(home,'agents.sock'));i++)await new Promise(r=>setTimeout(r,50))
+  ok((await cli('plugin','list')).some(p=>p.id==='mininotion'),'bundled manifest discovered without loading domain code')
+  await cli('group','add','任意命名','--mode','work','--plugin','mininotion')
+  await cli('group','add','Other','--mode','work','--plugin','mininotion')
+  const guide=fs.readFileSync(path.join(workspace,'AGENTS.md'),'utf8')
+  ok(guide.startsWith('# Keep user instructions')&&guide.includes('.agents-company/README.md'),'existing agent instructions preserved with discovery link')
+  await cli('workspace','docs','--team','任意命名')
+  ok(fs.readFileSync(path.join(workspace,'AGENTS.md'),'utf8')===guide,'provisioning is idempotent')
+  const employee=await cli('card','create','--title','Writer','--group','任意命名','--cwd','writer','--engine','codex')
+  ok(fs.readFileSync(path.join(employee.cwd,'CLAUDE.md'),'utf8').includes('.agents-company/README.md'),'employee receives relative documentation entry')
+  const shim=path.join(workspace,'.agents-company/bin/mininotion')
+  const fromCLI=JSON.parse((await run(shim,['api','fs.write','--data',JSON.stringify({path:'writer/plan.md',content:'# Shared plan\n'})],{cwd:employee.cwd,env,timeout:30000})).stdout)
+  ok(fromCLI.content==='# Shared plan\n','generated executable works from a child directory with spaces and apostrophes')
+  ok((await plugin('page.list')).some(p=>p.sourceFile?.path==='writer/plan.md'),'CLI file renders as an indexed page')
+  const page=await plugin('page.create',{title:'API plan',color:'green'})
+  await plugin('block.append',{pageId:page.id,text:'Portable note'})
+  ok(fs.existsSync(path.join(workspace,`Documents/${page.id}.mininotion.json`)),'native page is an actual portable workspace file')
+  await plugin('file.export',{pageId:page.id,type:'md',output:'writer/export.md'})
+  ok(fs.readFileSync(path.join(workspace,'writer/export.md'),'utf8').includes('Portable note'),'packaged converter exports rich text through the CLI API')
+  ok(!(await plugin('page.list',{},'Other')).some(p=>p.id===page.id),'same-plugin Teams have separate fixed roots')
+  ok((await plugin('ui.register',{ready:false})).connected&&(await cli('plugin','describe','mininotion')).api.commands.some(c=>c.method==='ui.register'),'renderer readiness is a documented CLI API without opening a window')
+  const view=await cli('plugin','view','mininotion','--team','任意命名'),base=new URL('.',view.url)
+  ok((await fetch(view.url).then(r=>r.text())).includes('Mini Notion'),'plugin serves its own renderer')
+  const reply=await fetch(new URL('rpc',base),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:42,method:'page.get',params:{pageId:page.id}})}).then(r=>r.json())
+  ok(reply.result.title==='API plan','scoped renderer JSON API uses the same service')
+  ok((await fetch(new URL('/rpc',view.url))).status===404,'unguarded root has no RPC route')
+  const asset=await plugin('fs.asset-upload',{name:'pixel.png',contentBase64:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII='})
+  ok((await fetch(new URL('data/asset/'+asset.slice('asset://local/'.length),base))).headers.get('content-type')==='image/png','workspace attachments use the scoped asset route')
+  await cli('plugin','close',view.id)
+  await assert.rejects(fetch(view.url));ok(true,'closing a view releases its HTTP listener')
+  const starter=path.join(temp,'starter');fs.cpSync(path.join(root,'examples/plugin-starter'),starter,{recursive:true})
+  fs.writeFileSync(path.join(starter,'runtime.cjs'),fs.readFileSync(path.join(starter,'runtime.cjs'),'utf8').replace("if(method==='notes.list')","if(method==='private.write'){await fs.writeFile(path.join(workspace,'bypass.txt'),'wrong');result=true;}else if(method==='notes.list')"))
+  const invalid=path.join(temp,'invalid');fs.cpSync(starter,invalid,{recursive:true});const invalidSchema=JSON.parse(fs.readFileSync(path.join(invalid,'schema.json')));invalidSchema.commands=[];fs.writeFileSync(path.join(invalid,'schema.json'),JSON.stringify(invalidSchema))
+  await assert.rejects(()=>cli('plugin','install',invalid));ok(true,'plugins without a declared CLI command schema are rejected')
+  await cli('plugin','install',starter)
+  await cli('group','configure','Other','--mode','work','--plugin','workspace-notes')
+  const result=await cli('plugin','call','workspace-notes','notes.write','--team','Other','--params',JSON.stringify({name:'second.md',content:'Second independent plugin'}))
+  ok(result.name==='second.md'&&fs.existsSync(path.join(other,'second.md')),'second plugin installs and executes without host modifications')
+  await assert.rejects(()=>cli('plugin','call','workspace-notes','private.write','--team','Other'))
+  const guarded=await cli('plugin','view','workspace-notes','--team','Other'),guardedBase=new URL('.',guarded.url)
+  const denied=await fetch(new URL('rpc',guardedBase),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'private.write'})}).then(r=>r.json())
+  ok(denied.error.code===-32601&&!fs.existsSync(path.join(other,'bypass.txt')),'renderer and CLI both reject runtime methods absent from the shared command schema')
+  await cli('plugin','close',guarded.id)
+  ok(fs.existsSync(path.join(other,'.agents-company/plugins/workspace-notes/API.md')),'only the selected Work plugin is provisioned')
+  await assert.rejects(()=>plugin('fs.write',{path:path.join(other,'wrong.md'),content:'escape'}));ok(!fs.existsSync(path.join(other,'wrong.md')),'workspace API rejects crossing the Team root')
+  console.log(`PASS=${count} FAIL=0 — no model calls`)
+}catch(error){console.error(log);throw error}finally{daemon.kill('SIGTERM');await done;fs.rmSync(temp,{recursive:true,force:true})}

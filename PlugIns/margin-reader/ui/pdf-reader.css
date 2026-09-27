@@ -1,0 +1,41 @@
+/* PDF-specific layout: an 8px gutter, responsive scale, bounded raster pages. */
+.reader-viewport{display:flex;position:relative;flex:1;min-height:0;min-width:0}
+.reader-viewport>.reader-scroll{min-width:0}
+.pdf-vertical-progress{display:flex;align-items:stretch;justify-content:center;width:18px;flex-shrink:0;padding:8px 3px;background:var(--bg);border-left:1px solid var(--line)}
+.pdf-vertical-progress input{writing-mode:vertical-lr;direction:ltr;width:12px;height:100%;min-height:0;margin:0;padding:0;accent-color:var(--accent);cursor:pointer;border:0;border-radius:8px;appearance:none;background:var(--line)}
+.pdf-vertical-progress input::-webkit-slider-runnable-track{background:var(--line);width:5px;border-radius:8px}
+.pdf-vertical-progress input::-webkit-slider-thumb{appearance:none;width:11px;height:30px;margin-left:-3px;border-radius:6px;background:var(--accent);border:2px solid var(--bg)}
+.pdf-vertical-progress input::-moz-range-thumb{width:9px;height:28px;border:0;border-radius:6px;background:var(--accent)}
+.reader-view.pdf-document .document-heading{min-height:48px;padding:6px 12px;flex-shrink:0}
+.reader-view .reader-toolbar{min-height:40px;height:auto;flex-shrink:0;flex-wrap:wrap;padding:4px 10px}
+.pager input{width:48px}
+.pdf-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:5px 10px;min-height:40px;border-bottom:1px solid var(--line);background:var(--surface);flex-shrink:0;font-size:11px}
+.pdf-controls button{padding:4px 7px;font-size:11px;min-height:26px}
+.pdf-mode-switch{display:flex;border:1px solid var(--line);border-radius:7px;padding:2px;gap:1px}
+.pdf-mode-switch [aria-pressed=true],#pdf-focus[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+.pdf-controls select{font-size:11px;padding:5px 6px;max-width:105px}
+.pdf-speed-label{display:flex;align-items:center;gap:4px;white-space:nowrap;color:var(--muted)}
+.pdf-speed-label input{width:58px;padding:0;accent-color:var(--accent);cursor:pointer}
+.pdf-speed-label output{min-width:29px;font-variant-numeric:tabular-nums}
+#pdf-reset-zoom{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.reader-scroll.pdf-scroll{padding:8px;overscroll-behavior:none;overflow-anchor:none;scroll-behavior:auto;outline-offset:-2px}
+.reader-scroll.pdf-scroll[data-pdf-mode=continuous]{overflow-y:scroll;overflow-x:auto;scrollbar-width:none}
+.reader-scroll.pdf-scroll[data-pdf-mode=continuous]::-webkit-scrollbar{display:none}
+.reader-scroll.pdf-scroll[data-pdf-mode=continuous]::-webkit-scrollbar-track{background:var(--bg)}
+.reader-scroll.pdf-scroll[data-pdf-mode=continuous]::-webkit-scrollbar-thumb{background:var(--muted);border:3px solid var(--bg);border-radius:8px}
+.reader-scroll.pdf-scroll[data-pdf-mode=paged]{overflow:auto;scrollbar-width:none}
+.reader-scroll.pdf-scroll[data-pdf-mode=paged]::-webkit-scrollbar{display:none}
+.reading-surface.pdf{margin:0;max-width:none;min-height:0;background:transparent;border:0;border-radius:0;box-shadow:none;position:relative}
+.reading-surface.pdf .pdf-page{position:absolute;background:white;overflow:hidden;contain:layout paint;box-shadow:0 1px 3px #0002;line-height:normal}
+.pdf-page:not([data-render-state=ready])::after{content:'第 ' attr(data-page) ' 页';position:absolute;left:16px;top:16px;font-size:11px;color:#8a9099;pointer-events:none}
+.pdf-page[data-render-state=loading]::after{content:'正在渲染第 ' attr(data-page) ' 页…'}
+.pdf-page[data-render-state=error]::after{display:none}
+.pdf-retry{position:absolute;inset:30% 10%;white-space:normal;color:var(--danger);font-size:13px}
+.pdf-progress{display:flex;align-items:center;gap:10px;min-height:32px;padding:3px 12px;border-top:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:11px;flex-shrink:0}
+.pdf-progress input{flex:1;width:100%;padding:0;accent-color:var(--accent);cursor:pointer}
+.pdf-progress output{min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
+.reader-view.pdf-document .reading-footer{padding:4px 12px;min-height:27px;flex-shrink:0}
+.workspace.reading.focus-reading{grid-template-columns:minmax(0,1fr)}
+.workspace.reading.focus-reading>.explorer,.workspace.reading.focus-reading>.divider,.workspace.reading.focus-reading>#outline-pane{display:none!important}
+@media(max-width:1050px){.pdf-controls{gap:4px}.pdf-speed-label input{width:42px}.pdf-controls button{padding-inline:5px}}
+@media(max-width:820px){.pdf-controls{gap:5px}.pdf-controls .pdf-speed-label{margin-left:auto}.reader-toolbar .pager{gap:0}.pdf-controls #pdf-reset-zoom{margin-left:0}}

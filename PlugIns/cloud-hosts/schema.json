@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "cloud-hosts",
+  "version": "1.2.2",
+  "transport": "JSON-RPC 2.0",
+  "commands": [
+    {
+      "method": "hosts.list",
+      "description": "列出所有云主机，密码默认隐藏",
+      "options": {}
+    },
+    {
+      "method": "hosts.get",
+      "description": "读取主机账号、系统和连接配置",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.create",
+      "description": "登记一台云主机",
+      "options": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "host": {
+          "type": "string",
+          "required": true
+        },
+        "os": {
+          "type": "string",
+          "required": true
+        },
+        "defaultDirectory": {
+          "type": "string",
+          "required": true
+        },
+        "port": {
+          "type": "number",
+          "required": false
+        },
+        "password": {
+          "type": "string",
+          "required": false
+        },
+        "identityFile": {
+          "type": "string",
+          "required": false
+        },
+        "knownHosts": {
+          "type": "string",
+          "required": false
+        },
+        "sshConfig": {
+          "type": "string",
+          "required": false
+        },
+        "jump": {
+          "type": "string",
+          "required": false
+        },
+        "distribution": {
+          "type": "string",
+          "required": false
+        },
+        "vm": {
+          "type": "object",
+          "description": "VM 资产：hypervisorId,name,projectDirectory,state,access,notes；无 SSH 时明确标注，不伪造连通性"
+        },
+        "desktop": {
+          "type": "object",
+          "description": "protocol:rdp|vnc,address,port,viaHostId?,username?,quality:balanced|sharp|fast"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.update",
+      "description": "修改云主机账号和连接配置",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "patch": {
+          "type": "object",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.remove",
+      "description": "删除没有 Team 绑定的云主机",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.check",
+      "description": "检查 SSH 连接并保存状态",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.directories",
+      "description": "浏览现有远端目录",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "method": "hosts.credentials",
+      "description": "明确请求查看保存的密码",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "files": {
+          "type": "boolean",
+          "description": "false 仅返回密码，不读取已登记 SSH 文件"
+        }
+      }
+    },
+    {
+      "method": "hosts.fingerprints",
+      "description": "读取服务器 SSH 指纹，不自动信任",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.trust",
+      "description": "核对并信任明确指定的 SSH 指纹",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "fingerprint": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.exec",
+      "description": "仅在登记主机上执行管理命令，不会回退本机",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "command": {
+          "type": "string",
+          "required": true
+        },
+        "directory": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "number"
+        }
+      }
+    },
+    {
+      "method": "hosts.terminal-open",
+      "description": "Open a persistent SSH PTY without an employee",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "directory": {
+          "type": "string"
+        },
+        "cols": {
+          "type": "number"
+        },
+        "rows": {
+          "type": "number"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-list",
+      "description": "List host PTYs",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.terminal-read",
+      "description": "Read incremental host PTY output",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        },
+        "cursor": {
+          "type": "number"
+        },
+        "waitMs": {
+          "type": "number",
+          "description": "等待新输出或退出，0–15000ms，默认 0"
+        }
+      }
+    },
+    {
+      "method": "hosts.terminal-input",
+      "description": "Send host PTY input and control keys",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        },
+        "data": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-resize",
+      "description": "Resize a host PTY",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        },
+        "cols": {
+          "type": "number",
+          "required": true
+        },
+        "rows": {
+          "type": "number",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-close",
+      "description": "Close a host PTY",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.desktop-list",
+      "description": "List active remote desktop transports",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.desktop-open",
+      "description": "Open configured RDP or VNC transport; does not imply desktop login",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.desktop-launch",
+      "description": "Launch native RDP client on the Core machine",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.desktop-close",
+      "description": "Close desktop transport and SSH forward",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    }
+  ]
+}

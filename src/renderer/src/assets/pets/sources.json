@@ -1,0 +1,56 @@
+[
+  {
+    "id": "marmalade",
+    "url": "https://raw.githubusercontent.com/aprocom/chatgpt-pets/a6fbf8e516da23811fdd3371a212f565d250952c/pets/marmalade/spritesheet.webp",
+    "repository": "https://github.com/aprocom/chatgpt-pets",
+    "commit": "a6fbf8e516da23811fdd3371a212f565d250952c",
+    "license": "MIT",
+    "bytes": 2505008,
+    "sha256": "069d141482a8033ecb460b53eb2778d4542e8fb4a337a5e87161466205512cb7"
+  },
+  {
+    "id": "voltcoin",
+    "url": "https://raw.githubusercontent.com/aprocom/chatgpt-pets/a6fbf8e516da23811fdd3371a212f565d250952c/pets/voltcoin/spritesheet.webp",
+    "repository": "https://github.com/aprocom/chatgpt-pets",
+    "commit": "a6fbf8e516da23811fdd3371a212f565d250952c",
+    "license": "MIT",
+    "bytes": 2507124,
+    "sha256": "0778bb280713e35b4b247df42a0ff01493865c6e48b74343c916425d6ed24e90"
+  },
+  {
+    "id": "woodi",
+    "url": "https://raw.githubusercontent.com/Schrotty74/chatgpt-pets/2c8a83a47b3d991a84121dfd77c954c3ec71bd9c/Woodi/spritesheet.webp",
+    "repository": "https://github.com/Schrotty74/chatgpt-pets",
+    "commit": "2c8a83a47b3d991a84121dfd77c954c3ec71bd9c",
+    "license": "MIT",
+    "bytes": 2150868,
+    "sha256": "b34faf9a1d082d5fe0b5c5c0c32972dce63273c0e5c925829911253c3924a72e"
+  },
+  {
+    "id": "inky",
+    "url": "https://raw.githubusercontent.com/Schrotty74/chatgpt-pets/2c8a83a47b3d991a84121dfd77c954c3ec71bd9c/Inky/inky-spritesheet.webp",
+    "repository": "https://github.com/Schrotty74/chatgpt-pets",
+    "commit": "2c8a83a47b3d991a84121dfd77c954c3ec71bd9c",
+    "license": "MIT",
+    "bytes": 3396148,
+    "sha256": "16fbefdafd0a8323098affb7180206c52ff958c991ac562fd842074a57536394"
+  },
+  {
+    "id": "byte",
+    "url": "https://raw.githubusercontent.com/Schrotty74/chatgpt-pets/2c8a83a47b3d991a84121dfd77c954c3ec71bd9c/Byte/spritesheet-builder-v2.webp",
+    "repository": "https://github.com/Schrotty74/chatgpt-pets",
+    "commit": "2c8a83a47b3d991a84121dfd77c954c3ec71bd9c",
+    "license": "MIT",
+    "bytes": 2419380,
+    "sha256": "f7b4c8b7c80aa9bc46d70d5b7174c5a5e724511aa078217d8eee6f19fb14fe78"
+  },
+  {
+    "id": "wondercube",
+    "url": "https://raw.githubusercontent.com/Schrotty74/chatgpt-pets/2c8a83a47b3d991a84121dfd77c954c3ec71bd9c/WonderCube/spritesheet.webp",
+    "repository": "https://github.com/Schrotty74/chatgpt-pets",
+    "commit": "2c8a83a47b3d991a84121dfd77c954c3ec71bd9c",
+    "license": "MIT",
+    "bytes": 2476278,
+    "sha256": "6337491a44d9ecba65c3b01153b11d0aac01a43d9cf8df51d744dbb6d7af09b0"
+  }
+]

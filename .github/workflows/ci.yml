@@ -1,0 +1,68 @@
+name: Verify
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: Core and UI (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      CI: 'true'
+      AGENTS_COMPANY_TEST: '1'
+      AGENTS_BROWSER_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            PlugIns/*/package-lock.json
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run setup
+      - run: npm run build:plugins:release
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:server
+      - run: npm run test:coverage
+      - run: npm run test:release-core
+      - run: node test/platform-smoke-test.mjs
+      - run: python -m unittest discover -s Modules/Tunnel/tests -v
+      - if: runner.os == 'Linux'
+        run: npx --no-install playwright install --with-deps chromium
+      - if: runner.os != 'Linux'
+        run: npx --no-install playwright install chromium
+      - if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:release-ui
+      - if: runner.os != 'Linux'
+        run: npm run test:release-ui
+      - run: npm run release:check -- --technical
+      - name: Preserve test diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            artifacts/release-tests/**/*.json
+            artifacts/release-tests/**/*.log
+            artifacts/platform-smoke.json
+          retention-days: 10
+          if-no-files-found: ignore

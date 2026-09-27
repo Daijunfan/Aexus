@@ -1,0 +1,77 @@
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-alt: #f7f7f8;
+  --bg-elev: #ffffff;
+  --bg-hover: #ededf0;
+  --border: #dcdce0;
+  --border-soft: #e8e8ec;
+  --fg: #1d1d1f;
+  --fg-dim: #6b6b73;
+  --fg-faint: #9a9aa2;
+  --accent: #2563eb;
+  --green: #15803d;
+  --red: #dc2626;
+  --amber: #b45309;
+  --user-bubble: #e8f0fe;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.6 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.app {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/*
+ * The window is frameless apart from the traffic lights, so every view needs
+ * its own draggable strip. It also reserves the space the traffic lights
+ * occupy, which is what keeps them from overlapping app content.
+ */
+.titlebar {
+  height: 38px;
+  flex: none;
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-soft);
+  padding-left: 78px;
+  padding-right: 78px;
+}
+
+.titlebar-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

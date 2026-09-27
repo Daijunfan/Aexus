@@ -1,0 +1,282 @@
+{
+  "name": "agents-company",
+  "productName": "Agents Company",
+  "version": "0.49.1",
+  "description": "CLI-first visual Agent workspace with a shared desktop/web Core and bundled work plugins",
+  "main": "./out/main/index.js",
+  "author": "Agents Company",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "app": "node scripts/package-desktop.mjs --dir --development",
+    "dist": "node scripts/package-desktop.mjs",
+    "test:cli": "node test/cli-test.mjs",
+    "test:coverage": "node test/coverage-test.mjs",
+    "test": "npm run typecheck && npm run build && npm run test:coverage && npm run test:release-core",
+    "dev:headless": "AGENTS_COMPANY_HEADLESS=1 electron-vite dev",
+    "test:headless": "node test/run-headless.mjs",
+    "serve": "node bin/agents serve",
+    "test:core": "node test/core-test.mjs",
+    "test:ui": "node test/ui-test.mjs",
+    "test:service": "node test/service-test.mjs",
+    "test:workspaces": "node test/workspace-test.mjs",
+    "build:plugins": "node scripts/build-plugins.mjs",
+    "test:plugins": "node test/plugin-test.mjs && node test/plugin-workspace-location-test.mjs",
+    "test:plugin-ui": "node test/plugin-ui-test.mjs",
+    "test:plugin-live": "node test/plugin-live-test.mjs",
+    "test:plugin-sandbox": "node test/plugin-sandbox-test.cjs",
+    "test:modes": "node test/modes-test.mjs",
+    "test:modes-ui": "node test/modes-ui-test.mjs",
+    "test:directory-repair": "node test/directory-repair-test.mjs",
+    "test:managed": "node test/managed-directories-test.mjs",
+    "test:navigation-ui": "node test/navigation-ui-test.mjs",
+    "test:preferences": "node test/preferences-plugin-ui-test.mjs",
+    "build:icon": "node scripts/build-icon.mjs",
+    "test:interactions": "node test/snapping-test.mjs && node test/interaction-api-test.mjs && node test/interaction-ui-test.mjs && npm run test:canvas-stability",
+    "test:employee-lifecycle": "node test/creation-contract-test.mjs && node test/creation-form-ui-test.mjs && node test/employee-remove-workspace-ui-test.mjs && npm run test:bulk-edit",
+    "test:team-lifecycle": "node test/creation-contract-test.mjs && node test/team-lifecycle-ui-test.mjs",
+    "test:team-appearance": "node test/team-appearance-ui-test.mjs && node test/team-header-ui-test.mjs",
+    "test:remote": "python3 -m unittest discover -s Modules/Tunnel/tests -v && node test/remote-terminal-test.mjs && node test/workbench-ui-test.mjs",
+    "test:ssh": "node test/ssh-integration-test.mjs",
+    "test:cli-foundation": "node test/cli-foundation-test.mjs",
+    "test:cloud-teams": "node test/remote-terminal-test.mjs && node test/cloud-migration-test.mjs && node test/workbench-ui-test.mjs",
+    "test:scheduler": "node test/scheduler-test.mjs",
+    "test:notion-ui": "node test/notion-ui-test.mjs",
+    "test:cloud-live": "node test/cloud-host-live-test.mjs",
+    "test:native-execution": "node test/native-execution-test.mjs",
+    "install:mac": "node scripts/install-app.mjs",
+    "test:install": "node test/install-test.mjs",
+    "test:startup": "node test/startup-recovery-test.mjs",
+    "test:plugin-windows": "node test/plugin-window-cli-test.mjs && node test/plugin-window-ui-test.mjs",
+    "test:engine-controls": "node test/engine-controls-test.mjs && node test/engine-controls-ui-test.mjs",
+    "test:employee-features": "node test/employee-clone-test.mjs && node test/approval-stream-test.mjs && node test/employee-features-ui-test.mjs",
+    "test:native-clone": "node test/native-claude-clone-test.mjs && node test/native-execution-test.mjs",
+    "test:pets-ui": "node test/pet-catalog-ui-test.mjs",
+    "test:office-boundaries": "node test/office-boundaries-test.mjs",
+    "test:cloud-hook": "node test/cloud-hook-runtime-test.mjs",
+    "test:cloud-safety-live": "node test/cloud-safety-live-test.mjs",
+    "test:model-catalog": "node test/model-catalog-test.mjs",
+    "test:model-catalog-ui": "node test/model-catalog-ui-test.mjs",
+    "docs:managers": "node scripts/sync-manager-docs.mjs",
+    "test:manager-docs": "node scripts/sync-manager-docs.mjs --check && node test/manager-cli-test.mjs && node test/manager-agent-test.mjs && node test/manager-claude-test.mjs",
+    "test:canvas-stability": "node test/canvas-stability-test.mjs",
+    "test:cloud-hosts": "npm --prefix PlugIns/cloud-hosts test && node test/cloud-hosts-test.mjs && node test/cloud-host-health-test.mjs && node test/cloud-hosts-ui-test.mjs",
+    "test:cloud-native": "python3 -m unittest Modules/Tunnel/tests/test_agent_process.py && node test/cloud-native-worker-test.mjs && node test/cloud-native-worker-ui-test.mjs",
+    "test:work-scope": "node test/work-scope-startup-test.mjs",
+    "test:cli-utf8": "node test/cli-utf8-test.mjs",
+    "test:transfers": "node test/transfers-test.mjs",
+    "test:shared-ui": "node test/shared-ui-test.mjs",
+    "test:team-views": "node test/team-views-test.mjs && node test/team-views-ui-test.mjs",
+    "test:management": "node test/management-test.mjs && node test/management-provenance-test.mjs && node test/team-removal-permissions-test.mjs && node test/management-state-test.mjs && node test/management-activity-test.mjs && npm run test:governor && node test/agent-isolation-test.mjs && node test/management-ui-test.mjs && node test/isolated-desktop-test.mjs && node test/management-layout-test.mjs && node test/manager-bootstrap-state-test.mjs",
+    "test:management-live": "node test/management-remote-live-test.mjs",
+    "test:management-layout": "node test/management-layout-test.mjs",
+    "test:manager-bootstrap": "node test/manager-bootstrap-engine-test.mjs codex build && node test/manager-bootstrap-engine-test.mjs codex work && node test/manager-bootstrap-engine-test.mjs claude build && node test/manager-bootstrap-engine-test.mjs claude work",
+    "test:manager-acceptance-live": "node test/manager-acceptance-live-test.mjs",
+    "test:initialization": "node test/employee-pristine-test.mjs && node test/creation-form-ui-test.mjs",
+    "test:image-paste": "node test/image-paste-ui-test.mjs && python3 -m unittest Modules/Tunnel/tests/test_workspace_images.py",
+    "test:initialization-engines": "node test/employee-initialization-engine-test.mjs codex build && node test/employee-initialization-engine-test.mjs codex work && node test/employee-initialization-engine-test.mjs claude build && node test/employee-initialization-engine-test.mjs claude work",
+    "test:engine-models": "node test/engine-models-test.mjs",
+    "test:office-layout": "node test/office-layout-api-test.mjs && node test/office-collision-test.mjs && node test/team-room-drag-ui-test.mjs && node test/canvas-overview-ui-test.mjs",
+    "test:reply-receipts": "node test/reply-receipts-test.mjs && node test/layout-unread-ui-test.mjs",
+    "test:room-resize": "node test/room-resize-test.mjs && node test/room-resize-ui-test.mjs",
+    "test:manager-authority": "npm run test:governor",
+    "test:governor": "node test/governor-test.mjs && node test/governor-migration-test.mjs && node test/governor-ui-test.mjs",
+    "test:employee-remove-workspace": "node test/employee-remove-workspace-test.mjs && node test/employee-remove-workspace-remote-test.mjs && node test/employee-remove-workspace-ui-test.mjs && python3 -m unittest Modules/Tunnel/tests/test_workspace_removal.py",
+    "test:chat-scroll": "node test/chat-scroll-ui-test.mjs",
+    "test:remote-employee-cli": "node test/remote-employee-cli-test.mjs && node test/manager-local-only-ui-test.mjs",
+    "test:cloud-local-init-live": "node test/cloud-local-initialization-live-test.mjs",
+    "test:mixed-teams": "node test/mixed-team-management-test.mjs && node test/management-test.mjs && node test/management-ui-test.mjs",
+    "test:mixed-teams-live": "node test/mixed-team-management-live-test.mjs",
+    "test:connector-segments": "node test/connector-segments-test.mjs && node test/connector-segments-api-test.mjs && node test/connector-segments-ui-test.mjs",
+    "test:connectors": "node test/connector-api-test.mjs && node test/connector-routing-test.mjs && node test/connector-ui-test.mjs",
+    "test:cross-team": "node test/cross-team-routing-test.mjs && node test/cross-team-ui-test.mjs",
+    "test:task-view": "node test/task-view-test.mjs && node test/task-view-claude-test.mjs",
+    "test:bulk-edit": "node test/bulk-removal-test.mjs && node test/bulk-removal-remote-test.mjs && node test/bulk-edit-ui-test.mjs",
+    "test:governor-removal-live": "node test/governor-removal-live-test.mjs",
+    "test:governor-os-teams": "node test/governor-os-teams-test.mjs",
+    "test:governor-os-teams-live": "node test/governor-os-teams-live-test.mjs",
+    "test:performance": "node test/performance-core-test.mjs && node test/performance-ui-test.mjs",
+    "setup": "node scripts/setup.mjs",
+    "build:server": "node scripts/build-server.mjs",
+    "build:web": "vite build --config vite.web.config.ts",
+    "web": "node bin/agents serve --web",
+    "build:plugins:release": "node scripts/build-plugins.mjs --release",
+    "test:legacy": "npm run build:plugins && npm run typecheck && npm run build && npm run test:coverage && npm run test:cli-foundation && npm run test:engine-controls && npm run test:employee-features && npm run test:plugins && npm run test:cloud-hosts && npm run test:plugin-windows && node test/cloud-migration-test.mjs && npm run test:core && npm run test:workspaces && npm run test:service && npm run test:managed && npm run test:navigation-ui && npm run test:preferences && npm run test:interactions && npm run test:employee-lifecycle && npm run test:team-lifecycle && npm run test:team-appearance && npm run test:team-views && npm run test:remote && npm run test:cloud-native && npm run test:headless && npm run test:ui && npm run test:scheduler && npm run test:manager-docs && npm run test:management && npm run test:initialization && npm run test:image-paste && npm run test:office-layout && npm run test:reply-receipts",
+    "test:release-core": "node scripts/run-tests.mjs core",
+    "test:release-ui": "node scripts/run-tests.mjs ui",
+    "test:release-engines": "node scripts/run-tests.mjs engines",
+    "test:web": "node test/web-server-test.mjs && node test/web-ui-test.mjs",
+    "test:foundation": "node test/release-foundation-test.mjs",
+    "release:source": "node scripts/package-source.mjs",
+    "release:check": "node scripts/release-check.mjs",
+    "release:server": "node scripts/package-server.mjs",
+    "dist:mac": "node scripts/package-desktop.mjs --mac",
+    "dist:win": "node scripts/package-desktop.mjs --win",
+    "dist:linux": "node scripts/package-desktop.mjs --linux",
+    "maintainer:engine-downloads": "node scripts/update-engine-downloads.mjs",
+    "test:cloud-workbench": "node test/cloud-workbench-test.mjs && node test/cloud-workbench-ui-test.mjs",
+    "test:cloud-performance": "node test/cloud-workbench-performance-test.mjs",
+    "test:cloud-robustness": "node test/terminal-output-test.mjs && node test/terminal-wait-cancel-test.mjs && node test/cloud-terminal-stress-test.mjs && node test/cloud-connection-lifecycle-test.mjs"
+  },
+  "build": {
+    "appId": "com.agentscompany.app",
+    "productName": "Agents Company",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json",
+      "bin/**/*",
+      "API.md",
+      "docs/managers/**/*",
+      "PLUGIN_SPEC.md",
+      "README.md",
+      "examples/plugin-starter/**/*",
+      "THIRD_PARTY_NOTICES.md",
+      "licenses/**/*",
+      "src/renderer/src/assets/pets/sources.json",
+      "AGENTS.md",
+      "SCHEDULER.md",
+      "ENGINE_CAPABILITIES.md",
+      "src/renderer/src/assets/pets/licenses/**/*",
+      "ARCHITECTURE.md",
+      "PERMISSIONS.md",
+      "LICENSE",
+      "NOTICE",
+      "LICENSING.md",
+      "SECURITY.md",
+      "docs/DEPLOYMENT.md",
+      "engine-downloads.json"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "identity": null,
+      "icon": "build/icon.icns",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "允许网页聊天在你同意后使用麦克风。",
+        "NSCameraUsageDescription": "允许网页聊天在你同意后使用摄像头。"
+      }
+    },
+    "extraResources": [
+      {
+        "from": "build/DISTRIBUTION.json",
+        "to": "DISTRIBUTION.json"
+      },
+      {
+        "from": "build/plugins",
+        "to": "plugins",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/cli",
+        "to": "cli"
+      },
+      {
+        "from": "Modules/Tunnel",
+        "to": "Modules/Tunnel",
+        "filter": [
+          "*.py",
+          "README.md",
+          "profiles/*.example.json",
+          "windows/*.ps1",
+          "windows/*.cs"
+        ]
+      }
+    ],
+    "electronDist": "node_modules/electron/dist",
+    "asarUnpack": [
+      "node_modules/@anthropic-ai/claude-agent-sdk-*/**/*",
+      "node_modules/node-pty/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
+    "@vscode/codicons": "0.0.46-24",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "cross-spawn": "7.0.6",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tar": "7.5.22",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "44.4.4",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^4.0.0",
+    "esbuild": "0.25.12",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "sharp": "0.35.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "@anthropic-ai/claude-agent-sdk": "^0.3.272"
+  },
+  "bin": {
+    "agents": "./bin/agents"
+  },
+  "optionalDependencies": {
+    "node-pty": "1.1.0"
+  },
+  "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "keywords": [
+    "agents",
+    "codex",
+    "claude-agent",
+    "cli",
+    "self-hosted",
+    "electron"
+  ]
+}

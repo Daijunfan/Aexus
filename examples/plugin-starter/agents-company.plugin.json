@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "workspace-notes",
+  "name": "Workspace Notes",
+  "version": "1.0.0",
+  "description": "最小的独立 CLI 插件示例",
+  "runtime": "runtime.cjs",
+  "renderer": "ui/index.html",
+  "cli": "cli.cjs",
+  "documentation": "API.md",
+  "schema": "schema.json",
+  "autoAttach": true
+}

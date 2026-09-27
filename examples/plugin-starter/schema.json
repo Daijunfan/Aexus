@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "workspace-notes",
+  "version": "1.0.0",
+  "transport": "JSON-RPC 2.0",
+  "commands": [
+    {
+      "method": "notes.list",
+      "description": "List Markdown files at the workspace root",
+      "agentAccess": "workspace"
+    },
+    {
+      "method": "notes.write",
+      "description": "Write a Markdown file",
+      "mutates": true,
+      "options": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "content": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "agentAccess": "workspace"
+    }
+  ]
+}

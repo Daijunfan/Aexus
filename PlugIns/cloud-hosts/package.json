@@ -1,0 +1,18 @@
+{
+  "name": "agents-company-cloud-hosts",
+  "version": "1.2.2",
+  "private": true,
+  "scripts": {
+    "build:plugin": "node build.cjs",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@novnc/novnc": "1.7.0",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}

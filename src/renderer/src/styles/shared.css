@@ -1,0 +1,42 @@
+.directory-shared,.directory-overview { width:44px;height:44px;margin-top:12px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer;flex-shrink:0; }
+.directory-shared .codicon { font-size:23px; }
+.directory-shared:hover,.directory-shared.active,.directory-overview:hover,.directory-overview.active { background:var(--bg-hover);border-color:var(--border);color:var(--accent); }
+.directory-overview { margin-top:4px; }
+.shared-drawer { width:320px;flex:0 0 320px;min-height:0;display:flex;flex-direction:column;background:var(--bg-alt);border-right:1px solid var(--border-soft);color:var(--fg);z-index:20;overflow:hidden; }
+.shared-drawer>header { display:flex;align-items:center;justify-content:space-between;padding:18px 16px 8px; }
+.shared-drawer>header strong { font-size:15px;font-weight:650; }
+.shared-drawer>header small { display:block;margin-top:5px;font-size:11px;color:var(--fg-faint); }
+.shared-drawer button { cursor:pointer; }
+.shared-drawer>header button { display:grid;place-items:center;border:0;border-radius:5px;background:transparent;color:var(--fg-dim);width:28px;height:28px; }
+.shared-drawer button:hover { background:var(--bg-hover);color:var(--fg); }
+.shared-location { padding:0 16px 12px;margin:0;font-size:10px;color:var(--fg-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.shared-files { flex:1;min-height:150px; }
+.shared-files,.shared-files .file-list,.shared-files .file-toolbar { background:var(--bg-alt);color:var(--fg); }
+.shared-files .file-toolbar { border-color:var(--border-soft); }
+.shared-files .file-toolbar button { background:transparent;color:var(--fg-dim);border-color:transparent; }
+.shared-files .file-row button { color:var(--fg-dim); }
+.shared-files .file-row.selected,.shared-files .file-row:hover { background:var(--bg-hover); }
+.shared-files .file-row small { color:var(--fg-faint); }
+.shared-files .file-empty { color:var(--fg-faint); }
+.app:has(.shared-drawer) .conversation-dialog { box-shadow:none; }
+.shared-files .file-toolbar { flex-wrap:wrap;padding:8px;gap:5px; }
+.shared-files .file-toolbar nav { font-size:12px; }
+.shared-files .file-split { display:flex;min-height:0; }
+.shared-files .file-list { flex:1;width:100%;min-width:0;border-right:0; }
+.shared-files .file-preview { display:none; }
+.shared-files.shared-preview-open .file-list { display:none; }
+.shared-files.shared-preview-open .file-preview { display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;overflow:hidden;background:var(--bg-elev); }
+.shared-files .file-preview>header { display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--border-soft); }
+.shared-files .file-preview>header strong { min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.shared-files .file-preview>header span { grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;gap:6px; }
+.shared-files .file-preview>header button { margin:0;padding:4px 6px; }
+.shared-files .file-preview>textarea { flex:1;min-height:0;resize:none;margin:8px;padding:12px;border:1px solid var(--border);border-radius:6px;outline:0;background:var(--bg-elev);color:var(--fg);font:12px/1.65 Menlo,monospace; }
+.shared-files .file-preview>textarea::placeholder { color:var(--fg-faint); }
+.shared-files .file-preview>textarea:focus { border-color:var(--accent); }
+.shared-files .file-row { min-height:42px; }
+.shared-files .file-open span { font-size:12px; }
+.file-row[draggable=true] { cursor:grab; }
+.file-row[draggable=true]:active { cursor:grabbing; }
+.file-list:has(.file-row:hover) .file-row:hover { background:var(--bg-hover); }
+.app .conversation-layer,.app .office-panel-wrap,.app .team-workspace-wrap { left:calc(var(--directory-width) + var(--shared-width,0px)); }
+.directory-transfer-error { position:fixed;left:calc(var(--directory-width) + 8px);bottom:16px;max-width:320px;padding:12px;border:1px solid var(--red);border-radius:8px;background:var(--bg);color:var(--red);font-size:12px;z-index:100;overflow-wrap:anywhere; }

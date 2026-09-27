@@ -1,0 +1,2497 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "margin-reader",
+  "version": "0.7.0",
+  "transport": "JSON-RPC 2.0",
+  "commands": [
+    {
+      "method": "system.info",
+      "description": "Report parser capabilities, limits, plugin version and workspace.",
+      "agentAccess": "workspace",
+      "options": {}
+    },
+    {
+      "method": "fs.list",
+      "description": "List the immediate contents of a folder.",
+      "agentAccess": "workspace",
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Folder path; default is ."
+        }
+      }
+    },
+    {
+      "method": "fs.tree",
+      "description": "Read the expandable filesystem tree with explicit truncation information.",
+      "agentAccess": "workspace",
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Root folder; default is ."
+        },
+        "depth": {
+          "type": "number",
+          "description": "Maximum tree depth; default 32.",
+          "integer": true,
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    {
+      "method": "fs.mkdir",
+      "description": "Create a real folder and any missing ancestors without overwriting files.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "fs.write",
+      "description": "Create or update a UTF-8 text document. Updating requires expectedVersion.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "content": {
+          "type": "string",
+          "description": "UTF-8 document text.",
+          "required": true
+        },
+        "expectedVersion": {
+          "type": "string",
+          "description": "Version from fs.list; required when the destination already exists."
+        }
+      }
+    },
+    {
+      "method": "fs.move",
+      "description": "Move or rename a file/folder; preserve document IDs and refuse existing destinations.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "target": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "expectedVersion": {
+          "type": "string",
+          "description": "Optional source version for optimistic concurrency."
+        }
+      }
+    },
+    {
+      "method": "fs.copy",
+      "description": "Copy a file/folder without overwriting. Copied documents get independent IDs when opened.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "target": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "fs.trash",
+      "description": "Move a file/folder into recoverable plugin trash, never permanently delete it.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "expectedVersion": {
+          "type": "string",
+          "description": "Optional source version for optimistic concurrency."
+        }
+      }
+    },
+    {
+      "method": "fs.batch",
+      "description": "Move, copy or recoverably trash selected workspace files with preflight checks and rollback.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "action": {
+          "type": "string",
+          "description": "Batch operation.",
+          "required": true,
+          "enum": [
+            "move",
+            "copy",
+            "trash"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "description": "1-500 items: {path,expectedVersion}. Read source versions from fs.list.",
+          "required": true
+        },
+        "folder": {
+          "type": "string",
+          "description": "Existing destination folder for move/copy. Omit for trash. Names are preserved."
+        }
+      }
+    },
+    {
+      "method": "fs.trash.list",
+      "description": "List recoverable deleted items.",
+      "agentAccess": "workspace",
+      "options": {}
+    },
+    {
+      "method": "fs.restore",
+      "description": "Restore a trashed item. Refuse conflicts; optionally select a new target.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "trashId": {
+          "type": "string",
+          "description": "Trash ID.",
+          "required": true
+        },
+        "target": {
+          "type": "string",
+          "description": "New relative path; default is the original path."
+        }
+      }
+    },
+    {
+      "method": "import.begin",
+      "description": "Begin a resumable file upload; bytes remain in private staging until finish.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "totalBytes": {
+          "type": "number",
+          "description": "Exact file size; maximum 512 MiB.",
+          "required": true,
+          "integer": true,
+          "minimum": 0,
+          "maximum": 536870912
+        }
+      }
+    },
+    {
+      "method": "import.status",
+      "description": "Read a pending upload and its next expected byte offset.",
+      "agentAccess": "workspace",
+      "options": {
+        "uploadId": {
+          "type": "string",
+          "description": "Upload ID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "import.chunk",
+      "description": "Append one base64 chunk, checking its exact sequential offset.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "uploadId": {
+          "type": "string",
+          "description": "Upload ID.",
+          "required": true
+        },
+        "offset": {
+          "type": "number",
+          "description": "Expected byte offset.",
+          "required": true,
+          "integer": true,
+          "minimum": 0
+        },
+        "contentBase64": {
+          "type": "string",
+          "description": "Canonical base64, at most 4 MiB decoded.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "import.finish",
+      "description": "Finalize an upload, verify length/hash, save the original and parse it.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "uploadId": {
+          "type": "string",
+          "description": "Upload ID.",
+          "required": true
+        },
+        "sha256": {
+          "type": "string",
+          "description": "Optional expected lowercase SHA-256 digest."
+        },
+        "password": {
+          "type": "string",
+          "description": "Optional PDF password, never persisted."
+        },
+        "activate": {
+          "type": "boolean",
+          "description": "Select the imported document for reading; default true. False imports without changing the current document."
+        }
+      }
+    },
+    {
+      "method": "import.abort",
+      "description": "Remove a pending upload, leaving existing documents untouched.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "uploadId": {
+          "type": "string",
+          "description": "Upload ID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "web.import",
+      "description": "Save a public article or document URL offline, including downloadable raster images.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "url": {
+          "type": "string",
+          "description": "Public HTTP(S) URL. No login/paywall bypass.",
+          "required": true
+        },
+        "folder": {
+          "type": "string",
+          "description": "Destination folder; default is ."
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional saved document name."
+        }
+      }
+    },
+    {
+      "method": "document.open",
+      "description": "Parse a workspace file, import its original outline and return stable metadata.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "password": {
+          "type": "string",
+          "description": "Optional PDF password, never persisted."
+        },
+        "refresh": {
+          "type": "boolean",
+          "description": "Rebuild the parsed cache while preserving custom outline edits."
+        },
+        "activate": {
+          "type": "boolean",
+          "description": "Select the document for reading; default true. False leaves navigation unchanged."
+        }
+      }
+    },
+    {
+      "method": "document.preview",
+      "description": "Render a bounded PNG cover/thumbnail without changing document registration, reading position or outline. Derived cache is disposable.",
+      "agentAccess": "workspace",
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        },
+        "expectedVersion": {
+          "type": "string",
+          "description": "Optional version from fs.list; stale requests fail with CONFLICT."
+        },
+        "page": {
+          "type": "number",
+          "description": "One-based PDF thumbnail page; default 1.",
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "document.get",
+      "description": "Get document metadata and whether the source changed externally.",
+      "agentAccess": "workspace",
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "document.content",
+      "description": "Read one section/page as sanitized HTML and searchable plain text.",
+      "agentAccess": "workspace",
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "section": {
+          "type": "number",
+          "description": "Zero-based section; default 0.",
+          "integer": true,
+          "minimum": 0
+        },
+        "page": {
+          "type": "number",
+          "description": "One-based PDF page; overrides section.",
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "document.search",
+      "description": "Find literal text across the document and return jumpable reading locators.",
+      "agentAccess": "workspace",
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "query": {
+          "type": "string",
+          "description": "Search text.",
+          "required": true
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "description": "Case-sensitive matching; default false."
+        },
+        "limit": {
+          "type": "number",
+          "description": "Maximum matches; default 100.",
+          "integer": true,
+          "minimum": 1,
+          "maximum": 1000
+        }
+      }
+    },
+    {
+      "method": "document.export",
+      "description": "Export searchable content to a new portable text, Markdown, HTML or JSON file.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "format": {
+          "type": "string",
+          "description": "Export format.",
+          "required": true,
+          "enum": [
+            "txt",
+            "md",
+            "html",
+            "json"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "description": "Workspace-relative path. Absolute paths, traversal and reserved metadata are rejected.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "toc.list",
+      "description": "Get the editable document outline and revision.",
+      "agentAccess": "workspace",
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "toc.add",
+      "description": "Add a chapter at any valid locator and hierarchy position.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "description": "Chapter title, 1–500 characters.",
+          "required": true
+        },
+        "locator": {
+          "type": "object",
+          "description": "PDF: {page:1,pageOffset:0}; legacy offset remains accepted; flow document: {section:0,anchor:\"heading-id\"}.",
+          "required": true
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Parent chapter ID; null means top level.",
+          "nullable": true
+        },
+        "index": {
+          "type": "number",
+          "description": "Zero-based sibling insertion index; omitted means append.",
+          "integer": true,
+          "minimum": 0
+        }
+      },
+      "examples": [
+        {
+          "id": "DOCUMENT_ID",
+          "expectedRevision": 1,
+          "title": "Introduction",
+          "locator": {
+            "page": 1
+          }
+        }
+      ]
+    },
+    {
+      "method": "toc.update",
+      "description": "Edit a chapter title and/or its jump target.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "nodeId": {
+          "type": "string",
+          "description": "Chapter ID returned by toc.list.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "New chapter title."
+        },
+        "locator": {
+          "type": "object",
+          "description": "PDF: {page:1,pageOffset:0}; legacy offset remains accepted; flow document: {section:0,anchor:\"heading-id\"}.",
+          "required": false
+        }
+      }
+    },
+    {
+      "method": "toc.remove",
+      "description": "Delete a chapter; promote its children by default, or remove its whole subtree.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "nodeId": {
+          "type": "string",
+          "description": "Chapter ID returned by toc.list.",
+          "required": true
+        },
+        "mode": {
+          "type": "string",
+          "description": "Child handling; default promote.",
+          "enum": [
+            "promote",
+            "subtree"
+          ]
+        }
+      }
+    },
+    {
+      "method": "toc.move",
+      "description": "Reparent or reorder a chapter with its entire subtree. Cycles are rejected.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "nodeId": {
+          "type": "string",
+          "description": "Chapter ID returned by toc.list.",
+          "required": true
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Parent chapter ID; null means top level.",
+          "nullable": true
+        },
+        "index": {
+          "type": "number",
+          "description": "Zero-based sibling insertion index; omitted means append.",
+          "integer": true,
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "method": "toc.indent",
+      "description": "Indent under the preceding sibling while preserving descendants.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "nodeId": {
+          "type": "string",
+          "description": "Chapter ID returned by toc.list.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "toc.outdent",
+      "description": "Outdent one level and place immediately after the former parent.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "nodeId": {
+          "type": "string",
+          "description": "Chapter ID returned by toc.list.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "toc.reset",
+      "description": "Replace the custom outline with the original parsed document outline.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "reader.position.get",
+      "description": "Get the durable reading position.",
+      "agentAccess": "workspace",
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "bookmark.list",
+      "description": "List local document bookmarks with source validity and optional recoverable deleted entries.",
+      "agentAccess": "workspace",
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "includeTrashed": {
+          "type": "boolean",
+          "description": "Include removed bookmarks."
+        }
+      }
+    },
+    {
+      "method": "bookmark.add",
+      "description": "Bookmark a validated page/section without modifying the original file.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "description": "Bookmark title, 1–200 characters.",
+          "required": true
+        },
+        "locator": {
+          "type": "object",
+          "description": "PDF: {page:1,pageOffset:0}; legacy offset remains accepted; flow document: {section:0,anchor:\"heading-id\"}.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "bookmark.update",
+      "description": "Rename, recoverably remove or restore a bookmark.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current document outline revision. Stale revisions fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "bookmarkId": {
+          "type": "string",
+          "description": "Bookmark UUID.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "New title, 1–200 characters."
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "True removes recoverably; false restores."
+        }
+      }
+    },
+    {
+      "method": "reader.position.set",
+      "description": "Validate and persist a jump/reading position. Positions use last-write-wins.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Stable document ID returned by document.open.",
+          "required": true
+        },
+        "locator": {
+          "type": "object",
+          "description": "PDF: {page:1,pageOffset:0}; legacy offset remains accepted; flow document: {section:0,anchor:\"heading-id\"}.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "settings.get",
+      "description": "Get durable reader appearance and navigation preferences.",
+      "agentAccess": "workspace",
+      "options": {}
+    },
+    {
+      "method": "settings.set",
+      "description": "Persist preferences through the same API used by the renderer.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "theme": {
+          "type": "string",
+          "description": "Reader theme.",
+          "enum": [
+            "light",
+            "dark",
+            "sepia"
+          ]
+        },
+        "view": {
+          "type": "string",
+          "description": "Large folder tiles or compact list.",
+          "enum": [
+            "grid",
+            "list"
+          ]
+        },
+        "fontSize": {
+          "type": "number",
+          "description": "Flow text size.",
+          "minimum": 12,
+          "maximum": 32
+        },
+        "lineHeight": {
+          "type": "number",
+          "description": "Flow line height.",
+          "minimum": 1.2,
+          "maximum": 2.6
+        },
+        "sidebarWidth": {
+          "type": "number",
+          "description": "Explorer width.",
+          "minimum": 180,
+          "maximum": 480
+        },
+        "outlineWidth": {
+          "type": "number",
+          "description": "Outline width.",
+          "minimum": 200,
+          "maximum": 480
+        },
+        "pdfMode": {
+          "type": "string",
+          "description": "PDF layout: continuous vertical scroll or single-page navigation.",
+          "enum": [
+            "continuous",
+            "paged"
+          ]
+        },
+        "pdfFit": {
+          "type": "string",
+          "description": "Fit available width or the whole page, without distortion or cropping.",
+          "enum": [
+            "width",
+            "page"
+          ]
+        },
+        "pdfZoom": {
+          "type": "number",
+          "description": "PDF zoom relative to fit; independent of flow font size.",
+          "minimum": 0.5,
+          "maximum": 3
+        },
+        "pdfScrollSpeed": {
+          "type": "number",
+          "description": "Vertical wheel/trackpad speed multiplier. Horizontal gestures always turn one page.",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pdfFocus": {
+          "type": "boolean",
+          "description": "Hide explorer and outline to use the full reading width."
+        },
+        "activeStudySet": {
+          "type": "string",
+          "description": "Active study set UUID or null.",
+          "nullable": true
+        },
+        "studyRatio": {
+          "type": "number",
+          "description": "Document fraction of the document/mind-map split.",
+          "minimum": 0.3,
+          "maximum": 0.7
+        },
+        "currentFolder": {
+          "type": "string",
+          "description": "Current folder path."
+        },
+        "lastDocument": {
+          "type": "string",
+          "description": "Last open document ID or null.",
+          "nullable": true
+        }
+      }
+    },
+    {
+      "method": "study.canvas.ink.add",
+      "description": "Draw a freehand stroke in mind-map world coordinates; independent of node layout.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "points": {
+          "type": "array",
+          "description": "2–2048 [x,y] world points in 0–100000.",
+          "required": true
+        },
+        "color": {
+          "type": "string",
+          "description": "Palette color.",
+          "required": true
+        },
+        "width": {
+          "type": "number",
+          "description": "World-unit stroke width.",
+          "required": true,
+          "minimum": 0.1,
+          "maximum": 30
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Layer ID."
+        }
+      }
+    },
+    {
+      "method": "study.canvas.ink.remove",
+      "description": "Erase canvas handwriting with undo support.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "strokeId": {
+          "type": "string",
+          "description": "Stroke ID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.card.ink.add",
+      "description": "Add handwriting bound to a card; it follows card moves and is undoable.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID.",
+          "required": true
+        },
+        "points": {
+          "type": "array",
+          "description": "2–2048 normalized [x,y] points.",
+          "required": true
+        },
+        "color": {
+          "type": "string",
+          "description": "Palette color.",
+          "required": true
+        },
+        "width": {
+          "type": "number",
+          "description": "Normalized stroke width.",
+          "required": true,
+          "minimum": 0.001,
+          "maximum": 0.03
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Layer ID; default is default."
+        }
+      }
+    },
+    {
+      "method": "study.card.ink.remove",
+      "description": "Erase a card-bound stroke with undo support.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID.",
+          "required": true
+        },
+        "strokeId": {
+          "type": "string",
+          "description": "Stroke UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "document.list",
+      "description": "List registered document metadata without parsing full document caches or changing reading state.",
+      "agentAccess": "workspace",
+      "options": {
+        "ids": {
+          "type": "array",
+          "description": "Optional document IDs to return."
+        }
+      }
+    },
+    {
+      "method": "document.fold",
+      "description": "Collapse selected PDF pages into expandable strips, preserving their contents and annotations.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Document UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "pages": {
+          "type": "array",
+          "description": "Complete list of folded page numbers; empty restores all.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "pdf.compose",
+      "description": "Create a new PDF by combining, reordering, cropping, rotating or inserting pages; preserve all source files.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "path": {
+          "type": "string",
+          "description": "New workspace-relative PDF filename.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "Document title."
+        },
+        "pages": {
+          "type": "array",
+          "description": "1–2000 page specs: {documentId,expectedSourceVersion,page,rotation?:0|90|180|270,crop?:{x,y,width,height}}; crop is normalized to the unrotated source CropBox with top-left origin. Blank pages: {blank:true,width?,height?,paper?:plain|lined|grid}.",
+          "required": true
+        },
+        "activate": {
+          "type": "boolean",
+          "description": "Select the new document; default true."
+        }
+      }
+    },
+    {
+      "method": "reader.comparison.set",
+      "description": "Persist an independent comparison document/position without moving the primary reader.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "documentId": {
+          "type": "string",
+          "description": "Document UUID, or null to close comparison.",
+          "required": true,
+          "nullable": true
+        },
+        "locator": {
+          "type": "object",
+          "description": "PDF page/pageOffset or flow section/anchor; required when documentId is non-null."
+        }
+      }
+    },
+    {
+      "method": "reader.tabs.close",
+      "description": "Close a document tab without deleting its source or reading position.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "description": "Document UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.layer.create",
+      "description": "Create an independent visible/unlocked handwriting layer and select it.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "description": "Layer name.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.layer.update",
+      "description": "Rename, hide/show, lock/unlock or select a handwriting layer.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Layer ID, including default.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "New name."
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Layer visibility."
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "Protect strokes from edits."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Select for new handwriting."
+        }
+      }
+    },
+    {
+      "method": "study.layer.remove",
+      "description": "Hide a layer recoverably; strokes remain stored and undo restores it.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Layer ID, including default.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.layer.merge",
+      "description": "Move all strokes to another unlocked layer, then recoverably retire the source.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Layer ID, including default.",
+          "required": true
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Layer ID, including default.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.ink.transform",
+      "description": "Move selected strokes in page coordinates, recolor or move them to another layer.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "strokeIds": {
+          "type": "array",
+          "description": "Stroke IDs.",
+          "required": true
+        },
+        "dx": {
+          "type": "number",
+          "description": "Normalized horizontal translation.",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "dy": {
+          "type": "number",
+          "description": "Normalized vertical translation.",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "color": {
+          "type": "string",
+          "description": "Palette color.",
+          "enum": [
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "orange"
+          ]
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Target layer ID."
+        }
+      }
+    },
+    {
+      "method": "study.note.anchor",
+      "description": "Attach a note to a source position as an extended note, or detach it.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID.",
+          "required": true
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Member document UUID, or null to detach.",
+          "required": true,
+          "nullable": true
+        },
+        "locator": {
+          "type": "object",
+          "description": "Validated source locator."
+        },
+        "display": {
+          "type": "string",
+          "description": "Extended-note presentation.",
+          "enum": [
+            "margin",
+            "embedded",
+            "collapsed"
+          ]
+        }
+      }
+    },
+    {
+      "method": "study.map.configure",
+      "description": "Change branch layout or focus on a subtree without moving cards.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "layout": {
+          "type": "string",
+          "description": "Branch layout.",
+          "enum": [
+            "tree",
+            "down",
+            "radial"
+          ]
+        },
+        "focusId": {
+          "type": "string",
+          "description": "Focused subtree root; null restores full map.",
+          "nullable": true
+        }
+      }
+    },
+    {
+      "method": "study.cards.group",
+      "description": "Create a summary parent for selected cards.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardIds": {
+          "type": "array",
+          "description": "1–500 card IDs; do not select both an ancestor and descendant.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "Summary/composite title.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.cards.merge",
+      "description": "Combine selected cards into a composite card; original excerpts remain attached as collapsible children.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardIds": {
+          "type": "array",
+          "description": "1–500 card IDs; do not select both an ancestor and descendant.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "Summary/composite title.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.card.render",
+      "description": "Render card Markdown and mathematical formulas as sanitized offline HTML.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.search",
+      "description": "Search cards across all active study sets in this exact workspace.",
+      "agentAccess": "workspace",
+      "options": {
+        "query": {
+          "type": "string",
+          "description": "Case-insensitive literal query.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.card.reference",
+      "description": "Create a reference card pointing to a card in another study set in this workspace.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "targetSetId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "targetCardId": {
+          "type": "string",
+          "description": "Card UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.deck.create",
+      "description": "Create a named local review deck.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "description": "Deck title.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.deck.update",
+      "description": "Rename or recoverably archive/restore a deck; preserve card schedules.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "deckId": {
+          "type": "string",
+          "description": "Deck UUID.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "New title."
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Archive or restore."
+        }
+      }
+    },
+    {
+      "method": "study.review.optimize",
+      "description": "Train personalized FSRS parameters locally from at least 50 across-day review observations; reject concurrent edits.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "study.review.stats",
+      "description": "Read local review counts, daily activity and observed recall rate.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.review.settings",
+      "description": "Configure local FSRS target retention, maximum interval and active deck filter.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision. Conflicts require explicit retry.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "retention": {
+          "type": "number",
+          "description": "Desired recall probability.",
+          "minimum": 0.7,
+          "maximum": 0.99
+        },
+        "maximumInterval": {
+          "type": "number",
+          "description": "Maximum interval in days.",
+          "integer": true,
+          "minimum": 1,
+          "maximum": 36500
+        },
+        "deckId": {
+          "type": "string",
+          "description": "Active deck UUID or null for all.",
+          "nullable": true
+        }
+      }
+    },
+    {
+      "method": "study.ink.add",
+      "description": "Save a PDF handwriting stroke scoped to this study set and source version, without editing the PDF.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Member PDF document UUID.",
+          "required": true
+        },
+        "expectedSourceVersion": {
+          "type": "string",
+          "description": "Source version from document.open/get.",
+          "required": true
+        },
+        "layerId": {
+          "type": "string",
+          "description": "Target handwriting layer; default selected layer."
+        },
+        "page": {
+          "type": "number",
+          "description": "One-based PDF page.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "points": {
+          "type": "array",
+          "description": "2–2048 normalized [x,y] points, each coordinate between 0 and 1.",
+          "required": true
+        },
+        "color": {
+          "type": "string",
+          "description": "Highlight color.",
+          "enum": [
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "orange"
+          ],
+          "required": true
+        },
+        "width": {
+          "type": "number",
+          "description": "Stroke width as a fraction of page width.",
+          "required": true,
+          "minimum": 0.0005,
+          "maximum": 0.03
+        }
+      }
+    },
+    {
+      "method": "study.ink.remove",
+      "description": "Erase one stroke. study.undo restores it within the bounded edit history.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "strokeId": {
+          "type": "string",
+          "description": "Stroke UUID from study.get.ink.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.note.create",
+      "description": "Create an independent text card without requiring a source document or image.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "description": "Card title.",
+          "required": true
+        },
+        "text": {
+          "type": "string",
+          "description": "Note body, at most 20000 characters."
+        },
+        "color": {
+          "type": "string",
+          "description": "Highlight color.",
+          "enum": [
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "orange"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "description": "At most 30 unique text tags, each 1–60 characters."
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Optional parent card UUID."
+        }
+      }
+    },
+    {
+      "method": "study.cards.query",
+      "description": "Find cards by literal text, tag, color and source document within a study set.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "query": {
+          "type": "string",
+          "description": "Case-insensitive title, text, note and tags query."
+        },
+        "color": {
+          "type": "string",
+          "description": "Highlight color.",
+          "enum": [
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "orange"
+          ]
+        },
+        "tag": {
+          "type": "string",
+          "description": "Exact tag."
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Source document UUID."
+        }
+      }
+    },
+    {
+      "method": "study.view.set",
+      "description": "Remember the study workbench view for this study set.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "view": {
+          "type": "string",
+          "description": "Workbench view.",
+          "required": true,
+          "enum": [
+            "map",
+            "outline",
+            "cards",
+            "review"
+          ]
+        }
+      }
+    },
+    {
+      "method": "study.undo",
+      "description": "Undo the latest study edit, including card capture or review rating. Revisions remain monotonic.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "study.redo",
+      "description": "Redo an undone study edit. New edits clear redo; history is bounded to 30 entries/8 MiB per set.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "study.link.add",
+      "description": "Link two cards across branches without changing their hierarchy.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "from": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "to": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "description": "Link label up to 200 characters."
+        },
+        "bidirectional": {
+          "type": "boolean",
+          "description": "Two-way link; default true."
+        }
+      }
+    },
+    {
+      "method": "study.link.remove",
+      "description": "Remove an association; cards remain intact and undo restores the link.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "linkId": {
+          "type": "string",
+          "description": "Link UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.review.configure",
+      "description": "Enable/suspend a flashcard and set front/back text, retaining FSRS schedule.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Include card in the review queue.",
+          "required": true
+        },
+        "front": {
+          "type": "string",
+          "description": "Question, 1–20000 characters."
+        },
+        "back": {
+          "type": "string",
+          "description": "Answer, 1–20000 characters."
+        },
+        "cloze": {
+          "type": "string",
+          "description": "Optional text with {{answer}} markers; creates front/back by masking/revealing the marked text."
+        },
+        "deckId": {
+          "type": "string",
+          "description": "Review deck UUID or null.",
+          "nullable": true
+        },
+        "occlusions": {
+          "type": "array",
+          "description": "Normalized image masks [{x,y,width,height}], at most 100."
+        }
+      }
+    },
+    {
+      "method": "study.review.queue",
+      "description": "Get due card IDs, total enrolled cards and earliest due time using the server clock.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "deckId": {
+          "type": "string",
+          "description": "Optional deck filter."
+        }
+      }
+    },
+    {
+      "method": "study.review.preview",
+      "description": "Preview the four FSRS due times without recording an answer.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.review.grade",
+      "description": "Record an answer and its FSRS schedule/log atomically; stale/repeated submissions fail.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "rating": {
+          "type": "string",
+          "description": "Recall rating.",
+          "required": true,
+          "enum": [
+            "again",
+            "hard",
+            "good",
+            "easy"
+          ]
+        }
+      }
+    },
+    {
+      "method": "study.list",
+      "description": "List independent study sets without duplicating source files.",
+      "agentAccess": "workspace",
+      "options": {
+        "includeTrashed": {
+          "type": "boolean",
+          "description": "Include recoverable deleted sets."
+        }
+      }
+    },
+    {
+      "method": "study.create",
+      "description": "Create an empty study set.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "title": {
+          "type": "string",
+          "description": "Study set title, 1–200 characters.",
+          "required": true
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description, up to 4000 characters."
+        }
+      }
+    },
+    {
+      "method": "study.get",
+      "description": "Read a study set, document memberships, cards, mind map hierarchy and source availability.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.open",
+      "description": "Open the study set overview or a member document through shared navigation state.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Optional member document UUID; omit to show the full mind map."
+        }
+      }
+    },
+    {
+      "method": "study.update",
+      "description": "Rename or describe a study set.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "description": "New title."
+        },
+        "description": {
+          "type": "string",
+          "description": "New description."
+        }
+      }
+    },
+    {
+      "method": "study.remove",
+      "description": "Move a study set to recoverable study-set trash; preserve all originals and card images.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "study.restore",
+      "description": "Restore a deleted study set.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        }
+      }
+    },
+    {
+      "method": "study.documents.add",
+      "description": "Reference workspace files in a study set. One source may belong to many sets.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "paths": {
+          "type": "array",
+          "description": "1–500 relative file paths per request. Existing membership is deduplicated.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.documents.remove",
+      "description": "Remove memberships only; original documents and existing cards are preserved.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "documentIds": {
+          "type": "array",
+          "description": "1–500 member document UUIDs.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.card.create",
+      "description": "Create a colored excerpt and durable PNG snapshot in the shared headless Core.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Member document UUID.",
+          "required": true
+        },
+        "expectedSourceVersion": {
+          "type": "string",
+          "description": "Version returned by document.open/get.",
+          "required": true
+        },
+        "captureId": {
+          "type": "string",
+          "description": "Client-generated UUID. Replaying the identical capture is idempotent.",
+          "required": true
+        },
+        "text": {
+          "type": "string",
+          "description": "Selected text, up to 12000 characters. Empty only for PDF region captures.",
+          "required": true
+        },
+        "locator": {
+          "type": "object",
+          "description": "PDF {page,pageOffset?}; flow {section,anchor?}.",
+          "required": true
+        },
+        "selection": {
+          "type": "object",
+          "description": "PDF {rects:[{page,x,y,width,height}]} normalized to the rendered page, or {polygon:{page,points:[[x,y],...]}} for lasso capture. Flow {start,end} UTF-16 offsets in sanitized article textContent. Omit for text-only CLI cards."
+        },
+        "color": {
+          "type": "string",
+          "description": "Highlight color.",
+          "enum": [
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "orange"
+          ],
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "Optional card title."
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Optional parent card UUID."
+        },
+        "password": {
+          "type": "string",
+          "description": "PDF password for this request only; never saved."
+        }
+      }
+    },
+    {
+      "method": "study.card.update",
+      "description": "Edit card title, note, tags, highlight color or collapsed state.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "Card title, 1–200 characters."
+        },
+        "note": {
+          "type": "string",
+          "description": "Plain-text note, at most 20000 characters."
+        },
+        "text": {
+          "type": "string",
+          "description": "Body of independent note cards only, at most 20000 characters. Excerpt text remains immutable."
+        },
+        "tags": {
+          "type": "array",
+          "description": "At most 30 unique text tags, each 1–60 characters."
+        },
+        "color": {
+          "type": "string",
+          "description": "Highlight color.",
+          "enum": [
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "orange"
+          ]
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "Collapse or expand child cards."
+        }
+      }
+    },
+    {
+      "method": "study.card.move",
+      "description": "Reparent/reorder a card with its descendants; reject cross-set parents and cycles.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Parent card UUID; null/omitted makes a root.",
+          "nullable": true
+        },
+        "index": {
+          "type": "number",
+          "description": "Zero-based sibling index; omitted appends.",
+          "integer": true,
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "method": "study.card.remove",
+      "description": "Remove a card recoverably; promote its children or remove its subtree.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        },
+        "mode": {
+          "type": "string",
+          "description": "Default promote.",
+          "enum": [
+            "promote",
+            "subtree"
+          ]
+        }
+      }
+    },
+    {
+      "method": "study.card.restore",
+      "description": "Restore a removed card group and its durable images.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "expectedRevision": {
+          "type": "number",
+          "description": "Current study-set revision; stale writes fail with CONFLICT.",
+          "required": true,
+          "integer": true,
+          "minimum": 1
+        },
+        "trashId": {
+          "type": "string",
+          "description": "Card-trash group UUID from study.get.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.card.image",
+      "description": "Read the durable card PNG as canonical base64, usable without a renderer.",
+      "agentAccess": "workspace",
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "cardId": {
+          "type": "string",
+          "description": "Card UUID in this study set.",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "study.export",
+      "description": "Export study membership, cards and hierarchy to a new JSON file.",
+      "agentAccess": "workspace",
+      "mutates": true,
+      "options": {
+        "setId": {
+          "type": "string",
+          "description": "Study set UUID.",
+          "required": true
+        },
+        "path": {
+          "type": "string",
+          "description": "New workspace-relative JSON filename; never overwritten.",
+          "required": true
+        },
+        "includeImages": {
+          "type": "boolean",
+          "description": "Embed PNG images for portable export; default false."
+        }
+      }
+    }
+  ]
+}

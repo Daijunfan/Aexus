@@ -1,0 +1,31 @@
+# Example only: create an unprivileged agents account and adjust these paths.
+# Install a verified server candidate and configure authentication before enabling.
+[Unit]
+Description=Agents Company Core
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agents
+Group=agents
+WorkingDirectory=/opt/agents-company
+Environment=NODE_ENV=production
+Environment=AGENTS_COMPANY_HOME=/var/lib/agents-company
+Environment=AGENTS_COMPANY_PROJECTS=/var/lib/agents-company-projects
+Environment=AGENTS_COMPANY_SHARED_DIR=/var/lib/agents-company/shared
+# Native engines and their child tools inherit this account's available PATH.
+Environment=PATH=/home/agents/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/node /opt/agents-company/bin/agents serve --web --host 127.0.0.1 --port 5151
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=90
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+# Keep the authenticated listener private. Put HTTPS in front or use SSH -L.
+# This service-account separation is not a per-employee security sandbox.
+
+[Install]
+WantedBy=multi-user.target

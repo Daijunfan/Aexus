@@ -1,0 +1,52 @@
+{
+  "name": "agents-company-margin-reader",
+  "version": "0.7.0",
+  "private": true,
+  "description": "CLI-first, local-first document reader plugin for Agents Company",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "bin": {
+    "margin-reader": "cli.cjs"
+  },
+  "scripts": {
+    "build:plugin": "node scripts/build.cjs",
+    "check": "node scripts/check.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "test:ui": "node tests/ui-smoke.cjs",
+    "test:host": "node tests/host-smoke.cjs",
+    "test:live": "node tests/live-smoke.cjs",
+    "test:acceptance": "node scripts/verify-local-import.cjs",
+    "test:blog-ui": "node scripts/verify-blog-ui.cjs",
+    "test:pdf-modes": "node tests/pdf-modes-ui.cjs",
+    "test:library": "node tests/library-ui.cjs",
+    "test:library:native": "LIBRARY_NATIVE=1 node tests/library-ui.cjs",
+    "test:selection": "node tests/selection-ui.cjs",
+    "test:selection:native": "SELECTION_NATIVE=1 node tests/selection-ui.cjs",
+    "test:study": "node tests/study-ui.cjs",
+    "test:study:native": "STUDY_NATIVE=1 node tests/study-ui.cjs",
+    "test:workbench": "node tests/workbench-ui.cjs",
+    "test:advanced": "node tests/advanced-ui.cjs",
+    "test:advanced:native": "WORKBENCH_NATIVE=1 node tests/advanced-ui.cjs"
+  },
+  "dependencies": {
+    "@lingo-reader/mobi-parser": "0.4.6",
+    "@mozilla/readability": "0.6.0",
+    "@napi-rs/canvas": "0.1.100",
+    "@open-spaced-repetition/binding": "0.5.0",
+    "iconv-lite": "0.6.3",
+    "ipaddr.js": "2.2.0",
+    "jsdom": "26.1.0",
+    "jszip": "3.10.1",
+    "katex": "0.18.9",
+    "mammoth": "1.12.3",
+    "marked": "15.0.12",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "5.4.624",
+    "proper-lockfile": "4.1.2",
+    "sanitize-html": "2.17.7",
+    "ts-fsrs": "5.4.2",
+    "word-extractor": "1.0.4"
+  }
+}
