@@ -104,3 +104,37 @@ export async function executeRemote(target:RemoteTarget,command:string,timeout=1
     const result=JSON.parse(reply.content[0].text);if(reply.isError&&typeof result.exit_code!=='number')throw remoteError(result.error||'远程命令失败');return result
   }finally{client?.close();fs.rmSync(path.join(APP_HOME,'tunnel',id),{recursive:true,force:true})}
 }
+
+/** Engine-owned MCP connection, separate from the file browser and host commands. */
+export async function openTunnelTools(launch:RemoteLaunch){
+  const allowed=['execute','read_file','write_file','edit_file','list_files']
+  let client:RemoteFiles|undefined,closed=false,queue:Promise<unknown>=Promise.resolve()
+  const connection=async()=>{if(closed)throw Error('Tunnel connection closed');const current=client??(client=new RemoteFiles(launch));await current.ready;return current}
+  const close=()=>{closed=true;const current=client;client=undefined;current?.close()}
+  try{
+    const catalog=await (await connection()).request('tools/list',{})
+    const tools=(catalog.tools as {name:string;description:string;inputSchema:Record<string,unknown>}[]).filter(tool=>allowed.includes(tool.name))
+    if(allowed.some(name=>!tools.some(tool=>tool.name===name)))throw Error('Tunnel workspace tools are missing')
+    const perform=async(name:string,args:Record<string,unknown>,signal?:AbortSignal)=>{
+      if(!allowed.includes(name))throw Error('Only Tunnel workspace tools are permitted')
+      if(signal?.aborted)throw Error('Interrupted')
+      const current=await connection()
+      if(signal?.aborted)throw Error('Interrupted')
+      let cancelled=false
+      const cancel=()=>{
+        if(cancelled)return;cancelled=true
+        if(client===current)client=undefined
+        // Deliver cancellation before closing SSH. The ordered ping acknowledges
+        // that the remote command settled; a later call starts a fresh connection.
+        try{current.child.stdin.write(JSON.stringify({jsonrpc:'2.0',method:'notifications/cancelled',params:{}})+'\n');void current.request('ping',{},2500).catch(()=>{}).finally(()=>current.close())}catch{current.close()}
+      }
+      signal?.addEventListener('abort',cancel,{once:true})
+      try{return await current.request('tools/call',{name,arguments:args},name==='execute'?(Math.min(600,Math.max(.1,Number(args.timeout)||120))+10)*1000:30000)}
+      catch(error){cancel();throw error}
+      finally{signal?.removeEventListener('abort',cancel)}
+    }
+    // The remote workspace has a shared cwd. Queue here so aborted operations
+    // never reach the remote server after an earlier command is cancelled.
+    return {tools,close,call(name:string,args:Record<string,unknown>,signal?:AbortSignal){const result=queue.then(()=>perform(name,args,signal));queue=result.catch(()=>{});return result}}
+  }catch(error){close();throw error}
+}

@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.50.8 — Team selection and bilingual introduction
+
+- Show only the current view's teams when adding an employee; All Team continues to show the full roster.
+- Clear an open form's invalid selection after a team is deleted, renamed, or removed from the view. Keep other draft fields intact.
+- Remove deleted team references from the employee creation template and update them when a team is renamed.
+- Add a complete English README, language-switch links, and a Fate character introduction in both languages.
+
+## 0.50.7 — Exact character creation for Managers and Governors
+
+- Add `avatar.list` catalog discovery and explicit `character`, `avatarStyle`, and `profession` creation parameters, separate from `managementRole`.
+- Expose actual appearance metadata in employee status and add the scoped `card.avatar` operation. Unknown or ambiguous characters fail instead of becoming a default animal.
+- Update both supervisor handbooks and machine-readable creation metadata. Managers retain own-team scope; Governors retain cross-team Employee/Manager creation.
+- Fix `card create --thinking off` parsing and validate the Core boolean parameter.
+- Verify all 57 selectable appearances through both supervisor roles, plus five real named-character creations by fresh Claude Code Managers and a Governor using DeepSeek Flash with thinking off.
+
+## 0.50.6 — Selected Fate Masters
+
+- Add Shirou Emiya, Rin Tohsaka, Sakura Matou, Illyasviel von Einzbern, Kiritsugu Emiya, Kirei Kotomine and Waver Velvet in original-series-inspired and cute companion styles.
+- Reuse the existing eight-frame animation player and flat picker. The collection now has 42 Fate appearances and 57 selectable companions in total.
+- Preserve the existing Servant artwork and all employee identities, engines and positions.
+
+## 0.50.5 — Fate companion appearances
+
+- Add 14 Servants from Fate/stay night and Fate/Zero in two generated fan-art styles each: original-series-inspired proportions and cute companion proportions.
+- Put all 28 appearances in the existing flat picker, with no added categories; preserve prior companions and saved identities.
+- Use eight authored frames per skin for attentive, typing, greeting and rest states. Actual employee activity controls the displayed state; picker previews remain lightweight and respect reduced motion.
+- Add Core selection/save, image/alpha, animation and identity-preservation checks in isolated hidden windows.
+
+## 0.50.4 — Cloud hiring and navigation
+
+- Reuse Core target validation in the employee form: Pi/Cline Local Workers can use Cloud Team workspaces through Tunnel. Cloud-native/plugin targets remain unsupported.
+- Remove Clawd from the picker; preserve the other 15 choices and saved employee identities.
+- Load lossless six-frame picker strips while keeping original-resolution animation pixels.
+- Reuse exact routes across view switches and stable scene children during panning; avoid forced layout on non-zoom wheel input.
+- Pause only obscured canvas playback and reuse unchanged dropdown, plugin and conversation block data. Execution and scheduling are unchanged.
+
 ## 0.50.3 — Cline and Pi support
 
 - Add real Cline ACP and Pi RPC adapters with shared Core/CLI messaging, tool approvals, queues, cancellation and native session continuation. These adapters currently execute text tasks in Core-local Build workspaces, including locally running Cloud Team Managers.

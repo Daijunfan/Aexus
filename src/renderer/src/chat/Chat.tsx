@@ -30,7 +30,7 @@ export const Turn=memo(function Turn({ item,replyId }: { item: Item;replyId?:str
   )
 })
 
-export function BlockView({ block }: { block: Block }) {
+export const BlockView=memo(function BlockView({ block }: { block: Block }) {
   if (block.kind === 'text') {
     // JSON replies remain intact in the CLI transcript; the UI adds a readable view.
     let data:unknown
@@ -40,7 +40,7 @@ export function BlockView({ block }: { block: Block }) {
   }
   if (block.kind === 'thinking') return <Thinking text={block.text} done={block.done} />
   return <ToolCall block={block} />
-}
+})
 
 export function Thinking({ text, done }: { text: string; done: boolean }) {
   const [open, setOpen] = useState(false)

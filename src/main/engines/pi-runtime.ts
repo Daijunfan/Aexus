@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import {randomUUID} from 'node:crypto'
+import {openTunnelTools} from '../tunnel'
 import {piClient} from './pi-client'
 import type {EngineStart,EngineDriver} from './contract'
 import {type Live,sandboxFor} from '../sessions'
@@ -18,20 +19,29 @@ export async function discoverPi(){
 }
 export async function openPi(context:EngineStart){
   const {args,card,cardId,sessionId,cwd,permissionMode,host}=context
-  if(context.remote||context.nativeRemote||context.workRoot)throw Error('Pi currently supports a local Build workspace on the Core host; remote and plugin workspaces are not supported')
+  if(context.nativeRemote||context.workRoot)throw Error('Pi supports Core-local Build and Tunnel cloud workspaces only')
+  if(context.remote&&!context.remoteLaunch)throw Error('Missing cloud Tunnel; local execution is disabled')
   if(!engineEnvironment('pi').DEEPSEEK_API_KEY)throw Error('Configure the Pi DeepSeek API key in Coding Agent settings first')
   if(args.planMode||permissionMode==='plan')throw Error('Pi does not support Plan mode')
   const directory=path.join(APP_HOME,'agent-access',cardId,'pi'),{live,rememberMeta,emit,dispatchQueued}=host
   if(card?.piSessionFile&&!path.resolve(card.piSessionFile).startsWith(path.resolve(directory)+path.sep))throw Error('Pi session belongs to a different employee profile')
-  const state:Live={cardId,privateInitialization:isInitializer(cardId),kind:context.kind,engine:'pi',driver:null as never,q:null as never,input:null as never,sessionId:null,cwd,model:args.model||'deepseek-flash',thinkingEnabled:false,planMode:false,fastMode:false,sandbox:sandboxFor(permissionMode),permissionMode,running:false,queue:[]}
+  const state:Live={cardId,privateInitialization:isInitializer(cardId),kind:context.kind,engine:'pi',driver:null as never,q:null as never,input:null as never,sessionId:null,cwd,remote:context.remote,remoteLaunch:context.remoteLaunch,model:args.model||'deepseek-flash',thinkingEnabled:false,planMode:false,fastMode:false,sandbox:sandboxFor(permissionMode),permissionMode,running:false,queue:[]}
   const approve=approvalHandler(sessionId,()=>emit('session:changed',{sessionId}))
   let turnId='',message=0,finish:(()=>void)|undefined,failure:string|undefined,textSeen=false
-  const client=piClient({cwd,directory,employeeId:cardId,model:state.model,sessionFile:card?.piSessionFile,onPermission:async request=>{
-    const readOnly=['read','grep','find','ls'].includes(request.toolName)
-    if(state.privateInitialization)return readOnly
-    if(state.permissionMode==='bypassPermissions'||readOnly||state.permissionMode==='acceptEdits'&&['edit','write'].includes(request.toolName))return true
+  const tunnel=context.remoteLaunch?await openTunnelTools(context.remoteLaunch):undefined
+  const approved=new Map<string,string>()
+  const client=piClient({cwd:context.remoteLaunch?.cwd??cwd,remoteLaunch:context.remoteLaunch,tunnelTools:tunnel?.tools,onTunnelCall:async request=>{
+    const signature=JSON.stringify([request.toolName,request.input]);if(!state.running||state.abort?.signal.aborted||!tunnel||approved.get(request.toolCallId)!==signature)throw Error('Tunnel operation has no matching Core approval')
+    approved.delete(request.toolCallId);return tunnel.call(request.toolName.slice('tunnel__'.length),request.input,state.abort?.signal)
+  },directory,employeeId:cardId,model:state.model,sessionFile:card?.piSessionFile,onPermission:async request=>{
+    const remoteTool=context.remote?request.toolName.match(/^tunnel__(execute|read_file|write_file|edit_file|list_files)$/)?.[1]:undefined
+    if(context.remote&&!remoteTool)return false
+    const readOnly=context.remote?['read_file','list_files'].includes(remoteTool??''):['read','grep','find','ls'].includes(request.toolName)
+    const allow=()=>{if(tunnel)approved.set(request.toolCallId,JSON.stringify([request.toolName,request.input]));return true}
+    if(state.privateInitialization)return readOnly?allow():false
+    if(state.permissionMode==='bypassPermissions'||readOnly||state.permissionMode==='acceptEdits'&&(context.remote?['write_file','edit_file'].includes(remoteTool??''):['edit','write'].includes(request.toolName)))return allow()
     if(state.permissionMode==='dontAsk')return false
-    return (await approve(request.toolName,request.input,{signal:state.abort!.signal,toolUseID:request.toolCallId,requestId:request.toolCallId,title:'Pi: '+request.toolName}))?.behavior==='allow'
+    return (await approve(request.toolName,request.input,{signal:state.abort!.signal,toolUseID:request.toolCallId,requestId:request.toolCallId,title:'Pi: '+request.toolName}))?.behavior==='allow'?allow():false
   },onEvent:event=>{
     if(!state.running||!live.has(sessionId))return
     const send=(e:unknown)=>emit('session:agent',{sessionId,event:e})
@@ -46,7 +56,7 @@ export async function openPi(context:EngineStart){
     }
     if(event.type==='tool_execution_start')send({kind:'tool-start',id:event.toolCallId,name:event.toolName,command:JSON.stringify(event.args)})
     if(event.type==='tool_execution_end')send({kind:'tool-end',id:event.toolCallId,name:event.toolName,output:JSON.stringify(event.result),exitCode:event.isError?1:0})
-    if(event.type==='process_error')failure=client.redact(event.error)
+    if(event.type==='process_error'){state.abort?.abort();tunnel?.close();failure=client.redact(event.error)}
     if(event.type==='agent_settled'||event.type==='process_error')finish?.()
   }})
   try{
@@ -61,12 +71,12 @@ export async function openPi(context:EngineStart){
         const settled=new Promise<void>(resolve=>{finish=resolve});rememberMeta(sessionId,{busy:true});emit('session:turn-start',{sessionId})
         state.finished=(async()=>{
           try{await client.call('prompt',{message:text});await settled;if(!failure&&!textSeen)throw Error('Pi returned no assistant response')}catch(error){failure=client.redact(String((error as Error).message))}
-          finally{finish=undefined;state.running=false;state.abort=undefined;cancelApprovals(sessionId);if(failure)emit('session:error',{sessionId,message:failure});rememberMeta(sessionId,{busy:false});emit('session:result',{sessionId,success:!failure,error:failure});emit('session:turn-end',{sessionId});if(live.has(sessionId))dispatchQueued(state,sessionId)}
+          finally{approved.clear();finish=undefined;state.running=false;state.abort=undefined;cancelApprovals(sessionId);if(failure)emit('session:error',{sessionId,message:failure});rememberMeta(sessionId,{busy:false});emit('session:result',{sessionId,success:!failure,error:failure});emit('session:turn-end',{sessionId});if(live.has(sessionId))dispatchQueued(state,sessionId)}
         })()
       },
       async steer(text){await client.call('steer',{message:text})},
       async interrupt(){if(state.running){failure='Interrupted';state.abort?.abort();await client.call('abort');await state.finished}},
-      async close(){state.abort?.abort();finish?.();await client.close();await state.finished},
+      async close(){state.abort?.abort();tunnel?.close();finish?.();await client.close();await state.finished},
       async whenIdle(){await state.finished},
       async setModel(model){await client.call('set_model',{provider:'deepseek',modelId:model||'deepseek-flash'});await client.call('set_thinking_level',{level:'off'})},
       setPlan(){return unsupported('Plan mode')},async setPermission(mode){if(mode==='auto')throw Error('This adapter does not provide a permission classifier')},
@@ -76,5 +86,5 @@ export async function openPi(context:EngineStart){
     } satisfies EngineDriver
     live.set(sessionId,state);rememberMeta(sessionId,{engine:'pi',cwd,model:state.model,permissionMode,thinking:false,thinkingSupported:false,planMode:false,fastMode:false,commands:[],models:modelsFrom(catalog.models),piSessionId:state.sessionId!,busy:false})
     return {sessionId,cwd,engine:'pi' as const}
-  }catch(error){await client.close();throw error}
+  }catch(error){tunnel?.close();await client.close();throw error}
 }

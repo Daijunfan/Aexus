@@ -1,3 +1,4 @@
+import {retainEqual} from '../snapshot'
 import type {ManagementInteraction} from '../../../shared/management'
 import {EmployeeDeleteDialog} from './EmployeeDeleteDialog'
 import {EmployeeInitialization} from './EmployeeInitialization'
@@ -41,7 +42,7 @@ export const HomeView=memo(function HomeView({ store, view, busyIds,disconnected
   const toggleSelection=(id:string)=>setSelected(previous=>previous.includes(id)?previous.filter(value=>value!==id):[...previous,id])
   const deleteSelection=()=>setRemoval({employees:store.sessions.filter(card=>editMode==='team'?selectedIds.includes(card.group):selectedIds.includes(card.id)),...(editMode==='team'?{teams:[...selectedIds]}:{})})
   const [plugins,setPlugins]=useState<PluginDescriptor[]>([])
-  useEffect(()=>{const load=()=>void api.call<PluginDescriptor[]>('plugin.list').then(setPlugins).catch(()=>{});load();return api.onEvent(e=>{if(e.channel==='store:changed')load()})},[])
+  useEffect(()=>{const load=()=>void api.call<PluginDescriptor[]>('plugin.list').then(value=>setPlugins(previous=>retainEqual(previous,value))).catch(()=>{});load();return api.onEvent(e=>{if(e.channel==='store:changed')load()})},[])
   const [cloudStatus,setCloudStatus]=useState<Record<string,HostHealth>>({})
   const cloudKey=JSON.stringify(visibleGroups.filter(name=>teamSettings(store,name).mode==='cloud').map(name=>[name,teamSettings(store,name).hostId,teamSettings(store,name).remote]))
   const [checkingHosts,setCheckingHosts]=useState(false),checkingHostsRef=useRef(false)
@@ -86,7 +87,7 @@ export const HomeView=memo(function HomeView({ store, view, busyIds,disconnected
       <TeamViews store={store} act={act}/>
       <div className="company-actions"><button className="add-team" onClick={()=>void showPanel({kind:'team'})}><span>＋</span> 添加 Team</button><button className="add-employee" onClick={()=>void showPanel({kind:'employee'})}><span>＋</span> 添加员工</button></div>
     </header>
-    <div className={`office-layout ${view.shared?'shared-open':''}`}><PluginDirectory editing={editMode!==null} onToggleEdit={()=>chooseMode(editMode?null:'employee')} checkingHosts={checkingHosts} onRefreshHosts={()=>void refreshHosts()} plugins={plugins} active={pluginId} store={store} sharedOpen={!!view.shared} onOpen={id=>void act('plugin.open',{id})} onHome={()=>void act('view.open',{kind:'home'})} onSettings={()=>void act('view.open',{kind:'settings'})} onResize={onResize} act={act}/>{view.shared&&<SharedDrawer onClose={()=>void act('view.shared',{enabled:false})}/>}<OfficeCanvas selection={editMode?{mode:editMode,ids:new Set(selectedIds),toggle:toggleSelection}:undefined} interactions={interactions} key={`${store.activeTeamViewId??ALL_TEAM_VIEW}:${selectedView?JSON.stringify(selectedView.teams):''}`} activities={activities} cloudStatus={cloudStatus} plugins={plugins} store={store} busyIds={busyIds} disconnectedIds={disconnectedIds} act={act} onOpen={open} onEdit={edit} onView={onView}/></div>
+    <div className={`office-layout ${view.shared?'shared-open':''}`}><PluginDirectory editing={editMode!==null} onToggleEdit={()=>chooseMode(editMode?null:'employee')} checkingHosts={checkingHosts} onRefreshHosts={()=>void refreshHosts()} plugins={plugins} active={pluginId} store={store} sharedOpen={!!view.shared} onOpen={id=>void act('plugin.open',{id})} onHome={()=>void act('view.open',{kind:'home'})} onSettings={()=>void act('view.open',{kind:'settings'})} onResize={onResize} act={act}/>{view.shared&&<SharedDrawer onClose={()=>void act('view.shared',{enabled:false})}/>}<OfficeCanvas obscured={view.kind!=='home'} selection={editMode?{mode:editMode,ids:new Set(selectedIds),toggle:toggleSelection}:undefined} interactions={interactions} key={`${store.activeTeamViewId??ALL_TEAM_VIEW}:${selectedView?JSON.stringify(selectedView.teams):''}`} activities={activities} cloudStatus={cloudStatus} plugins={plugins} store={store} busyIds={busyIds} disconnectedIds={disconnectedIds} act={act} onOpen={open} onEdit={edit} onView={onView}/></div>
     {editMode&&<aside className="canvas-edit-toolbar" role="toolbar" aria-label="画布编辑">
       <div className="canvas-edit-modes"><button aria-pressed={editMode==='employee'} onClick={()=>chooseMode('employee')}>选中员工</button><button aria-pressed={editMode==='team'} onClick={()=>chooseMode('team')}>选中团队</button></div>
       <p>点击画布中的{editMode==='employee'?'员工':'团队'}进行多选。</p>
@@ -105,7 +106,7 @@ export const HomeView=memo(function HomeView({ store, view, busyIds,disconnected
       <div className="panel-backdrop" onClick={()=>setPanel(null)}/>
       <section className="office-panel" role="dialog" aria-modal="true" aria-label={panel.kind==='employee'?'员工资料':'编辑 Team'}>
         <header className="panel-header"><div><span className="eyebrow">{panel.kind==='employee'?'A COMPANION WITH A PLACE OF THEIR OWN':'TEAM WORKSPACE'}</span><h2>{panel.kind==='employee'?(panel.card?'配置员工工作空间':'认识你的新伙伴。'):panel.name===undefined?'创建 Team':`${panel.name||'待分配员工'} 的空间`}</h2></div><button className="panel-close" onClick={()=>setPanel(null)} aria-label="关闭面板">×</button></header>
-        {panel.kind==='employee'?<><p className="workspace-note">{panel.card?.workspaceError}</p><EmployeeForm employee={panel.card} template={panel.card?undefined:lastEmployee} groups={store.groups} roots={store.teamRoots??{}} settings={store.teamSettings} onSave={async fields=>{
+        {panel.kind==='employee'?<><p className="workspace-note">{panel.card?.workspaceError??(!panel.card&&selectedView?(visibleGroups.length?`仅列出「${selectedView.name}」视图中的团队；切换到 All Team 可查看全部团队。`:'当前视图没有团队，请先编辑视图加入已有团队，或切换到 All Team。'):undefined)}</p><EmployeeForm employee={panel.card} template={panel.card?undefined:lastEmployee} groups={panel.card?store.groups:visibleGroups} roots={store.teamRoots??{}} settings={store.teamSettings} onSave={async fields=>{
           const {teamRoot,...patch}=fields
           if(teamRoot&&teamRoot!==store.teamRoots?.[fields.group])await api.call('group.root',{name:fields.group,root:teamRoot,create:true})
           const result=panel.card?await api.call('card.update',{id:panel.card.id,patch}):await api.call('card.create',patch)

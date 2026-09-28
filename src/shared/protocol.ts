@@ -9,6 +9,10 @@ export const APP_HOME = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'Agen
 export const SOCKET_PATH = controlEndpoint(APP_HOME)
 
 export type Request = { cmd: string; args?: Record<string, unknown>; auth?:string }
+// avatar.list {query?,style?,all?}: live catalog for every role, including initialization.
+// card.create accepts character+avatarStyle or an exact avatar ID; profession is
+// separate from managementRole. card.avatar changes only a controlled appearance.
+export type {AvatarSelection,AvatarDescription,AvatarStyle} from './avatars'
 // engine.probe {engine,confirm:true,model?}: explicitly billed OK-only call on the Core host.
 // Returns engine/model/target/text/elapsedMs/checkedAt; checkEngine never invokes inference.
 
@@ -87,4 +91,4 @@ export type {DesktopProfile} from './remote'
 // host.desktop-list states: connecting, ready, disconnected. desktop-close can cancel a connecting session.
 
 // Engine IDs: codex, claude, cline, pi. Cline/Pi use DeepSeek Flash with Thinking off by default.
-// Cline/Pi initially support Core-local Build workspaces; unsupported targets fail before execution.
+// Cline/Pi support Core-local Build and Tunnel cloud workspaces; native-cloud/plugin targets fail before execution.

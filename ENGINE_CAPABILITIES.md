@@ -93,11 +93,11 @@ user's permissions; it does not inherit the Mac workspace-write path policy.
 
 Management APIs use the shared transcript/session layer and do not enable native Codex or Claude subagents. Team Manager authority is separate from engine tool permissions. Local macOS Isolated mode uses an outer Seatbelt process profile and private native-engine state; Codex's nested sandbox is disabled because macOS rejects sandbox reapplication. The outer profile enforces host-state/credential isolation and workspace writes. Work folder read boundaries remain in the outer policy; Claude keeps its file-tool scope hooks. Isolated native-history cloning is explicitly unavailable. Remote Isolated startup is rejected until an independently isolated remote OS environment is supplied; remote Trusted Managers use employee-bound SSH return channels.
 
-## Additional local adapters
+## Additional process adapters
 
 | Engine | Provider/default model | Thinking default | Protocol | Initial workspace scope |
 | --- | --- | --- | --- | --- |
-| Cline | DeepSeek / deepseek-flash | off | ACP 1 | Core-local Build |
-| Pi | DeepSeek / deepseek-flash | off | Pi RPC | Core-local Build |
+| Cline | DeepSeek / deepseek-flash | off | ACP 1 | Core-local Build / Cloud Team via MCP Tunnel |
+| Pi | DeepSeek / deepseek-flash | off | Pi RPC | Core-local Build / Cloud Team via MCP Tunnel |
 
-Both use the existing CLI APIs for text, native resume, tool approvals, interrupt, queues and schedules. Pi supports steering; Cline supports Plan. Unsupported modes fail explicitly. Local-workspace Managers may belong to a Cloud Team and manage its existing Codex/Claude cloud employees through company APIs. No cloud-to-local fallback is permitted. See API.md for install requirements and adapter limits.
+Both use the existing CLI APIs for text, native resume, tool approvals, interrupt, queues and schedules. Pi supports steering; Cline supports Plan. Unsupported modes fail explicitly. Local-workspace Managers may belong to a Cloud Team and create/manage cloud Employees using all four engines through the same company APIs. `engine.capabilities` provides no-inference creation-time discovery to Managers and Governors. Cline/Pi cloud Employees use `kind:worker, workEnvironment:team`; cloud-native and Work/plugin workspaces remain unsupported. Cline Flash accepts pasted/local/cloud images, including native resume; Pi image input remains unsupported by this adapter. No cloud-to-local fallback is permitted. See API.md for install requirements and adapter limits.

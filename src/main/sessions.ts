@@ -253,7 +253,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const identity={group:args.group??'',workEnvironment:card?.workEnvironment??args.workEnvironment,localWorkspaceRoot:card?.localWorkspaceRoot},config=employeeSettings(readStore(),identity),root=employeeRoot(readStore(),identity)
   if(args.remote!==undefined&&args.remote!==null)throw new Error('云主机连接由 Team 统一配置')
   const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode,undefined,false,args.workEnvironment)
-  assertEngineWorkspace(card?.engine??args.engine??'claude',config.mode)
+  assertEngineWorkspace(card?.engine??args.engine??'claude',config.mode,card?.kind??args.kind??'worker')
   const remote=config.mode==='cloud'?{...config.remote!,directory:cwd}:null
   const kind=card?.kind??'worker',nativeRemote=kind==='cloud-native-worker'?cloudNativeTarget(card!).target:undefined
   if(nativeRemote)await checkCloudNative(card!.group,card!.engine,cloudRelative(config,cwd))
@@ -262,7 +262,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!,card?.id??sessionId)
   const controlBin=remote&&card&&card.kind!=='cloud-native-worker'?await prepareRemoteAgentAccess(card.id,remote):undefined
   if(remote&&card&&!controlBin)await prepareRemoteEmployeeDocuments(card.id,remote)
-  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
+  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),['claude','cline','pi'].includes(args.engine??'claude')?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
   assertTeamAvailable(args.group)
   const latest=readStore(),latestConfig=employeeSettings(latest,identity)
   if(employeeRoot(latest,identity)!==root||latestConfig.mode!==config.mode||latestConfig.pluginId!==config.pluginId||JSON.stringify(latestConfig.remote)!==JSON.stringify(config.remote))throw new Error('Team 配置已变更，请重新打开会话')

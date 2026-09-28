@@ -8,7 +8,7 @@ import {piClient} from './pi-client'
 export async function probeProcessEngine(engine:'cline'|'pi',model='deepseek-flash'){
   const directory=fs.mkdtempSync(path.join(os.tmpdir(),'agents-'+engine+'-probe-')),started=Date.now(),prompt='Reply with exactly OK. Do not use tools or perform any other task.'
   let text='',finish:(()=>void)|undefined,failure:string|undefined
-  const client=engine==='cline'?clineClient({cwd:directory,directory,model,onUpdate:u=>{if(u.sessionUpdate==='agent_message_chunk')text+=u.content?.text??''}}):piClient({cwd:directory,directory,model,onEvent:e=>{if(e.type==='message_update'&&e.assistantMessageEvent?.type==='text_delta')text+=e.assistantMessageEvent.delta;if(e.type==='message_end'&&e.message?.errorMessage)failure=e.message.errorMessage;if(e.type==='agent_settled')finish?.();if(e.type==='process_error'){failure=e.error;finish?.()}}})
+  const client=engine==='cline'?await clineClient({cwd:directory,directory,model,onUpdate:u=>{if(u.sessionUpdate==='agent_message_chunk')text+=u.content?.text??''}}):piClient({cwd:directory,directory,model,onEvent:e=>{if(e.type==='message_update'&&e.assistantMessageEvent?.type==='text_delta')text+=e.assistantMessageEvent.delta;if(e.type==='message_end'&&e.message?.errorMessage)failure=e.message.errorMessage;if(e.type==='agent_settled')finish?.();if(e.type==='process_error'){failure=e.error;finish?.()}}})
   let timer:ReturnType<typeof setTimeout>|undefined
   try{
     if(engine==='cline'){

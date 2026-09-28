@@ -190,6 +190,7 @@ async function main() {
   switch (`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`) {
     case 'system.info': return out(await call('system.info'))
     case 'system.directories': {const p=parse(rest);return out(await call('system.directories',{path:p.path}))}
+    case 'engine.capabilities': {const p=parse(rest);return out(await call('engine.capabilities',{engine:p.engine}))}
     case 'engine.list': return out(await call('engine.list'))
     case 'engine.check': {const p=parse(rest);return out(await call('engine.check',{engine:p.engine,team:p.team,force:!!p.force}))}
     case 'engine.probe': {const p=parse(rest);return out(await call('engine.probe',{engine:p.engine,model:p.model,confirm:p.confirm===true}))}
@@ -567,15 +568,18 @@ async function main() {
     case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
     case 'card.initialize': {const p=parse(rest);return out(await call('card.initialize',{id:p._[0],model:p.model,effort:p.effort}))}
     case 'card.native-bind':return out(await call('card.native-bind',{id:rest[0],sessionId:rest[1]}))
+    case 'avatar.list': {const p=parse(rest);return out(await call('avatar.list',{query:p.query,style:p.style,all:!!p.all}))}
+    case 'card.avatar': {const p=parse(rest);return out(await call('card.avatar',{id:p._[0],avatar:p.avatar??p._[1],character:p.character,avatarStyle:p['avatar-style']}))}
     case 'card.create': {
       const p = parse(rest)
+      if(p.thinking!==undefined&&!['on','off'].includes(p.thinking))throw new Error('--thinking must be on or off')
       if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
-      return out(await call('card.create', { ...p, permissionMode:p.permission, workEnvironment:p['work-environment'],managementRole:p['management-role'],accessMode:p['access-mode'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
+      return out(await call('card.create', { ...p, thinking:p.thinking===undefined?undefined:p.thinking==='on', permissionMode:p.permission, avatarStyle:p['avatar-style'], workEnvironment:p['work-environment'],managementRole:p['management-role'],accessMode:p['access-mode'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
     }
     case 'card.update': {
       const p = parse(rest)
       if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
-      return out(await call('card.update', { id: p._[0], patch: { ...p, workEnvironment:p['work-environment'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined } }))
+      return out(await call('card.update', { id: p._[0], patch: { ...p, avatarStyle:p['avatar-style'], workEnvironment:p['work-environment'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined } }))
     }
     case 'room.design': {
       const p = parse(rest)

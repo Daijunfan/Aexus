@@ -51,6 +51,33 @@ API-key/provider authentication; this application does not provide claude.ai
 subscription login. Codex uses its official device authorization. The engine and
 model are separate concepts. See `docs/ENGINE_ADAPTERS.md` for the driver contract.
 
+## Cline / Pi: cloud workspace creation
+
+`engine.capabilities {engine:"cline"|"pi"|"codex"|"claude"}` is read-only and available to employees, Managers and Governors. It returns `engine`, display/protocol metadata, `capabilities`, `workspaceModes`, `employeeKinds`, and `cloudWorkerTransport`. It does not expose credentials or start inference. `engine.models` retains its existing authorization.
+
+```sh
+agents engine capabilities --engine cline --json
+agents engine capabilities --engine pi --json
+agents card create --title Cline-Worker --group "Cloud Team" --engine cline --kind worker --work-environment team --model deepseek-flash --thinking off --json
+agents card create --title Pi-Worker --group "Cloud Team" --engine pi --kind worker --work-environment team --model deepseek-flash --thinking off --json
+```
+
+Equivalent JSON: `card.create {title,group,engine:"cline"|"pi",kind:"worker",workEnvironment:"team",model:"deepseek-flash",thinking:false}`. Cline/Pi execute on the Core host and use the Cloud Team's existing MCP Tunnel for commands and files: `execute`, `read_file`, `write_file`, `edit_file`, `list_files`. Local tools are blocked in cloud mode even with Full access. Ask/Edit/Don't ask permissions still apply; Cline Plan permits remote reads only. Failures never switch execution to the local workspace. Cloud-native workers and Work/plugin directories remain unsupported for these two adapters.
+
+Manager/Governor runtime and workspace requirements are unchanged. In a Cloud Team they require `kind:"worker",workEnvironment:"local"`; their Employees normally use `workEnvironment:"team"`. This discovery API does not grant hiring or cross-Team authority. Only the user can create or assign a Governor.
+
+`engine.inspect SESSION_ID capabilities|mcp|usage|config` reports the selected adapter's own data and never uses Codex as a substitute for Cline/Pi. A Tunnel `status:"configured"` entry is configuration metadata, not a live connectivity result. Unsupported native skills/account/quota inspection is reported explicitly.
+
+### Cline image input
+
+Cline with `deepseek-flash` accepts the existing `session.send` and `session.enqueue` `images` paths, including pasted screenshots and cloud-workspace images. `deepseek-v4-pro` remains text-only. Pi image support is unchanged. Core retains the existing workspace-boundary, 16-image and 10-MB-per-image checks.
+
+Cline 3.0.65 advertises ACP images but drops the image content before constructing a provider request. The adapter therefore uses an employee-private loopback relay to add approved image bytes to the native Chat Completions request. All other model parameters and streamed responses pass through unchanged; no extra inference turn is added. Attachment references remain in native history and resolve on resume. Missing image conversion is reported as an error. The relay is closed with the employee session and changes only that employee's private provider settings, never the installed engine or global Cline configuration.
+
+```sh
+agents session send SESSION_ID 'Inspect this screenshot' --images '[".agents-attachments/pasted.png"]' --json
+```
+
 ## Browser file transport
 
 `transfer.upload-begin {to,name,bytes}` returns an upload ID and chunk limit.
@@ -157,12 +184,12 @@ See [PLUGIN_SPEC.md](PLUGIN_SPEC.md) for the package and documentation format.
 
 ### Worker employees
 
-Every employee uses Codex or Claude Code and the same `session.*`, `config.*`, file and terminal UI/CLI. An omitted `kind` or `kind:worker` means **Local Worker**: the Coding Agent process runs on the Mac. A Local Worker in a Cloud Team still uses the existing local engine and remote Tunnel tools. `kind:cloud-native-worker` means **Cloud Native Worker**: the Coding Agent executable, auth/configuration, tools and native session records live on that Team's registered SSH host. The Team owns `hostId` and remote root; the employee cannot specify a different host or leave the Team's remote directory. Existing employees are never converted automatically. Browser is a separate saved-webpage plugin under the **B** icon and does not create employees.
+Every employee uses Codex, Claude Code, Cline or Pi and the same `session.*`, `config.*`, file and terminal UI/CLI. An omitted `kind` or `kind:worker` means **Local Worker**: the Coding Agent process runs on the Mac. A Local Worker in a Cloud Team still uses the existing local engine and remote Tunnel tools. `kind:cloud-native-worker` means **Cloud Native Worker**: the Coding Agent executable, auth/configuration, tools and native session records live on that Team's registered SSH host. The Team owns `hostId` and remote root; the employee cannot specify a different host or leave the Team's remote directory. Existing employees are never converted automatically. Browser is a separate saved-webpage plugin under the **B** icon and does not create employees.
 
 ```bash
 agents status
 agents session list [--live]
-agents session new [--engine claude|codex] [--group NAME] [--title NAME] \
+agents session new [--engine claude|codex|cline|pi] [--group NAME] [--title NAME] \
   [--cwd /absolute/workspace] [--seat codey] [--model MODEL] \
   [--effort low|medium|high|xhigh|max] [--permission MODE] [--thinking on|off]
 agents session open <cardId>
@@ -444,7 +471,8 @@ The Core stores the last successfully created Team and employee configuration fo
 new-form defaults, even if that Team or employee is later removed. New names and
 work folders remain new selections; the previous Team/mode, model, character,
 appearance, directory mode and Team design are preselected when applicable.
-`card.update` saves the display name, appearance or engine without rebinding the workspace.
+`card.update` saves the display name and appearance without rebinding the workspace.
+The engine is fixed at creation; use a new employee to select another engine.
 Saving appearance within the same department does not change workstation order.
 Employee names can be changed with `card.rename`, `session.rename` or
 `card.update --title`; the one associated conversation follows that name while
@@ -691,6 +719,8 @@ agents management topology --creator unknown --json
 
 自定义视图被选中时，编辑图标紧邻该标签显示；标签较多时会将当前标签和图标一起滚动到可见位置。编辑面板从 All Team 列出已有团队，勾选加入此视图、取消勾选仅移出此视图；保存调用 `team-view.update {id,patch:{name,teams}}`，不会创建或删除团队、员工和文件。空视图会提示从 All Team 选择已有团队。All Team 固定显示全部团队，不提供成员编辑。
 
+在画布新增员工时，所属 Team 只列出当前视图内仍存在的团队；All Team 列出全部团队。团队被删除或移出当前视图后，已打开表单会清除失效选择，必须重新选择后才能保存。删除团队也会清除上次创建员工模板中的对应团队引用，保留其他形象和引擎偏好。视图筛选不改变 CLI/API 的职级权限。
+
 The built-in `All Team` view always contains every Team and cannot be edited or
 deleted. Custom views contain selected existing Teams and have independent canvas
 pan/zoom. Switching views only changes what the board displays; employees, folders,
@@ -906,6 +936,53 @@ With a desktop attached, navigation first flushes workspace editors. A failed
 save returns an error and leaves the current view unchanged. In headless mode no
 renderer is required. View changes emit `view:changed`; `revision` orders updates.
 
+## Character catalog and explicit employee creation
+
+`avatar.list {query?,style?:"default"|"anime"|"chibi",all?:boolean}` / `agents avatar list`
+returns the actual appearance catalog. Each entry has `id`, `name`, `characterId`,
+`character`, `style`, `aliases`, `legacyIds`, `color`, and `selectable`. The default
+list contains all 57 current picker choices; `--all` also includes retired skins.
+All employee roles may read it, including during Manager/Governor initialization.
+
+```sh
+agents avatar list --query "英雄王" --style chibi --json
+agents card create --title "英雄王可爱版" --group TEAM --character "吉尔伽美什" --avatar-style chibi --profession "代码审查" --management-role employee --engine claude --model deepseek-flash --thinking off --kind worker --work-environment team --json
+agents session status --employee EMPLOYEE_ID --json
+agents card avatar EMPLOYEE_ID --avatar fate-gilgamesh-chibi --json
+```
+
+Creation parameters have distinct meanings:
+
+| Parameter | Meaning |
+| --- | --- |
+| `title` | Employee display name; never determines appearance |
+| `character` + `avatarStyle` | Known character name/ID/alias and the desired appearance style |
+| `avatar` | Exact catalog appearance ID, as an alternative to character/style |
+| `managementRole` | Employee/Manager/Governor authority, independently checked by Core |
+| `profession` | Free-text occupation/duties, stored in the legacy `role` field |
+| `engine`, `model`, `thinking` | Coding Agent and runtime configuration |
+| `kind`, `workEnvironment`, `group` | Execution kind, work environment and Team |
+
+`role` remains a compatibility alias for the profession description. Do not use it
+for an illustrated character or for management authority. Unknown characters,
+ambiguous styles and conflicting appearance parameters fail before creating a
+workspace; they never fall back to an animal. Omitting appearance entirely retains
+legacy default behavior for ordinary unnamed-character employees.
+
+`card.avatar {id,avatar? ,character?,avatarStyle?}` updates only the selected
+appearance and its default palette. Manager may target itself and its Team's
+Employees; Governor may target controlled employees across Teams. It does not
+change engine, management role, name, history, folder or position. General
+`card.update` stays user-only. Existing create and update requests may use the new
+character/style and profession fields, and `api.describe card.create` includes a
+machine-readable `inputSchema`.
+
+`session.status`, `session.list` and management topology expose effective `avatar`,
+`avatarName`, `character`, `avatarStyle` and `profession`, including legacy default
+appearances. `session.info` exposes them for both open and closed employees. Both
+Manager and Governor must read back the actual appearance after creating a
+specified character; a matching employee title alone is not sufficient.
+
 ## Appearance and pointer preferences
 
 ```sh
@@ -923,7 +1000,18 @@ reject the whole update. Restore defaults by setting those three default values.
 `card.create` and `card.update` additionally accept the official skin IDs:
 `codex`, `dewey`, `fireball`, `rocky`, `seedy`, `stacky`, `bsod`, `null-signal`, `hoots`.
 Claude artwork: `clawd` uses the original Claude Code mascot. Official Anthropic Buddy character animations use `claude-axolotl`, `claude-blob`, `claude-cactus`, `claude-capybara`, `claude-cat`, `claude-chonk`, `claude-dragon`, `claude-duck`, `claude-ghost`, `claude-goose`, `claude-mushroom`, `claude-octopus`, `claude-owl`, `claude-penguin`, `claude-rabbit`, `claude-robot`, `claude-snail`, `claude-turtle`. These retain the upstream character-frame format. No engine call is needed to select or animate a character.
-Community IDs `woodi`, `marmalade`, `voltcoin`, `inky`, `byte`, `wondercube` remain selectable with their original artwork. Historical generic IDs retain their original community aliases.
+Community IDs `woodi`, `marmalade`, `voltcoin`, `inky`, `byte`, `wondercube` remain selectable with their original artwork.
+Fate character skins use `fate-<character>-anime` (original-series-inspired proportions)
+or `fate-<character>-chibi` (cute companion proportions). The 14 servant slugs are
+`saber`, `archer`, `cu-chulainn`, `medusa`, `medea`, `sasaki`, `cursed-arm`,
+`heracles`, `gilgamesh`, `diarmuid`, `iskandar`, `gilles`, `hundred-faces`,
+`lancelot`. Seven selected Master slugs are `shirou`, `rin`, `sakura`, `illya`,
+`kiritsugu`, `kirei`, `waver`, using the same two style suffixes. For example: `agents card update ID --avatar fate-saber-chibi`.
+Both variants appear in the same flat picker. These are newly generated fan-art
+animation frames, not official production animation assets. Selecting a skin does
+not change the employee's identity, engine, role, directory or position.
+
+Historical generic IDs retain their original community aliases.
 
 ## Employee conversation identity, sidebar and snapping
 
@@ -1352,12 +1440,13 @@ agents transfer cancel TRANSFER_ID --json
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 197 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 200 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
 | <code>agents system info</code> | <code>—</code> | Read Core host OS, architecture and deployment capabilities | 后端信息 | identity |
 | <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user only) | 后端目录选择 | operator |
+| <code>agents engine capabilities</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi</code> | Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference | 创建员工能力检查 | identity |
 | <code>agents engine list</code> | <code>—</code> | List registered Coding Agent adapters and public configuration | 引擎管理 | operator |
 | <code>agents engine check</code> | <code>--engine ID [--team NAME] [--force]</code> | Check executable, protocol and authentication without inference | 引擎检测 | operator |
 | <code>agents engine probe</code> | <code>--engine ID --confirm [--model ID]</code> | Explicit, potentially billed OK-only inference on the Core host; temporary workspace and 45s timeout | 引擎测试调用 | operator |
@@ -1381,6 +1470,7 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents api list</code> | <code>—</code> | List caller-authorized APIs | 管理与协同 | identity |
 | <code>agents api describe</code> | <code>COMMAND</code> | Describe an authorized API and its scope | 管理与协同 | identity |
 | <code>agents api docs</code> | <code>—</code> | Read the caller role API handbook | 管理与协同 | identity |
+| <code>agents avatar list</code> | <code>[--query NAME] [--style default&#124;anime&#124;chibi] [--all]</code> | Discover exact avatar IDs, character names, styles and aliases from the live picker catalog; no inference | 人物形象目录 | identity |
 | <code>agents connector get</code> | <code>--manager ID --employee ID</code> | Read endpoint anchors and 24 availablePoints, including all four corners of the uniform employee frame | 连线端点 | layout.read |
 | <code>agents connector set</code> | <code>--manager ID --employee ID [--source auto&#124;top&#124;right&#124;bottom&#124;left --source-offset 0.5] [--target auto&#124;top&#124;right&#124;bottom&#124;left --target-offset 0.5] [--points JSON&#124;@file &#124; --auto-route]</code> | Persist endpoint sides and offsets; does not create management authority or a relation | 点击人物周围点位 / 拖动端点吸附 | layout.write |
 | <code>agents connector segment</code> | <code>--manager ID --employee ID --index N --x X --y Y</code> | Move an orthogonal segment in source-Team coordinates; preserve attached employees | 拖动任意折线段 | layout.write |
@@ -1503,8 +1593,9 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents card remove</code> | <code>&lt;cardId&gt; [cardId ...] [--delete-workspace]</code> | Remove selected employees and owned sessions; optionally delete all their folders after one batch preflight | 侧栏编辑 · 多选员工 · 一次确认删除 | employee.delete |
 | <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 | operator |
 | <code>agents card initialize</code> | <code>&lt;employee-id&gt; [--model ID] [--effort LEVEL]</code> | Retry Manager/Governor onboarding; Employees stay ready without a model turn | Manager 重试初始化 | employee.message |
-| <code>agents card create</code> | <code>--title NAME [--group TEAM] [--kind worker&#124;cloud-native-worker] [--work-environment team&#124;local] [--management-role ROLE] [--engine E] [--model ID] [--effort LEVEL] [--avatar cat]</code> | Hire an Employee, Manager or user-created Governor; only supervisor roles initialize | 添加员工 | employee.create |
-| <code>agents card update</code> | <code>&lt;cardId&gt; [--title NAME] [--avatar fox] [--role ROLE]</code> | Edit an employee display name and appearance; Team and folder stay fixed | 员工资料 | operator |
+| <code>agents card create</code> | <code>--title NAME [--group TEAM] [--character NAME --avatar-style anime&#124;chibi &#124; --avatar ID] [--profession TEXT] [--management-role employee&#124;manager&#124;governor] [--kind worker&#124;cloud-native-worker] [--work-environment team&#124;local] [--engine E] [--model ID] [--thinking on&#124;off] [--effort LEVEL]</code> | Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; discover appearances with avatar.list and verify via session.status | 添加员工 | employee.create |
+| <code>agents card avatar</code> | <code>&lt;employee-id&gt; [--avatar ID &#124; --character NAME --avatar-style anime&#124;chibi]</code> | Set only a controlled employee appearance and its default palette; Manager own Team, Governor across Teams; discover IDs with avatar.list | 员工人物形象 | employee.configure |
+| <code>agents card update</code> | <code>&lt;cardId&gt; [--title NAME] [--avatar ID &#124; --character NAME --avatar-style STYLE] [--profession TEXT]</code> | User-only general profile editing; supervisors use card.avatar for appearance; Team and folder stay fixed | 员工资料 | operator |
 | <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 | operator |
 | <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 | operator |
 | <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 | operator |

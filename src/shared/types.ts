@@ -139,6 +139,7 @@ export type StoredSession = {
   seat?: string
   avatar?: AvatarKind
   accessory?: Accessory
+  /** Legacy storage name for the profession/duties description, never an avatar or authority. */
   role?: string
   color?: string
   position?: Point

@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.50.3",
+  "version": "0.50.8",
   "description": "CLI-first visual Agent workspace with a shared desktop/web Core and bundled work plugins",
   "main": "./out/main/index.js",
   "author": {

@@ -57,6 +57,17 @@
         "test/engine-install-test.mjs"
       ],
       "resolution": "Vendor SDK/native runtime excluded from distributed dependencies and plugin resources; separately installed by the user from checksum-pinned official packages. Public integration uses Claude Agent API-key flow."
+    },
+    {
+      "id": "fate-fan-art",
+      "status": "pending",
+      "scope": "42 generated Fate character fan-art sprite sheets (14 Servants and seven selected Masters) and their previews",
+      "required": "Record permission or an appropriate redistribution assessment before publishing these character assets. Generated fan art does not itself establish rights in the underlying character designs.",
+      "evidence": [
+        "src/renderer/src/assets/pets/fate/README.md",
+        "src/renderer/src/assets/pets/fate/sources.json"
+      ],
+      "resolution": "Generated fan-art collection added at the maintainer request. Source publication was requested by the maintainer; this does not establish new vendor permission or mark the redistribution review approved."
     }
   ]
 }

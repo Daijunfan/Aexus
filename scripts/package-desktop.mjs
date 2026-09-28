@@ -12,6 +12,7 @@ const review=JSON.parse(fs.readFileSync(path.join(root,'licenses/release-review.
 fs.mkdirSync(path.join(root,'build'),{recursive:true})
 fs.writeFileSync(path.join(root,'build/DISTRIBUTION.json'),JSON.stringify({version:pkg.version,platform:process.platform,arch:process.arch,candidate:development,plugins:JSON.parse(fs.readFileSync(path.join(root,'plugins.lock.json'),'utf8')).plugins,pendingReviews:review.reviews.filter(item=>item.status!=='approved').map(item=>item.id)},null,2)+'\n')
 run(process.execPath,['scripts/build-icon.mjs'])
+run(process.execPath,['scripts/build-pet-previews.mjs'])
 // A private candidate bypasses only pending redistribution reviews, not portability.
 run(process.execPath,['scripts/build-plugins.mjs','--release'])
 run('npx',['--no-install','electron-vite','build'],{AGENTS_COMPANY_RELEASE:'1'})

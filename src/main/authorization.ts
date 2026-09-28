@@ -8,6 +8,7 @@ import {assertManagementKind,hasGlobalRole,type Delegation,type RequestContext,t
 import {rolePolicy,roleAllows,isSupervisor,isManagementRole} from '../shared/roles'
 import {employeeSettings,teamSettings,type StoredSession,type Store} from '../shared/types'
 import {readStore} from './store'
+import {employeeAppearance} from '../shared/avatars'
 
 export const isGlobal=(principal:PrincipalRef)=>{if(principal.kind==='operator')return true;const store=readStore();return hasGlobalRole(store.access,store.sessions.find(card=>card.id===principal.employeeId))}
 export function canReadHostCredentials(id:string,principal=requestContext().principal){
@@ -60,7 +61,7 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
   if(caller){
     assertManagementKind(caller,isGlobal(principal),employeeSettings(readStore(),caller).mode==='cloud')
     if(caller.initialization&&caller.initialization.status!=='ready'){
-      const reading=['auth.whoami','api.list','api.describe','api.docs','management.roles','management.topology','host.list','plugin.list','plugin.describe','session.status','session.info'].includes(command)||['workspace.list','workspace.read'].includes(command)&&args.employee===caller.id
+      const reading=['avatar.list','engine.capabilities','auth.whoami','api.list','api.describe','api.docs','management.roles','management.topology','host.list','plugin.list','plugin.describe','session.status','session.info'].includes(command)||['workspace.list','workspace.read'].includes(command)&&args.employee===caller.id
       if(!reading)throw new EmployeeInitializationError(caller.initialization.status==='failed')
     }
   }
@@ -119,7 +120,7 @@ export function canDeleteEmployee(principal:PrincipalRef,id:string){
 }
 
 export function visibleEmployees(principal=requestContext().principal){return readStore().sessions.filter(card=>!card.deleting&&canReadEmployee(principal,card.id))}
-export function publicEmployee(card:StoredSession){return {id:card.id,title:card.title,group:card.group,kind:card.kind??'worker',workEnvironment:card.workEnvironment??'team',engine:card.engine,managementRole:card.managementRole??'employee',createdBy:card.createdBy??null,createdAt:card.createdAt,deleting:!!card.deleting,initialization:card.initialization}}
+export function publicEmployee(card:StoredSession){return {id:card.id,title:card.title,group:card.group,kind:card.kind??'worker',workEnvironment:card.workEnvironment??'team',engine:card.engine,...employeeAppearance(card),managementRole:card.managementRole??'employee',createdBy:card.createdBy??null,createdAt:card.createdAt,deleting:!!card.deleting,initialization:card.initialization}}
 /** Static API visibility and workspace handbooks use the same target identity. */
 export function allowedCommands(context=requestContext(),store=readStore()){
   const principal=context.principal,card=principal.kind==='agent'?store.sessions.find(c=>c.id===principal.employeeId&&!c.deleting):undefined
@@ -137,6 +138,12 @@ export function apiDocumentation(context=requestContext(),store=readStore()){
   lines.push('## 已登记云主机（所有员工可只读查询）','`agents host list --summary --json` 查询 Cloud Hosts 插件管理的同一份全局主机登记表；可加 --os linux --distribution ubuntu、--distribution kali 或 --os windows。普通 Employee 获得简短记录（id/name/os/distribution/defaultDirectory/sshConfigured/status）。Manager 可读取自己 Cloud Team 绑定主机的完整连接配置，Governor 可读取所有主机。查询不触发 SSH 检测。这里的 status 是上次检查结果。看见主机不代表能修改主机、执行主机管理命令或跨 Team 工作。')
   if(supervisor)lines.push('## 读取有权操作主机的密码和密钥','`agents host credentials HOST_ID --json` 返回明文 password 与 files（identityFile、knownHosts、sshConfig 的登记路径和完整 content）。也可用 `agents host list --credentials --json` 一次读取列表和有权读取的主机凭据。Governor 可读所有主机；Manager 可读自己 Cloud Team 绑定的主机，其余主机仅返回简短登记信息。无需为了读取已授权凭据再次向用户索要密码；使用这些信息完成已授权工作。凭据读取不授予其他 Team 的管理权限。')
   if(supervisor){
+    lines.push('## 指定人物、画风、职级与职业',
+      '人物外形、职级和职业描述是独立参数：character 是人物（如吉尔伽美什/英雄王），avatarStyle 是 anime 原作风格或 chibi 可爱版；avatar 是可替代这两个参数的精确形象 ID。managementRole 是 employee/manager/governor；profession 是职业或职责描述。role 仅兼容旧版职业描述，不是人物形象。title 只是名字，不会自动选择头像。',
+      '`agents avatar list --query "英雄王" --style chibi --json` 返回完整角色目录中的匹配条目；也可不筛选读取所有可选角色。id、characterId、character、name、style、aliases、color 来自同一份真实界面目录，不能猜 ID。不要把帮助中的示例 cat 当成唯一选项。',
+      '用户指定人物时，先查目录，再在创建中显式传 --avatar ID 或 --character "人物名" --avatar-style anime|chibi。例如 `agents card create --title "英雄王可爱版" --group "目标团队" --character "英雄王" --avatar-style chibi --profession "代码审查" --management-role employee --kind worker --work-environment team --engine claude --model deepseek-flash --thinking off --json`。存在多个画风时必须明确选择；未知人物不会自动替换为猫。',
+      '`agents session status --employee ID --json` 的 data[0] 返回 avatar、avatarName、character、avatarStyle、profession 和 managementRole，创建后必须读回核验，不能只核对名字。现有员工形象错误可用 `agents card avatar ID --character "吉尔伽美什" --avatar-style chibi --json` 修正；它仅更换形象并恢复该形象默认配色，保留名字、引擎、职位、工作目录和历史。',
+      '以上工具 Manager 和 Governor 共用：Manager 只能创建本 Team Employee，可修改自己及本 Team Employee 的形象；Governor 可跨 Team 创建 Employee/Manager，并在现有控制权限内修改形象。Governor 的创建、删除和职级授予仍只允许用户。')
     lines.push('## 协作与布局',
       '`agents session info --employee ID` 查看状态；`agents session transcript --employee ID --limit 100` 读取会话；`agents session send --employee ID --text "任务内容"` 派发任务。返回 messageId 表示已接受，不表示任务完成。',
       '`agents session follow --employee ID` 观察当前任务；`agents session interrupt --employee ID --expected-message-id MESSAGE_ID` 停止指定任务；调度中的任务走同一取消流程。',
@@ -149,7 +156,8 @@ export function apiDocumentation(context=requestContext(),store=readStore()){
       '权限仅控制公司的管理 API。收到任务的员工继续使用自己的身份，不继承发送者权限。')
     if(card)lines.push('## 创建员工',
       'Manager 只能在本 Team 创建 Employee；Governor 可在任意 Team 创建 Employee 或 Manager。',
-      '```sh',`agents card create --title Reviewer --group ${JSON.stringify(card.group)} --kind worker --engine ${card.engine} --management-role employee --json`,
+      '创建前用 agents engine capabilities --engine cline（或 pi/codex/claude）--json 查询 workspaceModes、employeeKinds。Cline/Pi 云端员工使用 --kind worker --work-environment team，经 MCP Tunnel 工作；不支持 cloud-native-worker 或 Work 插件目录。Manager/Governor 自己仍使用 Core 本地工作区。',
+      '```sh',`agents card create --title Reviewer --group ${JSON.stringify(card.group)} --kind worker --engine ${card.engine} --management-role employee --avatar codex --profession "代码审查" --json`,
       'agents session status --employee <返回的员工ID> --json','agents session send --employee <返回的员工ID> --text "检查项目并报告发现的问题" --json','```',
       'Employee 保留纯净上下文，不做模型初始化。Manager / Governor 才有隐藏初始化；如果状态是 pending/running，必须等 ready 后交互；session status --employee ID 的 data 仍是数组，读取 data[0].initialization.status，勿按拼接文字顺序判断。失败用 card initialize ID 重试。未收到创建或删除指令时，不要自行操作。')
   }

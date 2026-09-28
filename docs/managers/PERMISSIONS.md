@@ -72,3 +72,7 @@ Trusted 保留系统账号的实际文件权限；API 授权不等于对同用�
 `session.acknowledge` 只允许用户确认确切的 replyId。任何 Agent 的读取或订阅都不会清除用户未读状态；隐藏窗口也不代用户确认。初始化不产生未读消息。Web 端使用认证用户会话及页面可见性检查；桌面端额外验证原生窗口状态。
 
 `host.list` 与 Cloud Hosts 插件共用主机登记表，支持 os / distribution 筛选，不发起 SSH。普通 Employee 可读取简短主机信息。Manager 可读取自己 Cloud Team 绑定主机的完整连接记录，Governor 可读取全部主机。`host.credentials ID` 返回明文密码，以及登记的 identityFile、knownHosts、sshConfig 文件路径与完整内容（包括私钥）；`host.list --credentials` 可一并返回有权读取的主机凭据。Manager 对其他主机只能看到简短信息；Employee 不可读取凭据。读取凭据不授予 host.check/exec/create/update/remove 的管理权限。
+
+## 人物形象
+
+所有职位都可用 `avatar.list` 查询完整可选目录，包括初始化期间。`character`/`avatarStyle` 或 `avatar` 仅选择视觉形象；`profession`（旧字段 `role`）仅描述职业；职级仍由 `managementRole` 控制。Manager 可用 `card.avatar` 修改自己及本 Team Employee，Governor 可在其控制范围内跨 Team 修改；该接口不修改名字、引擎、权限、职位、目录或历史。

@@ -72,3 +72,7 @@ Anthropic Buddy character frames and sequences are adapted from https://github.c
 ## Additional Coding Agent identification marks
 
 The Cline mark is the unmodified SVG from the official Cline CLI 3.0.65 package (Apache-2.0 project). Pi's unmodified mark comes from https://pi.dev/logo-auto.svg (official Pi project, MIT). Source records and hashes are in `src/renderer/src/assets/engines/sources.json`. These identify the separately installed engines and imply no endorsement. Runtime packages are installed into user-owned Core storage, not bundled into the application.
+
+## Fate companion fan artwork
+
+The optional Fate Servant and selected Master appearances are newly generated fan artwork inspired by Fate/stay night and Fate/Zero character designs associated with TYPE-MOON and the respective production rights holders. They are not official animation assets and imply no endorsement. Prompts, source references and asset hashes are recorded in `src/renderer/src/assets/pets/fate/sources.json`; no vendor redistribution permission is claimed.

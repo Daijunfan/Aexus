@@ -1,4 +1,4 @@
-import {assertEngineWorkspace} from '../shared/engines'
+import {assertEngineWorkspace,engineCapabilities} from '../shared/engines'
 import {hostTerminals,openHostTerminal,requireHostTerminal,listHostDesktops,connectHostDesktop,launchHostDesktop,closeHostDesktop,assertHostIdle,closeHostTerminals} from './host-connections'
 import {isEngine} from '../shared/engines'
 import {runtimeInfo} from './platform'
@@ -32,6 +32,7 @@ import {validateCloudHostPatch,cloudHostFingerprints,trustCloudHostFingerprint,l
 import {openExternalUrl} from './external'
 import {managerCliRoot} from './exec'
 import {sharedDirectory} from './shared-directory'
+import {listAvatars,resolveAvatar,avatarDescription,employeeAppearance,professionValue} from '../shared/avatars'
 import {startTransfer,listTransfers,getTransfer,cancelTransfer,type FileEndpoint} from './transfers'
 import type {FileLocation} from '../shared/transfers'
 import {inspectEngine,invokeSkill} from './engine-tools'
@@ -210,7 +211,7 @@ async function dispatchRequest(req: Request): Promise<any> {
   const s = (v: unknown) => String(v)
 
   if(req.cmd.startsWith('group.')&&!['group.list','group.remove'].includes(req.cmd))assertTeamAvailable(a.name)
-  if(['card.update','card.move','card.remove','card.rename'].includes(req.cmd))assertTeamAvailable(readStore().sessions.find(c=>c.id===(a.id??a.cardId))?.group)
+  if(['card.update','card.avatar','card.move','card.remove','card.rename'].includes(req.cmd))assertTeamAvailable(readStore().sessions.find(c=>c.id===(a.id??a.cardId))?.group)
   if(['card.create','card.move','card.update','session.new'].includes(req.cmd))assertTeamAvailable(a.group??a.patch?.group)
   switch (req.cmd) {
     case 'system.info': return {...runtimeInfo(),clientId:requestContext().clientId}
@@ -221,6 +222,7 @@ async function dispatchRequest(req: Request): Promise<any> {
       return {path:directory,parent:dirname(directory),entries:readdirSync(directory,{withFileTypes:true}).filter(entry=>entry.isDirectory()&&!entry.name.startsWith('.')).map(entry=>({name:entry.name,path:resolve(directory,entry.name)})).sort((x,y)=>x.name.localeCompare(y.name))}
     }
     case 'engine.list': return engineList()
+    case 'engine.capabilities': return engineCapabilities(a.engine)
     case 'engine.check': return checkEngine(a.engine,{team:a.team,force:a.force===true})
     case 'engine.probe': return probeEngine(a.engine,a.confirm===true,a.model)
     case 'engine.configure': {const result=configureEngine(a.engine,a.patch??{});invalidateEngine(a.engine);exposeClaudeSdk();return result}
@@ -244,6 +246,7 @@ async function dispatchRequest(req: Request): Promise<any> {
     case 'api.list': return allowedCommands()
     case 'api.describe': {const command=allowedCommands().find(value=>value.name===a.command);if(!command)throw Error('API not available to this caller');return command}
     case 'api.docs': return apiDocumentation()
+    case 'avatar.list': return listAvatars(a)
     case 'office.layout': return officeLayout(a.team,a.viewId)
     case 'session.acknowledge': return acknowledgeReply(s(a.employee??employeeId(a.id)),a.replyId)
     case 'management.team': return setManagerTeam(a.clear===true?null:a.team)
@@ -496,7 +499,8 @@ async function dispatchRequest(req: Request): Promise<any> {
     case 'session.info': {
       const info = sessionInfo(s(a.id))
       if (!info){const card=readStore().sessions.find(c=>c.id===a.id);if(card)return {...publicEmployee(card),lastReply:card.lastReply,busy:false,sessionId:null};throw new Error(`unknown session ${s(a.id)}`)}
-      return info
+      const card=readStore().sessions.find(card=>card.id===info.cardId)
+      return {...info,...(card?employeeAppearance(card):{})}
     }
 
     case 'session.interrupt': {
@@ -726,6 +730,7 @@ async function dispatchRequest(req: Request): Promise<any> {
       catch(error){deleteTranscript(card.id);throw error}
     }
     case 'card.create': {
+      if(a.thinking!==undefined&&typeof a.thinking!=='boolean')throw Error('thinking must be a boolean; CLI uses --thinking on|off')
       if(a.accessMode!==undefined&&!['trusted','isolated'].includes(a.accessMode))throw Error('Invalid process access mode')
       if(a.managementRole!==undefined&&!isManagementRole(a.managementRole))throw Error('Invalid management role')
       const kind=a.kind??'worker'
@@ -737,9 +742,9 @@ async function dispatchRequest(req: Request): Promise<any> {
       if (!isEngine(engine)) throw new Error('Unknown engine')
       let model=a.model||defaultEmployeeModel(engine,kind)
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
-      const appearance = employeeFields(a)
+      const avatar=resolveAvatar(a),appearance=employeeFields({...a,...(avatar!==undefined?{avatar}:{}),role:professionValue(a)})
       const store=readStore(),identity={group:s(a.group??''),workEnvironment:a.workEnvironment},config=employeeSettings(store,identity)
-      assertEngineWorkspace(engine,config.mode)
+      assertEngineWorkspace(engine,config.mode,kind)
       if(a.workEnvironment!==undefined&&!['team','local'].includes(a.workEnvironment))throw Error('工作环境必须为 team 或 local')
       if(a.workEnvironment==='local'&&(kind==='cloud-native-worker'||config.mode==='work'))throw Error('该员工必须使用 Team 工作环境')
       assertManagementKind({kind,managementRole:a.managementRole??'employee'},false,config.mode==='cloud')
@@ -767,13 +772,23 @@ async function dispatchRequest(req: Request): Promise<any> {
       if(employee.initialization.status==='pending')queueEmployeeInitialization(id)
       return executionEmployee(saved,saved.sessions.find((c) => c.id === id)!)
     }
+    case 'card.avatar': {
+      const card=readStore().sessions.find(c=>c.id===a.id&&!c.deleting)
+      if(!card)throw Error('Unknown employee')
+      const avatar=resolveAvatar(a)
+      if(!avatar)throw Error('Provide avatar or character with avatarStyle; discover choices with agents avatar list')
+      assertNotRemoving(card.id)
+      const saved=patchSession(card.id,{avatar,color:avatarDescription(avatar).color}).sessions.find(c=>c.id===card.id)!
+      return {id:saved.id,...employeeAppearance(saved)}
+    }
     case 'card.update': {
       const store=readStore(), card=store.sessions.find(c=>c.id===a.id)
       if(!card) throw new Error('Unknown employee')
       if(a.patch?.group!==undefined&&a.patch.group!==card.group)throw new Error('员工创建后不能更换 Team')
       if(a.patch?.cwd!==undefined&&a.patch.cwd!==card.cwd||a.patch?.directoryMode!==undefined)throw new Error('员工工作目录创建后不能更换')
       const prospective={...card,group:a.patch?.group??card.group};assertManagementKind(prospective,hasGlobalRole(store.access,prospective),employeeSettings(store,prospective).mode==='cloud')
-      const patch={...a.patch};if(patch.workEnvironment!==undefined&&patch.workEnvironment!==(card.workEnvironment??'team'))throw Error('工作环境创建后固定；请创建新员工')
+      const patch={...a.patch};const avatar=resolveAvatar(patch);if(avatar!==undefined)patch.avatar=avatar;if(patch.profession!==undefined)patch.role=professionValue(patch)
+      if(patch.workEnvironment!==undefined&&patch.workEnvironment!==(card.workEnvironment??'team'))throw Error('工作环境创建后固定；请创建新员工')
       if(patch.accessMode!==undefined)throw Error('Use card.access-mode')
       if(patch.kind!==undefined&&patch.kind!==(card.kind??'worker'))throw new Error('员工职位创建后不可更改')
       if(patch.chatProvider!==undefined||patch.chatMode!==undefined||patch.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')

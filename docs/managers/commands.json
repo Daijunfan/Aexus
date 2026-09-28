@@ -16,6 +16,14 @@
     "target": "request"
   },
   {
+    "name": "engine.capabilities",
+    "args": "--engine codex|claude|cline|pi",
+    "summary": "Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference",
+    "gui": "创建员工能力检查",
+    "permission": "identity",
+    "target": "request"
+  },
+  {
     "name": "engine.list",
     "args": "",
     "summary": "List registered Coding Agent adapters and public configuration",
@@ -196,6 +204,35 @@
     "args": "",
     "summary": "Read the caller role API handbook",
     "gui": "管理与协同",
+    "permission": "identity",
+    "target": "request"
+  },
+  {
+    "name": "avatar.list",
+    "args": "[--query NAME] [--style default|anime|chibi] [--all]",
+    "summary": "Discover exact avatar IDs, character names, styles and aliases from the live picker catalog; no inference",
+    "gui": "人物形象目录",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "人物名称、别名或 ID；例如英雄王、吉尔伽美什、Saber"
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "default",
+            "anime",
+            "chibi"
+          ]
+        },
+        "all": {
+          "type": "boolean",
+          "description": "Include retired appearances retained for compatibility"
+        }
+      }
+    },
     "permission": "identity",
     "target": "request"
   },
@@ -1177,16 +1214,137 @@
   },
   {
     "name": "card.create",
-    "args": "--title NAME [--group TEAM] [--kind worker|cloud-native-worker] [--work-environment team|local] [--management-role ROLE] [--engine E] [--model ID] [--effort LEVEL] [--avatar cat]",
-    "summary": "Hire an Employee, Manager or user-created Governor; only supervisor roles initialize",
+    "args": "--title NAME [--group TEAM] [--character NAME --avatar-style anime|chibi | --avatar ID] [--profession TEXT] [--management-role employee|manager|governor] [--kind worker|cloud-native-worker] [--work-environment team|local] [--engine E] [--model ID] [--thinking on|off] [--effort LEVEL]",
+    "summary": "Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; discover appearances with avatar.list and verify via session.status",
     "gui": "添加员工",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Employee display name only; does not select appearance"
+        },
+        "group": {
+          "type": "string",
+          "description": "Existing Team; Manager defaults to own Team and cannot hire elsewhere"
+        },
+        "character": {
+          "type": "string",
+          "description": "Exact characterId/name/alias from avatar.list; e.g. 英雄王 or gilgamesh"
+        },
+        "avatarStyle": {
+          "type": "string",
+          "enum": [
+            "default",
+            "anime",
+            "chibi"
+          ],
+          "description": "Original-series anime or cute chibi; explicit when character has multiple appearances"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Exact avatar.list id, as an alternative to character + avatarStyle; e.g. fate-gilgamesh-chibi"
+        },
+        "profession": {
+          "type": "string",
+          "description": "Occupation or responsibility; does not grant authority"
+        },
+        "managementRole": {
+          "type": "string",
+          "enum": [
+            "employee",
+            "manager",
+            "governor"
+          ],
+          "description": "Manager may create own-Team employees; Governor may create employees/managers across Teams; only user creates Governors"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "worker",
+            "cloud-native-worker"
+          ]
+        },
+        "workEnvironment": {
+          "type": "string",
+          "enum": [
+            "team",
+            "local"
+          ]
+        },
+        "engine": {
+          "type": "string",
+          "enum": [
+            "codex",
+            "claude",
+            "cline",
+            "pi"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "thinking": {
+          "type": "boolean"
+        },
+        "permissionMode": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "directoryMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "bind"
+          ]
+        }
+      }
+    },
     "permission": "employee.create",
     "target": "session-or-employee"
   },
   {
+    "name": "card.avatar",
+    "args": "<employee-id> [--avatar ID | --character NAME --avatar-style anime|chibi]",
+    "summary": "Set only a controlled employee appearance and its default palette; Manager own Team, Governor across Teams; discover IDs with avatar.list",
+    "gui": "员工人物形象",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "character": {
+          "type": "string"
+        },
+        "avatarStyle": {
+          "type": "string",
+          "enum": [
+            "default",
+            "anime",
+            "chibi"
+          ]
+        }
+      }
+    },
+    "permission": "employee.configure",
+    "target": "session-or-employee"
+  },
+  {
     "name": "card.update",
-    "args": "<cardId> [--title NAME] [--avatar fox] [--role ROLE]",
-    "summary": "Edit an employee display name and appearance; Team and folder stay fixed",
+    "args": "<cardId> [--title NAME] [--avatar ID | --character NAME --avatar-style STYLE] [--profession TEXT]",
+    "summary": "User-only general profile editing; supervisors use card.avatar for appearance; Team and folder stay fixed",
     "gui": "员工资料",
     "permission": "operator",
     "target": "session-or-employee"

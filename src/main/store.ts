@@ -221,6 +221,7 @@ export function removeGroup(name: string|string[]): Store {
   if (store.sessions.some(c=>names.has(c.group))) throw new Error('请先迁移或移除 Team 内的员工，再删除 Team；工作文件不会被删除')
   if(store.access?.managerTeam&&names.has(store.access.managerTeam))delete store.access.managerTeam
   store.groups = store.groups.filter(g=>!names.has(g))
+  if(store.lastEmployeeTemplate?.group&&names.has(store.lastEmployeeTemplate.group))delete store.lastEmployeeTemplate.group
   store.teamViews=store.teamViews?.map(view=>view.teams.some(team=>names.has(team))?{...view,teams:view.teams.filter(team=>!names.has(team)),viewport:undefined}:view)
   for(const name of names){
     if (store.rooms) delete store.rooms[name]
@@ -241,6 +242,7 @@ export function renameGroup(name: string, nextName: string): Store {
   const renamed=<T>(record:Record<string,T>|undefined)=>record&&Object.fromEntries(Object.entries(record).map(([key,value])=>[key===name?next:key,value]))
   if(store.access?.managerTeam===name)store.access.managerTeam=next
   store.groups=store.groups.map(group=>group===name?next:group)
+  if(store.lastEmployeeTemplate?.group===name)store.lastEmployeeTemplate.group=next
   store.teamViews=store.teamViews?.map(view=>({...view,teams:view.teams.map(team=>team===name?next:team)}))
   store.sessions=store.sessions.map(card=>card.group===name?{...card,group:next}:card)
   store.teamRoots=renamed(store.teamRoots)

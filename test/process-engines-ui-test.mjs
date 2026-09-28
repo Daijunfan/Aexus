@@ -36,11 +36,18 @@ try{
   const engineControl=page.locator('.session-settings [data-control="engine"]');assert.equal(await engineControl.evaluate(el=>el.tagName),'SPAN');await expect(engineControl).toHaveAttribute('title',/引擎创建后固定/);
   await page.getByRole('button',{name:'员工资料',exact:true}).click();await expect(page.locator('.employee-form .engine-choices')).toHaveCount(0);await expect(page.locator('.employee-engine-fixed')).toContainText('引擎创建后固定');await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);
   await page.locator('.composer textarea').fill('UNICODE_FIXTURE');await page.locator('.composer textarea').press('Enter');await expect(page.locator('.transcript')).toContainText('春')
+  if(card.engine==='cline'){
+   const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII='
+   await page.locator('.composer textarea').evaluate((element,base64)=>{const transfer=new DataTransfer();transfer.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],'screen.png',{type:'image/png'}));element.dispatchEvent(new ClipboardEvent('paste',{clipboardData:transfer,bubbles:true,cancelable:true}))},png)
+   await expect(page.locator('.attachment-chips button')).toHaveCount(1)
+   await page.locator('.composer textarea').fill('Inspect pasted screenshot');await page.locator('.composer textarea').press('Enter')
+   await expect(page.locator('.transcript')).toContainText('IMAGE_RECEIVED 1');await expect(page.locator('.attachment-chips button')).toHaveCount(0)
+  }
   if(card.engine==='pi')await expect(page.locator('[data-control="plan"]')).toHaveCount(0)
   await expect(page.locator('[data-control="effort"]')).toHaveCount(0);await expect(page.locator('.employee-clone')).toBeDisabled()
   await page.screenshot({path:out+'/'+card.engine+'-chat.png'})
   await call('view.close')
  }
  assert.deepEqual(errors,[]);assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())))
- console.log('PASS hidden UI: 4 creation-only engine choices/marks in both themes; existing engine read-only; sidebar tools have equal dimensions and gaps; Cline/Pi normalized chat, defaults and capability controls; fixture only')
+ console.log('PASS hidden UI: 4 creation-only engine choices/marks in both themes; existing engine read-only; sidebar tools have equal dimensions and gaps; Cline/Pi normalized chat, defaults and capability controls; Cline pasted screenshot sent as image data; fixture only')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

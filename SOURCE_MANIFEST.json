@@ -1,5 +1,5 @@
 {
-  "version": "0.50.3",
+  "version": "0.50.8",
   "plugins": [
     {
       "directory": "cloud-hosts",
@@ -36,7 +36,7 @@
     },
     {
       "file": "API.md",
-      "sha256": "de0674dac1944556e44623e3ee6a648490cb72752f15eb1baea2784af9bc57e5"
+      "sha256": "ca1837e96030c2088c1a2ab4b7712dea111c21caf907798114d68b00fd353172"
     },
     {
       "file": "ARCHITECTURE.md",
@@ -44,7 +44,7 @@
     },
     {
       "file": "CHANGELOG.md",
-      "sha256": "cde3c07c3c162ff2e912041f7ae9a3440724a2eb82567ab7928bc5f4e7a5061a"
+      "sha256": "dc913093d895134d5ac80cfeee95318034d966729653975c50afba567c1c5e15"
     },
     {
       "file": "CONTRIBUTING.md",
@@ -56,7 +56,7 @@
     },
     {
       "file": "ENGINE_CAPABILITIES.md",
-      "sha256": "555f8bb1f4de1426464b48aa9c9b1cd1fe6986327c4c2a74c1534d97b7790911"
+      "sha256": "3cb345698f4889e5aec284d9e6188342e4f2b34aac64cf6b0b611deed87d2709"
     },
     {
       "file": "LICENSE",
@@ -156,7 +156,7 @@
     },
     {
       "file": "PERMISSIONS.md",
-      "sha256": "824fa3e433e884e8f5b63bcf4f5d6c646650f7ec26a75038ebd6ef27ffabe95e"
+      "sha256": "ea34e4c8d8523e9a175db82c240f1797fe007566424dcd734c26003313c12554"
     },
     {
       "file": "PLUGIN_SPEC.md",
@@ -2703,8 +2703,12 @@
       "sha256": "b751942e5769eff98ff7417424ca6bbef53d29faeb2d94b654b8fb08a03ba369"
     },
     {
+      "file": "README.en.md",
+      "sha256": "ece1a765d69c99b57743d975487ea80e564e4f3b6111ea1a7253c155a288af03"
+    },
+    {
       "file": "README.md",
-      "sha256": "9f2e2dc7f71f92fee952c7634a78c2e10ba3e8b51abc03203395b5621cf09d77"
+      "sha256": "dabb6b3da9082e92b59c974e9a3c952e35c708a90f46f8a0de8b7c64bca95b43"
     },
     {
       "file": "SCHEDULER.md",
@@ -2716,7 +2720,7 @@
     },
     {
       "file": "THIRD_PARTY_NOTICES.md",
-      "sha256": "735aee3ee91ddef760648f87d0558941cfca2a3bd52d573e5dfbdb6a0924bbdf"
+      "sha256": "c7956b196611564e9b932d7208ef1f90a4fb55324eea1c0a2f4739183dca3b44"
     },
     {
       "file": "app_icon.png",
@@ -2724,7 +2728,7 @@
     },
     {
       "file": "bin/agents",
-      "sha256": "4e4d8656865df277467032dd7b5bc98a8151664f13b62c47038126d9b13b7185"
+      "sha256": "6c098aa7fb2d3cda14035b57e42330c09d7b44c5f2bfc8fbae36d96b67e5185f"
     },
     {
       "file": "bin/http-client.cjs",
@@ -2744,7 +2748,7 @@
     },
     {
       "file": "docs/ENGINE_ADAPTERS.md",
-      "sha256": "b68bac51baa4cdd2f7ca6b385a8155c980ee0a9ce2e8cfc2d9511aa88f366344"
+      "sha256": "748c6ee140607e94509e267f5fd6fef8b36a4b78e7c492d2ae636b5e3aae2b5a"
     },
     {
       "file": "docs/deploy/agents-company.service",
@@ -2756,11 +2760,11 @@
     },
     {
       "file": "docs/managers/AGENTS.md",
-      "sha256": "8415eaf3e40cea23c02982db5ead335b639176705967faf11c5f4fe5907a13e5"
+      "sha256": "c86ab72ddc69c879264161cf67dd59ce190561c5448d1c9c0bbc9a0957e1330d"
     },
     {
       "file": "docs/managers/API.md",
-      "sha256": "b8a7120a4e6a44351e28ff1304c26259746f1ed83668bb36338ba407f900cd4e"
+      "sha256": "cab87da1633bf0ed79ee7463073a4b4e68c6cc13a06ec70e1995540f3249c1dc"
     },
     {
       "file": "docs/managers/ARCHITECTURE.md",
@@ -2768,11 +2772,11 @@
     },
     {
       "file": "docs/managers/CLAUDE.md",
-      "sha256": "8415eaf3e40cea23c02982db5ead335b639176705967faf11c5f4fe5907a13e5"
+      "sha256": "c86ab72ddc69c879264161cf67dd59ce190561c5448d1c9c0bbc9a0957e1330d"
     },
     {
       "file": "docs/managers/ENGINE_CAPABILITIES.md",
-      "sha256": "555f8bb1f4de1426464b48aa9c9b1cd1fe6986327c4c2a74c1534d97b7790911"
+      "sha256": "3cb345698f4889e5aec284d9e6188342e4f2b34aac64cf6b0b611deed87d2709"
     },
     {
       "file": "docs/managers/INTRO.md",
@@ -2780,7 +2784,7 @@
     },
     {
       "file": "docs/managers/PERMISSIONS.md",
-      "sha256": "824fa3e433e884e8f5b63bcf4f5d6c646650f7ec26a75038ebd6ef27ffabe95e"
+      "sha256": "ea34e4c8d8523e9a175db82c240f1797fe007566424dcd734c26003313c12554"
     },
     {
       "file": "docs/managers/PLUGIN_SPEC.md",
@@ -2796,7 +2800,7 @@
     },
     {
       "file": "docs/managers/commands.json",
-      "sha256": "22b68fa025c99f56137b9fdcd9d6aafdd2ccbe6a31ab58dd24f5efb114f457d7"
+      "sha256": "cddbb1cc754dcc6b1d333f11ac1c85f06901229e199b0fbb12aaf07823bf9894"
     },
     {
       "file": "electron.vite.config.ts",
@@ -2852,7 +2856,7 @@
     },
     {
       "file": "licenses/release-review.json",
-      "sha256": "83538978de58952d114f84ca82f98e8800c51cbf233b7fcc97523da40e8901b0"
+      "sha256": "c326e36ecc4b782b8605bf995889a21bf20e603cfcd659bf5124ab579cbf64d1"
     },
     {
       "file": "licenses/simple-icons-CC0-1.0.txt",
@@ -2868,11 +2872,11 @@
     },
     {
       "file": "package-lock.json",
-      "sha256": "fa6a7cbe70dc5de58a87c0c246e041a61e1fcb2c6cc1710b78ce717e6a271f10"
+      "sha256": "e28505bcadf4fd3d04392d307033cafe32f9ffa0304c43b59fd9e24b656d25a1"
     },
     {
       "file": "package.json",
-      "sha256": "dc4ca4fcebcf066e258d0d1b88f04d14fb266678bcde6f4a1b503f3d34945495"
+      "sha256": "068b4640662e0a189bf18438fc23465641485e51bdf049f0fd872cb191171eb2"
     },
     {
       "file": "plugins.lock.json",
@@ -2881,6 +2885,10 @@
     {
       "file": "scripts/build-icon.mjs",
       "sha256": "544eedb1452af10c55f5e91f5685e8a9bfcf740c83e3468eb7672d08685da2e1"
+    },
+    {
+      "file": "scripts/build-pet-previews.mjs",
+      "sha256": "61a50b125ef139af65f1f1e749767eaeb36dfdcb96b9760fcba7a4d2603db6de"
     },
     {
       "file": "scripts/build-plugins.mjs",
@@ -2900,7 +2908,7 @@
     },
     {
       "file": "scripts/package-desktop.mjs",
-      "sha256": "566331776d23a0aa54a9c1ebc1611cbd453e22609ce082fc1ea12bbb6d2ec9a9"
+      "sha256": "781ca3d11781b45a3208cebb6bf0b5276fcd90b74a692fe0c1c75994f234aa50"
     },
     {
       "file": "scripts/package-server.mjs",
@@ -2916,7 +2924,7 @@
     },
     {
       "file": "scripts/run-tests.mjs",
-      "sha256": "61a1246f6ce6a5638e5de4c3855f05d1065267cb5397b3d9f3b1d83685286cb1"
+      "sha256": "6715d980723b872b91d319b299a78324a09ee04ad2956c11ca6bed98a28276c6"
     },
     {
       "file": "scripts/setup.mjs",
@@ -2952,7 +2960,7 @@
     },
     {
       "file": "src/main/authorization.ts",
-      "sha256": "bba63b995a545fae374f0b3e4ba81e84db49d28fb892084149b65cf99c110737"
+      "sha256": "277b64dafa32d2f0197001a392c6bacfcbfd092e47aa4c9924802f1a89fdbd61"
     },
     {
       "file": "src/main/claude-provider.ts",
@@ -3004,11 +3012,11 @@
     },
     {
       "file": "src/main/engine-models.ts",
-      "sha256": "3d37cf8c485d7bb0e9de78423456474a5e6a1b599d4eb804ca757eac49597436"
+      "sha256": "83a4083075b47e99090dff4a547c2c11a33acfb817b9f3e47903398bf926921e"
     },
     {
       "file": "src/main/engine-tools.ts",
-      "sha256": "5ea2cfd3c8b786d91a744a32c6eed94ee4e9122e00101682e3858d70a750e950"
+      "sha256": "6c7efbbb9c0c8a891529fb9da09124076103348951d5eae721d6989ba0377d8d"
     },
     {
       "file": "src/main/engines/claude-options.ts",
@@ -3024,11 +3032,15 @@
     },
     {
       "file": "src/main/engines/cline-client.ts",
-      "sha256": "1b5aaaafd8da227d33bd568745758cbc08f1aeeb86e5c9132102d3705f1d5448"
+      "sha256": "2a1d50d4c1f72ddcd5bcdf7433e5d5b5fa3b8ba6128535c0e17dbccd42244344"
+    },
+    {
+      "file": "src/main/engines/cline-compat.ts",
+      "sha256": "c6a822d896ba5e7948f67947902188ffbaede4c69aa9255e3aa0c186973fe3d8"
     },
     {
       "file": "src/main/engines/cline-runtime.ts",
-      "sha256": "b803d578d672b7cbe13d899978d4f631872a24505d43aa25ede54811393fe844"
+      "sha256": "710738d96ad941181a2a95085102c1cf08c1003d9671f979a42101e14b293aa8"
     },
     {
       "file": "src/main/engines/codex-runtime.ts",
@@ -3056,11 +3068,15 @@
     },
     {
       "file": "src/main/engines/pi-client.ts",
-      "sha256": "9b7f3644913df53cf4a05191f27340ad53819001054b15432932584e8c1bf04b"
+      "sha256": "37005730952893d1df9c301b7203150283cc60bc9c63edc8f9ebb12e3a7fd495"
     },
     {
       "file": "src/main/engines/pi-runtime.ts",
-      "sha256": "fe0076395bc7181c90c11103ed8867243c563028bf8a96fc6b8ebc14ab8442e4"
+      "sha256": "8fef796e8a2736a2f7380d33d0d5e864c516b84be3afbf1f10aaee7478c1566b"
+    },
+    {
+      "file": "src/main/engines/pi-tunnel.ts",
+      "sha256": "71a341f9ca531bfe08132ab3b33eb668a001c9d3ad7de42aea73acbc2d229231"
     },
     {
       "file": "src/main/engines/probe.ts",
@@ -3068,11 +3084,11 @@
     },
     {
       "file": "src/main/engines/process-probe.ts",
-      "sha256": "f7ead7e91049dd430db49352acdcdd98ecaebf0907fd9b67f4fbde71271699f7"
+      "sha256": "d3bd0a0cc96e01d49fcbe5a9513331ca35a7dbec38d0f2316d8447ddbd86debc"
     },
     {
       "file": "src/main/engines/registry.ts",
-      "sha256": "3b5620424ef9f43a2f581b66480bbe36ea1843613ab50adca176c66e057ec823"
+      "sha256": "7a33be9a9a81c8f0770968975c68411f876a136ba0220ff1694374ac77528bab"
     },
     {
       "file": "src/main/engines/runtime.ts",
@@ -3208,11 +3224,11 @@
     },
     {
       "file": "src/main/server.ts",
-      "sha256": "0feebef26bbbb0bd037478a1a4141faead49c4e17e0b1efc445b5f56c37d994c"
+      "sha256": "96d7dc7a88713183a06efbeb79dcc962e2f2a93e88ded653d7100501c6c033b3"
     },
     {
       "file": "src/main/sessions.ts",
-      "sha256": "d5ed9fe6424889da9e8238d78de751de65be07d867b522301da9fa4a1a5d6914"
+      "sha256": "fca72c37936b5e1428c04f872cf1b066f1c776b3286de63a2e0c1a0ffc6c0698"
     },
     {
       "file": "src/main/shared-directory.ts",
@@ -3220,7 +3236,7 @@
     },
     {
       "file": "src/main/store.ts",
-      "sha256": "92d2bafa57fef0fb080abfb4a8b3b793795fe845bf406e25e455ecfe078a69aa"
+      "sha256": "3e3437d2237dc725c5a5f3193370efe1abd959a5796d4596cfeeba3fa012dccb"
     },
     {
       "file": "src/main/task-view.ts",
@@ -3248,7 +3264,7 @@
     },
     {
       "file": "src/main/tunnel.ts",
-      "sha256": "7d013d6ba6cb9d9be4771edfd60c88b7bc6ee2ed0bb33459ddc070bbbf8ce300"
+      "sha256": "af1ded0fc531260374c2674b547ad0a2293ab0dd8f807754cc17ab8e138b6e79"
     },
     {
       "file": "src/main/ui.ts",
@@ -3352,7 +3368,7 @@
     },
     {
       "file": "src/renderer/src/assets/pets/README.md",
-      "sha256": "bab799b891f93c1516d57b7ce754b63a92947b4a89cf9fbe7178b50f394eb53f"
+      "sha256": "3f8d7f42320331ee4ab53ea153848ac6bad52b6f4dc244346eeca624d5626fa8"
     },
     {
       "file": "src/renderer/src/assets/pets/bsod.webp",
@@ -3377,6 +3393,350 @@
     {
       "file": "src/renderer/src/assets/pets/dewey.webp",
       "sha256": "c8350fcc0db3d33a5b4dfd0b5d8bfdb21e3c5aaf20e4f9278d48bd54a5c98d0c"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/README.md",
+      "sha256": "9f431bc21a879b1145458b4e3da138e689a6e1d22be9a161d92491bb3ddeeaaf"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-archer-anime.webp",
+      "sha256": "0d7e593827b7e3a97b30bdd6b576ae3f233f78b38ceea93e9ab7baef24c1a123"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-archer-chibi.webp",
+      "sha256": "dc0bad2deda46d88a6ae789b8703ca5d88acb5eaad7a65b42b8fa893934c2dd4"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-cu-chulainn-anime.webp",
+      "sha256": "c898adb27a70a0aca0faf472ead483e94d76cccb61d52cd3923895ab7240d201"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-cu-chulainn-chibi.webp",
+      "sha256": "28b9b05aa1235d1cde9570ad97dd5c601837358a1d7007a6bf754e64456ef7a7"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-cursed-arm-anime.webp",
+      "sha256": "c444bd642339703bca204ef9e061921854ec9d183aca983616f5633d53e33cec"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-cursed-arm-chibi.webp",
+      "sha256": "adc90f30816d1d388d768faf426684eb5cda843f0e42cd29f5f470c47c439473"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-diarmuid-anime.webp",
+      "sha256": "6062057bbf75afc9fc40966f11dfa8e2210345e82c6b83d325d46d42d9178ca8"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-diarmuid-chibi.webp",
+      "sha256": "a3ea24d8cc9bffe49fa8a2dcf29ebeeabfdf5362133a9baab95372638c4250a6"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-gilgamesh-anime.webp",
+      "sha256": "4e84d36c688205f93b16229db09c63dfc2386aef5e94388c5a1a9d0d5b59ffcb"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-gilgamesh-chibi.webp",
+      "sha256": "33e1aabf7755d5757e21947b725c2a9d26583db23a95b71e0c9d57c5cc03a35f"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-gilles-anime.webp",
+      "sha256": "a021c39006722d16c350091a4e113be3b8fb93e94604da9d1ebb78bbd0444c97"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-gilles-chibi.webp",
+      "sha256": "c2f5ad9462678dbe28c43631b3db1967aeca354820a5266330d8665e3672b43f"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-heracles-anime.webp",
+      "sha256": "a6de01ea744d4774f3cb48f80d70f1f048226a2e601c0976da2a10e8aced87b7"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-heracles-chibi.webp",
+      "sha256": "384d3b9858e8cfef0489556950c4d092875a98bb84ac56be6663693077aa1919"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-hundred-faces-anime.webp",
+      "sha256": "8ec253d5dc8679796123e4cd1a9df82b8cc5dcd75cadef7012c1e34ca9b04af8"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-hundred-faces-chibi.webp",
+      "sha256": "455e8fcdab65ed400a0c79e1a75b0529435e83e287f4e2f56b05c2e96b50ddb1"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-illya-anime.webp",
+      "sha256": "83ddf32b24cedc9989c0d9eb3781f99c6815bb9d1e5e2e79b756a87598f148c0"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-illya-chibi.webp",
+      "sha256": "cffbf184fdc6037600b2825c48a6fa43162a1d11b8a594cee34690c671510749"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-iskandar-anime.webp",
+      "sha256": "f6d76df65dcd085781dcca4674256900013d98a58a58ff29503eeb8e575665aa"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-iskandar-chibi.webp",
+      "sha256": "5f74e9fbbf7a276476b4230fd0c597acf1981edc4e8e47163a9b93f3b8e5d9ab"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-kirei-anime.webp",
+      "sha256": "d0ea3d658c182390f0d127d415f5243955ff27b5d45f31e7191ceca7c56e7c4f"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-kirei-chibi.webp",
+      "sha256": "2bb2d7864e6c8c31921be8e5bf3a1ac910104ef0e94ed843397adbcffd616325"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-kiritsugu-anime.webp",
+      "sha256": "183d6395bb3b419b77fadb54a9ea827fffa500d776f06756f5defc372e0c7136"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-kiritsugu-chibi.webp",
+      "sha256": "d5d958634a3bdf3d9ece01edbf8d3f0dfa0e1090a22b2c3e1881ff098f919136"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-lancelot-anime.webp",
+      "sha256": "b7b8151951c76bc8bab0ee0762409ad3f31a5abe8a924fbfac72faa1c28688e1"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-lancelot-chibi.webp",
+      "sha256": "2ca52b6e18ee622f06f1cd959c0e7921604475a00dc565b9eb7bc406ea8592d0"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-medea-anime.webp",
+      "sha256": "0dd2a58001f8a112608b20b00996198403866fd2861f0ff02ad71a1f3aa7cb73"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-medea-chibi.webp",
+      "sha256": "950e2c515ab560e962ffa21cd5c5f95ef2c356737db2f502ab7a7a343985259d"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-medusa-anime.webp",
+      "sha256": "68110ab8e678356f056d0e8a799c88c00d283651159b819d19d4830b26c765d9"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-medusa-chibi.webp",
+      "sha256": "1a99260897b25fed11d15d2ebb2f4ecf9e13bdc436b659c7b34d8b6da2eb1364"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-rin-anime.webp",
+      "sha256": "5eb9e93e9f7f8a086c8e1d3e961ee86b6d0ce337f3cc3e66e5f3a8d9fff9b32d"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-rin-chibi.webp",
+      "sha256": "a3bf492becbbbafb0876ca18153391edbd0a90f9c3adf96b549ccf4d90f4e6c5"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-saber-anime.webp",
+      "sha256": "f3bb8955ecb03b03d5543429d5eae7fc927f53dbc1ac8af40910fd4079558435"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-saber-chibi.webp",
+      "sha256": "6e8d5217bce381eb8b3e29adc78ead00003061b5f95aef408905ad8a49ed02cf"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-sakura-anime.webp",
+      "sha256": "631493866b66f786235996a74824ed4f7264616ce9ead96fb81a8acdc2bc02e7"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-sakura-chibi.webp",
+      "sha256": "50bfe91dbb071a1e859423f56c4df2c25cbefb7663777fd13837d98c3ea273fc"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-sasaki-anime.webp",
+      "sha256": "dc04a32aedc8e301a310b9c92078e0ff1886bbae5be5ba925d1b50b7c9f78d71"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-sasaki-chibi.webp",
+      "sha256": "a95898689344595424b809b67cd2ef1c21997248b24f6cde7b3859ea662f82ef"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-shirou-anime.webp",
+      "sha256": "a2daeead1a4691f555b126c059b31eded422ad10b2e24d52d96e08647ff9d1e4"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-shirou-chibi.webp",
+      "sha256": "0ebab8d8b3993271bae8a7539daa28628744482a7f7c4422e1c96826a6273e83"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-waver-anime.webp",
+      "sha256": "02c033573acc339435839ae0f970ea82b46acc5327e03e6f809c3f8298bad67f"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/fate-waver-chibi.webp",
+      "sha256": "4034435f95dd9c6abfe3fa549d37a84ed4fd476955b9e8ec23113b69556c2fa5"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-archer-anime.webp",
+      "sha256": "04651281f008ab929a16d9265cad8e351bc3cf605e7bd36dc945c927d02af0a7"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-archer-chibi.webp",
+      "sha256": "ac885412b81a21f3432080049370e8c7590cd8213780b8a0889fd9f547235996"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-cu-chulainn-anime.webp",
+      "sha256": "9b0459a3c271a8274b7fcf214650eb71d612c39279764c37f958189bda74ee5b"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-cu-chulainn-chibi.webp",
+      "sha256": "36f752d3d57069e539618ee33b4d5a200f723e7921e060998398d67492039e22"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-cursed-arm-anime.webp",
+      "sha256": "bebee4600577d81fa452f6aa4eb67100281609fcd24208cae85a44f035d76d91"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-cursed-arm-chibi.webp",
+      "sha256": "7961c5f6e971aab6adb81e5db7358af113395223ec799df9f8bdee1a0e8ac025"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-diarmuid-anime.webp",
+      "sha256": "981d10ed921aa818526482649c74eddb5f3dcc770dfd10172f0f179adb646755"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-diarmuid-chibi.webp",
+      "sha256": "979c3669ad8b74b34c26cfe2d507c6b6c082fa23f397e87c4a1d9753ed60a321"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-gilgamesh-anime.webp",
+      "sha256": "56da03b3b933307814b18bdaa664fa4f9f695afb79433e1c6cff1ff3952d0191"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-gilgamesh-chibi.webp",
+      "sha256": "7810b0d0c18dc513c37eab0d2414c016077711f1963e0edc2ca745c31ccc82c0"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-gilles-anime.webp",
+      "sha256": "91cdd39a769e99a564fa43e941838c63f5ed2e4f0767271bc37e989ae2031f0e"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-gilles-chibi.webp",
+      "sha256": "2aa095f2a5034f10a32937dde7ecec9d864bb2ca2b9e90d17b2f8ec3ec273478"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-heracles-anime.webp",
+      "sha256": "17f08315d071bcf19ee8583af8fa94d7ec2bc844861b3ceac7b8f145d89ba9f7"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-heracles-chibi.webp",
+      "sha256": "83834ecac207aff3fe8a0f14b0140a94f6763a94f79390b4636df0cf7d9f8b43"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-hundred-faces-anime.webp",
+      "sha256": "42415b5b6c95bd6ff54f285d998aff38088ac1c7a538f21685e45722689e8c83"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-hundred-faces-chibi.webp",
+      "sha256": "75deaeb78b9c35e13ed8b1fa5ec51a6c7f97503ad8780c5a8177ae6ed3113444"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-illya-anime.webp",
+      "sha256": "cefce21f29196dae2fbff7af540f2d6c957a2872616162815a74ba7d8f8da3e8"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-illya-chibi.webp",
+      "sha256": "95051dd07b3a2060c5c1f0b3df033e09c879595efe0c831cf63b971cbe036b88"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-iskandar-anime.webp",
+      "sha256": "26d03554ef37b3b655dc8c55aded7f2916318f22ec91aa8cab5f349642fba619"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-iskandar-chibi.webp",
+      "sha256": "707f6c94e8c68e3ac4acf89fc7eb40eb454ea1f422bae3d69fcbebc0a28015ba"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-kirei-anime.webp",
+      "sha256": "50710977ead6ab9ca1ba92fb136024c16115c4c5f8c773800601a8593898a7ae"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-kirei-chibi.webp",
+      "sha256": "831dcd8a2bddcf7bc4fe31ab7f4ba1ed34b6eaa2360189de584e145507d4ea23"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-kiritsugu-anime.webp",
+      "sha256": "41d982b1a5562aee7a714b912dc2afed2c3fa221bb3c17b5dd1ddbbffee4b44c"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-kiritsugu-chibi.webp",
+      "sha256": "e028316742cf68251238da4de3eb414d32ab92e0f44c01fa5bf456c2b53331b0"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-lancelot-anime.webp",
+      "sha256": "aa42a9da1c90ae3707ecad722c5f1a1a78318885fff2f62bf8929e8b3ed9cfd2"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-lancelot-chibi.webp",
+      "sha256": "cd99cf51bda70e20118bc26a7cd494b667ca7fb7179563730bf13dd9a854a263"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-medea-anime.webp",
+      "sha256": "41ac0c30ffb0e15dfd18f743aad663d19fcb2957baa277541362b7f913daf876"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-medea-chibi.webp",
+      "sha256": "cb4175ca23d6c0445c2f5c5b97ea3e30c859d81c07a4c8c605552716dc20fdbe"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-medusa-anime.webp",
+      "sha256": "549ad97c5d618b9eb88642f505618e3da3bc4399ce40216818cf754a880ceb27"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-medusa-chibi.webp",
+      "sha256": "442f7b8d76716b1f60552cd09bc0e2d9541f4f8169ea6143b4fd220fd84dc18a"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-rin-anime.webp",
+      "sha256": "2a7cd810c14fc3c7d946859abf2eb24bb7523a45d69757769f4effefe13023d8"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-rin-chibi.webp",
+      "sha256": "4517ca495ef38e1997200ca2d345e3a9f1fe9aa4606898d467636d62cc69e801"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-saber-anime.webp",
+      "sha256": "9ad8e366f1f9e6205c776c7d3fa1530e67926e2ac89e3c09ad9f7dcdc3205048"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-saber-chibi.webp",
+      "sha256": "a9f13efac04503d1823ec18f25ca11897b4d90534d30f981aa532b3ce83353c1"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-sakura-anime.webp",
+      "sha256": "704d7a0763789b71483acd09a3a9667bc684606f33f1a40b9241d89893cfe2e4"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-sakura-chibi.webp",
+      "sha256": "5c266a7e832897e0585e11256bba97e7da6e4bab5373d8649659e2a066cf4fde"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-sasaki-anime.webp",
+      "sha256": "5f1e030e939ed15be902beebd0f5686694e64665976b6d454e7d4eccaea80de2"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-sasaki-chibi.webp",
+      "sha256": "bd25b8d8b7b8caf48e88bb4d7e163cc745f98236decd96ff1a2c2f31716fb8f2"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-shirou-anime.webp",
+      "sha256": "a4fdd751c04eb39949b0fd2b287ff2d30261ed968299d4b4461208c58871eee8"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-shirou-chibi.webp",
+      "sha256": "a023cd05e0f317b53a2a1576e4714ba94604e285b3b4ea9916aa6bb481b5bb11"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-waver-anime.webp",
+      "sha256": "6abe23ce48b4594cd4bd83b8e17c8e864fa01ca1189d4e7e2a8e211987f517e7"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/previews/fate-waver-chibi.webp",
+      "sha256": "ee7e04dbfc7e9d0b876e96912ed500ac6acc007f7a6cb83b49754a5f23c9130b"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/fate/sources.json",
+      "sha256": "2741d1b5308594ba47c75994068326c2daeafcaa871a4e25dbb1a25637952851"
     },
     {
       "file": "src/renderer/src/assets/pets/fireball.webp",
@@ -3409,6 +3769,66 @@
     {
       "file": "src/renderer/src/assets/pets/null-signal.webp",
       "sha256": "326278fe5e42297f31672d5a70e7a726091ca787cd3eb6c49b9da28d910c0ae6"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/bsod.webp",
+      "sha256": "9b49668c609669249c44964a0f0cc23cdccdefcf64ef95a0f542461d86c6c609"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/byte.webp",
+      "sha256": "1481edf06adab4b9dd051dce9b8c756e92abcd11f0f57cf02fb574ce6164ce7e"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/codex.webp",
+      "sha256": "03b3e0ff83f25e1e48d2d72c41a73eb8c5bc45066c106aba96090111eb3f9443"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/dewey.webp",
+      "sha256": "24423af2180319f1eade3d4698c1ebb19570778797a69c6feb1720a19551a659"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/fireball.webp",
+      "sha256": "2bc9988c03e1e1435914237643fd1ddef439c246da4aa1338aaeb2e2dd47ec55"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/hoots.webp",
+      "sha256": "a5e2834dddc3b763260f5dda33d88332c753f7db869f3195f3fd85220469ffbd"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/inky.webp",
+      "sha256": "26be197dd54db46a2687b8cdb9520fbe4d5e94394fa90a161863b26b6b633932"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/marmalade.webp",
+      "sha256": "40797b19ad56b56b55f4e30f9e5429187a410fe93726ca2a91503d6122e659b0"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/null-signal.webp",
+      "sha256": "0b9f46154d04a56b61893b3cb09b0b441d210fb33b7927db6270092cba935137"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/rocky.webp",
+      "sha256": "9a68e4ccc8eb161d722e2303b04174c913d438d6508a844740d05af7151b2860"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/seedy.webp",
+      "sha256": "2bafa4aee267705ea54fc9608c2c43bfbedbdb5194c09e6927d8fe8cafff78fd"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/stacky.webp",
+      "sha256": "1072a1ef76c9e03397508fd9f47ffac51ceeea02d6460bb35b59568839c9e148"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/voltcoin.webp",
+      "sha256": "ef3be8ec39496da8a8e856192e7478119c905cbd4d712edc167da3f2d9d8a9fb"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/wondercube.webp",
+      "sha256": "f03c998e3e1d13761acaac1b765bedeede4005b96fdcc388f162a3e7e2f98e26"
+    },
+    {
+      "file": "src/renderer/src/assets/pets/previews/woodi.webp",
+      "sha256": "3996c5f7db77ed50f8fa3c8decd7146facae462ac29972a18c63009d6a3a6bb5"
     },
     {
       "file": "src/renderer/src/assets/pets/rocky.webp",
@@ -3456,7 +3876,7 @@
     },
     {
       "file": "src/renderer/src/chat/Chat.tsx",
-      "sha256": "fcbe105a09914b6efeca1b302d314fa9293ebbd418b84ebad4b9b0925848057a"
+      "sha256": "98cebb14d326c91783b6b94d5c3f2b6e2e7395fc3af1716fcecd22f55e62e08d"
     },
     {
       "file": "src/renderer/src/chat/useReplyRead.ts",
@@ -3468,7 +3888,7 @@
     },
     {
       "file": "src/renderer/src/components/AppSelect.tsx",
-      "sha256": "a6545b442f1fcb091b916c2cbef237cd636ef7e4c379f97ea98ea8c95fe670b4"
+      "sha256": "6830c015c36e01e4b5b21e848dad1eba52871b7d0d14852c253555545c7bc38b"
     },
     {
       "file": "src/renderer/src/components/CloneEmployeeForm.tsx",
@@ -3512,7 +3932,7 @@
     },
     {
       "file": "src/renderer/src/components/HomeView.tsx",
-      "sha256": "7296178becb14fe5adc620c313cc8a31ea3d3cb7e9289f757087d89938c22b2e"
+      "sha256": "a87f420c5bb117ff7d2f443830a1a8fdfc1234f483ae48320ff762b24e1e4fb8"
     },
     {
       "file": "src/renderer/src/components/Icon.tsx",
@@ -3603,20 +4023,24 @@
       "sha256": "65129dbb8d8769d75dd96ff9f2e4cc920a7980fbb204bad8f329f3ff3053084b"
     },
     {
+      "file": "src/renderer/src/office/FatePet.tsx",
+      "sha256": "72ba5bf17c5d284952ca8579099e742c6e0fc55788e7bb4e3461d5d013929b80"
+    },
+    {
       "file": "src/renderer/src/office/Furniture.tsx",
       "sha256": "e05051ae9196fc2a6feff058adbdb3d81aaaaefaf4b18d416e21bab9ccf6c6ab"
     },
     {
       "file": "src/renderer/src/office/Mascot.tsx",
-      "sha256": "cc3d03ebd4be6f8750701d9658ad161018543a97673f6b48ec2e85775aed3bd8"
+      "sha256": "681988c6dbfd0ebb9855fdb6d0ce07454eb0c5a8d1c2ca0bb5977d048bff7f0e"
     },
     {
       "file": "src/renderer/src/office/OfficeCanvas.tsx",
-      "sha256": "4c060daa1df61eb4c9c6960e91b11897c2bb47593025218ac494e3935f91c858"
+      "sha256": "6786a398bcff80e4f32cb02ee94d22f3fbdd88c5e2f655a6d4f56cfcdfbe018c"
     },
     {
       "file": "src/renderer/src/office/OfficeForms.tsx",
-      "sha256": "7e14e595bd977829c288b18da83e3ef1942499d381b1fe8cd8def0458d80380e"
+      "sha256": "f4b203e52fcc30f91066863047a6b99c69836eb453f91519ed87a0faaaaba4f8"
     },
     {
       "file": "src/renderer/src/office/PolygonEditor.tsx",
@@ -3628,7 +4052,7 @@
     },
     {
       "file": "src/renderer/src/office/SpritePet.tsx",
-      "sha256": "64c1530f3a4f5be9a1ad84cd48bf7c8706b635112c3fc3ffae99c799126ac8de"
+      "sha256": "3f0656b6a0c8c34bf847d46327a04991915e946c8a60ca31ddc1a5a37a815029"
     },
     {
       "file": "src/renderer/src/office/TeamOSIcon.tsx",
@@ -3639,8 +4063,12 @@
       "sha256": "f61083e3db665a255e046bbebc500c47dc9d27b1c788c81a1569038dc9e04449"
     },
     {
+      "file": "src/renderer/src/office/routing-cache.ts",
+      "sha256": "52df2f602375b04b88172ee6dbb617a738b34d02fbf03d309a4947a07e66251f"
+    },
+    {
       "file": "src/renderer/src/office/useDialogFocus.ts",
-      "sha256": "1e2d3e655565b4a992392c2c5a89710f0d22de035e97ed435868a9263d35ee90"
+      "sha256": "a870654bcad510674d6e11a167702235676a64eb265db48131ab0f6612a961ac"
     },
     {
       "file": "src/renderer/src/office/usePetBehavior.ts",
@@ -3672,7 +4100,7 @@
     },
     {
       "file": "src/renderer/src/styles/panels.css",
-      "sha256": "1f4031632792e3a0be4d8937e5ac17f6871d862724db486e57fae6c2ad1570bd"
+      "sha256": "3ac08d2c43e9cffcdf6466f946c42f9a356532084a89c6ed144ff56c1fb0c3f9"
     },
     {
       "file": "src/renderer/src/styles/pets.css",
@@ -3732,7 +4160,11 @@
     },
     {
       "file": "src/shared/api-registry.ts",
-      "sha256": "465aa9c08224c58a870c5682c5b35caea407e958339ec88e9fa13ae4adf50f3e"
+      "sha256": "a90f1f222e26dc8444a1cc4fc5e07e7ca5459567a50b7be276705ad94a30bd2f"
+    },
+    {
+      "file": "src/shared/avatars.ts",
+      "sha256": "7eb74a03b5c21c74cc7e7f5f20e50308fb1c0c22e5cfed56188857fb000088ed"
     },
     {
       "file": "src/shared/canvas.ts",
@@ -3756,7 +4188,7 @@
     },
     {
       "file": "src/shared/engines.ts",
-      "sha256": "19ab3735dac576c0f81113d56f2934c8e6280f113713d89ea03cfb2a809f747f"
+      "sha256": "299cfc584ca21598de7becc978c4d116489ad21e4b18bdf7c363988b9169e645"
     },
     {
       "file": "src/shared/management-layout.ts",
@@ -3780,7 +4212,7 @@
     },
     {
       "file": "src/shared/office.ts",
-      "sha256": "e0f381a7655eb53845d036117232bc1a945e82b5e361f78e06bcff0d61f492b6"
+      "sha256": "4c568fd929bd7027175033dcda3dcd2c3507d4dbe374c2e0bf28bfbdc600ad47"
     },
     {
       "file": "src/shared/plugin-windows.ts",
@@ -3796,7 +4228,7 @@
     },
     {
       "file": "src/shared/protocol.ts",
-      "sha256": "c2856a1137948b197e5fdeafd3b07afb0e2e11f1466054837d7f872b3bd404d2"
+      "sha256": "874c2dd6450125f6c2d342c28d5a3a5eb6ad4b89b16e5080336e543250cd4bf2"
     },
     {
       "file": "src/shared/remote.ts",
@@ -3828,7 +4260,7 @@
     },
     {
       "file": "src/shared/types.ts",
-      "sha256": "bda4b8d81ccad0b739269caa24915cabe69038d3c6f290a56aa668c5adf6373d"
+      "sha256": "c7161f46c912e967c40db778386e6eda6d07ca660663d33e5db8e1e5a06e7e09"
     },
     {
       "file": "src/shared/view.ts",
@@ -3845,6 +4277,14 @@
     {
       "file": "test/approval-stream-test.mjs",
       "sha256": "54b3bd4fa5b8210d638a6e3519d04db548304becfed733c1eb081c37cec5f8a1"
+    },
+    {
+      "file": "test/avatar-api-live-test.mjs",
+      "sha256": "464d7eae869e8cf094fe43ef94018b7bae08b027a1988f6b8742a141ee1a23ad"
+    },
+    {
+      "file": "test/avatar-api-test.mjs",
+      "sha256": "daefadf0209b665b238cea93d7e63fc9b41ff50b372811dcb8253c45da542fca"
     },
     {
       "file": "test/bulk-edit-ui-test.mjs",
@@ -3889,6 +4329,10 @@
     {
       "file": "test/cloud-context-live-test.mjs",
       "sha256": "55ccd7a14930017bfd7492cfd66c1c62d67715f39f54be8db811e60cb35baf5d"
+    },
+    {
+      "file": "test/cloud-engine-form-ui-test.mjs",
+      "sha256": "9f427e8316c5e2cb00e166ad51784844dea802c94fb03d8337a952d5c8e8ed56"
     },
     {
       "file": "test/cloud-hook-runtime-test.mjs",
@@ -4063,6 +4507,10 @@
       "sha256": "51a8818ed1cf63105e0f3c051bee6f76eeb640e039fae419ae33d3b525175734"
     },
     {
+      "file": "test/employee-team-selection-ui-test.mjs",
+      "sha256": "2c4af8ee4d7f082a7cff1d3d041d847cd5684fff0f33c388074b76887ff2e6b1"
+    },
+    {
       "file": "test/engine-controls-test.mjs",
       "sha256": "da68e98e767bcd1bafb128f14b76fcb5d735441685b115d18ce65b9b90273562"
     },
@@ -4083,6 +4531,10 @@
       "sha256": "341e6d00f014b430f8d77b44fadcadd4952dad9b82bf07a5cf058945e0dd344f"
     },
     {
+      "file": "test/fate-avatars-ui-test.mjs",
+      "sha256": "790a94c0efd4d0185a70a4fd7d1f6a8af056cb5d8cb023e2d89fc66903820162"
+    },
+    {
       "file": "test/fixtures/cloud-workbench.mjs",
       "sha256": "407cd808547470c06a8d0d87411504f6d1bf6dd1deb96bcf42caa29d79f6a415"
     },
@@ -4099,8 +4551,12 @@
       "sha256": "46c30a0e3cd9638fb490f1e28469c6f826051d30b8ad3c638fd5f5d40ddde2c0"
     },
     {
+      "file": "test/fixtures/navigation-scene.json",
+      "sha256": "236d62805e6cd2bba70095b6c0db1774ee8a376e3a3b1bae0a82b2935ef4c37d"
+    },
+    {
       "file": "test/fixtures/process-adapter.cjs",
-      "sha256": "459fe03d20f2887c1d03f9a26c691ff64763610a7d40022a838959ad27920d8d"
+      "sha256": "c0fb93ffdaac6eaec5b249366264ba44eb9776a0ae9dba53b944ff7cef471cb1"
     },
     {
       "file": "test/governor-cloud-acceptance-live-test.mjs",
@@ -4255,6 +4711,14 @@
       "sha256": "27c75ca86e72da3366ef051c8dfe1ccfac602c8d9c53f49a9251866af9ed390f"
     },
     {
+      "file": "test/navigation-performance-test.mjs",
+      "sha256": "0b7e85c610b4fe5a2bd3a5ab183f396796746cd2e092645a4127c43b28ec20da"
+    },
+    {
+      "file": "test/navigation-rendering-test.mjs",
+      "sha256": "97765739025669276660ccd7ca7bedff1ce5735d2e5396ae39a7beb4bb1a12b8"
+    },
+    {
       "file": "test/navigation-ui-test.mjs",
       "sha256": "6093a6e3004da2b85410809939817e8386141fd8b2036339ad7e01d73d038d69"
     },
@@ -4276,7 +4740,7 @@
     },
     {
       "file": "test/packaged-desktop-smoke-test.mjs",
-      "sha256": "e305d853c36d77b24a3d8454b5bd9c3e882d43f0e3ed77c3691f7eaf583b58a8"
+      "sha256": "b0ee758a975a1af37cb2f39d305a88c908f1e276770e3a28f342b9b0bc51ea99"
     },
     {
       "file": "test/performance-core-test.mjs",
@@ -4288,7 +4752,7 @@
     },
     {
       "file": "test/pet-catalog-ui-test.mjs",
-      "sha256": "90bee7c0ea0061c8cd757918b709825b507f308f3d482553498abbefef90cfe7"
+      "sha256": "5a3438817d322ec5cca32a88b812294c26468c935372f547665359b2445520a7"
     },
     {
       "file": "test/platform-smoke-test.mjs",
@@ -4327,12 +4791,28 @@
       "sha256": "35982b555fb020324134fa01f98a6f66b27d88c54cb36c7aab3517f0fb633c1e"
     },
     {
+      "file": "test/process-cloud-test.mjs",
+      "sha256": "d534fb53335ca95a0ed75b00b8abcc64af7997c84361a84a4b7e2fba10ec1839"
+    },
+    {
+      "file": "test/process-engines-native-test.mjs",
+      "sha256": "64c7532e4ec6db652d0b7b6c1a969334bde396ffa76bba1d30baf8ab7a72ca89"
+    },
+    {
       "file": "test/process-engines-test.mjs",
       "sha256": "90f5c3659985cc857d7754ec07290813ce5301a66f5a8ebedfc7e01620b580e4"
     },
     {
       "file": "test/process-engines-ui-test.mjs",
-      "sha256": "f38ca32d69a8133b44ab037e6df7b0d1ee65e20eea7115c0ce0c270252582db1"
+      "sha256": "e67d44c28ffaede5bd73a308d3eecac9db43e3bdd9b2211ed3287198cb4e8378"
+    },
+    {
+      "file": "test/process-images-test.mjs",
+      "sha256": "74a0ee4656d789baa7e209a000a5dad6599072d2406003dca5dfd4756d1df7a0"
+    },
+    {
+      "file": "test/process-transport-test.mjs",
+      "sha256": "a23d99b15598be879e2d2657b26ed39ac83478e5904baf47fd33557ac552764c"
     },
     {
       "file": "test/release-foundation-test.mjs",
@@ -4344,7 +4824,7 @@
     },
     {
       "file": "test/remote-employee-cli-test.mjs",
-      "sha256": "d88b1b4e174408baea3e33471e02d6cdf084cdcdb64169e852b3122b8a9720fb"
+      "sha256": "ba6a74d52c3a7eab8322505e57edbf0dc9bf257bf9956cdff85be80022cb7b86"
     },
     {
       "file": "test/remote-terminal-test.mjs",

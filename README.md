@@ -1,5 +1,7 @@
 # Agents Company
 
+[简体中文](README.md) · [English](README.en.md)
+
 **把散落在终端、聊天窗口和远程主机上的 AI，组织成一个能协作的团队。**
 
 给 Governor 一句话，由 Manager 分工，让员工在各自的项目目录里执行。谁在工作、谁在沟通、结果放在哪里，都在同一个界面里。
@@ -27,8 +29,24 @@
 | 任务与记录 | 排队、定时任务、审批、历史会话和未读回复 |
 | 桌面与浏览器 | Electron 桌面和浏览器使用同一个 React 界面、同一个 Node Core |
 | CLI 优先 | 团队、员工、引擎、主机、文件和插件操作均有公开 CLI / Core API |
+| 动画角色 | Fate 圣杯战争英灵与主要御主，两种风格自由选择；通过 API 指定人物、画风和职业 |
 
 连线表示创建来源和实际交互，**权限由职级决定**。没有创建来源线，也能操作权限范围内的员工。Governor 的创建、删除和职位变更由用户控制。
+
+## 新增：圣杯战争角色
+
+来自 **Fate/stay night** 和 **Fate/Zero** 的 14 位英灵，以及卫宫士郎、远坂凛、间桐樱、伊莉雅、卫宫切嗣、言峰绮礼和韦伯 7 位主要御主，加入同一个角色列表。每位角色都有 **原作风格** 与 **可爱版** 两种形象，共 **42 款 Fate 形象**，包括 Saber、Archer 和吉尔伽美什。
+
+角色会随员工的真实工作、通信和休息状态播放动画。它们是新绘制的同人角色素材；[素材来源与说明](src/renderer/src/assets/pets/fate/README.md)记录了画风、帧布局和来源。
+
+Manager 和 Governor 都能查询完整目录并准确指定形象，避免出现“名字是英雄王、外形却是老虎”的情况：
+
+```sh
+agents avatar list --query "英雄王" --style chibi --json
+agents card create --title "英雄王可爱版" --group "Your Team" --character "吉尔伽美什" --avatar-style chibi --profession "代码审查" --management-role employee --engine claude --model deepseek-flash --thinking off --json
+```
+
+`character` 选择人物，`avatarStyle` 选择画风，`profession` 描述职业，`managementRole` 决定管理职级。Manager 创建本团队 Employee；Governor 可跨团队创建 Employee 和 Manager。创建表单只显示当前视图内的团队，切到 All Team 可选择全部团队。
 
 ## Coding Agent 引擎
 
@@ -36,12 +54,12 @@
 | --- | --- | --- |
 | Codex | 官方 App Server 协议 | Core 本地与已支持的 SSH / 云端原生工作区 |
 | Claude Code | Claude Agent SDK | Core 本地与已支持的 SSH / 云端原生工作区 |
-| Cline | 官方 CLI 的 ACP 协议 | Core 本地 Build 工作区 |
-| Pi | 官方 Coding Agent 的 RPC 协议 | Core 本地 Build 工作区 |
+| Cline | 官方 CLI 的 ACP 协议 | Core 本地 Build，以及通过 Tunnel 操作 Cloud Team 工作区 |
+| Pi | 官方 Coding Agent 的 RPC 协议 | Core 本地 Build，以及通过 Tunnel 操作 Cloud Team 工作区 |
 
-Cline、Pi 以及配置 DeepSeek 的 Claude Code 默认使用 **DeepSeek Flash，关闭思考**。Cline/Pi 已接入真实消息流、工具审批、任务队列、取消和原生会话恢复；目前只接收文本输入。模型与能力详情见 [引擎适配文档](docs/ENGINE_ADAPTERS.md)。
+Cline、Pi 以及配置 DeepSeek 的 Claude Code 默认使用 **DeepSeek Flash，关闭思考**。Cline/Pi 已接入真实消息流、工具审批、任务队列、取消和原生会话恢复；Cline Flash 支持图片输入，Pi 当前只接收文本。模型与能力详情见 [引擎适配文档](docs/ENGINE_ADAPTERS.md)。
 
-Cloud Team 中使用本地工作区的 Manager 可以选择 Cline/Pi，通过公司 API 指挥云端员工；这不代表 Cline/Pi 已支持云端原生执行。封面为本地 Mac 上四种引擎共同参与的实机画面。
+Cloud Team 中的 Cline/Pi 员工可以由 Core 本地引擎通过 Tunnel 操作远端工作区；使用本地工作区的 Manager 也能通过公司 API 指挥云端员工。Cline/Pi 暂不支持云端原生执行或插件工作区。封面为本地 Mac 上四种引擎共同参与的实机画面。
 
 **员工引擎在创建时确定，创建后不可切换。** 需要另一种引擎时，删除该员工后重新添加；同一引擎内仍可调整模型及其支持的运行设置。
 

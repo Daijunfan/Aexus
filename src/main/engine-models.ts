@@ -20,8 +20,8 @@ export function defaultEmployeeModel(engine:Engine,kind:EmployeeKind='worker'){
 /** Discover models without creating an employee or sending an inference turn. */
 export async function engineModels(engine:Engine,kind:EmployeeKind='worker',team?:string){
   if(!isEngine(engine))throw Error('请选择有效的 Coding Agent')
-  if(engine==='cline'||engine==='pi'){if(kind==='cloud-native-worker')throw Error('This engine currently supports Core-host local workspaces');return {models:(await (engine==='cline'?discoverCline():discoverPi())).models,defaultModel:defaultEmployeeModel(engine)}}
   if(!['worker','cloud-native-worker'].includes(kind))throw Error('Unknown employee kind')
+  if(engine==='cline'||engine==='pi'){if(kind==='cloud-native-worker')throw Error('Use kind:worker for Cline/Pi cloud workspaces through Tunnel; cloud-native execution is not supported');return {models:(await (engine==='cline'?discoverCline():discoverPi())).models,defaultModel:defaultEmployeeModel(engine)}}
   const store=readStore(),config=team?teamSettings(store,team):undefined
   if(kind==='cloud-native-worker'&&(!team||!store.groups.includes(team)||config?.mode!=='cloud'||!config.remote))throw Error('请先选择已绑定云主机的 Cloud Team')
   const remote=kind==='cloud-native-worker'?config!.remote:undefined

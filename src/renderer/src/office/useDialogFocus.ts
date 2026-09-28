@@ -8,7 +8,9 @@ export function useDialogFocus(selector: string, open: boolean) {
     const dialog = document.querySelector<HTMLElement>(selector)
     const focusable = () => [...(dialog?.querySelectorAll<HTMLElement>('button, input, select, textarea, iframe, [tabindex="0"]') ?? [])]
       .filter((el) => !el.hasAttribute('disabled') && el.getBoundingClientRect().height > 0)
-    focusable()[0]?.focus({ preventScroll: true })
+    // Locate only the initial focus target; avoid measuring every form control.
+    const first=[...(dialog?.querySelectorAll<HTMLElement>('button, input, select, textarea, iframe, [tabindex="0"]')??[])].find(el=>!el.hasAttribute('disabled')&&el.getBoundingClientRect().height>0)
+    first?.focus({ preventScroll: true })
     const key = (event: KeyboardEvent) => {
       if (event.key !== 'Tab'||(event.target as HTMLElement)?.closest('.xterm')) return
       const items = focusable()
