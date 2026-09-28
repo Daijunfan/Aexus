@@ -7,7 +7,7 @@ export function usePetBehavior(seed: string, working: boolean, dragging: boolean
   const animated=useContext(CanvasMotion)
   const previous=useRef({working,dragging,hovered})
   useEffect(()=>{
-    if(!animated)return
+    if(!animated){setPose(dragging||hovered?'pickup':working?'type':'sleep');previous.current={working,dragging,hovered};return}
     if(dragging||hovered) { setPose('pickup'); previous.current={working,dragging,hovered}; return }
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if(reduced) { setPose(working?'type':'sleep'); previous.current={working,dragging,hovered}; return }

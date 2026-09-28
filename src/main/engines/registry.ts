@@ -33,6 +33,7 @@ export async function checkEngine(engine:EngineId,options:{team?:string;force?:b
     const result:EngineHealth={engine,label:definition.label,target:options.team??os.hostname(),installed:false,protocol:'unchecked',authentication:'unknown',ready:false,checkedAt:Date.now(),managed:!!configuration.managedPath,hasApiKey:publicEngineConfiguration(engine).hasApiKey,capabilities:{...definition.capabilities}}
     try{
       if(options.team){
+        if(engine==='cline'||engine==='pi')throw Error('This engine currently supports Core-host local workspaces')
         const remote=await checkCloudNative(options.team,engine)
         Object.assign(result,{installed:true,protocol:'compatible',authentication:remote.authentication,target:remote.host,version:remote.version,ready:remote.authentication==='configured'})
       }else{
@@ -40,7 +41,10 @@ export async function checkEngine(engine:EngineId,options:{team?:string;force?:b
         const version=await command(engine,['--version'])
         if(version.code!==0)throw Error(version.stderr||version.stdout||'CLI 不可执行')
         result.installed=true;result.version=(version.stdout||version.stderr).split('\n')[0]
-        if(engine==='codex'){
+        if(engine==='cline'||engine==='pi'){
+          const discovery=engine==='cline'?await import('./cline-runtime').then(m=>m.discoverCline()):await import('./pi-runtime').then(m=>m.discoverPi())
+          result.version=discovery.version??result.version;result.protocol='compatible';result.authentication=result.hasApiKey?'configured':'not-signed-in';result.ready=result.hasApiKey;return result
+        }else if(engine==='codex'){
           const {withCodexSessionApi}=await import('../native-sessions')
           await withCodexSessionApi(call=>call('model/list',{limit:1}))
         }else{

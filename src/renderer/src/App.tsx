@@ -1,3 +1,4 @@
+import {ENGINE_DEFINITIONS} from '../../shared/engines'
 import {retainEqual,createRefreshQueue} from './snapshot'
 import {rolePolicy} from '../../shared/roles'
 import {employeeReady} from '../../shared/types'
@@ -179,7 +180,7 @@ export default function App() {
     { value: 'default', label: 'Read only', hint: 'Inspect files; no file changes' },
     { value: 'acceptEdits', label: 'Workspace write', hint: 'Allow edits within this workspace' },
     { value: 'bypassPermissions', label: 'Full access', hint: 'Run without sandbox restrictions' }
-  ] : PERMISSION_MODES
+  ] : PERMISSION_MODES.filter(p=>!active||!['cline','pi'].includes(active.engine)||p.value!=='auto'&&(p.value!=='plan'||active.engine==='cline'))
   const model=active?activeModel(active.models,active.model):undefined
   const efforts=active?modelEfforts(active.engine,model):[]
   const fastAvailable=active?supportsFast(active.engine,model):false
@@ -200,7 +201,7 @@ export default function App() {
           <span className="session-heading"><EngineMark engine={active.engine} size={20} /><SessionTitle title={employee?.title??active.title}/><small className="execution-badge" title={employee?.remote?.host}>{employee?.kind==='cloud-native-worker'?'Cloud Native Worker':'Local Worker'}</small></span>
           <button className="employee-details" hidden={editingEmployee} onClick={() => setEditingEmployee(true)}>员工资料</button>
           <button className="engine-tools-open" disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}>工具与额度</button>
-          <button className="employee-clone" disabled={active.busy||!!active.approvals?.length||!!active.pendingMessages?.length} onClick={()=>void act('view.open',{kind:'clone',employee:employee?.id??active.cardId})}>克隆员工</button>
+          <button className="employee-clone" disabled={!ENGINE_DEFINITIONS[active.engine].capabilities.clone||active.busy||!!active.approvals?.length||!!active.pendingMessages?.length} onClick={()=>void act('view.open',{kind:'clone',employee:employee?.id??active.cardId})}>克隆员工</button>
           <span className="session-state"><i className={active.busy?'working':employee?.kind==='cloud-native-worker'&&active.error?'disconnected':''} />{active.busy?'工作中':employee?.kind==='cloud-native-worker'&&active.error?'连接／执行失败':'休息中'}</span>
           <button className="close-session" disabled={!employee} onClick={()=>setDeletingEmployee(employee!.id)} title="删除员工及关联会话">删除会话</button>
         </header>
@@ -217,7 +218,7 @@ export default function App() {
         }} onBound={async saved=>{await refresh();setEditingEmployee(false);await openCard(saved)}} /></div> : <div className="employee-workbench"><FileWorkspace explorerWidth={store.preferences?.explorerWidth} onAttachImage={attachImage} key={'files-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
         {openError&&<div className="conversation-repair" role="alert"><span>{openError}</span><button onClick={()=>setEditingEmployee(true)}>配置工作目录</button>{!employee?.workspaceError&&<button onClick={()=>employee&&void openCard(employee)}>重试连接</button>}</div>}
         {liveActive?<div className="session-settings controls">
-          <Dropdown control="engine" open={menu==='engine'} onToggle={()=>setMenu(menu==='engine'?null:'engine')} onClose={()=>setMenu(null)} label={active.engine==='codex'?'Codex':'Claude Agent'} width={200}>{(['codex','claude'] as const).map(engine=><button className={`menu-item ${engine===active.engine?'sel':''}`} key={engine} disabled={active.busy} onClick={async()=>{setMenu(null);const card=await act('config.engine',{id:employee?.id??active.id,engine});if(card)await openCard(card)}}>{engine==='codex'?'Codex':'Claude Agent'}</button>)}</Dropdown>
+          <span className="engine-readonly" data-control="engine" title="引擎创建后固定；如需更换，请删除员工后重新添加">{ENGINE_DEFINITIONS[active.engine].label}</span>
           <Dropdown control="model" open={menu === 'model'} onToggle={() => setMenu(menu === 'model' ? null : 'model')} onClose={() => setMenu(null)} label={modelLabel} width={330}>
             {active.models.map((m) => <button className={`menu-item col ${m.value === active.model ? 'sel' : ''}`} key={m.value} disabled={active.busy} onClick={() => { setMenu(null); void configure('config.model', { model: m.value }) }}><span className="menu-name">{m.value === active.model ? '✓ ' : ''}{m.displayName}</span><span className="menu-desc">{m.description||m.value}</span></button>)}
             {!active.models.length && <div className="menu-item">Loading models…</div>}
@@ -225,12 +226,13 @@ export default function App() {
           {work||employee?.remote&&employee.kind!=='cloud-native-worker'?<span className="work-permission" title={active.cwd}>{employee?.remote?`SSH · ${employee.remote.host}`:'Work · 当前目录及子目录'}</span>:<Dropdown control="perm" open={menu === 'perm'} onToggle={() => setMenu(menu === 'perm' ? null : 'perm')} onClose={() => setMenu(null)} label={permissions.find((p) => p.value === active.permissionMode)?.label ?? active.permissionMode} width={310}>
             {permissions.map((p) => <button key={p.value} className={`menu-item col ${p.value === active.permissionMode ? 'sel' : ''}`} onClick={() => { setMenu(null); void configure('config.permission', { mode: p.value }) }}><span className="menu-name">{p.label}</span><span className="menu-desc">{p.hint}</span></button>)}
           </Dropdown>}
-          <Dropdown control="effort" open={menu === 'effort'} onToggle={() => setMenu(menu === 'effort' ? null : 'effort')} onClose={() => setMenu(null)} label={`思考 · ${active.effort ?? 'Default'}`} width={190}>
+          {ENGINE_DEFINITIONS[active.engine].capabilities.effort&&<Dropdown control="effort" open={menu === 'effort'} onToggle={() => setMenu(menu === 'effort' ? null : 'effort')} onClose={() => setMenu(null)} label={`思考 · ${active.effort ?? 'Default'}`} width={190}>
             <button className="menu-item" onClick={() => { setMenu(null); void configure('config.effort', { effort: 'default' }) }}>Default</button>
             {efforts.map(value=><button key={value} className={`menu-item ${value===active.effort?'sel':''}`} onClick={()=>{setMenu(null);void configure('config.effort',{effort:value})}}>{value}</button>)}
-          </Dropdown>
+          </Dropdown>}
+          {(active.engine==='cline'||active.engine==='pi')&&<span className="work-permission">Thinking off</span>}
           {active.engine==='claude'&&<button className={`toggle ${active.thinking?'on':''}`} disabled={active.busy||!active.thinkingSupported} onClick={()=>void configure('config.thinking',{enabled:!active.thinking})}>Thinking {active.thinking?'on':'off'}</button>}
-          <button className={`toggle ${active.planMode?'on':''}`} data-control="plan" aria-pressed={!!active.planMode} disabled={active.busy} onClick={()=>void configure('config.plan',{enabled:!active.planMode})}>{active.planMode?'计划模式':'执行模式'}</button>
+          {ENGINE_DEFINITIONS[active.engine].capabilities.plan&&<button className={`toggle ${active.planMode?'on':''}`} data-control="plan" aria-pressed={!!active.planMode} disabled={active.busy} onClick={()=>void configure('config.plan',{enabled:!active.planMode})}>{active.planMode?'计划模式':'执行模式'}</button>}
           {employee?.remote&&employee.kind!=='cloud-native-worker'&&active.engine==='codex'&&<button className={`toggle ${active.remoteAdmin?'on':''}`} data-control="remote-admin" aria-pressed={!!active.remoteAdmin} disabled={active.busy} title="仅在远端使用 SSH 用户权限访问硬件和管理服务；不会授权本机执行" onClick={()=>void configure('config.remote-admin',{enabled:!active.remoteAdmin})}>{active.remoteAdmin?'远端主机管理：已授权':'远端主机管理：关闭'}</button>}
           {(fastAvailable||active.fastMode)&&<button className={`toggle ${active.fastMode?'on':''}`} data-control="fast" aria-label="Fast 模式" aria-pressed={!!active.fastMode} disabled={active.busy} onClick={()=>void configure('config.fast',{enabled:!active.fastMode})} title={active.fastModeDisabledReason?`Fast 状态：${active.fastModeDisabledReason}`:fastTier(model)?.description??'官方 Fast 模式，开启后用量增加'}>⚡ {active.fastMode?'Fast'+(fastTier(model)?.description.match(/(\d+(?:\.\d+)?)x/)?.[1]?' · '+fastTier(model)!.description.match(/(\d+(?:\.\d+)?)x/)![1]+'×':''):'Standard'}{active.fastModeState==='cooldown'?' · 冷却中':''}</button>}
           <span className="cwd" title={active.cwd}>{active.cwd}</span>
@@ -254,7 +256,7 @@ export default function App() {
               else if (e.key === 'ArrowUp') setCmdIndex((i) => (i + commands.length - 1) % commands.length)
               else { const c = commands[cmdIndex];if(e.key==='Enter'&&(input==='/'+c.name||c.aliases?.includes(input.slice(1))||!c.argumentHint))void send(input==='/'+c.name?input:'/'+c.name);else setInput('/'+c.name+(c.argumentHint?' ':'')) }
             } else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() }
-          }} />{active.busy ? <><button className="send-btn steer" disabled={!input.trim()||!!images.length} onClick={async()=>{const text=input;if(await act('session.steer',{id:active.id,text})){setInput('');if(employee)delete drafts.current[employee.id]}}}>追加</button><button className="send-btn enqueue" disabled={!input.trim()&&!images.length} onClick={()=>void send()}>排队</button><button className="send-btn stop" onClick={() => void stop()}>■ Stop</button></> : <button className="send-btn" disabled={!liveActive||(!input.trim()&&!images.length)} onClick={() => void send()} title="Send message">↑</button>}</div>
+          }} />{active.busy ? <><button className="send-btn steer" disabled={!ENGINE_DEFINITIONS[active.engine].capabilities.steer||!input.trim()||!!images.length} onClick={async()=>{const text=input;if(await act('session.steer',{id:active.id,text})){setInput('');if(employee)delete drafts.current[employee.id]}}}>追加</button><button className="send-btn enqueue" disabled={!input.trim()&&!images.length} onClick={()=>void send()}>排队</button><button className="send-btn stop" onClick={() => void stop()}>■ Stop</button></> : <button className="send-btn" disabled={!liveActive||(!input.trim()&&!images.length)} onClick={() => void send()} title="Send message">↑</button>}</div>
           <div className="composer-foot"><button className="slash-trigger" aria-label="打开斜杠命令" disabled={!liveActive} onClick={()=>{setInput('/');composer.current?.focus()}}>/ 命令</button><span>{active.busy ? <span className="status-line"><span className="spinner" />{active.approvals?.length ? 'Waiting for permission' : active.activity || 'Working…'}</span> : 'Enter to send · Shift Enter for a new line'}</span><span>{active.engine === 'codex' ? 'Codex' : 'Claude Agent'} · {active.group || 'Independent workspace'}</span></div>
         </div>
         </FileWorkspace><EmployeeTerminal terminalHeight={store.preferences?.terminalHeight} key={'terminal-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}/></div>}

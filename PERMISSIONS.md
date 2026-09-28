@@ -53,7 +53,7 @@ Manager / Governor 都必须是在 Core 所在主机运行、使用该主机本�
 
 `createdBy` 只能由后台写入。同 Team 内，管理者创建了可创建的下属职位才有常驻来源线。用户创建的员工没有来源线，但仍受上述范围内的 Manager / Governor 管理。来源线不授予权限。`management topology` 返回 createdBy、createdByMe、createdAt 和 allowedActions，并支持 `--creator self|others|operator|unknown|EMPLOYEE_ID`；历史来源缺失时为 null，查询筛选不扩大本来的职位范围。
 
-真实 API 交互时，来源线变绿；没有来源线的对象出现临时绿色虚线。`management.activity` 返回真实调用状态。查询、发送、订阅、排队、停止和调度都使用稳定员工 ID，不依赖原生引擎的多 Agent 功能。
+真实消息/控制请求、回复订阅或经过授权的委派任务执行期间，来源线变绿；没有来源线的对象出现临时绿色虚线。`management.activity` 用 kind=request/task 区分正在通信与正在协作的任务，任务线有 messageId，结束即清除。查询、发送、订阅、排队、停止和调度都使用稳定员工 ID，不依赖原生引擎的多 Agent 功能。
 
 消息、队列、调度、订阅保存原始发起者；接收者仍使用自己的身份。接受请求、准备执行及异步准备后均复核权限。Governor 降级或凭据撤销后，旧的跨 Team 委派失效；重新授予权限不会恢复旧任务。其他用户或管理者的独立任务不受影响。
 

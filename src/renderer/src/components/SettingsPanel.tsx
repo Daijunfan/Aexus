@@ -13,6 +13,8 @@ export function SettingsPanel({value,onSave,onClose}:{value:Preferences;onSave:(
 <div className="field-heading">新员工执行权限</div><label>默认权限<select value={draft.defaultPermissionMode} onChange={e=>setDraft({...draft,defaultPermissionMode:e.target.value as Preferences['defaultPermissionMode']})}><option value="default">Ask · 需要时审批</option><option value="acceptEdits">Workspace write · 允许工作区编辑</option><option value="bypassPermissions">Full access · 信任引擎所在系统账号</option></select><small>Full access 保留完整功能，但不构成操作系统隔离。已有员工权限不会因升级自动提高。</small></label>
         <div className="field-heading">新员工默认模型</div>
         <ModelSelect preference engine="codex" label="Codex 默认模型" value={draft.defaultCodexModel} onChange={value=>setDraft({...draft,defaultCodexModel:value})}/>
+        <ModelSelect preference engine="cline" label="Cline 默认模型" value={draft.defaultClineModel} onChange={value=>setDraft({...draft,defaultClineModel:value})}/>
+        <ModelSelect preference engine="pi" label="Pi 默认模型" value={draft.defaultPiModel} onChange={value=>setDraft({...draft,defaultPiModel:value})}/>
         <ModelSelect preference engine="claude" label="Claude Agent 默认模型" value={draft.defaultClaudeModel} onChange={value=>setDraft({...draft,defaultClaudeModel:value})}/>
         <small>仅用于之后创建的员工；创建时仍可单独选择。初始化也使用所选模型。</small>
         <div className="field-heading">背景与界面</div><div className="theme-presets">{THEMES.map(theme=><button type="button" key={theme} data-theme-option={theme} aria-pressed={draft.theme===theme} onClick={()=>setDraft({...draft,theme})}><i className={`theme-sample sample-${theme}`}/><span>{THEME_LABELS[theme]}</span>{draft.theme===theme&&<b>✓</b>}</button>)}</div>

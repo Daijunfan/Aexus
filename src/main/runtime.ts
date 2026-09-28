@@ -5,7 +5,7 @@ import {closeEngineLogins} from './engines/login'
 import {exposeClaudeSdk} from './engines/claude-sdk'
 import {acquireRuntimeLock} from './runtime-lock'
 import {publishReply} from './reply-receipts'
-import {setManagementActivityEmitter,clearManagementInteraction,pruneManagementActivity,resetManagementActivity} from './management-activity'
+import {setManagementActivityEmitter,setManagementTask,clearManagementInteraction,pruneManagementActivity,resetManagementActivity} from './management-activity'
 import {startInitializations,stopInitializations} from './initialization'
 import {readStore,migrateEmployeePermissionDefaults} from './store'
 import {employeeSettings} from '../shared/types'
@@ -21,7 +21,7 @@ import { publishEvent, setDesktopEvent, startServer, stopServer } from './server
 import { closePlugins } from './plugins/runtime'
 import {setTerminalEmitter,closeTerminals} from './terminals'
 import {closeRemoteFiles} from './tunnel'
-import { conversation,transcriptItems,markTurnEnd, markTurnStart, recordClaude, recordCodex, recordUser, recordError, saveTranscript } from './transcripts'
+import { conversation,transcriptItems,markTurnEnd, markTurnStart, recordClaude, recordCodex, recordAgent, recordUser, recordError, saveTranscript } from './transcripts'
 
 /** One event stream for the CLI, persistence, and the optional desktop shell. */
 export function startRuntime(notify: (channel: string, payload: any) => void = () => {}) {
@@ -38,8 +38,12 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
   const broadcast = (channel: string, payload: any) => {
     const id = payload?.sessionId
     if (id) {
+      const state=getLive(id),cardId=payload.cardId??state?.cardId
+      if(cardId&&channel==='session:turn-start'&&!state?.privateInitialization)setManagementTask(cardId,state?.currentTask)
+      if(cardId&&['session:turn-end','session:interrupted','session:error','session:closed','session:end'].includes(channel))setManagementTask(cardId)
       if(['session:interrupted','session:error','session:closed','session:end'].includes(channel)){const cardId=payload.cardId??getLive(id)?.cardId;if(cardId)clearManagementInteraction(cardId)}
       if (channel === 'session:message') recordClaude(id, payload.message)
+      if (channel === 'session:agent') recordAgent(id,payload.event)
       if (channel === 'session:codex') recordCodex(id, payload.event)
       if (channel === 'session:user') recordUser(id, payload.text,payload.images)
       if (channel === 'session:turn-start') markTurnStart(id)

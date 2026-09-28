@@ -188,7 +188,7 @@
 .directory-refresh .codicon{font-size:22px}.directory-refresh[aria-busy=true] .codicon{animation:spin 1s linear infinite}
 .directory-refresh:disabled{opacity:.6;cursor:wait}
 
-.directory-edit{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;margin:7px 0 3px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer}
+.directory-edit{display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;margin:7px 0 0;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer}
 .directory-edit .codicon{font-size:22px}.directory-edit:hover,.directory-edit.active{background:var(--bg-hover);color:var(--accent);border-color:var(--border)}
 
 .team-environment-options button{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;padding:10px 14px;font-weight:600}

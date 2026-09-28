@@ -47,3 +47,9 @@
 .infinite-canvas[data-animated=false] *, .infinite-canvas[data-animated=false] *::before, .infinite-canvas[data-animated=false] *::after{animation-play-state:paused!important}
 .infinite-canvas[data-animated=false] .official-frame,.infinite-canvas[data-animated=false] .sleep-z{will-change:auto}
 
+
+.claude-pet .clawd-body{position:absolute;display:block;left:14%;top:23%;width:72%;height:62%;object-fit:contain;filter:drop-shadow(1px 4px 2px #16212630)}
+.claude-pet .clawd-awake{animation:clawd-step .7s ease-in-out infinite;transform-origin:50% 85%}
+.claude-pet .buddy-body{position:absolute;display:flex;align-items:center;justify-content:center;inset:0;white-space:pre;font:700 7.2cqw/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:-.03em;text-shadow:0 2px 1px #16212618}
+@keyframes clawd-step{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3%) rotate(2deg)}}
+.infinite-canvas[data-animated=false] .clawd-body{animation-play-state:paused}

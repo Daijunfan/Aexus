@@ -1,3 +1,4 @@
+import {assertEngineWorkspace} from '../shared/engines'
 import {hostTerminals,openHostTerminal,requireHostTerminal,listHostDesktops,connectHostDesktop,launchHostDesktop,closeHostDesktop,assertHostIdle,closeHostTerminals} from './host-connections'
 import {isEngine} from '../shared/engines'
 import {runtimeInfo} from './platform'
@@ -17,7 +18,7 @@ import {queueEmployeeInitialization,retryEmployeeInitialization,cancelEmployeeIn
 import {removeEmployeeWorkspace} from './employee-workspace-removal'
 import {engineModels,defaultEmployeeModel} from './engine-models'
 import {officeLayout} from './office'
-import {beginManagementInteraction,clearManagementInteraction,managementActivity} from './management-activity'
+import {beginManagementInteraction,clearManagementInteraction,managementActivity,pruneManagementActivity} from './management-activity'
 import {acknowledgeReply} from './reply-receipts'
 import {pendingInitialization,readyInitialization,assertEmployeeReady,assertInitializationRequest} from './initialization-state'
 import {assertManagementKind,hasGlobalRole} from '../shared/management'
@@ -147,6 +148,7 @@ export function publishEvent(channel: string, payload: unknown,clientId?:string)
 const RENDERED_CHANNELS = new Set([
   'session:message',
   'session:codex',
+  'session:agent',
   'session:turn-start',
   'session:turn-end',
   'session:end',
@@ -190,7 +192,6 @@ export async function handleRequest(req:Request,context?:RequestContext&{signal?
   }
   if(req.cmd==='session.send'||req.cmd==='session.enqueue')a.delegation=delegationFor(target??employeeId(a.id)!,caller)
   const result=await dispatchRequest({...req,args:a})
-  if(req.cmd==='card.create'&&result?.id)beginManagementInteraction(req.cmd,result.id,caller)()
   if(caller.principal.kind==='operator')return result?.sessions&&result?.groups?clientStore(result):result
   if(req.cmd==='session.search')return result.filter((card:StoredSession)=>canReadEmployee(caller.principal,card.id))
   if(req.cmd==='session.list'&&isGlobal(caller.principal)){const ids=new Set(visibleEmployees(caller.principal).map(card=>card.id));return a.live?result.filter((item:any)=>ids.has(item.cardId)):{...result,sessions:result.sessions.filter((item:StoredSession)=>ids.has(item.id))}}
@@ -239,7 +240,7 @@ async function dispatchRequest(req: Request): Promise<any> {
 
     case 'auth.whoami': {const principal=requestContext().principal,card=callerEmployee(principal);return {principal,managementRole:card?.managementRole??'employee',team:card?.group,globalManager:isGlobal(principal),managerTeam:null,globalByTeam:false,accessMode:card?.accessMode??'trusted'}}
     case 'auth.agent-token': return agentCredential(s(a.id))
-    case 'auth.revoke': {const result=revokeAgentCredential(s(a.id));clearManagementInteraction(s(a.id));revokeInvalidDelegations();reconcileSchedules();publishEvent('access:changed',{});return result}
+    case 'auth.revoke': {const result=revokeAgentCredential(s(a.id));clearManagementInteraction(s(a.id));pruneManagementActivity();revokeInvalidDelegations();reconcileSchedules();publishEvent('access:changed',{});return result}
     case 'api.list': return allowedCommands()
     case 'api.describe': {const command=allowedCommands().find(value=>value.name===a.command);if(!command)throw Error('API not available to this caller');return command}
     case 'api.docs': return apiDocumentation()
@@ -260,7 +261,7 @@ async function dispatchRequest(req: Request): Promise<any> {
     case 'management.global': if(typeof a.enabled!=='boolean')throw Error('enabled must be boolean');return setGlobalManager(s(a.id),a.enabled)
     case 'card.initialize': return retryEmployeeInitialization(s(a.id),{model:a.model,effort:a.effort})
     case 'card.management-role': return setManagementRole(s(a.id),a.role)
-    case 'card.access-mode': {const card=readStore().sessions.find(c=>c.id===a.id);if(card&&(card.threadId||card.claudeSessionId)&&card.accessMode!==a.mode)throw Error('Execution isolation is fixed once native history exists; create a new employee');if(!['trusted','isolated'].includes(a.mode))throw Error('Use trusted or isolated');await closeForEngineChange(s(a.id));return updateStore(store=>{const card=store.sessions.find(c=>c.id===a.id);if(!card)throw Error('Unknown employee');card.accessMode=a.mode})}
+    case 'card.access-mode': {const card=readStore().sessions.find(c=>c.id===a.id);if(card&&(card.threadId||card.claudeSessionId)&&card.accessMode!==a.mode)throw Error('Execution isolation is fixed once native history exists; create a new employee');if(!['trusted','isolated'].includes(a.mode))throw Error('Use trusted or isolated');await closeForNativeChange(s(a.id));return updateStore(store=>{const card=store.sessions.find(c=>c.id===a.id);if(!card)throw Error('Unknown employee');card.accessMode=a.mode})}
     case 'session.status': {const cards=a.employee?readStore().sessions.filter(c=>c.id===a.employee):visibleEmployees();return cards.map(card=>{const live=listLive().find(item=>sessionInfo(item.id)?.cardId===card.id),state=live?sessionInfo(live.id):undefined;return {...publicEmployee(card),lastReply:card.lastReply,sessionId:live?.id,busy:state?.busy??false,currentTask:state?.currentTask,activityPreview:state?.activityPreview,waitingApproval:live?approvalsFor(live.id).length>0:false}})}
     case 'shared.info': return {path:sharedDirectory()}
     case 'transfer.start': return startTransfer(a.from,a.to,fileEndpoint(a.from,false),fileEndpoint(a.to,true))
@@ -511,16 +512,8 @@ async function dispatchRequest(req: Request): Promise<any> {
       return { closed }
     }
 
-    case 'config.engine': {
-      const store=readStore(),card=store.sessions.find(c=>c.id===a.id)??store.sessions.find(c=>c.id===sessionSnapshot(s(a.id)).cardId)
-      if(!card)throw new Error('Unknown employee')
-      employeeFields({engine:a.engine},card)
-      assertTeamAvailable(card.group);assertNotRemoving(card.id)
-      if(card.kind==='cloud-native-worker'&&card.engine!==a.engine)await checkCloudNative(card.group,a.engine)
-      if(card.engine!==a.engine)await closeForEngineChange(card.id)
-      const next=updateEmployee(card.id,{engine:a.engine})
-      return executionEmployee(next,next.sessions.find(c=>c.id===card.id)!)
-    }
+    case 'config.engine':
+      throw new Error('员工引擎创建后固定；如需使用其他引擎，请删除员工后重新添加')
     case 'config.model':
       return { ok: await setModel(s(a.id), a.model ? s(a.model) : undefined) }
     case 'config.remote-admin':
@@ -727,7 +720,7 @@ async function dispatchRequest(req: Request): Promise<any> {
       await checkCloudNative(card.group,card.engine,cloudRelative(teamSettings(readStore(),card.group),card.cwd))
       if(readStore().sessions.some(other=>other.id!==card.id&&nativeSessionRefs(other).some(ref=>ref.engine===card.engine&&ref.id===sessionId&&JSON.stringify(ref.origin??null)===JSON.stringify(origin))))throw new Error('此远端原生会话已属于另一名员工')
       const items=await readCloudNativeSession(card,sessionId)
-      await closeForEngineChange(card.id)
+      await closeForNativeChange(card.id)
       seedTranscript(card.id,items)
       try{const store=patchSession(card.id,{...(card.engine==='codex'?{threadId:sessionId}:{claudeSessionId:sessionId}),nativeOwnership:'external'});return {card:store.sessions.find(value=>value.id===card.id),imported:items.length}}
       catch(error){deleteTranscript(card.id);throw error}
@@ -746,6 +739,7 @@ async function dispatchRequest(req: Request): Promise<any> {
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
       const appearance = employeeFields(a)
       const store=readStore(),identity={group:s(a.group??''),workEnvironment:a.workEnvironment},config=employeeSettings(store,identity)
+      assertEngineWorkspace(engine,config.mode)
       if(a.workEnvironment!==undefined&&!['team','local'].includes(a.workEnvironment))throw Error('工作环境必须为 team 或 local')
       if(a.workEnvironment==='local'&&(kind==='cloud-native-worker'||config.mode==='work'))throw Error('该员工必须使用 Team 工作环境')
       assertManagementKind({kind,managementRole:a.managementRole??'employee'},false,config.mode==='cloud')
@@ -766,7 +760,7 @@ async function dispatchRequest(req: Request): Promise<any> {
       authorize('card.create',a);
       const employee:StoredSession = { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,workEnvironment:a.workEnvironment,directoryMode:a.directoryMode??(a.cwd?'bind':'default'),localWorkspaceRoot:a.workEnvironment==='local'&&teamSettings(store,a.group).mode==='cloud'?employeeRoot(store,identity):undefined,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
         model,
-        effort: a.effort ?? 'low', permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
+        thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??'low', permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
       employee.initialization=isSupervisor(employee.managementRole)?pendingInitialization():readyInitialization()
       ensureEmployeeBootstrap(employee,latest)
       const saved=patchSession(id,employee)
@@ -784,13 +778,12 @@ async function dispatchRequest(req: Request): Promise<any> {
       if(patch.kind!==undefined&&patch.kind!==(card.kind??'worker'))throw new Error('员工职位创建后不可更改')
       if(patch.chatProvider!==undefined||patch.chatMode!==undefined||patch.chromeProfile!==undefined)throw new Error('Web chat employees are no longer supported')
       employeeFields(patch,card)
+      assertEngineWorkspace(patch.engine??card.engine,employeeSettings(store,card).mode)
       if(patch.remote!==undefined)throw new Error('云主机连接由 Team 统一配置，员工不能覆盖主机')
       if(card.kind==='cloud-native-worker'){
         cloudNativeTarget(card)
         if(patch.group!==undefined&&patch.group!==card.group)throw new Error('Cloud Native Worker 不能移动到另一 Team')
-        if(patch.engine!==undefined&&patch.engine!==card.engine)await checkCloudNative(card.group,patch.engine)
       }
-      if(patch.engine!==undefined&&patch.engine!==card.engine)await closeForEngineChange(card.id)
       if(patch.group!==undefined || patch.cwd!==undefined || patch.directoryMode!==undefined) {
         const group=patch.group??card.group,input=patch.directoryMode==='default'?patch.cwd:patch.cwd??card.cwd
         const unchanged=group===card.group&&input===card.cwd&&patch.directoryMode!=='default'
@@ -916,9 +909,9 @@ function fileEndpoint(ref:FileLocation,destination:boolean):FileEndpoint {
   return {root,path:ref.path||'.',remote}
 }
 
-async function closeForEngineChange(cardId:string):Promise<void> {
+async function closeForNativeChange(cardId:string):Promise<void> {
   assertEmployeeControl(cardId,undefined,true)
-  for(const live of listLive()){const snapshot=sessionSnapshot(live.id);if(snapshot.cardId===cardId){if(snapshot.busy)throw new Error('员工正在工作，请先停止任务再切换引擎或工作空间');await closeSession(live.id)}}
+  for(const live of listLive()){const snapshot=sessionSnapshot(live.id);if(snapshot.cardId===cardId){if(snapshot.busy)throw new Error('员工正在工作，请先停止任务再调整执行隔离或绑定原生会话');await closeSession(live.id)}}
 }
 
 async function closeForWorkspaceChange(cardId: string): Promise<void> {
@@ -969,8 +962,8 @@ export function startServer(onListening: () => void = () => {}): void {
         const card=employeeId(sessionId)
         const found=listLive().find(item=>sessionInfo(item.id)?.cardId===card);if(found)sessionId=found.id
         try{authorize('session.follow',req.args,card,caller);assertEmployeeReady(card)}catch(error){sock.end(JSON.stringify({ok:false,error:(error as Error).message,...((error as {code?:string}).code?{code:(error as {code:string}).code}:{})})+'\n');return}
-        followerActivity.get(sock)?.();followerActivity.set(sock,beginManagementInteraction(req.cmd,card,caller))
         const info = sessionInfo(sessionId)
+        if(info?.busy){followerActivity.get(sock)?.();followerActivity.set(sock,beginManagementInteraction(req.cmd,card,caller))}
         if (!info) {
           if(card){const items=transcriptItems(card);sock.write(JSON.stringify({ok:true,data:{following:card,transcript:items,text:renderTranscript(items)}})+'\n');sock.end(JSON.stringify({type:'done'})+'\n')}
           else sock.end(JSON.stringify({ ok: false, error: `unknown session ${sessionId}` }) + '\n')

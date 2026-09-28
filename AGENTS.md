@@ -6,7 +6,7 @@ Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIB
 
 - Business behavior belongs to the Node Core. Electron and browser UI call the same authenticated operations; UI behavior cannot bypass the CLI/API.
 - Update the command registry, Core dispatch, CLI parser, API documentation and tests together. Run `npm run docs:managers` after changing API or permission documentation.
-- Keep Team, employee, native-session and workspace identities stable. Engine switching archives native references and preserves visible history. Never silently change execution host or elevate permissions.
+- Keep Team, employee, native-session and workspace identities stable. Employee engines are fixed at creation; using another engine requires deleting the employee and creating a new one. Preserve archived native references from older versions. Never silently change execution host or elevate permissions.
 - “Local” means the Core host. Browser-local files must be uploaded, not treated as server paths. Client navigation/cameras are separate from shared company geometry.
 - Governor/Manager authority comes from the role policy. Creation lines, directory names and view membership do not grant permissions.
 

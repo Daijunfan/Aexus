@@ -10,7 +10,7 @@ import {emitCoreEvent} from '../core-events'
 type Login={id:string;engine:'codex';state:'running'|'succeeded'|'failed'|'cancelled';log:string;url?:string;startedAt:number;error?:string}
 const jobs=new Map<string,{value:Login;child:ChildProcess;timer:NodeJS.Timeout}>()
 export function beginEngineLogin(engine:string){
-  if(engine!=='codex')throw Error('Claude Agent uses an API key or an approved provider configuration; this application does not provide claude.ai subscription login')
+  if(engine!=='codex')throw Error('This engine uses an API key or an approved provider configuration; device-code login is available for Codex only')
   const active=[...jobs.values()].find(job=>job.value.state==='running');if(active)return {...active.value}
   const child=spawn(engineExecutable('codex'),['login','--device-auth'],{env:{...childEnv(),...engineEnvironment('codex')},stdio:['ignore','pipe','pipe'],windowsHide:true,detached:process.platform!=='win32'})
   const value:Login={id:randomUUID(),engine:'codex',state:'running',log:'',startedAt:Date.now()}

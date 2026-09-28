@@ -35,7 +35,7 @@
 
 旧员工及 `kind:worker` 是 Local Worker。即使所属 Team 在云主机上，Coding Agent 进程仍运行在 Mac，命令通过既有 Tunnel 工具或 Codex 远程执行环境到云端。`kind:cloud-native-worker` 只允许 Cloud Team，Codex app-server 或 Claude CLI 进程通过 SSH 在该 Team 主机上原生启动；不会把 Mac 的认证、Skills、MCP 或 Claude/DeepSeek 环境注入远端，也不会在断线后退回本机执行。
 
-创建和切换引擎前使用 `engine.remote-check` 验证远端 CLI、结构化协议、认证状态及目录；提交创建时 Core 再检查一次。远端 Codex 的模型、账号和技能取自远端 app-server；Claude 使用远端 SDK 进程。员工和原生会话引用保存执行来源。Codex 云端克隆通过远端 `thread/fork`；云端 Claude 的克隆暂时明确拒绝，避免误克隆本机记录。手动绑定的外部原生历史可恢复和显示，但删除员工默认不删除外部原件。
+创建云端原生员工前使用 `engine.remote-check` 验证远端 CLI、结构化协议、认证状态及目录；提交创建时 Core 再检查一次。远端 Codex 的模型、账号和技能取自远端 app-server；Claude 使用远端 SDK 进程。员工和原生会话引用保存执行来源。Codex 云端克隆通过远端 `thread/fork`；云端 Claude 的克隆暂时明确拒绝，避免误克隆本机记录。手动绑定的外部原生历史可恢复和显示，但删除员工默认不删除外部原件。
 
 ## 宿主约定
 
@@ -92,3 +92,12 @@ user's permissions; it does not inherit the Mac workspace-write path policy.
 ## Company management and process isolation
 
 Management APIs use the shared transcript/session layer and do not enable native Codex or Claude subagents. Team Manager authority is separate from engine tool permissions. Local macOS Isolated mode uses an outer Seatbelt process profile and private native-engine state; Codex's nested sandbox is disabled because macOS rejects sandbox reapplication. The outer profile enforces host-state/credential isolation and workspace writes. Work folder read boundaries remain in the outer policy; Claude keeps its file-tool scope hooks. Isolated native-history cloning is explicitly unavailable. Remote Isolated startup is rejected until an independently isolated remote OS environment is supplied; remote Trusted Managers use employee-bound SSH return channels.
+
+## Additional local adapters
+
+| Engine | Provider/default model | Thinking default | Protocol | Initial workspace scope |
+| --- | --- | --- | --- | --- |
+| Cline | DeepSeek / deepseek-flash | off | ACP 1 | Core-local Build |
+| Pi | DeepSeek / deepseek-flash | off | Pi RPC | Core-local Build |
+
+Both use the existing CLI APIs for text, native resume, tool approvals, interrupt, queues and schedules. Pi supports steering; Cline supports Plan. Unsupported modes fail explicitly. Local-workspace Managers may belong to a Cloud Team and manage its existing Codex/Claude cloud employees through company APIs. No cloud-to-local fallback is permitted. See API.md for install requirements and adapter limits.

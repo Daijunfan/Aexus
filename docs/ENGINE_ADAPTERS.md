@@ -4,7 +4,7 @@
 
 Core owns employee identity, roles, Teams, queues, task delegation, initialization, transcripts and revocation. A Coding Agent remains an external execution engine. Its adapter translates supported public runtime operations/events; it does not grant permissions or create company employees through native subagent features.
 
-The current registrations are Codex App Server and Claude Agent SDK. Model providers (including provider-specific Claude configurations) are independent of engine IDs. Switching providers does not create a new employee engine kind.
+The current registrations are Codex App Server, Claude Agent SDK, Cline ACP and Pi RPC. Model providers (including provider-specific Claude configurations) are independent of engine IDs. Switching providers does not create a new employee engine kind.
 
 ## Modules
 
@@ -24,7 +24,7 @@ The current registrations are Codex App Server and Claude Agent SDK. Model provi
 
 `sessions.ts` exposes the same company API and delegates send, steer, interrupt, close, settings and background-process handling through the driver. Raw compatibility events remain available; scheduler completion also receives a normalized result. Legacy native-history import/delete compatibility is still engine-specific. It must not become a dependency of role authorization.
 
-The contract deliberately keeps the existing two runtime behaviors. Some compatibility metadata still references the current native session types. Adding a radically different engine may require extending those adapters; merely placing an executable on PATH is not a complete integration.
+The contract preserves the existing runtime behaviors. Some compatibility metadata still references the current native session types. Adding a radically different engine may require extending those adapters; merely placing an executable on PATH is not a complete integration.
 
 ## Adding an engine
 
@@ -32,13 +32,13 @@ The contract deliberately keeps the existing two runtime behaviors. Some compati
 2. Implement the driver using the engine's documented integration surface. Unsupported capabilities return an explicit error and should not be advertised in the UI.
 3. Convert events to the project's public conversation/state model. Keep native session IDs private to the adapter and preserve their ownership/origin when archiving them.
 4. Implement no-inference discovery/authentication checks on the actual execution host. Resolve binaries when used; installation should not require restarting Core.
-5. Add protocol fixtures and lifecycle tests for completion, errors, cancellation, permissions, initialization and engine switching. Use an optional explicit live test for billed model calls.
+5. Add protocol fixtures and lifecycle tests for completion, errors, cancellation, permissions, initialization and fixed employee-engine identity. Use an optional explicit live test for billed model calls.
 
 A UI capability is the intersection of project authorization, adapter support, selected model capability and current session state. A missing engine is not a reason to escalate privileges or fall back to execution on a different machine.
 
-## Switching
+## Employee engine identity
 
-`card.update --data '{"engine":"…"}'` preserves employee ID, Team, role, directory, visible transcript and archived native references. The current task must be idle or explicitly stopped. Native contexts are not promised to migrate between different engines. Schedules pin their selected engine; after a switch, update the affected schedules deliberately rather than silently running them against another engine.
+An employee's engine is selected at creation and cannot be changed. To use another engine, explicitly delete the employee and create a new one. `card.update` rejects a different engine; legacy `config.engine` always rejects. Model and supported runtime settings remain configurable within the chosen engine. Existing histories and archived native references from older versions remain intact.
 
 ## Installation and authentication
 
@@ -55,3 +55,13 @@ The public distribution contains the adapters, not the Claude Agent SDK/native r
 The installer retrieves both the SDK controller and matching native executable from `engine-downloads.json`, verifies official npm origin and SHA-512, preserves their legal notices, and activates them only after both complete. Cancellation preserves the previous configuration. `engine.configure` optionally accepts an absolute `sdkPath`; hosted MiniNotion reuses the same user-owned SDK and executable through process-local discovery. Neither runtime bytes nor credentials are copied into public release artifacts.
 
 `engine.check` reports executable/protocol/auth configuration without inference. `engine.probe --engine ID --confirm [--model ID]` is a separate, potentially billed OK-only call on the Core host, with a temporary directory and 45-second timeout. It does not create a company employee or a persistent native session.
+
+## Cline ACP / Pi RPC
+
+`cline-client.ts` and `pi-client.ts` own their documented subprocess protocols; their runtime modules normalize text/tool events through `session:agent` and use the existing Core lifecycle/approval/queue contracts. Task cooperation indicators therefore remain tied to actual delegated engine turns. `process-probe.ts` reuses those transports for isolated, explicit OK-only checks.
+
+Cline 3.0.65 uses `CLINE_PROVIDER=deepseek`, `CLINE_MODEL=deepseek-flash`, `CLINE_API_KEY` and `--auto-approve false`; Core handles ACP permission requests. Pi 0.87.1 uses its official RPC JSONL protocol, `--thinking off`, `DEEPSEEK_API_KEY`, isolated `PI_CODING_AGENT_DIR` and a small explicit tool-permission extension connected to Core approvals. Auto-discovered Pi extensions are disabled. Neither adapter delegates company authority to native subagents.
+
+Initial scope is a Core-local Build workspace. Unsupported remote/plugin workspaces fail closed at creation, switching and execution. Text input, resume and task lifecycle are supported; unsupported controls are hidden or reject explicitly. CLI discovery may create a disposable native session but performs no model request. Native session data lives beneath the employee's private `agent-access` profile.
+
+Actual request verification: DeepSeek Chat Completions documents `reasoning_effort: "none"` as Thinking off; Cline emits that value. Pi emits `thinking: {type: "disabled"}`. Do not infer Thinking off from absence of visible thought text.

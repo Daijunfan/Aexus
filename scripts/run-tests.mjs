@@ -3,8 +3,8 @@ import path from 'node:path'
 import {spawn} from 'node:child_process'
 const root=path.resolve(import.meta.dirname,'..'),suite=process.argv[2]??'core'
 const suites={
-  core:['release-foundation','engine-probe','creation-contract','employee-pristine','governor','governor-migration','management-state','management-provenance','management-activity','management','task-view','reply-receipts','team-views','connector-routing','connector-segments-api','connector-segments','cross-team-routing','room-resize','performance-core','web-server','web-desktop-relay'],
-  ui:['creation-form-ui','governor-ui','management-ui','connector-terminals-ui','cross-team-ui','canvas-stability','chat-scroll-ui','connector-segments-ui','team-views-ui','performance-ui','web-ui','remote-desktop','web-vnc-ui'],
+  core:['process-engines','release-foundation','engine-probe','creation-contract','employee-pristine','governor','governor-migration','management-state','management-provenance','management-activity','management','task-view','reply-receipts','team-views','connector-routing','connector-segments-api','connector-segments','cross-team-routing','room-resize','performance-core','web-server','web-desktop-relay'],
+  ui:['process-engines-ui','pet-catalog-ui','screenshot-privacy-ui','creation-form-ui','governor-ui','management-ui','connector-terminals-ui','cross-team-ui','canvas-stability','chat-scroll-ui','connector-segments-ui','team-views-ui','performance-ui','web-ui','remote-desktop','web-vnc-ui'],
   engines:['manager-bootstrap-engine:codex:build','manager-bootstrap-engine:codex:work','manager-bootstrap-engine:claude:build','manager-bootstrap-engine:claude:work','employee-initialization-engine:codex:build','employee-initialization-engine:codex:work','employee-initialization-engine:claude:build','employee-initialization-engine:claude:work']
 }
 if(!suites[suite])throw Error('Choose core, ui or engines')

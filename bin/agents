@@ -216,7 +216,7 @@ async function main() {
     case 'transfer.cancel': return out(await call('transfer.cancel',{id:rest[0]}))
     case 'settings.get': return out(await call('settings.get'))
     case 'settings.set': {
-      const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;if(p['default-permission']!==undefined)a.defaultPermissionMode=p['default-permission'];for(const [key,flag] of [['defaultCodexModel','default-codex-model'],['defaultClaudeModel','default-claude-model']])if(p[flag]!==undefined)a[key]=p[flag];for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);for(const [key,flag] of [['snapEmployees','snap-employees'],['showTeamOverview','team-overview']])if(p[flag]!==undefined){if(!['on','off'].includes(p[flag]))throw new Error(`--${flag} accepts on|off`);a[key]=p[flag]==='on'}return out(await call('settings.set',a))
+      const p=parse(rest),a={};if(p.theme!==undefined)a.theme=p.theme;if(p['default-permission']!==undefined)a.defaultPermissionMode=p['default-permission'];for(const [key,flag] of [['defaultCodexModel','default-codex-model'],['defaultClaudeModel','default-claude-model'],['defaultClineModel','default-cline-model'],['defaultPiModel','default-pi-model']])if(p[flag]!==undefined)a[key]=p[flag];for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);for(const [key,flag] of [['snapEmployees','snap-employees'],['showTeamOverview','team-overview']])if(p[flag]!==undefined){if(!['on','off'].includes(p[flag]))throw new Error(`--${flag} accepts on|off`);a[key]=p[flag]==='on'}return out(await call('settings.set',a))
     }
     case 'auth.whoami':case 'api.list':case 'api.docs':return out(await call(group+'.'+sub),data=>sub==='docs'?data.markdown:JSON.stringify(data,null,2))
     case 'api.describe':return out(await call('api.describe',{command:rest[0]}))
@@ -385,6 +385,7 @@ async function main() {
       return
     }
 
+    // Compatibility error only: an existing employee cannot change engines.
     case 'config.engine': return out(await call('config.engine',{id:rest[0],engine:rest[1]}))
     case 'config.model':
       return out(await call('config.model', { id: rest[0], model: rest[1] }))

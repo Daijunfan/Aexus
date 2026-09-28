@@ -142,6 +142,132 @@
       "url": "https://registry.npmjs.org/@anthropic-ai/claude-agent-sdk-linux-arm64-musl/-/claude-agent-sdk-linux-arm64-musl-0.3.272.tgz",
       "integrity": "sha512-0RqFqN/0vZNl6CmDPEpOgn3agqfN4rwgIwagsf92qr+iCxNbPBBr4GXnu08pW2uuXYfqO6A+lI+BHKlOgqr05A==",
       "executable": "claude"
+    },
+    {
+      "engine": "cline",
+      "platform": "darwin",
+      "arch": "arm64",
+      "package": "@cline/cli-darwin-arm64",
+      "version": "3.0.65",
+      "url": "https://registry.npmjs.org/@cline/cli-darwin-arm64/-/cli-darwin-arm64-3.0.65.tgz",
+      "integrity": "sha512-fgHAh/XbPGjUuDJcfXL/yqjZ17ZsDGYFbWfddJnwWQhxoSe63/wdgR9gJMUDK/MBvP89+2hBj9mswIwycAGaNQ==",
+      "executable": "bin/cline"
+    },
+    {
+      "engine": "cline",
+      "platform": "darwin",
+      "arch": "x64",
+      "package": "@cline/cli-darwin-x64",
+      "version": "3.0.65",
+      "url": "https://registry.npmjs.org/@cline/cli-darwin-x64/-/cli-darwin-x64-3.0.65.tgz",
+      "integrity": "sha512-POuoEtOPOtye6Nx/MHe3cQFkkTUf9gkv0Fmr85X+x/eg0hQfHKnAOrTBj+6/txhNjSSlX7UBAGKB8E4eR4zZpA==",
+      "executable": "bin/cline"
+    },
+    {
+      "engine": "cline",
+      "platform": "linux",
+      "arch": "arm64",
+      "package": "@cline/cli-linux-arm64",
+      "version": "3.0.65",
+      "url": "https://registry.npmjs.org/@cline/cli-linux-arm64/-/cli-linux-arm64-3.0.65.tgz",
+      "integrity": "sha512-JxGPEF5ymwXXVSfVfSz4hEjMMgJEipiLYBmbG26e3VVon3p1RXyuaVObuqY2bs7Yhz8gxgh/ULQfdj8IMrm99Q==",
+      "executable": "bin/cline"
+    },
+    {
+      "engine": "cline",
+      "platform": "linux",
+      "arch": "x64",
+      "package": "@cline/cli-linux-x64",
+      "version": "3.0.65",
+      "url": "https://registry.npmjs.org/@cline/cli-linux-x64/-/cli-linux-x64-3.0.65.tgz",
+      "integrity": "sha512-YRDt0eNj/XEMB7DeMeOeE92jQFf7DyKGCysStxrk+mIKdO0GVPugDG4yxsmKtBouBnaRVteW3NwYEnSq2kah8A==",
+      "executable": "bin/cline"
+    },
+    {
+      "engine": "cline",
+      "platform": "win32",
+      "arch": "arm64",
+      "package": "@cline/cli-windows-arm64",
+      "version": "3.0.65",
+      "url": "https://registry.npmjs.org/@cline/cli-windows-arm64/-/cli-windows-arm64-3.0.65.tgz",
+      "integrity": "sha512-O+f5KBtUsWTCkO1rOAlrfnhj9rRYrs2D6IcbQPBt+TBOVX+YE4s6VPBDi1A56mijlm9tKJPdpT36GvIOgD3reQ==",
+      "executable": "bin/cline.exe"
+    },
+    {
+      "engine": "cline",
+      "platform": "win32",
+      "arch": "x64",
+      "package": "@cline/cli-windows-x64",
+      "version": "3.0.65",
+      "url": "https://registry.npmjs.org/@cline/cli-windows-x64/-/cli-windows-x64-3.0.65.tgz",
+      "integrity": "sha512-YcLWhECyDykLFv4qisuF/1zH6FJJjm7y3TEDVIro7X2P/VQ6txfvytZIAqeWQ6x4MREfiJ5MaZ8S0m7/6Ai2tg==",
+      "executable": "bin/cline.exe"
+    },
+    {
+      "engine": "pi",
+      "platform": "darwin",
+      "arch": "arm64",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.87.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz",
+      "integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
+      "executable": "dist/bundle/cli.js",
+      "runtime": "node"
+    },
+    {
+      "engine": "pi",
+      "platform": "darwin",
+      "arch": "x64",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.87.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz",
+      "integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
+      "executable": "dist/bundle/cli.js",
+      "runtime": "node"
+    },
+    {
+      "engine": "pi",
+      "platform": "linux",
+      "arch": "arm64",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.87.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz",
+      "integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
+      "executable": "dist/bundle/cli.js",
+      "runtime": "node"
+    },
+    {
+      "engine": "pi",
+      "platform": "linux",
+      "arch": "x64",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.87.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz",
+      "integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
+      "executable": "dist/bundle/cli.js",
+      "runtime": "node"
+    },
+    {
+      "engine": "pi",
+      "platform": "win32",
+      "arch": "arm64",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.87.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz",
+      "integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
+      "executable": "dist/bundle/cli.js",
+      "runtime": "node"
+    },
+    {
+      "engine": "pi",
+      "platform": "win32",
+      "arch": "x64",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.87.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz",
+      "integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
+      "executable": "dist/bundle/cli.js",
+      "runtime": "node"
     }
   ],
   "claudeSdk": {

@@ -5,52 +5,50 @@ import assert from 'node:assert/strict'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 import platform from '../bin/platform.cjs'
 
-const test=await fixtureCore(),{cli,call,raw,token,create,ready,status,until,control,env}=test
-let follower
+const test=await fixtureCore(),{cli,call,token,create,ready,status,until,control,env}=test,followers=[]
 try{
  await cli('group','add','A');await cli('group','add','B')
- const manager=await create('Manager','A','manager'),user=await create('User-created'),outside=await create('Outside','B'),auth=await token(manager.id)
- const child=await call(auth,'card','create','--title','Created','--group','A','--engine','codex','--model','gpt-6-luna','--effort','low');await ready(child.id)
- // Measure short-lived pulses over Core IPC, without native CLI process startup latency.
+ const manager=await create('Manager','A','manager'),auth=await token(manager.id),workers=[await create('User-created'),await create('Another')],outside=await create('Outside','B')
+ const child=await call(auth,'card','create','--title','Created','--group','A','--engine','codex','--model','gpt-6-luna','--effort','low');await ready(child.id);workers.push(child)
  const rpc=async(auth,cmd,args={})=>{const result=await test.request(auth,cmd,args);assert.ok(result.ok,result.error);return result.data}
  const activity=async()=>(await rpc(null,'management.activity')).interactions
- assert.deepEqual((await cli('management','topology')).edges.map(e=>e.employeeId),[child.id])
- assert.equal((await activity())[0].employeeId,child.id,'create lights the real child')
- await rpc(auth,'session.transcript',{employee:child.id})
- let current=(await activity())[0];assert.equal(current.managerId,manager.id);assert.equal(current.employeeId,child.id);assert.equal(current.command,'session.transcript');assert.ok(current.expiresAt>current.startedAt)
- await rpc(null,'session.info',{employee:outside.id});assert.equal((await activity())[0].employeeId,child.id,'operator queries never replace Agent activity')
- await rpc(auth,'session.info',{employee:user.id});assert.ok((await activity()).some(i=>i.employeeId===user.id),'Manager may interact without a creation line')
- assert.equal((await rpc(auth,'management.activity',{team:'A'})).interactions.length,2,'reading activity preserves both targets')
+ const hold=worker=>fs.writeFileSync(path.join(control,worker.id+'.hold-user'),'')
+ assert.equal((await cli('management','topology')).edges.length,1)
+ assert.deepEqual(await activity(),[],'creation is not collaboration')
+ for(const worker of workers)for(const cmd of ['session.info','session.transcript','session.status']){await rpc(auth,cmd,{employee:worker.id});assert.deepEqual(await activity(),[],'read-only queries never invent collaboration')}
+ assert.equal((await test.request(auth,'session.send',{employee:outside.id,text:'Forbidden'})).ok,false)
+ assert.deepEqual(await activity(),[],'authorization failures never light an edge')
+ for(const worker of workers){
+  hold(worker);const sent=await rpc(auth,'session.send',{employee:worker.id,text:'Wait for fixture release'})
+  await until(async()=>(await status(worker.id)).busy,'real fixture execution')
+  const task=(await activity()).find(i=>i.employeeId===worker.id)
+  assert.equal(task.kind,'task');assert.equal(task.messageId,sent.messageId);assert.equal(task.messageId,(await status(worker.id)).currentTask.messageId);assert.equal(task.expiresAt,undefined)
+ }
+ assert.equal((await activity()).length,3,'three real parallel delegated tasks remain visible without open API requests')
+ const follow=async employee=>{
+  const socket=net.connect(platform.controlEndpoint(env.AGENTS_COMPANY_HOME));followers.push(socket)
+  await new Promise((resolve,reject)=>{socket.once('error',reject);socket.once('connect',()=>socket.write(JSON.stringify({cmd:'session.follow',args:{employee},auth})+'\n'));socket.once('data',chunk=>{assert.ok(JSON.parse(chunk.toString().split('\n')[0]).ok);resolve()})})
+  return socket
+ }
+ const streams=await Promise.all(workers.map(worker=>follow(worker.id))),duplicate=await follow(workers[0].id)
+ assert.equal((await activity()).length,3,'task and same-pair streams share one line')
+ duplicate.destroy();streams.forEach(socket=>socket.destroy());await rpc(auth,'session.info',{employee:workers[1].id})
+ assert.equal((await activity()).length,3,'closing a reply subscription cannot hide actual delegated work')
+ fs.rmSync(path.join(control,workers[0].id+'.hold-user'))
+ await until(async()=>(await activity()).length===2,'completion clears only its task immediately')
+ await rpc(null,'session.interrupt',{employee:workers[1].id});await until(async()=>(await activity()).length===1,'interruption clears its task')
+ await cli('session','close',(await status(workers[2].id)).sessionId);await until(async()=>!(await activity()).length,'closing a worker clears its task')
+ hold(workers[0]);await rpc(null,'session.send',{employee:workers[0].id,text:'Independent operator task'})
+ await until(async()=>(await status(workers[0].id)).busy,'operator task is genuinely running');assert.deepEqual(await activity(),[],'busy alone and creation provenance cannot invent a manager')
+ const observed=await follow(workers[0].id);assert.equal((await activity())[0].kind,'request');observed.destroy();await until(async()=>!(await activity()).length,'request-only observation ends with the actual subscription')
+ await rpc(null,'session.interrupt',{employee:workers[0].id})
+ const governor=await create('Governor','B','governor'),governorAuth=await token(governor.id)
+ hold(manager);await rpc(governorAuth,'session.send',{employee:manager.id,text:'Delegated Manager task'})
+ await rpc(auth,'session.send',{employee:workers[0].id,text:'Delegated child task'})
+ await until(async()=>(await activity()).length===2,'Governor and Manager hierarchy both show real tasks')
  assert.equal((await test.request(auth,'management.activity',{team:'B'})).ok,false)
- await rpc(auth,'office.layout');assert.equal((await activity()).length,2,'unrelated Manager call cannot erase delivery activity')
- assert.equal((await raw(auth,'session','info','--employee',outside.id)).ok,false);assert.ok(!(await activity()).some(i=>i.employeeId===outside.id),'denied calls do not light an edge')
- await call(auth,'card','place',user.id,'--x','450','--y','210','--snap','off');assert.ok((await activity()).some(i=>i.employeeId===user.id))
- const geometry=await call(auth,'office','layout','--team','A');assert.ok(geometry.rooms[0].connections.every(edge=>edge.points.every((p,i)=>!i||p.x===edge.points[i-1].x||p.y===edge.points[i-1].y)))
- await call(auth,'session','info','--employee',child.id);await until(async()=>!(await activity()).length,'short activity expires')
- fs.writeFileSync(path.join(control,user.id+'.hold-user'),'')
- await call(auth,'session','send','--employee',user.id,'--text','Tell me when the review is ready.')
- await until(async()=>(await status(user.id)).busy,'employee running')
- follower=net.connect(platform.controlEndpoint(env.AGENTS_COMPANY_HOME))
- await new Promise((resolve,reject)=>{follower.once('error',reject);follower.once('connect',()=>follower.write(JSON.stringify({cmd:'session.follow',args:{employee:user.id},auth})+'\n'));follower.once('data',data=>{assert.ok(JSON.parse(data.toString().split('\n')[0]).ok);resolve()})})
- current=(await activity())[0];assert.equal(current.command,'session.follow');assert.equal(current.expiresAt,undefined)
- await new Promise(resolve=>setTimeout(resolve,1750));assert.equal((await activity())[0].command,'session.follow','live subscription remains active')
- await rpc(auth,'session.transcript',{employee:child.id});follower.destroy();follower=undefined
- assert.ok((await activity()).some(i=>i.employeeId===child.id),'closing a subscription cannot clear another recipient')
- const schedule=await call(auth,'schedule','create','--name','Later','--employee',user.id,'--prompt','Read the notes','--at',new Date(Date.now()+3600000).toISOString())
- assert.equal((await activity()).find(i=>i.employeeId===user.id).command,'schedule.create')
- await call(auth,'schedule','get',schedule.id);assert.ok((await activity()).some(i=>i.employeeId===user.id))
- const managerSession=await cli('session','open',manager.id)
- fs.writeFileSync(path.join(control,manager.id+'.hold-user'),'')
- await cli('session','send','--employee',manager.id,'--text','Fixture turn that delegates a task')
- await until(async()=>(await status(manager.id)).busy,'manager running')
- await call(auth,'session','send','--employee',child.id,'--text','Reply OK')
- fs.unlinkSync(path.join(control,manager.id+'.hold-user'))
- await until(async()=>!(await status(manager.id)).busy,'manager completes')
- assert.ok((await activity()).some(i=>i.employeeId===child.id&&i.expiresAt>Date.now()),'completing a Manager turn cannot erase its fresh notification')
- await cli('session','close',managerSession.sessionId);assert.equal((await activity()).length,0,'closing the Manager clears its interaction')
- await call(auth,'session','info','--employee',child.id)
- await cli('auth','revoke',manager.id);assert.equal((await activity()).length,0)
- await cli('session','interrupt','--employee',user.id)
- await test.stop();await test.start();assert.equal((await activity()).length,0,'restart does not replay activity')
- console.log('PASS real headless CLI: creator provenance, all same-Team target control, positions, read/send/follow/schedule activity, replacement, expiry, denial, revocation and restart')
-}finally{follower?.destroy();await test.close()}
+ await cli('auth','revoke',governor.id);await until(async()=>(await activity()).length===1,'revoked Governor delegation clears without cancelling independent Manager work')
+ await cli('auth','revoke',manager.id);await until(async()=>!(await activity()).length,'revocation clears delegated tasks immediately')
+ await test.stop();await test.start();assert.equal((await activity()).length,0,'restart does not replay completed tasks')
+ console.log('PASS real Core IPC: genuine parallel task lifetimes, exact message IDs, request/task dedup, completion/interruption/close/revoke, independent operator work, Governor hierarchy and restart; fixture only')
+}finally{followers.forEach(socket=>socket.destroy());await test.close()}

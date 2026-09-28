@@ -29,8 +29,8 @@ export function hasGlobalRole(_access:ManagementAccess|undefined,card:ManagedIde
 
 export type CurrentTask={messageId:string;delegation:Delegation;startedAt:number;runId?:string;viewId?:string}
 
-/** Short-lived API activity, independent of creation provenance and employee task duration. */
-export type ManagementInteraction={managerId:string;employeeId:string;command:string;requestId:string;startedAt:number;expiresAt?:number}
+/** Live communication or a running task with authenticated delegation; never completed-call replay. */
+export type ManagementInteraction={managerId:string;employeeId:string;command:string;requestId:string;startedAt:number;kind?:'request'|'task';messageId?:string}
 export type ManagementActivity={revision:number;interactions:ManagementInteraction[]}
 
 /** Team permissions are computed from the complete roster, never a filtered list of employee nodes. */

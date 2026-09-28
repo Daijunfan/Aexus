@@ -266,7 +266,7 @@
   {
     "name": "management.activity",
     "args": "[--team NAME]",
-    "summary": "Read authenticated Manager API interactions; running calls and brief completed-call indicators",
+    "summary": "Read live communication and running delegated tasks; no completed-call linger",
     "gui": "管理交互连线",
     "permission": "topology",
     "target": "request"
@@ -505,7 +505,7 @@
   },
   {
     "name": "engine.models",
-    "args": "--engine codex|claude [--kind worker|cloud-native-worker] [--team NAME]",
+    "args": "--engine codex|claude|cline|pi [--kind worker|cloud-native-worker] [--team NAME]",
     "summary": "List available models before employee creation, without inference; Cloud Native reads the selected host",
     "gui": "创建员工和默认模型设置",
     "permission": "operator",
@@ -513,7 +513,7 @@
   },
   {
     "name": "settings.set",
-    "args": "[--theme white|light|space|black|midnight|sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off] [--team-overview on|off] [--default-codex-model ID] [--default-claude-model ID]",
+    "args": "[--theme white|light|space|black|midnight|sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off] [--team-overview on|off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]",
     "summary": "Persist appearance, canvas controls and default employee models",
     "gui": "背景、灵敏度和团队索引",
     "permission": "operator",
@@ -873,9 +873,9 @@
   },
   {
     "name": "config.engine",
-    "args": "<card-or-live-id> codex|claude",
-    "summary": "Switch employee engine while preserving conversation history",
-    "gui": "引擎选择",
+    "args": "<card-or-live-id> ENGINE",
+    "summary": "Retired: always rejects; delete the employee and create a new one to choose another engine",
+    "gui": "创建后引擎固定",
     "permission": "operator",
     "target": "session-or-employee"
   },

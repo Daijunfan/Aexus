@@ -78,7 +78,8 @@ export function buildOptions(args: {
   if(provider){
     // The installed system CLI may predate custom model capabilities. Use the SDK's paired runtime.
     opts.pathToClaudeCodeExecutable=engineExecutable('claude',true)
-    opts.model=deepSeekModel(provider,args.model)
+    opts.model=deepSeekModel(provider,args.model||'deepseek-flash')
+    opts.thinking=args.thinking===true?{type:'adaptive',display:'summarized'}:{type:'disabled'}
     opts.effort=(deepSeekEffort(args.effort)??'high') as Options['effort']
     opts.settings={...opts.settings,...deepSeekPicker,fastMode:false}
   }

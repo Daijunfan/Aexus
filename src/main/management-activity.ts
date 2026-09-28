@@ -1,27 +1,48 @@
 import {isSupervisor} from '../shared/roles'
-import {type ManagementActivity,type ManagementInteraction,type RequestContext} from '../shared/management'
+import {type CurrentTask,type ManagementActivity,type ManagementInteraction,type RequestContext} from '../shared/management'
 import {readStore} from './store'
-import {canControl,callerEmployee,isGlobal,requestContext} from './authorization'
+import {canControl,callerEmployee,isGlobal,requestContext,validateDelegation} from './authorization'
 import {connectorKey} from '../shared/connector'
 
-const current=new Map<string,{interaction:ManagementInteraction;token:number;timer?:ReturnType<typeof setTimeout>}>()
+const current=new Map<number,ManagementInteraction>()
+const tasks=new Map<string,{task:CurrentTask;interaction:ManagementInteraction}>()
+const communicationCommands=new Set(['session.send','session.enqueue','session.steer','session.interrupt','session.follow'])
 let revision=0,sequence=0,emit:(snapshot:ManagementActivity)=>void=()=>{}
-const snapshot=():ManagementActivity=>({revision,interactions:[...current.values()].map(value=>value.interaction)})
+const snapshot=():ManagementActivity=>({revision,interactions:[...new Map([...current.values(),...Array.from(tasks.values(),value=>value.interaction)].map(value=>[connectorKey(value.managerId,value.employeeId),value])).values()]})
 const changed=()=>{revision++;emit(snapshot())}
 export function setManagementActivityEmitter(handler:typeof emit){emit=handler}
+/** Exact engine turn lifetime and original delegation; never infer work from a creation line. */
+export function setManagementTask(employeeId:string,task?:CurrentTask){
+  const principal=task?.delegation.requestedBy
+  if(task&&principal?.kind==='agent'&&principal.employeeId!==employeeId){
+    const manager=readStore().sessions.find(card=>card.id===principal.employeeId)
+    if(manager&&isSupervisor(manager.managementRole)&&canControl(principal,employeeId)){
+      try{
+        validateDelegation(task.delegation,employeeId)
+        if(tasks.get(employeeId)?.task.messageId===task.messageId)return
+        tasks.set(employeeId,{task,interaction:{managerId:principal.employeeId,employeeId,command:'session.send',kind:'task',messageId:task.messageId,requestId:task.delegation.requestId,startedAt:task.startedAt}});changed();return
+      }catch{/* Revoked delegation must not remain a visible collaboration. */}
+    }
+  }
+  if(tasks.delete(employeeId))changed()
+}
 export function clearManagementInteraction(managerId:string){
   let removed=false
-  for(const [key,value] of current)if(value.interaction.managerId===managerId){clearTimeout(value.timer);current.delete(key);removed=true}
+  for(const [key,value] of current)if(value.managerId===managerId){current.delete(key);removed=true}
   if(removed)changed()
 }
-export function resetManagementActivity(){for(const value of current.values())clearTimeout(value.timer);current.clear();revision=0;emit=()=>{}}
+export function resetManagementActivity(){current.clear();tasks.clear();revision=0;emit=()=>{}}
 export function pruneManagementActivity(){
   const store=readStore()
+  let removed=false
   for(const [key,value] of current){
-    const id=value.interaction.managerId
-    const manager=store.sessions.find(card=>card.id===id&&!card.deleting)
-    if(!manager||!isSupervisor(manager.managementRole)||!canControl({kind:'agent',employeeId:id},value.interaction.employeeId)){clearTimeout(value.timer);current.delete(key);changed()}
+    const id=value.managerId,manager=store.sessions.find(card=>card.id===id&&!card.deleting)
+    if(!manager||!isSupervisor(manager.managementRole)||!canControl({kind:'agent',employeeId:id},value.employeeId)){current.delete(key);removed=true}
   }
+  for(const [employeeId,value] of tasks){
+    try{validateDelegation(value.task.delegation,employeeId)}catch{tasks.delete(employeeId);removed=true}
+  }
+  if(removed)changed()
 }
 export function managementActivity(team?:string):ManagementActivity{
   const context=requestContext(),global=isGlobal(context.principal),caller=callerEmployee(context.principal),store=readStore()
@@ -35,21 +56,13 @@ export function managementActivity(team?:string):ManagementActivity{
   })}
 }
 
-/** Called only after API authorization. An Agent cannot set or impersonate these indicators. */
+/** Actual message/control requests and live reply subscriptions, without completed-call persistence. */
 export function beginManagementInteraction(command:string,employeeId:string|undefined,context:RequestContext):()=>void{
-  if(context.principal.kind!=='agent'||command==='management.activity')return ()=>{}
+  if(context.principal.kind!=='agent'||!communicationCommands.has(command))return ()=>{}
   const managerId=context.principal.employeeId,store=readStore(),manager=store.sessions.find(card=>card.id===managerId)
   if(!manager||!isSupervisor(manager.managementRole))return ()=>{}
   if(!employeeId||employeeId===managerId||!canControl(context.principal,employeeId))return ()=>{}
-  const key=connectorKey(managerId,employeeId)
-  clearTimeout(current.get(key)?.timer)
-  const token=++sequence,interaction:ManagementInteraction={managerId,employeeId,command,requestId:context.requestId,startedAt:Date.now()}
-  current.set(key,{interaction,token});changed()
-  return ()=>{
-    const entry=current.get(key);if(!entry||entry.token!==token||entry.timer)return
-    // Every recipient keeps its own short delivery pulse, including rapid fan-out.
-    const duration=command==='session.send'||command==='session.enqueue'?2400:1600
-    entry.interaction={...entry.interaction,expiresAt:Date.now()+duration}
-    entry.timer=setTimeout(()=>{if(current.get(key)?.token===token){current.delete(key);changed()}},duration);entry.timer.unref();changed()
-  }
+  const token=++sequence
+  current.set(token,{managerId,employeeId,command,kind:'request',requestId:context.requestId,startedAt:Date.now()});changed()
+  return ()=>{if(current.delete(token))changed()}
 }

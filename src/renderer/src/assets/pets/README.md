@@ -1,7 +1,11 @@
-# Open-source companions
+# Companion collection
 
-Six unmodified MIT-licensed community sprite atlases ship with the application: Woodi, Marmalade, Voltcoin, Inky, Byte and WonderCube. Their pinned source commits, hashes and licenses are in `sources.json`; full copyright and permission notices are in `licenses/`.
+The picker preserves 34 characters in three collections: nine OpenAI sprite characters; Claude's 18 Buddy character animations plus Clawd in the same collection; and the six original saved community characters (woodi, marmalade, voltcoin, inky, byte, wondercube).
 
-The renderer crops the 8-column, 11-row atlases into 192 × 208 cells. Work, thinking, hover and resting are driven by actual application state; reduced-motion and hidden-window controls are respected. Color filters remain reversible.
+The eight previously imported OpenAI atlases are restored byte-for-byte from project history (8 columns × 9 rows). Hoots comes from the installed official OpenAI extension 26.917.61114 (8 × 11). All cells are 192 × 208. Source URLs or versioned extension resource paths, sizes and SHA-256 values are in `sources.json`.
 
-Old avatar IDs stay readable through `LEGACY_AVATARS` in `src/shared/office.ts`. They resolve to licensed replacements without rewriting employee identity, position or historical records. Official vendor sprites without an explicit redistribution grant are not part of this source distribution.
+Claude Buddy frames and sequences are adapted from Anthropic's MIT-licensed `claude-desktop-buddy`, pinned in `sources.json`. Its original ASCII artwork and animation sequences are retained; hardware particle overlays are omitted. The application maps sleeping, working, communication and hover to those clips. The full upstream license is in `licenses/Anthropic-Buddy-MIT.txt`.
+
+Clawd's SVG is copied unchanged from the official Claude Code extension 2.1.280. Its gentle movement and hover reactions are application animation, not a claim of an upstream sprite atlas. Official vendor atlas/glyph redistribution review remains pending for the local candidate.
+
+The six community atlases retain their original artwork, MIT notices and 8 × 11 frame layout. Community IDs render their own original characters. Older generic avatar IDs resolve through `LEGACY_AVATARS` to the original community appearances; stored identities and geometry are unchanged. All players respect reduced motion and canvas playback controls.

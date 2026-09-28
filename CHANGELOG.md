@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.50.3 — Cline and Pi support
+
+- Add real Cline ACP and Pi RPC adapters with shared Core/CLI messaging, tool approvals, queues, cancellation and native session continuation. These adapters currently execute text tasks in Core-local Build workspaces, including locally running Cloud Team Managers.
+- Default DeepSeek integrations in Claude Code, Cline and Pi to DeepSeek Flash with thinking off. Install Cline/Pi from checksum-pinned official packages into user-managed Core storage.
+- Preserve empty Cline sessions correctly across a close/reopen before the first message, and fix native session ID validation during cleanup.
+- Fix employee engines at creation. Existing employees display their engine read-only; changing engines requires deleting the employee and creating a new one.
+- Render all four engine marks as complete inline SVGs in both light and dark themes. Preserve 34 companion choices, restore the six saved community characters, and include Clawd in the Claude collection.
+- Show real ongoing delegated tasks as green collaboration lines, keep participants awake, and replace the README cover with the approved four-engine collaboration capture.
+- Align the three sidebar tools with equal sizes and spacing. Apply ad-hoc signing to local macOS candidates and verify their normal LaunchServices startup.
+
+
+## 0.49.8
+
+- Show only genuine in-flight message/control requests and reply subscriptions; remove query pulses and completed-call linger.
+- Keep communication participants awake without changing engine busy state.
+- Route badge-side siblings through short shared corridors and synchronize shared flow animation.
+
+## 0.49.7
+
+- Use a round Kali icon and a consistent, larger 64px system-icon frame; rebalance the header without changing Team geometry.
+
+## 0.49.6
+
+- Keep active arrow tips at their actual receiving endpoint; fit arrowheads within short incoming segments.
+- Display the Apple macOS mark for teams hosted on a Mac and the official Kali dragon for Kali Linux hosts.
+
+## 0.49.5
+
+- Align Governor, Manager and Employee in the same badge header and clarify engine and unread indicators with descriptive tooltips.
+
+## 0.49.4
+
+- Restore directional arrowheads on active management lines with a fixed open chevron and flowing dashed body; preserve route geometry and employee placement.
+
 ## 0.49.3
 
 - Use the current application icon in the company header, browser login and favicon, all from the same source artwork.

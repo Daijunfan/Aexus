@@ -26,7 +26,7 @@
 .employee-preview small { display: block; font-size: 10px; color: #9eaf98; margin-top: 7px; }
 .avatar-options { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 7px; }
 .avatar-options button { position: relative; padding: 0 0 6px; border: 1px solid #7d8d6f37; background: #111f2433; color: #aeb9a5; border-radius: 8px; font-size: 9px; }
-.avatar-options .mascot { width: 100%; height: 69px; display: block; margin-top: 4px; }
+.avatar-options .mascot { width: min(100%,64px); height: 75px; display: block; margin: 4px auto 12px; }
 .avatar-options button.selected { border-color: #c0c8a2; background: #b3c99715; color: #e4e9d2; }
 .avatar-options button:hover { border-color: #cbd7b5; }
 .color-field { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 23px; font-size: 11px; color: #c8d1bc; }
@@ -132,3 +132,12 @@ input[readonly] { color:#b5c6b4; background:#15201f; cursor:default; }
 .management-role-settings .global-manager{display:flex;align-items:center;gap:8px;font-size:12px}
 
 .employee-delete-list{max-height:36vh;overflow:auto;margin:14px 0;padding-right:6px}.employee-delete-list>div+div{border-top:1px solid var(--border-soft);padding-top:12px}.employee-delete-list strong{display:block;font-size:13px}.employee-delete-list small{display:block;margin-top:5px}.employee-delete-list .employee-delete-path{margin:8px 0 12px}.employee-delete-teams{font-weight:600;overflow-wrap:anywhere}
+
+.avatar-collection + .avatar-collection{margin-top:12px}
+.avatar-collection-label{font-size:11px;color:var(--fg-dim);margin-bottom:6px}
+
+.avatar-options:has(.buddy-body){grid-template-columns:repeat(4,minmax(0,1fr))}
+.avatar-options:has(.buddy-body) .mascot{width:100%;height:92px}
+
+.employee-engine-fixed { display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--fg);font-size:12px; }
+.employee-engine-fixed small { display:block;margin-top:5px;color:var(--fg-dim); }

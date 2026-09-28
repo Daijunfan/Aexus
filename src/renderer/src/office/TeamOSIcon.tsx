@@ -1,4 +1,4 @@
-import kali from '../assets/os/security-linux.svg'
+import kali from '../assets/os/kali.svg'
 import apple from '../assets/os/macos-device.svg'
 
 export function TeamOSIcon({os,distribution}:{os:'linux'|'macos'|'windows';distribution?:string}) {

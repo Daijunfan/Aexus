@@ -540,11 +540,13 @@ agents office layout --team "Engineering" --json
 agents card place EMPLOYEE_ID --x 430 --y 240 --snap off --json
 ```
 
-`management.activity` 返回 `{revision,interactions}`。每项包含 `managerId`、`employeeId`、实际调用的 `command`、`requestId`、`startedAt`，以及调用结束后的 `expiresAt`（毫秒时间戳）。状态由后台从通过身份校验的 API 调用中产生，不能通过参数伪造。用户可查看全部；Team Manager 只查看本 Team；普通 Employee 只查看涉及本人的交互。`management:activity` 事件向可信桌面界面推送同一结构，刷新连线不重新读取会话全文。
+`management.activity` 返回 `{revision,interactions}`。每项包含 `managerId`、`employeeId`、实际调用的 `command`、`requestId`、`startedAt`，不再返回旧版的 `expiresAt`：请求完成或订阅断开后立即从列表移除。状态由后台从通过身份校验的 API 调用中产生，不能通过参数伪造。用户可查看全部；Team Manager 只查看本 Team；普通 Employee 只查看涉及本人的交互。`management:activity` 事件向可信桌面界面推送同一结构，刷新连线不重新读取会话全文。
 
-读取状态或会话、发送消息、修改模型、移动员工、创建员工和操作定时任务等都会标记真实目标。每对管理者与员工独立显示；查询其他目标或执行全局读取不会清除已有交互。它表示实际管理 API 的调用与短暂回执，不代表员工整个工作时长，不持久化或重放。
+`management.activity` 同时返回真实通信请求与正在执行的委派任务。`kind=request` 表示 `session.send/enqueue/steer/interrupt` 或正在连接的 `session.follow`；`kind=task` 表示引擎已开始、尚未结束的任务，附带 `messageId` 和原始派发请求的 `requestId`。任务线只连接 `currentTask.delegation.requestedBy` 中经过授权的管理者与接收者，不从创建关系、普通 busy 状态或历史记录猜测。用户直接派发的独立任务不生成管理协作线。每对管理者与员工合并显示，同对任务和通信不重复绘线。
 
-Manager 自己创建的同 Team Employee，以及 Governor 在任意 Team 创建的 Employee / Manager，有常驻实线。实际授权 API 调用开始时，对应线立即变成加粗的绿色流动虚线；调用结束后短暂显示回执，再恢复常驻线或移除临时线。发送／排队消息保留 2.4 秒，其余快速操作保留 1.6 秒；持续订阅在结束后开始计时。同一上级通知多位下属时，每一对关系独立计时，不会被下一位下属或无关查询覆盖。关闭上级会话、撤销身份或失去权限会清除相应活动。系统“减少动态效果”会关闭流动动画，保留颜色和线宽。创建来源和管理权限互相独立，没有常驻线也可使用完全相同的管理 API。
+绿色表示“协作中”：并行派发给多名员工且仍在执行的任务可以同时亮起；任务完成、失败、中断、关闭或授权撤销时立即清除。读取状态、会话记录、布局或配置不亮灯，完成的调用没有延时残留。任务指示不持久化、不重放；引擎实际执行时角色显示“工作中”，参与协作但没有执行轮时显示“协作中”并保持清醒，不伪造引擎 busy。
+
+Manager 自己创建的同 Team Employee，以及 Governor 在任意 Team 创建的 Employee / Manager，有常驻实线。真正进行中的消息/控制请求和回复订阅会将对应线显示为绿色流动虚线；结束立即恢复常驻线或移除临时线。没有延长亮灯的计时器，普通读取不会产生通信指示。真正并发的请求可同时显示；关闭上级会话、撤销身份或失去权限会清除相应活动。系统“减少动态效果”会关闭流动动画，保留颜色和线宽。创建来源和管理权限互相独立，没有常驻线也可使用完全相同的管理 API。
 
 连线在目标工牌侧边收口；员工排列在 Manager 下方时，从 Manager 工牌下缘出线，并允许同一管理者的线路共用主干。不同管理者的线路仍优先错开。线路绕开完整工位，水平／垂直行进并使用小圆角。拖动员工时即时重算，不移动其他员工来迁就线条。两个工位完全重叠、封死所有通路时无法保证避障，但线段仍保持正交。Manager 可用上面的 `card.place` 调整自己或同 Team 的任意 Employee，或调用 `management.relayout` 自动整理。
 
@@ -919,8 +921,9 @@ Changes persist in `Store.preferences` and emit `store:changed`. Invalid values
 reject the whole update. Restore defaults by setting those three default values.
 
 `card.create` and `card.update` additionally accept the official skin IDs:
-`codex`, `dewey`, `fireball`, `rocky`, `seedy`, `stacky`, `bsod`, `null-signal`.
-The previous `cat|fox|rabbit|panda|penguin|robot|cloud` SVG avatars remain supported.
+`codex`, `dewey`, `fireball`, `rocky`, `seedy`, `stacky`, `bsod`, `null-signal`, `hoots`.
+Claude artwork: `clawd` uses the original Claude Code mascot. Official Anthropic Buddy character animations use `claude-axolotl`, `claude-blob`, `claude-cactus`, `claude-capybara`, `claude-cat`, `claude-chonk`, `claude-dragon`, `claude-duck`, `claude-ghost`, `claude-goose`, `claude-mushroom`, `claude-octopus`, `claude-owl`, `claude-penguin`, `claude-rabbit`, `claude-robot`, `claude-snail`, `claude-turtle`. These retain the upstream character-frame format. No engine call is needed to select or animate a character.
+Community IDs `woodi`, `marmalade`, `voltcoin`, `inky`, `byte`, `wondercube` remain selectable with their original artwork. Historical generic IDs retain their original community aliases.
 
 ## Employee conversation identity, sidebar and snapping
 
@@ -1121,13 +1124,13 @@ is created, and an SSH failure never falls back to local file operations.
 
 ## Headless engine and conversation control
 
-`config.engine {id,engine:"codex"|"claude"}` / `agents config engine ID ENGINE`
-accepts an employee ID or live session ID. It switches the stored employee engine,
-closes the old idle engine, retains the same employee and saved transcript, preserves
-old native IDs, and leaves terminals running. Open the employee again using
-`session.open`; the UI invokes those same two commands. `card.update --engine` uses
-the same behavior. New Codex context defaults to `gpt-5.6-luna` and `low`; Claude uses
-its configured default model. Busy switches are rejected before changing records.
+An employee's Coding Agent engine is fixed at creation, for all roles and execution
+locations. Choose `engine` in `card.create` / `session.new`. Changing it requires
+explicitly deleting that employee and creating a new one. `card.update` rejects a
+different engine before changing state or closing its session. Legacy
+`config.engine` always rejects with this guidance. The UI displays the existing
+engine as read-only; model and supported thinking/effort controls remain available.
+Existing employees and historical native references are retained unchanged.
 
 `config.model`, `config.thinking`, `config.effort`, `config.permission`, approvals,
 `session.send`, `session.follow`, `session.interrupt` and history reading all work
@@ -1212,11 +1215,10 @@ and forced invalid-tool tests. Existing processes require reconnection to load c
 
 `settings.set.pageZoom` (`--page-zoom`) is persisted independently of canvas zoom; range 0.75–1.5, default 1. The desktop applies the same setting for Cmd/Ctrl +, − and 0. File-tree drafts are not filesystem objects: Enter submits `workspace.write`/`mkdir`/`move`; Escape or clicking elsewhere cancels.
 
-Additional community avatar IDs: `woodi`, `marmalade`, `voltcoin`, `inky`, `byte`,
-`wondercube`. Set them with `agents card create --avatar ...` or
-`agents card update ID --avatar ...`. Original classic sprite IDs remain available.
-Legacy hand-drawn IDs remain accepted as aliases to replacement sprites so existing
-employees and CLI integrations keep working. Attribution is in THIRD_PARTY_NOTICES.md.
+All six community IDs render their original artwork. The picker preserves 34
+characters in OpenAI, Claude (including Clawd), and saved community collections. `card.update ID --avatar clawd` changes appearance without
+altering employee identity, conversation, workspace, position or management lines.
+Attribution and animation adaptations are recorded in THIRD_PARTY_NOTICES.md.
 
 ## Resizable workbench and live office activity
 
@@ -1387,7 +1389,7 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents session acknowledge</code> | <code>--employee ID --reply-id ID</code> | User-only acknowledgement of the exact displayed reply; stale acknowledgements do not clear newer replies | 可见回复已读 | operator |
 | <code>agents management relayout</code> | <code>--team NAME</code> | Group related employees and fit this Team without changing the viewport | 整理团队拓扑 | layout.write |
 | <code>agents management topology</code> | <code>[--team NAME] [--teams-only] [--creator self&#124;others&#124;operator&#124;unknown&#124;EMPLOYEE_ID]</code> | Read teams with isOwnTeam, employeeCount, governorIds, allowedActions and deleteBlockedReason; employee nodes include creation provenance and allowedActions | 管理与协同 | topology |
-| <code>agents management activity</code> | <code>[--team NAME]</code> | Read authenticated Manager API interactions; running calls and brief completed-call indicators | 管理交互连线 | topology |
+| <code>agents management activity</code> | <code>[--team NAME]</code> | Read live communication and running delegated tasks; no completed-call linger | 管理交互连线 | topology |
 | <code>agents management roles</code> | <code>—</code> | List employee-owned role policies: Employee, Manager and Governor, scopes and protected lifecycle rules | 职位权限 | identity |
 | <code>agents management request</code> | <code>--employee ID [--manager ID]</code> | Deprecated: creation lines are derived from createdBy and cannot be edited; all same-Team Employees are manageable | 已停用的管理关系操作 | relation |
 | <code>agents management decide</code> | <code>ID approve&#124;deny</code> | Deprecated: creation lines are derived from createdBy and cannot be edited; all same-Team Employees are manageable | 已停用的管理关系操作 | operator |
@@ -1417,8 +1419,8 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 | schedule |
 | <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 | schedule |
 | <code>agents settings get</code> | <code>—</code> | Read appearance controls and per-engine default employee models | 应用设置 | operator |
-| <code>agents engine models</code> | <code>--engine codex&#124;claude [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
-| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID]</code> | Persist appearance, canvas controls and default employee models | 背景、灵敏度和团队索引 | operator |
+| <code>agents engine models</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
+| <code>agents settings set</code> | <code>[--theme white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Persist appearance, canvas controls and default employee models | 背景、灵敏度和团队索引 | operator |
 | <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
 | <code>agents view open</code> | <code>home&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID] [--plugin ID]</code> | Open a form, workspace or employee conversation | 打开资料或会话 | operator |
 | <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
@@ -1463,7 +1465,7 @@ agents transfer cancel TRANSFER_ID --json
 | <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search | operator |
 | <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests | operator |
 | <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline | operator |
-| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; codex&#124;claude</code> | Switch employee engine while preserving conversation history | 引擎选择 | operator |
+| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; ENGINE</code> | Retired: always rejects; delete the employee and create a new one to choose another engine | 创建后引擎固定 | operator |
 | <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown | employee.configure |
 | <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 | operator |
 | <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown | operator |

@@ -35,7 +35,7 @@
 .employee-location .employee-name { font-size:12px; }.employee-location .employee-role { font-size:9px; }
 .employee-location .employee-badge{grid-template-rows:auto auto auto}
 .employee-location .employee-name{padding-right:28px;min-height:24px}
-.employee-location .badge-engine{position:absolute;right:10px;top:10px;width:24px;height:24px;display:grid;place-items:center}
+.employee-location .badge-engine{color:var(--fg);position:absolute;right:10px;top:10px;width:24px;height:24px;display:grid;place-items:center}
 .employee-location .badge-engine svg,.employee-location .badge-engine img{display:block}
 .employee-location .employee-role{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 3px;overflow:visible}
 .employee-location .badge-place{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -133,19 +133,19 @@
 .bubble-tool .activity-text,.bubble-tool pre { font:11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
 .bubble-tool pre { padding-top:7px;margin:7px 0 0;border-top:1px solid var(--border-soft);color:var(--fg-dim);white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
 /* The entire 170px wall above the floor is the Team header, not a floating plaque. */
-.team-header{top:0;left:0;right:0;height:170px;padding:20px 32px 18px;display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:48px 46px 24px;gap:7px 16px;align-items:center;border:0;border-bottom:2px solid var(--room-accent);border-radius:0;box-shadow:none;backdrop-filter:none;background:color-mix(in srgb,var(--bg-elev) 78%,transparent)}
+.team-header{top:0;left:0;right:0;height:170px;padding:14px 32px 16px;display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:42px 64px 18px;gap:7px 16px;align-items:center;border:0;border-bottom:2px solid var(--room-accent);border-radius:0;box-shadow:none;backdrop-filter:none;background:color-mix(in srgb,var(--bg-elev) 78%,transparent)}
 .team-title{grid-column:1/-1;grid-row:1;max-width:90%;padding:0 12px;align-self:center}.team-title strong{font-size:36px;line-height:1.25;letter-spacing:-.5px}.team-kind{grid-column:1;grid-row:2;justify-self:end;margin:0;font-size:15px;padding:7px 14px}.team-cloud-meta{grid-column:2/4;grid-row:2;justify-self:start;gap:14px}.team-health{font-size:14px;margin:0;padding:8px 11px;gap:8px}.team-health i{width:13px;height:13px}.team-os{padding:3px 10px 3px 4px;gap:8px;background:color-mix(in srgb,var(--bg-elev) 70%,transparent)}.team-os img,.team-os svg{width:40px;height:40px;border-radius:8px}.team-os small{font:600 15px/1.2 ui-sans-serif,system-ui}.team-root-label{position:static;grid-column:1/-1;grid-row:3;transform:none;justify-self:center;font-size:13px;max-width:90%;text-overflow:ellipsis}.team-kind-work{grid-column:1/-1;justify-self:center}.world-room[data-shape=ellipse] .team-header,.world-room[data-shape=hexagon] .team-header{padding-inline:18%}
-@container(max-width:550px){.team-header{left:0;right:0;padding:22px 18px 14px;grid-template-columns:auto 1fr;gap:7px 9px}.team-title strong{font-size:30px}.team-kind{font-size:13px;padding:6px 9px}.team-cloud-meta{grid-column:2;gap:7px}.team-health{font-size:12px;padding:5px}.team-os small{display:inline;font-size:12px}.team-os img,.team-os svg{width:34px;height:34px}.team-root-label{font-size:12px;max-width:96%}}
+@container(max-width:550px){.team-header{left:0;right:0;padding:14px 18px 16px;grid-template-columns:auto 1fr;gap:7px 9px}.team-title strong{font-size:30px}.team-kind{font-size:13px;padding:6px 9px}.team-cloud-meta{grid-column:2;gap:7px}.team-health{font-size:12px;padding:5px}.team-os small{display:inline;font-size:12px}.team-os img,.team-os svg{width:34px;height:34px}.team-root-label{font-size:12px;max-width:96%}}
 .team-header{grid-template-columns:minmax(0,1fr);justify-items:center}
 .team-badges{grid-column:1;grid-row:2;display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap}
 .team-header .team-kind{flex:none;justify-self:auto;margin:0;font-size:14px;padding:7px 11px}
 .team-header .team-cloud-meta{display:flex;align-items:center;justify-self:auto;gap:10px;flex:none}
 .team-header .team-health{font-size:13px;padding:7px 9px;margin:0;gap:7px}
 .team-header .team-health i{width:12px;height:12px}
-.team-header .team-os{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;gap:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
-.team-header .team-os img,.team-header .team-os svg{width:50px;height:50px;border-radius:0;filter:drop-shadow(0 2px 3px #0003)}
-.team-header .team-os-kali img{width:48px;height:48px}
-.team-header .team-os-apple{display:block;width:48px;height:48px;flex:none;background:var(--fg);mask-size:contain;mask-repeat:no-repeat;mask-position:center;filter:drop-shadow(0 2px 3px #0003)}
+.team-header .team-os{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;gap:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.team-header .team-os img,.team-header .team-os svg{width:64px;height:64px;border-radius:0;filter:drop-shadow(0 2px 3px #0003)}
+.team-header .team-os-kali img{border-radius:50%;border:2px solid transparent;background:#367bf0;background-clip:padding-box;padding:3px}
+.team-header .team-os-apple{display:block;width:64px;height:64px;flex:none;background:var(--fg);mask-size:94%;mask-repeat:no-repeat;mask-position:center;filter:drop-shadow(0 2px 3px #0003)}
 .team-header .team-plugin-icon .plugin-monogram{width:50px;height:50px;border-radius:10px;font-size:32px;box-shadow:0 2px 3px #0003}
 @container(max-width:420px){.team-badges,.team-header .team-cloud-meta{gap:6px}.team-header .team-kind,.team-header .team-health{padding-inline:7px}}
 
@@ -155,14 +155,15 @@
 .employee-management[data-management-role=governor]{color:var(--accent);font-weight:750;letter-spacing:.3px}
 .management-edges{--management-active:#32bc78;opacity:1}
 .management-connection{color:var(--accent)}
-.management-line{opacity:.75;transition:stroke .12s,opacity .12s}
+.management-line{opacity:.75;transition:opacity .12s}
 .management-line-halo{stroke:var(--floor-top);opacity:.8;stroke-linejoin:round}
 .management-connection[data-active=true]{color:var(--management-active)}
-.management-connection[data-active=true] .management-line{opacity:1;animation:management-flow .85s linear infinite}
+.management-connection[data-active=true] .management-line{opacity:1}
+.office-connections[data-active=true]{animation:management-flow .85s linear infinite}
 @keyframes management-flow{to{stroke-dashoffset:var(--flow-distance,-17px)}}
 .management-connection[data-temporary=true] .management-line{stroke-dasharray:7 5}
 .management-connection[data-temporary=true] .management-line-halo{stroke-dasharray:7 5}
-@media(prefers-reduced-motion:reduce){.management-line{transition:none;animation:none!important}}
+@media(prefers-reduced-motion:reduce){.management-line,.office-connections{transition:none;animation:none!important}}
 .unread-dot { display:inline-block;width:8px;height:8px;min-width:8px;border-radius:50%;background:#e34b55;box-shadow:0 0 0 2px var(--bg-elev); }
 .employee-unread { position:absolute;right:8px;top:9px; }
 .bubble-unread { border-color:color-mix(in srgb,#e34b55 45%,var(--border)); }
@@ -200,10 +201,11 @@
 .connector-editor .connector-offset{margin-top:12px;font-size:11px}.connector-offset input{min-width:0;flex:1;accent-color:var(--accent)}.connector-offset output{width:30px}
 .connector-editor footer{display:flex;justify-content:space-between;gap:8px;margin-top:16px}.connector-editor .primary{background:var(--accent);border-color:var(--accent);color:white;padding-inline:22px}
 .connector-editor .connector-error{color:#b57920}
-.employee[data-management-role=manager] .employee-management,.employee[data-management-role=governor] .employee-management{position:absolute;grid-column:auto;top:0;left:0;right:0;border-radius:8px 8px 0 0;padding:4px 12px;font-size:11px;font-weight:750;letter-spacing:.8px;color:#4f549a;background:#eeedfa;text-align:left}
+.employee[data-management-role] .employee-management{position:absolute;grid-column:auto;top:0;left:0;right:0;border-radius:8px 8px 0 0;padding:4px 12px;font-size:11px;font-weight:750;letter-spacing:.8px;color:#496756;background:#edf3ef;text-align:left}
+.employee[data-management-role=manager] .employee-management{color:#4f549a;background:#eeedfa}
 .employee[data-management-role=governor] .employee-management{color:#886126;background:#faf0dc}
-.employee[data-management-role=manager] .employee-badge,.employee[data-management-role=governor] .employee-badge{padding-top:32px}
-.employee[data-management-role=manager] .badge-engine,.employee[data-management-role=governor] .badge-engine{top:32px}
+.employee[data-management-role] .employee-badge{padding-top:32px}
+.employee[data-management-role] .badge-engine{top:32px}
 
 /* One foreground edge layer: room stacking, culling and dragging cannot cover an edge. */
 .office-connections{position:absolute;inset:0;z-index:12;overflow:visible;pointer-events:none;touch-action:none;color:var(--accent);--management-active:#32bc78}
@@ -241,3 +243,6 @@ body.is-connector-dragging,body.is-connector-dragging *{cursor:grabbing!importan
 .team-select-toggle{position:absolute;inset:0;width:100%;height:100%;z-index:30;background:transparent;border:0;cursor:pointer}.team-select-toggle:hover,.team-select-toggle[aria-pressed=true]{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .team-selection-outline{position:absolute;inset:0;z-index:31;pointer-events:none;overflow:visible}
 .is-editing-canvas .office-connections,.is-editing-canvas .office-connections *{pointer-events:none!important}
+
+
+.employee-location .is-communicating .badge-light{background:#32bc78;border-color:#d4f4df;box-shadow:0 0 7px #32bc7866}

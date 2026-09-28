@@ -4,15 +4,15 @@
 
 给 Governor 一句话，由 Manager 分工，让员工在各自的项目目录里执行。谁在工作、谁在沟通、结果放在哪里，都在同一个界面里。
 
-![Agents Company：Governor、Manager 与员工的真实协作画面](docs/images/cover.png)
+![Agents Company：Codex、Claude Code、Cline 与 Pi 的真实团队协作](docs/images/cover.png)
 
 [下载安装包](https://github.com/Daijunfan/Agents-Company/releases) · [安装与部署](docs/DEPLOYMENT.md) · [全部 CLI / API](API.md) · [权限说明](PERMISSIONS.md) · [参与开发](CONTRIBUTING.md)
 
 ## 解决什么问题
 
-- **多个 Agent 窗口来回切。** 把 Codex 和 Claude Agent 放在同一张画布中，直接打开任一员工的对话、文件和终端。
+- **多个 Agent 窗口来回切。** 把 Codex、Claude Code、Cline 和 Pi 放在同一张画布中，直接打开任一员工的对话、文件和终端。
 - **本机、服务器、项目目录容易混。** 团队绑定实际执行环境，员工继承对应工作区；远端连接失败会报错，不会偷偷改在浏览器或本机执行。
-- **分工后不知道进度。** 工作状态、未读回复和真实管理交互直接显示。绿色流动线表示正在发生或刚完成的 API 交互，不是装饰动画。
+- **分工后不知道进度。** 工作状态、未读回复和真实管理交互直接显示。绿色流动线表示正在发生的管理通信或仍在执行的委派任务；任务结束后熄灭。
 - **反复向每个 Agent 解释怎么配合。** Governor 管理各团队，Manager 管理本队员工；管理者通过同一套公司 API 分派、查看和安排任务。
 
 ## 核心功能
@@ -21,7 +21,7 @@
 | --- | --- |
 | 可视化办公室 | 拖动团队和员工、手动调整连线、切换主题、用自定义视图组织已有团队 |
 | 分级协作 | Governor 跨团队调度；Manager 管理本队全部 Employee，包括其他创建者招募的员工 |
-| 两种执行引擎 | 使用 Codex App Server 或 Claude Agent SDK；模型服务商与引擎分别配置 |
+| 四种 Coding Agent | Codex App Server、Claude Agent SDK、Cline ACP、Pi RPC；模型服务商与引擎分别配置 |
 | 本地与 SSH | 引擎在 Core 本机工作、从 Core 操作远端工作区，或在远端原生运行 |
 | 项目工作台 | 查看和编辑文件、交互终端、图片输入、跨工作区文件传输 |
 | 任务与记录 | 排队、定时任务、审批、历史会话和未读回复 |
@@ -29,6 +29,21 @@
 | CLI 优先 | 团队、员工、引擎、主机、文件和插件操作均有公开 CLI / Core API |
 
 连线表示创建来源和实际交互，**权限由职级决定**。没有创建来源线，也能操作权限范围内的员工。Governor 的创建、删除和职位变更由用户控制。
+
+## Coding Agent 引擎
+
+| 引擎 | 接入方式 | 当前执行范围 |
+| --- | --- | --- |
+| Codex | 官方 App Server 协议 | Core 本地与已支持的 SSH / 云端原生工作区 |
+| Claude Code | Claude Agent SDK | Core 本地与已支持的 SSH / 云端原生工作区 |
+| Cline | 官方 CLI 的 ACP 协议 | Core 本地 Build 工作区 |
+| Pi | 官方 Coding Agent 的 RPC 协议 | Core 本地 Build 工作区 |
+
+Cline、Pi 以及配置 DeepSeek 的 Claude Code 默认使用 **DeepSeek Flash，关闭思考**。Cline/Pi 已接入真实消息流、工具审批、任务队列、取消和原生会话恢复；目前只接收文本输入。模型与能力详情见 [引擎适配文档](docs/ENGINE_ADAPTERS.md)。
+
+Cloud Team 中使用本地工作区的 Manager 可以选择 Cline/Pi，通过公司 API 指挥云端员工；这不代表 Cline/Pi 已支持云端原生执行。封面为本地 Mac 上四种引擎共同参与的实机画面。
+
+**员工引擎在创建时确定，创建后不可切换。** 需要另一种引擎时，删除该员工后重新添加；同一引擎内仍可调整模型及其支持的运行设置。
 
 ## 自带三个插件
 
@@ -51,7 +66,7 @@
 
 ### 从源码启动
 
-需要 Node.js **22.18+**（验证基线为 Node 24）和 npm。SSH / POSIX 终端需要 Python 与 OpenSSH；Windows 本地终端使用 ConPTY。
+需要 Node.js **22.18+**（Pi 需要 **22.19+**；验证基线为 Node 24）和 npm。SSH / POSIX 终端需要 Python 与 OpenSSH；Windows 本地终端使用 ConPTY。
 
 ```sh
 npm ci
@@ -105,6 +120,6 @@ npm run test:release-engines
 
 ## 开源许可
 
-完整发行版采用 **GNU GPL v3**；第三方组件保留各自兼容的许可证和声明。匹配源码包括全部插件和上游编辑器所需源码。单独安装的 Coding Agent 程序与模型服务遵守各自条款。
+项目代码采用 **GNU GPL v3**；第三方代码与素材保留各自的许可证、声明及审核记录，项目 GPL 不为品牌素材授予额外许可。匹配源码包括全部插件和上游编辑器所需源码。单独安装的 Coding Agent 程序与模型服务遵守各自条款。
 
 见 [LICENSE](LICENSE)、[LICENSING.md](LICENSING.md) 和 [第三方声明](THIRD_PARTY_NOTICES.md)。

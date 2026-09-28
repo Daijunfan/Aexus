@@ -42,7 +42,7 @@ function validate(input: ScheduleSpec): ScheduleSpec {
   if (typeof a.prompt !== 'string' || !a.prompt.trim()) throw new Error('action.prompt is required')
   if (a.model !== undefined && (typeof a.model !== 'string' || !a.model.trim())) throw new Error('model must be a nonempty string')
   if (a.effort !== undefined && !['low', 'medium', 'high', 'xhigh', 'max'].includes(a.effort)) throw new Error('Invalid effort level')
-  if (a.thinking !== undefined && (typeof a.thinking !== 'boolean' || card.engine !== 'claude')) throw new Error('thinking must be boolean and is only supported by Claude; Codex uses effort')
+  if (a.thinking !== undefined && (typeof a.thinking !== 'boolean' || card.engine==='codex' || (card.engine==='cline'||card.engine==='pi')&&a.thinking)) throw new Error('thinking must be boolean; Cline/Pi support off only, Codex uses effort')
   const action: ScheduledAction = { type: 'agent', employeeId: card.id, engine: card.engine, prompt: a.prompt, model: a.model, effort: a.effort, thinking: a.thinking, viewId:taskViewId(card.id,a.viewId,true) }
   const timeoutSeconds = input.timeoutSeconds ?? 1800, graceSeconds = input.graceSeconds ?? 60
   if (!Number.isInteger(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > 86400) throw new Error('timeoutSeconds must be 1..86400')

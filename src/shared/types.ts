@@ -62,7 +62,9 @@ export const EFFORT_LEVELS: { value: EffortLevel; label: string }[] = [
 
 export const ENGINES: { value: Engine; label: string; hint: string }[] = [
   { value: 'claude', label: 'Claude Agent', hint: 'Anthropic Claude via the Agent SDK' },
-  { value: 'codex', label: 'Codex', hint: 'OpenAI Codex CLI' }
+  { value: 'codex', label: 'Codex', hint: 'OpenAI Codex CLI' },
+  { value: 'cline', label: 'Cline', hint: 'Cline ACP · DeepSeek Flash' },
+  { value: 'pi', label: 'Pi', hint: 'Pi RPC · DeepSeek Flash' }
 ]
 
 /** Undefined on legacy employees: do not run paid onboarding when upgrading. */
@@ -106,6 +108,11 @@ export type StoredSession = {
   /** Read-only API projection from Team; persisted only in legacy 0.12 records. */
   remote?: import('./remote').RemoteTarget | null
   clonedFrom?: string
+  clineSessionId?: string
+  clineConfigRoot?:string
+  piSessionId?: string
+  piSessionFile?:string
+  piConfigRoot?:string
   claudeSessionId?: string
   threadId?: string
   nativeSessions?: NativeSession[]
@@ -207,6 +214,11 @@ export type Session = {
   /** The stored card this session represents (equals id for a new session). */
   cardId?: string
   engine: Engine
+  clineSessionId?: string
+  clineConfigRoot?:string
+  piSessionId?: string
+  piSessionFile?:string
+  piConfigRoot?:string
   claudeSessionId?: string
   threadId?: string
   title: string
@@ -296,6 +308,8 @@ export function groupSessions(
 /** Old native IDs survive workspace/context changes until the employee is removed. */
 export function nativeSessionRefs(card:StoredSession):NativeSession[] {
   const refs=[...(card.nativeSessions??[])]
+  if(card.clineSessionId)refs.push({engine:'cline',id:card.clineSessionId,profile:card.clineConfigRoot})
+  if(card.piSessionId)refs.push({engine:'pi',id:card.piSessionId,profile:card.piConfigRoot})
   if(card.threadId)refs.push({engine:'codex',id:card.threadId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   return refs.filter((ref,i)=>refs.findIndex(other=>other.engine===ref.engine&&other.id===ref.id&&other.ownership===ref.ownership&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))===i)

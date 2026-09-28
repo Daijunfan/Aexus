@@ -32,7 +32,7 @@ try{
  const page=await app.firstWindow();await page.locator('.infinite-canvas').waitFor()
  assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())))
  for(const [name,label] of [['Local Team','Local'],['Plugin Team','Plugin'],['Kali Team','Cloud'],['Windows Team','Cloud']])await expect(page.locator(`[data-department="${name}"] .team-header .team-kind`)).toHaveText(label)
- await expect(page.locator('[data-department="Local Team"] .team-os-apple')).toHaveCSS('width','48px')
+ await expect(page.locator('[data-department="Local Team"] .team-os-apple')).toHaveCSS('width','64px')
  assert.ok(await page.locator('[data-department="Local Team"] .team-os-apple').evaluate(icon=>getComputedStyle(icon).maskImage!=='none'))
  await expect(page.locator('[data-department="Ubuntu Team"] .team-os')).toHaveAttribute('data-os','ubuntu')
  await expect(page.locator('[data-department="Plugin Team"] .team-plugin-icon')).toHaveAttribute('data-plugin','mininotion')
@@ -50,7 +50,9 @@ try{
  await expect(page.locator('.team-os small')).toHaveCount(0)
  assert.deepEqual(await page.locator('[data-department="Ubuntu Team"] .team-os').evaluate(element=>{const style=getComputedStyle(element);return [style.borderTopWidth,style.backgroundColor]}),['0px','rgba(0, 0, 0, 0)'])
  const iconGeometry=async(name,selector)=>page.locator(`[data-department="${name}"] .team-os`).evaluate((wrapper,selector)=>{const outer=wrapper.getBoundingClientRect(),inner=wrapper.querySelector(selector).getBoundingClientRect();return {size:parseFloat(getComputedStyle(wrapper).width),offsetX:(inner.left+inner.width/2)-(outer.left+outer.width/2),offsetY:(inner.top+inner.height/2)-(outer.top+outer.height/2)}},selector)
- for(const [name,selector] of [['Local Team','.team-os-apple'],['Windows Team','svg'],['Ubuntu Team','svg']]){const icon=await iconGeometry(name,selector);assert.equal(icon.size,52);assert.ok(Math.abs(icon.offsetX)<1&&Math.abs(icon.offsetY)<1,`${name} icon is off center: ${JSON.stringify(icon)}`)}
+ for(const [name,selector] of [['Local Team','.team-os-apple'],['Windows Team','svg'],['Ubuntu Team','svg'],['Kali Team','img']]){const icon=await iconGeometry(name,selector);assert.equal(icon.size,64);assert.ok(Math.abs(icon.offsetX)<1&&Math.abs(icon.offsetY)<1,`${name} icon is off center: ${JSON.stringify(icon)}`)}
+ await expect(page.locator('[data-department="Kali Team"] .team-os img')).toHaveCSS('border-radius','50%')
+ for(const [name,selector] of [['Local Team','.team-os-apple'],['Windows Team','svg'],['Ubuntu Team','svg'],['Kali Team','img']]){const icon=page.locator(`[data-department="${name}"] .team-os ${selector}`);await expect(icon).toHaveCSS('width','64px');await expect(icon).toHaveCSS('height','64px')}
  const checkCount=()=>fs.existsSync(checks)?fs.readFileSync(checks,'utf8').trim().split('\n').length:0
  const refresh=page.getByRole('button',{name:'刷新主机状态',exact:true})
  await expect(refresh).toBeVisible()
@@ -120,5 +122,5 @@ try{
  const kaliIcon=await iconGeometry('Kali Team','img');assert.ok(Math.abs(kaliIcon.offsetX)<1&&Math.abs(kaliIcon.offsetY)<1)
  await expect.poll(async()=>{const box=await page.locator('[data-department="Kali Team"]').boundingBox();return !!box&&box.x>=80&&box.x<500&&box.y>=80&&box.y<500}).toBe(true)
  await page.screenshot({path:path.join(root,'artifacts/kali-header-preview.png')})
- console.log('PASS manual refresh only: no SSH on startup, focus, idle timer, reload or view changes; cached status and timestamps; bottom-left refresh; Team headers show the matching Plugin icon beside Plugin, plus original MarginNote, colorful Cloud Hosts, preserved Notion, and icon-only Apple, Ubuntu, Kali and Windows identities')
+ console.log('PASS manual refresh only: no SSH on startup, focus, idle timer, reload or view changes; cached status and timestamps; bottom-left refresh; Team headers show the matching Plugin icon beside Plugin, plus plugin artwork and equal-sized Apple, Ubuntu, round Kali and Windows identities')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

@@ -40,7 +40,7 @@ try{
   await page.locator('.add-employee').click()
   await expect(page.locator('.employee-form select[name="group"]')).toHaveValue('Alpha')
   await expect(page.locator('.employee-form select[name="model"]')).toHaveValue('gpt-6-luna')
-  await expect(page.locator('.employee-form .avatar-options button.selected .mascot')).toHaveAttribute('data-avatar','woodi')
+  await expect(page.locator('.employee-form .avatar-options button.selected .mascot')).toHaveAttribute('data-avatar','rocky')
   await expect(page.locator('.employee-form input[name="title"]')).toHaveValue('')
   await page.locator('.panel-close').click()
   const originalRoot=(await cli('session','list')).teamRoots.Alpha
@@ -70,7 +70,7 @@ try{
   await cli('view','close');await cli('card','remove',card.id)
   await page.locator('.add-employee').click()
   await expect(page.locator('.employee-form select[name="model"]')).toHaveValue('gpt-6-luna')
-  await expect(page.locator('.employee-form .avatar-options button.selected .mascot')).toHaveAttribute('data-avatar','woodi')
+  await expect(page.locator('.employee-form .avatar-options button.selected .mascot')).toHaveAttribute('data-avatar','rocky')
   await page.locator('.panel-close').click()
   await cli('group','remove','Renamed Team')
   await page.locator('.add-team').click()

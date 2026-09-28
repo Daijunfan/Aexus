@@ -27,7 +27,7 @@ Codex is also a separately detected or explicitly installed execution program. I
 
 ## Artwork and names
 
-Unverified official pet art and extracted Finder/MarginNote icons are excluded from the public source. The replacement source/permission records are documented in `licenses/artwork-review.md` and the adjacent asset `sources.json` files. Engine/OS names identify compatibility; they do not imply endorsement.
+The source includes the restored OpenAI and Claude character collection, the MIT-licensed Anthropic Buddy animations and six MIT-licensed community companions. Extracted Finder/MarginNote application icons remain excluded. Source, license and pending review records are documented in `licenses/artwork-review.md`, `licenses/release-review.json`, `THIRD_PARTY_NOTICES.md` and the adjacent asset `sources.json` files. The project GPL does not grant additional rights to vendor artwork or trademarks; attribution and publication do not constitute a redistribution license. Engine/OS names identify compatibility and do not imply endorsement.
 
 ## Release verification
 

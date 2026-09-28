@@ -63,6 +63,10 @@ setUiHandler(async (op, args) => {
     const css=args?.privacy?await contents.insertCSS('.team-root-label,.activity-bubble,.room-dimension{visibility:hidden!important}'):undefined
     try{
       if(throttled)contents.setBackgroundThrottling(false)
+      // Wake an occluded compositor while export styling is still applied. Its
+      // first capture can contain the preceding frame even after renderer rAF.
+      await contents.capturePage(undefined,{stayHidden:true,stayAwake:true})
+      contents.invalidate()
       await contents.executeJavaScript('new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(null)));setTimeout(()=>resolve(null),150)})')
       const image = await contents.capturePage(undefined,{stayHidden:true,stayAwake:true}),path=String(args?.path)
       writeFileSync(path, image.toPNG())

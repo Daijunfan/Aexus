@@ -10,7 +10,7 @@ const out=path.join(f.root,'artifacts','opensource-tests-0.49.0');fs.mkdirSync(o
 let browser,checks=0;const errors=[]
 const pass=label=>{console.log('PASS '+label);checks++}
 try{
-  const engine=await f.cli('engine','list');assert.equal(engine.length,2)
+  const engine=await f.cli('engine','list');assert.deepEqual(engine.map(item=>item.engine).sort(),['claude','cline','codex','pi'])
   await f.cli('group','add','Engineering');await f.cli('group','add','Research')
   const governor=await f.create('Governor','Engineering','governor'),worker=await f.create('Builder','Engineering')
   const url='http://127.0.0.1:'+port,token=fs.readFileSync(path.join(f.env.AGENTS_COMPANY_HOME,'control.token'),'utf8').trim()
@@ -53,8 +53,7 @@ try{
     await win.locator('header button').last().click();await expect(win).toHaveCount(0,{timeout:20000});pass(id+' loads in an isolated iframe and acknowledges save before close')
   }
   await rpc('view.open',{kind:'settings'});await expect(page.getByRole('dialog',{name:'应用设置'})).toBeVisible()
-  await expect(page.locator('[data-engine-health="codex"]')).toBeVisible()
-  await expect(page.locator('[data-engine-health="claude"]')).toBeVisible()
+  for(const id of ['codex','claude','cline','pi'])await expect(page.locator(`[data-engine-health="${id}"]`)).toBeVisible()
   await page.screenshot({path:path.join(out,'web-engine-settings.png')});pass('engine detection/configuration/install UI is available in the same settings page')
   await page.getByRole('button',{name:'关闭设置',exact:true}).click()
   const choose=page.evaluate(()=>window.agents.call('workspace.choose',{}));await expect(page.getByRole('dialog',{name:'选择后端主机文件夹'})).toBeVisible();await page.getByRole('dialog',{name:'选择后端主机文件夹'}).getByRole('button',{name:'取消',exact:true}).click();assert.equal((await choose).path,null);pass('folder chooser explicitly browses Core-host paths')

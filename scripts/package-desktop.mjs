@@ -28,6 +28,8 @@ if(platform==='win'){
   fs.writeFileSync(path.join(cliRoot,'agents'),cli,{mode:0o755})
 }
 const nativeOptions=[]
+// Local macOS candidates need a fresh signature after Electron's bundle is renamed.
+if(platform==='mac'&&development)nativeOptions.push('--config.mac.identity=-')
 if(platform==='win'){
   // node-pty 1.1 uses N-API prebuilds. Verify the actual Electron runtime before
   // skipping the redundant rebuild; a missing or incompatible module stops packaging.

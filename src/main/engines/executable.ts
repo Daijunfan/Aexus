@@ -14,7 +14,7 @@ export function bundledClaudeBinary(from?:string){
 /** Resolve at call time: install/configure never requires restarting the company. */
 export function engineExecutable(engine:EngineId,preferPaired=engine==='claude'):string{
   const config=engineConfiguration(engine)
-  const override=process.env[engine==='codex'?'CODEX_BIN':'CLAUDE_BIN']
+  const override=process.env[engine.toUpperCase()+'_BIN']
   if(override)return override
   if(config.path)return config.path
   if(config.managedPath&&fs.existsSync(config.managedPath))return config.managedPath

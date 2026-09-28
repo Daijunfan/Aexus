@@ -274,6 +274,7 @@ export function designRoom(name: string, patch: Partial<RoomDesign>): Store {
 
 export function employeeFields(patch: Partial<StoredSession>, employee?:StoredSession): Partial<StoredSession> {
   if(patch.engine!==undefined&&!isEngine(patch.engine))throw new Error('Unknown engine')
+  if(employee&&patch.engine!==undefined&&patch.engine!==employee.engine)throw new Error('员工引擎创建后固定；如需使用其他引擎，请删除员工后重新添加')
   if (patch.avatar !== undefined && !AVATARS.includes(patch.avatar)) throw new Error('Unknown avatar')
   if (patch.accessory !== undefined && !ACCESSORIES.includes(patch.accessory)) throw new Error('Unknown accessory')
   if (patch.color !== undefined && !/^#[\da-f]{6}$/i.test(patch.color)) throw new Error('Color must be a hex color')
@@ -292,7 +293,6 @@ export function updateEmployee(id: string, patch: Partial<StoredSession>, direct
   if(patch.group!==undefined&&patch.group!==employee.group)throw new Error('员工创建后不能更换 Team')
   if(patch.cwd!==undefined&&patch.cwd!==employee.cwd)throw new Error('员工工作目录创建后不能更换')
   const fields = employeeFields(patch,employee)
-  if(patch.engine!==undefined&&patch.engine!==employee.engine)Object.assign(fields,{engine:patch.engine,nativeSessions:nativeSessionRefs(employee),threadId:undefined,claudeSessionId:undefined,nativeOwnership:undefined,model:undefined,effort:'low',fastMode:false,thinking:patch.engine==='claude',permissionMode:employee.permissionMode??'bypassPermissions'})
   return patchSession(id, fields)
 }
 
@@ -456,7 +456,7 @@ export function setPreferences(patch:Partial<Preferences>):Preferences {
   if(!Number.isFinite(value.terminalHeight)||value.terminalHeight<120||value.terminalHeight>600)throw new Error('Terminal height must be between 120 and 600')
   if(typeof value.snapEmployees!=='boolean')throw new Error('snapEmployees must be boolean')
   if(typeof value.showTeamOverview!=='boolean')throw new Error('showTeamOverview must be boolean')
-  for(const key of ['defaultCodexModel','defaultClaudeModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
+  for(const key of ['defaultCodexModel','defaultClaudeModel','defaultClineModel','defaultPiModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
   const store=readStore();store.preferences=value;writeStore(store);return value
 }
 

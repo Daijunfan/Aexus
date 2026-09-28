@@ -5,7 +5,7 @@ import spawn from 'cross-spawn'
 import {isEngine,type EngineId} from '../../shared/engines'
 import {childEnv} from '../exec'
 import {terminateTree} from '../platform'
-import {claudeUserSettings,deepSeekProvider} from '../claude-provider'
+import {claudeUserSettings,deepSeekProvider,deepSeekPicker} from '../claude-provider'
 import {engineEnvironment} from './configuration'
 import {assertEngineExecutable} from './registry'
 
@@ -13,10 +13,11 @@ import {assertEngineExecutable} from './registry'
 export async function probeEngine(engine:EngineId,confirm:boolean,model?:string){
   if(!isEngine(engine))throw Error('Unknown Coding Agent engine')
   if(confirm!==true)throw Error('测试调用可能产生模型费用；请明确确认后重试 (--confirm)')
+  if(engine==='cline'||engine==='pi'){await assertEngineExecutable(engine);return (await import('./process-probe')).probeProcessEngine(engine,model)}
   const executable=await assertEngineExecutable(engine),cwd=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'agents-engine-probe-')))
   const selected=model||(engine==='codex'?'gpt-6-luna':deepSeekProvider()?'deepseek-flash':'haiku')
   const prompt='Reply with exactly OK. Do not use tools, inspect files, or perform any other task.'
-  const args=engine==='codex'?['exec','--ephemeral','--skip-git-repo-check','--sandbox','read-only','--json','--model',selected,'-c','model_reasoning_effort="low"',prompt]:['--print','--output-format','json','--tools','','--setting-sources','','--no-session-persistence','--model',selected,prompt]
+  const args=engine==='codex'?['exec','--ephemeral','--skip-git-repo-check','--sandbox','read-only','--json','--model',selected,'-c','model_reasoning_effort="low"',prompt]:['--print','--settings',JSON.stringify({alwaysThinkingEnabled:false,...(deepSeekProvider()?deepSeekPicker:{})}),'--output-format','json','--tools','','--setting-sources','','--no-session-persistence','--model',selected,prompt]
   const env:NodeJS.ProcessEnv={...childEnv(),...(engine==='claude'?claudeUserSettings().env:{}),...engineEnvironment(engine)}
   for(const key of Object.keys(env))if(key.startsWith('AGENTS_COMPANY_TOKEN')||['AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_PORT'].includes(key))delete env[key]
   env.AGENTS_COMPANY_HOME=path.join(cwd,'company')

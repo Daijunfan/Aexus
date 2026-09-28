@@ -4,14 +4,14 @@ import path from 'node:path'
 const root=path.resolve(import.meta.dirname,'..'),entries=[]
 const platforms=[['darwin','arm64','aarch64-apple-darwin'],['darwin','x64','x86_64-apple-darwin'],['linux','x64','x86_64-unknown-linux-musl'],['linux','arm64','aarch64-unknown-linux-musl'],['win32','x64','x86_64-pc-windows-msvc'],['win32','arm64','aarch64-pc-windows-msvc']]
 for(const [platform,arch,triple] of platforms){
-  for(const engine of ['codex','claude']){
-    const name=engine==='codex'?'@openai/codex':`@anthropic-ai/claude-agent-sdk-${platform}-${arch}`
-    const version=engine==='codex'?`0.156.1-${platform}-${arch}`:'0.3.272'
+  for(const engine of ['codex','claude','cline','pi']){
+    const name=engine==='codex'?'@openai/codex':engine==='cline'?`@cline/cli-${platform==='win32'?'windows':platform}-${arch}`:engine==='pi'?'@earendil-works/pi-coding-agent':`@anthropic-ai/claude-agent-sdk-${platform}-${arch}`
+    const version=engine==='codex'?`0.156.1-${platform}-${arch}`:engine==='cline'?'3.0.65':engine==='pi'?'0.87.1':'0.3.272'
     const response=await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}/${encodeURIComponent(version)}`)
     if(!response.ok)throw Error('Cannot verify '+name+'@'+version)
     const metadata=await response.json(),url=new URL(metadata.dist.tarball)
     if(url.protocol!=='https:'||url.hostname!=='registry.npmjs.org'||!/^sha512-[A-Za-z0-9+/]+=*$/.test(metadata.dist.integrity))throw Error('Missing pinned HTTPS / SHA-512 package metadata')
-    entries.push({engine,platform,arch,package:name,version,url:url.href,integrity:metadata.dist.integrity,executable:engine==='codex'?`vendor/${triple}/bin/${platform==='win32'?'codex.exe':'codex'}`:platform==='win32'?'claude.exe':'claude'})
+    entries.push({engine,platform,arch,package:name,version,url:url.href,integrity:metadata.dist.integrity,...(engine==='pi'?{runtime:'node'}:{}),executable:engine==='pi'?'dist/bundle/cli.js':engine==='cline'?`bin/${platform==='win32'?'cline.exe':'cline'}`:engine==='codex'?`vendor/${triple}/bin/${platform==='win32'?'codex.exe':'codex'}`:platform==='win32'?'claude.exe':'claude'})
   }
 }
 for(const arch of ['x64','arm64']){

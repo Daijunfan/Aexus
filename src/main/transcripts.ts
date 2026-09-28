@@ -4,7 +4,7 @@
 // shared/ rather than in the component.
 
 import {atomicJson,readJson} from './atomic-file'
-import { apply, applyCodex, renderTranscript } from '../shared/transcript'
+import { apply, applyCodex, applyAgent, renderTranscript } from '../shared/transcript'
 import type { Item, Session } from '../shared/types'
 import { mkdirSync, readFileSync, writeFileSync,rmSync } from 'node:fs'
 import { join } from 'node:path'
@@ -13,7 +13,7 @@ import { APP_HOME } from '../shared/protocol'
 const directory = join(APP_HOME, 'transcripts')
 const cards = new Map<string, string>()
 
-export function restoreTranscript(id: string, cardId: string, engine: 'claude' | 'codex'): void {
+export function restoreTranscript(id: string, cardId: string, engine: import('../shared/types').Engine): void {
   const s = { ...empty(id), engine }
   s.items=readJson<Item[]>(join(directory,`${cardId}.json`),()=>[],Array.isArray)
   conversations.set(id, s)
@@ -73,7 +73,7 @@ function conv(sessionId: string): Session {
   return s
 }
 
-export function setEngine(sessionId: string, engine: 'claude' | 'codex'): void {
+export function setEngine(sessionId: string, engine: import('../shared/types').Engine): void {
   conv(sessionId).engine = engine
 }
 
@@ -86,6 +86,8 @@ export function recordClaude(sessionId: string, message: unknown): void {
 export function recordCodex(sessionId: string, event: unknown): void {
   conversations.set(sessionId, applyCodex(conv(sessionId), event))
 }
+
+export function recordAgent(sessionId:string,event:unknown){conversations.set(sessionId,applyAgent(conv(sessionId),event))}
 
 /** Note the user's own turn, which the engines echo but the mirror needs at once. */
 export function recordUser(sessionId: string, text: string,images?:string[]): void {

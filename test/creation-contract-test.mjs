@@ -8,6 +8,20 @@ try{
   await cli('group','add','Original')
   const employee=await create('First','Original'),root=(await cli('session','list')).teamRoots.Original
   const session=await cli('session','open',employee.id)
+  const original=(await cli('session','list')).sessions.find(card=>card.id===employee.id)
+  for(const engine of ['claude','cline','pi']){
+    for(const [cmd,args] of [['card.update',{id:employee.id,patch:{engine}}],['config.engine',{id:employee.id,engine}],['config.engine',{id:session.sessionId,engine}]]){
+      const response=await f.request(null,cmd,args);assert.equal(response.ok,false);assert.match(response.error,/引擎创建后固定/)
+    }
+  }
+  for(const role of ['manager','governor']){
+    const supervisor=await create(role,'Original',role),token=await f.token(supervisor.id),response=await f.request(token,'card.update',{id:employee.id,patch:{engine:'claude'}})
+    assert.equal(response.ok,false);assert.match(response.error,/引擎创建后固定|Forbidden: card.update/)
+  }
+  await cli('card','update',employee.id,'--engine','codex') // An unchanged form value is allowed.
+  const unchanged=(await cli('session','list')).sessions.find(card=>card.id===employee.id)
+  for(const key of ['engine','threadId','nativeSessions','cwd','title'])assert.deepEqual(unchanged[key],original[key])
+  assert.equal((await cli('session','status','--employee',employee.id))[0].sessionId,session.sessionId)
   await cli('card','rename',employee.id,'Display name')
   await cli('session','rename',session.sessionId,'Another display name')
   await cli('card','update',employee.id,'--title','Final name')
@@ -30,5 +44,5 @@ try{
   assert.equal(defaults.lastEmployeeTemplate.engine,'codex')
   assert.equal(defaults.lastEmployeeTemplate.model,'gpt-6-luna')
   assert.equal(defaults.lastTeamTemplate.settings.mode,'build')
-  console.log('PASS CLI names can change while employee Team, employee folder and Team root remain fixed; no model calls')
+  console.log('PASS CLI names can change while employee engine, Team, folder and Team root remain fixed; no model calls')
 }finally{await f.close()}

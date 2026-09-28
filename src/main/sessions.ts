@@ -1,4 +1,4 @@
-import {isEngine} from '../shared/engines'
+import {isEngine,assertEngineWorkspace} from '../shared/engines'
 import {assertEngineExecutable} from './engines/registry'
 import {openEngine} from './engines/runtime'
 import type {EngineDriver} from './engines/contract'
@@ -212,6 +212,8 @@ export type StartArgs = {
   remoteAdmin?: boolean
   fastMode?: boolean
   effort?: EffortLevel
+  clineSessionId?:string
+  piSessionId?:string
   claudeSessionId?: string
   threadId?: string
 }
@@ -251,6 +253,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const identity={group:args.group??'',workEnvironment:card?.workEnvironment??args.workEnvironment,localWorkspaceRoot:card?.localWorkspaceRoot},config=employeeSettings(readStore(),identity),root=employeeRoot(readStore(),identity)
   if(args.remote!==undefined&&args.remote!==null)throw new Error('云主机连接由 Team 统一配置')
   const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode,undefined,false,args.workEnvironment)
+  assertEngineWorkspace(card?.engine??args.engine??'claude',config.mode)
   const remote=config.mode==='cloud'?{...config.remote!,directory:cwd}:null
   const kind=card?.kind??'worker',nativeRemote=kind==='cloud-native-worker'?cloudNativeTarget(card!).target:undefined
   if(nativeRemote)await checkCloudNative(card!.group,card!.engine,cloudRelative(config,cwd))
@@ -272,7 +275,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   if (!isEngine(engine)) throw new Error(`Unknown engine: ${engine}`)
   if (engine === 'codex') args = { ...args, effort: card?args.effort:(args.effort??'low') }
   const provider=engine==='claude'&&!nativeRemote?deepSeekProvider(remote?undefined:cwd):undefined
-  if(provider)args={...args,model:deepSeekModel(provider,args.model),effort:deepSeekEffort(args.effort),fastMode:false}
+  if(provider)args={...args,model:deepSeekModel(provider,args.model||'deepseek-flash'),thinking:args.thinking??false,effort:deepSeekEffort(args.effort),fastMode:false}
   const permissionMode = args.permissionMode ?? 'default'
   const cardId = card?.id ?? sessionId
   validateDelegation(openingDelegation,cardId)
@@ -284,7 +287,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
     permissionMode, planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false, thinking: engine === 'claude' && args.thinking !== false
   })
   const access=employeeProcessOptions(cardId)
-  if(access.profile)patchSession(cardId,{nativeConfigRoot:engine==='codex'?access.env.CODEX_HOME:access.env.CLAUDE_CONFIG_DIR})
+  if(access.profile&&(engine==='codex'||engine==='claude'))patchSession(cardId,{nativeConfigRoot:engine==='codex'?access.env.CODEX_HOME:access.env.CLAUDE_CONFIG_DIR})
   restoreTranscript(sessionId, cardId, engine)
 
   return openEngine({args,card,kind,engine,cardId,sessionId,cwd,workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,provider,permissionMode,host:{live,info,privateTurns,emit,rememberMeta,rememberTerminalCommands,sessionInfo,dispatchQueued}})
@@ -424,7 +427,7 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
   }
   validateDelegation(delegation,s.cardId)
   const contextualText=taskViewPrompt(viewId,text)
-  const engineText=s.engine==='claude'&&bootstrap!==s.bootstrapInstructions?bootstrap+'\n\n[Current user request]\n'+contextualText:contextualText
+  const engineText=s.engine!=='codex'&&bootstrap!==s.bootstrapInstructions?bootstrap+'\n\n[Current user request]\n'+contextualText:contextualText
   s.bootstrapInstructions=bootstrap
   if(!privateTurns.has(sessionId)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner,viewId};rememberMeta(sessionId,{currentTask:s.currentTask})}
   emit('session:user', { sessionId, text,images:imagePaths })
@@ -560,6 +563,8 @@ export type SessionInfo = {
   terminalCommands?: string[]
   models: ModelInfo[]
   busy: boolean
+  clineSessionId?:string
+  piSessionId?:string
   claudeSessionId?: string
   threadId?: string
 }
@@ -643,7 +648,7 @@ export async function runPrivateInitialization(employeeId:string,prompt:string,s
         }
         if(message.type==='result'&&typeof message.result==='string')finalText=message.result
       }
-      if(channel==='session:codex'){
+      if(channel==='session:codex'||channel==='session:agent'){
         if(payload.event.kind==='notice'&&payload.event.level==='error'){reject(Error(payload.event.text));return}
         const event=payload.event
         if(event.kind==='text')finalText=event.text

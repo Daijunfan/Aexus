@@ -15,6 +15,7 @@ export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:str
   const data=all(),value={...data[engine]}
   if(patch.path!==undefined){if(patch.path&&(!path.isAbsolute(patch.path)||!fs.existsSync(patch.path)||!fs.statSync(patch.path).isFile()))throw Error('Choose an existing executable on the Core host');value.path=patch.path||undefined}
   if(patch.sdkPath!==undefined){if(engine!=='claude'||patch.sdkPath&&(!path.isAbsolute(patch.sdkPath)||!fs.existsSync(patch.sdkPath)||!fs.statSync(patch.sdkPath).isFile()))throw Error('Choose an existing Claude Agent SDK module on the Core host');value.sdkPath=patch.sdkPath||undefined}
+  if(['cline','pi'].includes(engine)&&patch.baseUrl)throw Error('Cline and Pi use the official DeepSeek endpoint')
   if(patch.baseUrl!==undefined){if(patch.baseUrl){const url=new URL(patch.baseUrl);if(url.username||url.password||url.search||url.hash||url.protocol!=='https:'&&!(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)))throw Error('Provider URL must use HTTPS (HTTP is allowed only for loopback development)')};value.baseUrl=patch.baseUrl||undefined}
   if(patch.apiKey!==undefined){
     if(typeof patch.apiKey!=='string'||patch.apiKey.length>8192)throw Error('Invalid API key')
@@ -27,6 +28,6 @@ export function setManagedEngine(engine:EngineId,executable:string,sdkPath?:stri
 export function engineEnvironment(engine:EngineId):NodeJS.ProcessEnv{
   const config=engineConfiguration(engine),env:NodeJS.ProcessEnv={}
   if(config.baseUrl)env[engine==='claude'?'ANTHROPIC_BASE_URL':'OPENAI_BASE_URL']=config.baseUrl
-  if(config.secret){const bytes=Buffer.from(config.secret,'base64'),cipher=createDecipheriv('aes-256-gcm',key(),bytes.subarray(0,12));cipher.setAuthTag(bytes.subarray(12,28));const secret=Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]).toString('utf8');env[engine==='claude'?'ANTHROPIC_API_KEY':'OPENAI_API_KEY']=secret;if(engine==='claude')env.ANTHROPIC_AUTH_TOKEN=''}
+  if(config.secret){const bytes=Buffer.from(config.secret,'base64'),cipher=createDecipheriv('aes-256-gcm',key(),bytes.subarray(0,12));cipher.setAuthTag(bytes.subarray(12,28));const secret=Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]).toString('utf8');env[engine==='cline'?'CLINE_API_KEY':engine==='pi'?'DEEPSEEK_API_KEY':engine==='claude'?'ANTHROPIC_API_KEY':'OPENAI_API_KEY']=secret;if(engine==='claude')env.ANTHROPIC_AUTH_TOKEN=''}
   return env
 }

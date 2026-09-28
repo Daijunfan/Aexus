@@ -27,6 +27,8 @@ export type {UiElement,UiSnapshot} from './api-registry'
 // management.relayout is registered with all other authenticated commands in api-registry.ts.
 
 // card.initialize retries onboarding; EMPLOYEE_INITIALIZING / EMPLOYEE_INITIALIZATION_FAILED are lifecycle error codes.
+// Employee engine is fixed at creation. card.update rejects a different engine;
+// legacy config.engine always rejects with delete-and-recreate guidance.
 // engine.models discovers the selected engine/host catalog without a session or inference.
 // card.remove accepts deleteWorkspace:boolean (default false); explicit true removes the employee directory recursively.
 
@@ -44,8 +46,9 @@ export type {ManagementTeam} from './management'
 // Nodes expose createdBy: PrincipalRef|null, createdByMe: boolean|null and createdAt.
 // Missing legacy provenance is unknown (null), not operator or others; filters never expand scope.
 // Edges show trusted creation provenance; they do not authorize control.
-// management.activity [team] returns ManagementActivity; management:activity publishes the same snapshot.
-// Activity is derived from authenticated calls, never client-set or persisted into the employee store.
+// management.activity [team] returns live requests and running delegated tasks (kind, messageId); management:activity publishes the same snapshot.
+// Activity includes authenticated live communication and running delegated tasks; no read polling or completion linger.
+// It is never client-set or persisted into the employee store.
 
 // Layout/camera requests accept viewId; send/enqueue and scheduled action accept a pinned Governor viewId.
 // office.layout.crossTeamConnections uses shared, three-part employee-to-employee routing.
@@ -82,3 +85,6 @@ export type {DesktopProfile} from './remote'
 // host.terminal-read waitMs: 0..15000 (default 0) waits for data or exit; cursor semantics are unchanged.
 
 // host.desktop-list states: connecting, ready, disconnected. desktop-close can cancel a connecting session.
+
+// Engine IDs: codex, claude, cline, pi. Cline/Pi use DeepSeek Flash with Thinking off by default.
+// Cline/Pi initially support Core-local Build workspaces; unsupported targets fail before execution.

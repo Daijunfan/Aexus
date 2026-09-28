@@ -1,4 +1,4 @@
-import {connectorSetting,type ConnectorAnchor,type ConnectorSetting} from './connector'
+import {connectorSetting,type ConnectorAnchor,type ConnectorSetting,type ConnectorSettings} from './connector'
 import {roomContainsSegment,roomPolygon} from './room-geometry'
 import {EMPLOYEE_SIZE,ROOM_HEADER_HEIGHT,type Point,type PlannedRoom} from './canvas'
 
@@ -26,7 +26,7 @@ export function usableEmployeePorts(box:Box,anchor:ConnectorAnchor,target:boolea
   return ports
 }
 /** A small visibility grid routes around full employee footprints, regardless of their ordering. */
-export function routeManagementConnection(room:PlannedRoom,managerId:string,employeeId:string,occupied:Point[][]=[],setting:ConnectorSetting=connectorSetting(undefined,managerId,employeeId)):Point[]{
+export function routeManagementConnection(room:PlannedRoom,managerId:string,employeeId:string,occupied:Point[][]=[],setting:ConnectorSetting=connectorSetting(undefined,managerId,employeeId),shared:Point[][]=[]):Point[]{
   const source=room.employees.find(item=>item.card.id===managerId)!,target=room.employees.find(item=>item.card.id===employeeId)!
   const boxes=room.employees.map(item=>({...item.position,...EMPLOYEE_SIZE})),a={...source.position,...EMPLOYEE_SIZE},b={...target.position,...EMPLOYEE_SIZE}
   const obstacles=boxes.map(box=>({x:box.x-clearance,y:box.y-clearance,width:box.width+clearance*2,height:box.height+clearance*2}))
@@ -35,14 +35,15 @@ export function routeManagementConnection(room:PlannedRoom,managerId:string,empl
   const stubOpen=(port:Port)=>open(port.exit)&&inRoom(port.point)&&!boxes.some(box=>crosses(port.point,port.exit,box))&&!pathsConflict([port.point,port.exit],occupied)
   const starts=usableEmployeePorts(a,setting.source,false,stubOpen),ends=usableEmployeePorts(b,setting.target,true,stubOpen)
   const waypoints=(roomPolygon(room.bounds)??[]).flatMap(p=>[-12,12].flatMap(x=>[-12,12].map(y=>({x:p.x+x,y:p.y+y}))))
-  return orthogonalRoutes({starts,ends,obstacles,limits:{x:4,y:ROUTE_TOP,width:room.bounds.width-8,height:room.bounds.height-4-ROUTE_TOP},contains:inRoom,occupied,avoidOccupied:true,waypoints,segmentAllowed:(p,q)=>roomContainsSegment(room.bounds,p,q)})[0]?.points??[]
+  return orthogonalRoutes({starts,ends,obstacles,limits:{x:4,y:ROUTE_TOP,width:room.bounds.width-8,height:room.bounds.height-4-ROUTE_TOP},contains:inRoom,occupied,shared,avoidOccupied:true,waypoints,segmentAllowed:(p,q)=>roomContainsSegment(room.bounds,p,q)})[0]?.points??[]
 
 }
 
 /** Shared visibility-grid A*. Cross-Team callers use no unsafe fallback when blocked. */
-export function orthogonalRoutes({starts,ends,obstacles,limits,contains,segmentAllowed,occupied=[],waypoints=[],avoidOccupied=false}:{starts:Port[];ends:Port[];obstacles:Box[];limits:Box;contains:(point:Point)=>boolean;segmentAllowed?:(a:Point,b:Point)=>boolean;occupied?:Point[][];waypoints?:Point[];avoidOccupied?:boolean},all=false){
+export function orthogonalRoutes({starts,ends,obstacles,limits,contains,segmentAllowed,occupied=[],shared=[],waypoints=[],avoidOccupied=false}:{starts:Port[];ends:Port[];obstacles:Box[];limits:Box;contains:(point:Point)=>boolean;segmentAllowed?:(a:Point,b:Point)=>boolean;occupied?:Point[][];shared?:Point[][];waypoints?:Point[];avoidOccupied?:boolean},all=false){
   if(!starts.length||!ends.length)return []
   occupied=occupied.map(compactRoutingPath)
+  waypoints=[...waypoints,...shared.flat()]
   if(avoidOccupied)obstacles=[...obstacles,...lineObstacles(occupied)]
   const open=(p:Point)=>contains(p)&&!obstacles.some(box=>inside(p,box))
   const unique=(values:number[])=>[...new Set(values)].sort((a,b)=>a-b)
@@ -52,7 +53,8 @@ export function orthogonalRoutes({starts,ends,obstacles,limits,contains,segmentA
   const goals=new Map(ends.map(port=>[node(port.exit),port])),origins=new Map<number,Port>(),cost=new Map<number,number>(),previous=new Map<number,number>()
   const valid=new Map<number,boolean>(),segments=new Map<string,boolean>()
   const occupiedSegments=occupied.flatMap(path=>path.slice(1).map((q,index)=>[path[index],q]))
-  const sharedDistance=(a:Point,b:Point)=>occupiedSegments.reduce((sum,[p,q])=>{
+  const reusedSegments=shared.flatMap(path=>path.slice(1).map((q,index)=>[path[index],q]))
+  const overlapDistance=(a:Point,b:Point,parts:Point[][])=>parts.reduce((sum,[p,q])=>{
     const overlap=(a:number,b:number,c:number,d:number)=>Math.max(0,Math.min(Math.max(a,b),Math.max(c,d))-Math.max(Math.min(a,b),Math.min(c,d)))
     return sum+(a.x===b.x&&p.x===q.x&&a.x===p.x?overlap(a.y,b.y,p.y,q.y):a.y===b.y&&p.y===q.y&&a.y===p.y?overlap(a.x,b.x,p.x,q.x):0)
   },0)
@@ -89,7 +91,7 @@ export function orthogonalRoutes({starts,ends,obstacles,limits,contains,segmentA
     const column=n%xs.length,row=Math.floor(n/xs.length)
     for(const next of [column>0?n-1:-1,column+1<xs.length?n+1:-1,row>0?n-xs.length:-1,row+1<ys.length?n+xs.length:-1]){
       if(next<0||!validNode(next)||!clearSegment(n,next))continue
-      const q=point(next),nextDirection=p.x===q.x?2:1,state=next*3+nextDirection,g=current.cost+distance(p,q)+(direction===nextDirection?0:28)+sharedDistance(p,q)*3
+      const q=point(next),nextDirection=p.x===q.x?2:1,state=next*3+nextDirection,g=current.cost+distance(p,q)+(direction===nextDirection?0:28)+overlapDistance(p,q,occupiedSegments)*3+(reusedSegments.length?Math.max(0,distance(p,q)-overlapDistance(p,q,reusedSegments))*.001:0)
       if(g>=(cost.get(state)??Infinity))continue
       cost.set(state,g);previous.set(state,current.state);push(state,g)
     }
@@ -125,6 +127,28 @@ export function clearManagementPath(room:PlannedRoom,points:Point[]){
   const boxes=room.employees.map(item=>({...item.position,...EMPLOYEE_SIZE}))
   return points.length>1&&points.every(p=>p.y>=ROUTE_TOP)&&points.slice(1).every((p,i)=>roomContainsSegment(room.bounds,points[i],p)&&!boxes.some(box=>crosses(points[i],p,box)))
 }
+/** Shared badge-side branches when the geometry is clear; obstructed branches reuse the same outlet via A*. */
+export function managementBadgeBranches(room:PlannedRoom,managerId:string,employeeIds:string[],settings:ConnectorSettings|undefined,occupied:Point[][]){
+ const manager=room.employees.find(item=>item.card.id===managerId)!,a={...manager.position,...EMPLOYEE_SIZE}
+ const result=new Map<string,{source:ConnectorAnchor;points?:Point[]}>()
+ for(const side of ['left','right'] as const){
+  const sign=side==='right'?1:-1,source:ConnectorAnchor={side,offset:.8},start={x:a.x+(sign>0?a.width:0),y:a.y+a.height*.8}
+  const targets=employeeIds.flatMap(id=>{const item=room.employees.find(e=>e.card.id===id)!,setting=connectorSetting(settings,managerId,id),b={...item.position,...EMPLOYEE_SIZE}
+   if(setting.source.side!=='auto'||setting.target.side!==(sign>0?'left':'right'))return []
+   const point={x:b.x+(sign>0?0:b.width),y:b.y+b.height*(setting.target.offset??.5)}
+   return sign*(point.x-start.x)>36?[{id,point}]:[]
+  })
+  if(!targets.length)continue
+  const gap=Math.min(...targets.map(t=>sign*(t.point.x-start.x))),bus=start.x+sign*Math.min(40,gap/2)
+  for(const target of targets){
+   const points=compactRoutingPath([start,{x:bus,y:start.y},{x:bus,y:target.point.y},target.point])
+   const clear=clearManagementPath(room,points)&&!pathsConflict(points,occupied)
+   result.set(target.id,{source,...(clear?{points}:{})})
+  }
+ }
+ return result
+}
+
 /** Two-column families get ordered, separate lanes. No edge shares another edge's source port or trunk. */
 export function managementFan(room:PlannedRoom,managerId:string,employeeIds:string[],occupied:Point[][]=[]):Map<string,Point[]>|undefined {
   const manager=room.employees.find(item=>item.card.id===managerId)!,a={...manager.position,...EMPLOYEE_SIZE},centre=a.x+a.width/2

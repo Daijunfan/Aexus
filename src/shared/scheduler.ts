@@ -8,7 +8,7 @@ export type ScheduleWindow = { start: string; end: string; timezone: string; day
 export type ScheduledAction = {
   type: 'agent'
   employeeId: string
-  engine: 'claude' | 'codex'
+  engine: import('./types').Engine
   prompt: string
   viewId?: string
   model?: string

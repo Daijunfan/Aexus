@@ -3,8 +3,8 @@
   "reviews": [
     {
       "id": "official-pet-art",
-      "status": "approved",
-      "scope": "src/renderer/src/assets/pets — official OpenAI sprites",
+      "status": "pending",
+      "scope": "Nine OpenAI pet atlases, Clawd SVG and original OpenAI/Codex and Claude identification glyphs",
       "required": "Record an explicit redistribution license/permission or replace these sprites with clearly licensed alternatives. Source attribution alone is insufficient.",
       "evidence": [
         "licenses/artwork-review.md",
@@ -12,7 +12,7 @@
         "src/renderer/src/assets/pets/licenses",
         "src/renderer/src/assets/plugin-icons/sources.json"
       ],
-      "resolution": "Replaced or excluded unverified artwork; approval applies to the current public source snapshot, not private historical assets."
+      "resolution": "Restored original assets in local 0.49.9 candidate at user request. Prior public exclusion no longer applies to this local candidate; no public redistribution clearance is claimed."
     },
     {
       "id": "vendor-system-icons",

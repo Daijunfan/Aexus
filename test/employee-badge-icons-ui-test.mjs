@@ -12,13 +12,14 @@ const sessions=[card('local-codex','Local','codex'),card('local-claude','Local',
 sessions[0].position.x=30
 sessions[0].managementRole='governor';sessions[2].managementRole='manager';sessions[4].createdBy={kind:'agent',employeeId:sessions[2].id}
 const bounds=x=>({x,y:0,width:760,height:520,shape:'rounded',arrangement:'free',pinned:true})
-fs.writeFileSync(path.join(state,'sessions.json'),JSON.stringify({groups:['Local','Cloud'],sessions,rooms:{Local:{bounds:bounds(0)},Cloud:{bounds:bounds(790)}},teamRoots:{Local:temp,Cloud:'/home/djf'},teamSettings:{Cloud:{mode:'cloud',remote:{host:'example.invalid',directory:'/home/djf',os:'linux'}}},preferences:{theme:'white'},viewport:{x:20,y:70,zoom:1}}))
+fs.writeFileSync(path.join(state,'sessions.json'),JSON.stringify({groups:['Local','Cloud'],sessions,rooms:{Local:{bounds:bounds(0)},Cloud:{bounds:bounds(790)}},teamRoots:{Local:temp,Cloud:'/home/djf'},teamSettings:{Cloud:{mode:'cloud',remote:{host:'example.invalid',directory:'/home/djf',os:'linux',distribution:'kali'}}},preferences:{theme:'white'},viewport:{x:20,y:70,zoom:1}}))
 const env={...process.env,AGENTS_COMPANY_HOME:state,AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1900',AGENTS_COMPANY_HEIGHT:'1000'}
 delete env.ELECTRON_RUN_AS_NODE
 const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env})
 try{
  const page=await app.firstWindow();await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('.infinite-canvas').waitFor()
  assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible())))
+ const localOS=process.platform==='darwin'?'macos':process.platform==='win32'?'windows':'linux';await expect(page.locator('[data-department="Local"] .team-os')).toHaveAttribute('data-os',localOS);if(localOS==='macos')await expect(page.locator('[data-department="Local"] .team-os')).toHaveAttribute('aria-label','macOS')
  for(const [id,location,engine,workspace] of [['local-codex','local','codex','local'],['local-claude','local','claude','local'],['mac-manager','local','codex','local'],['routed','local','codex','cloud'],['native','cloud','claude','cloud']]){
    const badge=page.locator(`[data-card-id="${id}"] .employee-badge`)
    await expect(badge.locator('.badge-location')).toHaveAttribute('data-location',location)
@@ -28,12 +29,17 @@ try{
    await expect(badge.locator('.badge-workspace small')).toHaveText('工作环境')
    await expect(badge.locator('.badge-workspace b')).toHaveText(workspace==='cloud'?'云端':'本地')
    await expect(badge.locator('.badge-tool')).toHaveCount(0)
-   if(engine==='codex')await expect(badge.locator('.badge-engine svg')).toHaveAttribute('aria-label','Codex')
-   else assert.ok(await badge.locator('.badge-engine img').evaluate(image=>image.alt==='Claude'&&image.complete&&image.naturalWidth>0))
+   const engineLabel=engine==='codex'?'Codex':'Claude Agent'
+   await expect(badge.locator('.badge-engine svg')).toHaveAttribute('aria-label',engineLabel)
+   await expect(badge.locator('.badge-engine')).toHaveAttribute('title','运行引擎：'+engineLabel)
+   await expect(badge.locator('.employee-management')).toHaveText(id==='local-codex'?'Governor':id==='mac-manager'?'Manager':'Employee')
    await expect(badge.locator('.employee-role')).not.toContainText(/Worker|Codex|Claude Code/)
  }
+ await expect(page.locator('[data-department="Cloud"] .team-os')).toHaveAttribute('data-os','kali');assert.ok(await page.locator('[data-department="Cloud"] .team-os img').evaluate(image=>image.complete&&image.naturalWidth>0))
  assert.ok(await page.locator('[data-card-id="local-codex"] .badge-location img').evaluate(image=>image.complete&&image.naturalWidth>0))
  await expect(page.locator('.badge-location[data-location=cloud] svg')).toHaveCount(1)
+ const headers=await page.locator('.employee-badge').evaluateAll(badges=>badges.map(b=>{const box=b.getBoundingClientRect(),role=b.querySelector('.employee-management').getBoundingClientRect(),name=b.querySelector('.employee-name').getBoundingClientRect(),engine=b.querySelector('.badge-engine').getBoundingClientRect();return {height:box.height,top:role.top-box.top,left:role.left-box.left,roleHeight:role.height,nameTop:name.top-box.top,engineTop:engine.top-box.top}}))
+ for(const header of headers)for(const key of ['height','top','left','roleHeight','nameTop','engineTop'])assert.ok(Math.abs(header[key]-headers[0][key])<.1,key+' stays aligned across roles and local/cloud employees')
  const iconBox=await page.locator('[data-card-id="routed"] .badge-location img').boundingBox()
  assert.ok(iconBox&&iconBox.width>=18&&iconBox.height>=18)
  const cloud=await page.locator('[data-card-id="native"] .cloud-native-foot').boundingBox(),badge=await page.locator('[data-card-id="native"] .employee-badge').boundingBox();assert.ok(cloud&&badge&&cloud.y>=badge.y+badge.height+1,'native cloud remains below the entire badge');assert.ok(cloud.width>=badge.width*.95&&cloud.height>=38,'native cloud fills almost the full employee width with a full silhouette')
@@ -50,5 +56,5 @@ try{
  assert.deepEqual(nativeFrame,{width:190,height:250},'cloud-native connector frame uses the same complete footprint')
  for(const offset of [0,1])await expect(page.locator(`.connector-pin-group[data-end="target"] .connector-pin-hit[data-side="top"][data-offset="${offset}"]`)).toHaveCount(1)
  await page.screenshot({path:path.join(root,'artifacts/native-worker-connector-frame.png'),animations:'disabled'})
- console.log('PASS employee badges show Agent process location, not workspace location, plus Codex/Claude marks; standard 190x250 frame; native cloud stays below badge within the frame throughout animation')
+ console.log('PASS all three English role headers, badge heights and engine positions align; descriptive engine tooltips; local/cloud location and 190x250 frames unchanged; native cloud stays below badge')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

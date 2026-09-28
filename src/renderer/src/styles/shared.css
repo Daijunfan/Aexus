@@ -1,7 +1,6 @@
-.directory-shared,.directory-overview { width:44px;height:44px;margin-top:12px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer;flex-shrink:0; }
+.directory-shared,.directory-overview { width:44px;height:44px;margin-top:4px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer;flex-shrink:0; }
 .directory-shared .codicon { font-size:23px; }
 .directory-shared:hover,.directory-shared.active,.directory-overview:hover,.directory-overview.active { background:var(--bg-hover);border-color:var(--border);color:var(--accent); }
-.directory-overview { margin-top:4px; }
 .shared-drawer { width:320px;flex:0 0 320px;min-height:0;display:flex;flex-direction:column;background:var(--bg-alt);border-right:1px solid var(--border-soft);color:var(--fg);z-index:20;overflow:hidden; }
 .shared-drawer>header { display:flex;align-items:center;justify-content:space-between;padding:18px 16px 8px; }
 .shared-drawer>header strong { font-size:15px;font-weight:650; }

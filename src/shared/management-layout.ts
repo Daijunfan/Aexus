@@ -1,6 +1,6 @@
 import {connectorSetting,type ConnectorSettings} from './connector'
 import {isSupervisor} from './roles'
-import {routeManagementConnection,managementFan} from './management-routing'
+import {routeManagementConnection,managementFan,managementBadgeBranches} from './management-routing'
 import {creationRelations,type ManagementRelation} from './management'
 import type {Store,StoredSession} from './types'
 import {EMPLOYEE_SIZE,EMPLOYEE_TOP,MIN_ROOM_HEIGHT,DEFAULT_POLYGON,planOffice,shapeContains,type Point,type RoomBounds,type PlannedRoom} from './canvas'
@@ -139,10 +139,13 @@ export function managementRoutes(room:PlannedRoom,relations:Pick<ManagementRelat
   const ids=new Set(room.employees.map(item=>item.card.id)),edges=relations.filter(edge=>edge.state==='active'&&ids.has(edge.managerId)&&ids.has(edge.employeeId))
   const paths=[...occupied],routes=[]
   for(const managerId of [...new Set(edges.map(edge=>edge.managerId))]){
-    const family=edges.filter(edge=>edge.managerId===managerId),automatic=family.every(edge=>{const s=connectorSetting(settings,managerId,edge.employeeId);return s.source.side==='auto'&&s.target.side==='auto'}),fan=automatic?managementFan(room,managerId,family.map(edge=>edge.employeeId),paths):undefined
+    const siblingsStart=[...paths],shared:Point[][]=[],family=edges.filter(edge=>edge.managerId===managerId),automatic=family.every(edge=>{const s=connectorSetting(settings,managerId,edge.employeeId);return s.source.side==='auto'&&s.target.side==='auto'}),fan=automatic?managementFan(room,managerId,family.map(edge=>edge.employeeId),paths):undefined
+    const branches=managementBadgeBranches(room,managerId,family.map(edge=>edge.employeeId),settings,siblingsStart)
+    shared.push(...[...branches.values()].flatMap(branch=>branch.points?[branch.points]:[]))
     for(const edge of family){
-      const points=fan?.get(edge.employeeId)??routeManagementConnection(room,managerId,edge.employeeId,paths,connectorSetting(settings,managerId,edge.employeeId))
-      if(points.length)paths.push(points)
+      const setting=connectorSetting(settings,managerId,edge.employeeId),branch=branches.get(edge.employeeId)
+      const points=branch?.points??fan?.get(edge.employeeId)??routeManagementConnection(room,managerId,edge.employeeId,siblingsStart,branch?{...setting,source:branch.source}:setting,shared)
+      if(points.length){paths.push(points);shared.push(points)}
       routes.push({id:edge.id,managerId,employeeId:edge.employeeId,anchors:connectorSetting(settings,managerId,edge.employeeId),status:points.length?'routed' as const:'blocked' as const,layout:fan?'individual-lanes' as const:'obstacle-route' as const,points,path:roundedOrthogonalPath(points)})
     }
   }

@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Agents Company",
-  "version": "0.49.3",
+  "version": "0.50.3",
   "description": "CLI-first visual Agent workspace with a shared desktop/web Core and bundled work plugins",
   "main": "./out/main/index.js",
   "author": {
@@ -141,6 +141,7 @@
       "THIRD_PARTY_NOTICES.md",
       "licenses/**/*",
       "src/renderer/src/assets/pets/sources.json",
+      "src/renderer/src/assets/engines/**/*",
       "AGENTS.md",
       "SCHEDULER.md",
       "ENGINE_CAPABILITIES.md",
