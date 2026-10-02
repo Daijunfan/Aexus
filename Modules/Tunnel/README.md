@@ -8,7 +8,7 @@ version: 0.15.0
 
 ## Purpose
 
-本模块集成自 `/Users/djf/develop/CS/Tunnel`，作为 Agents Company 的内部功能模块。
+本模块集成自 `Modules/Tunnel`，作为 Agents Company 的内部功能模块。
 Agent 进程、模型请求及认证保留在 Mac；项目命令与文件工具通过 SSH 路由到所属 Team 指定的云主机。
 不注册为插件，不安装另一个 APP，不修改全局 CLI、Shell 或 SSH 配置。
 原 Tunnel 项目及其私有连接资料保留在原处，没有打包进本项目。
@@ -110,7 +110,7 @@ RDP 是桌面入口，不能代替 SSH 命令入口。Windows 需要 OpenSSH Ser
 
 `windows/prepare-host.ps1` 是一次性管理员 PowerShell 引导脚本；旁边提供官方 OpenSSH ZIP、Python embedded ZIP、Codex Windows npm 包 `codex.tgz` 与 Mac 的 `authorized_key.pub`。脚本不包含密码，安装到 Program Files / ProgramData，使用 SID 配置管理员公钥权限。内置防火墙规则适用于本次 QEMU 网关 `10.0.2.2`；其他部署应按实际入口配置来源地址。
 
-本次 `bupt-windows` SSH 别名通过 `bupt208` 跳板连接其回环端口 12222；Windows SSH 端口没有暴露到公网。已有 RDP 13389 转发保持不变。QEMU 运行脚本已备份并保存新转发，Windows sshd 自动启动。
+本次 `example-windows` SSH 别名通过 `example-linux` 跳板连接其回环端口 12222；Windows SSH 端口没有暴露到公网。已有 RDP 13389 转发保持不变。QEMU 运行脚本已备份并保存新转发，Windows sshd 自动启动。
 
 Mac 控制器使用本机配置目录；原生执行环境单独携带 Windows 路径，不能把 `C:\...` 填进 Mac 的 `AbsolutePathBuf` 权限根目录。Windows cloud 模式使用 SSH 用户本身的权限。模型的环境、工具与目录全部来自所选 Windows 环境，不注入 SSH、Tunnel 或 exec-server 说明。不存在的目录必须在模型调用前失败，不能落回用户主目录。
 

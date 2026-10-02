@@ -1,5 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill'
-import type { ScheduleRule, ScheduleWindow, ScheduleSpec } from '../../shared/scheduler'
+import type { ScheduleRule, ScheduleWindow, ScheduleSpec, ScheduledJob } from '../../shared/scheduler'
 
 export function instant(value: unknown): string {
   if (typeof value !== 'string') throw new Error('Time must be an ISO timestamp with UTC offset')
@@ -27,7 +27,11 @@ export function validateRule(value: ScheduleRule): ScheduleRule {
     return { kind: 'interval', everySeconds: value.everySeconds, anchor: instant(value.anchor) }
   }
   if (value?.kind === 'weekly') return { kind: 'weekly', time: clock(value.time), days: days(value.days), timezone: zone(value.timezone) }
-  throw new Error('rule.kind must be once, interval or weekly')
+  if(value?.kind==='monthly'){
+    if(value.day!=='last'&&(!Number.isInteger(value.day)||value.day<1||value.day>31))throw Error('Monthly day must be 1..31 or last')
+    return {kind:'monthly',day:value.day,time:clock(value.time),timezone:zone(value.timezone)}
+  }
+  throw new Error('rule.kind must be once, interval, weekly or monthly')
 }
 export function validateWindow(value?: ScheduleWindow | null): ScheduleWindow | undefined {
   if (value == null) return undefined
@@ -70,6 +74,16 @@ function nextRule(rule: ScheduleRule, after: number): number | null {
     return anchor + Math.max(0, Math.floor((after - anchor) / period) + 1) * period
   }
   const date = local(after, rule.timezone).toPlainDate()
+  if(rule.kind==='monthly'){
+    const month=date.with({day:1})
+    for(let offset=0;offset<14;offset++){
+      const candidate=month.add({months:offset}),day=rule.day==='last'?candidate.daysInMonth:rule.day
+      if(day>candidate.daysInMonth)continue
+      const next=candidate.with({day}).toZonedDateTime({timeZone:rule.timezone,plainTime:rule.time}).epochMilliseconds
+      if(next>after)return next
+    }
+    return null
+  }
   for (let offset = 0; offset <= 7; offset++) {
     const day = date.add({ days: offset })
     if (!rule.days.includes(day.dayOfWeek)) continue
@@ -99,4 +113,33 @@ export function preview(spec: Pick<ScheduleSpec, 'rule' | 'window' | 'until'>, a
     result.push(next); after = ms(next)
   }
   return result
+}
+
+/** Project a saved schedule without replenishing its remaining quota when the viewport advances.
+ * Forecasts assume the Core continues running; they do not claim execution took place. */
+export function forecastSchedule(job: ScheduledJob, after: number, count = 5, now = Date.now()): string[] {
+  if (!Number.isInteger(count) || count < 1 || count > 100) throw Error('count must be 1..100')
+  let remaining = job.maxOccurrences == null ? Infinity : Math.max(0, job.maxOccurrences - (job.occurrences ?? 0))
+  if (!remaining) return []
+  let cursor = Math.max(now - 1, job.nextAt ? ms(job.nextAt) - 1 : now - 1)
+  if (remaining !== Infinity && after > cursor) {
+    // Interval runs within one permitted window can be counted arithmetically.
+    // The work is bounded by calendar windows, never by every-second occurrences.
+    for (let step = 0; ; step++) {
+      const next = nextOccurrence(job, cursor)
+      if (!next) return []
+      const at = ms(next)
+      if (at > after) break
+      if (step >= 10000) throw Error('Preview range is too distant; choose a closer date range')
+      let skipped = 1
+      if (job.rule.kind === 'interval') {
+        const end = Math.min(after, job.until ? ms(job.until) - 1 : Infinity, job.window ? windowEnd(job.window, at) - 1 : Infinity)
+        skipped = Math.floor((end - at) / (job.rule.everySeconds * 1000)) + 1
+        cursor = at + (skipped - 1) * job.rule.everySeconds * 1000
+      } else cursor = at
+      remaining -= skipped
+      if (remaining <= 0) return []
+    }
+  }
+  return preview(job, Math.max(after, cursor), Math.min(count, remaining))
 }

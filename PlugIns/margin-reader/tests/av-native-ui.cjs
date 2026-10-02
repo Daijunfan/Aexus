@@ -1,0 +1,24 @@
+'use strict';
+const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
+const exec=require('node:util').promisify(require('node:child_process').execFile),root=path.resolve(__dirname,'..'),host=path.resolve(root,'../..');
+const {_electron:electron,expect}=require(path.join(host,'node_modules/@playwright/test'));
+(async()=>{
+ const temp=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'mr-av-native-'))),output=path.join(root,'artifacts/av-native');await fs.mkdir(output,{recursive:true});
+ const env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_BUILTIN_PLUGINS:path.join(temp,'empty'),AGENTS_COMPANY_PLUGIN_DIRS:'',AGENTS_COMPANY_HIDDEN:'1'};
+ for(const key of Object.keys(env))if(key.startsWith('AGENTS_COMPANY_TOKEN')||['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_PORT','AGENTS_COMPANY_URL','AGENTS_COMPANY_CLIENT','AGENTS_COMPANY_PLUGIN_RPC','AGENTS_WORKSPACE'].includes(key))delete env[key];
+ let app,page;const report={passed:[],failed:[],skipped:[],untested:['Windows','Linux','physical pen/touch hardware','other media codecs and large files'],platform:process.platform,modelCalls:0};
+ try{
+  app=await electron.launch({executablePath:require(path.join(host,'node_modules/electron')),args:[host],env});await app.firstWindow();
+  const cli=async(...args)=>{const r=JSON.parse((await exec(process.execPath,[path.join(host,'bin/agents'),...args,'--json'],{env,timeout:60000,maxBuffer:16*1024*1024})).stdout);assert(r.ok,r.error);return r.data;};
+  await cli('plugin','install',path.join(root,'dist-plugin'));const api=(m,p={})=>cli('plugin','call','margin-reader',m,'--params',JSON.stringify(p));const info=await api('system.info');assert(info.workspace.startsWith(temp+path.sep));
+  if(!info.formats.find(f=>f.format==='webm').available){report.skipped.push('Native AV: FFmpeg/ffprobe unavailable');return;}
+  require('./fixtures-av.cjs').make(info.workspace);const doc=await api('document.open',{path:'lesson.webm'});let set=await api('study.create',{title:'Native video'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['lesson.webm']});await api('study.open',{setId:set.id,documentId:doc.id});
+  const opened=app.waitForEvent('window');await cli('plugin','open','margin-reader');page=await opened;page.on('pageerror',e=>report.failed.push(e.message));await page.waitForSelector('body[data-ready=true]');const video=page.locator('#reading-surface video');await expect.poll(()=>video.evaluate(v=>v.readyState)).toBeGreaterThanOrEqual(2);
+  await page.fill('.av-time','1');await page.click('.av-seek');await expect.poll(()=>video.evaluate(v=>v.currentTime)).toBeCloseTo(1,1);await expect.poll(async()=>(await api('reader.position.get',{id:doc.id})).locator.time).toBeCloseTo(1,1);
+  await page.click('#av-excerpt');await page.fill('[name=title]','Native interval');await page.fill('[name=start]','1');await page.fill('[name=end]','2');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();set=await api('study.get',{setId:set.id});assert.equal(set.cards[0].anchor.locator.endTime,2);
+  await page.fill('.av-time','3');await page.click('.av-seek');await page.locator('[data-time-card]').click();await expect.poll(()=>video.evaluate(v=>v.currentTime)).toBeCloseTo(1,1);await video.evaluate(v=>v.play());await expect.poll(()=>video.evaluate(v=>v.currentTime)).toBeCloseTo(2,1);await expect.poll(()=>video.evaluate(v=>v.paused)).toBe(true);
+  report.passed.push('Native playback, actual seek, CLI position, frame excerpt, source interval and bounded interval playback');
+  await api('settings.set',{presentationPointers:true});await expect(page.locator('body')).toHaveAttribute('data-presentation-pointers','true');await page.mouse.move(600,280);await page.mouse.down();await expect(page.locator('.presentation-input-pointer')).toBeVisible();await page.mouse.up();await expect(page.locator('.presentation-input-pointer')).toHaveCount(0);report.passed.push('Native click visualization follows public Core settings');
+  assert(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())));report.passed.push('All native windows remained hidden; temporary workspace only');await page.screenshot({path:path.join(output,'native-video.png')});assert.deepEqual(report.failed,[]);
+ }catch(e){report.failed.push(e.message);throw e;}finally{await fs.writeFile(path.join(output,'results.json'),JSON.stringify(report,null,2));await app?.close();await fs.rm(temp,{recursive:true,force:true});console.log(JSON.stringify(report));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

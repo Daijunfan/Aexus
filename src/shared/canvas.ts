@@ -12,6 +12,7 @@ export type RoomBounds = Point & {
 export const ROOM_HEADER_HEIGHT = 170
 export const EMPLOYEE_TOP = ROOM_HEADER_HEIGHT + 12
 export const MIN_ROOM_HEIGHT = 520
+/** Complete rectangular actor footprint, including avatar, badge and native cloud. */
 export const EMPLOYEE_SIZE = { width: 190, height: 250 }
 export const DEFAULT_VIEW: Viewport = { x: 70, y: 125, zoom: 0.8 }
 export const DEFAULT_POLYGON: Point[] = [{x:0.08,y:0},{x:0.92,y:0},{x:1,y:0.25},{x:0.93,y:1},{x:0.08,y:0.96},{x:0,y:0.28}]
@@ -52,7 +53,8 @@ export function shapeContains(bounds: RoomBounds, p: Point): boolean {
   if (bounds.shape==='ellipse') return ((x-.5)/.5)**2 + ((y-.5)/.5)**2 <= .94
   if (bounds.shape==='hexagon') return pointInPolygon({x,y},[{x:.14,y:.01},{x:.86,y:.01},{x:.99,y:.5},{x:.86,y:.99},{x:.14,y:.99},{x:.01,y:.5}])
   if (bounds.shape==='custom') return pointInPolygon({x,y},bounds.points ?? DEFAULT_POLYGON)
-  return x>=.015 && x<=.985 && y>=.025 && y<=.975
+  // Fixed clearance: enlarging a rectangular room must not push stationary employees inward.
+  return p.x>=18 && p.x<=bounds.width-18 && p.y>=18 && p.y<=bounds.height-18
 }
 const overlaps = (a:Point,b:Point) => Math.abs(a.x-b.x)<EMPLOYEE_SIZE.width+18 && Math.abs(a.y-b.y)<EMPLOYEE_SIZE.height+16
 const cornersFit = (b:RoomBounds,p:Point) => [p,{x:p.x+EMPLOYEE_SIZE.width,y:p.y},{x:p.x,y:p.y+EMPLOYEE_SIZE.height},{x:p.x+EMPLOYEE_SIZE.width,y:p.y+EMPLOYEE_SIZE.height}].every(c=>shapeContains(b,c))
@@ -75,6 +77,30 @@ export function employeeFits(b:RoomBounds,p:Point):boolean {
   })
 }
 const fits=employeeFits
+
+/** Resize the outline around fixed world-space employee footprints, without rearranging them. */
+export function resizeOccupiedRoom(room:PlannedRoom,requested:RoomBounds):PlannedRoom {
+  const near=(a:number,b:number)=>Math.abs(a-b)<1e-6
+  const anchored=(near(requested.x,room.bounds.x)||near(requested.x+requested.width,room.bounds.x+room.bounds.width))&&(near(requested.y,room.bounds.y)||near(requested.y+requested.height,room.bounds.y+room.bounds.height))
+  // A combined CLI placement/size update can move the Team; edge dragging keeps an opposite edge fixed.
+  const origin=anchored?room.bounds:requested
+  const basis={...room.bounds,x:origin.x,y:origin.y}
+  const world=room.employees.map(({position})=>({x:origin.x+position.x,y:origin.y+position.y}))
+  if(!world.length)return {...room,bounds:requested}
+  const left=Math.min(requested.x,...world.map(p=>p.x-18)),top=Math.min(requested.y,...world.map(p=>p.y-EMPLOYEE_TOP))
+  const right=Math.max(requested.x+requested.width,...world.map(p=>p.x+EMPLOYEE_SIZE.width+18))
+  const bottom=Math.max(requested.y+requested.height,...world.map(p=>p.y+EMPLOYEE_SIZE.height+18))
+  const target={...requested,x:left,y:top,width:right-left,height:bottom-top}
+  const contains=(bounds:RoomBounds)=>world.every(p=>employeeFits(bounds,{x:p.x-bounds.x,y:p.y-bounds.y}))
+  let bounds=target
+  if(!contains(target)){
+    const at=(t:number)=>({...target,x:basis.x+(target.x-basis.x)*t,y:basis.y+(target.y-basis.y)*t,width:basis.width+(target.width-basis.width)*t,height:basis.height+(target.height-basis.height)*t})
+    let low=0,high=1
+    for(let i=0;i<24;i++){const t=(low+high)/2;if(contains(at(t)))low=t;else high=t}
+    bounds=at(low)
+  }
+  return {...room,bounds,employees:room.employees.map((employee,i)=>({...employee,position:{x:world[i].x-bounds.x,y:world[i].y-bounds.y}}))}
+}
 /** Project a drag onto the legal footprint area; used identically by Core and preview. */
 export function constrainEmployee(b:RoomBounds,point:Point,previous?:Point):Point {
   const p={x:Math.max(18,Math.min(b.width-EMPLOYEE_SIZE.width-18,point.x)),y:Math.max(EMPLOYEE_TOP,Math.min(b.height-EMPLOYEE_SIZE.height-18,point.y))}

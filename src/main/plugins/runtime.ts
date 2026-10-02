@@ -1,6 +1,7 @@
 import {authenticate} from '../agent-access'
+import {APP_HOME} from '../../shared/protocol'
 import {authorize} from '../authorization'
-import {withCaller,operatorContext,requestContext,isGlobal} from '../authorization'
+import {withCaller,requestContext,isGlobal} from '../authorization'
 import {randomUUID as requestId} from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -9,26 +10,28 @@ import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { requirePlugin, pluginFile } from './registry'
 import { openMailbox } from './mailbox'
+import { pluginWorkspaceBase } from '../workspaces'
 import type { PluginDescriptor, PluginFactory, PluginRuntime, PluginRequest, PluginResponse } from '../../shared/plugins'
 
 const requireModule=createRequire(__filename)
 const instances=new Map<string,Promise<{plugin:PluginDescriptor;runtime:PluginRuntime}>>()
 const views=new Map<string,{server:http.Server;close:()=>Promise<void>}>()
-const mailboxes=new Map<string,Promise<()=>void>>()
+const mailboxes=new Map<string,{workspace:string;opened:Promise<()=>void>}>()
 export async function prepareWorkspacePlugins(workspace:string,pluginId:string,employeeId:string) {
   workspace=fs.realpathSync(workspace)
   const plugin=requirePlugin(pluginId)
-    const directory=path.join(workspace,'.agents-company','ipc',plugin.id,employeeId)
+    const root=path.join(APP_HOME,'agent-access',employeeId);fs.mkdirSync(root,{recursive:true,mode:0o700})
+    const directory=path.join(root,'ipc',plugin.id)
     let ancestor=directory;while(!fs.existsSync(ancestor))ancestor=path.dirname(ancestor)
-    if(!fs.realpathSync(ancestor).startsWith(workspace+path.sep))throw new Error('Plugin mailbox escapes workspace')
+    const actual=fs.realpathSync(ancestor),base=fs.realpathSync(root);if(actual!==base&&!actual.startsWith(base+path.sep))throw new Error('Plugin mailbox escapes employee runtime')
     if(!mailboxes.has(directory)) {
       const opened=pluginRuntime(plugin.id,workspace).then(({runtime})=>openMailbox(directory,{...runtime,request:request=>{const context=authenticate((request as any).auth);return withCaller(context,()=>{authorize('plugin.call',{id:pluginId,employee:employeeId});return runtime.request(request)})}},workspace))
-      mailboxes.set(directory,opened);opened.catch(()=>mailboxes.delete(directory))
+      mailboxes.set(directory,{workspace,opened});opened.catch(()=>mailboxes.delete(directory))
     }
-    await mailboxes.get(directory)
+    await mailboxes.get(directory)!.opened
 }
 export async function releaseWorkspacePlugins(workspace:string) {
-  for(const [directory,opened] of mailboxes)if(directory===workspace||directory.startsWith(workspace+path.sep)){(await opened)();mailboxes.delete(directory)}
+  for(const [directory,entry] of mailboxes)if(entry.workspace===workspace||entry.workspace.startsWith(workspace+path.sep)){(await entry.opened)();mailboxes.delete(directory)}
 }
 export async function pluginRuntime(id:string,workspace:string) {
   workspace=fs.realpathSync(workspace)
@@ -37,7 +40,7 @@ export async function pluginRuntime(id:string,workspace:string) {
   if(!instance){instance=(async()=>{
     const factory=requireModule(pluginFile(plugin.directory,plugin.runtime)) as PluginFactory
     if(typeof factory.createPlugin!=='function')throw new Error('Plugin must export createPlugin(context)')
-    const core=await factory.createPlugin({workspace,pluginRoot:plugin.directory,executable:process.execPath,requestHost:async request=>(await import('../server')).handleRequest(request)})
+    const core=await factory.createPlugin({workspace,workspaceBase:pluginWorkspaceBase(id),pluginRoot:plugin.directory,executable:process.execPath,requestHost:async request=>(await import('../server')).handleRequest(request)})
     if(typeof core.request!=='function')throw new Error('Plugin must implement request()')
     const schema=JSON.parse(fs.readFileSync(pluginFile(plugin.directory,plugin.schema),'utf8')),methods=new Set(schema.commands.map((command:{method:string})=>command.method))
     // CLI, renderer HTTP and employee mailboxes all pass through this same boundary.
@@ -49,15 +52,16 @@ export async function pluginRuntime(id:string,workspace:string) {
   })();instances.set(key,instance);instance.catch(()=>instances.delete(key))}
   return instance
 }
-export async function callPlugin(id:string,workspace:string,method:string,params:Record<string,unknown>={}) {
+export async function callPlugin(id:string,workspace:string,method:string,params:Record<string,unknown>={},raw=false) {
   const {runtime}=await pluginRuntime(id,workspace)
-  const reply=await runtime.request({jsonrpc:'2.0',id:randomUUID(),method,params})
+  const reply=await runtime.request({jsonrpc:'2.0',id:randomUUID(),method,params,...(!raw?{stateMode:'none' as const}:{})})
+  if(raw)return reply
   if(reply.error)throw new Error(`${reply.error.message} (${reply.error.code})`)
   return reply.result
 }
 const mime=(file:string)=>({'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.wasm':'application/wasm','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.map':'application/json'}[path.extname(file)]||'application/octet-stream')
 export async function openPluginView(id:string,workspace:string) {
-  const {plugin,runtime}=await pluginRuntime(id,workspace)
+  const caller=requestContext(),{plugin,runtime}=await pluginRuntime(id,workspace)
   const token=randomUUID(),base=`/${token}/`,uiRoot=path.dirname(pluginFile(plugin.directory,plugin.renderer))
   const clients=new Set<http.ServerResponse>(),sockets=new Set<import('node:net').Socket>()
   let unsubscribe:(()=>void)|undefined
@@ -71,8 +75,13 @@ export async function openPluginView(id:string,workspace:string) {
         let body='';for await(const part of req){body+=part;if(body.length>64*1024*1024)throw new Error('Request too large')}
         const request=JSON.parse(body) as PluginRequest
         if(request.jsonrpc!=='2.0'||typeof request.method!=='string')throw new Error('Invalid JSON RPC request')
-        const reply=await withCaller(operatorContext(),()=>runtime.request(request))
-        res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(reply));return
+        const controller=new AbortController(),cancel=()=>controller.abort()
+        res.once('close',cancel)
+        try{
+          const reply=await withCaller({...caller,requestId:requestId(),signal:controller.signal},()=>{authorize('plugin.call',{id,workspace});return runtime.request(request)})
+          if(!res.destroyed){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(reply))}
+        }finally{res.removeListener('close',cancel)}
+        return
       }
       if(req.method!=='GET'){res.writeHead(405);res.end();return}
       if(target==='events') {
@@ -90,7 +99,7 @@ export async function openPluginView(id:string,workspace:string) {
   })
   server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket))})
   await new Promise<void>((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)})
-  try {unsubscribe=await runtime.subscribe?.(event=>{for(const client of clients)client.write(`data: ${JSON.stringify(event)}\n\n`)})}
+  try {unsubscribe=await runtime.subscribe?.(event=>{if(!clients.size)return;const packet=`data: ${JSON.stringify(event)}\n\n`;for(const client of clients){if(client.writableLength>32*1024*1024)client.destroy();else client.write(packet)}},{stateMode:'delta',initialState:false})}
   catch(error){server.close();throw error}
   const port=(server.address() as import('node:net').AddressInfo).port
   const close=async()=>{unsubscribe?.();for(const client of clients)client.end();for(const socket of sockets)socket.destroy();await new Promise<void>(resolve=>server.close(()=>resolve()))}
@@ -98,4 +107,8 @@ export async function openPluginView(id:string,workspace:string) {
   return {id:token,plugin:plugin.id,name:plugin.name,workspace,url:`http://127.0.0.1:${port}${base}${path.basename(plugin.renderer)}?hosted=1`}
 }
 export async function closePluginView(id:string) {const view=views.get(id);if(view){views.delete(id);await view.close()}return {closed:true}}
-export async function closePlugins() {for(const value of mailboxes.values())try{(await value)()}catch{};mailboxes.clear();for(const id of [...views.keys()])await closePluginView(id);for(const value of instances.values()){try{await (await value).runtime.close?.()}catch{}}instances.clear()}
+export async function closePlugins() {
+  await Promise.all([...mailboxes.values()].map(async value=>{try{(await value.opened)()}catch(error){console.error('Plugin mailbox close:',error)}}));mailboxes.clear()
+  await Promise.all([...views.keys()].map(id=>closePluginView(id)))
+  await Promise.all([...instances.values()].map(async value=>{try{await (await value).runtime.close?.()}catch(error){console.error('Plugin runtime close:',error)}}));instances.clear()
+}

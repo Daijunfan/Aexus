@@ -6,11 +6,10 @@ const f=await fixtureCore(),{cli,call,raw,create,token,status,until}=f
 try{
   await cli('group','add','A')
   const manager=await create('Lead','A','manager'),employee=await create('Worker')
-  const relation=await cli('management','request','--manager',manager.id,'--employee',employee.id)
-  await cli('management','decide',relation.id,'approve')
   const m=await token(manager.id),e=await token(employee.id)
   assert.equal((await status(employee.id)).lastReply,undefined,'hidden OK never creates unread')
-  const layout=JSON.stringify((await cli('office','layout')).rooms)
+  const geometry=rooms=>rooms.map(r=>({name:r.name,bounds:r.bounds,employees:r.employees.map(e=>({id:e.id,position:e.position,width:e.width,height:e.height}))}))
+  const layout=JSON.stringify(geometry((await cli('office','layout')).rooms))
   const replyFile=path.join(f.control,employee.id+'.reply.txt')
   fs.writeFileSync(replyFile,'第一段：工作已处理。\n\n最后一段：请用户确认验收结果。')
   const send=async text=>{await cli('session','send','--employee',employee.id,'--text',text);await until(async()=>!(await status(employee.id)).busy,'turn end');return (await status(employee.id)).lastReply}
@@ -38,7 +37,7 @@ try{
   assert.equal((await status(employee.id)).lastReply.id,second.id)
   await f.stop();await f.start()
   assert.equal((await status(employee.id)).lastReply.id,second.id);assert.equal((await status(employee.id)).lastReply.readAt,undefined)
-  assert.equal(JSON.stringify((await cli('office','layout')).rooms),layout,'messages and read receipts never reflow')
+  assert.equal(JSON.stringify(geometry((await cli('office','layout')).rooms)),layout,'messages and read receipts never reflow')
   assert.equal((await f.request(null,'card.update',{id:employee.id,patch:{lastReply:{id:'forged',readAt:1}}})).ok,false)
   const normal=await cli('session','transcript','--employee',employee.id)
   assert.ok(!normal.text.includes('PRIVATE_INIT'))

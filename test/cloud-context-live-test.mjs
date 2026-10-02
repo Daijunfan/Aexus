@@ -33,7 +33,7 @@ try{
  const blocks=transcript.items.filter(i=>i.role==='assistant').flatMap(i=>i.blocks),texts=blocks.filter(b=>b.kind==='text').map(b=>b.text).join('\n'),calls=blocks.filter(b=>b.kind==='tool')
  const result={prompt,model:snapshot.model,effort:snapshot.effort,assistant:texts,commands:calls.map(c=>({command:c.input,result:c.result,isError:c.isError})),contextClean:true,nativeExecution:true,threadId:snapshot.threadId}
  fs.writeFileSync(path.join(artifact,'result.json'),JSON.stringify(result,null,2));fs.writeFileSync(path.join(artifact,'reply.md'),texts)
- assert.ok(calls.length>0&&calls.some(c=>c.result?.includes('gpubupt208')),JSON.stringify(snapshot))
+ assert.ok(calls.length>0&&calls.some(c=>c.result?.includes(process.env.AGENTS_LIVE_HOSTNAME||'example-linux')),JSON.stringify(snapshot))
  assert.ok(!/(tunnel|exec-server|隧道|转发|\bssh\b)/i.test(texts),texts)
  assert.ok(texts.includes('4316')&&texts.includes('A100')&&texts.includes('Ubuntu'),texts)
  console.log(JSON.stringify(result,null,2))

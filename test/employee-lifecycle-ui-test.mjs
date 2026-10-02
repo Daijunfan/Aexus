@@ -58,9 +58,9 @@ try{
   ok((await cli('session','list')).sessions.some(c=>c.title==='Builder'&&c.cwd===external),'Build binding accepts an existing physical folder outside the Team root')
   // Delete an idle, never-started employee through the UI; native API cases are covered separately.
   const target=(await cli('session','list')).sessions.find(c=>c.title==='Nested')
-  await cli('view','open','conversation','--employee',target.id);await expect(page.locator('.composer textarea')).toBeEnabled();await page.locator('.employee-details').click()
-  await page.getByRole('button',{name:'移除员工',exact:true}).click();await expect(page.locator('.workspace-note').filter({hasText:'永久删除'})).toBeVisible()
-  await page.getByRole('button',{name:'确认删除员工及全部会话',exact:true}).click();await expect(page.locator('.conversation-dialog')).toHaveCount(0)
+  await cli('view','open','conversation','--employee',target.id);await expect(page.locator('.composer textarea')).toBeEnabled()
+  await page.getByRole('button',{name:'删除会话',exact:true}).click();await expect(page.getByRole('alertdialog')).toBeVisible()
+  await page.getByRole('button',{name:'only employee',exact:true}).click();await expect(page.locator('.conversation-dialog')).toHaveCount(0)
   ok(!(await cli('session','list')).sessions.some(c=>c.id===target.id)&&fs.existsSync(target.cwd),'UI removal deletes the employee/session while keeping its work folder')
   await page.screenshot({path:path.join(project,'artifacts/employee-lifecycle-0.9.png')})
   ok(errors.length===0,'no renderer exceptions: '+errors.join('; '))

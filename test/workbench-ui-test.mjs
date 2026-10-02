@@ -33,7 +33,7 @@ try{
  assert.equal((await cli('host','check',host.id)).connected,true)
  await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)
  await page.locator('.add-employee').click();await page.locator('select[name="group"]').selectOption('Cloud Team');await page.locator('input[name="title"]').fill('Cloud engineer')
- await expect(page.locator('input[name="remote-host"],.execution-target')).toHaveCount(0);await expect(page.locator('.cloud-inheritance')).toContainText('fixture');await expect(page.locator('.engine-choices .codex-mark path')).toHaveAttribute('fill','#111111');assert.equal(await page.locator('.engine-choices .codex-mark').evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(17, 17, 17)')
+ await expect(page.locator('input[name="remote-host"],.execution-target')).toHaveCount(0);await expect(page.locator('.cloud-inheritance')).toContainText('fixture');await expect(page.locator('.engine-choices .codex-mark path')).toHaveAttribute('fill','#111111');assert.deepEqual(await page.locator('.engine-choices .codex-mark').evaluate(e=>{const s=getComputedStyle(e);return [s.borderTopWidth,s.backgroundColor,s.paddingTop]}),['0px','rgba(0, 0, 0, 0)','0px'])
  await page.locator('[data-directory-mode="bind"]').click();await expect(page.locator('.employee-directory-picker')).toBeVisible()
  await page.getByRole('option',{name:'使用当前文件夹'}).click();await expect(page.locator('input[name="cwd"]')).toHaveValue(remote)
  await page.locator('.save-employee').click();await expect(page.locator('.office-panel')).toHaveCount(0)

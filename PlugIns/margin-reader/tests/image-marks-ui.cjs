@@ -1,0 +1,22 @@
+'use strict';
+const assert=require('node:assert/strict'),path=require('node:path'),{createCanvas}=require('@napi-rs/canvas');
+const {create,expect}=require('./ui-session.cjs');
+(async()=>{const f=await create('image-marks');let failure;
+ try{const {page,api}=f,canvas=createCanvas(200,100),ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,200,100);ctx.fillStyle='#2070d0';ctx.fillRect(20,20,50,30);ctx.fillStyle='#d03020';ctx.fillRect(160,10,30,30);
+  let set=await api('study.create',{title:'图片标记定位'});const change=async(m,p={})=>set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});
+  await change('study.media.import',{kind:'image',title:'旋转与裁剪',contentBase64:(await canvas.encode('png')).toString('base64')});const id=set.cards[0].id,original=set.cards[0].mediaId,blue={x:.1,y:.2,width:.25,height:.3},red={x:.8,y:.1,width:.15,height:.3};
+  await change('study.card.emphasis.set',{cardId:id,images:[{...blue,group:'蓝色'},{...red,group:'红色'}]});await change('study.review.configure',{cardId:id,enabled:true,occlusions:[blue,red],occlusionGroups:[1,2]});await api('study.open',{setId:set.id});await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');
+  const menu=async action=>{await page.locator(`.study-card[data-card-id="${id}"] .study-card-more`).click();await page.locator(`[data-action="${action}"]`).click();};
+  await menu('transform');await page.fill('[name=x]','20');await page.fill('[name=width]','50');await page.selectOption('[name=rotation]','90');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+  set=await api('study.get',{setId:set.id});assert.notEqual(set.cards[0].mediaId,original);assert.equal(set.cards[0].emphasis.images.length,1);assert.equal(set.cards[0].review.occlusions.length,1);
+  await menu('preview');const frame=page.locator('.emphasis-image-preview'),mark=frame.locator('.emphasis-rectangle');await expect(mark).toHaveCount(1);await expect(frame.locator('img')).toBeVisible();
+  const box=await frame.boundingBox(),region=await mark.boundingBox();assert(Math.abs((region.x-box.x)/box.width-.5)<.015);assert(Math.abs((region.y-box.y)/box.height)<.015);assert(Math.abs(region.width/box.width-.3)<.015);assert(Math.abs(region.height/box.height-.3)<.015);await page.screenshot({path:path.join(f.output,'transformed-emphasis.png')});
+  f.pass('The real crop/rotate dialog moves visible emphasis to the transformed image region and removes the cropped mark');
+  await page.click('#dialog-cancel');await page.click('[data-study-view=review]');await expect(page.locator('.study-occlusion')).toHaveCount(1);const occlusion=await page.locator('.study-occlusion').boundingBox(),image=await page.locator('.review-image-wrap img').boundingBox();assert(Math.abs((occlusion.x-image.x)/image.width-.5)<.015);assert(Math.abs(occlusion.width/image.width-.3)<.015);await page.reload();await page.waitForSelector('body[data-ready=true]');await expect(page.locator('.study-occlusion')).toHaveCount(1);await page.click('#study-review-reveal');await expect(page.locator('#study-review-answer')).toBeVisible();
+  f.pass('Review masks use the same transformed coordinates and survive a fresh browser load');
+  // The view change has its own undo record; undo the image edit against Core history.
+  set=await api('study.get',{setId:set.id});await change('study.undo');set=await api('study.get',{setId:set.id});if(set.cards[0].mediaId!==original)await change('study.undo');set=await api('study.get',{setId:set.id});assert.equal(set.cards[0].mediaId,original);assert.equal(set.cards[0].emphasis.images.length,2);assert.equal(set.cards[0].review.occlusions.length,2);
+  await page.reload();await page.waitForSelector('body[data-ready=true]');await page.click('[data-study-view=map]');await expect(page.locator('#study-board')).toHaveAttribute('data-view','map');await menu('preview');await expect(page.locator('.emphasis-rectangle')).toHaveCount(2);
+  f.pass('Undo restores the original raster and both emphasis/review masks in Core and the rendered preview');
+ }catch(e){failure=e;}f.report.validation={passed:f.report.checks,failed:failure?[failure.message]:[],skipped:[],untested:['Windows','Linux']};await f.finish(failure);
+})().catch(e=>{console.error(e);process.exitCode=1;});

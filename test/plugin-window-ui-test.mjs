@@ -19,8 +19,7 @@ try{
  await cli('view','open','workspace','--name','Planning')
  await expect(main.locator('.file-workspace')).toBeVisible();ok(await main.locator('iframe').count()===0,'Work Team workspace is the same file browser as other Teams')
  await cli('view','close')
- const opened=app.waitForEvent('window')
- await main.locator('[data-plugin="mininotion"]').click();const page=await opened;page.setDefaultTimeout(20000)
+ const [page]=await Promise.all([app.waitForEvent('window'),main.locator('.plugin-directory [data-plugin="mininotion"]').click()]);page.setDefaultTimeout(20000)
  await page.locator('.sidebar').waitFor();let state=(await windows())[0]
  ok(state.attached&&await main.locator('iframe').count()===0&&await main.locator('.infinite-canvas').isVisible(),'plugin is a separate native window; the company stays on the canvas')
  ok(await page.locator('iframe').count()===0,'plugin is loaded at the top level without a wrapper iframe')

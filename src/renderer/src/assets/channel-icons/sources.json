@@ -1,0 +1,24 @@
+{
+  "assets": [
+    {
+      "file": "x.svg",
+      "owner": "X Corp.",
+      "source": "https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-logo.zip",
+      "archivePath": "logo.svg",
+      "guidelines": "https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-brand-guidelines.pdf",
+      "sha256": "dd46f96b6f47fcd33683b79ddfaf3daca1d4f8aeba3c0f2bde1584c69cc699d4",
+      "modified": false
+    },
+    {
+      "file": "youtube.png",
+      "owner": "Google LLC / YouTube",
+      "source": "https://www.gstatic.com/marketing-cms/78/29/3e68a1414bb28d0b7e47b44c3c91/youtube-icon.zip",
+      "archivePath": "YouTube_Icon/Digital/01 Red/yt_icon_red_digital.png",
+      "guidelines": "https://brand.youtube/youtube-icon/",
+      "sha256": "1027b1b0517727adb9697155a270744381c3ce9b047b1c8bd8a9389dc7d07a83",
+      "modified": false
+    }
+  ],
+  "purpose": "Identify the original source of collected content. No endorsement or redistribution clearance is implied.",
+  "redistributionReview": "pending"
+}

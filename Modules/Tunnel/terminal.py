@@ -14,7 +14,7 @@ import sys
 import termios
 import transport
 
-config = json.loads(Path(sys.argv[1]).read_text())
+config = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
 target = config.get('remote')
 if target:
     args = transport.ssh_args(target)

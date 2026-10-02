@@ -1,0 +1,44 @@
+.channel-conversation{position:relative}
+.channel-conversation .channel-person{cursor:pointer;border:0;background:none;padding:0;text-align:left;color:inherit}
+.channel-timeline{display:flex;flex-direction:column;gap:0;padding-bottom:20px}
+.channel-timeline>[data-chat-item]{flex-shrink:0;min-width:0}
+.channel-news-item{width:100%;max-width:720px;align-self:flex-start}
+/* One paper surface with a soft, left-pointing lower corner; media clips itself. */
+.channel-timeline .channel-news-card{--bubble-fill:var(--message-paper,var(--bg-elev));margin-bottom:20px;border:0;border-radius:22px 22px 22px 6px;background:var(--bubble-fill);overflow:visible;box-shadow:0 3px 12px color-mix(in srgb,var(--accent) 7%,transparent),0 0 0 .5px color-mix(in srgb,var(--fg) 8%,transparent)}
+.channel-timeline .channel-news-card::before{content:'';position:absolute;left:-12px;bottom:0;width:18px;height:24px;background:var(--bubble-fill);clip-path:path('M18 0 C17 10 13 18 2 21 C0 21.5 1 24 4 24 L18 24 Z');pointer-events:none}
+.channel-timeline .message-date{flex-shrink:0}
+.channel-earlier{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.channel-earlier .channel-load-more{margin:0;font-size:11px;padding:8px 13px}
+.channel-earlier-unread{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:6px 18px 0;padding:10px 13px;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--border));border-radius:12px;background:var(--bg-elev);font-size:12px;color:var(--fg)}
+.channel-earlier-unread>span,.channel-earlier-unread>button{display:flex;align-items:center;gap:7px}
+.channel-earlier-unread>span>.codicon{color:var(--accent)}
+.channel-earlier-unread>button{border:0;border-radius:8px;padding:7px 9px;background:color-mix(in srgb,var(--accent) 10%,var(--bg-elev));color:var(--accent);font:inherit;font-weight:600}
+.channel-earlier-unread>button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.channel-earlier-unread>button:disabled{opacity:.6}
+.channel-timeline>[data-channel-unread]{align-self:stretch}
+.channel-discussion-message{margin-bottom:15px;max-width:90%}
+.channel-discussion-message .group-message-heading{gap:8px;margin-bottom:9px}
+.channel-discussion-message .group-message-heading .message-avatar{width:26px;height:26px;border-radius:9px;font-size:10px}
+.channel-discussion-message .group-message-heading>strong{font-size:12px}
+.channel-admin-badge{font-size:9px;color:var(--fg-dim);padding:3px 6px;border-radius:6px;background:color-mix(in srgb,var(--accent) 8%,transparent);margin-left:auto}
+.channel-discussion-message .group-reply-link{max-width:100%;text-align:left}
+.channel-discussion-message .group-reply-link strong{display:block;font-size:11px}
+.channel-discussion-message .group-reply-link small{display:block;max-width:100%;max-height:2.9em;overflow:hidden;font-size:11px;line-height:1.4;color:var(--fg-dim)}
+.channel-conversation .channel-composer{padding-inline:30px;padding-top:8px}
+.channel-composer .group-compose-box{padding-left:15px}
+.channel-composer>footer>span{font-size:9px}
+.channel-composer .channel-add-admin{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--accent)}
+.channel-compose-region{position:relative;flex:none;min-width:0}
+.channel-jump-latest{position:absolute;right:22px;bottom:calc(100% + 12px);display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border-soft);border-radius:50%;background:var(--bg-elev);color:var(--fg);box-shadow:0 4px 16px #1b254316;z-index:8}
+.channel-jump-latest .codicon{font-size:21px}
+.channel-filter-note{padding:12px 24px 18px;text-align:center}
+.channel-filter-note button{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--border-soft);padding:10px 16px;border-radius:13px;background:var(--bg-elev);color:var(--fg);font-size:12px}
+.channel-admin-dialog{width:min(550px,100%)}
+.channel-admin-note{font-size:13px;line-height:1.7;color:var(--fg-dim);margin:0 0 20px}
+.channel-admin-options .message-avatar{width:38px;height:38px;border-radius:13px;flex:none}
+.channel-admin-options>label{gap:10px;padding:10px}
+.channel-admin-options>label>span:last-of-type{flex:1;min-width:0}
+.channel-admin-dialog .group-error button{margin-left:8px;border:1px solid currentColor;border-radius:7px;background:transparent;padding:5px 9px;color:inherit;font:inherit}
+.channel-admin-options em{font-size:9px;font-style:normal;padding:4px 7px;border-radius:7px;color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+@media(max-width:760px){.channel-conversation .channel-composer{padding-inline:18px}.channel-composer>footer>span{display:none}.channel-jump-latest{right:16px}.channel-admin-dialog .group-error button{margin-left:8px;border:1px solid currentColor;border-radius:7px;background:transparent;padding:5px 9px;color:inherit;font:inherit}
+.channel-admin-options em{display:none}.channel-timeline{padding-inline:18px}.channel-conversation .message-thread-actions{gap:0}.channel-conversation .message-thread-actions button{width:31px}.channel-discussion-message{max-width:94%}}

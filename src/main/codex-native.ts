@@ -1,8 +1,13 @@
+import {DOCUMENTATION_TOOL} from './documentation-tool'
+import {DISCUSSION_TOOL} from './discussion-tool'
+import {acquireCodexStartup} from './engines/startup'
+import {engineExecutable} from './engines/executable'
+import {engineEnvironment} from './engines/configuration'
 import {employeeInstructions} from './plugins/documents'
 import {readStore} from './store'
 import {remoteAgentBin} from './remote-agent-access'
 import {spawnEmployeeProcess} from './agent-process-isolation'
-import {spawn} from 'node:child_process'
+import spawn from 'cross-spawn'
 import {createInterface} from 'node:readline'
 import {once} from 'node:events'
 import {APP_HOME,SOCKET_PATH} from '../shared/protocol'
@@ -16,7 +21,7 @@ import type {CodexEvent,SandboxMode} from './codex'
 
 export const nativeExecutionConfig=()=>['-c','mcp_servers={}','-c','skills.include_instructions=false','-c','skills.bundled.enabled=false',
   '-c','include_apps_instructions=false','-c','memories.use_memories=false','-c','memories.generate_memories=false','--disable','memories','--disable','apps','--disable','hooks','--disable','plugins','--disable','chronicle','--disable','multi_agent']
-type Args={employeeId?:string;connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;nativeRemote?:RemoteTarget;remoteAdmin?:boolean;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string}
+type Args={employeeId?:string;connectionId?:string;prompt:string;images?:ImageInput[];cwd:string;workRoot?:string;permissionRoot?:string;remote?:RemoteTarget|null;nativeRemote?:RemoteTarget;remoteAdmin?:boolean;model?:string;effort?:string;serviceTier?:string;planMode?:boolean;resumeId?:string;sandbox:SandboxMode;signal:AbortSignal;onEvent:(event:CodexEvent)=>void;onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>;approvalPolicy?:string;acknowledging?:boolean;initializing?:boolean;discussionUrl?:string}
 class RemoteStartupError extends Error {}
 const sessions=new Map<string,NativeConnection>()
 type NativeConnection=Awaited<ReturnType<typeof connect>>
@@ -49,16 +54,26 @@ export async function runNativeCodexTurn(binary:string,args:Args){
   finally{if(session&&(!args.connectionId||!session.alive())){if(args.connectionId)sessions.delete(args.connectionId);await session.close()}}
 }
 async function connect(binary:string,initial:Args){
+  const profile=initial.employeeId?readStore().sessions.find(card=>card.id===initial.employeeId)?.nativeConfigRoot:undefined
+  const releaseStartup=await acquireCodexStartup(initial.nativeRemote,profile)
+  try{
   let args=initial,threadId=initial.resumeId??'',turnId='',loaded=false,working=false,sequence=0,stderr='',dead=false,compact=false
-  let loadedInstructions='',loadedPolicy=''
-  let waiting:{turnId?:string;resolve:()=>void;reject:(error:Error)=>void}|undefined,closing:Promise<void>|undefined
+  let loadedInstructions='',loadedPolicy='',loadedPhase='work',configuredModel=initial.model
+  let restoreEnvironments:Array<{environmentId:string;cwd:string;runtimeWorkspaceRoots:string[]}>|undefined
+  let waiting:{turnId?:string;acceptedTurnId?:string;processing:Set<string>;delivered?:boolean;read?:boolean;resolve:()=>void;reject:(error:Error)=>void}|undefined,closing:Promise<void>|undefined
+  const receipt=()=>{
+    if(!waiting?.acceptedTurnId)return
+    const turnId=waiting.acceptedTurnId
+    if(!waiting.delivered){waiting.delivered=true;args.onEvent({kind:'input-receipt',stage:'delivered',turnId})}
+    if(!waiting.read&&waiting.processing.has(turnId)){waiting.read=true;args.onEvent({kind:'input-receipt',stage:'read',turnId})}
+  }
   const executor=args.remote&&!args.nativeRemote?await openCodexExecutor({...args.remote,cliBin:remoteAgentBin(args.employeeId)}):undefined
   // Permit only the authenticated application socket while retaining read-only files.
   const localControl=!!args.employeeId&&!args.remote
-  const controlFlags=localControl?[...(!args.workRoot?['-c','default_permissions="agents-company-readonly"']:[]),'-c','permissions.agents-company-readonly.extends=":read-only"','-c','permissions.agents-company-readonly.network.enabled=true','-c',`permissions.agents-company-readonly.network.unix_sockets={${JSON.stringify(SOCKET_PATH)}="allow"}`]:[]
-  const flags=[...controlFlags,'-c',`model=${JSON.stringify(args.model||'gpt-5.6-luna')}`,...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true']
-  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'--disable','multi_agent','app-server','--listen','stdio://'],undefined,args.employeeId):spawnEmployeeProcess(args.employeeId,binary,[...(args.remote?nativeExecutionConfig():args.workRoot?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot,localControl?SOCKET_PATH:undefined):[]),...flags,'--disable','multi_agent','app-server'],
-    {cwd:args.remote?APP_HOME:args.cwd,env:{...childEnv(args.cwd,args.workRoot),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})}})
+  const controlFlags=localControl&&args.sandbox!=='danger-full-access'?[...(!args.workRoot?['-c','default_permissions="agents-company-readonly"']:[]),'-c','permissions.agents-company-readonly.extends=":read-only"','-c','permissions.agents-company-readonly.network.enabled=true','-c',`permissions.agents-company-readonly.network.unix_sockets={${JSON.stringify(SOCKET_PATH)}="allow"}`]:[]
+  const flags=[...controlFlags,...(args.model?['-c',`model=${JSON.stringify(args.model)}`]:[]),...(args.effort?['-c',`model_reasoning_effort=${JSON.stringify(args.effort)}`]:[]),'-c',`service_tier=${JSON.stringify(args.serviceTier??'default')}`,'-c','features.fast_mode=true']
+  const child=args.nativeRemote?spawnRemoteAgent(args.nativeRemote,'codex',[...flags,'--disable','multi_agent','app-server','--listen','stdio://'],undefined,args.employeeId):spawnEmployeeProcess(args.employeeId,binary,[...(args.remote?nativeExecutionConfig():args.workRoot&&args.sandbox!=='danger-full-access'?workCodexConfig(args.cwd,args.permissionRoot??args.workRoot,localControl?SOCKET_PATH:undefined):[]),...flags,'--disable','multi_agent','app-server'],
+    {cwd:args.remote?APP_HOME:args.cwd,env:{...childEnv(args.cwd,args.workRoot),...engineEnvironment('codex'),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})}})
   const ended=once(child,'close').catch(()=>{}),lines=createInterface({input:child.stdout}),lifetime=new AbortController()
   const pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:NodeJS.Timeout}>(),incoming=new Map<string|number,AbortController>()
   const fail=(error:Error)=>{for(const p of pending.values()){clearTimeout(p.timer);p.reject(error)}pending.clear();waiting?.reject(error)}
@@ -72,6 +87,7 @@ async function connect(binary:string,initial:Args){
   lines.on('line',line=>{
     let event:any;try{event=JSON.parse(line)}catch{return}
     if(event.id!==undefined&&event.method){
+      if(waiting&&typeof event.params?.turnId==='string'&&['item/commandExecution/requestApproval','item/fileChange/requestApproval','tool/requestUserInput'].includes(event.method)){waiting.processing.add(event.params.turnId);receipt()}
       const controller=new AbortController(),parent=waiting?args.signal:lifetime.signal,cancel=()=>controller.abort();incoming.set(event.id,controller);parent.addEventListener('abort',cancel,{once:true});if(parent.aborted)cancel()
       const reply=(value:unknown)=>{if(incoming.get(event.id)===controller&&!child.stdin.destroyed&&!child.stdin.writableEnded)child.stdin.write(JSON.stringify(value)+'\n')}
       const cleanup=()=>{if(incoming.get(event.id)===controller)incoming.delete(event.id);parent.removeEventListener('abort',cancel)}
@@ -86,6 +102,10 @@ async function connect(binary:string,initial:Args){
     if(event.method==='thread/started'&&(!threadId||p.thread?.id===threadId)){threadId=p.thread.id;args.onEvent({kind:'thread',threadId})}
     if(p.threadId&&threadId&&p.threadId!==threadId)return
     if(event.method==='thread/closed'){loaded=false;working=false;waiting?.reject(new Error('原生会话已关闭，请重试连接'))}
+    const processing=typeof p.delta==='string'&&p.delta.length>0&&['item/agentMessage/delta','item/plan/delta','item/reasoning/summaryTextDelta'].includes(event.method)
+      ||event.method==='item/started'&&item&&['commandExecution','fileChange','mcpToolCall','webSearch','collabAgentToolCall','dynamicToolCall','imageGeneration','imageView','subAgentActivity'].includes(item.type)
+      ||event.method==='item/completed'&&item&&(['agentMessage','plan'].includes(item.type)&&!!item.text||item.type==='reasoning'&&!![...(item.summary??[]),...(item.content??[])].join(''))
+    if(waiting&&typeof p.turnId==='string'&&processing){waiting.processing.add(p.turnId);receipt()}
     const id=(value:string|undefined)=>value?`${p.turnId??turnId}:${value}`:undefined
     if(event.method==='item/agentMessage/delta'||event.method==='item/plan/delta')args.onEvent({kind:'text-delta',id:id(p.itemId)!,text:p.delta})
     if(event.method==='item/reasoning/summaryTextDelta')args.onEvent({kind:'reasoning-delta',id:id(p.itemId)!,text:p.delta})
@@ -119,8 +139,17 @@ async function connect(binary:string,initial:Args){
     child.stdin.end();child.kill('SIGTERM');const timer=setTimeout(()=>child.kill('SIGKILL'),1500);await ended;clearTimeout(timer);lines.close()
     for(const item of pending.values())clearTimeout(item.timer);pending.clear();await executor?.close()
   })()
-  try{await call('initialize',{clientInfo:{name:'agents_company',version:'1'},capabilities:{experimentalApi:true,mcpServerOpenaiFormElicitation:true}});child.stdin.write(JSON.stringify({method:'initialized'})+'\n')}
+  try{await call('initialize',{clientInfo:{name:'agents_company',version:'1'},capabilities:{experimentalApi:true,mcpServerOpenaiFormElicitation:true}});child.stdin.write(JSON.stringify({method:'initialized'})+'\n');releaseStartup()}
   catch(error){await close();throw error}
+  let nativeConfig:Record<string,any>
+  try{
+  nativeConfig=(await call('config/read',{includeLayers:false,cwd:initial.nativeRemote?initial.cwd:codexControlCwd(initial.cwd,initial.remote)})).config??{}
+  if(!configuredModel){
+    configuredModel=nativeConfig.model
+    if(!configuredModel){const catalog=await call('model/list',{limit:100});const model=(catalog.data??[]).find((item:any)=>item.isDefault)??catalog.data?.[0];configuredModel=model?.model??model?.id}
+  }
+  if(!configuredModel)throw Error('Codex 未返回可用默认模型；请在引擎设置中选择账户可用的模型')
+  }catch(error){await close();throw error}
   return {close,call,threadId:()=>threadId,turnId:()=>turnId,alive:()=>!dead&&(!executor||executor.connected()),busy:()=>working,
     async run(next:Args){
       args=next;let killTimer:NodeJS.Timeout|undefined
@@ -133,27 +162,60 @@ async function connect(binary:string,initial:Args){
         const environments=args.remote&&!args.nativeRemote?[{environmentId:'remote',cwd:args.remote.directory,runtimeWorkspaceRoots:[args.remote.directory]}]:undefined
         const controlCwd=args.nativeRemote?args.cwd:codexControlCwd(args.cwd,args.remote),windows=args.remote?.os==='windows'
         const sandbox=args.remote&&(windows||args.remoteAdmin&&!args.planMode)?'danger-full-access':args.sandbox
-        const permissionProfile=args.workRoot?'agents-company-work':localControl&&args.sandbox==='read-only'?'agents-company-readonly':undefined
+        const permissionProfile=args.workRoot&&args.sandbox!=='danger-full-access'?'agents-company-work':localControl&&args.sandbox==='read-only'?'agents-company-readonly':undefined
         const policy=permissionProfile?{permissions:permissionProfile}:{sandboxPolicy:{type:sandbox==='workspace-write'?'workspaceWrite':sandbox==='read-only'?'readOnly':'dangerFullAccess',...(sandbox==='workspace-write'?{writableRoots:[controlCwd],networkAccess:true,excludeTmpdirEnvVar:true,excludeSlashTmp:true}:{})}}
         const saved=args.employeeId?readStore().sessions.find(card=>card.id===args.employeeId):undefined
         const bootstrap=saved?employeeInstructions(saved,readStore()):undefined
-        if(loaded&&(bootstrap!==loadedInstructions||(permissionProfile??sandbox)!==loadedPolicy))loaded=false
-        if(!loaded){
-          const options={cwd:controlCwd,developerInstructions:bootstrap,model:args.model||'gpt-5.6-luna',approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(permissionProfile?{permissions:permissionProfile}:{sandbox}),...(args.remote&&!args.nativeRemote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
-          // Employee clones must own their history so removing one employee cannot invalidate another.
-          const started=args.resumeId?await call('thread/resume',{threadId:args.resumeId,...options}):await call('thread/start',{...options,environments,historyMode:'legacy'})
-          threadId=started.thread.id;loaded=true;loadedInstructions=bootstrap??'';loadedPolicy=permissionProfile??sandbox;args.onEvent({kind:'thread',threadId})
+        const phase=args.acknowledging?'acknowledgment':args.initializing?'initialization':'work',reading=phase!=='work'
+        if(loaded&&(phase!==loadedPhase||(bootstrap??'')!==loadedInstructions||(permissionProfile??sandbox)!==loadedPolicy)){
+          // Reloading an actor can release its background terminals. Never terminate
+          // employee work just to switch the reading-stage tool catalog.
+          const terminals=await call('thread/backgroundTerminals/list',{threadId,limit:1})
+          if(!Array.isArray(terminals.data))throw Error('This Codex runtime cannot verify background terminal safety')
+          if(terminals.data.length)throw Error('Finish or stop the existing Codex background terminals before initialization or shared-message reading; no terminal was stopped.')
+          if(reading&&!restoreEnvironments){
+            const original=(await call('thread/read',{threadId,includeTurns:false})).thread?.environments
+            if(!Array.isArray(original))throw Error('This Codex runtime cannot isolate reading from workspace tools')
+            restoreEnvironments=original
+          }
+          await call('thread/unsubscribe',{threadId});loaded=false
         }
-        const settings={threadId,cwd:controlCwd,model:args.model||'gpt-5.6-luna',effort:args.effort??null,serviceTier:args.serviceTier??null,approvalPolicy:args.approvalPolicy??'never',collaborationMode:{mode:args.planMode?'plan':'default',settings:{model:args.model||'gpt-5.6-luna',reasoning_effort:args.effort??null,developer_instructions:null}},...policy}
+        if(!loaded){
+          const options:{config?:Record<string,unknown>;[key:string]:unknown}={cwd:controlCwd,...(bootstrap?{developerInstructions:bootstrap}:{}),model:args.model||configuredModel,approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(permissionProfile?{permissions:permissionProfile}:{sandbox}),...(args.remote&&!args.nativeRemote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
+          if(reading){
+            if(!args.discussionUrl)throw Error('The native reading tool is unavailable')
+            options.config={...options.config,
+              'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,
+              'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,
+              'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,
+              'features.multi_agent':false,'features.multi_agent_v2':false,'agents.enabled':false,'agents.max_depth':0,
+              ...Object.fromEntries(Object.keys(nativeConfig.mcp_servers??{}).map(name=>[`mcp_servers.${name}.enabled`,false]))
+            }
+          }
+          if(args.discussionUrl){const name=phase==='acknowledgment'?DISCUSSION_TOOL.name:DOCUMENTATION_TOOL.name;options.config={...options.config,'mcp_servers.agents_company':{enabled:true,url:args.discussionUrl,enabled_tools:[name],tools:{[name]:{approval_mode:'approve'}}}}}
+          // Employee clones must own their history so removing one employee cannot invalidate another.
+          const resumeId=threadId||args.resumeId
+          const started=resumeId?await call('thread/resume',{threadId:resumeId,...options}):await call('thread/start',{...options,environments,historyMode:'legacy'})
+          threadId=started.thread.id;loaded=true;loadedInstructions=bootstrap??'';loadedPolicy=permissionProfile??sandbox;loadedPhase=phase;args.onEvent({kind:'thread',threadId})
+        }
+        if(reading&&!restoreEnvironments){
+          const original=(await call('thread/read',{threadId,includeTurns:false})).thread?.environments
+          if(!Array.isArray(original))throw Error('This Codex runtime cannot isolate reading from workspace tools')
+          restoreEnvironments=original
+        }
+        const turnEnvironments=reading?[]:restoreEnvironments??environments
+        const settings={threadId,cwd:controlCwd,model:args.model||configuredModel,effort:args.effort??null,serviceTier:args.serviceTier??null,approvalPolicy:args.approvalPolicy??'never',collaborationMode:{mode:args.planMode?'plan':'default',settings:{model:args.model||configuredModel,reasoning_effort:args.effort??null,developer_instructions:null}},...policy}
         await call('thread/settings/update',settings);args.signal.throwIfAborted()
         const action=args.prompt.match(/^\/(compact|review)(?:\s+([\s\S]*))?$/);compact=action?.[1]==='compact'
+        if(restoreEnvironments&&!reading&&action)throw Error('Send a regular message to restore the workspace before using /review or /compact after an acknowledgment.')
         const target=action?.[2]?.startsWith('--base ')?{type:'baseBranch',branch:action[2].slice(7).trim()}:action?.[2]?.startsWith('--commit ')?{type:'commit',sha:action[2].slice(9).trim(),title:null}:action?.[2]?{type:'custom',instructions:action[2]}:{type:'uncommittedChanges'}
         await new Promise<void>((resolve,reject)=>{
-          waiting={resolve,reject};working=true
-          const operation=compact?call('thread/compact/start',{threadId}):action?.[1]==='review'?call('review/start',{threadId,delivery:'inline',target}):call('turn/start',{...settings,environments,input:[...(args.prompt?[{type:'text',text:args.prompt}]:[]),...(args.images??[]).map(image=>({type:'image',url:`data:${image.mimeType};base64,${image.data}`}))]})
-          void operation.then(result=>{if(result.turn){turnId=result.turn.id;if(waiting)waiting.turnId??=turnId}if(args.signal.aborted)abort()},reject)
+          const current={resolve,reject,processing:new Set<string>()} as NonNullable<typeof waiting>;waiting=current;working=true
+          const operation=compact?call('thread/compact/start',{threadId}):action?.[1]==='review'?call('review/start',{threadId,delivery:'inline',target}):call('turn/start',{...settings,environments:turnEnvironments,input:[...(args.prompt?[{type:'text',text:args.prompt}]:[]),...(args.images??[]).map(image=>({type:'image',url:`data:${image.mimeType};base64,${image.data}`}))]})
+          void operation.then(result=>{if(result.turn){turnId=result.turn.id;if(waiting===current){current.turnId=turnId;current.acceptedTurnId=turnId;if(!reading&&!action)restoreEnvironments=undefined;receipt()}}if(args.signal.aborted)abort()},reject)
         })
       }catch(error){working=false;throw error}finally{clearTimeout(killTimer);waiting=undefined;args.signal.removeEventListener('abort',abort)}
     }
   }
+  }finally{releaseStartup()}
 }

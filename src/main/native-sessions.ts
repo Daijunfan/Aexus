@@ -1,13 +1,16 @@
+import {acquireCodexStartup} from './engines/startup'
+import {engineExecutable} from './engines/executable'
+import {engineEnvironment} from './engines/configuration'
 import {workCodexConfig} from './scope'
 import {openCodexExecutor,codexControlCwd} from './codex-executor'
 import {nativeExecutionConfig} from './codex-native'
 import type {RemoteTarget} from '../shared/remote'
-import {spawn} from 'node:child_process'
+import spawn from 'cross-spawn'
 import {createInterface} from 'node:readline'
 import fs from 'node:fs'
 import path from 'node:path'
 import {homedir} from 'node:os'
-import {deleteSession as deleteClaudeSession,forkSession as forkClaudeSession} from '@anthropic-ai/claude-agent-sdk'
+import {loadClaudeSdk} from './engines/claude-sdk'
 import {childEnv,resolveBinary} from './exec'
 import {nativeSessionRefs,type NativeSession,type StoredSession} from '../shared/types'
 import {APP_HOME} from '../shared/protocol'
@@ -18,24 +21,28 @@ import {cloudHostTarget} from './cloud-hosts'
 type Call=(method:string,params:Record<string,unknown>)=>Promise<any>
 /** Native metadata API only: never starts an inference turn. */
 export async function withCodexSessionApi<T>(action:(call:Call)=>Promise<T>,options:{cwd?:string;remote?:RemoteTarget;nativeRemote?:RemoteTarget;configArgs?:string[]}={}):Promise<T> {
+  const releaseStartup=await acquireCodexStartup(options.nativeRemote)
+  try{
   const executor=options.remote&&!options.nativeRemote?await openCodexExecutor(options.remote):undefined
-  const child=options.nativeRemote?spawnRemoteAgent(options.nativeRemote,'codex',['app-server','--listen','stdio://']):spawn(resolveBinary('codex',process.env.CODEX_BIN),['app-server','--stdio',...(options.remote?nativeExecutionConfig():[]),...(options.configArgs??[]),'--disable','memories','--disable','chronicle','-c','memories.generate_memories=false','-c','model="gpt-5.6-luna"','-c','model_reasoning_effort="low"'],{cwd:options.remote?APP_HOME:options.cwd,env:{...childEnv(),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})},stdio:['pipe','pipe','pipe']})
+  const child=options.nativeRemote?spawnRemoteAgent(options.nativeRemote,'codex',['app-server','--listen','stdio://']):spawn(engineExecutable('codex'),['app-server','--stdio',...(options.remote?nativeExecutionConfig():[]),...(options.configArgs??[]),'--disable','memories','--disable','chronicle','-c','memories.generate_memories=false','-c','model_reasoning_effort="low"'],{cwd:options.remote?APP_HOME:options.cwd,env:{...childEnv(),...engineEnvironment('codex'),...(executor?{CODEX_EXEC_SERVER_URL:executor.url}:{})},stdio:['pipe','pipe','pipe']})
   let sequence=0,stderr=''
   const pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>}>()
   const fail=(error:Error)=>{for(const request of pending.values()){clearTimeout(request.timer);request.reject(error)}pending.clear()}
   const ended=new Promise<void>(resolve=>child.once('close',()=>{fail(new Error(stderr.trim()||'Codex 会话服务已退出'));resolve()}))
-  child.on('error',fail);child.stdin.on('error',fail);child.stderr.on('data',data=>stderr=(stderr+data).slice(-4000))
-  const lines=createInterface({input:child.stdout})
+  child.on('error',fail);child.stdin!.on('error',fail);child.stderr!.on('data',data=>stderr=(stderr+data).slice(-4000))
+  const lines=createInterface({input:child.stdout!})
   lines.on('line',line=>{let reply:any;try{reply=JSON.parse(line)}catch{return}const request=pending.get(reply.id);if(!request)return;pending.delete(reply.id);clearTimeout(request.timer);if(reply.error)request.reject(new Error(reply.error.message));else request.resolve(reply.result)})
   const call:Call=(method,params)=>new Promise((resolve,reject)=>{
     const id=++sequence,timer=setTimeout(()=>{pending.delete(id);reject(new Error(`Codex ${method} 超时`))},15000)
-    pending.set(id,{resolve,reject,timer});child.stdin.write(JSON.stringify({id,method,params})+'\n')
+    pending.set(id,{resolve,reject,timer});child.stdin!.write(JSON.stringify({id,method,params})+'\n')
   })
   try{
     await call('initialize',{clientInfo:{name:'agents_company_sessions',version:'1'},capabilities:{experimentalApi:true}})
-    child.stdin.write(JSON.stringify({method:'initialized'})+'\n')
+    child.stdin!.write(JSON.stringify({method:'initialized'})+'\n')
+    releaseStartup()
     return await action(call)
-  }finally{lines.close();child.stdin.end();child.kill('SIGTERM');const kill=setTimeout(()=>child.kill('SIGKILL'),1500);await ended;clearTimeout(kill);await executor?.close()}
+  }finally{lines.close();child.stdin!.end();child.kill('SIGTERM');const kill=setTimeout(()=>child.kill('SIGKILL'),1500);await ended;clearTimeout(kill);await executor?.close()}
+  }finally{releaseStartup()}
 }
 
 
@@ -44,7 +51,7 @@ export async function forkEmployeeContext(source:StoredSession,cwd:string,title:
   if(source.nativeConfigRoot)throw Error('Isolated native-history cloning is not supported by the current adapter')
   if(source.kind==='cloud-native-worker'&&source.engine==='claude')throw new Error('云端 Claude Code 会话克隆尚未提供可靠的原生复制接口；原会话保持不变')
   if(source.engine==='claude'&&source.claudeSessionId){
-    const result=await forkClaudeSession(source.claudeSessionId,{title})
+    const result=await (await loadClaudeSdk()).forkSession(source.claudeSessionId,{title})
     return {claudeSessionId:result.sessionId}
   }
   if(source.engine==='codex'&&source.threadId){
@@ -75,7 +82,7 @@ function removeLines(file:string,ids:Set<string>,key:string) {
 }
 
 export async function deleteNativeSessions(refs:NativeSession[]):Promise<void> {
-  for(const ref of refs)if(!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(ref.id))throw new Error(`无效的 ${ref.engine} 原生会话 ID，未移除员工`)
+  for(const ref of refs)if(!(ref.engine==='cline'?/^[A-Za-z0-9_-]{1,128}$/:/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i).test(ref.id))throw new Error(`无效的 ${ref.engine} 原生会话 ID，未移除员工`)
   const allOwned=refs.filter(ref=>ref.ownership!=='external')
   for(const profile of new Set(allOwned.flatMap(ref=>ref.profile?[ref.profile]:[]))){if(!path.resolve(profile).startsWith(path.join(APP_HOME,'agent-access')+path.sep))throw Error('Invalid isolated engine profile');fs.rmSync(profile,{recursive:true,force:true})}
   const owned=allOwned.filter(ref=>!ref.profile)
@@ -91,7 +98,7 @@ export async function deleteNativeSessions(refs:NativeSession[]):Promise<void> {
     const root=process.env.CODEX_HOME||path.join(homedir(),'.codex')
     removeLines(path.join(root,'session_index.jsonl'),codex,'id');removeLines(path.join(root,'history.jsonl'),codex,'session_id')
   }
-  for(const id of claude)try{await deleteClaudeSession(id)}catch(error){if(!String(error).includes(`Session ${id} not found in any project directory`))throw error}
+  for(const id of claude)try{await (await loadClaudeSdk()).deleteSession(id)}catch(error){if(!String(error).includes(`Session ${id} not found in any project directory`))throw error}
   if(claude.size){
     const root=process.env.CLAUDE_CONFIG_DIR||path.join(homedir(),'.claude'),projects=path.join(root,'projects')
     removeLines(path.join(root,'history.jsonl'),claude,'sessionId')

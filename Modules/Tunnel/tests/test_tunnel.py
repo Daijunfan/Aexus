@@ -83,10 +83,10 @@ class RoutingTests(unittest.TestCase):
 
     def test_native_lookup_skips_our_wrappers(self):
         with tempfile.TemporaryDirectory() as directory:
-            executable = Path(directory)/'codex'
-            executable.write_text('#!/bin/sh\nexit 0\n'); executable.chmod(0o755)
+            executable = Path(directory)/('codex.cmd' if os.name == 'nt' else 'codex')
+            executable.write_text('@exit /b 0\r\n' if os.name == 'nt' else '#!/bin/sh\nexit 0\n'); executable.chmod(0o755)
             with patch.dict(os.environ, {'PATH': str(commands.ROOT/'bin')+os.pathsep+directory}):
-                self.assertEqual(commands.native_executable('codex'), str(executable))
+                self.assertEqual(os.path.normcase(commands.native_executable('codex')), os.path.normcase(str(executable)))
 
     def test_route_guard_allows_only_workspace_and_conversation_tools(self):
         for name in ['mcp__tunnel__read_file', 'tunnel_execute', 'tunnel__edit_file']:
@@ -114,7 +114,8 @@ class RoutingTests(unittest.TestCase):
             cfg = {'host': 'fixture', 'directory': directory + '/missing', 'os': 'linux'}
             # Use the real bootstrap/transport, replacing only the SSH executable.
             code = "import sys,base64,zlib;exec(zlib.decompress(base64.b64decode(sys.stdin.readline())))"
-            script = ("import sys,resource;resource.setrlimit(resource.RLIMIT_CORE,(0,0));"
+            limit_core = "import resource;resource.setrlimit(resource.RLIMIT_CORE,(0,0));" if os.name != 'nt' else ''
+            script = ("import sys;" + limit_core +
                       "sys.path.insert(0," + repr(str(commands.ROOT)) + ");import transport;"
                       "transport.server_command=lambda cfg:" + repr([sys.executable, '-c', code]) + ";"
                       "sys.exit(transport.serve(" + repr(cfg) + "))")

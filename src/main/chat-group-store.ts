@@ -1,0 +1,12 @@
+import {join} from 'node:path'
+import {APP_HOME} from '../shared/protocol'
+import {readJson} from './atomic-file'
+import type {ChatGroup,ChatMessage,ChatDelivery} from '../shared/chat-groups'
+
+export const directory=join(APP_HOME,'chats');export const indexFile=join(directory,'groups.json')
+export type Catalog={version:1;groups:ChatGroup[]}
+export const catalog=()=>readJson<Catalog>(indexFile,()=>({version:1,groups:[]}),value=>!!value&&typeof value==='object'&&(value as Catalog).version===1&&Array.isArray((value as Catalog).groups)&&(value as Catalog).groups.every(group=>!!group&&typeof group.id==='string'&&/^cg_[a-f0-9-]{36}$/.test(group.id)&&typeof group.name==='string'&&Array.isArray(group.memberIds)&&group.memberIds.every(id=>typeof id==='string')&&Number.isSafeInteger(group.revision)&&Number.isSafeInteger(group.readSequence)&&Number.isSafeInteger(group.lastIncomingSequence)&&(group.mutes===undefined||!!group.mutes&&typeof group.mutes==='object'&&!Array.isArray(group.mutes)&&Object.values(group.mutes).every(until=>until===null||Number.isSafeInteger(until)&&until>0))))
+const idString=(value:unknown,label:string)=>{if(typeof value!=='string'||!value.trim()||value!==value.trim())throw Error('Provide a valid '+label);return value}
+export const groupId=(value:unknown)=>{const id=idString(value,'group ID');if(!/^cg_[a-f0-9-]{36}$/.test(id))throw Error('Invalid chat group ID');return id}
+export const historyFile=(id:string)=>join(directory,groupId(id)+'.json')
+export const messages=(id:string)=>readJson<ChatMessage[]>(historyFile(id),()=>[],value=>Array.isArray(value)&&value.every(message=>message&&typeof message.id==='string'&&Number.isSafeInteger(message.sequence)&&message.sequence>0&&typeof message.text==='string'&&(message.broadcast===undefined||message.broadcast===true)&&(message.editRevision===undefined||Number.isSafeInteger(message.editRevision)&&message.editRevision>=0)&&(message.editedAt===undefined||Number.isSafeInteger(message.editedAt)&&message.editedAt>=0)&&['operator','agent'].includes(message.author?.kind)&&(message.author.kind!=='agent'||typeof message.author.employeeId==='string')&&Array.isArray(message.mentions)&&Array.isArray(message.deliveries)&&message.deliveries.every((delivery:ChatDelivery)=>delivery&&typeof delivery.employeeId==='string'&&(delivery.mode===undefined||delivery.mode==='work'||delivery.mode==='awareness')&&['pending','routing','queued','running','completed','failed','interrupted'].includes(delivery.status))))

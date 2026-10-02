@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import adapters
 import commands
 import transport
@@ -71,7 +72,7 @@ def main(argv=None):
                 raise ValueError('Unexpected arguments: ' + ' '.join(native))
             print(transport.doctor(commands.target(options)))
         elif action == '_serve':
-            return transport.serve(json.loads(Path(args[0]).read_text()))
+            return transport.serve(json.loads(Path(args[0]).read_text(encoding='utf-8')))
         elif action == '_guard':
             print(json.dumps(adapters.guard(json.load(sys.stdin))))
         else:

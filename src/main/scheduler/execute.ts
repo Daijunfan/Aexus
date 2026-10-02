@@ -1,3 +1,4 @@
+import {taskViewId} from '../task-view'
 import {validateDelegation,withCaller,operatorContext} from '../authorization'
 import type {Delegation} from '../../shared/management'
 import type { ScheduledAction } from '../../shared/scheduler'
@@ -9,6 +10,7 @@ import { startSession, getLive, reserveEmployee, onSessionEvent, sendMessage, se
 export async function executeTask(action: ScheduledAction, owner: string, signal: AbortSignal, opened: (id: string) => void,delegation?:Delegation) {
   delegation??={requestedBy:{kind:'operator'},requestId:owner}
   validateDelegation(delegation,action.employeeId)
+  taskViewId(action.employeeId,action.viewId,true)
   const release = reserveEmployee(action.employeeId, owner)
   let id: string | undefined, unsubscribe = () => {}, restore: (() => Promise<void>) | undefined
   let abort = () => {}
@@ -38,14 +40,13 @@ export async function executeTask(action: ScheduledAction, owner: string, signal
       unsubscribe = onSessionEvent((channel, raw) => {
         const p = raw as any
         if (p?.sessionId !== id) return
-        if (channel === 'session:codex' && p.event?.kind === 'notice' && p.event.level === 'error') failure = p.event.text
-        if (channel === 'session:message' && p.message?.type === 'result' && (p.message.is_error || p.message.subtype !== 'success')) failure = p.message.errors?.join('; ') || p.message.subtype
+        if(channel==='session:result'&&!p.success)failure=p.error||'Engine task failed'
         if (channel === 'session:turn-end') failure ? reject(new Error(failure)) : resolve()
         if (['session:error', 'session:end', 'session:closed', 'session:interrupted'].includes(channel)) reject(new Error(p.message || 'Employee conversation was stopped'))
       })
       abort = () => { void closeSession(id!).then(() => reject(signal.reason), reject) }
       signal.addEventListener('abort', abort, { once: true })
-      try { signal.throwIfAborted(); void sendMessage(id!, action.prompt, owner,[],delegation).catch(reject) } catch (error) { reject(error) }
+      try { signal.throwIfAborted(); void sendMessage(id!, action.prompt, owner,[],delegation,action.viewId).catch(reject) } catch (error) { reject(error) }
     })
   } catch (error) {
     if (id && getLive(id)?.running) await closeSession(id)
@@ -55,7 +56,7 @@ export async function executeTask(action: ScheduledAction, owner: string, signal
     signal.removeEventListener('abort', abort)
     try {
       // Wait for a Codex turn to release the native writer before restoring options.
-      if (id && getLive(id)?.engine === 'codex') await getLive(id)?.finished
+      if (id) await getLive(id)?.driver.whenIdle()
       await restore?.()
     } catch (error) { if (id) await closeSession(id); throw error }
     finally { release() }

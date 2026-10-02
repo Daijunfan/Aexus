@@ -59,17 +59,27 @@ agents group list --details --json
 agents plugin call mininotion fs.list --employee EMPLOYEE_ID
 ```
 
-新的 Work Team 根目录固定为插件源码文件夹下的 `workspaces/<创建时的 Team 名称>`，例如
-`PlugIns/mini-notion/workspaces/Planning`。一个插件的多个 Team 各有独立目录；
-创建 Team 时不能使用 `--directory-mode bind --root PATH` 选择其他位置。已登记的
-旧 Team 继续使用原目录，升级不会自动移动文件。
-`workspaceDirectory` 是兼容旧目录与隔离测试的可选单个文件夹名称，只允许字母、数字、
-下划线和连字符；省略时使用 `<plugin-id>-workspace`。安装在应用数据目录中的插件则
-在其自身插件文件夹下保留 `workspaces` 子目录。
+新的 Work Team 根目录固定为 `<插件工作区基目录>/<创建时的 Team 名称>`。
+便携发布包使用 `$AGENTS_COMPANY_HOME/workspaces/<workspaceDirectory>` 作为基目录；
+开发包有有效 `source-location.json` 时继续使用源码目录的 `workspaces/`，例如
+`PlugIns/mini-notion/workspaces/Planning`。`AGENTS_COMPANY_WORKSPACES` 显式覆盖时，
+基目录为 `<该环境变量>/<workspaceDirectory>`。安装到用户插件目录的包同样使用外部
+工作区数据目录，不把工作文件放进可替换的软件包。
+一个插件的多个 Team 各有独立目录；创建 Team 时不能使用
+`--directory-mode bind --root PATH` 选择其他位置。已登记的旧 Team 继续使用原目录，
+升级不会自动移动文件。`workspaceDirectory` 只允许字母、数字、下划线和连字符；
+省略时使用 `<plugin-id>-workspace`。
+
+可选 manifest 字段 `defaultWorkspace` 为 `default`（省略时的默认值）或 `collection`。
+前者让用户直接打开插件时使用基目录下的 `default/`；后者使用基目录本身，允许插件
+在统一视图中索引各 Team 和用户页面。MiniNotion 使用 `collection`；其他插件保持原行为。
+这是用户默认视图的选择，不扩大员工权限，不改变 Team/员工的 cwd，也不让插件向父级查找数据库。
+旧 `default/` 的文件保留原位，集合视图从子目录读取它们；旧版外部默认目录的首次导入仍
+复制到 `default/`，不覆盖集合或已有目录。集合外的旧 Team 使用显式 `--team` 访问，不自动搬迁。
 员工必须使用所属 Team 根目录的**子目录**，支持任意层级嵌套，不能占用 Team 根目录。同一个确切目录对应一个员工；父目录员工可以操作所有子目录，子目录员工
 不能操作父目录或兄弟目录。Build 可以让多名员工共用普通项目根目录。
 Build 自动使用 `~/develop/Agents-company-projects/<创建时的 Team 名称>`。创建 Team 会创建
-对应目录；也可绑定其他已有的物理文件夹。Team 可在 UI 与 CLI 中改名，但原工作目录与员工目录不变；员工名称仍在创建后固定。员工支持新建文件夹
+对应目录；也可绑定其他已有的物理文件夹。Team 可在 UI 与 CLI 中改名，但原工作目录与员工目录不变；员工改显示名称也不重命名目录。员工支持新建文件夹
 （`--directory-mode default`，与员工同名）或绑定已有物理文件夹（`bind`）。
 旧版本未指定模式的 Team 按 Build 兼容。`group migrate NAME` 保留文件迁入新目录，
 保存元数据备份。已有员工的 Team 不可切换模式/插件，空 Team 可以更改。
@@ -79,15 +89,17 @@ Build 自动使用 `~/develop/Agents-company-projects/<创建时的 Team 名称>
 
 ```text
 employee-scope/
-  AGENTS.md                  # 受管理的工具入口，保留用户文本
-  CLAUDE.md
+  AGENTS.md                  # 可选：用户原有指令，保持原位
+  CLAUDE.md                  # 可选：用户原有指令，保持原位
   .agents-company/
+    AGENTS.md                # 宿主管理的工具入口
+    CLAUDE.md
     workspace.json           # schemaVersion 2、mode、scope、teamRoot、所选插件
     README.md                # 当前作用范围和 API 入口
     plugins/<id>/API.md
     plugins/<id>/schema.json
     bin/<id>                 # 固定 --workspace <employee-scope>
-    ipc/<id>/                # 本地 JSON-RPC 通道
+    ipc/<id>/<employeeId>/   # 带员工身份的本地 JSON-RPC 通道
   nested-employee/            # 可作为另一个员工更小的作用范围
 ```
 
@@ -125,7 +137,7 @@ exports.createPlugin = async ({workspace, pluginRoot, executable}) => ({
 });
 ```
 
-`workspace` 是规范化后的真实根目录；`pluginRoot` 是包目录；`executable` 是可使用
+`workspace` 是当前选定的真实目录；可选 `workspaceBase` 是插件全局集合目录，用于计算页面的全局物理层级，旧插件可忽略此字段。`pluginRoot` 是包目录；`executable` 是可使用
 `ELECTRON_RUN_AS_NODE=1` 运行 Node 程序的绝对入口。CLI、运行时和 GUI 必须复用同一
 领域实现/服务，不能拥有互不相通的持久化副本。多个写入者需要冲突检测。
 JSON API 的 `id` 为字符串或数字，`params` 为对象，错误使用 JSON-RPC 数值错误码；
@@ -135,7 +147,7 @@ JSON API 的 `id` 为字符串或数字，`params` 为对象，错误使用 JSON
 
 Work 员工启动前，宿主会准备所选插件的运行时和 Workspace 内的 JSON-RPC 通道。
 生成的 CLI 启动器设置 `AGENTS_COMPANY_PLUGIN_RPC`，指向
-`.agents-company/ipc/<plugin-id>`。此通道让受文件系统沙箱约束的 CLI 继续使用
+`.agents-company/ipc/<plugin-id>/<employeeId>`。此通道让受文件系统沙箱约束的 CLI 继续使用
 同一个后端，不需要放开网络或任意 Unix socket 权限。
 
 插件 CLI 可以采用以下可选协议（MiniNotion 已实现）：
@@ -225,9 +237,9 @@ workspace: required
 
 ## MiniNotion integration
 
-MiniNotion 是第一个内置包，Browser 是第二个。两者的源码分别是
-`PlugIns/mini-notion`、`PlugIns/browser` 中的独立 Git 仓库；宿主 Git 忽略插件源码。
-每个插件在本地独立提交，再从宿主构建已检出的插件目录。
+MiniNotion 源码位于 `PlugIns/mini-notion`，与 Cloud Hosts、Margin Reader 一起由宿主
+仓库管理。版本与 `plugins.lock.json` 保持一致；其中 `sourceCommit` 保留整合前的历史来源，
+当前源码由宿主仓库版本记录，不伪造新的插件独立提交。
 
 MiniNotion 构建：
 
@@ -236,12 +248,28 @@ npm run build:plugins
 npm run build
 npm run test:plugins
 npm run test:plugin-ui
+npm run test:mininotion
+npm run test:mininotion-ui
 ```
 
 MiniNotion 的 `--workspace` 模式将 Markdown、代码/文本、CSV、图片、PDF 映射成
-可浏览的文件页面，并将原生页面/数据库/记录保存为 `Documents/*.mininotion.json`。
+可浏览的文件页面。新原生主页面保存为 `<主页面目录>/index.mininotion.json`；后代页面、
+数据库、记录、模板和同页同步内容保存为同目录中的 `<page-id>.mininotion.json`。
+文件格式为 `{"format":"mininotion.page/v1","page":{...}}`；`page.parentId` 表达递归层级，
+物理目录无需跟随页面深度增长。用户与员工共用这些文件，不按创建者分库。
 原始 Markdown 使用源码编辑；富文本保持原生块结构。`fs.*` 是实际文件接口，
 与独立模式原有的空间 `folder.*` 接口区分。
+
+`fs.path {pageId}` 返回页面文件与 `absoluteDirectory`，员工创建时可绑定该目录；
+`fs.bind {path,title?,color?}` 把已有目录作为可编辑主页面，重复调用不覆盖内容。
+标题修改不重命名已绑定目录；跨主页面移动子树迁移原生文件，但不删除员工文件夹。
+旧 `Documents/*.mininotion.json` 继续原位读取；`fs.organize {dryRun:true}` 先返回整理计划，
+备份并检查绑定后才显式执行 `dryRun:false`。不得在升级时自动迁移用户资料。
+文件路径以 `fs.path` 为准，测试和其他消费者不得从页面标题或历史 `Documents` 布局猜测。
+
+默认插件窗口通过 `collection` 工作区展示同一基目录内的内容；`--team` 和 `--employee`
+仍选择各自范围。创建 Work Team、创建两名绑定不同主页面的员工、通过带员工凭据的
+CLI/mailbox 修改内容及从默认窗口回读，均由宿主集成测试覆盖。
 
 `.mininotion/` 保存共享服务的索引、设置、历史、附件和草稿。该模式不读取独立 App
 的个人数据库，也不启动自身 Agent。完整备份应复制整个 Workspace；PDF 导出和
@@ -256,7 +284,7 @@ MiniNotion 的 `--workspace` 模式将 Markdown、代码/文本、CSV、图片�
 `npm run build:plugins` 自动遍历这些源码目录，输出到 `build/plugins/<name>/`。
 宿主通过标准 manifest 发现生成包；不从插件源码导入业务实现。
 
-交付 App 包含构建后的插件，不需要原来的 `/Users/djf/develop/CS/mini-notion` checkout
+交付 App 包含构建后的插件，不需要原来的 `<plugin-source>/mini-notion` checkout
 或独立 MiniNotion macOS App。源码和用户数据分离，现有 Markdown/API 文档规范保持不变。
 
 创建员工默认在 Team 根目录内生成与员工同名的文件夹，保留中文、空格和大小写。Work 员工绑定已有文件夹时必须在插件权限根目录的子级；Build 可以绑定项目根目录之外的物理文件夹。移除员工会清理其 Codex / Claude 原生会话，工作文件与插件文档仍保留。
@@ -297,3 +325,7 @@ Cloud Hosts (`PlugIns/cloud-hosts`，独立 Git 仓库) 是此类插件：独立
 
 宿主传入的 `requestHost({cmd,args})` 保留实际调用者身份。插件不得自行读取用户控制凭据来代替员工调用。员工 mailbox 请求携带自己的认证凭据；目录位置不是身份。
 每条允许普通员工使用的命令在 schema 声明 `agentAccess: "workspace"`，并且实现必须限制到 context.workspace；未声明的命令只向用户或显式全局 Manager 开放。应用级主机管理插件复用 host.* 的全局授权。插件内部的独立 Agent 启动入口不得向普通 Work 员工开放。
+
+## Web transport
+
+The host keeps plugin frames in an opaque-origin sandbox. It injects a bridge for same-view `fetch` POSTs to `rpc`; the parent sends declared methods through authenticated `plugin.call` with the original structured JSON-RPC result (`raw`). Plugins must not rely on Core cookies, tokens, or a browser-local loopback server. A page URL alone does not grant RPC authority. Keep existing fetch-based RPC and save/flush acknowledgement behavior shared between desktop and Web.

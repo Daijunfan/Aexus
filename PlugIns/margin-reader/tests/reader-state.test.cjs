@@ -1,0 +1,52 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path');
+const {setup,pdfFixture}=require('./fixtures.cjs');
+async function fixture(t){const f=await setup(t);await fs.writeFile(path.join(f.workspace,'first.pdf'),pdfFixture());await fs.writeFile(path.join(f.workspace,'second.pdf'),pdfFixture());const first=await f.api('document.open',{path:'first.pdf'}),second=await f.api('document.open',{path:'second.pdf',activate:false});return {...f,first,second};}
+test('saved three-pane arrangements retain independent positions, orientation and conflict checks',async t=>{
+ const f=await fixture(t);await f.api('reader.position.set',{id:f.first.id,locator:{page:1}});
+ await f.api('reader.comparison.set',{documentId:f.second.id,locator:{page:2}});
+ await f.api('reader.comparison.set',{documentId:f.first.id,locator:{page:2,pageOffset:.3},slot:2});
+ let saved=await f.api('reader.comparisons.save',{title:'Three sources',direction:'rows',ratio:.35});
+ assert.equal((await f.api('reader.position.get',{id:f.first.id})).locator.page,1);
+ await f.api('reader.comparison.set',{documentId:null});await f.api('reader.comparisons.open',{viewId:saved.id});
+ const settings=await f.api('settings.get');assert.equal(settings.comparisonExtra.locator.pageOffset,.3);assert.equal(settings.comparison.locator.page,2);assert.equal(settings.comparisonDirection,'rows');assert.equal(settings.comparisonRatio,.35);
+ await f.error('reader.comparisons.update',{viewId:saved.id,expectedRevision:0,title:'Stale'},'INVALID_PARAMS');
+ saved=await f.api('reader.comparisons.update',{viewId:saved.id,expectedRevision:saved.revision,title:'Renamed'});
+ await f.error('reader.comparisons.update',{viewId:saved.id,expectedRevision:saved.revision-1,deleted:true},'CONFLICT');
+ saved=await f.api('reader.comparisons.update',{viewId:saved.id,expectedRevision:saved.revision,deleted:true});assert.equal((await f.api('reader.comparisons.list')).views.length,0);
+ await f.error('reader.comparisons.open',{viewId:saved.id},'NOT_FOUND');
+ saved=await f.api('reader.comparisons.update',{viewId:saved.id,expectedRevision:saved.revision,deleted:false});
+ assert.equal((await f.api('reader.comparisons.list',{documentId:f.first.id})).views.length,1);
+ await fs.appendFile(path.join(f.workspace,'second.pdf'),'\n% altered');
+ assert.equal((await f.api('reader.comparisons.list')).views[0].sources[1].sourceChanged,true);
+ const before=await f.api('settings.get');await f.error('reader.comparisons.open',{viewId:saved.id},'SOURCE_CHANGED');assert.deepEqual(await f.api('settings.get'),before);
+});
+test('attached notebooks create files and membership atomically, retain stroke context, and unlink without deleting content',async t=>{
+ const f=await fixture(t);let set=await f.api('study.create',{title:'Attached'});set=await f.api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['first.pdf']});
+ const notebook=await f.api('reader.notebook.create',{sourceId:f.first.id,expectedSourceVersion:f.first.sourceVersion,path:'notes.pdf',paper:'dots',setId:set.id,expectedRevision:set.revision});
+ assert.equal(notebook.pageCount,2);assert.equal(notebook.attachedTo.documentId,f.first.id);
+ set=await f.api('study.get',{setId:set.id});assert(set.documentIds.includes(notebook.id));assert.equal((await f.api('settings.get')).comparison.documentId,notebook.id);
+ await f.api('reader.comparison.set',{documentId:f.first.id,locator:{page:2,pageOffset:.6}});
+ set=await f.api('study.ink.add',{setId:set.id,expectedRevision:set.revision,documentId:notebook.id,expectedSourceVersion:notebook.sourceVersion,page:1,points:[[.1,.2],[.5,.3]],color:'blue',width:.004});
+ const source=await f.api('reader.notebook.source',{id:notebook.id,setId:set.id,strokeId:set.ink[0].id});assert.equal(source.documentId,f.first.id);assert.equal(source.locator.page,2);assert.equal(source.locator.pageOffset,.6);
+ let n=await f.api('document.open',{path:'notes.pdf',refresh:true,activate:false});assert.equal(n.attachedTo.documentId,f.first.id);
+ n=await f.api('reader.notebook.unlink',{id:n.id,expectedRevision:n.revision});assert.equal(n.attachedTo,null);assert((await fs.stat(path.join(f.workspace,'notes.pdf'))).isFile());
+ assert.equal((await f.api('reader.notebook.source',{id:n.id,setId:set.id,strokeId:set.ink[0].id})).locator.pageOffset,.6);
+ await f.error('reader.notebook.source',{id:n.id,page:1},'NOT_FOUND');
+ await f.error('reader.notebook.create',{sourceId:f.first.id,expectedSourceVersion:f.first.sourceVersion,path:'stale.pdf',setId:set.id,expectedRevision:1},'CONFLICT');assert(!await fs.stat(path.join(f.workspace,'stale.pdf')).catch(()=>null));
+ assert.deepEqual(await fs.readFile(path.join(f.workspace,'first.pdf')),pdfFixture());
+});
+test('page navigator, document metadata and tab ordering are shared CLI state and survive cache rebuilds',async t=>{
+ const f=await fixture(t);let d=await f.api('document.meta.update',{id:f.first.id,expectedRevision:f.first.revision,title:'Custom title',tags:['研究','考试'],category:'School',favorite:true});
+ d=await f.api('document.open',{path:'first.pdf',refresh:true,activate:false});assert.equal(d.title,'Custom title');assert.deepEqual(d.tags,['研究','考试']);assert.equal(d.favorite,true);
+ const b=await f.api('bookmark.add',{id:d.id,expectedRevision:d.revision,title:'Bookmark',locator:{page:2}});
+ const pages=await f.api('document.pages.query',{id:d.id,kind:'bookmarks'});assert.equal(pages.total,1);assert.equal(pages.pages[0].page,2);
+ assert.equal((await f.api('document.pages.query',{id:d.id,kind:'ink'})).total,0);
+ const first=await f.api('document.pages.query',{id:d.id,limit:1});assert.equal(first.nextOffset,1);
+ assert.equal((await f.api('document.pages.query',{id:d.id,offset:first.nextOffset,limit:1})).pages[0].page,2);
+ const tabs=await f.api('reader.tabs.set',{ids:[f.second.id,d.id],limit:3});assert.deepEqual(tabs.ids,[f.second.id,d.id]);
+ await f.error('reader.tabs.set',{ids:[d.id,d.id]},'INVALID_PARAMS');
+ await f.error('reader.comparison.set',{documentId:d.id,slot:2},'INVALID_PARAMS');
+ await f.api('settings.set',{brightness:.75,pdfDarkMode:'invert',readingMode:'immersive',studyLayout:'rows',comparisonSecondaryRatio:.4});assert.equal((await f.api('settings.get')).brightness,.75);
+ await f.error('settings.set',{brightness:-1},'INVALID_PARAMS');
+});

@@ -1,19 +1,22 @@
+import {engineExecutable} from './engines/executable'
+import {engineEnvironment} from './engines/configuration'
 import type {ModelInfo,ImageInput} from '../shared/types'
 import type {RemoteTarget} from '../shared/remote'
 import { runNativeCodexTurn } from './codex-native'
-import { spawn } from 'node:child_process'
+import spawn from 'cross-spawn'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
 import { childEnv, resolveBinary } from './exec'
 import {workCodexConfig} from './scope'
 
-const CODEX_BIN = resolveBinary('codex', process.env.CODEX_BIN)
+const codexBinary=()=>engineExecutable('codex')
 
 // Employee sessions use native app-server connections. The exec adapter below
 // remains available for one-shot callers that do not supply native interaction hooks.
 
 export type CodexEvent =
+  | {kind:'input-receipt';stage:'delivered'|'read';turnId:string}
   | {kind:'child-thread';threadId:string}
   | {kind:'background-turn';busy:boolean}
   | {kind:'usage';usage:Record<string,unknown>}
@@ -95,14 +98,15 @@ export async function runCodexTurn(args: {
   serviceTier?: string
   onRequest?:(method:string,params:any,signal:AbortSignal)=>Promise<unknown>
   approvalPolicy?:string
+  acknowledging?:boolean;initializing?:boolean;discussionUrl?:string
   onEvent: (e: CodexEvent) => void
   signal: AbortSignal
 }): Promise<void> {
-  if(args.onRequest||args.remote||args.nativeRemote||args.planMode||args.images?.length||/^\/(compact|review)(?:\s|$)/.test(args.prompt))return runNativeCodexTurn(CODEX_BIN,args)
+  if(args.onRequest||args.remote||args.nativeRemote||args.planMode||args.images?.length||/^\/(compact|review)(?:\s|$)/.test(args.prompt))return runNativeCodexTurn(codexBinary(),args)
   const cwd=args.cwd
   const cmd = ['exec', '--json', '--skip-git-repo-check',...(args.remote?[]:['-C', args.cwd])]
-  const env=childEnv(args.cwd,args.workRoot)
-  if(args.workRoot)cmd.push(...workCodexConfig(args.cwd,args.permissionRoot??args.workRoot))
+  const env={...childEnv(args.cwd,args.workRoot),...engineEnvironment('codex')}
+  if(args.workRoot&&args.sandbox!=='danger-full-access')cmd.push(...workCodexConfig(args.cwd,args.permissionRoot??args.workRoot))
   else cmd.push('--sandbox',args.sandbox)
 
   if (args.model && args.model !== 'default') cmd.push('-m', args.model)
@@ -119,7 +123,7 @@ export async function runCodexTurn(args: {
   }
 
   await new Promise<void>((resolve) => {
-    const child = spawn(CODEX_BIN, cmd, {
+    const child = spawn(codexBinary(), cmd, {
       cwd,
       env,
       stdio: ['pipe', 'pipe', 'pipe']
@@ -145,7 +149,7 @@ export async function runCodexTurn(args: {
     args.signal.addEventListener('abort', abort)
     if (args.signal.aborted) abort()
 
-    child.stdout.on('data', (chunk: Buffer) => {
+    child.stdout!.on('data', (chunk: Buffer) => {
       buf += chunk.toString()
       const lines = buf.split('\n')
       buf = lines.pop() ?? ''
@@ -165,7 +169,7 @@ export async function runCodexTurn(args: {
       }
     })
 
-    child.stderr.on('data', (chunk: Buffer) => {
+    child.stderr!.on('data', (chunk: Buffer) => {
       const text = chunk.toString().trim()
       stderr = (stderr + '\n' + text).slice(-6000)
       // Codex logs a noisy model-cache warning on some installs; not user-facing.
@@ -188,9 +192,9 @@ export async function runCodexTurn(args: {
 
     // Always send the prompt: on a fresh run it is the instruction, and on a
     // resume it is the new turn's message.
-    child.stdin.on('error', () => {}) // Spawn/exit errors are reported above.
-    child.stdin.write(args.prompt)
-    child.stdin.end()
+    child.stdin!.on('error', () => {}) // Spawn/exit errors are reported above.
+    child.stdin!.write(args.prompt)
+    child.stdin!.end()
   })
 }
 

@@ -1,11 +1,22 @@
 import {hasNativeCodexSession,nativeCodexRequest} from './codex-native'
 import {getLive,sessionInfo,sendMessage} from './sessions'
 import {withCodexSessionApi} from './native-sessions'
+import {engineCapabilities} from '../shared/engines'
 import {workCodexConfig} from './scope'
 
 export async function inspectEngine(id:string,section:string){
   const s=getLive(id);if(!s)throw new Error('请先打开员工会话')
   const meta=sessionInfo(id)!
+  if(s.engine==='cline'||s.engine==='pi'){
+    const capabilities=engineCapabilities(s.engine)
+    if(section==='capabilities')return {...capabilities,sections:['mcp','usage','config'],operations:['session.enqueue','session.queue','session.export','approval.respond',...(capabilities.capabilities.images?['workspace.image']:[]),...(capabilities.capabilities.plan?['config.plan']:[]),...(capabilities.capabilities.steer?['session.steer']:[])],nativeCommands:meta.commands}
+    if(section==='config')return meta
+    if(section==='skills')return {data:[],note:'This adapter does not expose native skills'}
+    if(section==='mcp')return {data:s.remoteLaunch?[{name:'tunnel',transport:'stdio',status:'configured',tools:['execute','read_file','write_file','edit_file','list_files']}]:[],note:'Configured transport only; this is not a live connection probe'}
+    if(section==='usage')return {usage:meta.usage??null}
+    if(section==='account')return {provider:'deepseek',note:'Account and quota inspection is not exposed by this adapter'}
+    throw Error('Unknown engine section')
+  }
   if(section==='capabilities')return {engine:s.engine,sections:['skills','mcp','account','usage','config'],operations:['card.clone','session.enqueue','session.steer','session.background','session.queue','session.export','config.plan','workspace.image','approval.respond',...(s.engine==='codex'?['session.review']:[])],nativeCommands:meta.commands}
   if(section==='config')return meta
   if(s.engine==='claude'){

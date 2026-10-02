@@ -11,7 +11,7 @@ const run=promisify(execFile),root=path.resolve(import.meta.dirname,'..'),id=cry
 const linuxDir='/home/djf/.ac-transfer-'+id,windowsDir=String.raw`C:\Users\lab\AgentsCompany\.ac-transfer-${id}`
 const hosts=JSON.parse(fs.readFileSync(path.join(os.homedir(),'AgentsCompany/cloud-hosts/hosts.json'),'utf8')),win=hosts.find(x=>x.name==='Windows-target2')
 assert.ok(win?.identityFile&&win.knownHosts)
-const linuxSSH=['-o','BatchMode=yes','-o','ConnectTimeout=10','djf@10.92.35.208']
+const linuxSSH=['-o','BatchMode=yes','-o','ConnectTimeout=10',process.env.AGENTS_LIVE_LINUX_HOST]
 const windowsSSH=['-o','BatchMode=yes','-o','ConnectTimeout=10','-o','StrictHostKeyChecking=yes','-o','IdentitiesOnly=yes','-o','UserKnownHostsFile='+win.knownHosts,'-i',win.identityFile,'-J',win.jump,'-p',String(win.port),win.host]
 const q=s=>"'"+s.replaceAll("'","'\\''")+"'"
 const shell=async(args,command)=>run('ssh',[...args,command],{timeout:60000,maxBuffer:1024*1024})
@@ -24,7 +24,7 @@ try{
  await shell(linuxSSH,'mkdir '+q(linuxDir));await shell(windowsSSH,`$ErrorActionPreference='Stop'; [IO.Directory]::CreateDirectory('${windowsDir}') | Out-Null`)
  proc=spawn(process.execPath,[path.join(root,'bin/agents'),'serve'],{env,stdio:'ignore'});ended=new Promise(r=>proc.once('exit',r))
  await until(async()=>{try{return (await cli('status')).running}catch{return false}})
- const a=await cli('host','create','--data',JSON.stringify({name:'Live Linux',host:'djf@10.92.35.208',os:'linux',defaultDirectory:linuxDir}))
+ const a=await cli('host','create','--data',JSON.stringify({name:'Live Linux',host:process.env.AGENTS_LIVE_LINUX_HOST,os:'linux',defaultDirectory:linuxDir}))
  const b=await cli('host','create','--data',JSON.stringify({name:'Live Windows',host:win.host,os:'windows',port:win.port,jump:win.jump,identityFile:win.identityFile,knownHosts:win.knownHosts,defaultDirectory:windowsDir}))
  await cli('group','add','Linux','--mode','cloud','--host-id',a.id,'--remote-dir',linuxDir);await cli('group','add','Windows','--mode','cloud','--host-id',b.id,'--remote-dir',windowsDir)
  const source=path.join(temp,'dataset'),output=path.join(temp,'output');fs.mkdirSync(path.join(source,'中文 子目录'),{recursive:true});fs.mkdirSync(output)

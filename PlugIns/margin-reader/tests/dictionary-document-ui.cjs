@@ -1,0 +1,63 @@
+'use strict';
+const fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
+const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtures.cjs');
+(async()=>{
+ const f=await create('dictionary-document-ui');let failure;
+ try{
+  const {page,api}=f;
+  await fs.writeFile(path.join(f.workspace,'book.pdf'),pdfFixture());
+  await api('fs.write',{path:'reading.html',content:'<h1>Reading reference</h1><p>中文🙂 条件<strong>概率</strong> 与 <em>Introduction</em> are related.</p><p><code>Introduction</code> remains code.</p><p>Term near the end.</p>'});
+  const flow=await api('document.open',{path:'reading.html',activate:false}),pdf=await api('document.open',{path:'book.pdf',activate:false});
+  let reader=await api('study.create',{title:'Reading owner'});reader=await api('study.documents.add',{setId:reader.id,expectedRevision:reader.revision,paths:['reading.html','book.pdf']});
+  let dictionary=await api('study.create',{title:'External glossary'});
+  const change=async(method,p)=>dictionary=await api(method,{setId:dictionary.id,expectedRevision:dictionary.revision,...p});
+  await change('study.note.create',{title:'Selected submap',submap:true});const rootId=dictionary.cards[0].id;
+  await change('study.note.create',{title:'条件概率；Introduction',text:'**DEFINITION_BODY** with $p(x)$',parentId:rootId});const definition=dictionary.cards.find(c=>c.parentId===rootId).id;
+  await change('study.note.create',{title:'条件概率',text:'SECOND_DEFINITION'});
+  reader=await api('study.links.settings',{setId:reader.id,expectedRevision:reader.revision,sources:[{setId:dictionary.id,rootId,color:'green'}]});
+  await api('study.open',{setId:reader.id,documentId:flow.id});await page.goto(f.server.url);await page.locator('body[data-ready=true]').waitFor();
+  const marks=page.locator('.flow-document .reader-dictionary-hit');await expect(marks.first()).toBeVisible();
+  const original=(await api('document.content',{id:flow.id})).html;
+  const {JSDOM}=require('jsdom'),dom=new JSDOM(original),expectedText=dom.window.document.body.textContent;dom.window.close();
+  assert.equal(await page.locator('.flow-document article').textContent(),expectedText);
+  assert.equal(await marks.filter({has:page.locator('code')}).count(),0);
+  const clickWord=async keyword=>{
+   await page.evaluate(()=>{window.getSelection()?.removeAllRanges();document.querySelector('.flow-document')?.shadowRoot?.getSelection?.()?.removeAllRanges();});
+   const el=page.locator(`.reader-dictionary-hit[data-keyword="${keyword}"]`).first();await el.scrollIntoViewIfNeeded();const box=await el.boundingBox();assert(box);await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+  };
+  await clickWord('条件概率');await expect(page.locator('.dictionary-card-preview')).toContainText('DEFINITION_BODY');await expect(page.locator('.dictionary-card-preview .katex')).toBeVisible();
+  const settings=await api('settings.get');assert.equal(settings.activeStudySet,reader.id);assert.equal(settings.lastDocument,flow.id);
+  await page.screenshot({path:path.join(f.output,'dictionary-popup.jpg'),type:'jpeg',quality:65});
+  await page.locator('#dictionary-search-cards').click();await expect(page.locator('[name=query]')).toHaveValue('条件概率');await expect(page.locator('#board-status')).toContainText('2 张卡片');await page.locator('#dialog-cancel').click();assert.equal((await api('settings.get')).lastDocument,flow.id);
+  f.pass('Flow keywords spanning inline elements show a rich definition and open wider card search without changing reading scope');
+  // Configure a submap and its color through the actual settings dialog.
+  await page.locator('#study-dictionary').click();await page.selectOption('[name=sourceSet]',dictionary.id);await page.selectOption('[name=sourceRoot]',rootId);await page.selectOption('[name=sourceColor]','purple');await page.locator('#dictionary-scope-add').click();await page.locator('#dialog-submit').click();await expect(page.locator('#dialog')).toBeHidden();
+  await expect(marks.first()).toHaveCSS('border-bottom-color','rgb(134, 84, 184)');f.pass('The dictionary dialog saves submap scopes and independent keyword colors through Core');
+  reader=await api('study.get',{setId:reader.id});await api('study.links.settings',{setId:reader.id,expectedRevision:reader.revision,sources:[{setId:dictionary.id,rootId:null,color:'blue'}]});
+  await expect(marks.first()).toHaveCSS('border-bottom-color','rgb(35, 121, 197)');await clickWord('条件概率');await expect(page.locator('[data-dictionary-candidate]')).toHaveCount(2);await page.locator('[data-dictionary-candidate="0"]').click();await expect(page.locator('.dictionary-card-preview')).toContainText('DEFINITION_BODY');
+  await page.locator('#dictionary-edit-card').click();await page.fill('[name=note]','EDITED_IN_CONTEXT');await page.locator('#dialog-submit').click();await expect(page.locator('#dialog')).toBeHidden();
+  assert.equal((await api('study.get',{setId:dictionary.id})).cards.find(c=>c.id===definition).note,'EDITED_IN_CONTEXT');assert.equal((await api('settings.get')).lastDocument,flow.id);
+  f.pass('Duplicate keywords expose candidate selection and in-context editing keeps the reading document open');
+  // Real text selection must pass through the non-interactive overlay.
+  const p=page.locator('.flow-document p').first(),pbox=await p.boundingBox();assert(pbox);
+  await page.mouse.move(pbox.x+1,pbox.y+pbox.height/2);await page.mouse.down();await page.mouse.move(pbox.x+Math.min(250,pbox.width-2),pbox.y+pbox.height/2,{steps:15});await page.mouse.up();
+  await expect(page.locator('#study-palette')).toBeVisible();await page.locator('#study-palette [data-color=yellow]').click();
+  await expect.poll(async()=>(await api('study.get',{setId:reader.id})).cards.length).toBe(1);
+  await expect(page.locator('.flow-document .study-mark').first()).toBeVisible();
+  f.pass('Dragging through dictionary underlines still saves an excerpt with the correct original UTF-16 coordinates');
+  await api('study.open',{setId:reader.id,documentId:pdf.id});await expect(page.locator('#document-path')).toHaveText('book.pdf');
+  const pdfMark=page.locator('.pdf-page[data-page="1"] .reader-dictionary-hit[data-keyword=Introduction]');await expect(pdfMark.first()).toBeVisible();
+  await clickWord('Introduction');await expect(page.locator('.dictionary-card-preview')).toContainText('DEFINITION_BODY');assert.equal((await api('settings.get')).lastDocument,pdf.id);await page.locator('#dialog-cancel').click();
+  f.pass('Original PDF text-layer words open the same offline dictionary without OCR or modifying PDF text spans');
+  await pdfMark.first().focus();await page.keyboard.press('Enter');await expect(page.locator('.dictionary-card-preview')).toBeVisible();await page.locator('#dialog-cancel').click();
+  f.pass('Dictionary words are also keyboard reachable');
+  const repeated=Array(235).fill('Introduction').join(' ');await api('fs.write',{path:'many.html',content:'<p>'+repeated+'</p>'});
+  reader=await api('study.get',{setId:reader.id});reader=await api('study.documents.add',{setId:reader.id,expectedRevision:reader.revision,paths:['many.html']});const many=reader.documents.find(d=>d.path==='many.html');
+  await api('study.open',{setId:reader.id,documentId:many.id});await expect(page.locator('#document-path')).toHaveText('many.html');
+  await expect(page.locator('.flow-document .reader-dictionary-hit')).toHaveCount(200);await expect(page.locator('#reader-dictionary-more')).toBeVisible();await page.locator('#reader-dictionary-more').click();await expect(page.locator('.flow-document .reader-dictionary-hit')).toHaveCount(35);await expect(page.locator('#reader-dictionary-more')).toBeHidden();
+  f.pass('Dense keyword pages stay bounded and expose the remaining matches through an explicit next group');
+  reader=await api('study.get',{setId:reader.id});await api('study.links.settings',{setId:reader.id,expectedRevision:reader.revision,documentLinks:false});await expect(page.locator('.reader-dictionary-hit')).toHaveCount(0);
+  f.pass('Disabling document dictionary marks clears the overlay without touching saved annotations or source files');
+  assert.deepEqual(await fs.readFile(path.join(f.workspace,'book.pdf')),pdfFixture());await page.screenshot({path:path.join(f.output,'dictionary-final.png')});
+ }catch(error){failure=error;}await f.finish(failure);
+})().catch(error=>{console.error(error);process.exitCode=1;});

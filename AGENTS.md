@@ -1,32 +1,31 @@
-# Agents Company 工作约定
+# Agents Company contributor instructions
 
-保持简单、边界清晰，优先复用现有接口。未经明确要求不得创建或调用子 Agent。
+Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIBUTING.md`, `SECURITY.md`, `API.md` and `PERMISSIONS.md` before changing execution or authority. Do not launch child Agents unless the task explicitly requests them.
 
-## CLI 是产品基础
+## Core and presentation
 
-- 业务逻辑放在共享 Core，不能依赖 Electron 窗口、React 组件或 DOM。
-- 先实现 Core / CLI API，再接 UI。UI 的业务操作必须是 CLI API 的严格子集。
-- 会话、引擎、模型、思考/effort、权限、Team、员工、文件、终端、插件操作都必须可在 `agents serve` 下无窗口完成。
-- 新命令同时更新 `src/shared/protocol.ts`、`src/main/server.ts`、`bin/agents`、`API.md`，并提供真实 CLI 验证。不能只用 `ui.click` 代替业务 API。
-- 同步运行 `npm run docs:managers`，让 `docs/managers/API.md` 与根目录 API、调度规范和命令注册表一致；Manager 文档源不放在 Team 根目录，每位员工自己的 Workspace 自动获得副本和 `agents` 启动器。
-- Team 决定 Work、本地 Build 或 cloud 执行环境；云主机账号统一由 Cloud Hosts 插件通过共享 host.* Core API 管理；cloud Team 只持久化 hostId 与 directory，remote 是运行时只读投影。员工不能覆盖主机，只能选择 Team 范围内的云端工作目录。
-- 新建 Work Team 的根目录固定在所属插件文件夹的 `workspaces/<Team 名称>`；Team 不手选目录。员工可在该根目录内默认生成或绑定已有子目录，创建时复制插件 CLI 文档与启动器。已有 Work Team 的目录不自动移动。
-- Team 名称可修改且不改变目录；员工名称创建后不可更改。切换引擎或工作目录必须保留会话历史与旧原生 ID，删除员工时再统一清理。
+- Business behavior belongs to the Node Core. Electron and browser UI call the same authenticated operations; UI behavior cannot bypass the CLI/API.
+- Update the command registry, Core dispatch, CLI parser, API documentation and tests together. Run `npm run docs:managers` after changing API or permission documentation.
+- Keep Team, employee, native-session and workspace identities stable. Employee engines are fixed at creation; using another engine requires deleting the employee and creating a new one. Preserve archived native references from older versions. Never silently change execution host or elevate permissions.
+- “Local” means the Core host. Browser-local files must be uploaded, not treated as server paths. Client navigation/cameras are separate from shared company geometry.
+- Secretary/Governor/Manager authority comes from the role policy. Secretary is the highest Agent application-administration role; only the user may appoint, demote or delete Secretaries. Creation lines, directory names and view membership do not grant permissions.
 
-## 插件也必须 CLI 优先
+## Plugins and engines
 
-- 一个插件一个 `PlugIns/<name>` 目录。复用 `PLUGIN_SPEC.md` 与 `examples/plugin-starter`。
-- 必须提供独立 CLI、共享 runtime.request、非空命令 schema 和规范 Markdown 文档；不能只有界面。
-- 所有业务操作在 schema 中声明；UI、CLI 和员工调用必须共用同一 request 实现。宿主拒绝未声明的命令。
-- 业务数据不能只保存在 renderer/localStorage；不能以 Electron IPC 私有方法绕开 CLI/Core。
-- 新插件必须在没有 Electron 窗口的环境中验证创建、读取、修改和错误处理；再做 UI 与 CLI 一致性检查。
+- All three first-release plugins are source-versioned under `PlugIns/`. Keep their licenses, CLI, runtime, schema, UI and build inputs together; update `plugins.lock.json` deliberately.
+- User workspaces and credentials are not source. Portable plugin workspaces live outside application binaries; existing bound directories are never moved automatically.
+- An engine adapter handles its documented execution protocol and normalizes results. It cannot bypass Core permissions. Unsupported capabilities must fail explicitly.
+- Never mark a pending redistribution review approved without actual evidence. Attribution does not establish permission to redistribute vendor artwork or runtimes.
 
-## 验证与后台工作
+## Verification and user data
 
-- 运行改动相关的类型检查、CLI 覆盖检查和实际行为测试；通过后不做无理由的重复测试。
-- 用户要求后台工作时，只使用隐藏窗口、隔离数据目录，不启动可见窗口、网页或系统选择器。
-- Codex 推理测试只能使用 `gpt-6-luna`、`low`。优先使用无推理的协议与 fixture 测试。
-- 不在真实用户数据中创建或删除测试员工。安装前确认应用身份与活动任务，备份并核对现有数据。
-- 禁止替换仍在运行的 App，包括先改名旧 `.app` 再把新包放回原路径；Electron 缓存的 ASAR 文件偏移会导致二进制乱码。也不能以“保留旧进程，下次启动生效”为由绕过。
-- 每次代码修改并通过验证后安装新版 App。若旧版仍运行，用户已授权先停止（必要时强制终止）旧进程，再调用安装器；安装前检查活动任务并备份数据，安装后复核。
-- 安装使用 `npm run install:mac -- --source '/path/Agents Company.app'`。安装器确认目标及候选进程全部退出后才替换；不得手写热替换命令绕过检查。安装完成后要实测隐藏窗口的页面渲染，而非只检查构建成功。
+- Test with temporary `AGENTS_COMPANY_HOME`, workspace and native-profile directories. Never create/delete test employees or run sample schedules in real user state.
+- Use deterministic protocol/model fixtures by default. Billed model calls, real-host changes and native child Agents require explicit authorization; record what actually ran.
+- Test desktop rendering in hidden windows and Web rendering in headless browsers. Do not claim another operating system passed based on a local build.
+- Preserve existing edits. Never reset the repository, clear credentials, overwrite user documents, or publish a repository/tag/package without explicit permission.
+- Builds do not imply installation. Do not stop or replace another developer's running app automatically. When a user explicitly requests installation, inspect active tasks, back up state and stop the old process before replacing its ASAR.
+- For an authorized macOS installation, use `npm run install:mac -- --source '/path/Agents Company.app'`, then verify the installed app in an isolated hidden-window test. Do not hand-roll hot replacement.
+
+## Release
+
+`npm run release:check -- --technical` checks engineering prerequisites. Full `release:check` also enforces unresolved redistribution reviews. Candidate archives are private artifacts until those reviews are complete. Every validation report must separate passed, failed, skipped and untested platforms.

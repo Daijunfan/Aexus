@@ -3,7 +3,11 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
@@ -11,7 +15,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["node", "electron-vite/node"]
+    "types": [
+      "node",
+      "electron-vite/node"
+    ],
+    "allowImportingTsExtensions": true
   },
   "include": [
     "electron.vite.config.ts",

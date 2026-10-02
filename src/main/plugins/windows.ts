@@ -1,4 +1,5 @@
 // CLI-owned presentation state. Electron is an optional adapter, never the data owner.
+import {currentClientId} from '../request-context'
 import type {PluginWindowState,WindowBounds} from '../../shared/plugin-windows'
 import {openPluginView,closePluginView} from './runtime'
 export type PluginWindowDriver = {
@@ -16,12 +17,13 @@ export function onPluginWindows(listener:(windows:PluginWindowState[])=>void){li
 function changed(){for(const listener of listeners)listener(pluginWindows())}
 function get(id:string){const state=windows.get(id);if(!state)throw new Error('Unknown plugin window');return state}
 export async function openPluginWindow(plugin:string,workspace:string):Promise<PluginWindowState>{
-  const existing=[...windows.values()].find(window=>window.plugin===plugin&&window.workspace===workspace)
+  const clientId=currentClientId()??'desktop'
+  const existing=[...windows.values()].find(window=>window.plugin===plugin&&window.workspace===workspace&&(window.clientId??'desktop')===clientId)
   if(existing){if(existing.mode==='minimized')existing.mode='normal';await driver?.present(existing);changed();return {...existing}}
-  const key=plugin+':'+workspace
+  const key=clientId+':'+plugin+':'+workspace
   if(opening.has(key))return opening.get(key)!
   const operation=(async()=>{
-    const view=await openPluginView(plugin,workspace),state:PluginWindowState={...view,mode:'normal',attached:!!driver}
+    const view=await openPluginView(plugin,workspace),state:PluginWindowState={...view,clientId,mode:'normal',attached:!!driver}
     windows.set(state.id,state)
     try{await driver?.present(state);changed();return {...state}}
     catch(error){windows.delete(state.id);await closePluginView(state.id);changed();throw error}
@@ -50,4 +52,4 @@ export async function dismissPluginWindow(id:string):Promise<{closed:boolean}>{
   closing.set(id,operation)
   try{return await operation}finally{closing.delete(id)}
 }
-export async function closePluginWindows(){await Promise.all([...opening.values()]);for(const id of [...windows.keys()])await dismissPluginWindow(id)}
+export async function closePluginWindows(){await Promise.all([...opening.values()]);await Promise.all([...windows.keys()].map(id=>dismissPluginWindow(id)))}

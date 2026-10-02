@@ -14,7 +14,7 @@ let n=0; const ok=(value,label)=>{assert.ok(value,label);console.log(`PASS  ${la
 try {
   await build({entryPoints:{workspaces:'src/main/workspaces.ts',canvas:'src/shared/canvas.ts'},outdir:join(temp,'lib'),bundle:true,platform:'node',format:'cjs',logLevel:'silent'})
   const require=createRequire(import.meta.url),{teamRoot,employeeWorkspace,workspaceStatus,defaultTeamRoot}=require(join(temp,'lib/workspaces.js'))
-  ok(defaultTeamRoot('Planning',{mode:'work',pluginId:'mininotion'})===join(import.meta.dirname,'../PlugIns/mini-notion/workspaces/Planning')&&defaultTeamRoot('Research',{mode:'work',pluginId:'browser'})===join(import.meta.dirname,'../PlugIns/browser/workspaces/Research'),'production Work roots belong to each plugin source folder and remain separate per Team')
+  ok(defaultTeamRoot('Planning',{mode:'work',pluginId:'mininotion'})===join(import.meta.dirname,'../PlugIns/mini-notion/workspaces/Planning')&&defaultTeamRoot('Research',{mode:'work',pluginId:'cloud-hosts'})===join(import.meta.dirname,'../PlugIns/cloud-hosts/workspaces/Research'),'production Work roots belong to each plugin source folder and remain separate per Team')
   const store={groups:['Engineering'],teamRoots:{Engineering:realpathSync(root)},teamSettings:{Engineering:{mode:'work',pluginId:'mininotion'}},sessions:[]}
   assert.throws(()=>teamRoot(home));assert.throws(()=>teamRoot('relative'))
   ok(true,'Team root must be an existing absolute external folder')

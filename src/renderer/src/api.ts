@@ -1,6 +1,9 @@
+import {createWebApi} from './web/transport'
 import type { Request } from '../../shared/protocol'
 
 export type AgentsApi = {
+  readonly mode?:'desktop'|'web'
+  readonly platform?:'macos'|'linux'|'windows'
   filePath(file:File):string
   rendererReady(): void
   call<T = any>(cmd: Request['cmd'], args?: Request['args']): Promise<T>
@@ -10,4 +13,12 @@ export type AgentsApi = {
   openExternal(url: string): Promise<void>
 }
 declare global { interface Window { agents: AgentsApi } }
-export const api = window.agents
+const desktop=window.agents
+export const api:AgentsApi = desktop?{...desktop,call:async<T>(cmd:Request['cmd'],args?:Request['args']):Promise<T>=>{
+  try{return await desktop.call<T>(cmd,args)}catch(error){
+    if(error instanceof Error)throw error
+    const failure=error as {message?:string;code?:string}
+    throw Object.assign(new Error(failure?.message??String(error)),failure?.code?{code:failure.code}:{})
+  }
+}}:createWebApi()
+if(!window.agents)window.agents=api

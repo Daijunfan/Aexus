@@ -48,7 +48,7 @@ def target(options):
     if profile:
         if Path(profile).name != profile or profile in (".", ".."):
             raise ValueError("Profile must be a name from profiles/")
-        cfg = json.loads((ROOT / "profiles" / (profile + ".json")).read_text())
+        cfg = json.loads((ROOT / "profiles" / (profile + ".json")).read_text(encoding='utf-8'))
     cfg.update({key: value for key, value in options.items() if key != "profile"})
     if not cfg.get("host") or not cfg.get("directory"):
         raise ValueError("Remote mode requires --tunnel-host and --tunnel-path, or --tunnel-profile")
@@ -87,7 +87,7 @@ def shell_config():
 
 
 def edit_shell(path, install):
-    content = path.read_text() if path.exists() else ""
+    content = path.read_text(encoding='utf-8') if path.exists() else ""
     if BEGIN in content:
         start = content.index(BEGIN)
         end = content.index(END, start) + len(END)
@@ -127,10 +127,10 @@ def install(python):
 def uninstall():
     state = ROOT / ".tunnel/installation.json"
     if state.exists():
-        edit_shell(Path(json.loads(state.read_text())["shell_file"]), False)
+        edit_shell(Path(json.loads(state.read_text(encoding='utf-8'))["shell_file"]), False)
         state.unlink()
     for name in (*AGENTS, "tunnel"):
         path = ROOT / "bin" / name
-        if path.exists() and str(ROOT / "tunnel.py") in path.read_text():
+        if path.exists() and str(ROOT / "tunnel.py") in path.read_text(encoding='utf-8'):
             path.unlink()
     print("Removed Tunnel's shell PATH block. Original CLI installations are unchanged.")

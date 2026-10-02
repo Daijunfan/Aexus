@@ -71,6 +71,19 @@ def workspace_files(root, operation, args):
             raise ValueError('Cannot remove the workspace root')
         file.rmdir()
         return {'removed': True}
+    if operation == 'remove-directory':
+        if file == Path(file.anchor) or file == Path.home().resolve():
+            raise ValueError('不能删除主机根目录或用户主目录')
+        if file != root or args.get('allowRoot') is not True:
+            locate(value, True)
+        protected = [Path(p).resolve() for p in args.get('protectedPaths', [])]
+        if any(p == file or file in p.parents for p in protected):
+            raise ValueError('工作文件夹仍被其他员工或 Team 使用，请选择 only employee')
+        if (root / value).is_symlink() or (file.exists() and not file.is_dir()):
+            raise ValueError('工作目录不是普通文件夹，请选择 only employee')
+        if not args.get('preview') and file.exists():
+            shutil.rmtree(file)
+        return {'removed': not args.get('preview', False), 'path': str(file)}
     if operation == 'directory':
         if args.get('create'):
             locate(value, True)
@@ -114,6 +127,16 @@ def workspace_files(root, operation, args):
             raise ValueError('文件已被其他操作修改，请重新读取后保存')
         if args.get('create') and file.exists():
             raise ValueError('同名文件已存在')
+        if args.get('contentBase64') is not None:
+            encoded = args['contentBase64']
+            if not isinstance(encoded, str) or len(encoded) > 14 * 1024 * 1024:
+                raise ValueError('图片不能超过 10 MB')
+            data = base64.b64decode(encoded, validate=True)
+            if len(data) > 10 * 1024 * 1024 or not (data.startswith(b'\x89PNG\r\n\x1a\n') or data.startswith(b'\xff\xd8\xff') or data[:6] in (b'GIF87a', b'GIF89a') or data[:4] == b'RIFF' and data[8:12] == b'WEBP'):
+                raise ValueError('请选择 10 MB 以内的 PNG、JPEG、GIF 或 WebP 图片')
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_bytes(data)
+            return dict(path=value, saved=True)
         file.parent.mkdir(parents=True, exist_ok=True)
         file.write_text(args.get('content', ''), encoding='utf-8')
         return dict(path=value, saved=True)
@@ -135,7 +158,7 @@ def workspace_files(root, operation, args):
         return dict(id=identity, path=value)
     if operation == 'restore':
         identity = str(uuid.UUID(args['id']))
-        info = json.loads((trash/(identity+'.json')).read_text())
+        info = json.loads((trash/(identity+'.json')).read_text(encoding='utf-8'))
         target = locate(info['path'], True)
         if target.exists():
             raise ValueError('原路径已有文件')

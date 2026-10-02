@@ -1,9 +1,21 @@
+import {attachmentPaths,attachmentInfo} from '../shared/message-attachments'
+import type {MessageReply} from '../shared/types'
+import type {MessageQuote} from '../shared/message-quotes'
+import {isEngine,assertEngineWorkspace} from '../shared/engines'
+import {assertEngineExecutable} from './engines/registry'
+import {openEngine} from './engines/runtime'
+import type {EngineDriver} from './engines/contract'
+import {taskViewId,taskViewPrompt} from './task-view'
+import {discussionPolicy as chatAcknowledgmentPolicy,discussionPrompt as chatTaskPrompt,discussionTarget,recordDiscussionDelivery as updateChatDelivery} from './discussion-context'
+import {DISCUSSION_TOOL,openDiscussionTool} from './discussion-tool'
+import {prepareDocumentationTool,beginDocumentationRead,assertDocumentationRead} from './documentation-tool'
+import type {PrivateSendAttempt} from './private-send-receipts'
+import type {SharedTaskContext as ChatTaskContext} from '../shared/chat-groups'
 import {assertEmployeeReady,isInitializer,pendingInitialization} from './initialization-state'
-import {assertManagementKind} from '../shared/management'
-import {SOCKET_PATH} from '../shared/protocol'
+import {hasGlobalRole,assertManagementKind} from '../shared/management'
 import {prepareRemoteAgentAccess,prepareRemoteEmployeeDocuments,closeRemoteAgentAccess,remoteAgentBin} from './remote-agent-access'
 import {employeeProcessOptions,spawnEmployeeProcess} from './agent-process-isolation'
-import {delegationFor,validateDelegation,authorizeSlash,withCaller,requestContext} from './authorization'
+import {delegationFor,validateDelegation,authorizeSlash,requestContext} from './authorization'
 import type {Delegation,CurrentTask} from '../shared/management'
 import {agentEnvironment} from './agent-access'
 import {activityPreview,employeeActivity} from '../shared/activity'
@@ -16,7 +28,6 @@ import {checkRemote,prepareRemote,resolveEmployeeWorkspace,remoteFiles,type Remo
 // session. Both frontends drive this: the Electron main process (IPC) and the
 // local socket server (CLI). Emitting is injected so neither frontend is baked in.
 
-import { query } from '@anthropic-ai/claude-agent-sdk'
 import type {
   Options,
   PermissionMode,
@@ -29,15 +40,15 @@ import type {EffortLevel,ModelInfo,SlashCommand,ImageInput,EmployeeKind,NativeOr
 import {withCodexSessionApi} from './native-sessions'
 import { codexModels, allCodexModels, runCodexTurn, type SandboxMode } from './codex'
 import {deepSeekProvider,deepSeekModels,deepSeekModel,deepSeekEffort,deepSeekPicker,type DeepSeekProvider} from './claude-provider'
-import { childEnv, managerCliRoot, resolveBinary } from './exec'
+import { childEnv, resolveBinary } from './exec'
 import { prepareWorkspacePlugins } from './plugins/runtime'
 import { patchSession, readStore } from './store'
-import { conversation, forget, restoreTranscript, saveTranscript } from './transcripts'
+import { conversation, forget, restoreTranscript, saveTranscript,resolveMessageReply } from './transcripts'
 import { approvalHandler,nativeRequestHandler,elicitationHandler, approvalsFor, cancelApprovals } from './approvals'
-import {teamSettings,nativeSessionRefs,type Session} from '../shared/types'
-import {CLOUD_TOOLS,cloudToolAllowed,cloudClaudeSettings,workClaudeOptions} from './scope'
-import { employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName,cloudRelative } from './workspaces'
-import { provisionEmployee,ensureEmployeeBootstrap,employeeInstructions } from './plugins/documents'
+import {teamSettings,employeeSettings,nativeSessionRefs,type Session,type StoredSession} from '../shared/types'
+import {CLOUD_TOOLS,cloudToolAllowed,cloudClaudeSettings} from './scope'
+import { employeeRoot,employeeWorkspace, executionEmployee, chooseEmployeeWorkspace, workspaceName,cloudRelative } from './workspaces'
+import { provisionEmployee,ensureEmployeeBootstrap,employeeInstructions,employeeRolePrompt } from './plugins/documents'
 import {checkCloudNative,cloudNativeTarget} from './cloud-native'
 import {spawnRemoteAgent} from './remote-agent-process'
 
@@ -49,12 +60,14 @@ export function beginEmployeeRemoval(id:string){if(removingEmployees.has(id))thr
 export function endEmployeeRemoval(id:string){removingEmployees.delete(id)}
 export function assertNotRemoving(id?:string){if(id&&(removingEmployees.has(id)||readStore().sessions.find(c=>c.id===id)?.deleting))throw new Error('员工正在移除中，无法打开会话')}
 
-const CLAUDE_BIN = resolveBinary('claude', process.env.CLAUDE_BIN)
 
-export type Engine = 'claude' | 'codex'
+export type Engine = import('../shared/engines').EngineId
 
 export type Live = {
+  driver:EngineDriver
+  privateSend?:PrivateSendAttempt
   privateInitialization?:boolean
+  acknowledging?:boolean
   bootstrapInstructions?:string
   cardId: string
   currentTask?:CurrentTask
@@ -84,9 +97,10 @@ export type Live = {
   permissionMode: PermissionMode
   /** Codex runs one child process per turn, so turns are queued rather than pushed. */
   running: boolean
+  queueDispatching?: boolean
   nativeTasks?:Record<string,{processId:string;command:string;cwd:string;status:string}>
-  pendingMessages?: {id:string;text:string;images?:string[];delegation?:Delegation}[]
-  queue: {text:string;images?:ImageInput[]}[]
+  pendingMessages?: {id:string;text:string;images?:string[];files?:string[];delegation?:Delegation;viewId?:string;chat?:ChatTaskContext;replyTo?:string;replyQuote?:MessageQuote;crossReply?:MessageReply}[]
+  queue: {text:string;images?:ImageInput[];taskId?:string}[]
   abort?: AbortController
   finished?: Promise<void>
 }
@@ -138,7 +152,7 @@ const observers = new Set<Emitter>()
 const emit: Emitter = (channel, payload) => {
   const hidden=privateTurns.get((payload as {sessionId?:string})?.sessionId??'')
   if(hidden)hidden(channel,payload)
-  if((hidden||live.get((payload as {sessionId?:string})?.sessionId??'')?.privateInitialization)&&channel!=='session:changed')return
+  if((hidden||live.get((payload as {sessionId?:string})?.sessionId??'')?.privateInitialization)&&channel!=='session:changed'&&!(live.get((payload as {sessionId?:string})?.sessionId??'')?.acknowledging&&channel==='session:receipt'))return
   broadcast(channel, payload)
   for (const listener of observers) listener(channel, payload)
 }
@@ -188,86 +202,13 @@ export function codexEffort(effort?: EffortLevel): string | undefined {
   return effort
 }
 
-export function buildOptions(args: {
-  employeeId?:string
-  cwd: string
-  workRoot?: string
-  permissionRoot?: string
-  remote?:RemoteTarget|null
-  nativeRemote?:RemoteTarget
-  remoteLaunch?:RemoteLaunch
-  model?: string
-  resume?: string
-  permissionMode?: PermissionMode
-  thinking?: boolean
-  planMode?: boolean
-  isPlanning?:()=>boolean
-  remoteAdmin?: boolean
-  fastMode?: boolean
-  effort?: EffortLevel
-}): Options {
-  const env={...childEnv(args.cwd,args.workRoot),...(args.employeeId?agentEnvironment(args.employeeId):{})}
-  const opts: Options = {
-    cwd: args.cwd,
-    // Packaged apps get a minimal PATH, so point the SDK at the real CLI
-    // explicitly rather than letting it resolve (and fail) on its own.
-    pathToClaudeCodeExecutable: CLAUDE_BIN,
-    env,
-    permissionMode: args.planMode?'plan':args.permissionMode ?? 'default',
-    includePartialMessages: true,
-    thinking:
-      args.thinking === false ? { type: 'disabled' } : { type: 'adaptive', display: 'summarized' },
-    model: args.model,
-    effort: args.effort as Options['effort'],
-    resume: args.resume,
-    systemPrompt: { type: 'preset', preset: 'claude_code',snapshot:false, ...(args.employeeId?{append:employeeInstructions(readStore().sessions.find(card=>card.id===args.employeeId)!,readStore())}:{}) },
-    settingSources: ['user', 'project', 'local'],
-    stderr: (data) => console.error('[claude]', data)
-  }
-  // The permission mode is switchable mid-session from the toolbar, so the
-  // capability must be present from the start — otherwise selecting "Bypass"
-  // on an already-running session would be refused by the engine.
-  opts.allowDangerouslySkipPermissions = !args.workRoot
-  if(args.workRoot)Object.assign(opts,workClaudeOptions(args.cwd,args.permissionRoot??args.workRoot,args.employeeId?SOCKET_PATH:undefined))
-  // The CLI is identity-scoped in Core. Preapproving this entrypoint also keeps
-  // an already-open Employee usable after promotion, without approving arbitrary Bash.
-  if(args.employeeId&&!args.remoteLaunch&&!args.nativeRemote)opts.allowedTools=['Bash(agents *)']
-  if(args.remoteLaunch){
-    const launch=args.remoteLaunch,cloudSettings=cloudClaudeSettings()
-    Object.assign(opts,{cwd:launch.cwd,tools:[],mcpServers:{tunnel:launch.server},strictMcpConfig:true,allowedTools:CLOUD_TOOLS,settingSources:[],env:{...cloudSettings.env,...env},settings:{permissions:cloudSettings.permissions},
-      disallowedTools:['Bash','PowerShell','Read','Write','Edit','Glob','Grep','NotebookEdit','Agent','Task','Skill','WebFetch','WebSearch','EnterWorktree','ExitWorktree'],
-      systemPrompt:{type:'preset',preset:'claude_code',snapshot:false,append:[launch.instructions,args.employeeId?employeeInstructions(readStore().sessions.find(card=>card.id===args.employeeId)!,readStore()):''].filter(Boolean).join('\n\n')},allowDangerouslySkipPermissions:false,
-      hooks:{PreToolUse:[{hooks:[async(input:any)=>{
-        const planning=args.isPlanning?.()??args.planMode
-        const allowed=cloudToolAllowed(input.tool_name,planning)
-        return {hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:allowed?'allow':'deny',permissionDecisionReason:planning?'计划模式只允许读取文件；请切换到执行模式后修改。':'云主机模式仅允许 Tunnel 远端工具'}}
-      }]}]}})
-  }
-  opts.settings={...(typeof opts.settings==='object'?opts.settings:{}),fastMode:args.fastMode??false}
-  if(args.employeeId&&readStore().sessions.find(card=>card.id===args.employeeId)?.accessMode==='isolated')opts.settings={...opts.settings,sandbox:{enabled:false}}
-  if(args.nativeRemote){
-    opts.pathToClaudeCodeExecutable='claude'
-    opts.env={}
-    opts.spawnClaudeCodeProcess=options=>spawnRemoteAgent(args.nativeRemote!,'claude',options.args,options.signal,args.employeeId)
-  }
-  const provider=args.nativeRemote?undefined:deepSeekProvider(args.remote?undefined:args.cwd)
-  if(provider){
-    // The installed system CLI may predate custom model capabilities. Use the SDK's paired runtime.
-    opts.pathToClaudeCodeExecutable=__filename.includes('.asar/')
-      ?require.resolve(`@anthropic-ai/claude-agent-sdk-${process.platform}-${process.arch}/${process.platform==='win32'?'claude.exe':'claude'}`).replace('.asar/','.asar.unpacked/')
-      :undefined
-    opts.model=deepSeekModel(provider,args.model)
-    opts.effort=(deepSeekEffort(args.effort)??'high') as Options['effort']
-    opts.settings={...opts.settings,...deepSeekPicker,fastMode:false}
-  }
-  if(args.employeeId){if(!args.nativeRemote)opts.spawnClaudeCodeProcess=options=>spawnEmployeeProcess(args.employeeId,options.command,options.args,{cwd:options.cwd,env:options.env,signal:options.signal});opts.disallowedTools=[...new Set([...(opts.disallowedTools??[]),'Agent','Task'])]}
-  return opts
-}
+export {buildOptions} from './engines/claude-options'
 
 export type StartArgs = {
   delegation?:Delegation
   cardId?: string
   kind?:EmployeeKind
+  workEnvironment?:import('../shared/types').WorkEnvironment
   remote?:RemoteTarget|null
   title?: string
   directoryMode?: string
@@ -282,6 +223,8 @@ export type StartArgs = {
   remoteAdmin?: boolean
   fastMode?: boolean
   effort?: EffortLevel
+  clineSessionId?:string
+  piSessionId?:string
   claudeSessionId?: string
   threadId?: string
 }
@@ -300,14 +243,14 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   let card = args.cardId ? readStore().sessions.find((c) => c.id === args.cardId) : undefined
   assertTeamAvailable(card?.group??args.group)
   if (args.cardId && !card) throw new Error(`no such card ${args.cardId}`)
-  if (card && card.kind!=='cloud-native-worker' && card.engine === 'codex' && teamSettings(readStore(),card.group).mode === 'cloud' && card.codexExecution !== 'native-v1') {
+  if (card && card.kind!=='cloud-native-worker' && card.engine === 'codex' && employeeSettings(readStore(),card).mode === 'cloud' && card.codexExecution !== 'native-v1') {
     // Old MCP instructions/tools are already in native history. Start a clean context,
     // retaining the original native ID for deletion and the host's visible transcript.
     const next=patchSession(card.id,{nativeSessions:nativeSessionRefs(card),threadId:undefined,codexExecution:'native-v1'})
     card=next.sessions.find(c=>c.id===card!.id)!
   }
   if (card) {
-    assertManagementKind(card,!!readStore().access?.globalManagerIds.includes(card.id))
+    assertManagementKind(card,hasGlobalRole(readStore().access,card),employeeSettings(readStore(),card).mode==='cloud')
     ensureEmployeeBootstrap(card,readStore())
     if(card.accessMode==='isolated')employeeProcessOptions(card.id)
     if(card.kind==='cloud-native-worker')cloudNativeTarget(card)
@@ -318,304 +261,105 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
     args = { ...card, cardId: card.id }
   }
   const sessionId = newSessionId()
-  const config=teamSettings(readStore(),args.group??''),root=readStore().teamRoots?.[args.group??'']
+  const identity={group:args.group??'',workEnvironment:card?.workEnvironment??args.workEnvironment,localWorkspaceRoot:card?.localWorkspaceRoot},config=employeeSettings(readStore(),identity),root=employeeRoot(readStore(),identity)
   if(args.remote!==undefined&&args.remote!==null)throw new Error('云主机连接由 Team 统一配置')
-  const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode)
+  const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode,undefined,false,args.workEnvironment)
+  assertEngineWorkspace(card?.engine??args.engine??'claude',config.mode,card?.kind??args.kind??'worker')
   const remote=config.mode==='cloud'?{...config.remote!,directory:cwd}:null
   const kind=card?.kind??'worker',nativeRemote=kind==='cloud-native-worker'?cloudNativeTarget(card!).target:undefined
   if(nativeRemote)await checkCloudNative(card!.group,card!.engine,cloudRelative(config,cwd))
   if(!remote)provisionEmployee(cwd,root!,config)
   const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?dirname(workRoot):undefined
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!,card?.id??sessionId)
-  const controlBin=remote&&card&&card.kind!=='cloud-native-worker'&&(card.managementRole==='manager'||readStore().access?.globalManagerIds.includes(card.id))?await prepareRemoteAgentAccess(card.id,remote):undefined
+  const controlBin=remote&&card&&card.kind!=='cloud-native-worker'?await prepareRemoteAgentAccess(card.id,remote):undefined
   if(remote&&card&&!controlBin)await prepareRemoteEmployeeDocuments(card.id,remote)
-  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),(args.engine??'claude')==='claude'?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
+  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),['claude','cline','pi'].includes(args.engine??'claude')?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
   assertTeamAvailable(args.group)
-  const latest=readStore(),latestConfig=teamSettings(latest,args.group??'')
-  if(latest.teamRoots?.[args.group??'']!==root||latestConfig.mode!==config.mode||latestConfig.pluginId!==config.pluginId||JSON.stringify(latestConfig.remote)!==JSON.stringify(config.remote))throw new Error('Team 配置已变更，请重新打开会话')
+  const latest=readStore(),latestConfig=employeeSettings(latest,identity)
+  if(employeeRoot(latest,identity)!==root||latestConfig.mode!==config.mode||latestConfig.pluginId!==config.pluginId||JSON.stringify(latestConfig.remote)!==JSON.stringify(config.remote))throw new Error('Team 配置已变更，请重新打开会话')
   if(card&&!latest.sessions.some(c=>c.id===card.id&&c.cwd===card.cwd&&c.group===card.group&&c.engine===card.engine&&JSON.stringify(executionEmployee(latest,c).remote)===JSON.stringify(remote)))throw new Error('员工已被移除或调整目录，请重新打开会话')
   if(card){const existing=[...live.entries()].find(([,s])=>s.cardId===card.id);if(existing)return {sessionId:existing[0],cwd:existing[1].remote?.directory??existing[1].cwd,engine:existing[1].engine}}
   assertNotRemoving(card?.id)
-  if(!remote)employeeWorkspace(readStore(),args.group??'',cwd,card?.id,false)
+  if(!remote)employeeWorkspace(readStore(),args.group??'',cwd,card?.id,false,undefined,identity.workEnvironment)
   const engine: Engine = args.engine ?? 'claude'
-  if (engine !== 'claude' && engine !== 'codex') throw new Error(`Unknown engine: ${engine}`)
-  if (engine === 'codex') args = { ...args, model: args.model || 'gpt-5.6-luna', effort: card?args.effort:(args.effort??'low') }
+  if(!nativeRemote)await assertEngineExecutable(engine)
+  if (!isEngine(engine)) throw new Error(`Unknown engine: ${engine}`)
+  if (engine === 'codex') args = { ...args, effort: card?args.effort:(args.effort??'low') }
   const provider=engine==='claude'&&!nativeRemote?deepSeekProvider(remote?undefined:cwd):undefined
-  if(provider)args={...args,model:deepSeekModel(provider,args.model),effort:deepSeekEffort(args.effort),fastMode:false}
-  const permissionMode = args.permissionMode ?? (workRoot||remote?'acceptEdits':'default')
-  if(remote&&!nativeRemote&&permissionMode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限')
-  if(workRoot&&permissionMode!=='acceptEdits')throw new Error('Work 模式按员工目录授权，必须使用 Workspace write 权限')
+  if(provider)args={...args,model:deepSeekModel(provider,args.model||'deepseek-flash'),thinking:args.thinking??false,effort:deepSeekEffort(args.effort),fastMode:false}
+  const permissionMode = args.permissionMode ?? 'default'
   const cardId = card?.id ?? sessionId
   validateDelegation(openingDelegation,cardId)
   patchSession(cardId, {
-    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:'employee' as const,accessMode:'trusted' as const}:{}), engine, cwd, remote:undefined, group: args.group ?? '', seat: args.seat,
+    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:'employee' as const,accessMode:'trusted' as const}:{}), engine, cwd,workEnvironment:identity.workEnvironment,localWorkspaceRoot:identity.workEnvironment==='local'&&teamSettings(readStore(),identity.group).mode==='cloud'?root:undefined, remote:undefined, group: args.group ?? '', seat: args.seat,
     threadId:args.threadId,claudeSessionId:args.claudeSessionId,
     title: args.title || `New ${engine === 'codex' ? 'Codex' : 'Claude'} session`,
     createdAt: card?.createdAt ?? Date.now(), model: args.model, effort: args.effort,
     permissionMode, planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false, thinking: engine === 'claude' && args.thinking !== false
   })
   const access=employeeProcessOptions(cardId)
-  if(access.profile)patchSession(cardId,{nativeConfigRoot:engine==='codex'?access.env.CODEX_HOME:access.env.CLAUDE_CONFIG_DIR})
+  if(access.profile&&(engine==='codex'||engine==='claude'))patchSession(cardId,{nativeConfigRoot:engine==='codex'?access.env.CODEX_HOME:access.env.CLAUDE_CONFIG_DIR})
   restoreTranscript(sessionId, cardId, engine)
 
-  if (engine === 'codex') {
-    const state: Live = {
-      cardId,privateInitialization:!card||isInitializer(cardId),
-      kind,nativeOrigin:card?.nativeOrigin,
-      engine,
-      q: null as never,
-      input: null as never,
-      sessionId: null,
-      threadId: args.threadId,
-      cwd,
-      workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,
-      model: args.model,
-      thinkingEnabled: false,
-      planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
-      effort: args.effort,
-      sandbox: sandboxFor(permissionMode),
-      permissionMode,
-      running: false,
-      queue: []
-    }
-    state.bootstrapInstructions=employeeInstructions(readStore().sessions.find(card=>card.id===cardId)!,readStore())
-    live.set(sessionId, state)
-    rememberMeta(sessionId, {
-      engine,
-      cwd,
-      threadId: args.threadId,
-      model: args.model,
-      thinking: false,
-      thinkingSupported: false,
-      planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
-      effort: args.effort,
-      permissionMode,
-      commands: [],
-      models: nativeRemote?[]:codexModels(),
-      busy: false
-    })
-    emit('session:meta', {
-      sessionId,
-      engine,
-      commands: [],
-      models: nativeRemote?[]:codexModels(),
-      requestedModel: args.model,
-      permissionMode,
-      thinking: false,
-      thinkingSupported: false,
-      effort: args.effort
-    })
-    // Ask the installed CLI for current account/model capabilities without inference.
-    void withCodexSessionApi(allCodexModels,nativeRemote?{nativeRemote}:{}).then(models=>{
-      if(live.has(sessionId)&&models.length)rememberMeta(sessionId,{models})
-    }).catch(()=>{}) // Offline engines keep the official local cache above.
-    if(!card)void import('./initialization').then(module=>module.queueEmployeeInitialization(cardId))
-    return { sessionId, cwd:remote?.directory??cwd, engine }
-  }
-
-  const input = new AsyncQueue<SDKUserMessage>()
-  const state: Live = {
-    cardId,privateInitialization:!card||isInitializer(cardId),
-    kind,nativeOrigin:card?.nativeOrigin,
-    engine,
-    provider,
-    q: null as never,
-    input,
-    sessionId: null,
-    cwd,
-    workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,
-    model: args.model,
-    thinkingEnabled: args.thinking !== false,
-    planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
-    effort: args.effort,
-    sandbox: sandboxFor(permissionMode),
-    permissionMode,
-    running: false,
-    queue: []
-  }
-
-  const normalApproval=approvalHandler(sessionId, () => emit('session:changed', { sessionId }))
-  const approve:typeof normalApproval=async(...args)=>{
-    if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化阅读触发了额外权限请求，请检查文档可读性后重试。'});return {behavior:'deny',message:'Initialization only reads assigned documentation; interactive approvals are disabled'}}
-    return normalApproval(...args)
-  }
-  const q = query({ prompt: input, options: {
-    ...buildOptions({ ...args, employeeId:cardId,cwd, workRoot, permissionRoot, remote,nativeRemote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true, resume: args.claudeSessionId }),
-    canUseTool: remote&&!nativeRemote?async(tool,input,context)=>cloudToolAllowed(tool,state.planMode===true)?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
-    onElicitation:async(...args)=>{if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化不能等待用户回答，请检查引擎配置后重试。'});return {action:'decline'}};return elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))(...args)}
-  } })
-  state.q = q
-  state.bootstrapInstructions=employeeInstructions(readStore().sessions.find(card=>card.id===cardId)!,readStore())
-  live.set(sessionId, state)
-  rememberMeta(sessionId, { engine, cwd, model: args.model, permissionMode,
-    thinking: state.thinkingEnabled, thinkingSupported: true, planMode:state.planMode,fastMode:state.fastMode, effort: args.effort,
-    claudeSessionId: args.claudeSessionId, busy: false })
-
-  void (async () => {
-    try {
-      const [commands, nativeModels] = await Promise.all([q.supportedCommands(), q.supportedModels()])
-      const models=provider?deepSeekModels:nativeModels
-      if(!live.has(sessionId))return
-      rememberMeta(sessionId, {
-        engine,
-        cwd,
-        model: state.model,
-        thinking: state.thinkingEnabled,
-        thinkingSupported: true,
-        planMode:state.planMode,fastMode:state.fastMode,
-        effort: state.effort,
-        permissionMode,
-        commands,
-        models,
-        busy: state.running
-      })
-      emit('session:meta', {
-        sessionId,
-        engine,
-        commands,
-        models,
-        requestedModel: state.model,
-        permissionMode,
-        thinking: state.thinkingEnabled,
-        thinkingSupported: true,
-        effort: state.effort
-      })
-    } catch (err) {
-      if(live.has(sessionId))emit('session:error', { sessionId, message: String(err) })
-    }
-  })()
-
-  state.finished = (async () => {
-    try {
-      for await (const msg of q) {
-        if (!state.sessionId && 'session_id' in msg && msg.session_id) {
-          state.sessionId = msg.session_id
-          patchSession(cardId, { claudeSessionId: msg.session_id })
-          rememberMeta(sessionId, { claudeSessionId: msg.session_id })
-          emit('session:resolved', { sessionId, claudeSessionId: msg.session_id })
-        }
-        if (!live.has(sessionId)) continue
-        emit('session:message', { sessionId, message: msg as SDKMessage })
-        if (msg.type === 'system' && msg.subtype === 'init') {
-          rememberTerminalCommands(sessionId, (msg as any).terminal_slash_commands ?? [])
-          rememberMeta(sessionId, { model: provider?state.model:msg.model,commands:[...new Map([...(msg.slash_commands??[]).map(name=>({name,description:'Claude Code 命令',argumentHint:''})),...(info.get(sessionId)?.commands??[])].map(c=>[c.name,c])).values()] })
-        }
-        if(msg.type==='conversation_reset'){
-          const saved=readStore().sessions.find(c=>c.id===cardId)!
-          state.sessionId=msg.new_conversation_id
-          patchSession(cardId,{nativeSessions:nativeSessionRefs(saved),claudeSessionId:state.sessionId,nativeOwnership:undefined})
-          rememberMeta(sessionId,{claudeSessionId:state.sessionId})
-          emit('session:resolved',{sessionId,claudeSessionId:state.sessionId})
-        }
-        if(msg.type==='system'&&msg.subtype==='commands_changed')rememberMeta(sessionId,{commands:msg.commands})
-        if(msg.type==='system'&&['task_started','task_progress','task_notification'].includes(msg.subtype)){const task=msg as any;state.nativeTasks??={};if(task.subtype==='task_notification')delete state.nativeTasks[task.task_id];else state.nativeTasks[task.task_id]={processId:task.task_id,command:task.description??task.task_id,cwd:state.cwd,status:'running'};emit('session:changed',{sessionId})}
-        if(msg.type==='result')rememberMeta(sessionId,{usage:{...msg.usage,total_cost_usd:msg.total_cost_usd}})
-        if('fast_mode_state' in msg)rememberMeta(sessionId,{fastModeState:String(msg.fast_mode_state),fastModeDisabledReason:(msg as any).fast_mode_disabled_reason})
-        if (msg.type === 'result') {
-          state.running = false
-          rememberMeta(sessionId, { busy: false })
-          cancelApprovals(sessionId);emit('session:turn-end', { sessionId });dispatchQueued(state,sessionId)
-        }
-      }
-      if (live.has(sessionId)) emit('session:end', { sessionId })
-    } catch (err) {
-      if (live.has(sessionId)) emit('session:error', { sessionId, message: String(err) })
-    } finally {
-      state.running = false
-      if (live.has(sessionId)) rememberMeta(sessionId, { busy: false })
-    }
-  })()
-
-  if(!card)void import('./initialization').then(module=>module.queueEmployeeInitialization(cardId))
-  return { sessionId, cwd:remote?.directory??cwd, engine }
+  const opened=await openEngine({args,card,kind,engine,cardId,sessionId,cwd,workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,provider,permissionMode,host:{live,info,privateTurns,emit,rememberMeta,rememberTerminalCommands,sessionInfo,dispatchQueued}})
+  prepareDocumentationTool(require_(sessionId))
+  if(!card)(await import('./initialization')).queueEmployeeInitialization(cardId)
+  return opened
 }
 
-/** Serialize user turns over the employee’s native connection. */
-async function pumpCodex(s: Live, sessionId: string) {
-  if (s.running) return
-  s.running = true
-  try {
-    while (s.queue.length) {
-      const {text,images} = s.queue.shift()!
-      const abort = new AbortController()
-      s.abort = abort
-      rememberMeta(sessionId, { busy: true })
-      emit('session:turn-start', { sessionId })
-      await runCodexTurn({
-        employeeId:s.cardId,prompt: text,images,connectionId:sessionId,
-        cwd: s.cwd,
-        workRoot: s.workRoot,permissionRoot:s.permissionRoot,remote:s.remote,nativeRemote:s.nativeRemote,remoteAdmin:s.remoteAdmin,
-        resumeId: s.threadId,planMode:s.planMode,
-        model: s.model,
-        sandbox: s.sandbox,
-        effort: codexEffort(s.effort)??activeModel(sessionInfo(sessionId)?.models??[],s.model)?.defaultEffort,
-        serviceTier:s.fastMode?fastTier(activeModel(sessionInfo(sessionId)?.models??[],s.model))?.id:undefined,
-        signal: abort.signal,
-        approvalPolicy:s.workRoot||s.remote&&!s.nativeRemote||['dontAsk','bypassPermissions'].includes(s.permissionMode)?'never':'on-request',
-        onRequest:async(...args)=>{if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化不能申请额外权限或等待用户回答，请检查配置后重试。'});throw Error('Interactive requests are unavailable during initialization')};return nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&(!s.remote||!!s.nativeRemote)&&!s.planMode)(...args)},
-        onEvent: (ev) => {
-          if(ev.kind==='notice'&&ev.level==='error'&&s.nativeRemote){emit('session:error',{sessionId,message:ev.text});return}
-          if(ev.kind==='child-thread'){const card=readStore().sessions.find(c=>c.id===s.cardId);if(card)patchSession(s.cardId,{nativeSessions:[...nativeSessionRefs(card),{engine:'codex',id:ev.threadId,origin:s.nativeOrigin}]});return}
-          if(ev.kind==='background-turn'){if(!live.has(sessionId))return;s.running=ev.busy;rememberMeta(sessionId,{busy:ev.busy});emit(ev.busy?'session:turn-start':'session:turn-end',{sessionId});if(!ev.busy)dispatchQueued(s,sessionId);return}
-          if(ev.kind==='usage'){rememberMeta(sessionId,{usage:ev.usage});return}
-          if (ev.kind === 'thread') {
-            const prior=readStore().sessions.find(card=>card.id===s.cardId)
-            s.threadId = ev.threadId
-            patchSession(s.cardId, prior?.nativeOwnership==='external'&&prior.threadId&&prior.threadId!==ev.threadId?{nativeSessions:nativeSessionRefs(prior),threadId:ev.threadId,nativeOwnership:undefined}:{threadId:ev.threadId})
-            rememberMeta(sessionId, { threadId: ev.threadId })
-            emit('session:resolved', { sessionId, threadId: ev.threadId })
-            return
-          }
-          if (!live.has(sessionId)) return
-          emit('session:codex', { sessionId, event: ev })
-        }
-      })
-      if (!live.has(sessionId)) return
-      s.abort = undefined
-      rememberMeta(sessionId, { busy: false })
-      emit('session:turn-end', { sessionId })
-    }
-  } finally {
-    s.running = nativeCodexBusy(sessionId);rememberMeta(sessionId,{busy:s.running});if(!s.running){cancelApprovals(sessionId);dispatchQueued(s,sessionId)}
-  }
-}
-
+const queuedPrivateSends=new Map<string,PrivateSendAttempt>()
+export function privateSendQueued(employeeId:string,queueId:string){return [...live.values()].some(state=>state.cardId===employeeId&&(state.pendingMessages?.some(message=>message.id===queueId)||state.privateSend?.queueId===queueId))}
+function interruptQueuedPrivateSend(id:string,reason:string){const attempt=queuedPrivateSends.get(id);try{attempt?.interrupted(reason)}catch(error){return error}finally{queuedPrivateSends.delete(id)}}
 function dispatchQueued(s:Live,id:string){
-  if(!live.has(id)||s.running||!s.pendingMessages?.length)return
-  const next=s.pendingMessages.shift()!;rememberMeta(id,{pendingMessages:[...s.pendingMessages]})
-  void sendMessage(id,next.text,undefined,next.images,next.delegation).catch(error=>emit('session:error',{sessionId:id,message:String(error)}))
+  if(!live.has(id)||s.running||s.acknowledging||s.queueDispatching||!s.pendingMessages?.length)return
+  s.queueDispatching=true
+  const next=s.pendingMessages.shift()!,privateSend=queuedPrivateSends.get(next.id);queuedPrivateSends.delete(next.id);rememberMeta(id,{pendingMessages:[...s.pendingMessages]})
+  void sendMessage(id,next.text,undefined,next.images,next.delegation,next.viewId,next.chat,next.replyTo,next.replyQuote,next.crossReply,next.files,privateSend).then(sent=>{if(!sent)privateSend?.interrupted('Private message preparation was interrupted. It was not replayed.')}).catch(error=>{try{privateSend?.failed(error)}catch(saveError){emit('session:error',{sessionId:id,message:String(saveError)})};updateChatDelivery(s.cardId,next.chat,{status:'failed',error:String(error)});if(!next.delegation?.groupNotice&&!next.delegation?.channelNotice)emit('session:error',{sessionId:id,message:String(error)})}).finally(()=>{s.queueDispatching=false;if(!s.running)queueMicrotask(()=>dispatchQueued(s,id))})
 }
-export function enqueueMessage(id:string,text:string,images:string[]=[],delegation?:Delegation){
+function isGroupNotice(delegation:Delegation,chat:ChatTaskContext|undefined,employeeId:string){
+  const notice=delegation.groupNotice??delegation.channelNotice
+  if(notice&&(!chat||notice.employeeId!==employeeId||('groupId' in notice? !('groupId' in chat)||notice.groupId!==chat.groupId||notice.messageId!==chat.messageId:!('channelId' in chat)||notice.channelId!==chat.channelId||notice.entryId!==chat.entryId)))throw Error('Shared awareness scope does not match this message')
+  if(chat&&(chatAcknowledgmentPolicy(chat,employeeId).mode==='awareness')!==!!notice)throw Error('Shared delivery mode does not match its delegation')
+  return !!notice
+}
+export function enqueueMessage(id:string,text:string,images:string[]=[],delegation?:Delegation,viewId?:string,chat?:ChatTaskContext,replyTo?:string,replyQuote?:MessageQuote,crossReply?:MessageReply,filePaths:string[]=[],privateSend?:PrivateSendAttempt){
   const s=require_(id);assertEmployeeControl(s.cardId)
   if(!Array.isArray(images)||images.some(p=>typeof p!=='string')||images.length>16)throw new Error('images 必须是最多 16 个工作目录内的图片路径')
-  if(!text.trim()&&!images.length)throw new Error('Message cannot be empty')
-  delegation??=delegationFor(s.cardId);validateDelegation(delegation,s.cardId);authorizeSlash(text,s.cardId,delegation)
-  const entry={id:newSessionId(),text,images,delegation};(s.pendingMessages??=[]).push(entry)
+  filePaths=attachmentPaths(filePaths);if(images.length+filePaths.length>16)throw Error('Choose at most 16 attachments')
+  if(!text.trim()&&!images.length&&!filePaths.length)throw new Error('Message cannot be empty')
+  delegation??=delegationFor(s.cardId);validateDelegation(delegation,s.cardId)
+  const notice=isGroupNotice(delegation,chat,s.cardId)
+  const nativeControl=s.engine==='codex'&&!chat&&/^\/(compact|review)(?:\s|$)/.test(text)
+  if(!notice)authorizeSlash(text,s.cardId,delegation)
+  viewId=notice?undefined:taskViewId(s.cardId,viewId)
+  if(crossReply){if(delegation.requestedBy.kind!=='operator')throw Error('Only the user may quote another conversation')}else resolveMessageReply(id,replyTo,replyQuote)
+  if(replyTo!==undefined&&text.startsWith('/'))throw Error('Replies require a regular message, not a slash command')
+  const entry={id:newSessionId(),text,images,...(filePaths.length?{files:filePaths}:{}),delegation,viewId,chat,...(replyTo!==undefined?{replyTo,replyQuote,...(crossReply?{crossReply}:{})}:{})}
+  if(privateSend){privateSend.queued(entry.id);queuedPrivateSends.set(entry.id,privateSend)}
+  ;(s.pendingMessages??=[]).push(entry)
   rememberMeta(id,{pendingMessages:[...s.pendingMessages]});dispatchQueued(s,id);return entry
 }
 export async function steerMessage(id:string,text:string){
   const s=require_(id);assertEmployeeControl(s.cardId)
+  if(s.acknowledging)throw Error('Wait for group acknowledgment, or queue this message instead.')
   if(!s.running||!text.trim())throw new Error('请在任务运行时追加非空指令')
-  if(s.engine==='codex')await nativeCodexRequest(id,'turn/steer',{input:[{type:'text',text}]})
-  else s.input.push({type:'user',message:{role:'user',content:text},parent_tool_use_id:null,session_id:s.sessionId??''} as SDKUserMessage)
-  emit('session:user',{sessionId:id,text});return true
+  const engineText=taskViewPrompt(s.currentTask?.viewId,text)
+  await s.driver.steer(engineText)
+  emit('session:user',{sessionId:id,text,author:requestContext().principal});return true
 }
 export async function backgroundProcesses(id:string,processId?:string,stop=false){
   const s=require_(id);if(stop)assertEmployeeControl(s.cardId)
-  if(s.engine==='claude'){if(stop){const ids=processId?[processId]:Object.keys(s.nativeTasks??{});for(const task of ids){if(!s.nativeTasks?.[task])throw new Error('任务不属于当前员工');await s.q.stopTask(task);delete s.nativeTasks[task]}}return {data:Object.values(s.nativeTasks??{})}}
-  if(!hasNativeCodexSession(id))return {data:[]}
-  return nativeCodexRequest(id,stop?processId?'thread/backgroundTerminals/terminate':'thread/backgroundTerminals/clean':'thread/backgroundTerminals/list',processId?{processId}:{})
+  return s.driver.background(processId,stop)
 }
 export function queuedMessages(id:string){return [...(require_(id).pendingMessages??[])]}
 export function removeQueuedMessage(id:string,messageId:string){
-  const s=require_(id);assertEmployeeControl(s.cardId);s.pendingMessages=(s.pendingMessages??[]).filter(m=>m.id!==messageId)
-  rememberMeta(id,{pendingMessages:[...s.pendingMessages]});return queuedMessages(id)
+  const s=require_(id);assertEmployeeControl(s.cardId);let receiptError:unknown;const removed=s.pendingMessages?.find(message=>message.id===messageId);if(removed){receiptError=interruptQueuedPrivateSend(removed.id,'The queued private message was cancelled. It was not replayed.');updateChatDelivery(s.cardId,removed.chat,{status:'interrupted',error:'Queued message cancelled'})};s.pendingMessages=(s.pendingMessages??[]).filter(m=>m.id!==messageId)
+  rememberMeta(id,{pendingMessages:[...s.pendingMessages]});if(receiptError)throw receiptError;return queuedMessages(id)
 }
 export async function setPlanMode(id:string,enabled:boolean,owner?:string){
   const s=require_(id);assertEmployeeControl(s.cardId,owner)
   if(s.running)throw new Error('请先等待当前任务结束或停止任务')
-  if(s.engine==='codex'&&readStore().sessions.find(card=>card.id===s.cardId)?.accessMode==='isolated')await closeNativeCodexSession(id)
-  if(s.engine==='claude')await s.q.setPermissionMode(enabled?'plan':s.permissionMode)
+  await s.driver.setPlan(enabled)
   s.planMode=enabled;if(!owner)patchSession(s.cardId,{planMode:enabled});rememberMeta(id,{planMode:enabled});return true
 }
 
@@ -626,7 +370,7 @@ function require_(id: string): Live {
 }
 
 /** Deterministic slash commands never become model prompts. */
-async function runSessionCommand(id:string,text:string,owner?:string,delegation?:Delegation):Promise<boolean>{
+async function runSessionCommand(id:string,text:string,owner?:string,delegation?:Delegation,viewId?:string):Promise<boolean>{
   const match=text.trim().match(/^\/(\S+)(?:\s+([\s\S]*))?$/);if(!match)return false
   const s=require_(id),meta=sessionInfo(id)!,name=match[1],value=match[2]?.trim()??''
   if(s.engine==='codex'&&['compact','review'].includes(name)){if(name==='compact'&&(!s.threadId||value))throw new Error('用法：/compact，需要已有会话内容');return false}
@@ -646,7 +390,7 @@ async function runSessionCommand(id:string,text:string,owner?:string,delegation?
       result='已开始新的上下文，员工和工作目录保持不变。';break
     }
     case 'fork':{if(!value){result='用法：/fork 新员工名称。也可点击上方「克隆员工」选择工作目录。';break}if(owner)throw new Error('请通过 card.clone 在任务外克隆员工');const clone=await import('./employees').then(m=>m.cloneEmployee(s.cardId,{title:value}));result=`已克隆员工：${clone.title}\n员工 ID：${clone.id}\n工作目录：${clone.cwd}`;break}
-    case 'plan':{await setPlanMode(id,true,owner);if(value)return sendMessage(id,value,owner,[],delegation);result='计划模式已开启。使用 /normal 返回执行模式。';break}
+    case 'plan':{await setPlanMode(id,true,owner);if(value)return sendMessage(id,value,owner,[],delegation,viewId);result='计划模式已开启。使用 /normal 返回执行模式。';break}
     case 'normal':await setPlanMode(id,false,owner);result='已返回执行模式。';break
     case 'ps':result=JSON.stringify(await backgroundProcesses(id),null,2);break
     case 'stop':await backgroundProcesses(id,undefined,true);result='已停止此员工的后台终端。';break
@@ -665,7 +409,7 @@ async function runSessionCommand(id:string,text:string,owner?:string,delegation?
     case 'fast':if(value&& !['on','off','status'].includes(value))throw new Error('用法：/fast [on|off|status]');if(value!=='status')await setFastMode(id,value?value==='on':!s.fastMode,owner);result=`Fast：${s.fastMode?'开启（更高用量）':'关闭'}`;break
     case 'permissions':if(value){if(owner)throw new Error('定时任务不能更改员工权限');await setPermissionMode(id,value as PermissionMode)}result=`执行权限：${s.permissionMode}`;break
   }
-  emit('session:user',{sessionId:id,text})
+  emit('session:user',{sessionId:id,text,author:delegation?.requestedBy??requestContext().principal})
   emit('session:message',{sessionId:id,message:{type:'system',subtype:'local_command_output',content:result}})
   emit('session:turn-end',{sessionId:id});queueMicrotask(()=>dispatchQueued(s,id))
   return true
@@ -675,34 +419,46 @@ export async function setFastMode(id:string,enabled:boolean,owner?:string){
   const s=require_(id);assertEmployeeControl(s.cardId,owner)
   if(s.running)throw new Error('请等待当前任务结束后再切换速度')
   if(enabled&&!supportsFast(s.engine,activeModel(sessionInfo(id)?.models??[],s.model)))throw new Error('当前模型未提供官方 Fast 档位')
-  if(s.engine==='claude')await s.q.applyFlagSettings({fastMode:enabled})
+  await s.driver.setFast(enabled)
   s.fastMode=enabled
   if(!owner)patchSession(s.cardId,{fastMode:enabled})
   rememberMeta(id,{fastMode:enabled})
   return true
 }
 
-export async function sendMessage(sessionId: string, text: string, owner?: string,imagePaths:string[]=[],delegation?:Delegation): Promise<boolean> {
+export async function sendMessage(sessionId: string, text: string, owner?: string,imagePaths:string[]=[],delegation?:Delegation,viewId?:string,chat?:ChatTaskContext,replyTo?:string,replyQuote?:MessageQuote,crossReply?:MessageReply,filePaths:string[]=[],privateSend?:PrivateSendAttempt): Promise<boolean> {
   const s = require_(sessionId)
   assertEmployeeControl(s.cardId, owner)
-  delegation??=delegationFor(s.cardId);validateDelegation(delegation,s.cardId);authorizeSlash(text,s.cardId,delegation)
+  delegation??=delegationFor(s.cardId);validateDelegation(delegation,s.cardId)
+  const notice=isGroupNotice(delegation,chat,s.cardId)
+  if(!notice)authorizeSlash(text,s.cardId,delegation)
+  const nativeControl=s.engine==='codex'&&!chat&&/^\/(compact|review)(?:\s|$)/.test(text)
   const store=readStore(), card=executionEmployee(store,store.sessions.find(c=>c.id===s.cardId)!)
+  viewId=notice||nativeControl||privateTurns.has(sessionId)?undefined:taskViewId(card.id,viewId,!!owner)
   if(s.kind==='cloud-native-worker'&&JSON.stringify(cloudNativeTarget(card).origin)!==JSON.stringify(s.nativeOrigin))throw new Error('云主机身份已变化；不会在本机或其他云主机执行')
   if(card.engine!==s.engine)throw new Error('引擎配置已变更，请重新打开会话')
   if(JSON.stringify(card.remote??null)!==JSON.stringify(s.remote??null))throw new Error('云主机配置已变更，请重新打开会话')
   const cwd=card.remote?card.cwd:employeeWorkspace(store,card.group,card.cwd,card.id)
   if(cwd!==s.cwd) throw new Error('工作空间已变更，请重新打开员工会话')
   if(!Array.isArray(imagePaths)||imagePaths.some(p=>typeof p!=='string')||imagePaths.length>16)throw new Error('images 必须是最多 16 个工作目录内的图片路径')
-  if (!text.trim()&&!imagePaths.length) throw new Error('Message cannot be empty')
-  if (s.running) throw new Error('Session is busy; wait for completion or interrupt it first')
-  if(imagePaths.length&&text.startsWith('/'))throw new Error('请使用普通消息发送图片附件')
-  if(text.startsWith('/')&&await runSessionCommand(sessionId,text,owner,delegation)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner};rememberMeta(sessionId,{currentTask:s.currentTask});return true}
+  filePaths=attachmentPaths(filePaths);if(imagePaths.length+filePaths.length>16)throw Error('Choose at most 16 attachments')
+  if (!text.trim()&&!imagePaths.length&&!filePaths.length) throw new Error('Message cannot be empty')
+  if (s.running||s.acknowledging) throw new Error('Session is busy; wait for completion or interrupt it first')
+  if(!s.privateInitialization&&card.initialization?.nativeBindId)patchSession(card.id,{initialization:{...card.initialization,nativeBindId:undefined}})
+  if(replyTo!==undefined&&text.startsWith('/'))throw Error('Replies require a regular message, not a slash command')
+  if(crossReply&&delegation.requestedBy.kind!=='operator')throw Error('Only the user may quote another conversation')
+  const reply=crossReply??resolveMessageReply(sessionId,replyTo,replyQuote)
+  if(!notice&&(imagePaths.length||filePaths.length)&&text.startsWith('/'))throw new Error('请使用普通消息发送图片附件')
+  if(!chat&&text.startsWith('/')&&await runSessionCommand(sessionId,text,owner,delegation,viewId)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner,viewId,chat};rememberMeta(sessionId,{currentTask:s.currentTask});return true}
+  if(privateSend)s.privateSend=privateSend
+  try{
   let images:ImageInput[]=[]
-  if(imagePaths.length){
+  const files:import('../shared/message-attachments').MessageAttachment[]=[]
+  if(imagePaths.length||filePaths.length){
     const modalities=activeModel(sessionInfo(sessionId)?.models??[],s.model)?.inputModalities
-    if(modalities&&!modalities.includes('image'))throw new Error('当前模型不支持图片输入')
+    if(imagePaths.length&&modalities&&!modalities.includes('image'))throw new Error('当前模型不支持图片输入')
     const cancel=new AbortController();s.abort=cancel;s.running=true;rememberMeta(sessionId,{busy:true})
-    try{for(const image of imagePaths)images.push(card.remote?await remoteFiles(card.id,card.remote,'read-image',{path:image}):workspaceFiles(cwd,'read-image',{path:image}) as ImageInput)}
+    try{for(const image of imagePaths)images.push(card.remote?await remoteFiles(card.id,card.remote,'read-image',{path:image}):workspaceFiles(cwd,'read-image',{path:image}) as ImageInput);for(const path of filePaths){const info=card.remote?await remoteFiles(card.id,card.remote,'copy-info',{path}):workspaceFiles(cwd,'copy-info',{path});files.push(attachmentInfo(path,info))}}
     finally{s.running=false;s.abort=undefined;rememberMeta(sessionId,{busy:false})}
     if(cancel.signal.aborted||!live.has(sessionId))return false
   }
@@ -710,30 +466,41 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
   if(bootstrap!==s.bootstrapInstructions){
     ensureEmployeeBootstrap(card,store)
     if(s.remote&&s.kind!=='cloud-native-worker'){
-      if(card.managementRole==='manager'||store.access?.globalManagerIds.includes(card.id))await prepareRemoteAgentAccess(card.id,s.remote)
-      else closeRemoteAgentAccess(card.id)
+      await prepareRemoteAgentAccess(card.id,s.remote)
     }
   }
   validateDelegation(delegation,s.cardId)
-  const engineText=s.engine==='claude'&&bootstrap!==s.bootstrapInstructions?bootstrap+'\n\n[Current user request]\n'+text:text
-  s.bootstrapInstructions=bootstrap
-  if(!privateTurns.has(sessionId)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner};rememberMeta(sessionId,{currentTask:s.currentTask})}
-  emit('session:user', { sessionId, text,images:imagePaths })
-  if (s.engine === 'codex') {
-    s.queue.push({text,images})
-    s.finished=pumpCodex(s, sessionId)
-    return true
+  const replyText=reply?'[Reply to a previous message in this conversation]\n'+JSON.stringify(reply)+'\n\n[Current user request]\n'+text:text
+  const attachmentText=files.length?replyText+'\n\n[Attached files in this employee workspace]\n'+JSON.stringify(files)+'\nRead these files when relevant; attaching a file does not execute it.':replyText
+  const acceptedDelegation=delegation,prefix=s.engine!=='codex'&&bootstrap!==s.bootstrapInstructions?bootstrap+'\n\n[Current user request]\n':''
+  // Validate before acknowledging, and rebuild this projection again at actual work dispatch.
+  const acknowledgmentText=chatTaskPrompt(chat,s.cardId,acceptedDelegation,attachmentText,true)
+  if(!privateTurns.has(sessionId)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner,viewId,chat};rememberMeta(sessionId,{currentTask:s.currentTask})}
+  const taskId=privateTurns.has(sessionId)?undefined:s.currentTask?.messageId
+  privateSend?.dispatching(taskId!)
+  if(!notice)emit('session:user', { sessionId, taskId, text,images:imagePaths,...(files.length?{files}:{}),author:delegation.requestedBy,...(reply?{reply}:{}) })
+  const finishNotice=(status:'completed'|'failed'|'interrupted',error?:string)=>{
+    updateChatDelivery(s.cardId,chat,{status,sessionId,taskId,...(error?{error}:{})})
+    s.currentTask=undefined;rememberMeta(sessionId,{currentTask:undefined,busy:s.running});dispatchQueued(s,sessionId)
   }
-  s.running = true
-  rememberMeta(sessionId, { busy: true })
-  emit('session:turn-start', { sessionId })
-  s.input.push({
-    type: 'user',
-    message: { role: 'user', content:images.length?[...(engineText?[{type:'text',text:engineText}]:[]),...images.map(image=>({type:'image',source:{type:'base64',media_type:image.mimeType,data:image.data}}))]:engineText },
-    parent_tool_use_id: null,
-    session_id: s.sessionId ?? ''
-  } as SDKUserMessage)
+  const continueDelivery=()=>{
+    validateDelegation(acceptedDelegation,s.cardId)
+    if(chat&&!chatAcknowledgmentPolicy(chat,s.cardId).acknowledged)throw Error('Group acknowledgment is required before work can begin')
+    if(notice){finishNotice('completed');return}
+    const engineText=nativeControl?text:prefix+taskViewPrompt(viewId,chatTaskPrompt(chat,s.cardId,acceptedDelegation,attachmentText))
+    s.bootstrapInstructions=bootstrap
+    s.driver.send(s.privateInitialization||nativeControl?engineText:employeeRolePrompt(readStore().sessions.find(card=>card.id===s.cardId)!,engineText),images,taskId)
+    privateSend?.accepted(taskId!)
+  }
+  if(chat&&!chatAcknowledgmentPolicy(chat,s.cardId).acknowledged){
+    if(notice)updateChatDelivery(s.cardId,chat,{status:'running',sessionId,taskId})
+    void acknowledgeGroupRequest(s,sessionId,chat,acknowledgmentText,images,taskId).then(()=>{
+      if(live.get(sessionId)!==s||s.currentTask?.messageId!==taskId)throw Error('Employee task changed before work dispatch')
+      continueDelivery()
+    }).catch(error=>{if(live.get(sessionId)===s&&s.currentTask?.messageId===taskId){if(notice)finishNotice((error as Error).name==='AbortError'?'interrupted':'failed',(error as Error).message);else{emit((error as Error).name==='AbortError'?'session:interrupted':'session:error',{sessionId,message:(error as Error).message});dispatchQueued(s,sessionId)}}})
+  }else continueDelivery()
   return true
+  }finally{if(privateSend&&s.privateSend===privateSend)delete s.privateSend}
 }
 
 export async function setModel(sessionId: string, model?: string, owner?: string): Promise<boolean> {
@@ -741,7 +508,7 @@ export async function setModel(sessionId: string, model?: string, owner?: string
   assertEmployeeControl(s.cardId, owner)
   if(s.running)throw new Error('请等待当前任务结束后再切换模型')
   if(s.provider)model=deepSeekModel(s.provider,model)
-  if (s.engine === 'claude') await s.q.setModel(model)
+  await s.driver.setModel(model)
   s.model = model
   if (!owner) patchSession(s.cardId, { model })
   rememberMeta(sessionId, { model })
@@ -768,20 +535,9 @@ export async function setPermissionMode(
   if (s.running)throw new Error('请等待当前任务结束后再切换权限')
   if(mode==='plan')return setPlanMode(sessionId,true)
   if (!['default', 'acceptEdits', 'plan', 'auto', 'dontAsk', 'bypassPermissions'].includes(mode)) throw new Error(`Unknown permission mode: ${mode}`)
-  if(s.remote&&!s.nativeRemote&&mode!=='acceptEdits')throw new Error('云主机模式使用 SSH 用户的远端权限，不能切换本地沙箱')
-  if(managerCliRoot(s.cwd)&&mode!=='acceptEdits')throw new Error('Manager 员工需要 Workspace write 才能连接宿主 CLI')
-  if(s.workRoot&&mode!=='acceptEdits')throw new Error('Work 模式的目录权限不能绕过；请通过员工工作目录调整权限范围')
   // The engine decides whether this is allowed; record the change only after
   // it agrees, so the reported state can never drift from reality.
-  if (s.engine === 'codex') {
-    if(readStore().sessions.find(card=>card.id===s.cardId)?.accessMode==='isolated')await closeNativeCodexSession(sessionId)
-    s.permissionMode = mode;s.planMode=false
-    s.sandbox = sandboxFor(mode)
-    patchSession(s.cardId, { permissionMode: mode,planMode:false })
-    rememberMeta(sessionId, { permissionMode: mode,planMode:false })
-    return true
-  }
-  await s.q.setPermissionMode(mode)
+  await s.driver.setPermission(mode)
   s.permissionMode = mode;s.planMode=false
   patchSession(s.cardId, { permissionMode: mode,planMode:false })
   rememberMeta(sessionId, { permissionMode: mode,planMode:false })
@@ -791,9 +547,7 @@ export async function setPermissionMode(
 export async function setThinking(sessionId: string, enabled: boolean, owner?: string): Promise<boolean> {
   const s = require_(sessionId)
   assertEmployeeControl(s.cardId, owner)
-  if (s.engine === 'codex') throw new Error('Codex 使用模型支持的思考强度；请使用 /effort 或 config.effort')
-  // null clears the override (session default); 0 disables; a budget turns it on
-  await s.q.setMaxThinkingTokens(enabled ? null : 0, enabled ? 'summarized' : null)
+  await s.driver.setThinking(enabled)
   s.thinkingEnabled = enabled
   if (!owner) patchSession(s.cardId, { thinking: enabled })
   rememberMeta(sessionId, { thinking: enabled })
@@ -813,9 +567,7 @@ export async function setEffort(
   const cleared = effort === null || effort === undefined
   const choices=modelEfforts(s.engine,activeModel(sessionInfo(sessionId)?.models??[],s.model))
   if (!cleared && !choices.includes(effort)) throw new Error(`当前模型支持的思考强度：${choices.join(', ')||'无'}；也可使用 default`)
-  if (s.engine === 'claude') {
-    await s.q.applyFlagSettings({ effortLevel: cleared ? (s.provider?'high':null) : (effort as import('@anthropic-ai/claude-agent-sdk').EffortLevel) })
-  }
+  await s.driver.setEffort(cleared?null:effort)
   s.effort = cleared ? undefined : (effort as EffortLevel)
   if (!owner) patchSession(s.cardId, { effort: s.effort })
   rememberMeta(sessionId, { effort: s.effort })
@@ -825,18 +577,14 @@ export async function setEffort(
 export async function interrupt(sessionId: string,preserveQueue=false): Promise<boolean> {
   const s = live.get(sessionId)
   if (!s) return true
+  let receiptError:unknown;try{s.privateSend?.interrupted('Private message preparation was stopped. It was not replayed.')}catch(error){receiptError=error}
+  const notice=!!(s.currentTask?.delegation.groupNotice||s.currentTask?.delegation.channelNotice)
+  if(s.acknowledging)privateTurns.get(sessionId)?.('session:interrupted',{sessionId})
   cancelApprovals(sessionId);s.abort?.abort()
-  if(!preserveQueue)s.pendingMessages=[];rememberMeta(sessionId,{pendingMessages:[...(s.pendingMessages??[])]})
-  if (s.engine === 'codex') {
-    s.queue.length = 0
-    if(s.abort)s.abort.abort();else if(s.running&&hasNativeCodexSession(sessionId))try{await nativeCodexRequest(sessionId,'turn/interrupt')}catch(error){
-      if(!String(error).includes('no active turn to interrupt'))throw error
-      s.running=false;rememberMeta(sessionId,{busy:false})
-    }
-  } else {
-    await s.q.interrupt()
-  }
-  emit('session:interrupted', { sessionId })
+  if(!preserveQueue){for(const message of s.pendingMessages??[]){const error=interruptQueuedPrivateSend(message.id,'The private message queue was stopped. It was not replayed.');receiptError??=error;updateChatDelivery(s.cardId,message.chat,{status:'interrupted',error:'Queue cancelled by Stop'})};s.pendingMessages=[]}rememberMeta(sessionId,{pendingMessages:[...(s.pendingMessages??[])]})
+  await s.driver.interrupt()
+  if(!notice)emit('session:interrupted', { sessionId })
+  if(receiptError)throw receiptError
   return true
 }
 
@@ -845,20 +593,17 @@ export async function closeSession(sessionId: string): Promise<boolean> {
   if(employeeId)closeRemoteAgentAccess(employeeId)
   const s = live.get(sessionId)
   if (!s) return true
+  let receiptError:unknown;try{s.privateSend?.interrupted('The employee session closed before private message dispatch. It was not replayed.')}catch(error){receiptError=error}
+  if(s.acknowledging)privateTurns.get(sessionId)?.('session:closed',{sessionId})
   cancelApprovals(sessionId)
+  updateChatDelivery(s.cardId,s.currentTask?.chat,{status:'interrupted',error:'Employee session closed'})
+  for(const message of s.pendingMessages??[]){const error=interruptQueuedPrivateSend(message.id,'The employee session closed with a queued private message. It was not replayed.');receiptError??=error;updateChatDelivery(s.cardId,message.chat,{status:'interrupted',error:'Employee session closed'})}
   forget(sessionId)
   live.delete(sessionId)
-  if (s.engine === 'codex') {
-    s.queue.length = 0
-    s.abort?.abort()
-  } else {
-    s.input.close()
-    s.q.close()
-  }
-  await s.finished
-  if(s.engine==='codex')await closeNativeCodexSession(sessionId)
+  await s.driver.close()
   info.delete(sessionId)
-  emit('session:closed', { sessionId })
+  emit('session:closed', { sessionId,cardId:s.cardId })
+  if(receiptError)throw receiptError
   return true
 }
 
@@ -870,6 +615,7 @@ export async function closeAll():Promise<void> {
 
 /** What a live session reported about itself, for the CLI to read back. */
 export type SessionInfo = {
+  acknowledging?:boolean
   lastReply?:Session['lastReply']
   initialization?: import('../shared/types').EmployeeInitialization
   cardId?:string
@@ -881,6 +627,7 @@ export type SessionInfo = {
   model?: string
   thinking: boolean
   thinkingSupported: boolean
+  thinkingManaged?: boolean
   planMode?: boolean
   remoteAdmin?: boolean
   fastMode?: boolean
@@ -889,12 +636,14 @@ export type SessionInfo = {
   effort?: EffortLevel
   permissionMode: PermissionMode
   usage?:Record<string,unknown>
-  pendingMessages?:{id:string;text:string;images?:string[];delegation?:Delegation}[]
+  pendingMessages?:{id:string;text:string;images?:string[];files?:string[];delegation?:Delegation;viewId?:string;chat?:ChatTaskContext;replyTo?:string;replyQuote?:MessageQuote;crossReply?:MessageReply}[]
   commands: SlashCommand[]
   /** Commands bound to a local terminal, which a GUI should hide. */
   terminalCommands?: string[]
   models: ModelInfo[]
   busy: boolean
+  clineSessionId?:string
+  piSessionId?:string
   claudeSessionId?: string
   threadId?: string
 }
@@ -910,22 +659,23 @@ export function rememberTerminalCommands(sessionId: string, names: string[]): vo
 export function rememberMeta(sessionId: string, meta: Partial<SessionInfo>): void {
   if (!live.has(sessionId)) return
   const prev = info.get(sessionId) ?? { commands: [], models: [] }
-  info.set(sessionId, { ...prev, ...meta, id: sessionId } as SessionInfo)
+  info.set(sessionId, { ...prev, ...meta, ...(live.get(sessionId)?.acknowledging?{busy:true}:{}), id: sessionId } as SessionInfo)
   emit('session:changed', { sessionId })
 }
 
-export function sessionSnapshot(sessionId: string): Session {
+export function sessionSnapshot(sessionId: string,summary=false,store=readStore()): Session {
   const s = require_(sessionId)
-  const card = readStore().sessions.find((c) => c.id === s.cardId)!
-  return { ...conversation(sessionId), ...sessionInfo(sessionId), cardId: s.cardId,
+  const card = store.sessions.find((c) => c.id === s.cardId)!
+  const content=conversation(sessionId)
+  return { ...content, ...sessionInfo(sessionId,card),items:summary?[]:content.items, cardId: s.cardId,
     cwd:s.remote?.directory??s.cwd, title: card?.title ?? '', group: card?.group ?? '', createdAt: card?.createdAt ?? 0,
     approvals: approvalsFor(sessionId) } as Session
 }
 
-export function sessionInfo(sessionId: string): SessionInfo | undefined {
+export function sessionInfo(sessionId: string,storedCard?:StoredSession): SessionInfo | undefined {
   const meta=info.get(sessionId);if(!meta)return undefined
-  const card=readStore().sessions.find(card=>card.id===live.get(sessionId)?.cardId)
-  return {...meta,lastReply:card?.lastReply,cardId:live.get(sessionId)?.cardId,currentTask:privateTurns.has(sessionId)?undefined:live.get(sessionId)?.currentTask,initialization:card?.initialization,activityPreview:card?employeeActivity(card,{...conversation(sessionId),busy:meta.busy}):activityPreview(conversation(sessionId)),terminalCommands:meta.terminalCommands?.filter(name=>!engineCommands.some(c=>c.name===name||c.aliases?.includes(name))),commands:mergeCommands(meta.commands,meta.engine,activeModel(meta.models,meta.model))}
+  const card=storedCard??readStore().sessions.find(card=>card.id===live.get(sessionId)?.cardId)
+  return {...meta,acknowledging:!!live.get(sessionId)?.acknowledging,lastReply:card?.lastReply,cardId:live.get(sessionId)?.cardId,currentTask:privateTurns.has(sessionId)&&!live.get(sessionId)?.acknowledging?undefined:live.get(sessionId)?.currentTask,initialization:card?.initialization,activityPreview:card?employeeActivity(card,{...conversation(sessionId),busy:meta.busy}):activityPreview(conversation(sessionId)),terminalCommands:meta.terminalCommands?.filter(name=>!engineCommands.some(c=>c.name===name||c.aliases?.includes(name))),commands:mergeCommands(meta.commands,meta.engine,activeModel(meta.models,meta.model))}
 }
 
 export function allSessionInfo(): SessionInfo[] {
@@ -947,9 +697,44 @@ export function revokeInvalidDelegations(){
     if(state.privateInitialization)continue
     const valid=(delegation:Delegation|undefined)=>{try{validateDelegation(delegation,state.cardId);return true}catch{return false}}
     const previous=state.pendingMessages??[];state.pendingMessages=previous.filter(message=>valid(message.delegation))
-    if(previous.length!==state.pendingMessages.length)rememberMeta(id,{pendingMessages:state.pendingMessages})
+    if(previous.length!==state.pendingMessages.length){for(const message of previous)if(!state.pendingMessages.includes(message)){const error=interruptQueuedPrivateSend(message.id,'Private message sender authorization was revoked. It was not replayed.');if(error)emit('session:error',{sessionId:id,message:String(error)});updateChatDelivery(state.cardId,message.chat,{status:'interrupted',error:'Original sender authorization revoked'})};rememberMeta(id,{pendingMessages:state.pendingMessages})}
     if(state.running&&state.currentTask&&!valid(state.currentTask.delegation))void interrupt(id,true).catch(error=>emit('session:error',{sessionId:id,message:String(error)}))
   }
+}
+
+/** One internal acknowledgment turn on the existing engine, before the accepted work prompt. */
+async function acknowledgeGroupRequest(state:Live,sessionId:string,chat:ChatTaskContext,text:string,images:ImageInput[],taskId?:string){
+  const policy=chatAcknowledgmentPolicy(chat,state.cardId),closeTool=openDiscussionTool(state,chat)
+  let failure:string|undefined
+  let resolve!:()=>void,reject!:(error:Error)=>void
+  const completed=new Promise<void>((yes,no)=>{resolve=yes;reject=no});void completed.catch(()=>{})
+  state.acknowledging=true
+  privateTurns.set(sessionId,(channel,payload:any)=>{
+    if(channel==='session:codex'||channel==='session:agent'){
+      const event=payload.event
+      if(event.kind==='notice'&&event.level==='error')failure=event.text
+    }
+    if(channel==='session:result'&&!payload.success)failure=payload.error||'The acknowledgment turn failed'
+    if(channel==='session:error')reject(Error(payload.message))
+    if(['session:closed','session:interrupted'].includes(channel))reject(Object.assign(Error('Group acknowledgment was interrupted; work has not started'),{name:'AbortError'}))
+    if(channel==='session:end')reject(Error('Employee session closed before group acknowledgment'))
+    if(channel==='session:turn-end')failure?reject(Error(failure)):resolve()
+  })
+  const target=discussionTarget(chat)
+  const prompt='[Agents Company '+target.conversationType+' acknowledgment]\n'+JSON.stringify({...chat,...target,employeeId:state.cardId,mode:policy.mode,required:policy.required,muted:policy.muted})+
+    '\nRead the accepted shared message and its reply context below. This stage is only for your acknowledgment; do not begin work or use workspace tools. '+
+    (policy.mode==='awareness'?'You are receiving shared context, not a new assignment. This turn ends after your acknowledgment. ':'Formal work will be dispatched only after Core records your acknowledgment. ')+
+    'You MUST explicitly call the '+DISCUSSION_TOOL.name+' tool with '+JSON.stringify({...target,text:null})+' to confirm reading silently. Copy these routing IDs exactly; another group or channel in your history is a different destination. '+
+    (policy.muted||policy.required==='silent-only'?'This receipt must stay silent.':'Only if a brief response is useful to the people in this conversation, pass that actual public response as text instead. Default to null; do not publish your private reasoning, self-instructions, or decisions about whether/how to respond. ')+
+    'Ordinary assistant text, thoughts and JSON output are private and are NEVER sent to the group/channel or treated as a read confirmation. A tool call is required. After the tool succeeds, immediately finish this turn with only OK. Do not read history, discover tools or execute the accepted request in this turn. Core will send a separate response-stage task when applicable; do not start it yourself. '+
+    '\nThis is the original request accepted for this delivery; public corrections do not rewrite accepted work.\n[Accepted request]\n'+text
+  try{
+    state.driver.send(prompt,images,taskId)
+    await completed;await state.driver.whenIdle()
+    if(!live.has(sessionId))throw Error('Employee session closed before group acknowledgment')
+    if(!chatAcknowledgmentPolicy(chat,state.cardId).acknowledged)throw Error('Shared message was not acknowledged through its tool/API; work has not started')
+  }catch(error){if(state.running&&(error as Error).name!=='AbortError')await state.driver.interrupt().catch(()=>{});await state.driver.whenIdle();throw error}
+  finally{closeTool();privateTurns.delete(sessionId);state.acknowledging=false;if(live.has(sessionId))rememberMeta(sessionId,{busy:state.running})}
 }
 
 /** Keep the native context, but intercept the entire onboarding turn BEFORE persistence or publication. */
@@ -961,7 +746,7 @@ export async function runPrivateInitialization(employeeId:string,prompt:string,s
   const state=require_(sessionId)
   state.privateInitialization=true
   if(state.running)throw Error('Cannot initialize an active user turn')
-  let finalText='',deltaId='',deltaText=''
+  const closeDocumentation=beginDocumentationRead(state)
   let resolve!:()=>void,reject!:(error:Error)=>void
   const completed=new Promise<void>((yes,no)=>{resolve=yes;reject=no})
   // A permission request can fail while sendMessage is still awaiting preparation.
@@ -971,23 +756,16 @@ export async function runPrivateInitialization(employeeId:string,prompt:string,s
       if(channel==='session:message'){
         const message=payload.message
         if(message.type==='result'&&(message.is_error||String(message.subtype).startsWith('error'))){reject(Error('引擎初始化失败：'+(message.errors?.join('; ')||message.subtype)));return}
-        if(message.type==='assistant'){
-          const text=(message.message?.content??[]).filter((block:any)=>block.type==='text').map((block:any)=>block.text).join('')
-          if(text)finalText=text
-        }
-        if(message.type==='result'&&typeof message.result==='string')finalText=message.result
       }
-      if(channel==='session:codex'){
+      if(channel==='session:codex'||channel==='session:agent'){
         if(payload.event.kind==='notice'&&payload.event.level==='error'){reject(Error(payload.event.text));return}
-        const event=payload.event
-        if(event.kind==='text')finalText=event.text
-        if(event.kind==='text-delta'){if(deltaId!==event.id){deltaId=event.id;deltaText=''};deltaText=(deltaText+event.text).slice(0,4096);finalText=deltaText}
       }
+      if(channel==='session:result'&&payload.success===false)reject(Error(payload.error||'引擎初始化失败'))
       if(channel==='session:error')reject(Error(payload.message))
       if(['session:end','session:closed','session:interrupted'].includes(channel))reject(Error('初始化尚未完成，引擎连接已结束。'))
       if(channel==='session:turn-end'){
-        // Earlier reading commentary is not the final assistant acknowledgement.
-        if(finalText.trim()==='OK')resolve();else reject(Error('初始化未收到有效的 OK 确认，请检查文档和引擎配置后重试。'))
+        // Authenticated tool results prove readiness; model wording is not a receipt.
+        assertDocumentationRead(state);resolve()
       }
     }catch(error){reject(error as Error)}
   })
@@ -996,13 +774,14 @@ export async function runPrivateInitialization(employeeId:string,prompt:string,s
   try{
     await sendMessage(sessionId,prompt)
     await completed
-    if(state.engine==='codex')await state.finished
+    await state.driver.whenIdle()
     signal.throwIfAborted()
     if(!live.has(sessionId))throw Error('初始化连接已关闭。')
   }catch(error){
     await closeSession(sessionId).catch(()=>{})
     throw error
   }finally{
+    closeDocumentation()
     signal.removeEventListener('abort',cancel)
     privateTurns.delete(sessionId)
     state.privateInitialization=false

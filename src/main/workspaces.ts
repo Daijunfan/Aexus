@@ -7,15 +7,23 @@ import { APP_HOME } from '../shared/protocol'
 import {requirePlugin} from './plugins/registry'
 import {managerCliRoot} from './exec'
 import type { Store, StoredSession, TeamSettings } from '../shared/types'
-import { teamSettings } from '../shared/types'
+import { teamSettings,employeeSettings } from '../shared/types'
 export { employeeDirectoryName as workspaceName } from '../shared/office'
 
-/** User files live under the persistent plugin source, never inside the packaged App. */
+/** Portable data storage, or a legacy development source marker; never packaged App resources. */
 export function pluginWorkspaceBase(id:string):string {
   const plugin=requirePlugin(id),marker=join(plugin.directory,'source-location.json')
-  const source=existsSync(marker)?JSON.parse(readFileSync(marker,'utf8')).source:plugin.directory
-  if(typeof source!=='string'||!existsSync(source))throw new Error(`插件文件夹不存在：${source}`)
-  return resolve(process.env.AGENTS_COMPANY_WORKSPACES||join(realpathSync(source),'workspaces'),process.env.AGENTS_COMPANY_WORKSPACES?(plugin.workspaceDirectory||`${plugin.id}-workspace`):'')
+  const source=existsSync(marker)?JSON.parse(readFileSync(marker,'utf8')).source:undefined
+  // Valid legacy development markers remain compatible; release packages have none.
+  if(!process.env.AGENTS_COMPANY_WORKSPACES&&typeof source==='string'&&existsSync(source))return join(realpathSync(source),'workspaces')
+  return resolve(process.env.AGENTS_COMPANY_WORKSPACES||join(APP_HOME,'workspaces'),plugin.workspaceDirectory||`${plugin.id}-workspace`)
+}
+
+/** Collection views are an explicit plugin capability, not an ID-specific host branch.
+ * This changes only user-selected views, never an existing Team or employee root. */
+export function defaultPluginWorkspace(id:string):string {
+  const base=pluginWorkspaceBase(id)
+  return requirePlugin(id).defaultWorkspace==='collection'?base:join(base,'default')
 }
 
 /** Previous direct-plugin workspace, retained so the first open can import its files. */
@@ -27,6 +35,10 @@ export function legacyPluginWorkspace(id:string):string {
 export function inside(root: string, path: string): boolean {
   const part = relative(root, path)
   return !!part && part !== '..' && !part.startsWith(`..${sep}`) && !isAbsolute(part)
+}
+
+export function employeeRoot(store:Store,card:{group:string;workEnvironment?:import('../shared/types').WorkEnvironment;localWorkspaceRoot?:string}){
+  return teamSettings(store,card.group).mode==='cloud'&&card.workEnvironment==='local'?card.localWorkspaceRoot??defaultTeamRoot(card.group,{mode:'build'}):store.teamRoots?.[card.group]
 }
 
 export function defaultTeamRoot(name:string,settings:TeamSettings={mode:'build'}):string {
@@ -68,12 +80,14 @@ export function teamRoot(path: string,create:boolean|'preview'=false,pluginWorks
   return root
 }
 
-export function employeeWorkspace(store: Store, group: string, input: string, id?: string, create: boolean | 'preview' = false, directoryMode?: 'create'|'existing'): string {
-  const configured = store.teamRoots?.[group]
+export function employeeWorkspace(store: Store, group: string, input: string, id?: string, create: boolean | 'preview' = false, directoryMode?: 'create'|'existing',workEnvironment?:import('../shared/types').WorkEnvironment): string {
+  const existing=store.sessions.find(card=>card.id===id)
+  const identity={group,workEnvironment:workEnvironment??existing?.workEnvironment,localWorkspaceRoot:existing?.group===group?existing.localWorkspaceRoot:undefined},config=employeeSettings(store,identity)
+  const configured = employeeRoot(store,identity)
   if (!group || !store.groups.includes(group) || !configured) throw new Error('请先为所属 Team 绑定外部根目录')
-  if(teamSettings(store,group).mode==='cloud')return cloudDirectory(teamSettings(store,group),input)
-  const work=teamSettings(store,group).mode==='work'
-  const root = teamRoot(configured,false,work)
+  if(config.mode==='cloud')return cloudDirectory(config,input)
+  const work=config.mode==='work'
+  const root = identity.workEnvironment==='local'&&!existsSync(configured)?resolve(configured):teamRoot(configured,false,work)
   if(root!==configured)throw new Error('Team 根目录已被移动或替换，请重新绑定目录')
   const manager=managerCliRoot(root)===root
   if (!input?.trim()) throw new Error('请选择员工的工作文件夹')
@@ -93,7 +107,7 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
     const needsComparison =
       (work && teamSettings(store, card.group).mode === 'work') ||
       (manager && card.group === group)
-    if (!needsComparison) continue
+    if (!needsComparison||employeeSettings(store,card).mode==='cloud') continue
     const other = existsSync(card.cwd)?realpathSync(card.cwd):resolve(card.cwd)
     if (other===prospective) throw new Error('该 Team 的一个文件夹只能对应一名员工；可以选择父目录或嵌套子目录')
   }
@@ -110,7 +124,7 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
 }
 
 export function executionEmployee(store:Store,card:StoredSession):StoredSession {
-  const config=teamSettings(store,card.group)
+  const config=employeeSettings(store,card)
   return {...card,remote:config.mode==='cloud'?{...config.remote!,directory:card.cwd}:null}
 }
 export function cloudDirectory(settings:TeamSettings,input:string):string {
@@ -128,18 +142,19 @@ export function workspaceStatus(store: Store, card: StoredSession): StoredSessio
 }
 
 /** Creation has two choices. Explicit legacy cwd/create calls remain CLI-compatible. */
-export function chooseEmployeeWorkspace(store:Store,group:string,title:string,input?:string,mode?:string,id?:string,preview=false):string {
+export function chooseEmployeeWorkspace(store:Store,group:string,title:string,input?:string,mode?:string,id?:string,preview=false,workEnvironment?:import('../shared/types').WorkEnvironment):string {
   if(mode!==undefined&&!['default','bind','create','existing'].includes(mode))throw new Error('请选择默认生成或绑定已有文件夹')
   if(mode==='default'||(!mode&&!input)) {
     const name=String(title??'').trim()
     if(!name||name==='.'||name==='..'||/[\\/\0]/.test(name))throw new Error('默认文件夹必须与员工同名；名字不能含路径分隔符，请修改名字或绑定已有文件夹')
-    const root=store.teamRoots?.[group]
+    const existing=store.sessions.find(card=>card.id===id)
+    const root=employeeRoot(store,{group,workEnvironment:workEnvironment??existing?.workEnvironment,localWorkspaceRoot:existing?.group===group?existing.localWorkspaceRoot:undefined})
     if(!root)throw new Error('请先为所属 Team 配置工作区')
     const target=resolve(root,name)
     if(input&&resolve(root,input)!==target)throw new Error('默认工作目录由员工名字生成，不能指定其他路径')
     const own=id&&store.sessions.find(c=>c.id===id)?.cwd===target
-    return employeeWorkspace(store,group,target,id,preview?'preview':true,own?'existing':'create')
+    return employeeWorkspace(store,group,target,id,preview?'preview':true,own?'existing':'create',workEnvironment)
   }
   const existing=mode==='bind'||mode==='existing'
-  return employeeWorkspace(store,group,input||'',id,preview?'preview':!existing,existing?'existing':mode==='create'?'create':undefined)
+  return employeeWorkspace(store,group,input||'',id,preview?'preview':!existing,existing?'existing':mode==='create'?'create':undefined,workEnvironment)
 }

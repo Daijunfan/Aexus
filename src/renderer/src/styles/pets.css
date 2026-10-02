@@ -3,9 +3,9 @@
 .official-pet.pose-land { animation:pet-land .7s ease both; }
 @keyframes official-snooze { 0%,100% { transform:translateY(5px) rotate(-5deg); } 50% { transform:translateY(8px) rotate(-7deg) scale(1.01,.99); } }
 .with-official-pet.is-working .mascot { z-index:5; }
-.cloud-native-foot{position:absolute;left:19px;top:159px;width:150px;height:31px;z-index:5;pointer-events:none;filter:drop-shadow(0 3px 5px #557a9a55);animation:cloud-native-float 3.8s ease-in-out infinite}
+.cloud-native-foot{position:absolute;left:2px;bottom:3px;width:186px;height:40px;z-index:8;pointer-events:none;filter:drop-shadow(0 2px 2px #557a9a40);animation:cloud-native-float 3.8s ease-in-out infinite}
 .cloud-native-foot svg{display:block;width:100%;height:100%}.cloud-native-pet .mascot{z-index:6}
-@keyframes cloud-native-float{50%{transform:translateY(-3px)}}
+@keyframes cloud-native-float{50%{transform:translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){.cloud-native-foot{animation:none}}
 .official-colors { opacity:.45; }
 @media(prefers-reduced-motion:reduce){.official-pet,.official-pet * { animation:none!important; }}
@@ -32,3 +32,24 @@
 @keyframes pet-hop { 0%,100% { transform:translateY(0) scale(1.06,.96); } 45% { transform:translateY(-19px) scale(.97,1.03); } }
 @keyframes pet-land { 0% { transform:translateY(-19px) scale(.93,1.1); } 40% { transform:translateY(6px) scale(1.12,.9); } 72% { transform:translateY(-4px) scale(.98,1.04); } 100% { transform:none; } }
 @keyframes pet-breath { 50% { transform:scale(1.02,1.025); } }
+
+/* One cell is painted; breathing moves a small composited HTML layer, not the atlas SVG. */
+.mascot.official-pet{display:block;container-type:inline-size;filter:none!important}
+.pet-viewport{position:absolute;display:block;left:0;top:50%;width:100%;aspect-ratio:192/208;transform:translateY(-50%)}
+.official-pet .official-frame{position:absolute;display:block;inset:0;transform-origin:50% 81.73077%;will-change:transform}
+.official-pet .pet-cell{display:block;width:100%;height:100%;background-repeat:no-repeat}
+.official-pet .sleep-marks{position:absolute;inset:0;pointer-events:none}
+.official-pet .sleep-z{position:absolute;display:block;font-family:monospace;font-weight:700;line-height:1;color:var(--sleep-ink,#aac3e6);will-change:transform,opacity}
+.official-pet .z-one{left:75.52083%;top:26.92308%;font-size:6.770833cqw}
+.official-pet .z-two{left:83.85417%;top:13.94231%;font-size:9.375cqw}
+.official-pet .z-three{left:92.1875%;top:.48077%;font-size:11.45833cqw}
+@keyframes official-snooze{0%,100%{transform:translateY(2.40385%) rotate(-5deg)}50%{transform:translateY(3.84615%) rotate(-7deg) scale(1.01,.99)}}
+.infinite-canvas[data-animated=false] *, .infinite-canvas[data-animated=false] *::before, .infinite-canvas[data-animated=false] *::after{animation-play-state:paused!important}
+.infinite-canvas[data-animated=false] .official-frame,.infinite-canvas[data-animated=false] .sleep-z{will-change:auto}
+
+
+.claude-pet .clawd-body{position:absolute;display:block;left:14%;top:23%;width:72%;height:62%;object-fit:contain;filter:drop-shadow(1px 4px 2px #16212630)}
+.claude-pet .clawd-awake{animation:clawd-step .7s ease-in-out infinite;transform-origin:50% 85%}
+.claude-pet .buddy-body{position:absolute;display:flex;align-items:center;justify-content:center;inset:0;white-space:pre;font:700 7.2cqw/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:-.03em;text-shadow:0 2px 1px #16212618}
+@keyframes clawd-step{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3%) rotate(2deg)}}
+.infinite-canvas[data-animated=false] .clawd-body{animation-play-state:paused}

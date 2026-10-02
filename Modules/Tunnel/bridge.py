@@ -2,6 +2,9 @@
 import json
 from pathlib import Path
 import sys
+
+# Resolve bundled sibling modules even with the Windows embedded Python runtime.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import adapters
 import commands
 import transport
@@ -17,7 +20,7 @@ try:
         session, args, _ = adapters.prepare(request['engine'], config, [], request['session'])
         print(json.dumps({'cwd': str(session), 'args': args,
                           'server': {'command': sys.executable, 'args': [str(commands.ROOT/'tunnel.py'), '_serve', str(session/'target.json')]},
-                          'instructions': (session/'AGENTS.md').read_text()}))
+                          'instructions': (session/'AGENTS.md').read_text(encoding='utf-8')}))
     else:
         raise ValueError('Unknown host operation')
 except Exception as error:

@@ -12,6 +12,7 @@ export function workspacePath(root:string,value='.',write=false) {
   return file
 }
 const hash=(value:Buffer)=>createHash('sha256').update(value).digest('hex')
+const imageMime=(bytes:Buffer)=>bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?'image/png':bytes.subarray(0,3).equals(Buffer.from([255,216,255]))?'image/jpeg':/^GIF8[79]a$/.test(bytes.subarray(0,6).toString())?'image/gif':bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP'?'image/webp':undefined
 export function workspaceFiles(root:string,operation:string,args:Record<string,any>) {
   const file=workspacePath(root,args.path||'.',['write','mkdir','move','trash'].includes(operation))
   if(operation==='copy-info'){
@@ -43,7 +44,7 @@ export function workspaceFiles(root:string,operation:string,args:Record<string,a
   if(operation==='list')return {root,path:path.relative(root,file),entries:fs.readdirSync(file,{withFileTypes:true}).filter(e=>args.hidden||!e.name.startsWith('.')).map(e=>{const child=path.join(file,e.name),stat=fs.lstatSync(child);return {name:e.name,path:path.relative(root,child),directory:e.isDirectory(),symlink:e.isSymbolicLink(),bytes:stat.size,modifiedAt:stat.mtimeMs}}).sort((a,b)=>Number(b.directory)-Number(a.directory)||a.name.localeCompare(b.name))}
   if(operation==='read-image'){
     if(fs.statSync(file).size>10*1024*1024)throw new Error('图片不能超过 10 MB')
-    const bytes=fs.readFileSync(file),mimeType=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?'image/png':bytes.subarray(0,3).equals(Buffer.from([255,216,255]))?'image/jpeg':/^GIF8[79]a$/.test(bytes.subarray(0,6).toString())?'image/gif':bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP'?'image/webp':undefined
+    const bytes=fs.readFileSync(file),mimeType=imageMime(bytes)
     if(!mimeType)throw new Error('请选择 PNG、JPEG、GIF 或 WebP 图片')
     return {path:args.path,mimeType,data:bytes.toString('base64'),bytes:bytes.length,binary:true}
   }
@@ -57,6 +58,12 @@ export function workspaceFiles(root:string,operation:string,args:Record<string,a
   if(operation==='write') {
     if(args.hash&&(!fs.existsSync(file)||hash(fs.readFileSync(file))!==args.hash))throw new Error('文件已被其他操作修改，请重新读取后保存')
     if(args.create&&fs.existsSync(file))throw new Error('同名文件已存在')
+    if(args.contentBase64!==undefined){
+      if(typeof args.contentBase64!=='string'||args.contentBase64.length>14*1024*1024)throw new Error('图片不能超过 10 MB')
+      const bytes=Buffer.from(args.contentBase64,'base64')
+      if(bytes.length>10*1024*1024||!imageMime(bytes))throw new Error('请选择 10 MB 以内的 PNG、JPEG、GIF 或 WebP 图片')
+      fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes,{flag:args.create?'wx':'w'});return {path:args.path,saved:true}
+    }
     fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,String(args.content??''));return {path:args.path,saved:true}
   }
   if(operation==='mkdir'){fs.mkdirSync(file,{recursive:false});return {path:args.path,created:true}}

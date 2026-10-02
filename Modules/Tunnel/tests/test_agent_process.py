@@ -13,6 +13,7 @@ import agent_process
 
 
 class AgentProcessTest(unittest.TestCase):
+    @unittest.skipIf(os.name == 'nt', 'POSIX shell fixture; Windows transport is tested with its native protocol and ConPTY')
     def test_ssh_stdio_stays_clean_and_runs_in_remote_directory(self):
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
@@ -31,12 +32,19 @@ class AgentProcessTest(unittest.TestCase):
             self.assertEqual(json.loads(result.stdout), {"cwd": str(remote), "input": "hello"})
             self.assertEqual(result.stderr, "")
 
+    def test_embedded_python_resolves_sibling_modules(self):
+        probe = "import runpy,sys;ns=runpy.run_path(sys.argv[1]);print('IMPORT_OK' if callable(ns['command']) else 'BAD')"
+        result = subprocess.run([sys.executable, '-I', '-c', probe, str(ROOT/'agent_process.py')], capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), 'IMPORT_OK')
+
     def test_command_rejects_unknown_engine_and_quotes_paths(self):
         config = {"host": "fixture", "directory": "/home/djf/a folder", "os": "linux"}
         self.assertIn("a folder", agent_process.command(config, "codex", ["app-server"]))
         with self.assertRaisesRegex(ValueError, "Unknown"):
             agent_process.command(config, "bash", ["-c", "echo local"])
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX SSH fixture; native Windows session paths are exercised separately')
     def test_remote_claude_delete_targets_only_one_session(self):
         with tempfile.TemporaryDirectory() as temporary:
             base=Path(temporary);project=base/'.claude/projects/fixture';project.mkdir(parents=True)

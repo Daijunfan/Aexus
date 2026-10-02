@@ -1,0 +1,54 @@
+/* Company is a diagram surface. Presentation colors never replace saved room materials. */
+:root[data-presentation=company]{
+ --company-canvas:var(--bg);
+ --company-grid:color-mix(in srgb,var(--fg) 18%,transparent);
+ --company-room-edge:color-mix(in srgb,var(--fg) 36%,var(--bg-alt));
+ --company-card-edge:color-mix(in srgb,var(--fg) 28%,var(--bg-elev));
+ --company-connection:color-mix(in srgb,var(--fg) 76%,var(--bg-elev));
+ --company-active:light-dark(#147a4e,#63dfa0);
+ --company-error:light-dark(#b93838,#ff9892);
+ --company-pending:light-dark(#9b6908,#ebc770);
+ --company-manager:light-dark(#3d528f,#b8c8f5);
+ --company-governor:light-dark(#80571b,#edc77b);
+ --company-secretary:light-dark(#70408e,#d8b8f2);
+ --default-room-floor-top:var(--bg-alt);
+ --default-room-floor-bottom:var(--bg-alt);
+}
+:root[data-presentation=company] .infinite-canvas{background:var(--company-canvas)}
+:root[data-presentation=company] .canvas-grid{background-image:linear-gradient(to right,var(--company-grid) 1px,transparent 1px),linear-gradient(to bottom,var(--company-grid) 1px,transparent 1px);opacity:.5}
+:root[data-presentation=company] .room-outline{filter:drop-shadow(0 5px 7px #00000018)}
+:root[data-presentation=company] .room-outline>path:first-of-type{stroke:var(--company-room-edge);stroke-opacity:1}
+:root[data-presentation=company] .team-header{background:var(--bg-elev);border-bottom-color:color-mix(in srgb,var(--room-accent) 55%,var(--company-room-edge))}
+:root[data-presentation=company] .team-title strong{color:var(--fg);font-weight:700}
+:root[data-presentation=company] .world-room .team-header .team-root-label{color:var(--fg-dim);opacity:1}
+:root[data-presentation=company] .team-kind,:root[data-presentation=company] .team-health{border-color:var(--company-card-edge);background:var(--bg-alt);color:var(--fg-dim)}
+:root[data-presentation=company] .team-health[data-connected=true] i{background:var(--company-active);box-shadow:0 0 0 3px color-mix(in srgb,var(--company-active) 16%,transparent)}
+:root[data-presentation=company] .employee-location .employee-badge{background:var(--bg-elev);border-color:var(--company-card-edge);box-shadow:0 2px 5px #00000024}
+:root[data-presentation=company] .employee-location .employee-name{font-weight:700;color:var(--fg)}
+:root[data-presentation=company] .employee-location .badge-place small{color:var(--fg-dim)}
+:root[data-presentation=company] .employee[data-management-role] .employee-management{background:var(--bg-alt);color:var(--fg-dim);border-bottom:1px solid var(--border);letter-spacing:.45px}
+:root[data-presentation=company] .employee[data-management-role=manager] .employee-management{background:color-mix(in srgb,var(--company-manager) 12%,var(--bg-elev));color:var(--company-manager)}
+:root[data-presentation=company] .employee[data-management-role=governor] .employee-management{background:color-mix(in srgb,var(--company-governor) 12%,var(--bg-elev));color:var(--company-governor)}
+:root[data-presentation=company] .employee[data-management-role=secretary] .employee-management{background:color-mix(in srgb,var(--company-secretary) 12%,var(--bg-elev));color:var(--company-secretary)}
+:root[data-presentation=company] .employee-location .employee:hover{filter:none}
+:root[data-presentation=company] .employee-location .employee:hover .employee-badge{border-color:var(--accent)}
+:root[data-presentation=company] .employee-location .employee:focus-visible{outline:2px solid var(--accent);outline-offset:0}
+:root[data-presentation=company] .employee:is([data-state=initializing],[data-state=initialization-failed]){opacity:1}
+:root[data-presentation=company] .employee-state{background:var(--bg-elev);color:var(--fg);border:1px solid var(--company-card-edge);font-size:11px;font-weight:600;box-shadow:0 2px 6px #0002}
+:root[data-presentation=company] .employee-location .employee[data-state=sleeping] .badge-light{background:var(--fg-faint);border-color:var(--bg-elev);box-shadow:0 0 0 1px var(--company-card-edge)}
+:root[data-presentation=company] .employee-location .employee:is([data-state=working],[data-state=communicating]) .badge-light{background:var(--company-active);border-color:var(--bg-elev);box-shadow:0 0 0 1px var(--company-active)}
+:root[data-presentation=company] .employee-location .employee:is([data-state=disconnected],[data-state=initialization-failed]) .badge-light{background:var(--company-error);border-color:var(--bg-elev);box-shadow:0 0 0 1px var(--company-error);animation:none}
+:root[data-presentation=company] .employee-location .employee[data-state=initializing] .badge-light{background:var(--company-pending);border-color:var(--bg-elev);box-shadow:0 0 0 1px var(--company-pending);animation:none}
+:root[data-presentation=company] .activity-bubble,:root[data-presentation=company] .connector-editor{border-color:var(--company-card-edge);box-shadow:0 5px 15px #00000020}
+:root[data-presentation=company] .office-connections{--management-active:var(--company-active)}
+:root[data-presentation=company] .management-connection{color:var(--company-connection)}
+:root[data-presentation=company] .management-connection[data-active=true]{color:var(--management-active)}
+:root[data-presentation=company] .management-line{opacity:.95}
+:root[data-presentation=company] .office-connections .management-line-halo{stroke:var(--bg-elev);opacity:.96}
+:root[data-presentation=company] .office-connections marker path{fill:var(--company-connection);stroke:var(--bg-elev);stroke-width:1;paint-order:stroke}
+:root[data-presentation=company] .management-connection[data-selected=true]:not([data-active=true]){color:var(--accent)}
+:root[data-presentation=company] .canvas-hud>span{color:var(--fg-dim);background:var(--bg-elev);border-color:var(--company-card-edge);box-shadow:0 2px 6px #00000014}
+:root[data-presentation=company] .canvas-hud b{color:var(--fg-dim)}
+:root[data-presentation=company] .canvas-overview{background:var(--bg-elev);border-color:var(--company-card-edge);backdrop-filter:none}
+:root[data-presentation=company] .canvas-overview-room{background:var(--bg-alt);border-color:var(--company-connection);color:var(--fg);box-shadow:none}
+:root[data-presentation=company] .canvas-overview-room:is(:hover,:focus-visible){background:var(--bg-hover);outline:2px solid var(--accent);color:var(--fg)}

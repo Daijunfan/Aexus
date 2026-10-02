@@ -1,0 +1,48 @@
+'use strict';
+const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
+const {randomUUID}=require('node:crypto');
+const {chromium,expect}=require('../../../node_modules/@playwright/test');
+const root=path.resolve(__dirname,'..');
+(async()=>{
+ const temp=await fs.mkdtemp(path.join(os.tmpdir(),'mr-learning-ui-')),workspace=path.join(temp,'library');await fs.mkdir(workspace);
+ const server=await require('../dist-plugin/lib/server.cjs').startServer({workspace});let browser;
+ const report={passed:false,checks:[],browserErrors:[]},pass=text=>{report.checks.push(text);console.log('PASS '+text);};
+ const api=async(method,params={})=>{const r=await server.runtime.request({jsonrpc:'2.0',id:randomUUID(),method,params});assert(!r.error,JSON.stringify(r.error));return r.result;};
+ const output=path.join(root,'artifacts/learning');await fs.mkdir(output,{recursive:true});
+ try{
+  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Users/djf/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell'});
+  const page=await browser.newPage({viewport:{width:1520,height:1000}});page.on('pageerror',e=>report.browserErrors.push(e.message));page.setDefaultTimeout(15000);
+  await fs.writeFile(path.join(workspace,'recall.pdf'),require('./fixtures.cjs').pdfFixture());
+  let s=await api('study.create',{title:'Recall workflow'});
+  const change=async(method,p={})=>{s=await api('study.get',{setId:s.id});s=await api(method,{setId:s.id,expectedRevision:s.revision,...p});return s;};
+  await change('study.documents.add',{paths:['recall.pdf']});const doc=await api('document.open',{path:'recall.pdf',activate:false});
+  const captured=await api('study.card.create',{setId:s.id,expectedRevision:s.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),title:'Source question',text:'',color:'yellow',locator:{page:1},selection:{rects:[{page:1,x:.12,y:.15,width:.55,height:.13}]}});
+  await change('study.note.create',{title:'Grouped question',text:'Remember two countries'});s=await api('study.get',{setId:s.id});const note=s.cards.find(c=>c.title==='Grouped question');
+  await change('study.review.configure',{cardId:note.id,enabled:true,revealMode:'independent',cloze:'{{c1::巴黎::城市}} is in {{c2::France}}'});
+  await api('study.open',{setId:s.id,documentId:doc.id});await page.goto(server.url);await page.waitForSelector('body[data-ready=true]');
+  await page.click('#study-learning-menu');await page.click('[data-learning=recall]');await page.selectOption('[name=enabled]','yes');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+  await expect(page.locator('.study-recall-mask')).toBeVisible();await expect(page.locator('.recall-card-cover')).toHaveCount(2);
+  const mark=page.locator('.study-recall-mask').first(),box=await mark.boundingBox();await page.mouse.click(box.x+box.width*.6,box.y+box.height*.6);
+  await expect(page.locator('.study-recall-mask')).toHaveCount(0);await expect(page.locator(`.recall-card-cover[data-recall-card="${captured.card.id}"]`)).toHaveCount(0);
+  await page.click('#recall-reset');await expect(page.locator('.study-recall-mask')).toBeVisible();
+  await page.locator(`.recall-card-cover[data-recall-card="${note.id}"]`).click();await expect(page.locator(`.recall-card-cover[data-recall-card="${note.id}"]`)).toHaveCount(0);
+  pass('Actual document and mind-map clicks reveal synchronized recall masks; reset hides them without deleting source annotations');
+  await page.click('#study-learning-menu');await page.click('[data-learning=session]');await page.selectOption('[name=sort]','title');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+  await expect(page.locator('.study-review-front')).toHaveText('[ 城市 ] is in France');await expect(page.locator('#study-review-answer')).toBeHidden();
+  await page.locator('#study-cards-panel').focus();await page.keyboard.press('Space');await expect(page.locator('#study-review-answer')).toBeVisible();
+  assert.equal((await api('reader.position.get',{id:doc.id})).locator.page,1,'Review space must not turn the PDF page');
+  await page.reload();await page.waitForSelector('body[data-ready=true]');await expect(page.locator('#study-review-answer')).toBeVisible();await expect(page.locator('.study-review-front')).toHaveText('[ 城市 ] is in France');
+  await page.click('[data-grade=easy]');await expect(page.locator('.study-review-front')).toHaveText('巴黎 is in [ … ]');
+  await page.click('#review-session-previous');await expect(page.locator('.study-review-front')).toHaveText('[ 城市 ] is in France');await page.click('#study-review-reveal');await expect(page.locator('[data-grade=easy]')).toBeDisabled();
+  pass('Grouped cloze presents independent questions, persists reveal after reload, and rejects repeat grading in the UI');
+  await page.click('#study-undo');await expect(page.locator('[data-grade=easy]')).toBeEnabled();assert.equal((await api('study.review.log',{setId:s.id})).total,0);
+  await page.click('#review-session-star');await expect(page.locator('#review-session-star')).toHaveText('★ 已收藏');await page.click('#review-session-comments');await page.fill('[name=text]','A saved review comment');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+  assert.equal((await api('study.comment.list',{setId:s.id,cardId:note.id})).comments[0].text,'A saved review comment');
+  pass('Undo restores the exact review question and schedule; favorite and review annotations persist');
+  await page.click('[data-study-view=map]');await page.click('#study-organize');await page.click('[data-organize=none]');await page.click('#study-presentation');await expect(page.locator('#presentation-screen')).toBeVisible();await expect(page.locator('#presentation-content')).toContainText('Source question');
+  await page.keyboard.press('ArrowRight');await expect(page.locator('#presentation-content')).toContainText('Grouped question');await page.screenshot({path:path.join(output,'presentation.png')});await page.keyboard.press('Escape');await expect(page.locator('#presentation-screen')).toBeHidden();
+  pass('Local presentation traverses real study cards and exits with keyboard shortcuts without changing their hierarchy');
+  await page.setViewportSize({width:900,height:760});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({path:path.join(output,'recall-narrow.png')});assert.deepEqual(report.browserErrors,[]);report.passed=true;
+ }catch(e){report.error=e.stack;throw e;}finally{await fs.writeFile(path.join(output,'ui-result.json'),JSON.stringify(report,null,2));await browser?.close();await server.close();await fs.rm(temp,{recursive:true,force:true});}
+})().catch(e=>{console.error(e);process.exitCode=1;});

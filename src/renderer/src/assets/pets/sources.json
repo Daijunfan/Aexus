@@ -48,6 +48,30 @@
     "sha256": "8b5855148f8ad50cfedcd017b4b90ff622abda092bd9cb4ad56709674d59485c"
   },
   {
+    "id": "hoots",
+    "source": "openai.chatgpt/webview/assets/hoots-spritesheet-v8-21cacd193ace.webp",
+    "extensionVersion": "26.917.61114",
+    "bytes": 2447958,
+    "sha256": "62539958eb6ab2b23c6cb640c6ca9516a42a75e785203eee3eeff4d9c4581456"
+  },
+  {
+    "id": "clawd",
+    "source": "anthropic.claude-code/resources/clawd.svg",
+    "extensionVersion": "2.1.280",
+    "bytes": 1751,
+    "sha256": "9ca6ebb33e268ff95ded9b927ceb53f22deecf4f1de9988f088437621c85154c"
+  },
+  {
+    "id": "claude-buddies",
+    "repository": "https://github.com/anthropics/claude-desktop-buddy",
+    "commit": "a280c6421931431ba6905aee9d2b50b2bfd8c103",
+    "source": "src/buddies/*.cpp",
+    "license": "MIT",
+    "adaptation": "Original character body frames and sequences extracted into JSON; app status controls playback. Hardware particle overlays omitted.",
+    "sha256": "d577b264165009e6dc59bbc0a046f37c9bdb54d117a5ac71ba78cf74390ac0c8",
+    "bytes": 161684
+  },
+  {
     "id": "marmalade",
     "url": "https://raw.githubusercontent.com/aprocom/chatgpt-pets/a6fbf8e516da23811fdd3371a212f565d250952c/pets/marmalade/spritesheet.webp",
     "repository": "https://github.com/aprocom/chatgpt-pets",

@@ -1,0 +1,86 @@
+// Isolated source-built SQLite behavior tests; no model, network or real user state.
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import assert from 'node:assert/strict'
+import {createRequire} from 'node:module'
+import {build} from 'esbuild'
+const root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-channels-core-')),entry=path.join(temp,'channels.cjs'),home=path.join(temp,'state'),require=createRequire(import.meta.url),before=process.env.AGENTS_COMPANY_HOME,realNow=Date.now
+process.env.AGENTS_COMPANY_HOME=home
+fs.symlinkSync(path.join(root,'node_modules'),path.join(temp,'node_modules'),'dir')
+let core,now=realNow()
+try{
+ await build({stdin:{contents:"export * from './src/main/channels';export {withCaller,operatorContext} from './src/main/authorization'",resolveDir:root,sourcefile:'channel-test-entry.ts'},outfile:entry,bundle:true,platform:'node',format:'cjs',target:'node22',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'})
+ core=require(entry);Date.now=()=>now
+ const op=fn=>core.withCaller(core.operatorContext(),fn),rpc=(cmd,args={})=>op(()=>core.channelRequest('channel.'+cmd,args)),events=[];core.setChannelsEmitter(event=>events.push(event))
+ assert.deepEqual(rpc('list'),[]);assert.deepEqual(core.getChannelSettings(),{enabled:false,host:'127.0.0.1',port:5152})
+ const add=(plugin,locator,targetId)=>rpc('source-add',{plugin,locator,...(targetId?{targetId}:{})}),x=add('x','https://x.com/Example/','imported-x'),x2=add('x','other'),yt=add('youtube','https://www.youtube.com/@Example/','imported-yt'),tg=add('telegram','https://t.me/example'),tg2=add('telegram','https://t.me/other')
+ assert.equal(tg.pollSeconds,300);assert.equal(x.pollSeconds,3600);assert.equal(yt.pollSeconds,7200);assert.equal(rpc('source-add',{plugin:'x',locator:x2.locator,pollSeconds:120}).pollSeconds,120)
+ assert.equal(x.channelId,x2.channelId);assert.notEqual(tg.channelId,tg2.channelId);assert.equal(rpc('list').length,4)
+ for(const locator of ['@example','EXAMPLE','https://twitter.com/example/?lang=en']){const same=add('x',locator);assert.equal(same.id,x.id);assert.equal(same.targetId,'imported-x');assert.equal(same.locator,x.locator)}
+ assert.equal(add('youtube','@example').id,yt.id);assert.equal(add('youtube','https://youtube.com/@Example').id,yt.id)
+ assert.equal(add('x','https://mobile.twitter.com/EXAMPLE/?ref=profile').id,x.id);assert.equal(add('youtube','https://www.youtube.com/@Example/videos').id,yt.id)
+ const channelIdSource=add('youtube','https://www.youtube.com/channel/UCfixture');assert.equal(add('youtube','https://m.youtube.com/channel/UCfixture/videos').id,channelIdSource.id)
+ for(const locator of ['https://x.com/example/status/123','https://twitter.com/home','@a_name_over_15_characters','https://example.test/example','https://x.com/search?q=example'])assert.throws(()=>add('x',locator),error=>error.code==='INVALID_SOURCE_LOCATOR')
+ for(const locator of ['https://www.youtube.com/watch?v=abc','https://youtube.com/shorts/abc','https://youtube.com/live/abc','https://example.test/@example','UCfixture'])assert.throws(()=>add('youtube',locator),error=>error.code==='INVALID_SOURCE_LOCATOR')
+ const sameX=add('x','@samehandle'),sameYouTube=add('youtube','@samehandle');assert.equal(sameX.targetId,'x:@samehandle');assert.equal(sameYouTube.targetId,'youtube:@samehandle');assert.throws(()=>add('youtube','@different',sameX.targetId),error=>error.code==='SOURCE_ID_CONFLICT');assert.equal(rpc('source-add',{plugin:'x',locator:'@samehandle',targetId:'another-hint'}).targetId,sameX.targetId,'existing target identity never changes')
+ assert.throws(()=>rpc('source-update',{id:x.id,patch:{locator:'someoneElse'}}),/cannot change authors/)
+ assert.throws(()=>add('x','someoneElse','imported-x'),/cannot change authors/)
+ rpc('source-update',{id:x2.id,patch:{channelId:tg.channelId}});assert.equal(rpc('sources',{channelId:tg.channelId}).length,2,'X authors may join a Telegram-origin channel without moving its Telegram source');rpc('source-update',{id:x2.id,patch:{channelId:x.channelId}})
+ const custom=rpc('create',{name:'Research'});assert.throws(()=>rpc('source-update',{id:tg.id,patch:{channelId:custom.id}}),/one-to-one/)
+ const issued=rpc('collector-add',{name:'Narrow collector',sourceIds:[x.id]}),cap=(cmd,args={})=>core.channelCollectorRequest(issued.token,'channel.'+cmd,args),config=cap('collector-config')
+ assert.deepEqual(config.targets.map(value=>value.sourceId),[x.id]);assert.deepEqual(cap('collector-config',{sinceRevision:config.revision}),{revision:config.revision,changed:false})
+ for(const cmd of ['channel.settings','channel.collector-add','channel.source-add','session.send','auth.agent-token','messenger.state'])assert.throws(()=>core.channelCollectorRequest(issued.token,cmd,{}),error=>error.code==='COLLECTOR_FORBIDDEN')
+ assert.throws(()=>core.channelCollectorRequest('not-a-collector','channel.collector-config',{}),error=>error.code==='COLLECTOR_UNAUTHORIZED')
+ assert.ok(!JSON.stringify(rpc('collectors')).includes(issued.token));assert.ok(!JSON.stringify(rpc('collectors')).includes('token_hash'))
+ const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==',input={sourceId:x.id,externalId:'post1',publishedAt:now-1000},upload={...input,mediaKey:'image1',name:'news.png',mimeType:'image/png',data:png}
+ const image=cap('media-put',upload).media;assert.equal(cap('media-put',upload).duplicate,true)
+ assert.throws(()=>cap('media-put',{...upload,sourceId:x2.id}),error=>error.code==='SOURCE_FORBIDDEN')
+ assert.throws(()=>cap('media-put',{...upload,mimeType:'image/jpeg'}),/does not match/)
+ assert.throws(()=>cap('media-put',{...upload,name:'../leak.png'}),/Upload/)
+ assert.throws(()=>cap('media-put',{...upload,data:'A'.repeat(11184816)}),/up to 8 MiB/)
+ assert.throws(()=>op(()=>core.channelFileEndpoint({channelId:x.channelId,postId:'unknown',mediaId:image.id})),/Unknown news/)
+ const avatar=cap('media-put',{...upload,mediaKey:'avatar',name:'avatar.png'}).media,post={...input,title:'Source news',body:'Original body https://example.test/reference',url:'https://example.test/news',authorName:'Author',authorUrl:'https://x.com/Example',mediaIds:[image.id],avatarMediaId:avatar.id,contentHash:'v1'},created=cap('publish',post)
+ assert.equal(created.status,'created');const get=id=>rpc('post',{id}),first=get(created.id);assert.equal(first.expiresAt,input.publishedAt+48*3600000);assert.equal(first.media[0].id,image.id);assert.equal(rpc('sources',{channelId:x.channelId}).find(s=>s.id===x.id).avatar.mediaId,avatar.id)
+ const unchangedRev=cap('collector-config',{sinceRevision:config.revision});assert.equal(unchangedRev.changed,false,'posts do not invalidate authoritative source config')
+ now+=100;assert.equal(cap('publish',post).status,'duplicate');assert.deepEqual(get(created.id),first)
+ assert.throws(()=>cap('publish',{...post,body:'Conflict with old content hash'}),error=>error.code==='CONTENT_HASH_CONFLICT')
+ assert.equal(cap('publish',{...post,body:'Corrected body https://example.test/reference',contentHash:'v2'}).status,'updated');assert.equal(get(created.id).expiresAt,first.expiresAt);assert.equal(get(created.id).receivedAt,first.receivedAt)
+ assert.throws(()=>cap('publish',{...post,publishedAt:input.publishedAt+1}),error=>error.code==='POST_ID_CONFLICT')
+ const second=cap('publish',{...input,externalId:'post2',title:'No image',body:'Second article',contentHash:'second'})
+ assert.throws(()=>cap('publish',{...input,externalId:'post3',title:'Cross item image',body:'Forbidden',mediaIds:[image.id]}),error=>error.code==='MEDIA_SCOPE_MISMATCH')
+ assert.equal(op(()=>core.queryChannelPosts({media:true})).total,1);assert.equal(op(()=>core.queryChannelPosts({links:true})).total,1);assert.equal(rpc('posts',{query:'Corrected'}).total,1);assert.equal(rpc('posts',{query:'%'}).total,0)
+ const page=rpc('posts',{limit:1});assert.equal(page.total,2);assert.ok(page.nextCursor);const next=rpc('posts',{limit:1,cursor:page.nextCursor});assert.equal(next.total,2);assert.notEqual(page.posts[0].id,next.posts[0].id);assert.equal(next.nextCursor,null)
+ assert.throws(()=>op(()=>core.queryChannelPosts({messageOrder:true,cursor:page.nextCursor})),/cannot use a news cursor/)
+ const sorted=op(()=>core.queryChannelPosts({messageOrder:true}));assert.deepEqual(sorted.posts.map(p=>p.id),[created.id,second.id].sort());assert.equal(sorted.nextCursor,null)
+ rpc('save',{id:created.id,saved:true});rpc('source-update',{id:x.id,patch:{channelId:custom.id}});assert.equal(get(created.id).channelId,custom.id);assert.equal(get(created.id).saved,true);assert.equal(rpc('posts',{channelId:x.channelId}).total,0);assert.equal(rpc('posts',{channelId:custom.id}).total,2)
+ assert.throws(()=>op(()=>core.channelFileEndpoint({channelId:x.channelId,postId:created.id,mediaId:image.id})),error=>error.code==='MEDIA_SCOPE_MISMATCH')
+ const endpoint=op(()=>core.channelFileEndpoint({channelId:custom.id,path:created.id+'/'+image.id}));assert.equal(fs.readFileSync(path.join(endpoint.root,endpoint.path)).toString('base64'),png);assert.equal(endpoint.name,'news.png')
+ const orphan=cap('media-put',{...upload,externalId:'unpublished'}).media;assert.throws(()=>op(()=>core.channelFileEndpoint({channelId:custom.id,postId:created.id,mediaId:orphan.id})),error=>error.code==='MEDIA_SCOPE_MISMATCH')
+ rpc('source-remove',{id:x.id});assert.equal(get(created.id).saved,true);assert.equal(cap('collector-config').targets[0].enabled,false);assert.throws(()=>cap('publish',post),error=>error.code==='SOURCE_DISABLED');assert.throws(()=>cap('media-put',upload),error=>error.code==='SOURCE_DISABLED');assert.equal(add('x','@EXAMPLE').id,x.id)
+ rpc('delete',{id:second.id});assert.deepEqual(rpc('delete',{id:second.id}),{id:second.id,deleted:true});assert.equal(cap('publish',{...input,externalId:'post2',title:'No image',body:'Second article',contentHash:'second'}).status,'deleted')
+ assert.throws(()=>cap('media-put',{...upload,externalId:'post2'}),error=>error.code==='POST_DELETED')
+ core.closeChannels();assert.equal(get(created.id).saved,true,'saved state survives connection reopen')
+ now+=49*3600000;core.pruneChannelNews(now);assert.equal(get(created.id).saved,true);assert.ok(fs.existsSync(path.join(endpoint.root,endpoint.path)));assert.equal(fs.readdirSync(endpoint.root).length,2,'saved body image and avatar retained; staging reclaimed')
+ assert.equal(cap('publish',{...post,body:'Corrected body https://example.test/reference',contentHash:'v2'}).status,'duplicate','saved lost-response retry remains idempotent')
+ assert.equal(cap('publish',{...input,externalId:'oldReplay',title:'Old',body:'Do not replay'}).status,'expired')
+ const unsaved=rpc('save',{id:created.id,saved:false});assert.equal(unsaved.expired,true);assert.throws(()=>get(created.id),error=>error.code==='POST_GONE');assert.equal(fs.existsSync(path.join(endpoint.root,endpoint.path)),false);assert.equal(cap('publish',post).status,'expired')
+ now+=49*3600000;core.pruneChannelNews(now);assert.equal(cap('publish',post).status,'expired','replay remains expired after bounded tombstone collection')
+ const sparse={sourceId:x.id,publishedAt:now,title:'',body:''};assert.equal(cap('publish',{...sparse,externalId:'title-only',title:'A title without description'}).status,'created');assert.equal(cap('publish',{...sparse,externalId:'link-only',url:'https://example.test/only-link'}).status,'created')
+ const onlyImage=cap('media-put',{...upload,externalId:'image-only',publishedAt:now}).media;assert.equal(cap('publish',{...sparse,externalId:'image-only',mediaIds:[onlyImage.id]}).status,'created');assert.equal(get(cap('publish',{...sparse,externalId:'image-only',mediaIds:[onlyImage.id]}).id).body,'')
+ assert.throws(()=>cap('publish',{...sparse,externalId:'empty',title:'  ',body:'\n '}),/requires text/);assert.throws(()=>cap('publish',{...sparse,externalId:'avatar-is-not-content',avatarMediaId:onlyImage.id}),/requires text/);assert.throws(()=>cap('publish',{...sparse,externalId:'image-only',mediaIds:[onlyImage.id],avatarMediaId:onlyImage.id}),/requires text/)
+ rpc('collector-revoke',{id:issued.collector.id});assert.throws(()=>cap('collector-config'),error=>error.code==='COLLECTOR_UNAUTHORIZED')
+ for(const role of ['employee','manager','governor']){
+  fs.writeFileSync(path.join(home,'sessions.json'),JSON.stringify({groups:['Test'],rooms:{},sessions:[{id:role,kind:'worker',engine:'codex',group:'Test',managementRole:role,initialization:{status:'ready'}}]}))
+  const agent=(command,args={})=>core.withCaller({principal:{kind:'agent',employeeId:role},requestId:'test'},()=>core.channelRequest('channel.'+command,args))
+  assert.deepEqual(agent('list'),[])
+  rpc('update',{id:x.channelId,adminIds:[role]});rpc('update',{id:custom.id,adminIds:[role]})
+  const own=agent('list');assert.deepEqual(own.map(value=>value.id).sort(),[x.channelId,custom.id].sort());assert.deepEqual(own.find(value=>value.id===x.channelId),agent('get',{id:x.channelId}))
+  for(const value of own)assert.deepEqual(Object.keys(value).sort(),['adminIds','createdAt','id','kind','name','revision','updatedAt'],'employee discovery returns identity only, not user news/collection projections')
+  assert.throws(()=>agent('get',{id:tg.channelId}),/Not a channel administrator/)
+  for(const [command,args] of [['sources',{}],['posts',{}],['update',{id:x.channelId,adminIds:[]}],['settings',{}]])assert.throws(()=>agent(command,args),/Only the user/)
+  rpc('update',{id:x.channelId,adminIds:[]});assert.deepEqual(agent('list').map(value=>value.id),[custom.id]);assert.throws(()=>agent('get',{id:x.channelId}),/Not a channel administrator/)
+ }
+ assert.ok(events.some(e=>e.kind==='posts'));assert.ok(events.some(e=>e.kind==='sources'))
+ console.log('PASS source routing/identity, collector scope/revocation, image ownership, publish dedupe/update, SQL paging/search, local saved-media retention, expiry/deletion replay protection, role-independent member channel discovery and unchanged management denials')
+}finally{Date.now=realNow;core?.closeChannels();if(before===undefined)delete process.env.AGENTS_COMPANY_HOME;else process.env.AGENTS_COMPANY_HOME=before;fs.rmSync(temp,{recursive:true,force:true})}

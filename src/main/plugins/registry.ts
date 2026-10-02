@@ -1,3 +1,4 @@
+import {applicationRoot} from '../resources'
 import fs from 'node:fs'
 import path from 'node:path'
 import { APP_HOME } from '../../shared/protocol'
@@ -16,6 +17,7 @@ export function readPlugin(directory:string):PluginDescriptor {
   if(manifest.schemaVersion!==1)throw new Error('Unsupported plugin schemaVersion')
   if(!/^[a-z][a-z0-9-]*$/.test(manifest.id)||!manifest.name||!manifest.version)throw new Error('Invalid plugin identity')
   if(manifest.scope&&!['workspace','application'].includes(manifest.scope))throw new Error('Invalid plugin scope')
+  if(manifest.defaultWorkspace!==undefined&&!['default','collection'].includes(manifest.defaultWorkspace))throw new Error('Invalid plugin defaultWorkspace')
   if(manifest.workspaceDirectory&&!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(manifest.workspaceDirectory))throw new Error('Invalid plugin workspaceDirectory')
   for(const key of ['runtime','renderer','cli','documentation','schema'] as const)pluginFile(directory,manifest[key])
   const schema=JSON.parse(fs.readFileSync(pluginFile(directory,manifest.schema),'utf8'))
@@ -27,7 +29,7 @@ export function readPlugin(directory:string):PluginDescriptor {
 }
 export function pluginDirectories():string[] {
   const resources=process.resourcesPath
-  const builtin=process.env.AGENTS_COMPANY_BUILTIN_PLUGINS || (resources&&fs.existsSync(path.join(resources,'plugins'))?path.join(resources,'plugins'):path.resolve(__dirname,'../../../build/plugins'))
+  const builtin=process.env.AGENTS_COMPANY_BUILTIN_PLUGINS || (resources&&fs.existsSync(path.join(resources,'plugins'))?path.join(resources,'plugins'):path.join(applicationRoot(),'build/plugins'))
   return [builtin,path.join(APP_HOME,'plugins'),...(process.env.AGENTS_COMPANY_PLUGIN_DIRS||'').split(path.delimiter).filter(Boolean)]
 }
 export function listPlugins():PluginDescriptor[] {

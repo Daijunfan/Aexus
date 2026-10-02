@@ -14,11 +14,7 @@ input, select { color: var(--fg); }
 .company-header { height: 52px; min-height: 52px; padding: 0 18px 0 86px; display: flex; align-items: center; justify-content: space-between; gap: 25px; background: #171e21; border-bottom: 1px solid #cadab614; -webkit-app-region: drag; position: relative; z-index: 10; }
 .company-brand { display: flex; align-items: center; gap: 14px; font: 600 18px/1.3 -apple-system, sans-serif; letter-spacing: -.4px; color: #f0ebdf; }
 .company-brand small { display: block; margin-top: 5px; font: 8px/1.3 ui-monospace, monospace; letter-spacing: 1.9px; color: #8b9a8f; }
-.brand-symbol { width: 32px; height: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; transform: rotate(-8deg); }
-.brand-symbol i { background: #b5cbb0; border-radius: 7px 7px 3px 7px; }
-.brand-symbol i:nth-child(2) { background: #dbbf91; transform: rotate(90deg); }
-.brand-symbol i:nth-child(3) { opacity: .65; transform: rotate(-90deg); }
-.brand-symbol i:nth-child(4) { opacity: .9; transform: rotate(180deg); }
+.brand-symbol { width:32px;height:32px;display:block;object-fit:contain;border-radius:7px;flex-shrink:0; }
 .company-actions { display: flex; align-items: center; gap: 12px; -webkit-app-region: no-drag; }
 .company-actions button { border: 1px solid #9da98b50; border-radius: 8px; background: #283331; color: #d9dfcd; padding: 10px 17px; font-size: 12px; line-height: 1.4; box-shadow: inset 0 1px #ffffff08; transition: .2s; white-space: nowrap; }
 .company-actions button span { margin-right: 5px; font-size: 17px; line-height: 10px; }

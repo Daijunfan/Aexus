@@ -1,0 +1,31 @@
+import {$,escape,field,showDialog,run,toast} from './dom.js';
+import {base} from './transport.js';
+export function editEmphasis(study,card){
+ const set=study.current,text=structuredClone(card.emphasis?.text||[]),images=structuredClone(card.emphasis?.images||[]);
+ const content={title:card.title,text:card.editedText??card.text??'',note:card.note||'',...Object.fromEntries((card.comments||[]).filter(c=>!c.deletedAt).map(c=>['comment:'+c.id,c.text||'']))};
+ const labels={title:'标题',text:'正文',note:'笔记'};let drawing=false;
+ showDialog({title:'强调内容',html:field('emphasisField','文字来源','text',{choices:Object.keys(content).map(k=>[k,labels[k]||'评论 · '+content[k].slice(0,24)])})+'<textarea id="emphasis-text" readonly aria-label="选择要强调的文字"></textarea>'+field('emphasisGroup','分组名称','1',{required:true})+'<button type="button" id="emphasis-add">强调选中文字</button>'+(card.imageAsset?`<div id="emphasis-image" class="occlusion-editor"><img src="${new URL('data/'+card.imageAsset,base).href}" alt="拖动强调图片区域"></div>`:'')+'<div id="emphasis-marks"></div><p class="dialog-note">文字与图片可以使用相同组名；同组一起揭示。强调不修改原文，也不会自动加入复习。修改了原文字段后，失效的标记会标明。</p>',onSubmit:()=>{if(study.current?.id!==set.id)throw Error('学习集已切换，请重新打开。');if(drawing)throw Error('请结束当前选区。');return study.change('study.card.emphasis.set',{cardId:card.id,text,images},set.revision);},afterOpen:()=>{
+  const source=$('dialog-fields').querySelector('[name=emphasisField]'),group=()=>$('dialog-fields').querySelector('[name=emphasisGroup]').value.trim(),area=$('emphasis-text');
+  source.onchange=()=>{area.value=content[source.value];};source.onchange();
+  const dirty=()=>$('emphasis-marks').dispatchEvent(new Event('input',{bubbles:true}));
+  const draw=()=>{const rows=[...text.map((m,i)=>({m,i,type:'text',label:m.quote,stale:content[m.field]?.slice(m.start,m.end)!==m.quote})),...images.map((m,i)=>({m,i,type:'images',label:'图片区域 '+(i+1)}))];
+   $('emphasis-marks').innerHTML=rows.map(({m,i,type,label,stale})=>`<div class="layer-row"><span>${escape(label)}${stale?' · 文字已变化':''}</span><input data-mark-type="${type}" data-mark-index="${i}" value="${escape(m.group)}" aria-label="分组名称" maxlength="60"><button type="button" data-remove-type="${type}" data-remove-index="${i}">移除</button></div>`).join('');
+   $('emphasis-marks').querySelectorAll('[data-mark-type]').forEach(el=>el.oninput=()=>{(el.dataset.markType==='text'?text:images)[Number(el.dataset.markIndex)].group=el.value;});
+   $('emphasis-marks').querySelectorAll('[data-remove-type]').forEach(el=>el.onclick=()=>{(el.dataset.removeType==='text'?text:images).splice(Number(el.dataset.removeIndex),1);draw();dirty();});
+   const image=$('emphasis-image');if(image){image.querySelectorAll('.emphasis-rectangle').forEach(el=>el.remove());for(const m of images){const el=document.createElement('span');el.className='emphasis-rectangle';el.style.cssText=`left:${m.x*100}%;top:${m.y*100}%;width:${m.width*100}%;height:${m.height*100}%`;el.textContent=m.group;image.append(el);}}
+  };draw();
+  $('emphasis-add').onclick=run(()=>{const start=area.selectionStart,end=area.selectionEnd;if(start===end)throw Error('请先选择一段文字。');if(!group())throw Error('请输入分组名称。');if(text.some(m=>m.field===source.value&&m.start<end&&m.end>start))throw Error('这段文字已被强调；可在下方调整分组。');text.push({field:source.value,start,end,quote:area.value.slice(start,end),group:group()});draw();dirty();});
+  const image=$('emphasis-image');if(image)image.onpointerdown=e=>{if(e.button!==0||drawing)return;e.preventDefault();const box=image.getBoundingClientRect(),x=(e.clientX-box.x)/box.width,y=(e.clientY-box.y)/box.height,draft=document.createElement('span');draft.className='emphasis-rectangle';image.append(draft);drawing=true;image.setPointerCapture(e.pointerId);
+   const rect=ev=>{const ex=Math.max(0,Math.min(1,(ev.clientX-box.x)/box.width)),ey=Math.max(0,Math.min(1,(ev.clientY-box.y)/box.height));return {x:Math.min(x,ex),y:Math.min(y,ey),width:Math.abs(ex-x),height:Math.abs(ey-y)};};
+   image.onpointermove=ev=>{const r=rect(ev);draft.style.cssText=`left:${r.x*100}%;top:${r.y*100}%;width:${r.width*100}%;height:${r.height*100}%`;};
+   const finish=()=>{image.onpointermove=image.onpointerup=image.onpointercancel=null;drawing=false;draft.remove();draw();};
+   image.onpointerup=ev=>{const r=rect(ev);if(r.width>.005&&r.height>.005){images.push({...r,group:group()||'1'});dirty();}finish();};image.onpointercancel=finish;
+  };
+ }});
+}
+export function generateReview(study,cardIds){
+ const set=study.current,selected=cardIds||study.organization.ids(),saved=selected.length===1?set.cards.find(c=>c.id===selected[0])?.review?.generation?.rules||{}:{};
+ showDialog({title:'从强调与荧光笔出题',html:field('scope','范围',selected.length?'selection':'all',{choices:[['selection',`选中卡片 (${selected.length})`],['all','全部卡片']]})+[['documentHighlighter','遮挡文档荧光笔'],['cardHighlighter','遮挡卡片荧光笔'],['textEmphasis','遮挡文字强调'],['imageEmphasis','遮挡图片强调']].map(([key,label])=>field(key,label,saved[key]===false?'no':'yes',{choices:[['yes','启用'],['no','关闭']]})).join('')+field('password','PDF 密码（修复加密原文的旧摘录时需要）','',{type:'password'})+field('autoUpdate','标记更新后的处理','yes',{choices:[['yes','自动同步问题'],['no','只生成当前快照']]})+'<p class="dialog-note">以当前标记重新生成所选卡片的问题与遮罩，保留原卡片和复习记录。分组按名称排列，逐组揭示。自动同步保留复习记录；手工编辑问题会退出自动同步。没有可用标记时会提示，不会生成空题。</p>',submit:'生成复习题',onSubmit:async v=>{if(study.current?.id!==set.id)throw Error('学习集已切换。');if(v.scope==='selection'&&!selected.length)throw Error('请先选择卡片。');const result=await study.change('study.review.generate',{...(v.scope==='selection'?{cardIds:selected}:{}),autoUpdate:v.autoUpdate==='yes',...(v.password?{password:v.password}:{}),rules:Object.fromEntries(['documentHighlighter','cardHighlighter','textEmphasis','imageEmphasis'].map(k=>[k,v[k]==='yes']))},set.revision);const warnings=[...result.lastReviewBatch?.warnings||[],...result.lastReviewBatch?.skipped||[],...result.lastReviewBatch?.mappingRepair?.skipped||[]];toast(warnings.length?warnings.map(w=>w.message).join('；'):`已生成 ${result.lastReviewBatch.count} 张复习题`,Boolean(warnings.length));}});
+}
+
+export function imageEmphasis(card){return (card.emphasis?.images||[]).map(m=>`<span class="emphasis-rectangle" style="left:${m.x*100}%;top:${m.y*100}%;width:${m.width*100}%;height:${m.height*100}%" title="${escape(m.group)}"></span>`).join('');}

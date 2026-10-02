@@ -1,0 +1,7 @@
+/* Natural-flow rows preserve sticky message/code tools and measured variable heights. */
+.message-viewport{width:100%;min-width:0;flex:none;align-self:stretch;overflow-anchor:none}
+.transcript:has(>.message-viewport),.group-transcript:has(>.message-viewport){overflow-anchor:none}
+.message-viewport-row{display:flow-root;width:100%;min-width:0}
+.message-viewport-spacer{width:100%;pointer-events:none}
+.message-viewport-row:not([data-message-last])>:is(.turn,.group-message):last-child{margin-bottom:12px}
+.message-viewport-row:not([data-message-last])>:is(.turn,.group-message):is([data-bubble-group=first],[data-bubble-group=middle]):last-child{margin-bottom:3px}

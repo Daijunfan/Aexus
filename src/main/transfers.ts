@@ -5,7 +5,7 @@ import type {FileLocation,TransferJob} from '../shared/transfers'
 import {workspaceFiles} from './files'
 import {remoteFiles,closeRemote} from './tunnel'
 
-export type FileEndpoint={root:string;path:string;remote?:RemoteTarget}
+export type FileEndpoint={root:string;path:string;remote?:RemoteTarget;name?:string}
 type Task={job:TransferJob;source:FileEndpoint;target:FileEndpoint;cancelled:boolean;done?:Promise<void>}
 const tasks=new Map<string,Task>(),CHUNK=256*1024
 let stopping=false
@@ -18,7 +18,7 @@ export function getTransfer(id:string){const t=tasks.get(id);if(!t)throw Error('
 export function cancelTransfer(id:string){const t=tasks.get(id);if(!t)throw Error('Unknown transfer');if(['queued','running'].includes(t.job.state)){t.cancelled=true;if(t.job.state==='queued')t.job.state='cancelled';else{closeRemote(`transfer-${id}-from`);closeRemote(`transfer-${id}-to`)}}return getTransfer(id)}
 export function startTransfer(from:FileLocation,to:FileLocation,source:FileEndpoint,target:FileEndpoint){
   if(stopping)throw Error('文件传输服务正在关闭')
-  const name=(source.remote?.os==='windows'?path.win32:path.posix).basename(source.path==='.'?source.root:source.path)
+  const name=source.name??(source.remote?(source.remote.os==='windows'?path.win32:path.posix):path).basename(source.path==='.'?source.root:source.path)
   if(!name||name==='.'||name==='..'||/[\\/]/.test(name))throw Error('请选择有效文件或文件夹')
   const job:TransferJob={id:randomUUID(),from,to,name,state:'queued',bytes:0,totalBytes:0,files:0,totalFiles:0,createdAt:Date.now()}
   tasks.set(job.id,{job,source,target,cancelled:false})
@@ -44,7 +44,7 @@ async function copy(task:Task){
     if((await call(target,'to','copy-info',{path:destination})).exists)throw Error('目标已有同名文件，请先重命名；源文件未移动')
     const sourceInfo=await call(source,'from','copy-info',{path:source.path})
     if(!sourceInfo.exists)throw Error('源文件不存在')
-    const pathApi=source.remote?.os==='windows'?path.win32:path.posix
+    const pathApi=source.remote?(source.remote.os==='windows'?path.win32:path.posix):path
     if(JSON.stringify(source.remote?{...source.remote,directory:undefined}:null)===JSON.stringify(target.remote?{...target.remote,directory:undefined}:null)){
       const a=pathApi.resolve(source.root,source.path),b=pathApi.resolve(target.root,destination),relative=pathApi.relative(a,b)
       if(!relative||(sourceInfo.directory&&!relative.startsWith('..'+pathApi.sep)&&relative!=='..'&&!pathApi.isAbsolute(relative)))throw Error('不能复制到源目录本身或其子目录')

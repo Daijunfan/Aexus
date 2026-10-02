@@ -1,0 +1,28 @@
+{
+  "version": "0.52.2",
+  "platform": "darwin",
+  "arch": "arm64",
+  "candidate": true,
+  "plugins": [
+    {
+      "directory": "cloud-hosts",
+      "version": "1.2.2",
+      "sourceCommit": "92f0691f26c4cf46d976744d84c14a9fed628cd8"
+    },
+    {
+      "directory": "mini-notion",
+      "version": "1.22.0",
+      "sourceCommit": "75c634a80083f9adcb07407657bc2889c8121ec2"
+    },
+    {
+      "directory": "margin-reader",
+      "version": "0.7.0",
+      "sourceCommit": "8e880bb5b63c0e0eb4ce0d04d0d87fc6a3935ad2"
+    }
+  ],
+  "pendingReviews": [
+    "official-pet-art",
+    "fate-fan-art",
+    "channel-platform-brand-marks"
+  ]
+}

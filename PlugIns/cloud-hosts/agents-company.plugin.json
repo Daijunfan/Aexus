@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-hosts",
+  "name": "Cloud Hosts",
+  "version": "1.2.2",
+  "description": "云主机、SSH 账号与连接状态管理",
+  "runtime": "runtime.cjs",
+  "renderer": "ui/index.html",
+  "cli": "cli.cjs",
+  "documentation": "API.md",
+  "schema": "schema.json",
+  "autoAttach": true,
+  "workspaceDirectory": "cloud-hosts-workspace",
+  "scope": "application"
+}

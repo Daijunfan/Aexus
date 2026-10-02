@@ -1,0 +1,11 @@
+'use strict';
+exports.register=({command,str,num,opt,obj})=>{
+ const setId=str('Study UUID.',true),cardId=str('Existing source-excerpt card UUID.',true),partId=str('Excerpt part UUID.',true),expectedRevision=num('Current study revision.',true,{integer:true,minimum:1});
+ command('study.excerpt.repair','Restore missing source/image mappings only when re-rendered pixels match the immutable old excerpt. Preserves originals; returns repaired and skipped items. Undoable and idempotent when already mapped.',true,{setId,expectedRevision,cardIds:opt('array','Optional source-excerpt card IDs; omitted means all cards.'),descendants:opt('boolean','Include selected descendants.'),password:str('Optional PDF password for this request only; never persisted.')});
+ command('study.excerpt.list','List every original source fragment in a continuous/multi-document excerpt card, including stale-source status.',false,{setId,cardId});
+ command('study.excerpt.image','Read one immutable excerpt-fragment PNG; all reads remain within the study workspace.',false,{setId,cardId,partId});
+ const options={setId,cardId,expectedRevision,documentId:str('Current source-document UUID.',true),expectedSourceVersion:str('Source file version returned by document.get.',true),captureId:str('New UUID for this edit; retries are idempotent.',true),text:str('Selected text, at most 12000 characters.',true),locator:obj('Validated PDF/flow source locator.',true),selection:obj('PDF rectangles/polygon/bands or flow start/end offsets.',true),password:str('Optional PDF password for this request only.')};
+ command('study.excerpt.append','Append a text/image selection to the same card; preserve every source, immutable part image and the card UUID.',true,options);
+ command('study.excerpt.revise','Explicitly replace or rebind one selected fragment while preserving the card, comments, links and review records. Undo restores the previous snapshot.',true,{...options,partId:str('Fragment UUID; omitted replaces the first fragment.')});
+ command('study.excerpt.remove','Remove one fragment from a multi-part card; preserve at least one fragment and all immutable snapshots for undo.',true,{setId,cardId,expectedRevision,partId});
+};

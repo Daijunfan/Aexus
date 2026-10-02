@@ -29,4 +29,5 @@ export function remoteTarget(value:unknown):RemoteTarget|null {
 }
 
 export type VirtualMachine = {hypervisorId:string;name:string;projectDirectory:string;state:'running'|'stopped'|'paused'|'unknown';access:'ssh'|'serial'|'rdp'|'unconfigured';notes?:string}
-export type CloudHost = Omit<RemoteTarget,'directory'|'credentialId'> & {id:string;name:string;vm?:VirtualMachine;defaultDirectory:string;hasPassword:boolean;createdAt:number;updatedAt:number;status?:RemoteHealth&{checkedAt:number;error?:string}}
+export type DesktopProfile = {protocol:'rdp'|'vnc';address:string;port:number;viaHostId?:string;username?:string;quality?:'balanced'|'sharp'|'fast'}
+export type CloudHost = Omit<RemoteTarget,'directory'|'credentialId'> & {id:string;name:string;vm?:VirtualMachine;desktop?:DesktopProfile;defaultDirectory:string;hasPassword:boolean;createdAt:number;updatedAt:number;status?:RemoteHealth&{checkedAt:number;error?:string}}

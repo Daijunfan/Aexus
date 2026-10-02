@@ -1,0 +1,884 @@
+[
+  {
+    "id": "fate-saber-anime",
+    "character": "Saber · 阿尔托莉雅",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Create a production-ready transparent-background 2D game animation sprite sheet for SABER / Artoria Pendragon from Fate/stay night. Faithful recognizable anime character design: blonde braided bun and ahoge, emerald green eyes, blue royal dress, white skirt panels, silver chest armor and gauntlets. Original anime proportions, detailed clean cel-shaded Japanese animation linework, refined face, not chibi. One character repeated in EXACTLY EIGHT equally sized cells arranged FOUR COLUMNS by TWO ROWS. Every full-body figure is completely contained inside its own cell, same scale, camera and centered position, feet on identical local baseline, large empty gutters, no overlap between cells. Transparent alpha background, no checkerboard drawn, no ground, no text, no labels, no borders. Top row left to right: (1) calm standing, hands relaxed, eyes open; (2) same stance with subtle breathing and blink; (3) working holding a small dark navy laptop at waist height, typing with right hand; (4) same laptop work pose, alternate typing hand and subtle expression. Bottom row left to right: (5) friendly greeting, raised right hand; (6) same greeting with hand slightly moved for a two-frame wave; (7) restful standing with eyes softly closed and hands together, no laptop; (8) same restful pose, tiny breathing change. Keep all clothing and face details consistent across frames. The two frames of each pair must align with minimal movement to loop cleanly. Chest and head unobstructed, fully clothed, nonviolent. Wide sprite-sheet canvas aspect ratio about 1.85:1. This is fan-made new animation artwork, not a poster or screenshot.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "fc9ce61af0dabdd693c3ded72d4c4bf9e200c5de6b60792c4df480c00207ee5f",
+    "sha256": "f3bb8955ecb03b03d5543429d5eae7fc927f53dbc1ac8af40910fd4079558435",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-saber-chibi",
+    "character": "Saber · 阿尔托莉雅",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Transform the Saber animation sheet into a very cute collectible desktop companion sprite sheet: Saber / Artoria Pendragon from Fate/stay night, faithful blonde braided bun and ahoge, green eyes, blue dress, silver armor, white skirt. Huge expressive head, tiny rounded body (2.3-head-tall), thick crisp dark outline, charming 2D shaded illustration matching the cute orange cat companion reference. Keep her human identity, do not make her a cat. EXACTLY 8 full-body frames in an evenly spaced FOUR COLUMN by TWO ROW grid on true transparent alpha background. Frames 1-2 calm eyes-open/blink; frames 3-4 typing with a small navy laptop; frames 5-6 friendly raised-hand wave; frames 7-8 eyes-closed restful pose with hands together. Same character scale, centers and baseline in every cell, wide transparent gutters, all head and feet visible, no clipping, no caption, no labels, no logos, no drawn checkerboard or background, no shadows outside character outline. Remove all colored fringe and speckles. 2D game character sheet, not plush photo, not 3D render. Reference 1 provides identity and frame organization; reference 2 provides the rounded cute desktop-companion visual language. Eight separate clean cells, wide canvas about 1.85:1.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "f61f1a0467ea53253b681309d488d43edcf476c289843524a218da464cfc59ca",
+    "sha256": "6e8d5217bce381eb8b3e29adc78ead00003061b5f95aef408905ad8a49ed02cf",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-archer-anime",
+    "character": "Archer · 卫宫",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Archer EMIYA from Fate/stay night. Adult male, short swept-back white hair, tan skin, gray eyes, athletic muscular build, long open red coat with separated front and flowing lower coat tails, fitted black chest armor with thin silver crossing accents, black trousers and boots. Faithful recognizable EMIYA outfit and face. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "4d7c3786ce4987c1282691af05290ac72e351b0619d116c4319d13c30109e957",
+    "sha256": "0d7e593827b7e3a97b30bdd6b576ae3f233f78b38ceea93e9ab7baef24c1a123",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-archer-chibi",
+    "character": "Archer · 卫宫",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Archer EMIYA from Fate/stay night. Adult male, short swept-back white hair, tan skin, gray eyes, athletic muscular build, long open red coat with separated front and flowing lower coat tails, fitted black chest armor with thin silver crossing accents, black trousers and boots. Faithful recognizable EMIYA outfit and face. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "d26e7834bcc988aa3ede58f57e3de4b67955b9c61ec264d4f1df6c577389bac1",
+    "sha256": "dc0bad2deda46d88a6ae789b8703ca5d88acb5eaad7a65b42b8fa893934c2dd4",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-cu-chulainn-anime",
+    "character": "Lancer · 库丘林",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Lancer Cú Chulainn from Fate/stay night. Adult male with spiky deep blue hair and a short long-tail ponytail, red eyes, athletic build, fitted royal-blue bodysuit with silver armor shoulder accents and arm guards, silver neck accent, matching blue boots, confident friendly expression. Faithful recognizable blue Lancer design. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "e79866e0b27113855418676af932cb6d3dce1b8d5296139b73cedd82fe4abf27",
+    "sha256": "c898adb27a70a0aca0faf472ead483e94d76cccb61d52cd3923895ab7240d201",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-cu-chulainn-chibi",
+    "character": "Lancer · 库丘林",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Lancer Cú Chulainn from Fate/stay night. Adult male with spiky deep blue hair and a short long-tail ponytail, red eyes, athletic build, fitted royal-blue bodysuit with silver armor shoulder accents and arm guards, silver neck accent, matching blue boots, confident friendly expression. Faithful recognizable blue Lancer design. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "2e3354c0ec7b8548cafc5e347fc2aa07d19629183debc9216391f96e1b385709",
+    "sha256": "28b9b05aa1235d1cde9570ad97dd5c601837358a1d7007a6bf754e64456ef7a7",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-medusa-anime",
+    "character": "Rider · 美杜莎",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Rider Medusa from Fate/stay night. Adult woman with extremely long straight lavender hair reaching near her ankles, black-and-magenta eye-covering visor/blindfold, black high-neck short dress with purple trim, long black gloves and opaque thigh-high black boots. Faithful recognizable Rider costume; fully clothed, elegant calm stance. Her visor stays in all frames, communicate rest by lowering the head rather than removing the visor. Nonsexual office companion depiction. Use original-series anime proportions and faithful clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "3e59b8311eb1fde6e6dfc2036e736dfa990a299a4c4d0d17b42aef8cc755aeac",
+    "sha256": "68110ab8e678356f056d0e8a799c88c00d283651159b819d19d4830b26c765d9",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-medusa-chibi",
+    "character": "Rider · 美杜莎",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Rider Medusa from Fate/stay night. Adult woman with extremely long straight lavender hair reaching near her ankles, black-and-magenta eye-covering visor/blindfold, black high-neck short dress with purple trim, long black gloves and opaque thigh-high black boots. Faithful recognizable Rider costume; fully clothed, elegant calm stance. Her visor stays in all frames, communicate rest by lowering the head rather than removing the visor. Nonsexual office companion depiction. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "7502815155a0e11fae687babf8a73da13711d2495a80aba7df0746a03fae9e65",
+    "sha256": "1a99260897b25fed11d15d2ebb2f4ecf9e13bdc436b659c7b34d8b6da2eb1364",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-medea-anime",
+    "character": "Caster · 美狄亚",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Caster Medea from Fate/stay night. Adult elven woman with pale skin, violet-blue hair, pointed ears, a large dark purple hood and sweeping purple-and-black mage robe with a high angular collar and wide sleeves. Face visible below the hood, thoughtful mature face and narrow purple eyes. Faithful recognizable original Caster costume, full-length opaque robes, no weapon. Use original-series anime proportions and faithful clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "c58311194e321886f25e1e2f845a50ab0a85cf8198145570f36a134a6c1b3193",
+    "sha256": "0dd2a58001f8a112608b20b00996198403866fd2861f0ff02ad71a1f3aa7cb73",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-medea-chibi",
+    "character": "Caster · 美狄亚",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Caster Medea from Fate/stay night. Adult elven woman with pale skin, violet-blue hair, pointed ears, a large dark purple hood and sweeping purple-and-black mage robe with a high angular collar and wide sleeves. Face visible below the hood, thoughtful mature face and narrow purple eyes. Faithful recognizable original Caster costume, full-length opaque robes, no weapon. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "acf74944ebd87b58b9a1ffb61d4c15c5142abb8055084404fc7357a01cb1e621",
+    "sha256": "950e2c515ab560e962ffa21cd5c5f95ef2c356737db2f502ab7a7a343985259d",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-sasaki-anime",
+    "character": "Assassin · 佐佐木小次郎",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Assassin Sasaki Kojiro from Fate/stay night. Adult Japanese male, handsome calm narrow eyes, long indigo hair tied in a low ponytail, traditional pale lavender kimono with wide sleeves, dark violet hakama trousers, white inner collar, navy sash, sandals. Elegant refined swordsman in his canonical purple outfit. Sword may remain sheathed and unobtrusive, not held during work or greeting. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Especially ensure clean natural edge colors, no magenta/green chroma-key spill or floating speckles around the silhouettes.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "ac287e40988eb1a8b517ed6bd322455f493034a6f475007bea670d9fedeb5125",
+    "sha256": "dc04a32aedc8e301a310b9c92078e0ff1886bbae5be5ba925d1b50b7c9f78d71",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-sasaki-chibi",
+    "character": "Assassin · 佐佐木小次郎",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Assassin Sasaki Kojiro from Fate/stay night. Adult Japanese male, handsome calm narrow eyes, long indigo hair tied in a low ponytail, traditional pale lavender kimono with wide sleeves, dark violet hakama trousers, white inner collar, navy sash, sandals. Elegant refined swordsman in his canonical purple outfit. Sword may remain sheathed and unobtrusive, not held during work or greeting. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Especially ensure clean natural edge colors, no magenta/green chroma-key spill or floating speckles around the silhouettes.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "146b6e56ae61e0e0d724ade53aefff40caa9c4750e08166e73ec0510afac91bb",
+    "sha256": "a95898689344595424b809b67cd2ef1c21997248b24f6cde7b3859ea662f82ef",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-cursed-arm-anime",
+    "character": "真 Assassin · 咒腕哈桑",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with True Assassin Hassan of the Cursed Arm from Fate/stay night Heaven's Feel. Adult lean male assassin, iconic ivory skull-like mask with hollow black eye sockets, close black hood, dark navy-black ragged mantle, fitted black outfit and wrapped lower legs, one distinctive elongated red-black right arm kept bent within the cell. Masked face remains in all frames; express rest by bowed head and folded hands. Faithful fantasy costume, no blood, no gore, friendly quiet office poses. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Especially ensure clean natural edge colors, no magenta/green chroma-key spill or floating speckles around the silhouettes.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "d598fc9fbfd9cbf64bf46a6cef0b70723ec18e63f64b6b1309fb9c799ce26e3c",
+    "sha256": "c444bd642339703bca204ef9e061921854ec9d183aca983616f5633d53e33cec",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-cursed-arm-chibi",
+    "character": "真 Assassin · 咒腕哈桑",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with True Assassin Hassan of the Cursed Arm from Fate/stay night Heaven's Feel. Adult lean male assassin, iconic ivory skull-like mask with hollow black eye sockets, close black hood, dark navy-black ragged mantle, fitted black outfit and wrapped lower legs, one distinctive elongated red-black right arm kept bent within the cell. Masked face remains in all frames; express rest by bowed head and folded hands. Faithful fantasy costume, no blood, no gore, friendly quiet office poses. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Especially ensure clean natural edge colors, no magenta/green chroma-key spill or floating speckles around the silhouettes.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "91801791ad1367eebfc7a3cf4239f80a54ca000f86f89b878e49521baf7a5215",
+    "sha256": "adc90f30816d1d388d768faf426684eb5cda843f0e42cd29f5f470c47c439473",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-heracles-anime",
+    "character": "Berserker · 赫拉克勒斯",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Berserker Heracles from Fate/stay night. Adult Greek male giant with broad heavily muscular physique, deep brown/tan skin, wild long black hair, stern strong brow, dark wrapped waist armor and skirt, thick bronze-black forearm guards and armored boots. Recognizable classical Heracles silhouette, powerful but calm and non-threatening office posture. Bare male muscular upper torso as the canonical outfit, not sexual, no injuries. Keep him wide and strong while fully contained inside each cell. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "92245e7adf699c10c64803a837da550f6f33a8f59b36b015de6662a9de98417e",
+    "sha256": "a6de01ea744d4774f3cb48f80d70f1f048226a2e601c0976da2a10e8aced87b7",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-heracles-chibi",
+    "character": "Berserker · 赫拉克勒斯",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Berserker Heracles from Fate/stay night. Adult Greek male giant with broad heavily muscular physique, deep brown/tan skin, wild long black hair, stern strong brow, dark wrapped waist armor and skirt, thick bronze-black forearm guards and armored boots. Recognizable classical Heracles silhouette, powerful but calm and non-threatening office posture. Bare male muscular upper torso as the canonical outfit, not sexual, no injuries. Keep him wide and strong while fully contained inside each cell. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "8a6adfe5c2718b0a2de945722d6ca9a8c3ff9495be7b071706fcae333cdeea8d",
+    "sha256": "384d3b9858e8cfef0489556950c4d092875a98bb84ac56be6663693077aa1919",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-gilgamesh-anime",
+    "character": "Archer · 吉尔伽美什",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Archer Gilgamesh from Fate/stay night and Fate/Zero. Adult male, short upright spiky golden blond hair, sharp crimson red eyes, proud handsome face, elaborate shining gold full plate armor on shoulders chest arms and legs, distinctive crimson red fabric hanging from the waist. Faithful unmistakable gold-armored King of Heroes. Clean uncluttered silhouette; no portals, no background effects, no floating weapons. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "8b27aa401a03f0fe7463055b7ee528736b18fdae752d6e2d6fea49f9a8ec3bc5",
+    "sha256": "4e84d36c688205f93b16229db09c63dfc2386aef5e94388c5a1a9d0d5b59ffcb",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-gilgamesh-chibi",
+    "character": "Archer · 吉尔伽美什",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Archer Gilgamesh from Fate/stay night and Fate/Zero. Adult male, short upright spiky golden blond hair, sharp crimson red eyes, proud handsome face, elaborate shining gold full plate armor on shoulders chest arms and legs, distinctive crimson red fabric hanging from the waist. Faithful unmistakable gold-armored King of Heroes. Clean uncluttered silhouette; no portals, no background effects, no floating weapons. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "cc6eb5434828a63ca7ac3e5fafb71f46b534fde2edf00203a0d6dffeb3289228",
+    "sha256": "33e1aabf7755d5757e21947b725c2a9d26583db23a95b71e0c9d57c5cc03a35f",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-diarmuid-anime",
+    "character": "Lancer · 迪卢木多",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Lancer Diarmuid Ua Duibhne from Fate/Zero. Adult Irish male, swept-back dark brown-black hair with a small curled forelock, golden-hazel eyes, a distinctive small beauty mark beneath his right eye, handsome refined face, muscular athletic build. Canonical dark emerald-green fitted combat outfit with thin gold accents at collar and wrists, black boots and belt. Different from the blue Lancer Cú Chulainn. No armor pauldrons or red coat; faithful original dark-green Lancer design. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "accafa2b9da6acb2c160c7335c067d41c60f653e5327819b1ce6df6d13f35dbb",
+    "sha256": "6062057bbf75afc9fc40966f11dfa8e2210345e82c6b83d325d46d42d9178ca8",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-diarmuid-chibi",
+    "character": "Lancer · 迪卢木多",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Lancer Diarmuid Ua Duibhne from Fate/Zero. Adult Irish male, swept-back dark brown-black hair with a small curled forelock, golden-hazel eyes, a distinctive small beauty mark beneath his right eye, handsome refined face, muscular athletic build. Canonical dark emerald-green fitted combat outfit with thin gold accents at collar and wrists, black boots and belt. Different from the blue Lancer Cú Chulainn. No armor pauldrons or red coat; faithful original dark-green Lancer design. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "87ac7b7f0fd1f2c9c71611450cf668a73ebab0347219c1ac8f6f6ba0059c76f5",
+    "sha256": "a3ea24d8cc9bffe49fa8a2dcf29ebeeabfdf5362133a9baab95372638c4250a6",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-iskandar-anime",
+    "character": "Rider · 伊斯坎达尔",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Rider Iskandar / Alexander the Great from Fate/Zero. Adult imposing broad male, short spiky red hair, thick vivid red beard, warm confident face. Canonical dark red cloak with broad white fur at the shoulders, Roman-style brown and bronze cuirass/tunic, leather skirt armor and strapped boots. Strong kingly silhouette and big friendly smile. Keep his red hair and beard and white-fur cloak instantly recognizable; no horse or chariot. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "8a1bbd10e63323e977a428f7cbed3cacf6d05ce6854e5f63350064ebb1ad6f7a",
+    "sha256": "f6d76df65dcd085781dcca4674256900013d98a58a58ff29503eeb8e575665aa",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-iskandar-chibi",
+    "character": "Rider · 伊斯坎达尔",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference with Rider Iskandar / Alexander the Great from Fate/Zero. Adult imposing broad male, short spiky red hair, thick vivid red beard, warm confident face. Canonical dark red cloak with broad white fur at the shoulders, Roman-style brown and bronze cuirass/tunic, leather skirt armor and strapped boots. Strong kingly silhouette and big friendly smile. Keep his red hair and beard and white-fur cloak instantly recognizable; no horse or chariot. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Natural anti-aliased edge colors, no chroma-key color spill or floating speckles.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "b7659209ecc9717545178180248aa8b6e81fa6dcc321e0ea13e2283facb066a1",
+    "sha256": "5f74e9fbbf7a276476b4230fd0c597acf1981edc4e8e47163a9b93f3b8e5d9ab",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-gilles-anime",
+    "character": "Caster · 吉尔·德·雷",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the FIRST reference with Caster Gilles de Rais, Bluebeard, from Fate/Zero. Adult pale gaunt man with slicked-back dark hair, extremely wide round eyes, distinctive lined face and long nose. Canonical enormous angular teal-blue high collar with crimson inner lining, long dark teal and black sorcerer robes with wide sleeves. Use the SECOND reference to identify the distinctive face and collar, without copying its text or card background. Mild eccentric expression appropriate for a desktop companion; no horror scene, blood, injuries or victims. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep exactly the FOUR-column TWO-row layout from the first reference, not the second. Natural anti-aliased edges, no color-key spill.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "aa6e4f1d84a2c052d47bfa8ae76d58bcde1a6d97b6f13f624b3ffd5210b22deb",
+    "sha256": "a021c39006722d16c350091a4e113be3b8fb93e94604da9d1ebb78bbd0444c97",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-gilles-chibi",
+    "character": "Caster · 吉尔·德·雷",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the FIRST reference with Caster Gilles de Rais, Bluebeard, from Fate/Zero. Adult pale gaunt man with slicked-back dark hair, extremely wide round eyes, distinctive lined face and long nose. Canonical enormous angular teal-blue high collar with crimson inner lining, long dark teal and black sorcerer robes with wide sleeves. Use the SECOND reference to identify the distinctive face and collar, without copying its text or card background. Mild eccentric expression appropriate for a desktop companion; no horror scene, blood, injuries or victims. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the FIRST reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep exactly the FOUR-column TWO-row layout from the first reference, not the second. Natural anti-aliased edges, no color-key spill.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "b316598d7e8c78fb26e8cf8f9ea7ad62f4260380bea88177cc32069726623e17",
+    "sha256": "c2f5ad9462678dbe28c43631b3db1967aeca354820a5266330d8665e3672b43f",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-hundred-faces-anime",
+    "character": "Assassin · 百貌哈桑",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the FIRST reference with Assassin Hassan of the Hundred Faces from Fate/Zero, represented by the canonical adult male masked assassin Zayd. An athletic lean adult in a fitted dark charcoal outfit, dark hood/cowl, wrapped forearms, dark sash and loose ninja-style trousers and boots. Iconic ivory skull mask with a long angular nose, eye holes and etched teeth, identified by the SECOND reference portrait; no text or card frame from that reference. Both arms are normal and charcoal-colored, NOT the red cursed arm. Keep the skull mask on in every frame; express rest through a bowed head. No clones and no other figures. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep exactly the FOUR-column TWO-row layout from the first reference, not the second. Natural anti-aliased edges, no color-key spill.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "91368ed2cec96e291be8665054b640276d3ebf374f4ba85f54f10a09e7f8a308",
+    "sha256": "8ec253d5dc8679796123e4cd1a9df82b8cc5dcd75cadef7012c1e34ca9b04af8",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-hundred-faces-chibi",
+    "character": "Assassin · 百貌哈桑",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the FIRST reference with Assassin Hassan of the Hundred Faces from Fate/Zero, represented by the canonical adult male masked assassin Zayd. An athletic lean adult in a fitted dark charcoal outfit, dark hood/cowl, wrapped forearms, dark sash and loose ninja-style trousers and boots. Iconic ivory skull mask with a long angular nose, eye holes and etched teeth, identified by the SECOND reference portrait; no text or card frame from that reference. Both arms are normal and charcoal-colored, NOT the red cursed arm. Keep the skull mask on in every frame; express rest through a bowed head. No clones and no other figures. Use very cute 2.3-head-tall chibi proportions with huge expressive head, small rounded body, thick crisp dark outlines and warm 2D shading, tightly matching the FIRST reference's desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep exactly the FOUR-column TWO-row layout from the first reference, not the second. Natural anti-aliased edges, no color-key spill.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "dacbf8efebf09c3a3017ffbd580f2f3e7622cf7035a2bf1371703cf3272274ae",
+    "sha256": "455e8fcdab65ed400a0c79e1a75b0529435e83e287f4e2f56b05c2e96b50ddb1",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-lancelot-anime",
+    "character": "Berserker · 兰斯洛特",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the FIRST reference with Berserker Lancelot from Fate/Zero, the Black Knight. Adult male in fully enclosed dark violet-black medieval plate armor, sharply segmented breastplate, large angular shoulder plates and gauntlets, black armored boots. His iconic closed angular helmet has a thin horizontal red/crimson glowing visor and a small raised ridge, with long dark plume trailing behind. Use the SECOND reference for the helmet silhouette. NO visible human face or skin; keep the helmet CLOSED in every frame. For blinking/rest, dim the visor and gently bow the head instead of drawing eyes on the helmet. Faithful recognizable original Black Knight costume. No smoke, aura, background or weapons. Use faithful original-series adult anime proportions and clean flat 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep exactly the FOUR-column TWO-row layout from reference one, no text from reference two. All details remain within their own cell, clean natural edges.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "243bdc73f811a17638289b2d3ce290ccb4cf4c59c3073b9d44dd1db182526de8",
+    "sha256": "b7b8151951c76bc8bab0ee0762409ad3f31a5abe8a924fbfac72faa1c28688e1",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-lancelot-chibi",
+    "character": "Berserker · 兰斯洛特",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the FIRST reference with Berserker Lancelot from Fate/Zero, the Black Knight. Adult male in fully enclosed dark violet-black medieval plate armor, sharply segmented breastplate, large angular shoulder plates and gauntlets, black armored boots. His iconic closed angular helmet has a thin horizontal red/crimson glowing visor and a small raised ridge, with long dark plume trailing behind. Use the SECOND reference for the helmet silhouette. NO visible human face or skin; keep the helmet CLOSED in every frame. For blinking/rest, dim the visor and gently bow the head instead of drawing eyes on the helmet. Faithful recognizable original Black Knight costume. No smoke, aura, background or weapons. Use very cute 2.3-head-tall chibi proportions, large closed helmet and small rounded armored body, thick crisp dark outlines and 2D shading, tightly matching the FIRST reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep exactly the FOUR-column TWO-row layout from reference one, no text from reference two. All details remain within their own cell, clean natural edges.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "2f677abf0318251118a80879ba151cfd02e834fcb8edeae340412575f5928295",
+    "sha256": "2ca52b6e18ee622f06f1cd959c0e7921604475a00dc565b9eb7bc406ea8592d0",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-shirou-anime",
+    "character": "Master · 卫宫士郎",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Shirou Emiya, the main human Master from Fate/stay night. A teenage boy with short messy copper-red hair, amber-brown eyes and a kind determined face. His iconic ordinary casual outfit: a white long-sleeve raglan shirt with blue sleeves, dark blue straight trousers and simple sneakers. Slim youthful age-appropriate build. No armor, no robe, no sword, no red Archer coat. Fully clothed neutral everyday depiction. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep age-appropriate modest clothing throughout all eight frames. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "3396ab0d4add513ee1402bc82f34f890d35f790ad024f797f9edff20a840607a",
+    "sha256": "a2daeead1a4691f555b126c059b31eded422ad10b2e24d52d96e08647ff9d1e4",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-shirou-chibi",
+    "character": "Master · 卫宫士郎",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Shirou Emiya, the main human Master from Fate/stay night. A teenage boy with short messy copper-red hair, amber-brown eyes and a kind determined face. His iconic ordinary casual outfit: a white long-sleeve raglan shirt with blue sleeves, dark blue straight trousers and simple sneakers. Slim youthful age-appropriate build. No armor, no robe, no sword, no red Archer coat. Fully clothed neutral everyday depiction. Use very cute 2.3-head-tall chibi proportions with a large expressive head and small rounded body, crisp dark outlines and warm 2D shading, matching the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep age-appropriate modest clothing throughout all eight frames. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "78458bb4fd60da0eefc2f7e34db5620f54513058e3bcf6758f6f707f62af7ff5",
+    "sha256": "0ebab8d8b3993271bae8a7539daa28628744482a7f7c4422e1c96826a6273e83",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-rin-anime",
+    "character": "Master · 远坂凛",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Rin Tohsaka, the main human Master from Fate/stay night. A teenage schoolgirl with long dark brown hair in two side ponytails tied with black ribbons, turquoise blue-green eyes and a confident friendly expression. Her iconic casual outfit: an opaque red long-sleeved turtleneck sweater with a small white cross design on the chest, a modest black pleated skirt, opaque black tights and brown loafers. Faithful youthful age-appropriate anime face. Fully clothed, innocent neutral poses, no sexualization, no exposed midriff, no armor or weapon. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep age-appropriate modest clothing throughout all eight frames. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "13e7eff778af8724dc70207e91a5ae20b3ef6a905e18ec41e3d1da49f21460e2",
+    "sha256": "5eb9e93e9f7f8a086c8e1d3e961ee86b6d0ce337f3cc3e66e5f3a8d9fff9b32d",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-rin-chibi",
+    "character": "Master · 远坂凛",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Rin Tohsaka, the main human Master from Fate/stay night. A teenage schoolgirl with long dark brown hair in two side ponytails tied with black ribbons, turquoise blue-green eyes and a confident friendly expression. Her iconic casual outfit: an opaque red long-sleeved turtleneck sweater with a small white cross design on the chest, a modest black pleated skirt, opaque black tights and brown loafers. Faithful youthful age-appropriate anime face. Fully clothed, innocent neutral poses, no sexualization, no exposed midriff, no armor or weapon. Use very cute 2.3-head-tall chibi proportions with a large expressive head and small rounded body, crisp dark outlines and warm 2D shading, matching the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Keep age-appropriate modest clothing throughout all eight frames. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "9077f8b6371e1b1dea5010b5ee3d96e4a708f6f9202eacd4b342933b03a1fa62",
+    "sha256": "a3bf492becbbbafb0876ca18153391edbd0a90f9c3adf96b549ccf4d90f4e6c5",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-sakura-anime",
+    "character": "Master · 间桐樱",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Sakura Matou, the principal human Master from Fate/stay night Heaven's Feel. A teenage schoolgirl with straight soft violet hair reaching her upper back, violet eyes, a small red ribbon at the left side of her bangs, and a gentle shy expression. Her recognizable modest everyday look: a light lavender long-sleeved cardigan over a white blouse, a cream-colored knee-length skirt, opaque dark tights and brown loafers. Faithful youthful age-appropriate appearance, fully clothed, innocent neutral stance. No blindfold, no hood, no armor, no revealing outfit. Use the faithful original-series age-appropriate anime proportions and clean 2D Japanese cel animation drawing, not a chibi redesign and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Neutral front-facing full-body framing, modest age-appropriate clothing in all eight poses. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "592b0b4ba7c7690e1bcb952ebebd5f59b235f620e3fbd12c7df476bebc1be83d",
+    "sha256": "631493866b66f786235996a74824ed4f7264616ce9ead96fb81a8acdc2bc02e7",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-sakura-chibi",
+    "character": "Master · 间桐樱",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Sakura Matou, the principal human Master from Fate/stay night Heaven's Feel. A teenage schoolgirl with straight soft violet hair reaching her upper back, violet eyes, a small red ribbon at the left side of her bangs, and a gentle shy expression. Her recognizable modest everyday look: a light lavender long-sleeved cardigan over a white blouse, a cream-colored knee-length skirt, opaque dark tights and brown loafers. Faithful youthful age-appropriate appearance, fully clothed, innocent neutral stance. No blindfold, no hood, no armor, no revealing outfit. Use very cute 2.3-head-tall chibi proportions with large expressive head and tiny rounded body, crisp dark outlines and warm 2D shading, coordinated with the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Neutral front-facing full-body framing, modest age-appropriate clothing in all eight poses. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "1831e8ef18a6ddf1bb0f2c4f865a2920498a0227cccdf44bf3e7ba69cecdf5ec",
+    "sha256": "50bfe91dbb071a1e859423f56c4df2c25cbefb7663777fd13837d98c3ea273fc",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-illya-anime",
+    "character": "Master · 伊莉雅丝菲尔",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Illyasviel von Einzbern, Illya from Fate/stay night. Preserve her canonical petite childlike anime appearance: long straight silver-white hair, ruby red eyes, a small innocent round face. Her iconic fully covering winter outfit: purple beret, purple winter coat with a broad white fur collar and white fur cuffs, dark purple tights and white winter boots. The coat stays buttoned and reaches her knees. Age-appropriate, completely nonsexual, no bare torso, no adult proportions or heels. A sweet friendly bundled-up winter character. Use the faithful original-series age-appropriate anime proportions and clean 2D Japanese cel animation drawing, not a chibi redesign and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Neutral front-facing full-body framing, modest age-appropriate clothing in all eight poses. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "54c637764cce3844a3271c9f5c94c1d535ee6aa72cf44300715e55a83ef291c5",
+    "sha256": "83ddf32b24cedc9989c0d9eb3781f99c6815bb9d1e5e2e79b756a87598f148c0",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-illya-chibi",
+    "character": "Master · 伊莉雅丝菲尔",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Illyasviel von Einzbern, Illya from Fate/stay night. Preserve her canonical petite childlike anime appearance: long straight silver-white hair, ruby red eyes, a small innocent round face. Her iconic fully covering winter outfit: purple beret, purple winter coat with a broad white fur collar and white fur cuffs, dark purple tights and white winter boots. The coat stays buttoned and reaches her knees. Age-appropriate, completely nonsexual, no bare torso, no adult proportions or heels. A sweet friendly bundled-up winter character. Use very cute 2.3-head-tall chibi proportions with large expressive head and tiny rounded body, crisp dark outlines and warm 2D shading, coordinated with the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. Neutral front-facing full-body framing, modest age-appropriate clothing in all eight poses. Laptop cover is plain without any logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "1919ab4524a7133359bdef4a1b49cc2459cefede3487fe9f5e3352a9523ea2d0",
+    "sha256": "cffbf184fdc6037600b2825c48a6fa43162a1d11b8a594cee34690c671510749",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-kiritsugu-anime",
+    "character": "Master · 卫宫切嗣",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Kiritsugu Emiya, the main adult human Master from Fate/Zero. A lean adult man with short unkempt black hair, tired dark eyes, light chin stubble and a quiet serious expression. His iconic attire is a long charcoal-black trench coat over a black suit, white collared shirt and black tie, with dark trousers and plain black shoes. Faithful understated modern anime character design. No weapons, no cigarettes, no armor or robes. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. All eight full-body poses have consistent face, hair and clothing. Laptop cover is plain without a logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "aa32c831d319a16fba3a2039ead1c0a52bab0b9e2c9be3bc3d8cbb1393325c41",
+    "sha256": "183d6395bb3b419b77fadb54a9ea827fffa500d776f06756f5defc372e0c7136",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-kiritsugu-chibi",
+    "character": "Master · 卫宫切嗣",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Kiritsugu Emiya, the main adult human Master from Fate/Zero. A lean adult man with short unkempt black hair, tired dark eyes, light chin stubble and a quiet serious expression. His iconic attire is a long charcoal-black trench coat over a black suit, white collared shirt and black tie, with dark trousers and plain black shoes. Faithful understated modern anime character design. No weapons, no cigarettes, no armor or robes. Use very cute 2.3-head-tall chibi proportions with a large expressive head and small rounded body, crisp dark outlines and warm 2D shading, matching the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. All eight full-body poses have consistent face, hair and clothing. Laptop cover is plain without a logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "7709e272ae9fdc94cc2b834eb121bcab937c5249cef437e9601ed75355683da9",
+    "sha256": "d5d958634a3bdf3d9ece01edbf8d3f0dfa0e1090a22b2c3e1881ff098f919136",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-kirei-anime",
+    "character": "Master · 言峰绮礼",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Kirei Kotomine, the adult human Master and priest from Fate/stay night and Fate/Zero. A tall broad-shouldered adult man with medium-length shaggy dark brown hair, brown eyes and a composed faint smile. Recognizable long black buttoned clerical cassock, white clerical collar, a gold cross necklace, dark trousers and black shoes. Clearly a priest's outfit rather than Kiritsugu's suit/trench coat. No weapons or armor. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. All eight full-body poses have consistent face, hair and clothing. Laptop cover is plain without a logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "2b354bd59df6e2552f410a824f90be8f5fef37462760e1d7389314e90fdf4348",
+    "sha256": "d0ea3d658c182390f0d127d415f5243955ff27b5d45f31e7191ceca7c56e7c4f",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-kirei-chibi",
+    "character": "Master · 言峰绮礼",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Kirei Kotomine, the adult human Master and priest from Fate/stay night and Fate/Zero. A tall broad-shouldered adult man with medium-length shaggy dark brown hair, brown eyes and a composed faint smile. Recognizable long black buttoned clerical cassock, white clerical collar, a gold cross necklace, dark trousers and black shoes. Clearly a priest's outfit rather than Kiritsugu's suit/trench coat. No weapons or armor. Use very cute 2.3-head-tall chibi proportions with a large expressive head and small rounded body, crisp dark outlines and warm 2D shading, matching the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. All eight full-body poses have consistent face, hair and clothing. Laptop cover is plain without a logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "654c01fe845941bd08dc73ce922e1ec3650b7d1cc0fd03f952f92fa3081f6ffc",
+    "sha256": "2bb2d7864e6c8c31921be8e5bf3a1ac910104ef0e94ed843397adbcffd616325",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-waver-anime",
+    "character": "Master · 韦伯·维尔维特",
+    "style": "anime",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Waver Velvet, the young human Master from Fate/Zero, NOT his older Lord El-Melloi II appearance. Slim youthful man with a straight dark brown chin-length bob hairstyle, large green eyes, a modest earnest expression. His recognizable outfit: dark olive-green pullover sweater over a white collared shirt with a small red neck ribbon, light beige trousers and brown shoes. Fully clothed age-appropriate ordinary student clothing, no long adult coat, no armor or weapon. Use faithful original-series anime proportions and clean 2D Japanese cel animation drawing, not chibi and not 3D. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. All eight full-body poses have consistent face, hair and clothing. Laptop cover is plain without a logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "17aa0125b659ca0ba6d12ed10907d551958011a041d76c656122b5377b41cf6c",
+    "sha256": "02c033573acc339435839ae0f970ea82b46acc5327e03e6f809c3f8298bad67f",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  },
+  {
+    "id": "fate-waver-chibi",
+    "character": "Master · 韦伯·维尔维特",
+    "style": "chibi",
+    "source": "Generated with the built-in image_gen tool; Fate fan artwork, not official production frames.",
+    "prompt": "Replace Saber in every cell of the reference sheet with Waver Velvet, the young human Master from Fate/Zero, NOT his older Lord El-Melloi II appearance. Slim youthful man with a straight dark brown chin-length bob hairstyle, large green eyes, a modest earnest expression. His recognizable outfit: dark olive-green pullover sweater over a white collared shirt with a small red neck ribbon, light beige trousers and brown shoes. Fully clothed age-appropriate ordinary student clothing, no long adult coat, no armor or weapon. Use very cute 2.3-head-tall chibi proportions with a large expressive head and small rounded body, crisp dark outlines and warm 2D shading, matching the reference's cute desktop-companion style. Keep EXACTLY eight equally sized cells in FOUR columns and TWO rows, same center and baseline in each cell. Transparent alpha background; no scenery, text, labels, cell borders, logos, or drawn checkerboard. Keep all eight full bodies inside their cells with transparent gutters. Row 1 frames: neutral standing eyes open; same pose blinking; working on a small plain dark navy laptop at waist height; alternate typing hand. Row 2: friendly hand wave; alternate wave frame; restful eyes-closed pose; matching restful breathing frame. Keep clothing, identity and scale identical across frames. Clean crisp edges without colored fringes. No weapon attacks, gore or graphic violence. This is a coherent game animation atlas, not a lineup of different characters. All eight full-body poses have consistent face, hair and clothing. Laptop cover is plain without a logo.",
+    "reference": "Saber identity/style template; chibi proportions coordinated with the existing companion collection.",
+    "originalSHA256": "726558d36d88e0083e2293e35b9d0614f8352b0397f2e421e8ed159bb8b70f32",
+    "sha256": "4034435f95dd9c6abfe3fa549d37a84ed4fd476955b9e8ec23113b69556c2fa5",
+    "frames": 8,
+    "columns": 8,
+    "rows": 1,
+    "cell": {
+      "width": 384,
+      "height": 416
+    },
+    "previewCell": {
+      "width": 192,
+      "height": 208
+    }
+  }
+]

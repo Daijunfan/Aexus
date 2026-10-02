@@ -1,10 +1,14 @@
+import {isEngine} from '../shared/engines'
+import {clientStore,setClientView} from './client-state'
+import {resolveTeamView} from '../shared/team-views'
+import {rerouteTeamConnections} from '../shared/connector'
 import {reconcileOfficeLayout} from '../shared/office-layout'
-import {assertManagementKind,emptyAccess} from '../shared/management'
+import {hasGlobalRole,managementRelations,assertManagementKind,emptyAccess} from '../shared/management'
 import {cloudHostTarget,importCloudHost} from './cloud-hosts'
 import {remoteTarget} from '../shared/remote'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, symlinkSync } from 'node:fs'
 import { join,relative,dirname } from 'node:path'
-import {DEFAULT_PREFERENCES,THEMES,SIDEBAR_MIN,SIDEBAR_MAX,normalizedSidebarWidth,type Preferences} from '../shared/preferences'
+import {DEFAULT_PREFERENCES,THEMES,LANGUAGES,SIDEBAR_MIN,SIDEBAR_MAX,normalizedSidebarWidth,mergePreferences,PRESENTATION_VIEWS,type Preferences,type PreferencesPatch} from '../shared/preferences'
 import { homedir } from 'node:os'
 import {randomUUID} from 'node:crypto'
 
@@ -16,12 +20,12 @@ const ROOT = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'AgentsCompany')
 const FILE = join(ROOT, 'sessions.json')
 
 export type { Engine, StoredSession, Store, RoomLayout } from '../shared/types'
-import {ALL_TEAM_VIEW,teamSettings,nativeSessionRefs,type TeamSettings,type RoomLayout,type Store,type StoredSession,type TeamView} from '../shared/types'
+import {ALL_TEAM_VIEW,teamSettings,employeeSettings,nativeSessionRefs,type TeamSettings,type RoomLayout,type Store,type StoredSession,type TeamView} from '../shared/types'
 import { requirePlugin } from './plugins/registry'
-import { AVATARS, ACCESSORIES, DESKS, ROOM_THEMES, WALLS, ROOM_PATTERNS, type RoomDesign } from '../shared/office'
-import { employeeWorkspace, teamRoot,inside,workspaceName,managedTeamRoot,chooseTeamRoot,cloudDirectory,cloudRelative } from './workspaces'
+import { AVATARS, ACCESSORIES, DESKS, ROOM_THEMES, WALLS, ROOM_PATTERNS, roomDesign, type RoomDesign } from '../shared/office'
+import { employeeRoot,employeeWorkspace, teamRoot,inside,workspaceName,managedTeamRoot,chooseTeamRoot,cloudDirectory,cloudRelative } from './workspaces'
 import { provisionWorkspace } from './plugins/documents'
-import { ARRANGEMENTS, ROOM_SHAPES, MIN_ROOM_HEIGHT, DEFAULT_VIEW, initialBounds, planOffice, snapEmployee, constrainEmployee, type RoomBounds, type Point, type Viewport } from '../shared/canvas'
+import { ARRANGEMENTS, ROOM_SHAPES, MIN_ROOM_HEIGHT, DEFAULT_VIEW, initialBounds, planOffice, snapEmployee, constrainEmployee, resizeOccupiedRoom, type RoomBounds, type Point, type Viewport } from '../shared/canvas'
 
 const EMPTY: Store = { sessions: [], groups: [], rooms: {} }
 
@@ -30,12 +34,12 @@ export function readStore(): Store {
     if (!existsSync(FILE)) return { ...EMPTY }
     const raw = JSON.parse(readFileSync(FILE, 'utf8'))
     return {
-      revision:raw.revision??0,access:raw.access,
+      revision:raw.revision??0,fullAccessDefaultApplied:raw.fullAccessDefaultApplied,access:raw.access,connectorAnchors:raw.connectorAnchors,lastEmployeeTemplate:raw.lastEmployeeTemplate,lastTeamTemplate:raw.lastTeamTemplate,
       sessions: Array.isArray(raw.sessions) ? raw.sessions : [],
       groups: Array.isArray(raw.groups) ? raw.groups : [],
       teamViews:Array.isArray(raw.teamViews)?raw.teamViews:[],activeTeamViewId:raw.activeTeamViewId??ALL_TEAM_VIEW,
       rooms: raw.rooms && typeof raw.rooms === 'object' ? raw.rooms : {},
-      teamRoots: raw.teamRoots ?? {}, teamSettings:Object.fromEntries(Object.entries(raw.teamSettings??{}).map(([name,value])=>{const config=value as TeamSettings;if(config.mode==='cloud'&&config.hostId){try{return [name,{...config,remote:cloudHostTarget(config.hostId,config.directory)}]}catch{return [name,{...config,remote:undefined}]}}return [name,config]})), viewport: raw.viewport, preferences:{...DEFAULT_PREFERENCES,...raw.preferences,sidebarWidth:normalizedSidebarWidth(raw.preferences?.sidebarWidth)}
+      teamRoots: raw.teamRoots ?? {}, teamSettings:Object.fromEntries(Object.entries(raw.teamSettings??{}).map(([name,value])=>{const config=value as TeamSettings;if(config.mode==='cloud'&&config.hostId){try{return [name,{...config,remote:cloudHostTarget(config.hostId,config.directory)}]}catch{return [name,{...config,remote:undefined}]}}return [name,config]})), viewport: raw.viewport, preferences:{...mergePreferences(raw.preferences),defaultPermissionMode:raw.preferences?.defaultPermissionMode??(raw.fullAccessDefaultApplied?'bypassPermissions':'default'),sidebarWidth:normalizedSidebarWidth(raw.preferences?.sidebarWidth)}
     }
   } catch (error) {
     throw new Error('Store is unreadable; operations stopped: '+(error as Error).message)
@@ -54,21 +58,30 @@ export function onStoreChange(fn: StoreListener): () => void {
   return () => listeners.delete(fn)
 }
 
-export function writeStore(store: Store): void {
+export function writeStore(store: Store,options:{reconcileOffice?:boolean}={}): void {
   mkdirSync(ROOT, { recursive: true })
   const current=existsSync(FILE)?JSON.parse(readFileSync(FILE,'utf8')):undefined
   if((current?.revision??0)!==(store.revision??0))throw new Error('State changed during operation; retry against the current state')
-  for(const card of store.sessions)assertManagementKind(card,!!store.access?.globalManagerIds.includes(card.id))
+  for(const card of store.sessions){if(card.workEnvironment!==undefined&&!['team','local'].includes(card.workEnvironment))throw Error('Invalid work environment');if(card.workEnvironment==='local'&&(card.kind==='cloud-native-worker'||teamSettings(store,card.group).mode==='work'))throw Error('该员工必须使用 Team 工作环境');assertManagementKind(card,hasGlobalRole(store.access,card),employeeSettings(store,card).mode==='cloud')}
   if(store.access){
     const cards=new Map(store.sessions.map(card=>[card.id,card]))
-    store.access.relations=store.access.relations.filter(relation=>{const manager=cards.get(relation.managerId),employee=cards.get(relation.employeeId);return manager&&!manager.deleting&&employee&&!employee.deleting&&manager.managementRole==='manager'&&(employee.managementRole??'employee')==='employee'&&manager.group===employee.group&&!store.access!.globalManagerIds.includes(employee.id)})
-    store.access.globalManagerIds=store.access.globalManagerIds.filter(id=>cards.has(id)&&!cards.get(id)!.deleting)
+    if(store.access.bindings)store.access.bindings=store.access.bindings.filter(edge=>cards.has(edge.managerId)&&cards.has(edge.employeeId))
+    store.access.relations=managementRelations(store.sessions,store.access.bindings)
+    if(store.access.version===2){delete store.access.managerTeam;store.access.globalManagerIds=[]}
+    else store.access.globalManagerIds=store.access.globalManagerIds.filter(id=>cards.has(id)&&!cards.get(id)!.deleting)
     const principals=(cards:StoredSession[])=>cards.map(card=>({id:card.id,role:card.managementRole??'employee',group:card.group,deleting:card.deleting??false}))
-    if(store.access.globalGrants)store.access.globalGrants=Object.fromEntries(Object.entries(store.access.globalGrants).filter(([id])=>store.access!.globalManagerIds.includes(id)))
+    // Startup may write legacy state while migrating hosts/defaults. Preserve its grant
+    // epochs until initializeManagement converts the explicitly authorized employees.
+    if(store.access.version===2){
+      const globalIds=new Set(store.sessions.filter(card=>hasGlobalRole(store.access,card)).map(card=>card.id))
+      store.access.globalGrants=Object.fromEntries(Object.entries(store.access.globalGrants??{}).filter(([id])=>globalIds.has(id)))
+      for(const id of globalIds)store.access.globalGrants[id]??=randomUUID()
+    }
     const before={...current?.access,revision:0,principals:principals(current?.sessions??[])},after={...store.access,revision:0,principals:principals(store.sessions)}
     store.access.revision=(current?.access?.revision??0)+(JSON.stringify(before)!==JSON.stringify(after)?1:0)
   }
-  reconcileOfficeLayout(store,current)
+  if(store.connectorAnchors){const ids=new Set(store.sessions.filter(c=>!c.deleting).map(c=>c.id));store.connectorAnchors=Object.fromEntries(Object.entries(store.connectorAnchors).filter(([,c])=>ids.has(c.managerId)&&ids.has(c.employeeId)))}
+  if(options.reconcileOffice!==false)reconcileOfficeLayout(store,current)
   store.revision=(current?.revision??0)+1
   const saved={...store,teamSettings:Object.fromEntries(Object.entries(store.teamSettings??{}).map(([name,config])=>[name,config.mode==='cloud'&&config.hostId?{mode:'cloud',hostId:config.hostId,directory:config.remote?.directory??config.directory}:config]))}
   const temporary=FILE+'.'+randomUUID()+'.tmp'
@@ -77,12 +90,22 @@ export function writeStore(store: Store): void {
 }
 export function updateStore(change:(store:Store)=>void):Store {const store=readStore();change(store);writeStore(store);return store}
 
+/** Retain the legacy marker without rewriting any employee permission. */
+export function migrateEmployeePermissionDefaults(){
+  const store=readStore()
+  if(store.fullAccessDefaultApplied)return
+  // Compatibility marker only. Never elevate an existing user's selected permissions.
+  store.preferences={...getPreferences(),defaultPermissionMode:store.sessions.length?(store.preferences?.defaultPermissionMode??'bypassPermissions'):'default'}
+  store.fullAccessDefaultApplied=true
+  writeStore(store)
+}
+
 export function storePath(): string {
   return FILE
 }
 
-export function teamViewList(store=readStore()){return {activeId:store.activeTeamViewId??ALL_TEAM_VIEW,views:[{id:ALL_TEAM_VIEW,name:'All Team',teams:store.groups},...(store.teamViews??[])]}}
-export function canvasViewport(store=readStore()){return (store.activeTeamViewId&&store.activeTeamViewId!==ALL_TEAM_VIEW?store.teamViews?.find(view=>view.id===store.activeTeamViewId)?.viewport:store.viewport)??DEFAULT_VIEW}
+export function teamViewList(store=readStore()){store=clientStore(store);return {activeId:store.activeTeamViewId??ALL_TEAM_VIEW,views:[{id:ALL_TEAM_VIEW,name:'All Team',teams:store.groups},...(store.teamViews??[])]}}
+export function canvasViewport(store=readStore(),viewId?:string){return resolveTeamView(clientStore(store),viewId).viewport??DEFAULT_VIEW}
 function teamViewTeams(store:Store,teams:unknown):string[]{
   if(!Array.isArray(teams)||teams.some(name=>typeof name!=='string'||!store.groups.includes(name)))throw new Error('视图只能包含已有 Team')
   return [...new Set(teams)]
@@ -95,13 +118,18 @@ function teamViewName(store:Store,name:unknown,id?:string){
 }
 export function createTeamView(name:string,teams:string[]):TeamView{
   const store=readStore(),view={id:randomUUID(),name:teamViewName(store,name),teams:teamViewTeams(store,teams)}
-  store.teamViews=[...(store.teamViews??[]),view];store.activeTeamViewId=view.id;writeStore(store);return view
+  store.teamViews=[...(store.teamViews??[]),view];if(!setClientView(view.id))store.activeTeamViewId=view.id;writeStore(store);return view
 }
-export function updateTeamView(id:string,patch:{name?:string;teams?:string[]}):TeamView{
+export function updateTeamView(id:string,patch:{name?:string;teams?:string[];index?:number}):TeamView{
   const store=readStore(),view=store.teamViews?.find(value=>value.id===id)
   if(!view)throw new Error('视图不存在或 All Team 不能编辑')
   if(patch.name!==undefined)view.name=teamViewName(store,patch.name,id)
   if(patch.teams!==undefined){const next=teamViewTeams(store,patch.teams);if(JSON.stringify(next)!==JSON.stringify(view.teams))view.viewport=undefined;view.teams=next}
+  if(patch.index!==undefined){
+    if(!Number.isInteger(patch.index)||patch.index<0||patch.index>=store.teamViews!.length)throw new Error('视图位置无效')
+    store.teamViews!.splice(store.teamViews!.indexOf(view),1)
+    store.teamViews!.splice(patch.index,0,view)
+  }
   writeStore(store);return view
 }
 export function removeTeamView(id:string){
@@ -114,20 +142,17 @@ export function removeTeamView(id:string){
 export function selectTeamView(id:string){
   const store=readStore()
   if(id!==ALL_TEAM_VIEW&&!store.teamViews?.some(view=>view.id===id))throw new Error('视图不存在')
-  store.activeTeamViewId=id;writeStore(store);return teamViewList(store)
+  if(!setClientView(id)){store.activeTeamViewId=id;writeStore(store)};return teamViewList(store)
 }
 
 export function patchSession(id: string, patch: Partial<StoredSession>): Store {
   const store = readStore()
   const at = store.sessions.findIndex((s) => s.id === id)
   if (at < 0) {
-    store.sessions.push({ ...(patch as StoredSession), id })
-    if(patch.createdBy?.kind==='agent'){
-      const manager=store.sessions.find(c=>c.id===(patch.createdBy as {employeeId:string}).employeeId)
-      if(manager?.managementRole==='manager'&&manager.group===patch.group&&(patch.managementRole??'employee')==='employee'){
-        const access=store.access??=emptyAccess(),now=Date.now();access.relations.push({id:randomUUID(),managerId:manager.id,employeeId:id,state:'active',requestedBy:patch.createdBy,approvedBy:patch.createdBy,createdAt:now,updatedAt:now})
-      }
-    }
+    const card={...(patch as StoredSession),id}
+    store.sessions.push(card)
+    store.lastEmployeeTemplate={engine:card.engine,kind:card.kind,group:card.group,workEnvironment:card.workEnvironment,directoryMode:card.directoryMode,avatar:card.avatar,accessory:card.accessory,color:card.color,role:card.role,model:card.model,effort:card.effort,permissionMode:card.permissionMode,thinking:card.thinking,planMode:card.planMode,fastMode:card.fastMode,managementRole:card.managementRole}
+
   } else {
     const previous=store.sessions[at]
     employeeFields(patch,previous)
@@ -160,8 +185,9 @@ export function removeSession(id: string|string[]): Store {
 
 export function validateTeamSettings(settings:TeamSettings):TeamSettings {
   if(!['work','build','cloud'].includes(settings.mode))throw new Error('Team 模式必须是 work、build 或 cloud')
+  if(settings.directoryMode!==undefined&&!['default','bind'].includes(settings.directoryMode))throw new Error('请选择默认生成或绑定已有文件夹')
   if(settings.mode==='cloud'){if(!settings.hostId)throw new Error('请先在 Cloud Hosts 插件添加云主机，再使用 hostId 绑定 Team');const remote=cloudHostTarget(settings.hostId,settings.directory??settings.remote?.directory);return {mode:'cloud',hostId:settings.hostId,directory:remote.directory,remote}}
-  if(settings.remote)throw new Error('SSH 连接只能配置在 cloud Team 中')
+  if(settings.remote||settings.hostId||settings.directory)throw new Error('SSH 主机和远端目录只能配置在 cloud Team 中；请使用 --mode cloud')
   if(settings.directoryMode!==undefined&&!['default','bind'].includes(settings.directoryMode))throw new Error('请选择默认生成或绑定已有文件夹')
   const directory=settings.directoryMode?{directoryMode:settings.directoryMode}:{}
   if(settings.mode==='build')return {mode:'build',...directory}
@@ -181,22 +207,28 @@ export function addGroup(name: string, root?: string, settings:TeamSettings={mod
     if(config.mode!=='cloud'&&Object.entries(store.teamRoots??{}).some(([name,path])=>teamSettings(store,name).mode!=='cloud'&&path===canonical&&(config.mode==='work'||config.directoryMode!=='bind')))throw new Error('此工作目录已属于另一个项目或插件')
     if(config.mode!=='cloud'&&(config.mode==='work'||config.directoryMode!=='bind'))provisionWorkspace(canonical,config)
     store.groups.push(clean)
+    store.lastTeamTemplate={settings:config,design:roomDesign(store.groups.length-1),bounds:initialBounds(store.groups.length-1)}
     if(store.activeTeamViewId&&store.activeTeamViewId!==ALL_TEAM_VIEW){const view=store.teamViews?.find(view=>view.id===store.activeTeamViewId);if(view){view.teams.push(clean);view.viewport=undefined}}
     store.teamRoots = { ...store.teamRoots, [clean]: canonical }
     store.teamSettings={...store.teamSettings,[clean]:config}
-  } else if(teamSettings(store,clean).mode==='cloud'){if(JSON.stringify(teamSettings(store,clean))!==JSON.stringify(validateTeamSettings(settings)))throw new Error('Team 已存在，请使用 group configure 修改连接')} else if (root) return settings.directoryMode==='bind'?bindTeamRoot(clean,root):setTeamRoot(clean, root)
+  } else throw new Error('Team 已存在；名称可修改，工作目录创建后不可更换')
   writeStore(store)
   return store
 }
 
-export function removeGroup(name: string): Store {
+export function removeGroup(name: string|string[]): Store {
   const store = readStore()
-  if (store.sessions.some(c=>c.group===name)) throw new Error('请先迁移或移除 Team 内的员工，再删除 Team；工作文件不会被删除')
-  store.groups = store.groups.filter((g) => g !== name)
-  store.teamViews=store.teamViews?.map(view=>view.teams.includes(name)?{...view,teams:view.teams.filter(team=>team!==name),viewport:undefined}:view)
-  if (store.rooms) delete store.rooms[name]
-  if (store.teamRoots) delete store.teamRoots[name]
-  if (store.teamSettings) delete store.teamSettings[name]
+  const names=new Set(Array.isArray(name)?name:[name])
+  if (store.sessions.some(c=>names.has(c.group))) throw new Error('请先迁移或移除 Team 内的员工，再删除 Team；工作文件不会被删除')
+  if(store.access?.managerTeam&&names.has(store.access.managerTeam))delete store.access.managerTeam
+  store.groups = store.groups.filter(g=>!names.has(g))
+  if(store.lastEmployeeTemplate?.group&&names.has(store.lastEmployeeTemplate.group))delete store.lastEmployeeTemplate.group
+  store.teamViews=store.teamViews?.map(view=>view.teams.some(team=>names.has(team))?{...view,teams:view.teams.filter(team=>!names.has(team)),viewport:undefined}:view)
+  for(const name of names){
+    if (store.rooms) delete store.rooms[name]
+    if (store.teamRoots) delete store.teamRoots[name]
+    if (store.teamSettings) delete store.teamSettings[name]
+  }
   writeStore(store)
   return store
 }
@@ -209,13 +241,15 @@ export function renameGroup(name: string, nextName: string): Store {
   if(next===name)return store
   if(store.groups.includes(next))throw new Error('同名 Team 已存在')
   const renamed=<T>(record:Record<string,T>|undefined)=>record&&Object.fromEntries(Object.entries(record).map(([key,value])=>[key===name?next:key,value]))
+  if(store.access?.managerTeam===name)store.access.managerTeam=next
   store.groups=store.groups.map(group=>group===name?next:group)
+  if(store.lastEmployeeTemplate?.group===name)store.lastEmployeeTemplate.group=next
   store.teamViews=store.teamViews?.map(view=>({...view,teams:view.teams.map(team=>team===name?next:team)}))
   store.sessions=store.sessions.map(card=>card.group===name?{...card,group:next}:card)
   store.teamRoots=renamed(store.teamRoots)
   store.teamSettings=renamed(store.teamSettings)
   store.rooms=renamed(store.rooms)??{}
-  writeStore(store)
+  writeStore(store,{reconcileOffice:false})
   return store
 }
 
@@ -236,17 +270,18 @@ export function designRoom(name: string, patch: Partial<RoomDesign>): Store {
   const index = Math.max(0, store.groups.indexOf(name))
   const room = store.rooms?.[name] ?? { col: index % 3, row: Math.floor(index / 3), w: 1, h: 1 }
   store.rooms = { ...store.rooms, [name]: { ...room, design: { ...room.design, ...design } } }
+  if(name===store.groups.at(-1)&&store.lastTeamTemplate)store.lastTeamTemplate.design=roomDesign(index,store.rooms[name].design)
   writeStore(store)
   return store
 }
 
 export function employeeFields(patch: Partial<StoredSession>, employee?:StoredSession): Partial<StoredSession> {
-  if(patch.engine!==undefined&&!['codex','claude'].includes(patch.engine))throw new Error('Unknown engine')
+  if(patch.engine!==undefined&&!isEngine(patch.engine))throw new Error('Unknown engine')
+  if(employee&&patch.engine!==undefined&&patch.engine!==employee.engine)throw new Error('员工引擎创建后固定；如需使用其他引擎，请删除员工后重新添加')
   if (patch.avatar !== undefined && !AVATARS.includes(patch.avatar)) throw new Error('Unknown avatar')
   if (patch.accessory !== undefined && !ACCESSORIES.includes(patch.accessory)) throw new Error('Unknown accessory')
   if (patch.color !== undefined && !/^#[\da-f]{6}$/i.test(patch.color)) throw new Error('Color must be a hex color')
   if(patch.title!==undefined&&!String(patch.title).trim())throw new Error('会话名称不能为空')
-  if(employee&&patch.title!==undefined&&String(patch.title).trim()!==employee.title)throw new Error('员工名称创建后不可修改，与工作目录保持一致')
   const fields: Partial<StoredSession> = {}
   for (const key of ['title', 'role', 'avatar', 'accessory', 'color'] as const) {
     if (patch[key] !== undefined) Object.assign(fields, { [key]: patch[key] })
@@ -258,13 +293,9 @@ export function employeeFields(patch: Partial<StoredSession>, employee?:StoredSe
 export function updateEmployee(id: string, patch: Partial<StoredSession>, directoryMode?:'create'|'existing'): Store {
   const employee = readStore().sessions.find((c) => c.id === id)
   if (!employee) throw new Error(`no such card ${id}`)
+  if(patch.group!==undefined&&patch.group!==employee.group)throw new Error('员工创建后不能更换 Team')
+  if(patch.cwd!==undefined&&patch.cwd!==employee.cwd)throw new Error('员工工作目录创建后不能更换')
   const fields = employeeFields(patch,employee)
-  if(patch.engine!==undefined&&patch.engine!==employee.engine)Object.assign(fields,{engine:patch.engine,nativeSessions:nativeSessionRefs(employee),threadId:undefined,claudeSessionId:undefined,nativeOwnership:undefined,model:patch.engine==='codex'?(employee.kind==='cloud-native-worker'?'gpt-6-luna':'gpt-5.6-luna'):undefined,effort:'low',fastMode:false,thinking:patch.engine==='claude',permissionMode:teamSettings(readStore(),patch.group??employee.group).mode==='build'?'default':'acceptEdits'})
-  if (patch.group !== undefined && patch.group !== employee.group) moveSession(id, patch.group, undefined, patch.cwd, directoryMode)
-  else if (patch.cwd !== undefined && patch.cwd !== employee.cwd) {
-    const cwd=employeeWorkspace(readStore(),employee.group,patch.cwd,id,true,directoryMode)
-    if(cwd!==employee.cwd) Object.assign(fields,{cwd,threadId:undefined,claudeSessionId:undefined,nativeOwnership:undefined,...(employee.nativeOrigin?{nativeOrigin:{...employee.nativeOrigin,directory:cwd}}:{})})
-  }
   return patchSession(id, fields)
 }
 
@@ -274,11 +305,13 @@ export function moveSession(id: string, group: string, beforeId?: string, target
   const from = store.sessions.findIndex((s) => s.id === id)
   if (from < 0) throw new Error(`no such card ${id}`)
   const card=store.sessions[from]
+  if(group!==card.group)throw new Error('员工创建后不能更换 Team')
+  if(targetCwd!==undefined&&targetCwd!==card.cwd)throw new Error('员工工作目录创建后不能更换')
   if(card.kind==='cloud-native-worker'&&group!==card.group)throw new Error('Cloud Native Worker 不能移动到另一 Team')
   if(!store.groups.includes(group))throw new Error('Unknown Team')
   const cwd=employeeWorkspace(store,group,targetCwd ?? (group===card.group?card.cwd:card.cwd.split('/').at(-1)!),id,true,directoryMode)
   if(card.group!==group&&store.access)store.access.relations=store.access.relations.filter(r=>r.managerId!==id&&r.employeeId!==id)
-  const moving = { ...card, remote:undefined, group, cwd, ...(cwd!==card.cwd||group!==card.group?{nativeSessions:nativeSessionRefs(card),threadId:undefined,claudeSessionId:undefined}:{}), ...(group!==card.group?{position:undefined,remoteAdmin:false,permissionMode:teamSettings(store,group).mode!=='build'?'acceptEdits' as const:card.permissionMode}:{}) }
+  const moving = { ...card, remote:undefined, group, cwd,localWorkspaceRoot:card.workEnvironment==='local'&&teamSettings(store,group).mode==='cloud'?employeeRoot(store,{group,workEnvironment:'local'}):undefined, ...(cwd!==card.cwd||group!==card.group?{nativeSessions:nativeSessionRefs(card),threadId:undefined,claudeSessionId:undefined}:{}), ...(group!==card.group?{position:undefined,remoteAdmin:false,permissionMode:employeeSettings(store,{...card,group}).mode!=='build'?'acceptEdits' as const:card.permissionMode}:{}) }
   const rest = store.sessions.filter((s) => s.id !== id)
   const at = beforeId ? rest.findIndex((s) => s.id === beforeId) : -1
   const next = at < 0 ? [...rest, moving] : [...rest.slice(0, at), moving, ...rest.slice(at)]
@@ -292,6 +325,7 @@ export function moveSession(id: string, group: string, beforeId?: string, target
 export function bindTeamRoot(name:string,path:string):Store {
   const store=readStore()
   if(!store.groups.includes(name))throw new Error('Unknown Team')
+  if(store.teamRoots?.[name])throw new Error('Team 工作目录创建后不可更换')
   if(teamSettings(store,name).mode==='cloud')throw new Error('云主机目录请通过 group configure 更新')
   const config={...teamSettings(store,name),directoryMode:'bind' as const},root=chooseTeamRoot(name,config,path)
   const next={...store,teamRoots:{...store.teamRoots,[name]:root},teamSettings:{...store.teamSettings,[name]:config}}
@@ -307,6 +341,7 @@ export function bindTeamRoot(name:string,path:string):Store {
 export function setTeamRoot(name:string,path?:string,_create=true):Store {
   const store=readStore()
   if(!store.groups.includes(name))throw new Error('Unknown Team')
+  if(store.teamRoots?.[name])throw new Error('Team 工作目录创建后不可更换')
   if(teamSettings(store,name).mode==='cloud')throw new Error('云主机目录不支持本地迁移，请使用 group configure')
   const config={...teamSettings(store,name),directoryMode:'default' as const},root=managedTeamRoot(name,config,path),oldRoot=store.teamRoots?.[name]
   if(teamSettings(store,name).directoryMode==='bind')throw new Error('绑定目录不自动迁移；请保留绑定或新建 Team')
@@ -340,6 +375,7 @@ export function configureTeam(name:string,settings:TeamSettings,path?:string):St
   const store=readStore()
   if(!store.groups.includes(name))throw new Error('Unknown Team')
   const previous=teamSettings(store,name)
+  if(store.teamRoots?.[name])throw new Error('Team 工作方式和工作目录创建后不可更换')
   if(previous.mode==='work'&&previous.directoryMode==='bind'&&settings.mode==='work'&&settings.pluginId===previous.pluginId&&settings.directoryMode===undefined&&path===undefined)return store
   const samePlugin=settings.mode===previous.mode&&settings.pluginId===previous.pluginId
   const config=validateTeamSettings({...settings,directoryMode:settings.directoryMode??(samePlugin?previous.directoryMode:undefined)})
@@ -355,25 +391,34 @@ export function configureTeam(name:string,settings:TeamSettings,path?:string):St
 export function setBounds(name: string, patch: Partial<RoomBounds>): Store {
   const store=readStore()
   applyBounds(store,name,patch)
-  writeStore(store);return store
+  if(name===store.groups.at(-1)&&store.lastTeamTemplate)store.lastTeamTemplate.bounds={...store.rooms![name].bounds!}
+  writeStore(store,{reconcileOffice:false});return store
 }
 function applyBounds(store:Store,name:string,patch:Partial<RoomBounds>){
   const index=store.groups.indexOf(name)
   if(index<0 && name!=='') throw new Error('Unknown Team')
-  // Keep the edited Team anchored; the commit pass moves only colliding neighbors.
+  // A manual frame edit leaves other Teams exactly where the user placed them.
   store.rooms??={}
   const planned=planOffice(store)
   for(const room of planned)store.rooms[room.name]={...(store.rooms[room.name]??{col:0,row:0,w:1,h:1}),bounds:{...room.bounds,pinned:true}}
   const prev=initialBounds(Math.max(0,index),store.rooms?.[name])
-  const bounds={...prev,...patch}
+  let bounds={...prev,...patch}
   if(patch.x!==undefined||patch.y!==undefined) bounds.pinned=true
   if(![bounds.x,bounds.y,bounds.width,bounds.height].every(Number.isFinite)||bounds.width<360||bounds.height<380) throw new Error('Team 尺寸至少为 360 × 380，坐标须为有限数值')
   bounds.height=Math.max(MIN_ROOM_HEIGHT,bounds.height)
   if(!ROOM_SHAPES.includes(bounds.shape)||!ARRANGEMENTS.includes(bounds.arrangement)) throw new Error('Invalid room shape or arrangement')
   if(bounds.points && (bounds.points.length<3 || bounds.points.some(p=>![p.x,p.y].every(n=>Number.isFinite(n)&&n>=0&&n<=1)))) throw new Error('外框至少需要三个控制点，坐标位于 0–1 范围')
-  if(patch.width!==undefined||patch.height!==undefined){const room=planned.find(r=>r.name===name)!;store.sessions=store.sessions.map(c=>c.group===name?{...c,position:room.employees.find(p=>p.card.id===c.id)!.position}:c)}
+  if(patch.width!==undefined||patch.height!==undefined){
+    const room=planned.find(r=>r.name===name)!
+    const resizing=bounds.shape===prev.shape&&bounds.arrangement===prev.arrangement&&JSON.stringify(bounds.points)===JSON.stringify(prev.points)
+    const resized=resizing?resizeOccupiedRoom(room,bounds):room
+    if(resizing)bounds=resized.bounds
+    const positions=new Map(resized.employees.map(employee=>[employee.card.id,employee.position]))
+    store.sessions=store.sessions.map(card=>card.group===name?{...card,position:positions.get(card.id)}:card)
+  }
   if(patch.arrangement && patch.arrangement!==prev.arrangement) store.sessions=store.sessions.map(c=>c.group===name?{...c,position:undefined}:c)
   store.rooms={...store.rooms,[name]:{...(store.rooms?.[name]??{col:0,row:0,w:1,h:1}),bounds}}
+  if(bounds.x!==prev.x||bounds.y!==prev.y)store.connectorAnchors=rerouteTeamConnections(store.connectorAnchors,name,store.sessions)
   const adjusted=planOffice(store).find(room=>room.name===name)!
   store.sessions=store.sessions.map(card=>card.group===name&&card.position?{...card,position:adjusted.employees.find(e=>e.card.id===card.id)!.position}:card)
 }
@@ -393,17 +438,29 @@ export function placeEmployee(id: string, position: Point,options:{snap?:boolean
   writeStore(store);return store
 }
 
-export function setViewport(view: Viewport): Store {
+export function setViewport(view: Viewport,viewId?:string): Store {
   if(![view.x,view.y,view.zoom].every(Number.isFinite)||view.zoom<.08||view.zoom>3) throw new Error('Invalid canvas viewport')
-  const store=readStore(),selected=store.teamViews?.find(item=>item.id===store.activeTeamViewId)
-  if(selected)selected.viewport=view;else store.viewport=view
+  const store=readStore(),target=resolveTeamView(clientStore(store),viewId)
+  if(setClientView(target.id,view))return clientStore(store)
+  if(target.id===ALL_TEAM_VIEW)store.viewport=view;else target.viewport=view
   writeStore(store);return store
 }
 
-export function getPreferences():Preferences { return {...DEFAULT_PREFERENCES,...readStore().preferences} }
-export function setPreferences(patch:Partial<Preferences>):Preferences {
-  const value={...getPreferences(),...patch}
-  if(!THEMES.includes(value.theme))throw new Error('Unknown theme')
+export function getPreferences():Preferences { return readStore().preferences??mergePreferences() }
+export function setPreferences(patch:PreferencesPatch):Preferences {
+  for(const key of Object.keys(patch))if(!Object.hasOwn(DEFAULT_PREFERENCES,key))throw Error('Unknown preference: '+key)
+  const appearance=patch.viewAppearance
+  if(appearance!==undefined){
+    if(!appearance||typeof appearance!=='object'||Array.isArray(appearance)||Object.keys(appearance).some(view=>!PRESENTATION_VIEWS.includes(view as any)))throw Error('Choose Company, Messages or Plan appearance')
+    for(const change of Object.values(appearance))if(!change||typeof change!=='object'||Array.isArray(change)||Object.keys(change).some(key=>!['theme','themeColor'].includes(key)))throw Error('View appearance accepts theme and themeColor')
+  }
+  const value=mergePreferences(getPreferences(),patch)
+  if(!['default','acceptEdits','bypassPermissions'].includes(value.defaultPermissionMode))throw Error('Invalid default engine permission')
+  if(!LANGUAGES.includes(value.language))throw new Error('Interface language must be en or zh-CN')
+  for(const chosen of [patch,...Object.values(appearance??{}),...Object.values(value.viewAppearance)]){
+    if(chosen.theme!==undefined&&!THEMES.includes(chosen.theme))throw Error('Unknown theme')
+    if(chosen.themeColor!==undefined&&(typeof chosen.themeColor!=='string'||!/^#[0-9a-f]{6}$/i.test(chosen.themeColor)))throw Error('Theme color must be a six-digit hex color')
+  }
   if(!Number.isFinite(value.zoomSensitivity)||value.zoomSensitivity<.25||value.zoomSensitivity>8)throw new Error('Zoom sensitivity must be between 0.25 and 8')
   if(!Number.isFinite(value.panSensitivity)||value.panSensitivity<.25||value.panSensitivity>4)throw new Error('Pan sensitivity must be between 0.25 and 4')
   if(!Number.isFinite(value.sidebarWidth)||value.sidebarWidth<SIDEBAR_MIN||value.sidebarWidth>SIDEBAR_MAX)throw new Error('Icon sidebar width must be between 56 and 96')
@@ -411,7 +468,8 @@ export function setPreferences(patch:Partial<Preferences>):Preferences {
   if(!Number.isFinite(value.explorerWidth)||value.explorerWidth<140||value.explorerWidth>520)throw new Error('Explorer width must be between 140 and 520')
   if(!Number.isFinite(value.terminalHeight)||value.terminalHeight<120||value.terminalHeight>600)throw new Error('Terminal height must be between 120 and 600')
   if(typeof value.snapEmployees!=='boolean')throw new Error('snapEmployees must be boolean')
-  for(const key of ['defaultCodexModel','defaultClaudeModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
+  if(typeof value.showTeamOverview!=='boolean')throw new Error('showTeamOverview must be boolean')
+  for(const key of ['defaultCodexModel','defaultClaudeModel','defaultClineModel','defaultPiModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
   const store=readStore();store.preferences=value;writeStore(store);return value
 }
 

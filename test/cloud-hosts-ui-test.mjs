@@ -19,7 +19,7 @@ try{
  const local=page.locator('[data-department="Local Studio"]');await expect(local.locator('.team-os')).toHaveAttribute('data-os','macos')
  assert.equal(await local.locator('.team-header').evaluate(e=>e.clientHeight),168) // 170px includes the 2px floor divider.
  assert.ok(await local.locator('.team-title strong').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=34))
- assert.ok(await local.locator('.team-os img').evaluate(e=>e.complete&&e.naturalWidth>0))
+ assert.ok(await local.locator('.team-os-apple').evaluate(e=>getComputedStyle(e).maskImage!=='none'))
  const header=await local.locator('.team-header').boundingBox(),worker=await local.locator('.employee-location').boundingBox();assert.ok(worker.y>=header.y+header.height)
  const opened=app.waitForEvent('window');await page.locator('[data-plugin="cloud-hosts"]').click();const plugin=await opened;plugin.on('pageerror',e=>errors.push(e.message));await plugin.locator('#add').click()
  await plugin.locator('input[name=name]').fill('GPU Lab');await plugin.locator('input[name=host]').fill('fixture');await plugin.locator('input[name=defaultDirectory]').fill(remote);await plugin.locator('input[name=password]').fill('fixture-only');await plugin.getByRole('button',{name:'保存主机',exact:true}).click()

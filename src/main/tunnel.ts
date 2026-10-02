@@ -1,6 +1,8 @@
+import {applicationRoot} from './resources'
+import {terminateTree} from './platform'
 import {cloudHostAskpass} from './cloud-hosts'
 import {createHash,randomUUID} from 'node:crypto'
-import {teamSettings,type Store} from '../shared/types'
+import {teamSettings,employeeSettings,type Store} from '../shared/types'
 import {chooseEmployeeWorkspace,cloudDirectory,cloudRelative} from './workspaces'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -12,11 +14,17 @@ import {remoteTarget,type RemoteTarget} from '../shared/remote'
 import {childEnv,resolveBinary} from './exec'
 import type {Engine} from '../shared/types'
 
-export function tunnelDirectory(){return process.env.AGENTS_COMPANY_TUNNEL_DIR||(process.resourcesPath&&fs.existsSync(path.join(process.resourcesPath,'Modules/Tunnel'))?path.join(process.resourcesPath,'Modules/Tunnel'):path.resolve(__dirname,'../../../Modules/Tunnel'))}
-export const python=()=>resolveBinary('python3',process.env.AGENTS_COMPANY_PYTHON)
+export function tunnelDirectory(){return process.env.AGENTS_COMPANY_TUNNEL_DIR||(process.resourcesPath&&fs.existsSync(path.join(process.resourcesPath,'Modules/Tunnel'))?path.join(process.resourcesPath,'Modules/Tunnel'):path.join(applicationRoot(),'Modules/Tunnel'))}
+export const python=()=>{const candidate=resolveBinary('python3',process.env.AGENTS_COMPANY_PYTHON);return process.platform==='win32'&&candidate==='python3'?resolveBinary('python',process.env.AGENTS_COMPANY_PYTHON):candidate}
 export function tunnelConfig(target:RemoteTarget){
   const value:Record<string,unknown>={host:target.host,directory:target.directory,os:target.os,cli_bin:target.cliBin,port:target.port,proxy_jump:target.jump}
-  for(const [key,field] of [['identityFile','identity_file'],['knownHosts','known_hosts'],['sshConfig','ssh_config']] as const){const file=target[key];if(file){if(!path.isAbsolute(file)&&!file.startsWith('~/'))throw new Error('SSH 文件配置必须使用绝对路径或 ~/');value[field]=file.startsWith('~/')?path.join(homedir(),file.slice(2)):file}}
+  for(const [key,field] of [['identityFile','identity_file'],['knownHosts','known_hosts'],['sshConfig','ssh_config']] as const){
+    const file=target[key];if(!file)continue
+    if(!path.isAbsolute(file)&&!file.startsWith('~/'))throw new Error('SSH 文件配置必须使用绝对路径或 ~/')
+    const resolved=file.startsWith('~/')?path.join(homedir(),file.slice(2)):file
+    if(!fs.existsSync(resolved))throw new Error(`SSH ${key==='identityFile'?'私钥':key==='knownHosts'?'主机信任文件':'配置文件'}不存在：${resolved}。请在 Cloud Hosts 修复文件路径；这不是员工管理权限错误。`)
+    value[field]=resolved
+  }
   if(target.credentialId)value.askpass=cloudHostAskpass(target.credentialId,target)
   return value
 }
@@ -53,7 +61,7 @@ class RemoteFiles {
   fail(error:Error){for(const item of this.pending.values()){clearTimeout(item.timer);item.reject(error)}this.pending.clear()}
   request(method:string,params:Record<string,unknown>,timeout=25000):Promise<any>{return new Promise((resolve,reject)=>{const id=++this.sequence,timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('远程文件操作超时'));this.close()},timeout);this.pending.set(id,{resolve,reject,timer});this.child.stdin.write(JSON.stringify({jsonrpc:'2.0',id,method,params})+'\n')})}
   async call(operation:string,args:Record<string,unknown>){await this.ready;return this.request('tools/call',{name:'workspace',arguments:{operation,args}})}
-  close(){if(this.child.pid)try{process.kill(-this.child.pid,'SIGTERM')}catch{}this.fail(new Error('SSH 文件连接已关闭'))}
+  close(){terminateTree(this.child);this.fail(new Error('SSH 文件连接已关闭'))}
 }
 const connections=new Map<string,{key:string;client:Promise<RemoteFiles>}>()
 export async function remoteFiles(id:string,target:RemoteTarget,operation:string,args:Record<string,unknown>){
@@ -68,9 +76,12 @@ export function closeRemoteFiles(){for(const id of connections.keys())closeRemot
 
 export const teamConnectionId=(name:string)=>'team-'+createHash('sha256').update(name).digest('hex').slice(0,20)
 /** Employee creation uses the same directory contract locally and through SSH. */
-export async function resolveEmployeeWorkspace(store:Store,group:string,title:string,input?:string,mode?:string,id?:string,preview=false):Promise<string>{
-  const config=teamSettings(store,group)
-  if(config.mode!=='cloud')return chooseEmployeeWorkspace(store,group,title,input,mode,id,preview)
+export async function resolveEmployeeWorkspace(store:Store,group:string,title:string,input?:string,mode?:string,id?:string,preview=false,workEnvironment?:import('../shared/types').WorkEnvironment):Promise<string>{
+  workEnvironment??=store.sessions.find(card=>card.id===id)?.workEnvironment
+  if(workEnvironment!==undefined&&!['team','local'].includes(workEnvironment))throw Error('工作环境必须为 team 或 local')
+  if(workEnvironment==='local'&&teamSettings(store,group).mode==='work')throw Error('插件员工必须使用所属插件工作区')
+  const config=employeeSettings(store,{group,workEnvironment})
+  if(config.mode!=='cloud')return chooseEmployeeWorkspace(store,group,title,input,mode,id,preview,workEnvironment)
   if(!store.groups.includes(group)||!config.remote)throw new Error('请先配置云主机 Team')
   if(mode!==undefined&&!['default','bind','create','existing'].includes(mode))throw new Error('请选择默认生成或绑定已有文件夹')
   const generated=mode==='default'||(!mode&&!input)
@@ -92,4 +103,38 @@ export async function executeRemote(target:RemoteTarget,command:string,timeout=1
     const reply=await client.request('tools/call',{name:'execute',arguments:{command,timeout}},(timeout+10)*1000)
     const result=JSON.parse(reply.content[0].text);if(reply.isError&&typeof result.exit_code!=='number')throw remoteError(result.error||'远程命令失败');return result
   }finally{client?.close();fs.rmSync(path.join(APP_HOME,'tunnel',id),{recursive:true,force:true})}
+}
+
+/** Engine-owned MCP connection, separate from the file browser and host commands. */
+export async function openTunnelTools(launch:RemoteLaunch){
+  const allowed=['execute','read_file','write_file','edit_file','list_files']
+  let client:RemoteFiles|undefined,closed=false,queue:Promise<unknown>=Promise.resolve()
+  const connection=async()=>{if(closed)throw Error('Tunnel connection closed');const current=client??(client=new RemoteFiles(launch));await current.ready;return current}
+  const close=()=>{closed=true;const current=client;client=undefined;current?.close()}
+  try{
+    const catalog=await (await connection()).request('tools/list',{})
+    const tools=(catalog.tools as {name:string;description:string;inputSchema:Record<string,unknown>}[]).filter(tool=>allowed.includes(tool.name))
+    if(allowed.some(name=>!tools.some(tool=>tool.name===name)))throw Error('Tunnel workspace tools are missing')
+    const perform=async(name:string,args:Record<string,unknown>,signal?:AbortSignal)=>{
+      if(!allowed.includes(name))throw Error('Only Tunnel workspace tools are permitted')
+      if(signal?.aborted)throw Error('Interrupted')
+      const current=await connection()
+      if(signal?.aborted)throw Error('Interrupted')
+      let cancelled=false
+      const cancel=()=>{
+        if(cancelled)return;cancelled=true
+        if(client===current)client=undefined
+        // Deliver cancellation before closing SSH. The ordered ping acknowledges
+        // that the remote command settled; a later call starts a fresh connection.
+        try{current.child.stdin.write(JSON.stringify({jsonrpc:'2.0',method:'notifications/cancelled',params:{}})+'\n');void current.request('ping',{},2500).catch(()=>{}).finally(()=>current.close())}catch{current.close()}
+      }
+      signal?.addEventListener('abort',cancel,{once:true})
+      try{return await current.request('tools/call',{name,arguments:args},name==='execute'?(Math.min(600,Math.max(.1,Number(args.timeout)||120))+10)*1000:30000)}
+      catch(error){cancel();throw error}
+      finally{signal?.removeEventListener('abort',cancel)}
+    }
+    // The remote workspace has a shared cwd. Queue here so aborted operations
+    // never reach the remote server after an earlier command is cancelled.
+    return {tools,close,call(name:string,args:Record<string,unknown>,signal?:AbortSignal){const result=queue.then(()=>perform(name,args,signal));queue=result.catch(()=>{});return result}}
+  }catch(error){close();throw error}
 }

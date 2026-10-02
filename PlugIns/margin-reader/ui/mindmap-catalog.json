@@ -1,0 +1,24 @@
+{
+  "structures": {"mindmap":"均衡思维导图","logic-right":"逻辑图 · 向右","logic-left":"逻辑图 · 向左","org-down":"组织图 · 向下","org-up":"组织图 · 向上","tree-right":"树状图 · 向右","tree-left":"树状图 · 向左","timeline-horizontal":"横向时间轴","timeline-vertical":"纵向时间轴","fishbone-right":"鱼骨图 · 向右","fishbone-left":"鱼骨图 · 向左","matrix":"矩阵","brace":"括号图"},
+  "shapes": {"rounded":"圆角矩形","rectangle":"矩形","pill":"胶囊","ellipse":"椭圆","circle":"圆形","diamond":"菱形","hexagon":"六边形","octagon":"八边形","parallelogram":"平行四边形","trapezoid":"梯形","triangle":"三角形","pentagon":"五边形","star":"星形","cloud":"云朵","underline":"下划线","none":"纯文本","document":"文档","cylinder":"圆柱","process":"预定义过程","callout":"对话框","arrow-right":"右箭头","arrow-left":"左箭头","chevron":"山形","ribbon":"缎带","ticket":"票券","shield":"盾牌","heart":"心形","capsule-cut":"切角矩形","bracket":"方括号","flag":"旗帜","double-ellipse":"双椭圆"},
+  "lines": {"curve":"曲线","straight":"直线","elbow":"折线","rounded":"圆角折线","tapered":"渐细曲线"},
+  "arrows": {"none":"无","triangle":"实心箭头","open":"开放箭头","diamond":"实心菱形","diamond-open":"空心菱形","circle":"实心圆","circle-open":"空心圆","square":"方形","bar":"端线","fork":"分叉","double":"双箭头"},
+  "boundaries": {"rounded":"圆角外框","rectangle":"矩形外框","ellipse":"椭圆外框","cloud":"云状外框","pill":"胶囊外框","hexagon":"六边形外框","octagon":"切角外框","bracket":"括号外框","underline":"底线外框"},
+  "markers": {"priority":"优先级","progress":"进度","status":"状态","flag":"旗标","symbol":"符号"},
+  "symbols": {"idea":"灵感","question":"问题","warning":"注意","star":"重点","check":"完成","cross":"取消","heart":"喜爱","pin":"定位","clock":"时间","target":"目标","book":"资料","link":"关联"},
+  "numbering": {"none":"无编号","decimal":"1. 2. 3.","hierarchy":"1.1 分级","roman":"I. II. III.","alpha":"A. B. C."},
+  "themes": {
+    "radiance":{"title":"晴空","paper":"#FAFBFE","ink":"#253044","palette":["#5978E6","#EB9570","#55AB96","#B888D5","#D9AC47","#E07491"],"shape":"rounded","line":"curve","rootShape":"pill","fill":"soft","shadow":true},
+    "business":{"title":"商务","paper":"#FFFFFF","ink":"#27384B","palette":["#345579","#5C879B","#B7956B","#819277","#887998","#AE7772"],"shape":"rectangle","line":"elbow","rootShape":"rounded","fill":"white","shadow":false},
+    "pastel":{"title":"柔彩","paper":"#FFFCFA","ink":"#4B4548","palette":["#C67C9C","#A38AC2","#72A6AA","#B6A056","#D78B71","#788EC0"],"shape":"pill","line":"curve","rootShape":"pill","fill":"soft","shadow":false},
+    "forest":{"title":"林间","paper":"#F7FAF5","ink":"#293E32","palette":["#347B66","#82A75E","#BF974F","#609D9B","#936E58","#7E799D"],"shape":"rounded","line":"tapered","rootShape":"rounded","fill":"soft","shadow":true},
+    "midnight":{"title":"深夜","paper":"#192332","ink":"#E8EDF5","palette":["#86A5FF","#F2AA83","#72CFBC","#C3A3E4","#EBC572","#ED94B1"],"shape":"rounded","line":"curve","rootShape":"pill","fill":"dark","shadow":false},
+    "mono":{"title":"极简","paper":"#FFFFFF","ink":"#2F3339","palette":["#525A66","#525A66","#525A66","#525A66","#525A66","#525A66"],"shape":"underline","line":"rounded","rootShape":"rectangle","fill":"white","shadow":false},
+    "coral":{"title":"珊瑚","paper":"#FFFAF6","ink":"#4D3D36","palette":["#CE735A","#D59C4F","#89A580","#639AAE","#A386AC","#C28094"],"shape":"rounded","line":"curve","rootShape":"ellipse","fill":"soft","shadow":true},
+    "blueprint":{"title":"蓝图","paper":"#F3F7FC","ink":"#264360","palette":["#3C79AA","#5B98C3","#599EA0","#757CC2","#9B83B4","#658AA1"],"shape":"rectangle","line":"elbow","rootShape":"hexagon","fill":"white","shadow":false},
+    "aurora":{"title":"极光","paper":"#172C30","ink":"#E1F3EF","palette":["#80D2BB","#93B5F0","#D3B0F0","#ED9EBA","#E2C385","#A4CE86"],"shape":"pill","line":"curve","rootShape":"pill","fill":"dark","shadow":false},
+    "earth":{"title":"暖纸","paper":"#F8F1E5","ink":"#554937","palette":["#A0794F","#81945E","#669594","#AB7B75","#9B84AA","#B69342"],"shape":"rounded","line":"rounded","rootShape":"rounded","fill":"soft","shadow":false},
+    "ink":{"title":"墨线","paper":"#FBF9F3","ink":"#363B3B","palette":["#45565C","#637878","#8B7163","#718070","#7D7489","#997363"],"shape":"none","line":"tapered","rootShape":"ellipse","fill":"white","shadow":false},
+    "spectrum":{"title":"光谱","paper":"#FFFFFF","ink":"#273142","palette":["#597BDC","#52A595","#D4A246","#DE805D","#CA7092","#9B7CCE"],"shape":"rounded","line":"tapered","rootShape":"rounded","fill":"solid","shadow":true}
+  }
+}

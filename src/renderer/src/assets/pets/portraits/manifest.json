@@ -1,0 +1,686 @@
+[
+  {
+    "id": "codex",
+    "crop": {
+      "left": 21,
+      "top": 27,
+      "width": 150,
+      "height": 176
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 33374
+  },
+  {
+    "id": "dewey",
+    "crop": {
+      "left": 11,
+      "top": 15,
+      "width": 170,
+      "height": 186
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 25998
+  },
+  {
+    "id": "fireball",
+    "crop": {
+      "left": 37,
+      "top": 25,
+      "width": 118,
+      "height": 181
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 25514
+  },
+  {
+    "id": "rocky",
+    "crop": {
+      "left": 17,
+      "top": 47,
+      "width": 158,
+      "height": 160
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 31970
+  },
+  {
+    "id": "seedy",
+    "crop": {
+      "left": 37,
+      "top": 15,
+      "width": 118,
+      "height": 186
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 25242
+  },
+  {
+    "id": "stacky",
+    "crop": {
+      "left": 34,
+      "top": 15,
+      "width": 124,
+      "height": 186
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 24172
+  },
+  {
+    "id": "bsod",
+    "crop": {
+      "left": 35,
+      "top": 15,
+      "width": 122,
+      "height": 186
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 26150
+  },
+  {
+    "id": "null-signal",
+    "crop": {
+      "left": 48,
+      "top": 15,
+      "width": 96,
+      "height": 186
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 17838
+  },
+  {
+    "id": "hoots",
+    "crop": {
+      "left": 5,
+      "top": 8,
+      "width": 182,
+      "height": 192
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 43874
+  },
+  {
+    "id": "woodi",
+    "crop": {
+      "left": 22,
+      "top": 2,
+      "width": 148,
+      "height": 204
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 32624
+  },
+  {
+    "id": "marmalade",
+    "crop": {
+      "left": 18,
+      "top": 2,
+      "width": 156,
+      "height": 204
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 41022
+  },
+  {
+    "id": "voltcoin",
+    "crop": {
+      "left": 33,
+      "top": 2,
+      "width": 125,
+      "height": 204
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 37868
+  },
+  {
+    "id": "inky",
+    "crop": {
+      "left": 2,
+      "top": 10,
+      "width": 188,
+      "height": 187
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 61102
+  },
+  {
+    "id": "byte",
+    "crop": {
+      "left": 39,
+      "top": 2,
+      "width": 113,
+      "height": 204
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 38108
+  },
+  {
+    "id": "wondercube",
+    "crop": {
+      "left": 2,
+      "top": 21,
+      "width": 188,
+      "height": 166
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 40258
+  },
+  {
+    "id": "fate-saber-anime",
+    "crop": {
+      "left": 143,
+      "top": 6,
+      "width": 124,
+      "height": 126
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 50106
+  },
+  {
+    "id": "fate-saber-chibi",
+    "crop": {
+      "left": 66,
+      "top": 9,
+      "width": 221,
+      "height": 255
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 59298
+  },
+  {
+    "id": "fate-archer-anime",
+    "crop": {
+      "left": 135,
+      "top": 4,
+      "width": 133,
+      "height": 129
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 39358
+  },
+  {
+    "id": "fate-archer-chibi",
+    "crop": {
+      "left": 76,
+      "top": 6,
+      "width": 230,
+      "height": 254
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 49308
+  },
+  {
+    "id": "fate-cu-chulainn-anime",
+    "crop": {
+      "left": 136,
+      "top": 3,
+      "width": 150,
+      "height": 129
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 38998
+  },
+  {
+    "id": "fate-cu-chulainn-chibi",
+    "crop": {
+      "left": 69,
+      "top": 5,
+      "width": 241,
+      "height": 258
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 61214
+  },
+  {
+    "id": "fate-medusa-anime",
+    "crop": {
+      "left": 151,
+      "top": 7,
+      "width": 118,
+      "height": 127
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 42826
+  },
+  {
+    "id": "fate-medusa-chibi",
+    "crop": {
+      "left": 63,
+      "top": 10,
+      "width": 258,
+      "height": 253
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 56730
+  },
+  {
+    "id": "fate-medea-anime",
+    "crop": {
+      "left": 136,
+      "top": 0,
+      "width": 146,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 37848
+  },
+  {
+    "id": "fate-medea-chibi",
+    "crop": {
+      "left": 52,
+      "top": 3,
+      "width": 254,
+      "height": 259
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 62148
+  },
+  {
+    "id": "fate-sasaki-anime",
+    "crop": {
+      "left": 153,
+      "top": 3,
+      "width": 124,
+      "height": 127
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 40262
+  },
+  {
+    "id": "fate-sasaki-chibi",
+    "crop": {
+      "left": 54,
+      "top": 0,
+      "width": 254,
+      "height": 262
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 60340
+  },
+  {
+    "id": "fate-cursed-arm-anime",
+    "crop": {
+      "left": 129,
+      "top": 4,
+      "width": 165,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 26484
+  },
+  {
+    "id": "fate-cursed-arm-chibi",
+    "crop": {
+      "left": 64,
+      "top": 2,
+      "width": 235,
+      "height": 258
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 46098
+  },
+  {
+    "id": "fate-heracles-anime",
+    "crop": {
+      "left": 112,
+      "top": 0,
+      "width": 205,
+      "height": 129
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 29774
+  },
+  {
+    "id": "fate-heracles-chibi",
+    "crop": {
+      "left": 45,
+      "top": 0,
+      "width": 282,
+      "height": 258
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 49704
+  },
+  {
+    "id": "fate-gilgamesh-anime",
+    "crop": {
+      "left": 118,
+      "top": 2,
+      "width": 169,
+      "height": 130
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 38984
+  },
+  {
+    "id": "fate-gilgamesh-chibi",
+    "crop": {
+      "left": 66,
+      "top": 5,
+      "width": 222,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 57540
+  },
+  {
+    "id": "fate-diarmuid-anime",
+    "crop": {
+      "left": 142,
+      "top": 2,
+      "width": 129,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 35800
+  },
+  {
+    "id": "fate-diarmuid-chibi",
+    "crop": {
+      "left": 60,
+      "top": 7,
+      "width": 233,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 49332
+  },
+  {
+    "id": "fate-iskandar-anime",
+    "crop": {
+      "left": 111,
+      "top": 2,
+      "width": 191,
+      "height": 127
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 35920
+  },
+  {
+    "id": "fate-iskandar-chibi",
+    "crop": {
+      "left": 68,
+      "top": 4,
+      "width": 246,
+      "height": 259
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 64820
+  },
+  {
+    "id": "fate-gilles-anime",
+    "crop": {
+      "left": 106,
+      "top": 4,
+      "width": 186,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 36812
+  },
+  {
+    "id": "fate-gilles-chibi",
+    "crop": {
+      "left": 30,
+      "top": 7,
+      "width": 300,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 48634
+  },
+  {
+    "id": "fate-hundred-faces-anime",
+    "crop": {
+      "left": 142,
+      "top": 5,
+      "width": 138,
+      "height": 129
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 31940
+  },
+  {
+    "id": "fate-hundred-faces-chibi",
+    "crop": {
+      "left": 58,
+      "top": 3,
+      "width": 263,
+      "height": 258
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 43526
+  },
+  {
+    "id": "fate-lancelot-anime",
+    "crop": {
+      "left": 112,
+      "top": 5,
+      "width": 202,
+      "height": 126
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 29600
+  },
+  {
+    "id": "fate-lancelot-chibi",
+    "crop": {
+      "left": 25,
+      "top": 6,
+      "width": 272,
+      "height": 254
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 44682
+  },
+  {
+    "id": "fate-shirou-anime",
+    "crop": {
+      "left": 150,
+      "top": 3,
+      "width": 113,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 37492
+  },
+  {
+    "id": "fate-shirou-chibi",
+    "crop": {
+      "left": 70,
+      "top": 6,
+      "width": 230,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 49406
+  },
+  {
+    "id": "fate-rin-anime",
+    "crop": {
+      "left": 131,
+      "top": 3,
+      "width": 148,
+      "height": 129
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 39644
+  },
+  {
+    "id": "fate-rin-chibi",
+    "crop": {
+      "left": 40,
+      "top": 8,
+      "width": 316,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 47596
+  },
+  {
+    "id": "fate-sakura-anime",
+    "crop": {
+      "left": 173,
+      "top": 8,
+      "width": 96,
+      "height": 126
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 40790
+  },
+  {
+    "id": "fate-sakura-chibi",
+    "crop": {
+      "left": 74,
+      "top": 25,
+      "width": 228,
+      "height": 245
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 59372
+  },
+  {
+    "id": "fate-illya-anime",
+    "crop": {
+      "left": 134,
+      "top": 3,
+      "width": 131,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 41290
+  },
+  {
+    "id": "fate-illya-chibi",
+    "crop": {
+      "left": 53,
+      "top": 8,
+      "width": 265,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 54044
+  },
+  {
+    "id": "fate-kiritsugu-anime",
+    "crop": {
+      "left": 140,
+      "top": 4,
+      "width": 127,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 34774
+  },
+  {
+    "id": "fate-kiritsugu-chibi",
+    "crop": {
+      "left": 51,
+      "top": 6,
+      "width": 256,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 46702
+  },
+  {
+    "id": "fate-kirei-anime",
+    "crop": {
+      "left": 144,
+      "top": 0,
+      "width": 141,
+      "height": 130
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 30310
+  },
+  {
+    "id": "fate-kirei-chibi",
+    "crop": {
+      "left": 55,
+      "top": 8,
+      "width": 245,
+      "height": 254
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 47854
+  },
+  {
+    "id": "fate-waver-anime",
+    "crop": {
+      "left": 152,
+      "top": 7,
+      "width": 101,
+      "height": 128
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 31218
+  },
+  {
+    "id": "fate-waver-chibi",
+    "crop": {
+      "left": 69,
+      "top": 6,
+      "width": 223,
+      "height": 256
+    },
+    "width": 256,
+    "height": 256,
+    "bytes": 48930
+  }
+]

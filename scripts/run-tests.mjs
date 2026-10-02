@@ -1,0 +1,35 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import {spawn} from 'node:child_process'
+const root=path.resolve(import.meta.dirname,'..'),suite=process.argv[2]??'core'
+const suites={
+  core:['view-appearance-core','theme-preferences','channels-core','channel-messenger-core','channel-administrators-core','channel-avatar-core','channels-api','channels-integration','media-playback-core','gallery-history-core','message-attachments-core','cross-replies-core','precise-quotes-core','linked-replies-core','message-grouping','language-core','language-coverage','message-forwarding-core','messenger-core','plan-parity-core','plan-polish-core','plan-core','group-chat-core','group-delivery-core','discussion-tool-core','group-ack-lifecycle','group-ack-drivers','group-awareness-runtime','messages-core','mininotion-workspace','avatar-api','navigation-rendering','process-transport','process-cloud','process-images','process-engines','release-foundation','engine-probe','creation-contract','employee-pristine','governor','governor-migration','management-state','management-provenance','management-bindings','management-activity','management','task-view','reply-receipts','team-views','connector-routing','connector-segments-api','connector-segments','cross-team-routing','room-resize','performance-core','web-server','web-desktop-relay'],
+  ui:['channel-administrators-ui:--desktop','channel-administrators-ui','message-history-ui:--desktop','message-history-ui','view-appearance-ui:--desktop','view-appearance-ui','theme-picker-ui','voice-focus-source','message-viewport-source','message-window-navigation','channel-discussion-ui','channel-avatar-ui','company-clarity-source','plan-interaction-source','rich-message-text','message-code-block-ui','message-library-refresh-ui','group-projections-source','message-refinement-ui:--desktop','message-refinement-ui','message-action-rail-ui','message-action-scope-ui','message-wallpaper-source','channels-ui','channels-ui:--desktop','background-audio-ui','background-audio-ui:--desktop','media-playback-ui','media-playback-ui:--desktop','gallery-history-ui','gallery-history-ui:--desktop','gallery-zoom-web','message-gallery-ui','message-gallery-ui:--desktop','message-attachments-ui','cross-replies-web','precise-quotes-web','linked-replies-web','message-components-web','message-surface-web','language-web','language-ui','messenger-ui','plan-parity-ui','plan-polish-ui','plan-ui','message-receipt-ui','receipt-resilience-ui','group-chat-ui','messages-ui','mininotion-ui','employee-team-selection-ui','cloud-engine-form-ui','navigation-performance','process-engines-ui','pet-catalog-ui','screenshot-privacy-ui','creation-form-ui','governor-ui','management-ui','management-bindings-ui','communication-highlight-ui','connector-terminals-ui','cross-team-ui','canvas-stability','chat-scroll-ui','connector-segments-ui','team-views-ui','performance-ui','messages-polish-web','web-ui','remote-desktop','web-vnc-ui'],
+  engines:['discussion-codex-native','discussion-claude-native','plan-notion-delivery','manager-bootstrap-engine:codex:build','manager-bootstrap-engine:codex:work','manager-bootstrap-engine:claude:build','manager-bootstrap-engine:claude:work','employee-initialization-engine:codex:build','employee-initialization-engine:codex:work','employee-initialization-engine:claude:build','employee-initialization-engine:claude:work']
+}
+if(!suites[suite])throw Error('Choose core, ui or engines')
+// Release cases: macOS/Windows desktop, or Linux Core with a browser on another computer.
+if(suite==='ui'&&process.platform==='linux'){
+  suites.ui=['channel-administrators-ui','message-history-ui','view-appearance-ui','theme-picker-ui','voice-focus-source','message-viewport-source','message-window-navigation','channel-discussion-ui','channel-avatar-ui','company-clarity-source','plan-interaction-source','rich-message-text','message-code-block-ui','message-library-refresh-ui','group-projections-source','message-refinement-ui','message-action-rail-ui','message-action-scope-ui','message-wallpaper-source','channels-ui','background-audio-ui','media-playback-ui','gallery-history-ui','gallery-zoom-web','message-gallery-ui','message-attachments-ui','cross-replies-web','precise-quotes-web','linked-replies-web','message-components-web','message-surface-web','language-web','messages-polish-web','web-ui','web-vnc-ui']
+  console.log('Linux release validation covers Core/Web; native desktop is outside the release scope.')
+}
+const directory=path.join(root,'artifacts','release-tests',suite);fs.mkdirSync(directory,{recursive:true})
+const results=[]
+for(const entry of suites[suite]){
+  const [name,...args]=entry.split(':'),file=path.join(root,'test',name+'-test.mjs')
+  const started=Date.now(),log=path.join(directory,entry.replaceAll(':','-')+'.log'),output=fs.openSync(log,'w')
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...process.env,...(suite==='ui'&&process.platform==='win32'?{AGENTS_COMPANY_OFFSCREEN:'1'}:{})},stdio:['ignore',output,output]})
+  const timer=setTimeout(()=>child.kill('SIGTERM'),180000)
+  const status=await new Promise(resolve=>{child.once('error',error=>{fs.writeSync(output,error.stack);resolve(-1)});child.once('close',resolve)})
+  clearTimeout(timer);fs.closeSync(output)
+  const result={test:entry,status,ms:Date.now()-started,log:path.relative(root,log)};results.push(result)
+  console.log(`${status===0?'PASS':'FAIL'} ${entry} ${result.ms}ms`)
+  if(status!==0){
+    const detail=fs.readFileSync(log,'utf8').split('\n').slice(-80).join('\n')
+    console.log(detail)
+    if(process.env.GITHUB_ACTIONS==='true')console.log('::error title='+entry+'::'+detail.slice(-6000).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'))
+  }
+}
+fs.writeFileSync(path.join(directory,'results.json'),JSON.stringify(results,null,2)+'\n')
+console.log(`${suite}: ${results.filter(r=>r.status===0).length}/${results.length} passed`)
+process.exitCode=results.some(result=>result.status!==0)?1:0

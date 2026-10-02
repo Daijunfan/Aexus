@@ -7,7 +7,7 @@ const env={...process.env,AGENTS_COMPANY_HOME:temp,AGENTS_COMPANY_HIDDEN:'1'};de
 const app=await electron.launch({executablePath:'/Applications/Agents Company.app/Contents/MacOS/Agents Company',args:[],env}),page=await app.firstWindow();page.setDefaultTimeout(25000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const cli=async(...a)=>{const r=JSON.parse((await run(process.execPath,[root+'/bin/agents',...a,'--json'],{env,timeout:40000})).stdout);assert.ok(r.ok,r.error);return r.data};
 try{
- await expect(page.locator(`[data-card-id="${card.id}"] [data-avatar="fireball"]`)).toBeVisible();await page.screenshot({path:root+'/artifacts/windows-fireball-office.png'});
+ await expect(page.locator(`[data-card-id="${card.id}"] [data-avatar="voltcoin"]`)).toBeVisible();await page.screenshot({path:root+'/artifacts/windows-fireball-office.png'});
  await cli('view','open','conversation','--employee',card.id);await expect(page.locator('.composer textarea')).toBeEnabled({timeout:30000});await expect(page.locator('.terminal-location')).toContainText('C:\\Users\\djf\\AgentsCompany\\Fireball');await expect(page.locator('.xterm')).toBeVisible();
  const terms=await cli('terminal','list','--employee',card.id);assert.equal(terms.length,1);await cli('terminal','input',terms[0].id,'--data','$PSVersionTable.PSVersion.ToString()\r');
  await expect.poll(async()=>(await cli('terminal','read',terms[0].id)).output).toContain('5.1.');await expect(page.locator('.workspace-error,.app-error')).toHaveCount(0);assert.equal(errors.length,0);

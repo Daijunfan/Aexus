@@ -142,7 +142,10 @@ export function apply(s: Session, m: any): Session {
 // boundaries, so consecutive blocks accumulate into one assistant turn until a
 // turn ends. The block shapes match the Claude path exactly, which is what lets
 // one renderer serve both engines.
-export function applyCodex(s: Session, ev: any): Session {
+export const applyCodex=(s:Session,ev:any)=>applyAgent(s,ev)
+
+/** Shared normalized text/tool events from process-based Coding Agents. */
+export function applyAgent(s: Session, ev: any): Session {
   const items = [...s.items]
   const trailing = items[items.length - 1]
   // A codex turn owns the trailing assistant item for its whole duration, so
@@ -374,7 +377,8 @@ export function renderTranscript(items: Item[]): string {
   const out: string[] = []
   for (const item of items) {
     if (item.role === 'user') {
-      out.push(`> ${item.text}`,...(item.images??[]).map(path=>`> [图片] ${path}`))
+      if(item.reply)out.push(`> [Reply to ${item.reply.id}] ${Array.from(item.reply.text.replace(/\s+/g,' ').trim()).slice(0,200).join('')||'[photo]'}`)
+      out.push(`> ${item.text}`,...(item.images??[]).map(path=>`> [图片] ${path}`),...(item.files??[]).map(file=>`> [File] ${file.name} (${file.bytes} bytes): ${file.path}`))
       continue
     }
     if (item.role === 'notice') {

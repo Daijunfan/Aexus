@@ -33,18 +33,8 @@ export function attachPluginDesktop(main:()=>BrowserWindow|undefined,hidden:bool
       const parent=main(),display=parent?screen.getDisplayMatching(parent.getBounds()):screen.getPrimaryDisplay(),area=display.workArea
       const width=Math.min(1000,area.width-64),height=Math.min(780,area.height-64),origin=parent?.getBounds()??area
       const bounds=state.bounds??{width,height,x:Math.max(area.x,Math.min(origin.x+origin.width+24,area.x+area.width-width-24)),y:Math.max(area.y,Math.min(origin.y+48,area.y+area.height-height-24))}
-      const win=new BrowserWindow({...bounds,minWidth:480,minHeight:360,show:false,title:state.name,backgroundColor:'#ffffff',webPreferences:{preload,contextIsolation:true,nodeIntegration:false,sandbox:false,webviewTag:state.plugin==='browser',backgroundThrottling:false}})
+      const win=new BrowserWindow({...bounds,minWidth:480,minHeight:360,show:false,title:state.name,backgroundColor:'#ffffff',webPreferences:{preload,contextIsolation:true,nodeIntegration:false,sandbox:true,offscreen:process.env.AGENTS_COMPANY_OFFSCREEN==='1',backgroundThrottling:false}})
       const record:Record={win,state,ready:false,allowClose:false};records.set(state.id,record)
-      if(state.plugin==='browser'){
-        win.webContents.on('will-attach-webview',(event,preferences,params)=>{
-          if(params.partition!=='persist:agents-company-browser'||!['about:blank',''].includes(params.src)&&!/^https?:\/\//i.test(params.src)){event.preventDefault();return}
-          delete preferences.preload;preferences.nodeIntegration=false;preferences.contextIsolation=true;preferences.sandbox=true
-        })
-        win.webContents.on('did-attach-webview',(_event,guest)=>{
-          guest.setWindowOpenHandler(({url})=>{if(/^https?:\/\//i.test(url)&&!guest.isDestroyed())void guest.loadURL(url).catch(()=>{});return {action:'deny'}})
-          guest.on('will-navigate',(event,url)=>{if(!/^https?:\/\//i.test(url))event.preventDefault()})
-        })
-      }
       win.webContents.setWindowOpenHandler(({url})=>{if(/^https?:\/\//.test(url))void openExternalUrl(url);return {action:'deny'}})
       win.webContents.on('will-navigate',(event,url)=>{if(new URL(url).origin!==new URL(state.url).origin){event.preventDefault();if(/^https?:\/\//.test(url))void openExternalUrl(url)}})
       win.on('close',event=>{if(record.allowClose)return;event.preventDefault();void dismissPluginWindow(state.id).catch(error=>{if(!win.isDestroyed())win.setTitle(state.name+' · '+error.message)})})

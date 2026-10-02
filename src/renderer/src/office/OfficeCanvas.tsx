@@ -1,14 +1,37 @@
-import {separateRooms} from '../../../shared/office-layout'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../i18n'
+import {api} from '../api'
+import {cachedConnectionPlan} from './routing-cache'
+import {CanvasMotion} from './motion'
+import {ConnectionLayer} from './ConnectionLayer'
+import {officeConnectionPlan,connectionGeometryKey} from '../../../shared/office-connections'
+import {ConnectorEditor,ConnectorSelection,type ConnectionSelection} from './ConnectorEditor'
+import {connectorKey,rerouteTeamConnections,type ConnectorSetting} from '../../../shared/connector'
+import {crossTeamRoutes} from '../../../shared/cross-team-routing'
+import type {ManagementInteraction} from '../../../shared/management'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { teamSettings,type ActivityPreview,type Store,type StoredSession } from '../../../shared/types'
+import type {PluginDescriptor} from '../../../shared/plugins'
 import type {RemoteHealth} from '../../../shared/remote'
-import { DEFAULT_VIEW, EMPLOYEE_SIZE, fitViewport, constrainEmployee, planOffice, planRoom, snapEmployee, roomExtent, resizeRoom, type ResizeEdge, type SnapGuide, type PlannedRoom, type Point, type RoomBounds, type Viewport } from '../../../shared/canvas'
+import { DEFAULT_VIEW, EMPLOYEE_SIZE, fitViewport, constrainEmployee, planOffice, planRoom, snapEmployee, roomExtent, resizeRoom, resizeOccupiedRoom, type ResizeEdge, type SnapGuide, type PlannedRoom, type Point, type RoomBounds, type Viewport } from '../../../shared/canvas'
 import {DEFAULT_PREFERENCES} from '../../../shared/preferences'
 import { CanvasRoom } from './CanvasRoom'
+import {CanvasOverview} from './CanvasOverview'
+import '../styles/company-canvas.css'
 
 type Drag = { kind:'team'|'employee'|'resize'|'pan'; name:string; id?:string; edge?:ResizeEdge; resized?:RoomBounds; start:Point; origin:Point; room?:PlannedRoom; moved:boolean; x:number; y:number; rooms:PlannedRoom[]; sequence:number; guide?:SnapGuide;openOnClick?:boolean }
-type Props={activities:Record<string,ActivityPreview>;cloudStatus:Record<string,RemoteHealth>;store:Store;busyIds:Set<string>;disconnectedIds:Set<string>;act:(cmd:string,args?:Record<string,unknown>)=>Promise<any>;onOpen:(card:StoredSession)=>void;onEdit:(name:string)=>void;onView:(view:Viewport,size:Point)=>void}
-export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStatus,act,onOpen,onEdit,onView}:Props) {
+export type CanvasSelection={mode:'employee'|'team';ids:Set<string>;toggle:(id:string)=>void}
+type Props={obscured?:boolean;selection?:CanvasSelection;interactions:ManagementInteraction[];activities:Record<string,ActivityPreview>;cloudStatus:Record<string,RemoteHealth>;plugins:PluginDescriptor[];store:Store;busyIds:Set<string>;disconnectedIds:Set<string>;act:(cmd:string,args?:Record<string,unknown>)=>Promise<any>;onOpen:(card:StoredSession)=>void;onEdit:(name:string)=>void;onView:(view:Viewport,size:Point)=>void}
+export const OfficeCanvas=memo(function OfficeCanvas({obscured=false,selection,store,busyIds,disconnectedIds,activities,interactions:liveInteractions,cloudStatus,plugins,act,onOpen,onEdit,onView}:Props) {
+  useI18n()
+
+  const interactions=useMemo(()=>liveInteractions.filter(value=>value.highlighted!==false),[liveInteractions])
+  const [windowVisible,setWindowVisible]=useState(true)
+  const animated=windowVisible&&!obscured
+  useEffect(()=>api.onEvent(event=>{if(event.channel==='desktop:visibility'&&typeof event.payload.visible==='boolean')setWindowVisible(event.payload.visible)}),[])
+  const [connection,setConnection]=useState<ConnectionSelection|null>(null),[anchorDraft,setAnchorDraft]=useState<ConnectorSetting|null>(null),worldRef=useRef<HTMLDivElement>(null)
+  const selectConnection=useCallback((value:ConnectionSelection)=>{if(selection)return;setAnchorDraft(null);setConnection(value)},[!!selection])
+  const closeConnection=useCallback(()=>{setAnchorDraft(null);setConnection(null)},[])
+  useEffect(()=>{if(selection)closeConnection()},[selection?.mode,closeConnection])
   const preferences={...DEFAULT_PREFERENCES,...store.preferences}
   const selectedView=store.teamViews?.find(item=>item.id===store.activeTeamViewId)
   const savedViewport=selectedView?selectedView.viewport:store.viewport
@@ -20,17 +43,19 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
   const [panning,setPanning]=useState(false)
   const [settled,setSettled]=useState(0)
   const positioned=useRef(false),sequence=useRef(0),viewSequence=useRef(0),viewPending=useRef(false)
-  const frame=useRef(0)
-  useEffect(()=>()=>cancelAnimationFrame(frame.current),[])
+  const frame=useRef(0),cameraFrame=useRef(0)
+  useEffect(()=>()=>{cancelAnimationFrame(frame.current);cancelAnimationFrame(cameraFrame.current)},[])
+  const pendingCamera=useRef<(Viewport&{viewId:string})|undefined>(undefined)
   const saveTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined)
   const updateView=useCallback((next:Viewport,save=true)=>{
-    viewRef.current=next;setView(next)
-    if(save) {const token=++viewSequence.current;viewPending.current=true;clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>{void act('canvas.set',next).finally(()=>{if(token===viewSequence.current){viewPending.current=false;setSettled(v=>v+1)}})},250)}
-  },[act])
+    viewRef.current=next;cancelAnimationFrame(cameraFrame.current);cameraFrame.current=requestAnimationFrame(()=>setView(viewRef.current))
+    if(save) {const request={...next,viewId:store.activeTeamViewId??'all'};pendingCamera.current=request;const token=++viewSequence.current;viewPending.current=true;clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>{pendingCamera.current=undefined;void act('canvas.set',request).finally(()=>{if(token===viewSequence.current){viewPending.current=false;setSettled(v=>v+1)}})},250)}
+  },[act,store.activeTeamViewId])
   useEffect(()=>{if(savedViewport&&!dragRef.current&&!viewPending.current)updateView(savedViewport,false)},[savedViewport?.x,savedViewport?.y,savedViewport?.zoom,updateView,settled])
-  useEffect(()=>{const el=viewport.current!;const observer=new ResizeObserver(()=>setSize({x:el.clientWidth,y:el.clientHeight}));observer.observe(el);return()=>{observer.disconnect();clearTimeout(saveTimer.current)}},[])
+  useEffect(()=>{const el=viewport.current!;const observer=new ResizeObserver(()=>setSize({x:el.clientWidth,y:el.clientHeight}));observer.observe(el);return()=>{observer.disconnect();clearTimeout(saveTimer.current);if(pendingCamera.current){void act('canvas.set',pendingCamera.current);pendingCamera.current=undefined}}},[])
   useEffect(()=>onView(view,size),[view,size,onView])
-  const baseRooms=useMemo(()=>planOffice(store),[store])
+  const allRooms=useMemo(()=>planOffice(store),[store.groups,store.sessions,store.rooms])
+  const baseRooms=useMemo(()=>selectedView?allRooms.filter(room=>selectedView.teams.includes(room.name)):allRooms,[allRooms,selectedView?.teams])
   useEffect(()=>{
     if(positioned.current)return
     if(savedViewport){positioned.current=true;return}
@@ -43,21 +68,39 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
     const preview=draft.rooms.map(room=>{
       if(room.name!==draft.name)return room
       if(draft.kind==='team')return {...room,bounds:{...room.bounds,x:draft.x,y:draft.y,pinned:true}}
+      if(draft.kind==='resize')return resizeOccupiedRoom(room,draft.resized??room.bounds)
       const cards=room.employees.map(({card,position})=>({...card,position:draft.kind==='employee'&&card.id===draft.id?{x:draft.x,y:draft.y}:position}))
-      const bounds=draft.kind==='resize'?draft.resized??room.bounds:{...room.bounds,arrangement:'free' as const}
+      const bounds={...room.bounds,arrangement:'free' as const}
       return planRoom(room.name,cards,bounds)
     })
-    return draft.kind==='employee'?preview:separateRooms(preview,[draft.name])
-  },[baseRooms,draft,store])
+    return preview
+  },[baseRooms,draft])
+  const routingRooms=useMemo(()=>allRooms.map(room=>rooms.find(preview=>preview.name===room.name)??room),[allRooms,rooms])
+  const connectorAnchors=useMemo(()=>{
+    let settings=anchorDraft?{...store.connectorAnchors,[connectorKey(anchorDraft.managerId,anchorDraft.employeeId)]:anchorDraft}:store.connectorAnchors
+    for(const room of routingRooms){const before=allRooms.find(item=>item.name===room.name)!
+      if(room.bounds.x!==before.bounds.x||room.bounds.y!==before.bounds.y)settings=rerouteTeamConnections(settings,room.name,store.sessions)
+    }
+    return settings
+  },[store.connectorAnchors,store.sessions,anchorDraft,routingRooms,allRooms])
+  const visibleTeams=new Set(rooms.map(room=>room.name))
+  const routingKey=connectionGeometryKey(routingRooms,store.access?.relations??[],interactions,visibleTeams,connectorAnchors)
+  // Geometry and edge membership trigger A*. Activity only recolors existing paths.
+  const routing=useMemo(()=>cachedConnectionPlan(routingKey,()=>officeConnectionPlan(routingRooms,store.access?.relations??[],interactions,visibleTeams,connectorAnchors)),[routingKey])
+  const currentInteraction=(r:{managerId:string;employeeId:string})=>interactions.find(i=>i.managerId===r.managerId&&i.employeeId===r.employeeId)
+  const crossRoutes=useMemo(()=>routing.crossTeamConnections.map(r=>({...r,active:!!currentInteraction(r),command:currentInteraction(r)?.command})),[routing,interactions])
+  const displayConnections=useMemo(()=>routing.connections.map(r=>({...r,active:!!currentInteraction(r)})),[routing,interactions])
+  const connectorContext=useMemo(()=>({selected:connection,select:selectConnection}),[connection,selectConnection])
+  const saveConnection=useCallback((value:ConnectorSetting)=>act('connector.set',{manager:value.managerId,employee:value.employeeId,source:value.source,target:value.target,route:value.route}),[act])
   const zoomAt=useCallback((factor:number,x:number,y:number)=>{
     const old=viewRef.current,zoom=Math.min(3,Math.max(.08,old.zoom*factor))
     updateView({x:x-(x-old.x)*zoom/old.zoom,y:y-(y-old.y)*zoom/old.zoom,zoom})
   },[updateView])
   useEffect(()=>{
     const el=viewport.current!
-    const wheel=(event:WheelEvent)=>{event.preventDefault();if(dragRef.current)return;const r=el.getBoundingClientRect();const unit=event.deltaMode===1?16:event.deltaMode===2?el.clientHeight:1;if(event.ctrlKey||event.metaKey)zoomAt(Math.exp(-event.deltaY*unit*.005*preferences.zoomSensitivity),event.clientX-r.left,event.clientY-r.top);else updateView({...viewRef.current,x:viewRef.current.x-event.deltaX*unit*preferences.panSensitivity,y:viewRef.current.y-event.deltaY*unit*preferences.panSensitivity})}
+    const wheel=(event:WheelEvent)=>{if((event.target as Element).closest('.connector-editor'))return;event.preventDefault();if(dragRef.current)return;const unit=event.deltaMode===1?16:event.deltaMode===2?el.clientHeight:1;if(event.ctrlKey||event.metaKey){const r=el.getBoundingClientRect();zoomAt(Math.exp(-event.deltaY*unit*.005*preferences.zoomSensitivity),event.clientX-r.left,event.clientY-r.top)}else updateView({...viewRef.current,x:viewRef.current.x-event.deltaX*unit*preferences.panSensitivity,y:viewRef.current.y-event.deltaY*unit*preferences.panSensitivity})}
     const key=(event:KeyboardEvent)=>{
-      if(document.querySelector('[role="dialog"],.plugin-page') || (event.target as HTMLElement).matches('input,select,textarea'))return
+      if(document.querySelector('[role="dialog"],[role="alertdialog"],.plugin-page') || (event.target as HTMLElement).matches('input,select,textarea'))return
       if(event.code==='Space'){event.preventDefault();space.current=true;setPanning(true)}
       if(event.key==='0'){event.preventDefault();updateView(fitViewport(baseRooms,el.clientWidth,el.clientHeight))}
       if(event.key==='+'||event.key==='='){event.preventDefault();zoomAt(1.2,el.clientWidth/2,el.clientHeight/2)}
@@ -67,15 +110,16 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
     el.addEventListener('wheel',wheel,{passive:false});window.addEventListener('keydown',key);window.addEventListener('keyup',up)
     return()=>{el.removeEventListener('wheel',wheel);window.removeEventListener('keydown',key);window.removeEventListener('keyup',up)}
   },[baseRooms,updateView,zoomAt,preferences.panSensitivity,preferences.zoomSensitivity])
-  const begin=(kind:Drag['kind'],room:PlannedRoom|undefined,e:React.PointerEvent,id?:string,edge:ResizeEdge='se')=>{
+  const begin=useCallback((kind:Drag['kind'],room:PlannedRoom|undefined,e:React.PointerEvent,id?:string,edge:ResizeEdge='se')=>{
     if(e.button!==0&&e.button!==1)return
+    closeConnection()
     e.preventDefault();e.stopPropagation();viewport.current!.setPointerCapture(e.pointerId)
-    if(space.current||e.button===1)kind='pan'
+    if(selection||space.current||e.button===1)kind='pan'
     const origin=kind==='pan'?viewRef.current:kind==='employee'?room!.employees.find(p=>p.card.id===id)!.position:kind==='resize'?{x:room!.bounds.width,y:room!.bounds.height}:room!.bounds
     cancelAnimationFrame(frame.current)
     const drag:Drag={rooms,sequence:++sequence.current,openOnClick:!!(e.target as Element).closest('.team-title'),kind,name:room?.name??'',id,edge,room,start:{x:e.clientX,y:e.clientY},origin:{x:origin.x,y:origin.y},moved:false,x:origin.x,y:origin.y}
     dragRef.current=drag;setDraft(drag);if(kind==='pan')setPanning(true)
-  }
+  },[rooms,closeConnection,!!selection])
   const move=(e:React.PointerEvent)=>{
     const drag=dragRef.current;if(!drag)return
     const dx=e.clientX-drag.start.x,dy=e.clientY-drag.start.y
@@ -84,8 +128,7 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
     const next={...drag,moved:true,x:drag.origin.x+dx/scale,y:drag.origin.y+dy/scale}
     if(next.kind==='resize'){
       const candidate=resizeRoom(next.room!.bounds,next.edge!,{x:dx/scale,y:dy/scale})
-      try{planRoom(next.name,next.room!.employees.map(e=>({...e.card,position:e.position})),candidate)}catch{return}
-      next.resized=candidate
+      next.resized=resizeOccupiedRoom(next.room!,candidate).bounds
     }
     if(next.kind==='employee'){
       const point={x:next.x,y:next.y}
@@ -111,19 +154,29 @@ export function OfficeCanvas({store,busyIds,disconnectedIds,activities,cloudStat
       else if(drag.kind==='employee')await act('card.place',{id:drag.id,x:drag.x,y:drag.y,snap:false})
     } finally {if(sequence.current===drag.sequence)setDraft(null)}
   }
-  const visible={x:-view.x/view.zoom-400,y:-view.y/view.zoom-400,width:size.x/view.zoom+800,height:size.y/view.zoom+800}
-  return <div ref={viewport} className={`infinite-canvas ${panning?'is-panning':''}`} data-zoom={view.zoom.toFixed(3)} onPointerDown={e=>begin('pan',undefined,e)} onPointerMove={move} onPointerUp={e=>void finish(e)} onPointerCancel={e=>void finish(e)} onDoubleClick={e=>{if(e.target===e.currentTarget)updateView(fitViewport(baseRooms,size.x,size.y))}}>
-    <div className="canvas-grid" style={{backgroundSize:`${32*view.zoom}px ${32*view.zoom}px`,backgroundPosition:`${view.x}px ${view.y}px`}} />
-    <div className="canvas-world" style={{transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
+  // A stable overscan window avoids rebuilding all room children for each pixel.
+  const cellX=Math.floor(-view.x/view.zoom/200),cellY=Math.floor(-view.y/view.zoom/200),columns=Math.ceil(size.x/view.zoom/200),rows=Math.ceil(size.y/view.zoom/200)
+  const visible=useMemo(()=>({x:cellX*200-400,y:cellY*200-400,width:columns*200+1000,height:rows*200+1000}),[cellX,cellY,columns,rows])
+  const scene=useMemo(()=><>
+      <ConnectionLayer bounds={visible} connections={displayConnections} rooms={rooms} settings={connectorAnchors} zoom={view.zoom} onPreview={setAnchorDraft} onSave={saveConnection}/>
       {rooms.map((room,i)=>{
         const b=roomExtent(room)
         if(draft?.name!==room.name&&(b.x+b.width<visible.x||b.y+b.height<visible.y||b.x>visible.x+visible.width||b.y>visible.y+visible.height))return null
-        return <CanvasRoom key={room.name} room={room} access={store.access} index={i} design={store.rooms?.[room.name]?.design} root={store.teamRoots?.[room.name]} mode={teamSettings(store,room.name).mode} remote={teamSettings(store,room.name).remote} health={cloudStatus[room.name]} activities={activities} busyIds={busyIds} disconnectedIds={disconnectedIds} draggingId={draft?.moved?draft.id:undefined} visible={visible}
+        return <CanvasRoom selection={selection} connectorAnchors={connectorAnchors} crossRoutes={crossRoutes} interactions={interactions} key={room.name} room={room} access={store.access} index={i} design={store.rooms?.[room.name]?.design} root={store.teamRoots?.[room.name]} mode={teamSettings(store,room.name).mode} plugin={plugins.find(item=>item.id===teamSettings(store,room.name).pluginId)} pluginId={teamSettings(store,room.name).pluginId} remote={teamSettings(store,room.name).remote} health={cloudStatus[room.name]} activities={activities} busyIds={busyIds} disconnectedIds={disconnectedIds} draggingId={draft?.moved?draft.id:undefined} visible={visible}
           onOpen={onOpen} onEdit={()=>onEdit(room.name)} onStart={(kind,e,id,edge)=>begin(kind,room,e,id,edge)} />
       })}
+    </>,[visible,displayConnections,rooms,connectorAnchors,view.zoom,saveConnection,selection,crossRoutes,interactions,store.access,store.rooms,store.teamRoots,store.teamSettings,plugins,cloudStatus,activities,busyIds,disconnectedIds,draft?.name,draft?.id,draft?.moved,onOpen,onEdit,begin])
+  // Omit minor grid lines when zoomed out; world coordinates and snapping stay unchanged.
+  const gridSpacing=32*view.zoom*2**Math.max(0,Math.ceil(Math.log2(24/(32*view.zoom))))
+  return <CanvasMotion.Provider value={animated}><ConnectorSelection.Provider value={connectorContext}><div data-animated={animated} ref={viewport} className={`infinite-canvas ${panning?'is-panning':''} ${selection?'is-editing-canvas':''}`} data-zoom={view.zoom.toFixed(3)} onPointerDown={e=>begin('pan',undefined,e)} onPointerMove={move} onPointerUp={e=>void finish(e)} onPointerCancel={e=>void finish(e)} onDoubleClick={e=>{if(e.target===e.currentTarget)updateView(fitViewport(baseRooms,size.x,size.y))}}>
+    <div className="canvas-grid" style={{backgroundSize:`${gridSpacing}px ${gridSpacing}px`,backgroundPosition:`${view.x}px ${view.y}px`}} />
+    <div ref={worldRef} className="canvas-world" style={{transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
+      {scene}
       {draft?.moved&&draft.kind==='employee'&&(draft.guide?.x!==undefined||draft.guide?.y!==undefined)&&<div className="employee-snap-guide" aria-hidden="true" style={{left:draft.room!.bounds.x+draft.x,top:draft.room!.bounds.y+draft.y,width:EMPLOYEE_SIZE.width,height:EMPLOYEE_SIZE.height}}/>}
     </div>
-    {!rooms.length&&<div className="canvas-empty"><span>ROOM FOR EVERY POSSIBILITY</span><h1>从一个 Team 开始，<br />把想法放进更大的世界。</h1><p>添加 Team，绑定项目文件夹。<br />然后邀请你的第一位伙伴。</p></div>}
-    <div className="canvas-hud"><button className="snap-toggle" aria-pressed={preferences.snapEmployees} title="磁吸工位；按住 Option / Alt 可临时自由拖动" onPointerDown={e=>e.stopPropagation()} onClick={()=>void act('settings.set',{snapEmployees:!preferences.snapEmployees})}>磁吸 {preferences.snapEmployees?'开':'关'}</button><span>拖动空白平移 · 双指滑动 · ⌘ / Ctrl + 滚轮缩放 · 0 总览</span><span>{Math.round(view.zoom*100)}% <b>·</b> {store.groups.length} TEAMS <b>·</b> {store.sessions.length} TEAMMATES</span></div>
-  </div>
-}
+    {connection&&<ConnectorEditor connections={displayConnections} zoom={view.zoom} interactions={interactions} selected={connection} rooms={rooms} settings={connectorAnchors} relations={store.access?.relations??[]} crossRoutes={crossRoutes} world={worldRef.current} onClose={closeConnection} onPreview={setAnchorDraft} onSave={(value,reset)=>act(reset?'connector.reset':'connector.set',{manager:value.managerId,employee:value.employeeId,...(reset?{}:{source:value.source,target:value.target,route:value.route})})}/>}
+    {preferences.showTeamOverview&&<CanvasOverview rooms={rooms} view={view} size={size} onFocus={room=>updateView(fitViewport([room],size.x,size.y))} onFit={()=>updateView(fitViewport(rooms,size.x,size.y))}/>}
+    {!rooms.length&&<div className="canvas-empty"><span>{uiText("ROOM FOR EVERY POSSIBILITY")}</span>{selectedView?<><h1>{uiText("No teams in this view yet")}</h1><p>{uiText("Click the edit icon next to the view tab,")}<br />{uiText("then choose existing teams from All Team.")}</p></>:<><h1>{uiText("Start with one Team,")}<br />{uiText("and give your ideas a bigger world.")}</h1><p>{uiText("Add a Team and bind a project folder.")}<br />{uiText("Then invite your first companion.")}</p></>}</div>}
+    <div className="canvas-hud"><button className="snap-toggle" aria-pressed={preferences.snapEmployees} title={uiText("Snap to seats; hold Option / Alt to drag freely")} onPointerDown={e=>e.stopPropagation()} onClick={()=>void act('settings.set',{snapEmployees:!preferences.snapEmployees})}>{uiText("Snap")} {preferences.snapEmployees?uiText("On"):uiText("Off")}</button><span>{uiText("Drag empty space to pan · Two-finger scroll · ⌘ / Ctrl + wheel to zoom · 0 for overview")}</span><span>{Math.round(view.zoom*100)}% <b>·</b> {rooms.length}  {uiText("TEAMS")} <b>·</b> {rooms.reduce((sum,room)=>sum+room.employees.length,0)}  {uiText("TEAMMATES")}</span></div>
+  </div></ConnectorSelection.Provider></CanvasMotion.Provider>
+})

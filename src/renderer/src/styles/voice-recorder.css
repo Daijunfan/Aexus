@@ -1,0 +1,66 @@
+.message-record-voice{display:grid;place-items:center;flex:none;width:36px;height:44px;align-self:flex-end;padding:0;border:0;border-radius:11px;background:transparent;color:var(--accent);cursor:pointer}
+.message-record-voice .codicon{font-size:22px}
+.message-record-voice:hover{background:var(--bg-elev);color:var(--accent)}
+.message-record-voice:disabled{opacity:.35;cursor:default}
+.voice-recorder-overlay{position:fixed;inset:0;z-index:10065;display:grid;place-items:center;padding:22px;color:var(--fg)}
+.voice-recorder-backdrop{position:absolute;inset:0;background:color-mix(in srgb,var(--theme-wash,#d8c9ee) 60%,transparent);backdrop-filter:blur(13px)}
+.voice-recorder-dialog{position:relative;width:min(470px,100%);max-height:calc(100vh - 44px);overflow:auto;border:1px solid #e0e8e1;border-radius:25px;background:var(--bg-elev);box-shadow:0 22px 85px #3e594326,0 3px 12px #30402f0a;outline:none;border-color:#d9e4d5}
+.voice-recorder-dialog>header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:24px 26px 0}
+.voice-recorder-dialog header span{font-size:9px;font-weight:600;letter-spacing:1.6px;color:var(--fg-dim)}
+.voice-recorder-dialog h2{margin:7px 0 0;font-size:24px;line-height:1.4;letter-spacing:-.6px;font-weight:600;color:var(--fg)}
+.voice-recorder-dialog button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 12px;border:0;border-radius:11px;background:transparent;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;transition:background .15s,transform .15s}
+.voice-recorder-dialog button:hover{background:var(--bg-elev)}
+.voice-recorder-dialog button:active{transform:scale(.96)}
+.voice-recorder-dialog button:focus-visible,.voice-recorder-dialog input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.voice-recorder-dialog header>button{width:36px;padding:0;background:var(--bg-elev);color:#98a596}
+.voice-recorder-body{text-align:center;padding:25px 28px 19px;background:radial-gradient(ellipse at 50% 35%,#f0f5e980,transparent 68%)}
+.voice-recorder-emblem{display:grid;place-items:center;width:62px;height:62px;margin:0 auto 16px;border:1px solid #dce7da;border-radius:21px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--bg-elev)),color-mix(in srgb,var(--accent) 24%,var(--bg-elev)));color:var(--accent);box-shadow:0 4px 15px #5d845809;border-color:color-mix(in srgb,var(--accent) 25%,var(--bg-elev))}
+.voice-recorder-emblem .codicon{font-size:27px}
+.voice-recorder-status{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--fg-dim);min-height:18px}
+.voice-recorder-status>i{width:5px;height:5px;border-radius:50%;background:#a9b8a5}
+.recording .voice-recorder-status>i{background:#c58272;box-shadow:0 0 0 4px #e9c5b822;animation:voice-recording-pulse 1.4s ease-in-out infinite}
+.recording .voice-recorder-status{color:#ad8372}
+.voice-recorder-time{display:block;margin:15px 0 11px;font-size:44px;font-weight:420;font-variant-numeric:tabular-nums;letter-spacing:-1.4px;color:var(--fg)}
+.voice-waveform{display:flex;align-items:center;justify-content:center;gap:3px;height:84px;overflow:hidden;padding:4px 3px}
+.voice-waveform>i{width:3px;min-width:2px;max-height:74px;border-radius:2px;background:linear-gradient(color-mix(in srgb,var(--accent) 40%,var(--bg-elev)),var(--accent));transition:height .13s ease}
+.paused .voice-waveform>i{background:#b9c9b5}
+.voice-recorder-caption{font-size:12px;line-height:1.9;color:var(--fg-dim);max-width:315px;margin:16px auto 0}
+.voice-recorder-error,.voice-recorder-notice{font-size:11px;line-height:1.75;margin:12px 0 0}
+.voice-recorder-error{color:#ad7664}
+.voice-recorder-notice{color:#8d9777}
+.voice-recorder-preview{display:flex;align-items:center;gap:10px;padding:11px 13px;margin-top:12px;border:1px solid #e0e9dc;border-radius:14px;background:var(--bg-elev)}
+.voice-recorder-preview audio{display:none}
+.voice-recorder-preview button{width:34px;min-height:34px;flex:none;padding:0;border-radius:50%;background:color-mix(in srgb,var(--accent) 15%,var(--bg-elev))}
+.voice-recorder-preview input{appearance:none;flex:1;min-width:0;height:28px;margin:0;background:transparent;accent-color:var(--accent);cursor:pointer}
+.voice-recorder-preview input::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(to right,var(--accent) var(--played,0%),color-mix(in srgb,var(--accent) 20%,var(--bg-elev)) var(--played,0%))}
+.voice-recorder-preview input::-webkit-slider-thumb{appearance:none;width:12px;height:12px;margin-top:-4px;border-radius:50%;background:var(--accent);box-shadow:0 1px 3px #486d3c20}
+.voice-recorder-preview input::-moz-range-track{height:4px;border:0;border-radius:4px;background:color-mix(in srgb,var(--accent) 20%,var(--bg-elev))}
+.voice-recorder-preview input::-moz-range-progress{height:4px;border-radius:4px;background:var(--accent)}
+.voice-recorder-preview input::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:50%;background:var(--accent)}
+.voice-recorder-preview>span{font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--fg-dim)}
+.voice-recorder-dialog>footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 20px;border-top:1px solid #e7ece3}
+.voice-recorder-dialog footer>div{display:flex;gap:7px}
+.voice-recorder-dialog .primary{background:var(--accent);color:var(--button-ink,#fff);box-shadow:0 3px 9px #4c764321}
+.voice-recorder-dialog .primary:hover{background:color-mix(in srgb,var(--accent) 88%,#243047)}
+.voice-recorder-dialog .voice-discard{color:#858171;padding-inline:8px}
+@keyframes voice-recording-pulse {
+  50%{box-shadow:0 0 0 5px #e9c5b844}
+}
+@media (max-width:600px) {
+  .voice-recorder-overlay{padding:14px}
+  .voice-recorder-dialog{border-radius:20px;max-height:calc(100vh - 28px)}
+  .voice-recorder-dialog>header{padding:20px 20px 0}
+  .voice-recorder-body{padding:22px 20px 16px}
+  .voice-recorder-dialog>footer{padding:14px 12px;gap:5px}
+  .voice-recorder-dialog button{min-height:42px;padding:0 10px}
+  .voice-recorder-dialog footer>div{gap:3px}
+  .voice-waveform{gap:2px}
+  .voice-recorder-dialog h2{font-size:20px}
+  .message-record-voice{width:34px}
+}
+@media (prefers-reduced-motion:reduce) {
+  .voice-recorder-dialog button,.voice-waveform>i{transition:none}
+  .recording .voice-recorder-status>i{animation:none}
+}
+
+.voice-recorder-dialog button:disabled{opacity:.4;cursor:default;transform:none}

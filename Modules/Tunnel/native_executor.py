@@ -6,6 +6,9 @@ import signal
 import subprocess
 import sys
 import threading
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from transport import ssh_args, ssh_env
 
 config = json.loads(sys.stdin.readline())

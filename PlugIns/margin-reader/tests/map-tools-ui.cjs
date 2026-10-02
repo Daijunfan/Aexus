@@ -1,0 +1,45 @@
+"use strict";
+const assert=require('node:assert/strict'),path=require('node:path');
+const {create,expect}=require('./ui-session.cjs');
+(async()=>{
+ const f=await create('map-tools-ui'),{page,api,pass}=f;let error;
+ try{
+  let set=await api('study.create',{title:'Map interaction'}),other=await api('study.create',{title:'Paste destination'});
+  const change=async(method,p={})=>{set=await api('study.get',{setId:set.id});set=await api(method,{setId:set.id,expectedRevision:set.revision,...p});return set;};
+  for(const title of ['Alpha','Beta','Gamma'])await change('study.note.create',{title,text:title+' body'});
+  const [a,b,c]=set.cards.map(c=>c.id);await change('study.cards.move',{cardIds:[a,b,c],positions:[{cardId:a,x:35,y:35},{cardId:b,x:365,y:35},{cardId:c,x:695,y:35}]});
+  await api('study.open',{setId:set.id});await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');await page.click('#study-zoom-fit');
+  const card=id=>page.locator(`.study-card[data-card-id="${id}"]`);
+  const point=async(x,y)=>page.locator('#study-map-world').evaluate((el,p)=>{const b=el.getBoundingClientRect(),scale=b.width/el.clientWidth;return{x:b.x+p[0]*scale,y:b.y+p[1]*scale};},[x,y]);
+  const drag=async(from,to,middle)=>{await page.mouse.move(from.x,from.y);await page.mouse.down();if(middle)await page.mouse.move(middle.x,middle.y,{steps:12});await page.mouse.move(to.x,to.y,{steps:12});await page.mouse.up();};
+  await page.selectOption('#map-tool-mode','select');await expect.poll(async()=>(await api('study.get',{setId:set.id})).map.tools?.mode).toBe('select');
+  await drag(await point(15,15),await point(635,270));await expect(page.locator('.study-card.multi-selected')).toHaveCount(2);
+  pass('Rectangle selection selects the two intersecting cards without opening or moving them');
+  await page.click('#map-copy');await expect.poll(async()=>(await api('study.clipboard.get')).clipboard?.mode).toBe('clone');
+  await page.locator(`.study-set-row[data-set-id="${other.id}"]`).click();await expect(page.locator("#study-title")).toHaveText("Paste destination");await expect(page.locator("#study-board")).not.toHaveAttribute("inert", "");await page.click('#map-paste');await expect.poll(async()=>(await api('study.get',{setId:other.id})).cards.length).toBe(2);
+  let pasted=await api('study.get',{setId:other.id});assert(pasted.cards.every(x=>![a,b].includes(x.id)));
+  pass('Copy and paste work across studies through the workspace clipboard with independent IDs');
+  await page.locator(`.study-set-row[data-set-id="${set.id}"]`).click();await expect(page.locator("#study-title")).toHaveText("Map interaction");await expect(page.locator("#study-board")).not.toHaveAttribute("inert", "");await page.selectOption('#map-tool-mode','link-both');await expect.poll(async()=>(await api('study.get',{setId:set.id})).map.tools?.mode).toBe('link-both');await page.click('#study-zoom-fit');
+  const bounds=async id=>{const r=await card(id).boundingBox();return{x:r.x+r.width/2,y:r.y+r.height/2};};
+  await drag(await bounds(a),await bounds(b));await expect.poll(async()=>(await api('study.get',{setId:set.id})).links.length).toBe(1);
+  let fresh=await api('study.get',{setId:set.id});assert(fresh.links[0].bidirectional&&fresh.links[0].from===a&&fresh.links[0].to===b);
+  await page.selectOption('#map-tool-mode','curve');await expect.poll(async()=>(await api('study.get',{setId:set.id})).map.tools?.mode).toBe('curve');
+  const ap=await bounds(a),cp=await bounds(c);await drag(ap,cp,{x:(ap.x+cp.x)/2,y:ap.y+160});
+  await expect.poll(async()=>(await api('study.get',{setId:set.id})).links.length).toBe(2);fresh=await api('study.get',{setId:set.id});const curve=fresh.links.find(l=>l.to===c);assert(curve.curve.length>3);
+  const line=page.locator(`[data-association-id="${curve.id}"]`);await expect(line).toHaveAttribute('d',/ L/);
+  const originalPath=await line.getAttribute('d');await change('study.card.position',{cardId:c,x:760,y:100});await expect(line).not.toHaveAttribute('d',originalPath);
+  await page.locator(`[data-link-id="${curve.id}"]`).focus();await page.keyboard.press('Enter');await expect(page.locator('#dialog')).toBeVisible();await page.fill('[name=label]','Hand-drawn relation');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+  assert((await api('study.get',{setId:set.id})).links.some(l=>l.label==='Hand-drawn relation'));
+  pass('Directional and drawn links persist, remain attached when cards move, and expose keyboard-accessible editing');
+  await page.selectOption('#map-tool-mode','select');await page.selectOption('#map-selection-shape','lasso');await expect.poll(async()=>(await api('study.get',{setId:set.id})).map.tools?.selectionShape).toBe('lasso');await page.click('#study-zoom-fit');
+  const box=await card(a).boundingBox();const vertices=[{x:box.x-6,y:box.y-6},{x:box.x+box.width+6,y:box.y-6},{x:box.x+box.width+6,y:box.y+box.height+6},{x:box.x-6,y:box.y+box.height+6},{x:box.x-6,y:box.y-6}];
+  await page.mouse.move(vertices[0].x,vertices[0].y);await page.mouse.down();for(const v of vertices.slice(1))await page.mouse.move(v.x,v.y,{steps:8});await page.mouse.up();await expect(page.locator('.study-card.multi-selected')).toHaveCount(1);await expect(card(a)).toHaveClass(/multi-selected/);
+  await page.click('#map-insert');await page.selectOption('[name=relation]','parent');await page.fill('[name=title]','Inserted parent');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();fresh=await api('study.get',{setId:set.id});assert(fresh.cards.find(c=>c.id===a).parentId===fresh.cards.find(c=>c.title==='Inserted parent').id);
+  pass('Lasso selection and inserting an immediate parent preserve the original card identity');
+  await page.selectOption('#map-tool-mode','hand');await card(b).locator('header strong').click();await page.click('#map-cut');await expect.poll(async()=>(await api('study.clipboard.get')).clipboard?.mode).toBe('cut');
+  assert((await api('study.get',{setId:set.id})).cards.some(x=>x.id===b));await page.locator(`.study-set-row[data-set-id="${other.id}"]`).click();await expect(page.locator("#study-title")).toHaveText("Paste destination");await expect(page.locator("#study-board")).not.toHaveAttribute("inert", "");await page.click('#map-paste');await expect.poll(async()=>(await api('study.get',{setId:other.id})).cards.some(x=>x.id===b)).toBe(true);
+  await page.click('#study-undo');await expect.poll(async()=>(await api('study.get',{setId:set.id})).cards.some(x=>x.id===b)).toBe(true);assert(!(await api('study.get',{setId:other.id})).cards.some(x=>x.id===b));
+  pass('Cut remains non-destructive until paste, and a single undo reverses both study changes');
+  await page.screenshot({path:path.join(f.output,'map-tools.png')});
+ }catch(e){error=e;}finally{await f.finish(error);}
+})().catch(e=>{console.error(e);process.exitCode=1;});

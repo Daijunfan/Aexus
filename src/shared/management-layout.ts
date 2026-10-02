@@ -1,4 +1,7 @@
-import type {ManagementRelation} from './management'
+import {connectorSetting,type ConnectorSettings} from './connector'
+import {isSupervisor} from './roles'
+import {routeManagementConnection,managementFan,managementBadgeBranches} from './management-routing'
+import {creationRelations,type ManagementRelation} from './management'
 import type {Store,StoredSession} from './types'
 import {EMPLOYEE_SIZE,EMPLOYEE_TOP,MIN_ROOM_HEIGHT,DEFAULT_POLYGON,planOffice,shapeContains,type Point,type RoomBounds,type PlannedRoom} from './canvas'
 
@@ -25,7 +28,7 @@ function components(cards:StoredSession[],relations:ManagementRelation[]){
 
 /** A component reserves its routing corridors as well as its full-size employee footprints. */
 function componentBlock(cards:StoredSession[]):Block{
-  const managers=cards.filter(card=>card.managementRole==='manager'),employees=cards.filter(card=>card.managementRole!=='manager')
+  const managers=cards.filter(card=>isSupervisor(card.managementRole)),employees=cards.filter(card=>!isSupervisor(card.managementRole))
   const columns=Math.min(3,Math.max(1,Math.ceil(Math.sqrt(employees.length))))
   const band=44+managers.length*10,rows=Math.max(managers.length,Math.ceil(employees.length/columns)),height=band+rows*(H+band)-band
   const employeeX=W+64+managers.length*12,width=employeeX+columns*W+(columns-1)*GAP
@@ -99,7 +102,7 @@ export function reflowChangedManagement(store:Store,previous?:Store){
   const oldCards=new Map(previous.sessions.map(card=>[card.id,card]))
   const signature=(source:Store,name:string)=>{
     const members=source.sessions.filter(card=>card.group===name&&!card.deleting),ids=new Set(members.map(card=>card.id))
-    const edges=(source.access?.relations??[]).filter(edge=>edge.state==='active'&&ids.has(edge.managerId)&&ids.has(edge.employeeId))
+    const edges=creationRelations(source.sessions).filter(edge=>ids.has(edge.managerId)&&ids.has(edge.employeeId))
     return {hasEdges:edges.length>0,value:JSON.stringify([members.map(card=>card.id).sort(),edges.map(edge=>[edge.id,edge.managerId,edge.employeeId]).sort()])}
   }
   for(const name of store.groups){
@@ -111,7 +114,7 @@ export function reflowChangedManagement(store:Store,previous?:Store){
 }
 
 /** Axis-aligned polylines with small tangent quarter-corners. The last segment remains straight. */
-export function roundedOrthogonalPath(input:Point[],radius=6){
+export function roundedOrthogonalPath(input:Point[],radius=8){
   const points:Point[]=[]
   for(const p of input){
     if(!Number.isFinite(p.x)||!Number.isFinite(p.y))throw new Error('Invalid connector point')
@@ -132,23 +135,19 @@ export function roundedOrthogonalPath(input:Point[],radius=6){
   return d+' '+line(cursor,points.at(-1)!)
 }
 
-export function managementRoutes(room:PlannedRoom,relations:ManagementRelation[]){
-  const positions=new Map(room.employees.map(item=>[item.card.id,item.position])),cards=room.employees.map(item=>item.card),groups=components(cards,relations).groups
-  const groupFor=new Map<string,StoredSession[]>();for(const group of groups)for(const card of group)groupFor.set(card.id,group)
-  return relations.filter(edge=>edge.state==='active'&&positions.has(edge.managerId)&&positions.has(edge.employeeId)).map(edge=>{
-    const a=positions.get(edge.managerId)!,b=positions.get(edge.employeeId)!,group=groupFor.get(edge.managerId)!,managers=group.filter(card=>card.managementRole==='manager'),index=managers.findIndex(card=>card.id===edge.managerId)
-    const right=Math.max(...managers.map(card=>positions.get(card.id)!.x+W)),left=Math.min(...group.filter(card=>card.managementRole!=='manager').map(card=>positions.get(card.id)!.x))
-    let points:Point[]
-    if(right+32<left){
-      // The reserved left-side spine and row-top band cannot intersect an auto-placed employee.
-      const spine=right+18+index*10,band=b.y-18-index*8
-      points=[{x:a.x+W+3,y:a.y+H/2},{x:spine,y:a.y+H/2},{x:spine,y:band},{x:b.x+W/2,y:band},{x:b.x+W/2,y:b.y-8}]
-    }else{
-      // User-drag preview remains orthogonal too; rebinding/re-layout restores grouped corridors.
-      const horizontal=Math.abs(b.x-a.x)>=Math.abs(b.y-a.y)
-      if(horizontal){const direction=b.x>=a.x?1:-1,x1=a.x+(direction>0?W+3:-3),x2=b.x+(direction>0?-8:W+8),mid=(x1+x2)/2;points=[{x:x1,y:a.y+H/2},{x:mid,y:a.y+H/2},{x:mid,y:b.y+H/2},{x:x2,y:b.y+H/2}]}
-      else{const direction=b.y>=a.y?1:-1,y1=a.y+(direction>0?H+3:-3),y2=b.y+(direction>0?-8:H+8),mid=(y1+y2)/2;points=[{x:a.x+W/2,y:y1},{x:a.x+W/2,y:mid},{x:b.x+W/2,y:mid},{x:b.x+W/2,y:y2}]}
+export function managementRoutes(room:PlannedRoom,relations:Pick<ManagementRelation,'id'|'managerId'|'employeeId'|'state'>[],occupied:Point[][]=[],settings?:ConnectorSettings){
+  const ids=new Set(room.employees.map(item=>item.card.id)),edges=relations.filter(edge=>edge.state==='active'&&ids.has(edge.managerId)&&ids.has(edge.employeeId))
+  const paths=[...occupied],routes=[]
+  for(const managerId of [...new Set(edges.map(edge=>edge.managerId))]){
+    const siblingsStart=[...paths],shared:Point[][]=[],family=edges.filter(edge=>edge.managerId===managerId),automatic=family.every(edge=>{const s=connectorSetting(settings,managerId,edge.employeeId);return s.source.side==='auto'&&s.target.side==='auto'}),fan=automatic?managementFan(room,managerId,family.map(edge=>edge.employeeId),paths):undefined
+    const branches=managementBadgeBranches(room,managerId,family.map(edge=>edge.employeeId),settings,siblingsStart)
+    shared.push(...[...branches.values()].flatMap(branch=>branch.points?[branch.points]:[]))
+    for(const edge of family){
+      const setting=connectorSetting(settings,managerId,edge.employeeId),branch=branches.get(edge.employeeId)
+      const points=branch?.points??fan?.get(edge.employeeId)??routeManagementConnection(room,managerId,edge.employeeId,siblingsStart,branch?{...setting,source:branch.source}:setting,shared)
+      if(points.length){paths.push(points);shared.push(points)}
+      routes.push({id:edge.id,managerId,employeeId:edge.employeeId,anchors:connectorSetting(settings,managerId,edge.employeeId),status:points.length?'routed' as const:'blocked' as const,layout:fan?'individual-lanes' as const:'obstacle-route' as const,points,path:roundedOrthogonalPath(points)})
     }
-    return {id:edge.id,points,path:roundedOrthogonalPath(points)}
-  })
+  }
+  return routes
 }

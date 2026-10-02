@@ -1,24 +1,64 @@
-import {useState} from 'react'
+import {translate as uiText,useI18n} from '../i18n'
+import {AppSelect} from './AppSelect'
+import {EngineSettings} from './EngineSettings'
+import {Icon} from './Icon'
+import licenseText from '../../../../LICENSE?raw'
+import {useEffect,useRef,useState,type CSSProperties} from 'react'
 import {ModelSelect} from './ModelSelect'
-import {DEFAULT_PREFERENCES,THEMES,THEME_LABELS,type Preferences} from '../../../shared/preferences'
-export function SettingsPanel({value,onSave,onClose}:{value:Preferences;onSave:(value:Preferences)=>Promise<unknown>;onClose:()=>void}) {
-  const [draft,setDraft]=useState(value),[saving,setSaving]=useState(false)
-  return <div className="office-panel-wrap" onKeyDown={e=>{if(e.key==='Escape')onClose()}}>
-    <div className="panel-backdrop" onClick={onClose}/>
-    <section className="office-panel preferences-panel" role="dialog" aria-modal="true" aria-label="应用设置">
-      <header className="panel-header"><div><span className="eyebrow">MAKE YOURSELF AT HOME</span><h2>你的工作环境</h2></div><button className="panel-close" aria-label="关闭设置" onClick={onClose}>×</button></header>
-      <form onSubmit={async e=>{e.preventDefault();setSaving(true);try{if(await onSave(draft))onClose()}finally{setSaving(false)}}}>
-        <div className="field-heading">新员工默认模型</div>
-        <ModelSelect preference engine="codex" label="Codex 默认模型" value={draft.defaultCodexModel} onChange={value=>setDraft({...draft,defaultCodexModel:value})}/>
-        <ModelSelect preference engine="claude" label="Claude Code 默认模型" value={draft.defaultClaudeModel} onChange={value=>setDraft({...draft,defaultClaudeModel:value})}/>
-        <small>仅用于之后创建的员工；创建时仍可单独选择。初始化也使用所选模型。</small>
-        <div className="field-heading">背景与界面</div><div className="theme-presets">{THEMES.map(theme=><button type="button" key={theme} data-theme-option={theme} aria-pressed={draft.theme===theme} onClick={()=>setDraft({...draft,theme})}><i className={`theme-sample sample-${theme}`}/><span>{THEME_LABELS[theme]}</span>{draft.theme===theme&&<b>✓</b>}</button>)}</div>
-        <label>页面大小 <output>{Math.round(draft.pageZoom*100)}%</output><input aria-label="页面大小" type="range" min="0.75" max="1.5" step="0.05" value={draft.pageZoom} onChange={e=>setDraft({...draft,pageZoom:+e.target.value})}/><small>⌘ + 放大，⌘ − 缩小，⌘ 0 恢复。包含文字、按钮和终端。</small></label>
-        <label>双指 / 滚轮缩放灵敏度 <output>{draft.zoomSensitivity.toFixed(2)}×</output><input aria-label="缩放灵敏度" name="zoomSensitivity" type="range" min="0.25" max="8" step="0.25" value={draft.zoomSensitivity} onChange={e=>setDraft({...draft,zoomSensitivity:+e.target.value})}/><small>双指捏合，或按住 ⌘ / Ctrl 滚动。数值越大，缩放越快。</small></label>
-        <label>双指 / 滚轮平移灵敏度 <output>{draft.panSensitivity.toFixed(2)}×</output><input aria-label="平移灵敏度" name="panSensitivity" type="range" min="0.25" max="4" step="0.25" value={draft.panSensitivity} onChange={e=>setDraft({...draft,panSensitivity:+e.target.value})}/><small>只影响滚动平移，拖动 Team 仍准确跟随指针。</small></label>
-        <label className="snap-setting"><span><input type="checkbox" name="snapEmployees" checked={draft.snapEmployees} onChange={e=>setDraft({...draft,snapEmployees:e.target.checked})}/> 员工位置磁吸</span><small>靠近标准工位或其他员工的行列时轻轻对齐。按住 Option / Alt 可临时关闭。</small></label>
-        <div className="form-footer"><button type="button" className="btn" onClick={()=>setDraft(DEFAULT_PREFERENCES)}>恢复默认</button><button className="btn primary save-settings" disabled={saving}>{saving?'保存中…':'应用设置'}</button></div>
-      </form>
-    </section>
+import {usePreferencesAutosave} from './usePreferencesAutosave'
+import {DEFAULT_PREFERENCES,DEFAULT_VIEW_APPEARANCE,PRESENTATION_VIEWS,COLOR_THEMES,THEMES,THEME_LABELS,mergePreferences,readableThemeAccent,type Preferences,type PreferencesPatch,type PresentationView,type ViewAppearance} from '../../../shared/preferences'
+import '../styles/view-preferences.css'
+
+const viewLabels={company:'Company',messages:'Messages',plan:'Plan'},viewIcons={company:'organization',messages:'comment-discussion',plan:'checklist'}
+const neutralThemes:Preferences['theme'][]=['white','light','space','black','midnight','graphite']
+type EmployeeDefaults=Pick<Preferences,'defaultPermissionMode'|'defaultCodexModel'|'defaultClaudeModel'|'defaultClineModel'|'defaultPiModel'>
+const employeeDefaults:EmployeeDefaults={defaultPermissionMode:DEFAULT_PREFERENCES.defaultPermissionMode,defaultCodexModel:DEFAULT_PREFERENCES.defaultCodexModel,defaultClaudeModel:DEFAULT_PREFERENCES.defaultClaudeModel,defaultClineModel:DEFAULT_PREFERENCES.defaultClineModel,defaultPiModel:DEFAULT_PREFERENCES.defaultPiModel}
+
+export function SettingsPanel({value,onSave,onClose,initialView='company'}:{value:Preferences;onSave:(patch:PreferencesPatch)=>Promise<unknown>;onClose:()=>void;initialView?:PresentationView}){
+ useI18n()
+ const auto=usePreferencesAutosave(onSave),[view,setView]=useState<PresentationView>(initialView),[employeeDraft,setEmployeeDraft]=useState<Partial<EmployeeDefaults>>({}),[employeeSaving,setEmployeeSaving]=useState(false),[employeeError,setEmployeeError]=useState(''),[employeeSaved,setEmployeeSaved]=useState(false),tabs=useRef<HTMLDivElement>(null),body=useRef<HTMLDivElement>(null)
+ const draft=mergePreferences(mergePreferences(value,auto.changes),employeeDraft),appearance=draft.viewAppearance[view]
+ const employeePatch=Object.fromEntries(Object.entries(employeeDraft).filter(([key,next])=>next!==value[key as keyof EmployeeDefaults])) as Partial<EmployeeDefaults>,employeePending=Object.keys(employeePatch).length>0
+ const customStyle={'--custom-theme-color':appearance.themeColor,'--custom-theme-accent':readableThemeAccent(appearance.themeColor)} as CSSProperties
+ const changeAppearance=(patch:Partial<ViewAppearance>,delay=0)=>auto.update({viewAppearance:{[view]:patch}},delay)
+ const changeEmployee=(patch:Partial<EmployeeDefaults>)=>{setEmployeeDraft(previous=>({...previous,...patch}));setEmployeeSaved(false)}
+ useEffect(()=>{setEmployeeDraft(previous=>{const entries=Object.entries(previous).filter(([key,next])=>next!==value[key as keyof EmployeeDefaults]);return entries.length===Object.keys(previous).length?previous:Object.fromEntries(entries)})},[value.defaultPermissionMode,value.defaultCodexModel,value.defaultClaudeModel,value.defaultClineModel,value.defaultPiModel])
+ const saveEmployee=async()=>{if(employeeSaving||!employeePending)return;setEmployeeSaving(true);setEmployeeError('');try{if(await onSave(employeePatch))setEmployeeSaved(true);else setEmployeeError('Settings could not be saved. Your changes are still here.')}catch(cause){setEmployeeError((cause as Error).message)}finally{setEmployeeSaving(false)}}
+ const resetView=()=>auto.update({viewAppearance:{[view]:DEFAULT_VIEW_APPEARANCE[view]},...(view==='company'?{zoomSensitivity:DEFAULT_PREFERENCES.zoomSensitivity,panSensitivity:DEFAULT_PREFERENCES.panSensitivity,snapEmployees:DEFAULT_PREFERENCES.snapEmployees,showTeamOverview:DEFAULT_PREFERENCES.showTeamOverview}:{})})
+ const resetShared=()=>auto.update({language:DEFAULT_PREFERENCES.language,pageZoom:DEFAULT_PREFERENCES.pageZoom,sidebarWidth:DEFAULT_PREFERENCES.sidebarWidth,explorerWidth:DEFAULT_PREFERENCES.explorerWidth,terminalHeight:DEFAULT_PREFERENCES.terminalHeight})
+ const close=async()=>{if(!employeeSaving&&await auto.flush())onClose()}
+ const chooseView=(next:PresentationView)=>{setView(next);body.current?.scrollTo({top:0,behavior:'instant'})}
+ const moveTab=(event:React.KeyboardEvent,index:number)=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?PRESENTATION_VIEWS.length-1:(index+(event.key==='ArrowRight'?1:-1)+PRESENTATION_VIEWS.length)%PRESENTATION_VIEWS.length;chooseView(PRESENTATION_VIEWS[next]);tabs.current?.querySelectorAll<HTMLButtonElement>('[role=tab]')[next]?.focus()}
+ const themeButton=(theme:Preferences['theme'])=><button type="button" key={theme} data-theme-option={theme} aria-pressed={appearance.theme===theme} onClick={()=>changeAppearance({theme})}><span className={`settings-color-swatch theme-sample sample-${theme}`} style={theme==='custom'?customStyle:undefined} aria-hidden="true"/><span>{uiText(THEME_LABELS[theme])}</span>{appearance.theme===theme&&<Icon name="check"/>}</button>
+ return <div className="office-panel-wrap" onKeyDown={event=>{if(event.key==='Escape')void close()}}><div className="panel-backdrop" onClick={()=>void close()}/><section className="office-panel preferences-panel view-preferences-panel" role="dialog" aria-modal="true" aria-label={uiText('Application settings')}>
+  <header className="panel-header"><h2>{uiText('Settings')}</h2><span className="settings-save-status" role="status" data-state={auto.status}>{uiText(auto.status==='saving'?'Saving…':auto.status==='saved'?'Auto-saved':auto.status==='error'?'Save failed':'Changes save automatically')}</span><button className="panel-close" disabled={employeeSaving} aria-label={uiText('Close settings')} onClick={()=>void close()}>×</button></header>
+  <div ref={tabs} className="settings-view-tabs" role="tablist" aria-label={uiText('Settings for each view')}>{PRESENTATION_VIEWS.map((key,index)=><button key={key} id={'settings-tab-'+key} type="button" role="tab" aria-controls="settings-view-panel" aria-selected={view===key} tabIndex={view===key?0:-1} onClick={()=>chooseView(key)} onKeyDown={event=>moveTab(event,index)}><Icon name={viewIcons[key]}/>{uiText(viewLabels[key])}</button>)}</div>
+  {auto.error&&<div className="settings-autosave-error" role="alert"><span>{uiText(auto.error)}</span><button type="button" onClick={auto.retry}>{uiText('Retry save')}</button></div>}
+  <div ref={body} className="settings-scroll-body">
+   <section id="settings-view-panel" className="settings-view-section" role="tabpanel" aria-labelledby={'settings-tab-'+view}>
+    <div className="settings-section-heading"><h3>{uiText('Color scheme')}</h3><button type="button" onClick={resetView}>{uiText('Reset {0} settings',[uiText(viewLabels[view])])}</button></div>
+    <div className="theme-presets" aria-label={uiText('Color scheme')}>{(view==='messages'?COLOR_THEMES:neutralThemes).map(themeButton)}</div>
+    {view!=='messages'&&<details key={view} className="settings-more-themes" open={!neutralThemes.includes(appearance.theme)}><summary>{uiText('More color schemes')}</summary><div className="theme-presets">{THEMES.filter(theme=>!neutralThemes.includes(theme)).map(themeButton)}</div></details>}
+    <label className="custom-theme-color" htmlFor="custom-theme-color"><span>{uiText('Custom color')}</span><input id="custom-theme-color" name="themeColor" type="color" aria-label={uiText('Custom color')} value={appearance.themeColor} onChange={event=>changeAppearance({theme:'custom',themeColor:event.target.value},180)}/><output>{appearance.themeColor.toUpperCase()}</output></label>
+    {view==='company'&&<section className="settings-canvas-controls" aria-label={uiText('Company canvas')}><h3>{uiText('Company canvas')}</h3>
+     <label className="settings-toggle" title={uiText('Gently align near standard seats or other employees. Hold Option / Alt to disable temporarily.')}><span>{uiText('Snap employee positions')}</span><input type="checkbox" name="snapEmployees" checked={draft.snapEmployees} onChange={event=>auto.update({snapEmployees:event.target.checked})}/></label>
+     <label className="settings-toggle"><span>{uiText('Show team overview')}</span><input type="checkbox" name="showTeamOverview" checked={draft.showTeamOverview} onChange={event=>auto.update({showTeamOverview:event.target.checked})}/></label>
+     <label className="settings-range"><span>{uiText('Zoom sensitivity')}<output>{draft.zoomSensitivity.toFixed(2)}×</output></span><input aria-label={uiText('Zoom sensitivity')} title={uiText('Pinch, or hold ⌘ / Ctrl while scrolling. Higher values zoom faster.')} name="zoomSensitivity" type="range" min="0.25" max="8" step="0.25" value={draft.zoomSensitivity} onChange={event=>auto.update({zoomSensitivity:+event.target.value},180)}/></label>
+     <label className="settings-range"><span>{uiText('Pan sensitivity')}<output>{draft.panSensitivity.toFixed(2)}×</output></span><input aria-label={uiText('Pan sensitivity')} title={uiText('Only affects scroll panning. Dragged teams still follow the pointer precisely.')} name="panSensitivity" type="range" min="0.25" max="4" step="0.25" value={draft.panSensitivity} onChange={event=>auto.update({panSensitivity:+event.target.value},180)}/></label>
+    </section>}
+   </section>
+   <section className="settings-shared" aria-label={uiText('Shared settings')}><div className="settings-section-heading"><h3>{uiText('Shared settings')}</h3><button type="button" onClick={resetShared}>{uiText('Restore shared defaults')}</button></div>
+    <div className="settings-language"><label htmlFor="interface-language">{uiText('Interface language')}</label><AppSelect id="interface-language" name="language" aria-label={uiText('Interface language')} value={draft.language} onChange={event=>auto.update({language:event.target.value as Preferences['language']})}><option value="en">English</option><option value="zh-CN">简体中文</option></AppSelect></div>
+    <label className="settings-range"><span>{uiText('Page size')}<output>{Math.round(draft.pageZoom*100)}%</output></span><input aria-label={uiText('Page size')} title={uiText('⌘ + to zoom in, ⌘ − to zoom out, ⌘ 0 to reset. Applies to text, controls and terminals.')} type="range" min="0.75" max="1.5" step="0.05" value={draft.pageZoom} onChange={event=>auto.update({pageZoom:+event.target.value},180)}/></label>
+   </section>
+   <details className="settings-disclosure settings-employee-defaults"><summary><span>{uiText('Employee defaults')}</span>{employeePending&&<small>{uiText('Not applied')}</small>}<Icon name="chevron-down"/></summary><form onSubmit={event=>{event.preventDefault();void saveEmployee()}}><fieldset disabled={employeeSaving}>
+    <label>{uiText('Default permissions')}<select aria-label={uiText('Default permissions')} value={draft.defaultPermissionMode} onChange={event=>changeEmployee({defaultPermissionMode:event.target.value as Preferences['defaultPermissionMode']})}><option value="default">{uiText('Ask · Approve when needed')}</option><option value="acceptEdits">{uiText('Workspace write · Allow workspace edits')}</option><option value="bypassPermissions">{uiText('Full access · Trust the engine’s system account')}</option></select><small>{uiText('Full access keeps all capabilities but does not provide operating-system isolation. Existing employee permissions are not raised automatically.')}</small></label>
+    <ModelSelect preference engine="codex" label={uiText('Codex default model')} value={draft.defaultCodexModel} onChange={value=>changeEmployee({defaultCodexModel:value})}/><ModelSelect preference engine="cline" label={uiText('Cline default model')} value={draft.defaultClineModel} onChange={value=>changeEmployee({defaultClineModel:value})}/><ModelSelect preference engine="pi" label={uiText('Pi default model')} value={draft.defaultPiModel} onChange={value=>changeEmployee({defaultPiModel:value})}/><ModelSelect preference engine="claude" label={uiText('Claude Agent default model')} value={draft.defaultClaudeModel} onChange={value=>changeEmployee({defaultClaudeModel:value})}/><p className="settings-help">{uiText('Applies to employees created later. You can still choose a model at creation; initialization uses that model too.')}</p>
+    {employeeError&&<p className="settings-employee-error" role="alert">{uiText(employeeError)}</p>}
+    <div className="settings-employee-actions"><button type="button" className="settings-reset" onClick={()=>changeEmployee(employeeDefaults)}>{uiText('Restore employee defaults')}</button><button type="submit" className="btn primary" disabled={employeeSaving||!employeePending}>{uiText(employeeSaving?'Saving…':'Apply employee defaults')}</button></div>{employeeSaved&&!employeePending&&<small className="settings-employee-saved" role="status">{uiText('Employee defaults saved')}</small>}
+   </fieldset></form></details>
+   <details className="settings-disclosure settings-engines"><summary><span>{uiText('Coding agent engines')}</span><Icon name="chevron-down"/></summary><EngineSettings/></details>
+   <details className="settings-disclosure settings-license"><summary><span>{uiText('Open-source license')}</span><Icon name="chevron-down"/></summary><p>{uiText('Agents Company is distributed under GNU GPL v3, with modification and redistribution permitted under its terms and no warranty. Character assets and third-party components retain their own notices. Coding agent runtimes are installed separately under their own licenses.')}</p><details><summary>{uiText('Read GNU GPL v3')}</summary><pre>{licenseText}</pre></details></details>
   </div>
+ </section></div>
 }

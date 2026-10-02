@@ -3,7 +3,7 @@ import {operatorContext,withCaller} from './authorization'
 import {withInitializer,pendingInitialization} from './initialization-state'
 import {initializationPrompt,ensureEmployeeBootstrap} from './plugins/documents'
 import {runPrivateInitialization} from './sessions'
-import {employeeInitializing,type EmployeeInitialization} from '../shared/types'
+import {EFFORT_LEVELS,type EmployeeInitialization,type EffortLevel} from '../shared/types'
 
 // Small in-process queue: persistence stays in the existing employee record.
 const queued=new Set<string>()
@@ -17,15 +17,17 @@ function save(id:string,attemptId:string,patch:Partial<EmployeeInitialization>){
   return true
 }
 export function queueEmployeeInitialization(id:string){
-  const card=readStore().sessions.find(card=>card.id===id&&!card.deleting)
+  const store=readStore(),card=store.sessions.find(card=>card.id===id&&!card.deleting)
   if(card?.initialization?.status==='pending')queued.add(id)
   if(started&&!stopping)setImmediate(drain)
 }
-export function retryEmployeeInitialization(id:string){
+export function retryEmployeeInitialization(id:string,options:{model?:string;effort?:EffortLevel}={}){
   const card=readStore().sessions.find(card=>card.id===id&&!card.deleting)
   if(!card)throw Error('Unknown employee')
   if(!card.initialization||card.initialization.status==='ready')return {id,initialization:card.initialization??{status:'ready'}}
-  if(card.initialization.status==='failed')updateStore(store=>{store.sessions.find(card=>card.id===id)!.initialization=pendingInitialization()})
+  if(options.model!==undefined&&(typeof options.model!=='string'||!options.model.trim()))throw Error('model must be a model ID')
+  if(options.effort!==undefined&&!EFFORT_LEVELS.some(level=>level.value===options.effort))throw Error('Invalid effort')
+  if(card.initialization.status==='failed')updateStore(store=>{const current=store.sessions.find(card=>card.id===id)!;if(options.model!==undefined)current.model=options.model.trim();if(options.effort!==undefined)current.effort=options.effort;current.initialization=pendingInitialization()})
   queueEmployeeInitialization(id)
   return {id,initialization:readStore().sessions.find(card=>card.id===id)!.initialization}
 }
@@ -35,20 +37,21 @@ function drain(){
     if(active.size>=CONCURRENCY)return
     queued.delete(id)
     if(active.has(id))continue
-    const card=readStore().sessions.find(card=>card.id===id&&!card.deleting)
+    const store=readStore(),card=store.sessions.find(card=>card.id===id&&!card.deleting)
     if(card?.initialization?.status!=='pending')continue
     const attempt=card.initialization.attemptId,controller=new AbortController()
     const timer=setTimeout(()=>controller.abort(Error('初始化超时，请检查引擎连接后重试。')),TIMEOUT_MS)
     const done=Promise.resolve().then(()=>withCaller(operatorContext(),()=>withInitializer(id,async()=>{
       if(!save(id,attempt,{status:'running',startedAt:Date.now(),error:undefined}))return
       try{
-        const latest=readStore(),employee=latest.sessions.find(card=>card.id===id)!
+        const latest=readStore(),employee=latest.sessions.find(card=>card.id===id)!,freshNative=employee.kind==='cloud-native-worker'&&!employee.threadId&&!employee.claudeSessionId&&!employee.clonedFrom&&employee.nativeOwnership!=='external'
         ensureEmployeeBootstrap(employee,latest)
         await runPrivateInitialization(id,initializationPrompt(employee,latest),controller.signal)
         controller.signal.throwIfAborted()
-        save(id,attempt,{status:'ready',finishedAt:Date.now(),error:undefined})
+        const initialized=readStore().sessions.find(card=>card.id===id)
+        save(id,attempt,{status:'ready',finishedAt:Date.now(),error:undefined,nativeBindId:freshNative?initialized?.threadId??initialized?.claudeSessionId:undefined})
       }catch(error){
-        save(id,attempt,{status:'failed',finishedAt:Date.now(),error:String((error as Error)?.message??error).slice(0,600)})
+        save(id,attempt,{status:'failed',nativeBindId:undefined,finishedAt:Date.now(),error:String((error as Error)?.message??error).slice(0,600)})
       }
     }))).catch(error=>console.error('[employee initialization]',id,String(error))).finally(()=>{clearTimeout(timer);active.delete(id);setImmediate(drain)})
     active.set(id,{controller,done})

@@ -1,11 +1,13 @@
 ## 开始工作
 
-这是由根 API、调度规范和注册表生成的**全局参考手册**。员工实际应阅读工作目录中按自己 ID 生成的 API.md / PERMISSIONS.md，或执行 `agents auth whoami --json` 与 `agents api docs`，不能将参考手册当作权限凭据。
+这是由根 API、调度规范和注册表生成的全局参考手册，不是权限凭据。所有角色初始化只读取真实身份和 `agents api docs` 的共享短索引；之后按需用 `agents api describe COMMAND --all --json` 或 `agents api docs DOCUMENT` 阅读，不把整册手册自动载入上下文。Core 的 Company、Messages、Plan 三视图与 MiniNotion 等独立插件分列，执行权限仍由 Core 检查。
 
-Manager 必须是本地运行的员工，可属于普通 Build 或 Work Team。SSH Build 中的本地 Manager 使用身份绑定的回传 CLI。目录名称不决定身份，不需要绑定到特殊的 Agents-Managers 文件夹。
+Governor / Manager / Employee 是员工自身的职位。Manager 管理本 Team 全部 Employee；Governor 跨 Team 管理团队与员工，并可调整其他 Governor 的位置。Governor 的创建、删除、晋升、降级仅限用户；禁止借整个 Team 删除或克隆绕过。
 
-创建本项目员工用 `agents card create --title NAME --engine codex --json`。普通 Manager 省略 group 时使用自己的 Team；创建成功会自动建立有效箭头。随后使用真实员工 ID 调用 `session send --employee ID --text TEXT`、`session transcript --employee ID`、`session interrupt --employee ID`。引擎内置子 Agent 不能替代公司员工。
+管理职位必须在 Core 所在主机本地运行与工作，所属 Team 可任意。在 Cloud Team 创建管理职位需 `--work-environment local`。不需要绑定 Agents-Managers 文件夹，加入旧管理 Team 不会继承权限。
 
-同 Team 的已有 Employee 需要申请关系并等待批准。普通 Manager 只能管理有效关系目标，删除额外要求是自己创建的员工。全局 API 仅用于明确获得全局授权的 Agents Manager。用户授予全局权限使用 `agents management global ID on`。
+公司员工通过 `agents card create` 登记。Employee / Manager / Governor 都完成简短隐藏初始化，待 ready 后再派发任务；不执行文档示例或预加载全部 API。使用真实员工 ID 调用 `session.*` / `schedule.*`；引擎内置子 Agent 不替代公司员工。
 
-Team 可改名且目录不变；员工名称不可改。所有业务修改通过 CLI，不直接修改宿主状态文件。返回 `{ok:true,data}` 表示调用成功，发送消息的成功只表示被接受，完成状态应继续通过项目 API 确认。
+Team 与员工可改显示名，既有目录与归属保持固定。所有公司管理操作走 CLI，不直接修改宿主 JSON。返回发送成功只表示请求已接受，完成状态需继续查询。
+
+按操作系统建队先使用 `host list --summary --json`，按 os / distribution 选择已登记主机。云端使用 `group add NAME --mode cloud --host-id ID --directory-mode default`；Team/View 名称不代表操作系统。用 topology 的团队绑定和员工 workspace 字段核验；Cloud Team 中 Manager 用 local，招的 Employee 继承 team。完整步骤见下文“Governor: four actual operating-system teams”。

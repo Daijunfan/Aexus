@@ -8,6 +8,7 @@ const initializer = new AsyncLocalStorage<string>()
 export const withInitializer = <T>(id:string,work:()=>T) => initializer.run(id,work)
 export const isInitializer = (id:string) => initializer.getStore() === id
 export const pendingInitialization = ():EmployeeInitialization => ({status:'pending',attemptId:randomUUID(),createdAt:Date.now()})
+export const readyInitialization = ():EmployeeInitialization => {const now=Date.now();return {status:'ready',attemptId:randomUUID(),createdAt:now,finishedAt:now}}
 export class EmployeeInitializationError extends Error {
   readonly code:string
   constructor(failed=false){

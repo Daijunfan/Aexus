@@ -7,7 +7,10 @@ import shlex
 import sys
 import subprocess
 import zlib
+from pathlib import Path
 
+# Embedded Python / isolated mode does not add the script directory to sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import transport
 
 
@@ -57,7 +60,7 @@ if projects.is_dir():
   if children.is_dir() and not children.is_symlink(): shutil.rmtree(children);count+=1
   index=project/'sessions-index.json'
   if index.is_file() and not index.is_symlink():
-   value=json.loads(index.read_text())
+   value=json.loads(index.read_text(encoding='utf-8'))
    entries=value.get('entries')
    if isinstance(entries,list):
     kept=[entry for entry in entries if entry.get('sessionId')!=session]
@@ -66,14 +69,14 @@ if projects.is_dir():
      temp.write_text(json.dumps(value,indent=2)+'\\n');os.replace(temp,index);count+=1
 history=root/'history.jsonl'
 if history.is_file() and not history.is_symlink():
- lines=history.read_text().splitlines(keepends=True)
+ lines=history.read_text(encoding='utf-8').splitlines(keepends=True)
  def keep(line):
   try:return json.loads(line).get('sessionId')!=session
   except ValueError:return True
  remaining=[line for line in lines if keep(line)]
  if len(remaining)!=len(lines):
   temp=history.with_name(history.name+'.agents-company-tmp')
-  temp.write_text(''.join(remaining));os.replace(temp,history);count+=1
+  temp.write_text(''.join(remaining),encoding='utf-8');os.replace(temp,history);count+=1
 print(json.dumps({'deleted':count}))
 """
 
@@ -87,7 +90,7 @@ if len(files)!=1 or files[0].is_symlink(): raise FileNotFoundError('Claude sessi
 file=files[0]
 if file.stat().st_size>4000000: raise ValueError('Claude session exceeds 4 MB history limit')
 cwd=None;items=[]
-for line in file.read_text().splitlines():
+for line in file.read_text(encoding='utf-8').splitlines():
  try: event=json.loads(line)
  except ValueError: continue
  cwd=cwd or event.get('cwd')

@@ -1,13 +1,21 @@
+import type {MessageAttachment} from './message-attachments'
+import type {MessageQuote} from './message-quotes'
 import type {ManagementRole,ManagementAccess,PrincipalRef,CurrentTask,Delegation} from './management'
 // Plain data shared by the GUI and the CLI. Nothing here may import Electron,
 // React, or any browser API — the CLI runs it in plain Node.
 
-export type Engine = 'claude' | 'codex'
+export type Engine = import('./engines').EngineId
 export type EmployeeKind = 'worker' | 'cloud-native-worker'
+export type WorkEnvironment = 'team' | 'local'
 export type NativeOrigin = {kind:'cloud';hostId:string;host:string;os:'linux'|'macos'|'windows';directory:string}
 export type NativeSession = {engine:Engine;id:string;profile?:string;origin?:NativeOrigin;ownership?:'external'}
 export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; hostId?:string; directory?:string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind' }
 export const teamSettings = (store: Pick<Store,'teamSettings'>, name: string): TeamSettings => store.teamSettings?.[name] ?? {mode:'build'}
+/** Team is organizational membership; a local workspace may coexist with cloud teammates. */
+export function employeeSettings(store:Pick<Store,'teamSettings'>,card:{group:string;workEnvironment?:WorkEnvironment}):TeamSettings {
+  const config=teamSettings(store,card.group)
+  return config.mode==='cloud'&&card.workEnvironment==='local'?{mode:'build'}:config
+}
 import type { Accessory, AvatarKind, RoomDesign } from './office'
 import type { Point, RoomBounds, Viewport } from './canvas'
 
@@ -55,12 +63,16 @@ export const EFFORT_LEVELS: { value: EffortLevel; label: string }[] = [
 ]
 
 export const ENGINES: { value: Engine; label: string; hint: string }[] = [
-  { value: 'claude', label: 'Claude Code', hint: 'Anthropic Claude via the Agent SDK' },
-  { value: 'codex', label: 'Codex', hint: 'OpenAI Codex CLI' }
+  { value: 'claude', label: 'Claude Agent', hint: 'Anthropic Claude via the Agent SDK' },
+  { value: 'codex', label: 'Codex', hint: 'OpenAI Codex CLI' },
+  { value: 'cline', label: 'Cline', hint: 'Cline ACP · DeepSeek Flash' },
+  { value: 'pi', label: 'Pi', hint: 'Pi RPC · DeepSeek Flash' }
 ]
 
 /** Undefined on legacy employees: do not run paid onboarding when upgrading. */
 export type EmployeeInitialization = {
+  /** Core evidence: this native ID contains only the fresh hidden initialization. */
+  nativeBindId?:string
   status: 'pending' | 'running' | 'ready' | 'failed'
   attemptId: string
   createdAt: number
@@ -88,12 +100,23 @@ export type StoredSession = {
   id: string
   engine: Engine
   kind?: EmployeeKind
+  /** Default inherits Team; local keeps a Mac workspace inside a cloud Team. */
+  workEnvironment?: WorkEnvironment
+  /** Host-generated local root, preserved when a cloud Team is renamed. */
+  localWorkspaceRoot?: string
   title: string
   group: string
   cwd: string
+  /** Directory choice at creation; changing it later does not rebind the workspace. */
+  directoryMode?: 'default'|'bind'
   /** Read-only API projection from Team; persisted only in legacy 0.12 records. */
   remote?: import('./remote').RemoteTarget | null
   clonedFrom?: string
+  clineSessionId?: string
+  clineConfigRoot?:string
+  piSessionId?: string
+  piSessionFile?:string
+  piConfigRoot?:string
   claudeSessionId?: string
   threadId?: string
   nativeSessions?: NativeSession[]
@@ -108,7 +131,7 @@ export type StoredSession = {
   model?: string
   planMode?: boolean
   usage?: Record<string,unknown>
-  pendingMessages?: {id:string;text:string;images?:string[];delegation?:Delegation}[]
+  pendingMessages?: {id:string;text:string;images?:string[];files?:string[];delegation?:Delegation;viewId?:string}[]
   remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
@@ -120,6 +143,7 @@ export type StoredSession = {
   seat?: string
   avatar?: AvatarKind
   accessory?: Accessory
+  /** Legacy storage name for the profession/duties description, never an avatar or authority. */
   role?: string
   color?: string
   position?: Point
@@ -144,7 +168,11 @@ export type TeamView={id:string;name:string;teams:string[];viewport?:Viewport}
 
 export type Store = {
   revision?:number
+  fullAccessDefaultApplied?:boolean
+  connectorAnchors?:import('./connector').ConnectorSettings
   access?:ManagementAccess
+  lastEmployeeTemplate?:Partial<StoredSession>
+  lastTeamTemplate?:{settings:TeamSettings;design?:Partial<RoomDesign>;bounds?:RoomBounds}
 
   sessions: StoredSession[]
   groups: string[]
@@ -174,15 +202,20 @@ export type Block =
       elapsed?: number
     }
 
+/** A bounded public excerpt resolved by Core inside the same conversation. */
+export type MessageReply={id:string;role:'user'|'assistant';author?:PrincipalRef;text:string;images?:string[];files?:MessageAttachment[];truncated?:boolean;quote?:MessageQuote;conversation?:string;conversationTitle?:string;authorName?:string;omittedImages?:number;omittedFiles?:number}
+/** Outgoing evidence belongs to this task; incoming employee reply receipts are separate. */
+export type OutboundReceipt={taskId:string;deliveredAt?:number;readAt?:number}
 export type Item =
-  | { role: 'user'; id: string; text: string; images?:string[] }
-  | { role: 'assistant'; id: string; blocks: Block[] }
-  | { role: 'notice'; id: string; text: string; tone: 'info' | 'error' }
+  | { role: 'user'; id: string; createdAt?:number; author?:PrincipalRef; outbound?:OutboundReceipt; text: string; images?:string[];files?:MessageAttachment[];reply?:MessageReply }
+  | { role: 'assistant'; id: string; createdAt?:number; blocks: Block[] }
+  | { role: 'notice'; id: string; createdAt?:number; text: string; tone: 'info' | 'error' }
 
 export type ActivityPreview={unread?:boolean;replyId?:string;kind:'speech'|'thinking'|'tool';text:string;detail?:string;tool?:string;running?:boolean}
 
 /** A live session: everything the GUI needs to render one conversation. */
 export type Session = {
+  acknowledging?:boolean
   lastReply?:EmployeeReply
   initialization?: EmployeeInitialization
   currentTask?:CurrentTask
@@ -191,6 +224,11 @@ export type Session = {
   /** The stored card this session represents (equals id for a new session). */
   cardId?: string
   engine: Engine
+  clineSessionId?: string
+  clineConfigRoot?:string
+  piSessionId?: string
+  piSessionFile?:string
+  piConfigRoot?:string
   claudeSessionId?: string
   threadId?: string
   title: string
@@ -205,9 +243,10 @@ export type Session = {
   permissionMode: PermissionMode
   thinking: boolean
   thinkingSupported: boolean
+  thinkingManaged?: boolean
   planMode?: boolean
   usage?: Record<string,unknown>
-  pendingMessages?: {id:string;text:string;images?:string[]}[]
+  pendingMessages?: {id:string;text:string;images?:string[];files?:string[];viewId?:string;replyTo?:string;replyQuote?:MessageQuote;crossReply?:MessageReply}[]
   remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
@@ -235,9 +274,10 @@ export type SessionMeta = {
   permissionMode: PermissionMode
   thinking: boolean
   thinkingSupported: boolean
+  thinkingManaged?: boolean
   planMode?: boolean
   usage?: Record<string,unknown>
-  pendingMessages?: {id:string;text:string;images?:string[]}[]
+  pendingMessages?: {id:string;text:string;images?:string[];files?:string[];viewId?:string;replyTo?:string;replyQuote?:MessageQuote;crossReply?:MessageReply}[]
   remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
@@ -277,9 +317,17 @@ export function groupSessions(
   return departments
 }
 
+/** Empty native employees may bind an existing history; completed fresh onboarding is also empty. */
+export function canBindNativeSession(card:StoredSession){
+  const current=card.threadId??card.claudeSessionId
+  return card.kind==='cloud-native-worker'&&employeeReady(card)&&card.nativeOwnership!=='external'&&(!current||!card.clonedFrom&&card.initialization?.status==='ready'&&card.initialization.nativeBindId===current)
+}
+
 /** Old native IDs survive workspace/context changes until the employee is removed. */
 export function nativeSessionRefs(card:StoredSession):NativeSession[] {
   const refs=[...(card.nativeSessions??[])]
+  if(card.clineSessionId)refs.push({engine:'cline',id:card.clineSessionId,profile:card.clineConfigRoot})
+  if(card.piSessionId)refs.push({engine:'pi',id:card.piSessionId,profile:card.piConfigRoot})
   if(card.threadId)refs.push({engine:'codex',id:card.threadId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   return refs.filter((ref,i)=>refs.findIndex(other=>other.engine===ref.engine&&other.id===ref.id&&other.ownership===ref.ownership&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))===i)

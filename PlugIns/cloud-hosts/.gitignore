@@ -1,0 +1,4 @@
+node_modules/
+dist-plugin/
+workspaces/
+.DS_Store

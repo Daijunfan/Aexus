@@ -1,7 +1,10 @@
+import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../i18n'
 import { useId } from 'react'
 import type { RoomDesign } from '../../../shared/office'
 
 export function Plant({ variant = 'monstera', className = '' }: { variant?: 'monstera' | 'fern'; className?: string }) {
+
+
   const id = useId().replace(/:/g, '')
   return <svg className={`plant ${className}`} viewBox="0 0 95 150" aria-hidden="true" data-component="plant">
     <defs><linearGradient id={`${id}-leaf`} x2="1" y2="1"><stop stopColor="#779b76" /><stop offset=".5" stopColor="#416c57" /><stop offset="1" stopColor="#193d35" /></linearGradient><linearGradient id={`${id}-pot`}><stop stopColor="#464e55" /><stop offset=".45" stopColor="#838c87" /><stop offset="1" stopColor="#424c50" /></linearGradient></defs>
@@ -12,6 +15,8 @@ export function Plant({ variant = 'monstera', className = '' }: { variant?: 'mon
 }
 
 export function Bookshelf() {
+
+
   return <svg className="bookshelf" viewBox="0 0 140 130" aria-hidden="true" data-component="shelf">
     <path d="M7 5 L137 5 L137 125 L7 125 Z" fill="#3d3938" stroke="#847769" strokeWidth="4" /><path d="M11 9 H131 V121 H11 Z" fill="#292f32" />
     <g stroke="#73665a" strokeWidth="6"><path d="M8 48 H136 M8 88 H136" /></g>
@@ -25,6 +30,8 @@ export function Bookshelf() {
 }
 
 export function WindowWall({ wall }: { wall: RoomDesign['wall'] }) {
+
+
   const id = useId().replace(/:/g, '')
   return <div className={`room-wall wall-${wall}`} data-component="wall">
     {wall === 'windows' && <div className="window-panes"><div className="skyline" aria-hidden="true">{[45,68,36,87,50,73,42,58,32,63].map((h,i) => <i key={i} style={{ height: `${h}%`, left: `${i*11-4}%`, width: `${i%2 ? 9 : 13}%` }} />)}</div><div className="window-frame" /><div className="window-glint" /></div>}
@@ -34,14 +41,20 @@ export function WindowWall({ wall }: { wall: RoomDesign['wall'] }) {
 }
 
 export function Pendant() {
+
+
   return <svg className="pendant" viewBox="0 0 90 90" aria-hidden="true" data-component="lamp"><path d="M45 0 V31" stroke="#c3b9a0" strokeWidth="1.5" /><path d="M45 24 Q24 27 17 49 Q45 61 74 49 Q66 27 45 24" fill="#47514f" stroke="#929786" /><ellipse cx="45" cy="50" rx="27" ry="5" fill="#ffdaa0" /><path d="M39 30 Q26 33 23 43" stroke="#c0c4a1" fill="none" opacity=".4" /></svg>
 }
 
 export function Poster({ theme }: { theme: string }) {
-  return <div className={`room-poster poster-${theme}`} aria-hidden="true" data-component="art"><div className="poster-orbit" /><span>MAKE<br />GOOD<br /><em>things.</em></span><small>A LITTLE EVERY DAY</small></div>
+  useI18n()
+
+  return <div className={`room-poster poster-${theme}`} aria-hidden="true" data-component="art"><div className="poster-orbit" /><span>{uiText("MAKE")}<br />{uiText("GOOD")}<br /><em>{uiText("things.")}</em></span><small>{uiText("A LITTLE EVERY DAY")}</small></div>
 }
 
 export function Laptop({ working }: { working: boolean }) {
+
+
   return <svg className={`laptop ${working ? 'screen-on' : ''}`} viewBox="0 0 120 85" aria-hidden="true" data-component="computer">
     <path d="M19 8 Q19 4 23 4 H101 Q105 4 105 8 L97 65 H26 Z" fill="#233543" stroke="#83949d" strokeWidth="1.5" /><path d="M24 10 H100 L93 58 H30 Z" fill={working ? '#152d33' : '#263441'} />
     {working ? <g className="screen-code" strokeWidth="2.3" strokeLinecap="round"><path d="M32 20 H47 M36 27 H66 M36 34 H58 M32 42 H45" stroke="#8ac7a4" /><path d="M52 20 H70 M70 27 H86 M63 34 H81 M50 42 H72 M34 49 H53" stroke="#d6b78e" /></g> : <g opacity=".5"><circle cx="62" cy="32" r="11" fill="none" stroke="#9da6ac" /><path d="M69 26 Q58 22 57 32 Q56 40 67 41 Q56 47 50 36 Q44 24 57 20" fill="#a9b8b8" transform="translate(5 0)" /></g>}
@@ -50,6 +63,8 @@ export function Laptop({ working }: { working: boolean }) {
 }
 
 export function Desk({ material = 'walnut' }: { material?: RoomDesign['desk'] }) {
+
+
   const wood = material === 'oak' ? '#bb9270' : material === 'cloud' ? '#adb6ae' : '#826251'
   return <svg className="desk-furniture" viewBox="0 0 230 96" aria-hidden="true" data-component="desk">
     <ellipse cx="115" cy="84" rx="103" ry="9" fill="#122124" opacity=".22" />
@@ -61,14 +76,18 @@ export function Desk({ material = 'walnut' }: { material?: RoomDesign['desk'] })
 }
 
 export function Mug() {
+
+
   return <svg className="desk-mug" viewBox="0 0 42 58" aria-hidden="true" data-component="mug"><path className="coffee-steam" d="M17 24 Q9 14 19 5 M27 23 Q19 14 28 7" fill="none" stroke="#e0d6bc" strokeWidth="1.5" opacity=".3" /><path d="M30 31 Q45 28 40 42 Q36 48 29 44" fill="none" stroke="#aaa793" strokeWidth="4" /><path d="M9 29 H32 V49 Q21 58 9 49 Z" fill="#c3bda1" /><ellipse cx="20" cy="30" rx="11" ry="4" fill="#62675d" /><ellipse cx="20" cy="30" rx="8" ry="2" fill="#53473d" /><path d="M13 36 V48" stroke="#eee3b6" strokeOpacity=".5" strokeWidth="2" /></svg>
 }
 
 export function Lounge() {
+  useI18n()
+
   return <div className="office-lounge" aria-hidden="true" data-component="lounge">
     <Plant className="lounge-plant" />
     <svg className="lounge-sofa" viewBox="0 0 400 155" data-component="sofa"><ellipse cx="202" cy="140" rx="174" ry="12" fill="#152326" opacity=".3" /><path d="M53 117 L48 141 M338 117 L345 141" stroke="#6b5142" strokeWidth="10" /><rect x="47" y="23" width="297" height="89" rx="25" fill="#52726a" /><rect x="48" y="29" width="295" height="75" rx="24" fill="#648479" /><path d="M147 30 V105 M247 30 V105" stroke="#42665e" strokeWidth="2" /><rect x="42" y="88" width="310" height="44" rx="16" fill="#314f48" /><path d="M55 90 Q103 80 147 91 V112 H55 Z M150 91 Q201 80 246 91 V112 H150 Z M249 91 Q300 80 346 91 V112 H249 Z" fill="#668475" /><rect x="30" y="65" width="36" height="69" rx="15" fill="#52756a" /><rect x="334" y="65" width="36" height="69" rx="15" fill="#52756a" /><path d="M79 55 L117 42 L132 80 L91 88 Z" fill="#c1a87b" /><path d="M273 47 L313 53 L306 88 L268 82 Z" fill="#ac927c" /><path d="M187 51 Q215 40 226 60 L219 92 L183 91 Z" fill="#869b8b" /></svg>
-    <div className="lounge-message"><span>ROOM TO THINK.</span><p>Small agents.<br /><em>Big possibilities.</em></p><small>让每一个好想法，都有一起实现的伙伴。</small></div>
+    <div className="lounge-message"><span>{uiText("ROOM TO THINK.")}</span><p>{uiText("Small agents.")}<br /><em>{uiText("Big possibilities.")}</em></p><small>{uiText("Give every good idea a companion to make it happen.")}</small></div>
     <svg className="lounge-table" viewBox="0 0 200 120" data-component="table"><path d="M42 66 L36 111 M159 66 L166 111" stroke="#484742" strokeWidth="9" /><ellipse cx="100" cy="66" rx="95" ry="29" fill="#55463d" /><ellipse cx="100" cy="59" rx="95" ry="26" fill="#9c7b5e" /><path d="M71 53 L105 48 L125 57 L89 66 Z" fill="#c5b18f" /><path d="M72 50 L107 45 L124 54 L89 63 Z" fill="#617e77" /><rect x="141" y="36" width="13" height="23" rx="4" fill="#bbba9f" /><ellipse cx="148" cy="36" rx="7" ry="3" fill="#596556" /><path d="M148 35 V20 M148 27 Q130 17 138 11 M148 24 Q164 12 164 24" fill="#608166" stroke="#608166" strokeWidth="2" /></svg>
   </div>
 }

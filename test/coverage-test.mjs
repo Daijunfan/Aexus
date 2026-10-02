@@ -50,7 +50,7 @@ const renderer = rendererFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
 
 // ---- what the terminal exposes ----
 
-const server = readFileSync(join(ROOT, 'src', 'main', 'server.ts'), 'utf8')
+const server = ['server.ts','channels.ts'].map(file=>readFileSync(join(ROOT,'src','main',file),'utf8')).join('\n')
 const cli = readFileSync(join(ROOT, 'bin', 'agents'), 'utf8')
 const protocol = readFileSync(join(ROOT, 'src', 'shared', 'api-registry.ts'), 'utf8')
 
@@ -62,7 +62,8 @@ const serverCommands = new Set([
 const cliCommands = new Set(
   [...cli.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
 )
-const declared = new Set([...protocol.matchAll(/name: '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]))
+const {COMMANDS}=await import('../src/shared/api-registry.ts')
+const declared=new Set(COMMANDS.map(command=>command.name))
 const managerGuide=readFileSync(join(ROOT,'docs','managers','API.md'),'utf8')
 
 console.log('CLI / GUI coverage — static check\n')
@@ -151,7 +152,8 @@ for (const [label, command] of OBSERVE) {
 
 console.log('\n-- both engines are reachable --')
 const sessions = readFileSync(join(ROOT, 'src', 'main', 'sessions.ts'), 'utf8')
-ok(/=== 'codex'/.test(sessions) && /engine === 'claude'/.test(sessions), 'both engines are branched on')
+const adapters=readFileSync(join(ROOT,'src/main/engines/runtime.ts'),'utf8')
+ok(/codex:openCodex/.test(adapters)&&/claude:openClaude/.test(adapters)&&/openEngine\(/.test(sessions),'both engines use registered runtime adapters')
 ok(
   declared.size >= serverCommands.size,
   'the registry covers the command surface',

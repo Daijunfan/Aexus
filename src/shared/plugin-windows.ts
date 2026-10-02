@@ -1,5 +1,6 @@
 export type WindowBounds = {x:number;y:number;width:number;height:number}
 export type PluginWindowState = {
+  clientId?:string
   id:string
   plugin:string
   name:string

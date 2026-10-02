@@ -1,0 +1,83 @@
+"use strict";
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),{randomUUID}=require('node:crypto');
+const {setup,pdfFixture}=require('./fixtures.cjs');
+async function fixture(t){
+ const f=await setup(t),make=title=>f.api('study.create',{title}),get=id=>f.api('study.get',{setId:id});
+ const change=async(id,method,p={})=>{const s=await get(id);return f.api(method,{setId:id,expectedRevision:s.revision,...p});};
+ const a=await make('A'),b=await make('B'),c=await make('C');
+ const x=(await change(a.id,'study.note.create',{title:'Root',text:'Original text'})).cards[0].id;
+ const y=(await change(a.id,'study.note.create',{title:'Child',text:'Child body',parentId:x})).cards.at(-1).id;
+ const z=(await change(a.id,'study.note.create',{title:'Unmoved'})).cards.at(-1).id;
+ const dest=(await change(b.id,'study.note.create',{title:'Destination'})).cards[0].id;
+ let other=await change(c.id,'study.card.reference',{targetSetId:a.id,targetCardId:y});const ref=other.cards[0].id;
+ await change(a.id,'study.link.add',{from:x,to:z,bidirectional:false,label:'Leaving branch'});
+ await change(a.id,'study.link.add',{from:z,to:y,bidirectional:false,label:'Entering branch'});
+ await change(c.id,'study.link.add',{from:ref,to:x,toSetId:a.id,bidirectional:false,label:'External'});
+ const oldUri=(await f.api('link.create',{kind:'card',setId:a.id,id:x})).uri;
+ await change(c.id,'study.comment.add',{cardId:ref,text:`Old bookmark ${oldUri}`});
+ return {...f,a,b,c,x,y,z,dest,ref,oldUri,get,change};
+}
+test('cut does not remove anything until paste; stable IDs, old URLs and incoming/outgoing links survive a cross-study move',async t=>{
+ const f=await fixture(t);let a=await f.get(f.a.id),b=await f.get(f.b.id);
+ const {clipboard}=await f.api('study.clipboard.set',{setId:a.id,expectedRevision:a.revision,cardIds:[f.x,f.y],mode:'cut'});
+ assert.equal((await f.get(a.id)).cards.length,3);assert((await f.api('study.clipboard.get')).valid);
+ const result=await f.api('study.clipboard.paste',{setId:b.id,expectedRevision:b.revision,clipboardId:clipboard.id,parentId:f.dest});
+ assert.deepEqual(new Set(result.cardIds),new Set([f.x,f.y]));assert.equal((await f.get(a.id)).cards.length,1);
+ b=await f.get(b.id);assert.equal(b.cards.find(c=>c.id===f.x).parentId,f.dest);assert.equal(b.cards.find(c=>c.id===f.y).parentId,f.x);
+ assert.equal((await f.api('link.resolve',{uri:f.oldUri})).setId,b.id);
+ assert.equal((await f.get(f.c.id)).cards.find(c=>c.id===f.ref).reference.setId,b.id);
+ const leaving=b.links.find(l=>l.from===f.x);assert.equal(leaving.toSetId,a.id);assert.equal(leaving.to,f.z);
+ const entering=(await f.get(a.id)).links.find(l=>l.to===f.y);assert.equal(entering.toSetId,b.id);
+ assert((await f.api('study.card.backlinks',{setId:b.id,cardId:f.x})).backlinks.some(v=>v.cardId===f.ref&&v.reasons.includes('inline')));
+ assert.equal((await f.api('study.clipboard.get')).clipboard,null);
+});
+test('linked undo/redo restores all affected studies and rejects newer edits in another owner without partial rollback',async t=>{
+ const f=await fixture(t),a=await f.get(f.a.id),b=await f.get(f.b.id);
+ const {clipboard}=await f.api('study.clipboard.set',{setId:a.id,expectedRevision:a.revision,cardIds:[f.x],mode:'cut'});
+ await f.api('study.clipboard.paste',{setId:b.id,expectedRevision:b.revision,clipboardId:clipboard.id,parentId:f.dest});
+ await f.change(f.c.id,'study.card.update',{cardId:f.ref,note:'Newer work'});
+ const file=path.join(f.workspace,'.margin-reader/state.json'),before=await fs.readFile(file);
+ await f.error('study.undo',{setId:b.id,expectedRevision:(await f.get(b.id)).revision},'CONFLICT');assert.deepEqual(await fs.readFile(file),before);
+ await f.change(f.c.id,'study.undo');await f.change(b.id,'study.undo');
+ assert((await f.get(a.id)).cards.some(c=>c.id===f.x));assert(!(await f.get(b.id)).cards.some(c=>c.id===f.x));assert.equal((await f.get(f.c.id)).cards[0].reference.setId,a.id);
+ assert.equal((await f.api('link.resolve',{uri:f.oldUri})).setId,a.id);
+ await f.change(b.id,'study.redo');assert(!(await f.get(a.id)).cards.some(c=>c.id===f.x));assert((await f.get(b.id)).cards.some(c=>c.id===f.x));assert.equal((await f.api('link.resolve',{uri:f.oldUri})).setId,b.id);
+});
+test('stale source receipts and cycle moves leave originals intact; clone and reference copies have distinct semantics',async t=>{
+ const f=await fixture(t);let a=await f.get(f.a.id),b=await f.get(f.b.id);
+ let {clipboard}=await f.api('study.clipboard.set',{setId:a.id,expectedRevision:a.revision,cardIds:[f.x],mode:'cut'});
+ await f.error('study.clipboard.paste',{setId:a.id,expectedRevision:a.revision,clipboardId:clipboard.id,parentId:f.y},'INVALID_OUTLINE');
+ await f.change(a.id,'study.card.update',{cardId:f.x,text:'New source'});
+ await f.error('study.clipboard.paste',{setId:b.id,expectedRevision:b.revision,clipboardId:clipboard.id},'CONFLICT');assert((await f.get(a.id)).cards.some(c=>c.id===f.x));
+ a=await f.get(a.id);({clipboard}=await f.api('study.clipboard.set',{setId:a.id,expectedRevision:a.revision,cardIds:[f.x,f.y],mode:'clone',descendants:false}));
+ const clone=await f.api('study.clipboard.paste',{setId:b.id,expectedRevision:b.revision,clipboardId:clipboard.id});assert.equal(clone.cardIds.length,2);assert(!clone.cardIds.includes(f.x));
+ a=await f.get(a.id);b=await f.get(b.id);({clipboard}=await f.api('study.clipboard.set',{setId:a.id,expectedRevision:a.revision,cardIds:[f.x],mode:'reference',descendants:false}));
+ const mirror=await f.api('study.clipboard.paste',{setId:b.id,expectedRevision:b.revision,clipboardId:clipboard.id});
+ await f.change(a.id,'study.card.update',{cardId:f.x,text:'Mirrored update'});
+ b=await f.get(b.id);assert.equal(b.cards.find(c=>c.id===mirror.rootIds[0]).text,'Mirrored update');assert.equal(b.cards.find(c=>c.id===clone.rootIds[0]).text,'New source');
+ await f.api('study.clipboard.clear',{clipboardId:clipboard.id});assert.equal((await f.api('study.clipboard.get')).valid,false);
+});
+test('adjacent insertion and multi-branch moves preserve outline order, reject cycles and remain undoable',async t=>{
+ const f=await fixture(t);let a=await f.change(f.a.id,'study.card.insert',{cardId:f.x,relation:'before',title:'Before'});const before=a.lastInsertedCard;
+ a=await f.change(a.id,'study.card.insert',{cardId:f.x,relation:'after',title:'After'});const after=a.lastInsertedCard;
+ assert.deepEqual(a.cards.filter(c=>!c.parentId).map(c=>c.id),[before,f.x,after,f.z]);
+ a=await f.change(a.id,'study.card.insert',{cardId:f.x,relation:'parent',title:'Parent'});const parent=a.lastInsertedCard;
+ assert.equal(a.cards.find(c=>c.id===f.x).parentId,parent);
+ a=await f.change(a.id,'study.cards.move',{cardIds:[before,after],parentId:parent,index:0});assert.deepEqual(a.cards.filter(c=>c.parentId===parent).map(c=>c.id),[before,after,f.x]);
+ await f.error('study.cards.move',{setId:a.id,expectedRevision:a.revision,cardIds:[parent,f.x],parentId:f.y},'INVALID_OUTLINE');
+ a=await f.change(a.id,'study.undo');assert.equal(a.cards.find(c=>c.id===before).parentId,null);
+});
+test('cross-study cut copies immutable snapshots and layers; an old named version cannot duplicate moved identities',async t=>{
+ const f=await fixture(t);await fs.writeFile(path.join(f.workspace,'book.pdf'),pdfFixture());
+ let a=await f.change(f.a.id,'study.documents.add',{paths:['book.pdf']});const doc=await f.api('document.open',{path:'book.pdf',activate:false});
+ const r=await f.api('study.card.create',{setId:a.id,expectedRevision:a.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),text:'',color:'blue',locator:{page:1},selection:{rects:[{page:1,x:.1,y:.1,width:.5,height:.2}]}});
+ a=await f.change(a.id,'study.layer.create',{title:'Copied ink layer'});const layerId=a.activeLayer;
+ a=await f.change(a.id,'study.card.ink.add',{cardId:r.card.id,points:[[.2,.2],[.6,.6]],color:'blue',width:.01,layerId});
+ a=await f.change(a.id,'study.versions.create',{title:'Before move'});const versionId=a.lastVersionId;
+ const image=(await f.api('study.card.image',{setId:a.id,cardId:r.card.id})).contentBase64;
+ const {clipboard}=await f.api('study.clipboard.set',{setId:a.id,expectedRevision:a.revision,cardIds:[r.card.id],mode:'cut'});
+ const b=await f.get(f.b.id);await f.api('study.clipboard.paste',{setId:b.id,expectedRevision:b.revision,clipboardId:clipboard.id});
+ assert.equal((await f.api('study.card.image',{setId:b.id,cardId:r.card.id})).contentBase64,image);assert((await f.get(b.id)).layers.some(l=>l.id===layerId));
+ await f.error('study.versions.restore',{setId:a.id,expectedRevision:(await f.get(a.id)).revision,versionId},'CONFLICT');
+ await f.change(b.id,'study.undo');assert.equal((await f.api('study.card.image',{setId:a.id,cardId:r.card.id})).contentBase64,image);
+});

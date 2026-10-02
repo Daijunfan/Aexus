@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Margin Reader</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./vendor/pdf_viewer.css">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./pdf-reader.css">
+  <link rel="stylesheet" href="./library.css">
+  <link rel="stylesheet" href="./study.css">
+  <link rel="stylesheet" href="./advanced.css">
+  <link rel="stylesheet" href="./organize.css">
+  <link rel="stylesheet" href="./content.css">
+  <link rel="stylesheet" href="./ink-toolbar.css">
+  <link rel="stylesheet" href="./ink-rulers.css">
+  <link rel="stylesheet" href="./vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="./visual-polish.css">
+  <link rel="stylesheet" href="./interaction-polish.css">
+  <link rel="stylesheet" href="./book-library.css">
+  <link rel="stylesheet" href="./mindmap-studio.css">
+  <link rel="stylesheet" href="./mindmap-more.css">
+</head>
+<body>
+  <header class="app-bar">
+    <button class="brand" id="home" title="返回文库"><img src="./icon.svg" alt=""><span>Margin Reader<small>你的本地阅读空间</small></span></button>
+    <div class="top-actions">
+      <button id="new-folder" title="新建文件夹"><span data-icon="folder-plus"></span><span>新建文件夹</span></button>
+      <button id="import-url"><span data-icon="link"></span><span>保存网页</span></button>
+      <button class="primary" id="import-files"><span data-icon="upload"></span><span>导入文档</span></button>
+      <button class="icon-button" id="theme" title="切换主题" aria-label="切换主题"><span data-icon="sun"></span></button>
+    </div>
+  </header>
+  <div class="workspace" id="workspace">
+    <aside class="explorer" aria-label="文件资源管理器">
+      <div class="pane-heading"><span>文档</span><button class="icon-button" id="refresh-files" title="刷新文件树" aria-label="刷新文件树"><span data-icon="refresh"></span></button></div>
+      <button class="root-row" id="library-root"><span data-icon="library"></span><span>我的文库</span></button>
+      <div id="file-tree" class="file-tree" role="tree" aria-label="文库文件树"></div>
+      <div class="explorer-footer"><button id="open-trash"><span data-icon="trash"></span>回收站</button><span class="local-label"><i></i>本地文库</span></div>
+    </aside>
+    <div class="divider" id="explorer-divider" role="separator" tabindex="0" aria-label="调整文件树宽度" aria-orientation="vertical"></div>
+    <main class="main-pane">
+      <section id="library-view" class="library-view">
+        <div class="library-top"><div><nav id="breadcrumbs" class="breadcrumbs" aria-label="文件路径"></nav><h1 id="folder-title">我的文库</h1><p id="folder-count" class="muted">正在读取文库…</p></div><div class="view-switch" aria-label="文件视图"><button id="grid-view" class="icon-button" aria-label="大文件夹视图" title="大文件夹视图"><span data-icon="grid"></span></button><button id="list-view" class="icon-button" aria-label="列表视图" title="列表视图"><span data-icon="list"></span></button></div></div>
+        <div class="library-controls"><div class="library-search" role="search" aria-label="搜索文库"><span data-icon="search"></span><input id="file-filter" type="search" placeholder="搜索文库文件与文件夹…" aria-label="搜索文库文件与文件夹" aria-controls="files" autocomplete="off"><button id="clear-file-filter" type="button" class="icon-button" title="清除搜索" aria-label="清除文件搜索" hidden>×</button><kbd>⌘ F</kbd></div></div>
+        <div id="library-no-matches" class="library-no-matches" role="status" hidden><span data-icon="search"></span><h2>没有匹配的文件或文件夹</h2><p>试试文件名或路径中的其他关键词。</p><button id="reset-file-filter" type="button">清除搜索</button></div>
+        <div class="selection-bar" id="selection-bar"><span id="selected-name" class="muted" role="status" aria-live="polite">单击打开 · ⋯ 更多操作</span><div class="selection-controls"><div id="selection-tools" hidden><button id="select-all-files" type="button">全选</button></div><div id="selection-actions" hidden><button id="rename-file" type="button" hidden>重命名</button><button id="move-file" type="button">移动</button><button id="copy-file" type="button">复制</button><button id="trash-file" type="button" class="danger">移入回收站</button></div><button id="select-files" type="button" aria-pressed="false" aria-controls="files">选择</button></div></div>
+        <div id="files" class="files grid" aria-label="文件和文件夹"></div>
+        <div id="empty-library" class="empty-state" hidden><div class="empty-illustration"><span data-icon="book"></span></div><h2>把想读的，都放在这里</h2><p>拖入 PDF、Word、EPUB、MOBI 等文档，<br>或保存一篇网页，在自己的节奏里阅读。</p><button class="primary" id="empty-import">导入第一份文档</button><small>原始文件保留 · 目录可自由整理</small></div>
+      </section>
+      <section id="reader-view" class="reader-view" hidden>
+        <div class="document-heading"><button id="back-library" class="icon-button" title="返回文件夹" aria-label="返回文件夹"><span data-icon="arrow-left"></span></button><div><h1 id="document-title"></h1><span class="muted" id="document-path"></span></div><span id="format-label" class="format-label"></span></div>
+        <div class="reader-toolbar"><div class="pager"><button id="previous-page" class="icon-button" aria-label="上一页或章节"><span data-icon="chevron-left"></span></button><input id="page-number" type="number" min="1" value="1" aria-label="页码或章节序号"><span id="page-total">/ 1</span><button id="next-page" class="icon-button" aria-label="下一页或章节"><span data-icon="chevron-right"></span></button></div><div class="reader-tools"><button id="font-smaller" class="icon-button" aria-label="缩小阅读字号或页面">A−</button><button id="font-larger" class="icon-button" aria-label="放大阅读字号或页面">A＋</button><button id="toggle-outline" class="icon-button mobile-outline-toggle" aria-label="展开或收起目录" title="目录"><span data-icon="list"></span></button><button id="search-document" class="icon-button" aria-label="全文搜索" title="全文搜索 ⌘ F"><span data-icon="search"></span></button><button id="reopen-document" class="icon-button" aria-label="重新解析文档" title="重新解析文档"><span data-icon="refresh"></span></button><button id="export-document" class="icon-button" aria-label="导出文档" title="导出可读内容"><span data-icon="download"></span></button></div></div>
+        <div id="pdf-controls" class="pdf-controls" hidden>
+          <div class="pdf-mode-switch" role="group" aria-label="PDF 阅读模式"><button id="pdf-continuous" aria-pressed="true">连续滚动</button><button id="pdf-paged" aria-pressed="false">逐页翻页</button></div>
+          <label class="pdf-fit-label"><select id="pdf-fit" aria-label="PDF 页面适配"><option value="width">适合宽度</option><option value="page">适合整页</option></select></label>
+          <label class="pdf-turn-label" hidden><select id="pdf-turn-effect" aria-label="翻页动画"><option value="book">书页动画</option><option value="none">无动画</option></select></label>
+          <label class="pdf-speed-label" title="调整双指上下滑动的速度；横向滑动每次只翻一页">滚动 <input id="pdf-speed" type="range" min="0.25" max="4" step="0.25" value="1" aria-label="上下滚动速度"><output id="pdf-speed-value" for="pdf-speed">1×</output></label>
+          <button id="pdf-focus" aria-pressed="false" title="隐藏或显示两侧面板，扩大阅读区域">专注阅读</button>
+          <button id="pdf-reset-zoom" title="恢复适配比例" aria-label="恢复 PDF 适配比例">100%</button>
+        </div>
+        <div id="search-panel" class="search-panel" hidden><form id="search-form"><input id="search-query" placeholder="搜索整份文档…" aria-label="全文搜索词"><button class="primary" type="submit">搜索</button><button type="button" id="close-search" class="icon-button" aria-label="关闭搜索">×</button></form><div id="search-results" class="search-results"></div></div>
+        <div id="document-warning" class="document-warning" hidden></div>
+        <div class="reader-viewport">
+          <div id="reader-scroll" class="reader-scroll" tabindex="0" aria-label="文档阅读区域"><div id="reading-surface" class="reading-surface"></div></div>
+          <div id="pdf-vertical-progress" class="pdf-vertical-progress" hidden><input id="pdf-document-progress" type="range" min="0" max="100000" value="0" step="1" aria-label="PDF 竖向阅读进度" aria-orientation="vertical" title="拖动定位整份 PDF"></div>
+        </div>
+        <div id="pdf-progress" class="pdf-progress" hidden><span>1</span><input id="pdf-page-progress" type="range" min="1" max="1" value="1" step="1" aria-label="PDF 横向阅读进度" aria-orientation="horizontal"><output id="pdf-progress-value" for="pdf-page-progress">1 / 1</output></div>
+        <footer class="reading-footer"><span id="reading-position">—</span><span id="reader-save-status">阅读位置自动保存</span></footer>
+      </section>
+    </main>
+    <div class="divider" id="outline-divider" role="separator" tabindex="0" aria-label="调整目录宽度" aria-orientation="vertical" hidden></div>
+    <aside class="outline-pane" id="outline-pane" aria-label="可编辑章节目录" hidden>
+      <div class="pane-heading"><span>目录</span><span id="outline-count" class="count-badge">0</span><button id="add-chapter" class="icon-button" title="在当前位置添加章节" aria-label="添加章节"><span data-icon="plus"></span></button></div>
+      <p class="outline-help">点击章节跳转，拖动章节调整顺序。</p>
+      <div class="outline-tools"><button id="edit-chapter" title="编辑标题和跳转位置" disabled><span data-icon="edit"></span></button><button id="indent-chapter" title="增加缩进 · Tab" disabled><span data-icon="indent"></span></button><button id="outdent-chapter" title="减少缩进 · Shift Tab" disabled><span data-icon="outdent"></span></button><button id="up-chapter" title="向上移动 · Alt ↑" disabled><span data-icon="arrow-up"></span></button><button id="down-chapter" title="向下移动 · Alt ↓" disabled><span data-icon="arrow-down"></span></button><button id="remove-chapter" title="删除章节" disabled><span data-icon="trash"></span></button></div>
+      <div id="outline-tree" class="outline-tree" role="tree" aria-label="文档章节"></div>
+      <div class="outline-footer"><button id="reset-outline">恢复原始目录</button><span>自定义目录独立保存，不改动原文</span></div>
+    </aside>
+  </div>
+  <div id="drop-overlay" class="drop-overlay" hidden><span data-icon="upload"></span><h2>放入当前文件夹</h2><p>文档原件会复制到你的文库</p></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="activity" class="activity" role="status" hidden><span class="spinner"></span><span id="activity-text"></span></div>
+  <input type="file" id="file-input" multiple hidden>
+  <dialog id="dialog" aria-labelledby="dialog-title"><form id="dialog-form"><header><h2 id="dialog-title"></h2><button id="dialog-x" type="button" class="icon-button" aria-label="关闭对话框">×</button></header><div id="dialog-fields"></div><p id="dialog-error" class="dialog-error" role="alert" hidden></p><footer><button id="dialog-cancel" type="button">取消</button><button id="dialog-submit" class="primary" type="submit">保存</button></footer></form></dialog>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

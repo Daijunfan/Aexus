@@ -1,6 +1,6 @@
 // Real Claude Code + SDK hooks + real SSH; deterministic model responses, no inference.
 import fs from'node:fs';import os from'node:os';import path from'node:path';import http from'node:http';import{execFileSync}from'node:child_process';import{createRequire}from'node:module';import{build}from'esbuild';import assert from'node:assert/strict';
-const require=createRequire(import.meta.url),root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-hook-')),config=path.join(temp,'claude'),host=process.env.AC_HOOK_HOST||'bupt208';fs.mkdirSync(config);
+const require=createRequire(import.meta.url),root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-hook-')),config=path.join(temp,'claude'),host=process.env.AC_HOOK_HOST||'example-linux';fs.mkdirSync(config);
 const remote=execFileSync('ssh',['-T','-o','BatchMode=yes',host,'mktemp -d /home/djf/.cache/ac-hook-XXXXXX'],{encoding:'utf8'}).trim();const marker=path.join(temp,'local-sentinel'),hookMarker=path.join(temp,'user-hook-ran');fs.writeFileSync(marker,'LOCAL_SECRET_MUST_NOT_BE_READ');
 const report={tests:[],hookCalls:[],responses:[]},proof='REMOTE_'+Date.now(),server=http.createServer();let queue=[];
 server.on('request',async(req,res)=>{let raw='';for await(const chunk of req)raw+=chunk;let body;try{body=JSON.parse(raw)}catch{};if(req.url?.includes('count_tokens')){res.writeHead(200,{'content-type':'application/json'}).end('{"input_tokens":1}');return}if(!req.url?.includes('/messages')||!body?.messages){res.writeHead(404).end();return}

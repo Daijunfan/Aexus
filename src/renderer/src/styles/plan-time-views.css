@@ -1,0 +1,88 @@
+/* Time geometry and readable event details are separate: labels never imply duration. */
+.plan-time-workspace{--plan-time-label-width:260px;min-width:0}
+.plan-time-workspace .plan-time-controls{padding:4px 0 12px;gap:8px;background:transparent}
+.plan-time-workspace .plan-time-controls button,.plan-time-workspace .plan-time-controls input,.plan-time-workspace .plan-time-controls select{min-height:34px;font-size:12px}
+.plan-time-workspace .plan-time-legend{gap:10px 18px;font-size:11px;color:var(--fg-dim);padding-bottom:16px}
+.plan-time-workspace .plan-time-legend small{font-size:11px;max-width:900px;line-height:1.65}
+.plan-time-workspace .plan-time-loading{display:flex;align-items:center;gap:8px;padding:18px 0;color:var(--fg-dim);font-size:12px}
+.plan-time-workspace .plan-time-error{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.plan-time-workspace .plan-time-footnote{font-size:11px;color:var(--fg-dim)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-scroll{overflow:auto;border:1px solid var(--border-soft);border-radius:9px;max-height:65vh;scrollbar-width:thin;box-shadow:none;background:var(--bg-elev)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-grid{position:relative}
+.plan-timeline-view.plan-time-workspace .plan-timeline-axis{display:flex;position:sticky;top:0;z-index:6;height:44px;border-bottom:1px solid var(--border);background:var(--bg-alt)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-axis>div{display:flex;flex:none}
+.plan-timeline-view.plan-time-workspace .plan-timeline-axis>strong,.plan-timeline-view.plan-time-workspace .plan-timeline-label{width:var(--plan-time-label-width)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-axis>strong{position:sticky;left:0;z-index:7;box-sizing:border-box;display:flex;align-items:center;flex:none;padding:12px 15px;background:var(--bg-alt);border-right:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:.015em}
+.plan-timeline-view.plan-time-workspace .plan-timeline-axis span{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;white-space:nowrap;line-height:1.1;box-sizing:border-box;border-right:1px solid var(--border-soft);color:var(--fg-dim);font-size:11px;font-variant-numeric:tabular-nums}
+.plan-timeline-view.plan-time-workspace .plan-timeline-axis small{font-size:9px;color:var(--fg-faint)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-row{display:flex;border-bottom:1px solid var(--border-soft);min-height:124px}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label{position:sticky;left:0;z-index:3;box-sizing:border-box;flex:none;border:0;border-right:1px solid var(--border);color:var(--fg);text-align:left;align-self:stretch;display:flex;flex-direction:column;justify-content:flex-start;gap:14px;padding:24px 17px;background:var(--bg-elev)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 5%,var(--bg-elev))}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label>strong{font-size:13px;font-weight:600;line-height:1.5;text-align:left;overflow:hidden;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label>span{display:flex;align-items:center;gap:8px;margin:0;color:var(--fg-dim);font-size:11px}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label>span>span{text-align:left;min-width:0}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label small{display:block;color:var(--fg-faint);margin-top:3px;font-size:10px}
+.plan-timeline-view.plan-time-workspace .plan-timeline-track{position:relative;flex:none;background-image:linear-gradient(to right,var(--border-soft) 1px,transparent 1px);background-color:color-mix(in srgb,var(--bg-alt) 45%,var(--bg-elev))}
+.plan-timeline-view.plan-time-workspace .plan-timeline-now{position:absolute;top:0;bottom:0;border-left:1px solid var(--accent);z-index:1;pointer-events:none;opacity:.55}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar{--time-event-color:var(--accent);position:absolute;box-sizing:border-box;z-index:2;touch-action:pan-y;cursor:pointer;height:104px;padding:0;border:0;border-radius:0;background:none;color:var(--fg);overflow:visible;text-align:left;font-size:11px;box-shadow:none}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar.movable{cursor:grab;touch-action:none}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar.movable:active{cursor:grabbing}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar:disabled,.plan-timeline-view.plan-time-workspace .plan-timeline-label:disabled{opacity:1;cursor:default}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar.run{--time-event-color:var(--green,#60947e)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar.event-failed,.plan-timeline-view.plan-time-workspace .plan-timeline-bar.event-timed_out,.plan-timeline-view.plan-time-workspace .plan-timeline-bar.event-interrupted{--time-event-color:var(--red)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar.event-skipped,.plan-timeline-view.plan-time-workspace .plan-timeline-bar.event-cancelled{--time-event-color:var(--fg-faint)}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar.elapsed{--time-event-color:var(--accent)}
+.plan-timeline-view.plan-time-workspace .plan-time-span{position:absolute;top:5px;height:4px;border-radius:3px;background:var(--time-event-color);opacity:.8;pointer-events:none}
+.plan-timeline-view.plan-time-workspace .forecast .plan-time-span{height:3px;top:6px;background:repeating-linear-gradient(to right,var(--time-event-color) 0 5px,transparent 5px 8px)}
+.plan-timeline-view.plan-time-workspace .plan-time-marker{position:absolute;top:3px;width:8px;height:8px;transform:translateX(-50%);border:2px solid var(--bg-elev);box-shadow:0 0 0 1px var(--time-event-color);border-radius:50%;background:var(--time-event-color);box-sizing:border-box;pointer-events:none}
+.plan-timeline-view.plan-time-workspace .point .plan-time-marker{border-radius:1px;transform:translateX(-50%) rotate(45deg)}
+.plan-timeline-view.plan-time-workspace .plan-time-event-card{position:absolute;top:16px;box-sizing:border-box;height:88px;display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:9px 11px;border:1px solid var(--border);border-left:3px solid color-mix(in srgb,var(--time-event-color) 65%,var(--border));border-radius:7px;background:var(--bg-elev);box-shadow:0 2px 5px #17131f05;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.plan-timeline-view.plan-time-workspace .forecast .plan-time-event-card{border-left-style:dashed}
+.plan-timeline-view.plan-time-workspace .plan-time-event-heading{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0;line-height:1.2}
+.plan-timeline-view.plan-time-workspace .plan-time-event-heading time{font-size:11px;color:var(--fg-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.plan-timeline-view.plan-time-workspace .plan-time-event-heading .plan-run-outcome{font-size:10px;white-space:nowrap;max-width:99px;overflow:hidden;text-overflow:ellipsis}
+.plan-timeline-view.plan-time-workspace .plan-time-event-name{font-size:12px;font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan-timeline-view.plan-time-workspace .plan-time-event-duration{font-size:10px;color:var(--fg-dim);line-height:1.35;white-space:nowrap}
+.plan-timeline-view.plan-time-workspace .plan-time-event-message{font-size:10px;color:var(--fg-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar:hover:not(:disabled) .plan-time-event-card{border-color:color-mix(in srgb,var(--time-event-color) 60%,var(--border));box-shadow:0 3px 9px #17131f0b}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar:focus-visible{outline:0}
+.plan-timeline-view.plan-time-workspace .plan-timeline-bar:focus-visible .plan-time-event-card{outline:2px solid var(--accent);outline-offset:3px}
+.plan-planner-view.plan-time-workspace .plan-planner-scroll{overflow:auto;max-width:100%;scrollbar-width:thin}
+.plan-planner-view.plan-time-workspace .plan-planner-days{display:grid;grid-template-columns:repeat(7,minmax(196px,1fr));min-width:1444px;gap:12px;padding-bottom:15px}
+.plan-planner-view.plan-time-workspace .plan-planner-day{border:1px solid var(--border-soft);padding:10px;min-height:230px;border-radius:8px;background:color-mix(in srgb,var(--bg-alt) 65%,var(--bg-elev))}
+.plan-planner-view.plan-time-workspace .plan-planner-day.is-today{border-color:color-mix(in srgb,var(--accent) 50%,var(--border))}
+.plan-planner-view.plan-time-workspace .plan-planner-day>header{display:flex;border-bottom:1px solid var(--border-soft);flex-direction:row;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 3px 14px}
+.plan-planner-view.plan-time-workspace .plan-planner-day>header strong{font-size:12px;font-weight:600}
+.plan-planner-view.plan-time-workspace .plan-planner-day>header>span{font-size:10px;white-space:nowrap}
+.plan-planner-view.plan-time-workspace .plan-planner-day.is-today>header strong{color:var(--accent)}
+.plan-planner-view.plan-time-workspace .plan-planner-event{width:100%;text-align:left;align-items:flex-start;border:1px solid var(--border-soft);background:var(--bg-elev);color:var(--fg);display:flex;flex-direction:column;gap:12px;padding:13px;margin-top:11px;border-radius:7px;box-shadow:none;overflow:hidden;border-left:1px solid var(--border-soft)}
+.plan-planner-view.plan-time-workspace .plan-planner-event:disabled{opacity:1;cursor:default}
+.plan-planner-view.plan-time-workspace .plan-planner-event:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 40%,var(--border-soft))}
+.plan-planner-view.plan-time-workspace .plan-planner-event.run{border-left:3px solid var(--green,#60947e)}
+.plan-planner-view.plan-time-workspace .plan-planner-event.event-failed,.plan-planner-view.plan-time-workspace .plan-planner-event.event-timed_out,.plan-planner-view.plan-time-workspace .plan-planner-event.event-interrupted{border-left-color:var(--red)}
+.plan-planner-view.plan-time-workspace .plan-planner-event.event-skipped,.plan-planner-view.plan-time-workspace .plan-planner-event.event-cancelled{border-left-color:var(--fg-faint)}
+.plan-planner-view.plan-time-workspace .plan-planner-event.event-running{border-left-color:var(--accent)}
+.plan-planner-view.plan-time-workspace .plan-planner-event>time{font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--fg-dim)}
+.plan-planner-view.plan-time-workspace .plan-planner-event-main{display:flex;flex-direction:column;gap:11px;min-width:0;flex:1}
+.plan-planner-view.plan-time-workspace .plan-planner-event-main>strong{font-size:13px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.plan-planner-view.plan-time-workspace .plan-person{font-size:11px}
+.plan-planner-view.plan-time-workspace .plan-person small{font-size:10px}
+.plan-planner-view.plan-time-workspace .plan-planner-event-meta{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.plan-planner-view.plan-time-workspace .plan-planner-event-meta>small{font-size:10px;line-height:1.5;color:var(--fg-dim)}
+.plan-planner-view.plan-time-workspace .plan-planner-event-message{font-size:11px;line-height:1.5;color:var(--fg-faint);overflow-wrap:anywhere}
+.plan-planner-view.plan-time-workspace .plan-column-empty{font-size:11px;padding:28px 6px;color:var(--fg-faint);line-height:1.6}
+.plan-planner-view.plan-time-workspace.mode-day .plan-planner-days,.plan-planner-view.plan-time-workspace.mode-agenda .plan-planner-days{display:block;min-width:0;max-width:1080px;margin:0 auto}
+.plan-planner-view.plan-time-workspace.mode-day .plan-planner-day,.plan-planner-view.plan-time-workspace.mode-agenda .plan-planner-day{margin-bottom:14px;min-height:0;padding:14px}
+.plan-planner-view.plan-time-workspace.mode-day .plan-planner-event,.plan-planner-view.plan-time-workspace.mode-agenda .plan-planner-event{display:grid;grid-template-columns:135px minmax(180px,1fr) 190px;gap:15px;align-items:start}
+.plan-planner-view.plan-time-workspace.mode-day .plan-planner-event-message,.plan-planner-view.plan-time-workspace.mode-agenda .plan-planner-event-message{grid-column:2 / -1}
+@media(max-width:760px){
+.plan-time-workspace{--plan-time-label-width:160px}
+.plan-time-workspace .plan-time-controls select:last-child{margin-left:0;max-width:100%}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label{padding:22px 12px;gap:12px}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label>strong{font-size:12px}
+.plan-timeline-view.plan-time-workspace .plan-timeline-label>span{font-size:10px;gap:6px}
+.plan-planner-view.plan-time-workspace.mode-day .plan-planner-event,.plan-planner-view.plan-time-workspace.mode-agenda .plan-planner-event{grid-template-columns:minmax(0,1fr);gap:10px}
+.plan-planner-view.plan-time-workspace.mode-day .plan-planner-event-message,.plan-planner-view.plan-time-workspace.mode-agenda .plan-planner-event-message{grid-column:auto}
+}
+@media(max-width:500px){.plan-time-workspace{--plan-time-label-width:120px}}
+@media(prefers-reduced-motion:reduce){.plan-timeline-view.plan-time-workspace .plan-time-event-card{transition:none}}

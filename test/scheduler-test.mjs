@@ -49,6 +49,7 @@ const finished=async id=>until(async()=>{const r=(await history(id))[0];return r
 const create=async(employee,extra={})=>cli('schedule','create','--spec',JSON.stringify({name:'Scheduled work',action:{type:'agent',employeeId:employee.id,prompt:'scheduled command',model:employee.engine==='codex'?'gpt-5.6-luna':'fixture-task',effort:'low'},rule:{kind:'interval',everySeconds:3600,anchor:new Date(Date.now()+3600000).toISOString()},enabled:false,...extra}))
 try{
  launch();await ready()
+ await cli('engine','configure','--engine','claude','--data',JSON.stringify({sdkPath:sdk}))
  ok((await cli('schedule','schema')).version===1,'scheduler contract is discoverable over CLI without Electron')
  await cli('group','add','Scheduler');const card=await cli('card','create','--title','Worker','--group','Scheduler','--engine','codex')
  const item=await create(card)
@@ -91,7 +92,7 @@ try{
  ok((await finished(failure.id)).status==='failed','engine failures do not appear as successful runs')
  const claude=await cli('card','create','--title','Claude','--group','Scheduler','--engine','claude','--model','fixture-original')
  const cjob=await create(claude,{action:{type:'agent',employeeId:claude.id,prompt:'Claude task',model:'fixture-task',effort:'low',thinking:false}})
- await cli('schedule','run',cjob.id);ok((await finished(cjob.id)).status==='succeeded','Claude schedule uses the shared adapter')
+ await cli('schedule','run',cjob.id);const claudeRun=await finished(cjob.id);if(claudeRun.status!=='succeeded')console.error('CLAUDE_FIXTURE_FAILURE',JSON.stringify(claudeRun));ok(claudeRun.status==='succeeded','Claude schedule uses the shared adapter')
  const persisted=(await cli('session','list')).sessions.find(c=>c.id===claude.id),clive=(await cli('session','list','--live')).find(c=>c.cardId===claude.id),calls=fs.readFileSync(controls,'utf8').trim().split('\n').map(JSON.parse)
  ok(persisted.model==='fixture-original'&&clive.model==='fixture-original'&&calls.some(c=>c.method==='thinking'&&c.value===0)&&calls.some(c=>c.method==='model'&&c.value==='fixture-task'),'model/thinking overrides reach the engine and original preferences are restored')
  const crash=await cli('schedule','run',hold.id);await until(async()=>(await history(hold.id))[0].sessionId);await stop('SIGKILL')

@@ -1,3 +1,4 @@
+import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../i18n'
 import {useEffect,useRef,useState,type CSSProperties} from 'react'
 import {Terminal} from '@xterm/xterm'
 import {FitAddon} from '@xterm/addon-fit'
@@ -7,6 +8,8 @@ import {api} from '../api'
 import '@xterm/xterm/css/xterm.css'
 type Tab={id:string;employee:string;cwd:string;host?:string;running:boolean;exitCode?:number}
 export function EmployeeTerminal({employee,terminalHeight=220}:{employee:string;terminalHeight?:number}){
+  useI18n()
+
   const [heightDraft,setHeightDraft]=useState<number>()
   useEffect(()=>setHeightDraft(undefined),[terminalHeight])
   const [tabs,setTabs]=useState<Tab[]>([]),[selected,setSelected]=useState(''),[error,setError]=useState('')
@@ -28,5 +31,5 @@ export function EmployeeTerminal({employee,terminalHeight=220}:{employee:string;
     return()=>{disposed=true;clearInterval(timer);off();observer.disconnect();input.dispose();dimensions.dispose();term.dispose()}
   },[selected])
   const active=tabs.find(t=>t.id===selected)
-  return <section className="employee-terminal" aria-label="员工终端" style={{'--terminal-height':`${heightDraft??terminalHeight}px`} as CSSProperties}><PanelDivider axis="y" value={heightDraft??terminalHeight} min={120} max={600} label="调整终端高度" onDraft={setHeightDraft} onCommit={value=>api.call('settings.set',{terminalHeight:value})}/><header><strong>终端</strong><nav>{tabs.map((tab,i)=><button key={tab.id} className={tab.id===selected?'active':''} onClick={()=>setSelected(tab.id)}>{tab.host?'SSH':'Shell'} {i+1}{!tab.running?' · 已退出':''}</button>)}</nav><button className="terminal-action" title="新建终端" onClick={()=>void create()} aria-label="新建终端"><Icon name="add"/></button><button className="terminal-action" title="删除当前终端" disabled={!selected} aria-label="关闭当前终端" onClick={async()=>{try{await api.call('terminal.close',{id:selected});const next=await api.call<Tab[]>('terminal.list',{employee});setTabs(next);setSelected(next[0]?.id??'')}catch(e){setError((e as Error).message)}}}><Icon name="trash"/></button></header><div className="terminal-location" title={active?.cwd}>{active?.host?`${active.host} · `:''}{active?.cwd??'新建终端后从员工工作目录开始'}</div>{error&&<div className="terminal-error" role="alert">{error}<button onClick={()=>setError('')}>×</button></div>}<div className="terminal-screen" ref={container}/>{!selected&&<button className="terminal-empty" onClick={()=>void create()}>在员工工作目录新建终端</button>}</section>
+  return <section className="employee-terminal" aria-label={uiText("Employee terminal")} style={{'--terminal-height':`${heightDraft??terminalHeight}px`} as CSSProperties}><PanelDivider axis="y" value={heightDraft??terminalHeight} min={120} max={600} label={uiText("Resize terminal height")} onDraft={setHeightDraft} onCommit={value=>api.call('settings.set',{terminalHeight:value})}/><header><strong>{uiText("Terminal")}</strong><nav>{tabs.map((tab,i)=><button key={tab.id} className={tab.id===selected?'active':''} onClick={()=>setSelected(tab.id)}>{tab.host?'SSH':'Shell'} {i+1}{!tab.running?uiText(" · 已退出"):''}</button>)}</nav><button className="terminal-action" title={uiText("New terminal")} onClick={()=>void create()} aria-label={uiText("New terminal")}><Icon name="add"/></button><button className="terminal-action" title={uiText("Delete current terminal")} disabled={!selected} aria-label={uiText("Close current terminal")} onClick={async()=>{try{await api.call('terminal.close',{id:selected});const next=await api.call<Tab[]>('terminal.list',{employee});setTabs(next);setSelected(next[0]?.id??'')}catch(e){setError((e as Error).message)}}}><Icon name="trash"/></button></header><div className="terminal-location" title={active?.cwd}>{active?.host?`${active.host} · `:''}{active?.cwd??uiText("New terminals start in the employee’s working directory")}</div>{error&&<div className="terminal-error" role="alert">{error}<button onClick={()=>setError('')}>×</button></div>}<div className="terminal-screen" ref={container}/>{!selected&&<button className="terminal-empty" onClick={()=>void create()}>{uiText("Open a terminal in the employee’s working directory")}</button>}</section>
 }

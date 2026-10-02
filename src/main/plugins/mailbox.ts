@@ -2,15 +2,16 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { PluginRuntime } from '../../shared/plugins'
+import { PluginEventJournal } from './event-journal'
 
 // Sandboxed CLIs can exchange JSON through their writable Team folder without
 // granting network access. All requests still execute in the plugin runtime.
 export async function openMailbox(directory:string,runtime:PluginRuntime,workspace:string) {
   fs.mkdirSync(directory,{recursive:true})
   const root=fs.realpathSync(directory),pending=new Set<string>()
-  let closed=false,sequence=0
-  const events:{seq:number;data:unknown}[]=[]
-  const write=(name:string,value:unknown)=>{const file=path.join(root,name),temporary=path.join(root,randomUUID()+'.tmp');fs.writeFileSync(temporary,JSON.stringify(value),{flag:'wx',mode:0o600});fs.renameSync(temporary,file)}
+  let closed=false
+  const events=new PluginEventJournal()
+  const write=(name:string,value:unknown,encoded=false)=>{const file=path.join(root,name),temporary=path.join(root,randomUUID()+'.tmp');fs.writeFileSync(temporary,encoded?String(value):JSON.stringify(value),{flag:'wx',mode:0o600});fs.renameSync(temporary,file)}
   const consume=async(name:string)=>{
     if(closed||!/^[-a-f0-9]+\.request\.json$/.test(name)||pending.has(name))return
     const file=path.join(root,name)
@@ -25,7 +26,7 @@ export async function openMailbox(directory:string,runtime:PluginRuntime,workspa
     finally{fs.rmSync(file,{force:true});pending.delete(name)}
   }
   const watcher=fs.watch(root,(_event,name)=>{if(name)void consume(String(name))})
-  const unsubscribe=await runtime.subscribe?.(data=>{if(closed)return;events.push({seq:++sequence,data});if(events.length>128)events.shift();write('events.json',{sequence,events})})
+  const unsubscribe=await runtime.subscribe?.(data=>{if(closed)return;events.append(data);write('events.json',events.serialize(),true)},{stateMode:'delta'})
   write('host.json',{pid:process.pid,workspace})
   return ()=>{closed=true;watcher.close();unsubscribe?.();fs.rmSync(path.join(root,'host.json'),{force:true})}
 }

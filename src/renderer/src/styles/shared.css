@@ -1,6 +1,6 @@
-.directory-shared { width:44px;height:44px;margin-top:12px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer;flex-shrink:0; }
+.directory-shared,.directory-overview { width:44px;height:44px;margin-top:4px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--fg-dim);cursor:pointer;flex-shrink:0; }
 .directory-shared .codicon { font-size:23px; }
-.directory-shared:hover,.directory-shared.active { background:var(--bg-hover);border-color:var(--border);color:var(--accent); }
+.directory-shared:hover,.directory-shared.active,.directory-overview:hover,.directory-overview.active { background:var(--bg-hover);border-color:var(--border);color:var(--accent); }
 .shared-drawer { width:320px;flex:0 0 320px;min-height:0;display:flex;flex-direction:column;background:var(--bg-alt);border-right:1px solid var(--border-soft);color:var(--fg);z-index:20;overflow:hidden; }
 .shared-drawer>header { display:flex;align-items:center;justify-content:space-between;padding:18px 16px 8px; }
 .shared-drawer>header strong { font-size:15px;font-weight:650; }
@@ -39,3 +39,6 @@
 .file-list:has(.file-row:hover) .file-row:hover { background:var(--bg-hover); }
 .app .conversation-layer,.app .office-panel-wrap,.app .team-workspace-wrap { left:calc(var(--directory-width) + var(--shared-width,0px)); }
 .directory-transfer-error { position:fixed;left:calc(var(--directory-width) + 8px);bottom:16px;max-width:320px;padding:12px;border:1px solid var(--red);border-radius:8px;background:var(--bg);color:var(--red);font-size:12px;z-index:100;overflow-wrap:anywhere; }
+
+/* Vector icons preserve the existing em-sized Icon contract. */
+.codicon.vector-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.codicon.vector-icon::before{display:none}.vector-icon>svg{display:block;width:1em;height:1em;flex:none}

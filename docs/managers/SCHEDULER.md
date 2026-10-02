@@ -10,7 +10,7 @@ workspace: employee
 ## Purpose
 
 持久化地安排某个员工在指定时间使用指定模型、思考程度执行任务。调度器属于
-Agents Company Core，不依赖窗口或任何插件。CLI、未来的插件与 UI 使用同一个
+Agents Company Core，不依赖窗口或任何插件。CLI、Plan 视图与插件使用同一个
 `schedule.*` 协议。**本版本未向 MiniNotion 接入此调度器**；MiniNotion 原有的页面
 提醒/重复事项是另一项领域功能。
 
@@ -67,7 +67,19 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 
 `--start ISO` 指定间隔锚点；省略则从创建后一个间隔开始。`--time` 不带 `--days`
 表示每日；不带 `--timezone` 使用当前机器时区并在创建时固定保存。`--until ISO`
-是排期和自动执行的截止时间。`--paused` 创建后暂不自动运行。`--source plugin-id`
+是排期和自动执行的截止时间。默认启用自动运行；`--enabled false`（或 `--enabled off`）
+创建禁用任务，`--paused` 保留为同义的无值 flag；`--enabled true` / `--enabled on`
+明确启用。`--enabled` 缺值或非法值、`--paused` 带值、两者同时出现都会在创建前拒绝，
+不会静默启用。使用 `--spec` 时请在 JSON 内设置布尔值 `enabled`，不能再混用这两个 flag。
+例如先保存、检查后再决定是否启用：
+
+```sh
+agents schedule create --name '待确认检查' --employee EMPLOYEE_ID \
+  --after-seconds 1800 --prompt '检查项目并报告。' --enabled false --json
+agents schedule get JOB_ID --json
+```
+
+Governor 目标还必须提供 `--view VIEW_ID`，见下文“Governor 任务的视图目标”。`--source plugin-id`
 用于未来插件查询自己创建的任务，是调用方标签，不是权限凭证。
 
 ## Commands
@@ -85,7 +97,7 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 | `schedule update ID --patch @patch.json` | `{id,patch}` | 顶层部分更新；action/rule/window 提供完整对象；活动任务先取消 |
 | `schedule pause ID` | `{id}` | 暂停后续触发，不停止当前轮 |
 | `schedule resume ID` | `{id}` | 从当前时间之后重新计算，不补跑暂停期间任务 |
-| `schedule preview [ID / --spec @job.json] --after ISO --count 5` | `{id?,spec?,after?,count?}` | 只计算未来时间，不执行；count 1–100 |
+| `schedule preview [ID [--patch JSON] / --spec @job.json] --after ISO --count 5` | `{id?,spec?,patch?,after?,count?}` | 只计算未来时间，不执行；保存任务的 patch 预览保留已用次数且不写入；count 1–100 |
 | `schedule run ID` | `{id}` | 明确立即执行一次，即使排期暂停/已结束；忽略日历和工作时段，保留超时与权限；不消耗 nextAt |
 | `schedule history [ID] --employee ID --limit 50` | `{id?,employee?,limit?}` | 最新在前；保留最近 1000 条完成记录及全部活动记录 |
 | `schedule cancel RUN_ID` | `{id:runId}` | 终止该次执行，等待引擎停止；不暂停后续排期 |
@@ -146,16 +158,36 @@ agents schedule create --name '夜间任务' --employee EMPLOYEE_ID \
 
 契约为宿主 `schedule.*` v1；通过宿主 CLI/socket 使用，不依赖 MiniNotion 或 Electron。
 未来插件复用此接口，不能为宿主员工再创建自己的隐藏会话或绕过员工目录权限。
-插件自有的文档提醒可以继续独立存在。本次只交付基础 API，没有新增调度界面。
+插件自有的文档提醒可以继续独立存在。Plan 提供 Table、Board、Timeline、Calendar、Planner、List、Gallery、Chart、Feed、Form 十种调度数据库界面，仍使用同一套 API。
 
 验证：`npm run test:scheduler`。测试使用隔离数据与确定性引擎替身，Codex 参数固定
 `gpt-5.6-luna` / `low`，没有模型推理费用。
 
 ## Management authorization
 
-Jobs and runs preserve the requesting principal and the exact active relation ID.
+Jobs and runs preserve the requesting principal. Visual relation IDs never grant scheduling authority.
 Creation, manual run, resume and actual launch revalidate that authority. Revocation
 disables future jobs and cancels matching active runs; unrelated user/Manager work
 is retained. Legacy jobs without delegation remain operator-owned. `source` is only
 a label and never grants permission. Manager schedule listings include their own
 jobs and runs, not the global scheduler store.
+
+## Governor 任务的视图目标
+
+Governor 定时任务必须在 `action.viewId` 指定稳定 Team 视图 ID，简写命令可用 `--view VIEW_ID`。创建、修改和执行时校验；模型收到同一目标视图，运行时不查询当前标签作为兜底。视图删除后任务失败，不退回 All Team；此字段不授予权限。普通 Employee / Team Manager 不接收该字段。
+
+```sh
+agents schedule create --name "研发视图检查" --employee GOVERNOR_ID --view VIEW_ID --prompt "查看这个视图的团队布局" --every-seconds 3600 --paused
+```
+
+## Detailed scenario checks
+
+Saved-job preview accepts `{id,patch?,after?,count?}`. A patch is temporary and follows the update replacement rules; it is never persisted. Moving the preview cursor or calendar range does not reset a finite remaining quota. Notes-only edits preserve the next scheduled instant and can annotate a completed one-shot without replaying it. UI fields retain unchanged absolute seconds/milliseconds and the recurrence timezone's cutoff. See `docs/PLAN_SCENARIOS.md` for practical case-by-case assertions, including actual scheduled MiniNotion writes and rich database rendering.
+
+## Plan extension (additive v1)
+
+Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; scheduling others retains existing control limits. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
+
+## Read-model layout extension
+
+`plan.durationMinutes` (1–43,200) supplies an optional future work estimate. It is not a timeout, scheduling reservation or automatic stop time. Timeline uses actual timestamps for recorded attempts, displays missing estimates as instants, and uses half-open spans at date boundaries. `plan.analytics` counts all authorized matching schedules or retained actual runs; `plan.feed` never fabricates activity from forecasts. See `docs/PLAN_VIEW_PARITY.md` for APIs and interactive cases.

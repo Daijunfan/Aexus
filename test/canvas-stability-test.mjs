@@ -15,7 +15,7 @@ let listeners=[],reads=0,racing=false;
 window.test={samples:[],mutations:0,pulse(){listeners.forEach(fn=>fn({channel:'session:changed',payload:{}}))}};
 window.agents={rendererReady(){},onUiRequest(){return()=>{}},answerUi(){},onEvent(fn){listeners.push(fn);return()=>{listeners=listeners.filter(f=>f!==fn)}},async call(cmd,args={}){
  if(cmd==='view.get')return {kind:'home',revision:0};
- if(cmd==='plugin.list')return [];
+ if(cmd==='plugin.list'||cmd==='chat.list')return [];
  if(cmd==='session.list'){
   if(args.live)return [];
   const snapshot=structuredClone(state),delay=racing?(++reads===1?90:280):0;
@@ -32,7 +32,7 @@ window.agents={rendererReady(){},onUiRequest(){return()=>{}},answerUi(){},onEven
 }};
 const sample=()=>{const room=document.querySelector('.world-room'),pet=document.querySelector('.employee-location'),world=document.querySelector('.canvas-world');if(room)window.test.samples.push({room:room.style.left,pet:pet.style.left,world:world.style.transform,mutations:window.test.mutations});requestAnimationFrame(sample)};requestAnimationFrame(sample);
 `)
-fs.writeFileSync(path.join(temp,'main.cjs'),`const {app,BrowserWindow}=require('electron');app.setActivationPolicy('prohibited');app.setPath('userData',${JSON.stringify(path.join(temp,'state'))});app.whenReady().then(()=>{const w=new BrowserWindow({show:false,width:1440,height:1000,webPreferences:{backgroundThrottling:false}});w.loadFile(${JSON.stringify(html)})});`)
+fs.writeFileSync(path.join(temp,'main.cjs'),`const {app,BrowserWindow}=require('electron');if(process.platform==='darwin')app.setActivationPolicy('prohibited');app.setPath('userData',${JSON.stringify(path.join(temp,'state'))});app.whenReady().then(()=>{const w=new BrowserWindow({show:false,width:1440,height:1000,webPreferences:{backgroundThrottling:false,offscreen:process.env.AGENTS_COMPANY_OFFSCREEN==='1'}});w.loadFile(${JSON.stringify(html)})});`)
 const env={...process.env};delete env.ELECTRON_RUN_AS_NODE
 const app=await electron.launch({executablePath:require('electron'),args:[path.join(temp,'main.cjs')],env})
 try{
@@ -52,7 +52,9 @@ try{
  await page.evaluate(()=>{window.test.samples=[];document.querySelector('.infinite-canvas').dispatchEvent(new WheelEvent('wheel',{deltaX:80,deltaY:0,bubbles:true,cancelable:true}))})
  await page.waitForTimeout(850)
  const transforms=await page.evaluate(()=>window.test.samples.map(s=>s.world))
- assert.ok(transforms.every(s=>s==='translate(-10px, 100px) scale(1)'),'camera jumps to old viewport after save: '+JSON.stringify([...new Set(transforms)]))
+ const firstPan=transforms.indexOf('translate(-10px, 100px) scale(1)')
+ // RAF may expose the old position until the first paint; no later frame may jump back.
+ assert.ok(firstPan>=0&&transforms.slice(0,firstPan).every(s=>s==='translate(70px, 100px) scale(1)')&&transforms.slice(firstPan).every(s=>s==='translate(-10px, 100px) scale(1)'),'camera jumps to old viewport after save: '+JSON.stringify([...new Set(transforms)]))
  await page.evaluate(()=>{window.test.nodes=[document.querySelector('.world-room'),document.querySelector('.employee-location'),document.querySelector('.official-frame')];window.test.samples=[]})
  for(let i=0;i<16;i++){await page.evaluate(()=>window.test.pulse());await page.waitForTimeout(45)}
  await page.waitForTimeout(350)

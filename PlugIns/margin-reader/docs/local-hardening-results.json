@@ -1,0 +1,1104 @@
+{
+  "schema": "margin-reader.hardening-audit/v1",
+  "date": "2026-09-30T17:12:49.198Z",
+  "pluginVersion": "0.7.0",
+  "commands": 231,
+  "scope": {
+    "source": "PlugIns/margin-reader",
+    "hostSourceEdited": false,
+    "installedAppReplaced": false,
+    "modelCalls": 0,
+    "platform": "macOS arm64",
+    "untested": [
+      "Windows and Linux",
+      "physical stylus/palm rejection",
+      "external-disk hot unplug",
+      "real power loss",
+      "hours-long mixed-media residency",
+      "all third-party app versions",
+      "MarginNote native package migration",
+      "same-library independent native windows",
+      "OS-level deep links and Obsidian round trip"
+    ]
+  },
+  "regression": {
+    "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/results.json",
+    "suites": 42,
+    "failed": 0,
+    "skipped": 0,
+    "core": {
+      "tests": 297,
+      "pass": 297,
+      "fail": 0,
+      "skipped": 0
+    },
+    "results": [
+      {
+        "suite": "core",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 15.26,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/core.log",
+        "skipLines": []
+      },
+      {
+        "suite": "backup-stream-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 2.68,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/backup-stream-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "dictionary-document-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 12.67,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/dictionary-document-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "dictionary-selection-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 4.43,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/dictionary-selection-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "navigation-races-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 6.7,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/navigation-races-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "ui-smoke",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 12.92,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/ui-smoke.log",
+        "skipLines": []
+      },
+      {
+        "suite": "local-navigation-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 10.38,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/local-navigation-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "fragment-navigation-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 3.05,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/fragment-navigation-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "large-map-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 6.77,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/large-map-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "annotation-window-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 7.3,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/annotation-window-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "responsive-workbench-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 7.38,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/responsive-workbench-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "resize-handwriting-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 5.23,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/resize-handwriting-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "workbench-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 16.6,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/workbench-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "advanced-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 20.58,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/advanced-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "layout-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 6.7,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/layout-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "library-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 10.17,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/library-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "selection-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 19.81,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/selection-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "study-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 27.43,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/study-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "pdf-modes-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 26.93,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/pdf-modes-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "boards-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 4.5,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/boards-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "map-tools-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 12.34,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/map-tools-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "reading-appearance-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 4.94,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/reading-appearance-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "learning-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 7.37,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/learning-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "capture-devices-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 7.03,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/capture-devices-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "av-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 20.65,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/av-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "presentation-pointers-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 3.4,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/presentation-pointers-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "review-faces-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 9.69,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/review-faces-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "generated-review-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 4.42,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/generated-review-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "mapping-repair-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 3.64,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/mapping-repair-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "ruler-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 23.23,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/ruler-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "ink-toolbar-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 21.33,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/ink-toolbar-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "ink-preferences-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 25.96,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/ink-preferences-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "scribble-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 19.9,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/scribble-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "stroke-geometry-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 10.81,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/stroke-geometry-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "eraser-workflow-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 19.85,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/eraser-workflow-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "image-ink-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 13.68,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/image-ink-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "image-marks-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 3.92,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/image-marks-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "host-smoke",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 2.92,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/host-smoke.log",
+        "skipLines": []
+      },
+      {
+        "suite": "employee-host",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 104.47,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/employee-host.log",
+        "skipLines": []
+      },
+      {
+        "suite": "team-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 6.51,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/team-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "av-native-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 9.27,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/av-native-ui.log",
+        "skipLines": []
+      },
+      {
+        "suite": "review-faces-native-ui",
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "seconds": 13.99,
+        "log": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/artifacts/hardening-20260930T152459Z/run-2026-09-30T17-03-00-984Z/review-faces-native-ui.log",
+        "skipLines": []
+      }
+    ]
+  },
+  "measurements": {
+    "backup": {
+      "passed": true,
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v26.5.0",
+      "modelCalls": 0,
+      "sourceBytes": 1207959552,
+      "files": [
+        {
+          "name": "part-0.bin",
+          "sha256": "ff58514fae0b97a8d485584ffcbe85675d150a99d51209dc64f40c18ff0e8498",
+          "bytes": 402653184
+        },
+        {
+          "name": "part-1.bin",
+          "sha256": "0001ff26305d691017bbee915ae11bc98ddf10c5b2c6e59a4ef3aafb86278a98",
+          "bytes": 402653184
+        },
+        {
+          "name": "part-2.bin",
+          "sha256": "3754a5ed89352e6367e98dde2b12c31d0619fbd17be3546af432fd1f6d314e8a",
+          "bytes": 402653184
+        }
+      ],
+      "timingsMs": {
+        "library.backup.plan": 2.2,
+        "library.backup.create": 2457.09,
+        "library.backup.inspect": 1053.96,
+        "library.backup.restore": 1208.84
+      },
+      "peakRssBytes": 235814912,
+      "plan": {
+        "path": "large.mrbackup",
+        "revision": 0,
+        "files": 4,
+        "directories": 0,
+        "originalBytes": 1207959918,
+        "largestFileBytes": 402653184,
+        "chunkBytes": 4194304,
+        "estimatedAdditionalBytes": 1210193774,
+        "availableBytes": 430040719360,
+        "sufficientSpace": true,
+        "fitsLegacyZip": false,
+        "format": "segmented",
+        "excludes": [
+          "other .mrbackup archives",
+          "credentials",
+          ".git",
+          "nested private indexes",
+          "active uploads",
+          "derived previews"
+        ]
+      },
+      "backup": {
+        "path": "large.mrbackup",
+        "format": "segmented",
+        "schema": "margin-reader.backup/v2",
+        "files": 4,
+        "originalBytes": 1207959918,
+        "bytes": 1207996160,
+        "chunks": 289,
+        "chunkBytes": 4194304,
+        "encrypted": true,
+        "revision": 0,
+        "container": "directory"
+      },
+      "restored": {
+        "folder": "Recovered",
+        "workspaceRelative": "Recovered",
+        "format": "segmented",
+        "files": 4,
+        "documents": 0,
+        "studies": 0,
+        "skippedCaches": 0
+      }
+    },
+    "performance": [
+      {
+        "label": "hardening-a",
+        "size": 10000,
+        "environment": {
+          "node": "v26.5.0",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpus": "Apple M5 Pro"
+        },
+        "metrics": {
+          "settingsGet": {
+            "samplesMs": [
+              11.08,
+              10.44,
+              10.13,
+              9.68,
+              10.37
+            ],
+            "medianMs": 10.37,
+            "maxMs": 11.08
+          },
+          "studyGet": {
+            "samplesMs": [
+              19.82,
+              16.48,
+              15.08
+            ],
+            "medianMs": 16.48,
+            "maxMs": 19.82
+          },
+          "catalogSearch": {
+            "samplesMs": [
+              14.65,
+              13.46,
+              12.86
+            ],
+            "medianMs": 13.46,
+            "maxMs": 14.65
+          },
+          "noOpPositionMetadata": {
+            "samplesMs": [
+              29.57,
+              29.53,
+              31.43
+            ],
+            "medianMs": 29.57,
+            "maxMs": 31.43
+          },
+          "dictionaryMatch": {
+            "samplesMs": [
+              24.4,
+              11.55,
+              12.13
+            ],
+            "medianMs": 12.13,
+            "maxMs": 24.4
+          },
+          "dictionaryLookup": {
+            "samplesMs": [
+              15.68,
+              15.82,
+              14.87
+            ],
+            "medianMs": 15.68,
+            "maxMs": 15.82
+          },
+          "uiReadyMs": 238.71,
+          "cardBoxMs": 135.76
+        },
+        "browserErrors": [],
+        "stateBytes": 5830750,
+        "before": {
+          "nodes": 637,
+          "cards": 4,
+          "listCards": 0,
+          "maxLongTaskMs": 0,
+          "overflow": false,
+          "viewport": {
+            "width": 1199,
+            "height": 528
+          }
+        },
+        "cardBox": {
+          "nodes": 1788,
+          "cards": 0,
+          "listCards": 100,
+          "maxLongTaskMs": 0,
+          "overflow": false,
+          "viewport": {
+            "width": 0,
+            "height": 0
+          }
+        },
+        "chromium": [
+          {
+            "name": "Nodes",
+            "value": 3534
+          },
+          {
+            "name": "LayoutCount",
+            "value": 0
+          },
+          {
+            "name": "RecalcStyleCount",
+            "value": 0
+          },
+          {
+            "name": "TaskDuration",
+            "value": 0.000009
+          },
+          {
+            "name": "JSHeapUsedSize",
+            "value": 29271876
+          },
+          {
+            "name": "JSHeapTotalSize",
+            "value": 66355200
+          }
+        ]
+      },
+      {
+        "label": "hardening-b",
+        "size": 10000,
+        "environment": {
+          "node": "v26.5.0",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpus": "Apple M5 Pro"
+        },
+        "metrics": {
+          "settingsGet": {
+            "samplesMs": [
+              10.98,
+              10.26,
+              10.03,
+              9.63,
+              10.21
+            ],
+            "medianMs": 10.21,
+            "maxMs": 10.98
+          },
+          "studyGet": {
+            "samplesMs": [
+              19.31,
+              16.17,
+              14.89
+            ],
+            "medianMs": 16.17,
+            "maxMs": 19.31
+          },
+          "catalogSearch": {
+            "samplesMs": [
+              14.41,
+              13.2,
+              12.6
+            ],
+            "medianMs": 13.2,
+            "maxMs": 14.41
+          },
+          "noOpPositionMetadata": {
+            "samplesMs": [
+              31.45,
+              31.17,
+              31.14
+            ],
+            "medianMs": 31.17,
+            "maxMs": 31.45
+          },
+          "dictionaryMatch": {
+            "samplesMs": [
+              23.77,
+              11.38,
+              11.78
+            ],
+            "medianMs": 11.78,
+            "maxMs": 23.77
+          },
+          "dictionaryLookup": {
+            "samplesMs": [
+              15.56,
+              16.36,
+              14.74
+            ],
+            "medianMs": 15.56,
+            "maxMs": 16.36
+          },
+          "uiReadyMs": 231.69,
+          "cardBoxMs": 306.59
+        },
+        "browserErrors": [],
+        "stateBytes": 5830750,
+        "before": {
+          "nodes": 637,
+          "cards": 4,
+          "listCards": 0,
+          "maxLongTaskMs": 0,
+          "overflow": false,
+          "viewport": {
+            "width": 1199,
+            "height": 528
+          }
+        },
+        "cardBox": {
+          "nodes": 1788,
+          "cards": 0,
+          "listCards": 100,
+          "maxLongTaskMs": 0,
+          "overflow": false,
+          "viewport": {
+            "width": 0,
+            "height": 0
+          }
+        },
+        "chromium": [
+          {
+            "name": "Nodes",
+            "value": 4078
+          },
+          {
+            "name": "LayoutCount",
+            "value": 0
+          },
+          {
+            "name": "RecalcStyleCount",
+            "value": 0
+          },
+          {
+            "name": "TaskDuration",
+            "value": 0.000007
+          },
+          {
+            "name": "JSHeapUsedSize",
+            "value": 63741396
+          },
+          {
+            "name": "JSHeapTotalSize",
+            "value": 83361792
+          }
+        ]
+      },
+      {
+        "label": "hardening-c",
+        "size": 10000,
+        "environment": {
+          "node": "v26.5.0",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpus": "Apple M5 Pro"
+        },
+        "metrics": {
+          "settingsGet": {
+            "samplesMs": [
+              10.87,
+              10.44,
+              9.98,
+              9.49,
+              10.21
+            ],
+            "medianMs": 10.21,
+            "maxMs": 10.87
+          },
+          "studyGet": {
+            "samplesMs": [
+              28.24,
+              16.79,
+              14.9
+            ],
+            "medianMs": 16.79,
+            "maxMs": 28.24
+          },
+          "catalogSearch": {
+            "samplesMs": [
+              14.74,
+              14.01,
+              12.92
+            ],
+            "medianMs": 14.01,
+            "maxMs": 14.74
+          },
+          "noOpPositionMetadata": {
+            "samplesMs": [
+              30.96,
+              27.95,
+              29.47
+            ],
+            "medianMs": 29.47,
+            "maxMs": 30.96
+          },
+          "dictionaryMatch": {
+            "samplesMs": [
+              24.03,
+              11.39,
+              11.81
+            ],
+            "medianMs": 11.81,
+            "maxMs": 24.03
+          },
+          "dictionaryLookup": {
+            "samplesMs": [
+              15.82,
+              15.34,
+              14.45
+            ],
+            "medianMs": 15.34,
+            "maxMs": 15.82
+          },
+          "uiReadyMs": 238.96,
+          "cardBoxMs": 345.45
+        },
+        "browserErrors": [],
+        "stateBytes": 5830750,
+        "before": {
+          "nodes": 637,
+          "cards": 4,
+          "listCards": 0,
+          "maxLongTaskMs": 0,
+          "overflow": false,
+          "viewport": {
+            "width": 1199,
+            "height": 528
+          }
+        },
+        "cardBox": {
+          "nodes": 1788,
+          "cards": 0,
+          "listCards": 100,
+          "maxLongTaskMs": 0,
+          "overflow": false,
+          "viewport": {
+            "width": 0,
+            "height": 0
+          }
+        },
+        "chromium": [
+          {
+            "name": "Nodes",
+            "value": 4077
+          },
+          {
+            "name": "LayoutCount",
+            "value": 0
+          },
+          {
+            "name": "RecalcStyleCount",
+            "value": 0
+          },
+          {
+            "name": "TaskDuration",
+            "value": 0.000008
+          },
+          {
+            "name": "JSHeapUsedSize",
+            "value": 63754180
+          },
+          {
+            "name": "JSHeapTotalSize",
+            "value": 84410368
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "uiReadyMedianMs": 238.71,
+      "cardBoxMedianMs": 306.59,
+      "dictionaryMatchMedianMs": 11.81,
+      "dictionaryLookupMedianMs": 15.56,
+      "peakBackupRssMiB": 224.89
+    }
+  },
+  "security": {
+    "metadataAliasBefore": {
+      "workspaceDisposable": true,
+      "platform": "darwin",
+      "uppercaseMetadataReadAccepted": true,
+      "entryNames": [
+        "cache",
+        "trash",
+        "uploads"
+      ]
+    },
+    "metadataAliasAfter": {
+      "workspaceDisposable": true,
+      "platform": "darwin",
+      "uppercaseMetadataReadAccepted": false,
+      "error": "SCOPE_DENIED",
+      "entryNames": []
+    }
+  },
+  "previousRuns": [
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T15-57-35-377Z/results.json",
+      "suites": 40,
+      "failed": [
+        "layout-ui",
+        "image-ink-ui"
+      ]
+    },
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T16-07-42-423Z/results.json",
+      "suites": 5,
+      "failed": []
+    },
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T16-09-35-234Z/results.json",
+      "suites": 41,
+      "failed": [
+        "advanced-ui"
+      ]
+    },
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T16-21-10-631Z/results.json",
+      "suites": 41,
+      "failed": [
+        "pdf-modes-ui"
+      ]
+    },
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T16-30-56-254Z/results.json",
+      "suites": 41,
+      "failed": [
+        "local-navigation-ui"
+      ]
+    },
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T16-40-30-515Z/results.json",
+      "suites": 41,
+      "failed": [
+        "local-navigation-ui",
+        "study-ui",
+        "scribble-ui",
+        "employee-host"
+      ]
+    },
+    {
+      "path": "artifacts/hardening-20260930T152459Z/run-2026-09-30T16-52-42-355Z/results.json",
+      "suites": 41,
+      "failed": []
+    }
+  ],
+  "runtimeHashes": {
+    "runtime.cjs": "e7f5efa2dfcb7f724e3c8297a1fe827529b05d118aff18e762caca7d77a2dc55",
+    "cli.cjs": "e781a6c41fbe83b6c20738b2959d1944a1b73903bcfabe13440c15f467e3af85",
+    "schema.json": "9ae42163d1c901518108d2b1eeb7becdc9079a1c4cbe426ae010de50a7ccfae9",
+    "agents-company.plugin.json": "e9c243276c36d2153910b4d980254e0f232fc1bef16979d9108c3c62c86610cc",
+    "lib/av-document.cjs": "44959724f579ec39ef9e25cb1e5fd41ef4745602c4e915711a998adaef3932e5",
+    "lib/backup-reader.cjs": "f29455e2a0ddadcaf7d8820c9c26581b547d54e9f498c104213618e608af776c",
+    "lib/backup-restore.cjs": "7f9f5acbfd235664608f6a1236bca4c9c8d49c235b6fd2f85a7dcf7c914fa382",
+    "lib/backup-stream-format.cjs": "c35ec19978b9d623e457001e2832ba362ad12812a60593425f481a2d153ca4e6",
+    "lib/backup-stream-source.cjs": "010ca8c091d09fc7dba9303d9de57964480b9107a5a0cfcf3e178ee40190d1ea",
+    "lib/backup-stream.cjs": "c447fcb70b775ab671eaf4df08297f2601501c6ca2de1a6259f3d23a336014cb",
+    "lib/batch.cjs": "a261349f8d30dabdb805842ae94dac9f858f76fbe2a720aaa5fa66bf0b0b412f",
+    "lib/card-location.cjs": "f0aeae0235f42166ad6d8d19a5b4fa69a7be17ba9765aeeeb68895d49675b808",
+    "lib/card-text.cjs": "7e476425693854d5416892b2f135253821465f51b0c6ebcd9f04dc62d5393e15",
+    "lib/cloze.cjs": "7c9456a7140b063b53960d3dd1b5bed03d92802c3bde7671eb0d3a6a463d03fc",
+    "lib/document-layout.cjs": "25ab579ee6c1e31ce91e811aae91b6d886c462016ffb04bb2d31376381b29b16",
+    "lib/documents.cjs": "44a17127ea4d5d8786eadad633051a2ec8ad523387e6b2c06e22dc8dc31730bf",
+    "lib/excerpt-editor.cjs": "9120737c1fed9520a7d244f07e5b25e917da058d1fe426d46bc31f781a499197",
+    "lib/excerpt-parts.cjs": "9832b63d8aee4c5257bc0f6e2c9e90de0e5dddcba879568245b4055df834fc1e",
+    "lib/export-anki.cjs": "99dad6d60e3edaae82bb5c6b1d695a94a3379ed299140c995aba660e5ef09564",
+    "lib/export-docx.cjs": "87c6ebc44671e6cf30b740ce35202de789e69e9cce338110b918d7ce6e708d14",
+    "lib/export-render.cjs": "938c851da3f6f50ec42de791c3f57653a7ad35cf889a45014cf2d8da25575804",
+    "lib/export-worker.cjs": "add392ae396013ee32812533a9b1fff06d26b730925281efb51ba5c23e63df49",
+    "lib/files.cjs": "954d0dbe8a06231102870145f028dffdd4ebae5c88de2152b091bacf79a3c7a2",
+    "lib/generated-document.cjs": "a3e4dfb2a0bda499ead3ec5400a75b2ea3963a102f2f26447f6db6da1a7d619d",
+    "lib/html.cjs": "48f392d9319303ec443d524ce0aa1128b1ab548d8daec20e00cce31f1c692b29",
+    "lib/image-ink.cjs": "f5de1a9314bbcd5b1b9ddb3fd53d1e9b41853154c14185d7f22f7147949e92a3",
+    "lib/image-marks.cjs": "79aac93a802e06a9139b6ac2b80ce91677a5f3eb1d654f02ee48891c114a2e4d",
+    "lib/ink-geometry.cjs": "4ed2897f2fe1c6a4451f7126ad1fc2149420b02f1a302a2e102805e287fb24f2",
+    "lib/ink-toolbar.cjs": "82b440f3f8dedaac61dda50061f5eb866eb4f5bc129bc2fc127fa408625839c1",
+    "lib/library-backup.cjs": "1c4e9c3cffccf2ac5dbe5f91c80485bf2e29414bfe9e33a2b90fa806d5d0289d",
+    "lib/library-search.cjs": "2b2059d7f3d0c1741a95913d1f5dbefd6a54274a510e98d280a06f51059d8cf7",
+    "lib/literal-links.cjs": "92c6572707ef9a9d5e005c21e88d3566297394a331b529de49303c31f274ed94",
+    "lib/local-dictionary.py": "9765cdfc1aaf6decf9fb6b497c853ae525c386fad60231451ad047f1411afb97",
+    "lib/local-reading.cjs": "edb9ae2d42ffcb16641210bd18837169a9aaac898053c8cf7f6367e70683751a",
+    "lib/mailbox.cjs": "98542bed2ea40dc14e858f39c72c4fa129ee8ddaa8f1b416ab20ec7b11adaeaf",
+    "lib/map-ink.cjs": "d111fad1f527e2611167c11b5143de2d5b94ecc6c4864ee691b8d7b217c41fc9",
+    "lib/mapping-repair.cjs": "7d4401abc0afe44f9424752ba7d6ef8e6a93ea695977791141efb6327ec62602",
+    "lib/media-worker.cjs": "de6df5d1e2ee9a43d9e1db107dd01bb315b33ba108dcd2672eb1918b3b3f3b29",
+    "lib/mobi-targets.cjs": "8f1a995b043009bc686472c64827ba3c9c5ca1660cd9636c22e4f26832be09e0",
+    "lib/native-process.cjs": "ab30c83aebf63c95ed3481c715a48cc005cbe01d566531c0d485805ad8cee0f1",
+    "lib/network.cjs": "d0951e146efb820c767fe364f5341dd0d9bfb36a7146bf9e3ca3668167866e90",
+    "lib/outline-batch.cjs": "dff21c761d67403cd5d8d6fa1e4e9ad7bdc1f7a8e0deedc85f02a1858dbb9ac4",
+    "lib/outline.cjs": "e4e4aaeb70d1b29eff66a6f00afa362e15e4c2ed094cfeee0967fb5465f87dc6",
+    "lib/package-identities.cjs": "94e67295a98612c354392403c3bd109cf831470dfbba90905d8a2d0bd4608f17",
+    "lib/package-validation.cjs": "4741e3deb3f1c5763378fd0b9a3fee7a3628326c293a6d058ddd01c5619f9881",
+    "lib/page-reference.cjs": "5e5d0d3e858ea39f40bb7071c40766db961c37387aa2e03417c7357c0fbe4494",
+    "lib/parse.cjs": "393bb71b5be34024d81cdbe2c17e088771783060649a567b5a0a04316cee679e",
+    "lib/parser-worker.cjs": "1d75c79fd4752e3959164f29435f10b9449fe0c175b519efa05b6c62d816ec19",
+    "lib/parsers.cjs": "69231890281e43c86a365e939cb56acf8dd3de87660b546ad6e40363d4d8d09a",
+    "lib/pdf-edit.cjs": "4ee17dcfccc4ac639f3453788ac5b54b812ad4d69011d3ad71bd557502802f4d",
+    "lib/preview-worker.cjs": "0b422e4fa6cbc46c30aa3b7c344de71616bdde61fd83f3ac3a3e35bf7277ec8a",
+    "lib/preview.cjs": "3e9c238f919241ff2e60aad8231cf236c34210b4213d5118caba52b2e429636e",
+    "lib/reader-state.cjs": "699cf704e70c934c63b834e4839590c1c8bb950c1574aad0f49efd7a0d7d7d31",
+    "lib/review-content.cjs": "535d581a0ba455bda8adf32cad759821d4834afa6bdba73ecc04d65646f484ee",
+    "lib/safety.cjs": "e2524729e625f7de6e3f279b70f5014dc7ee14f100dca3973846f07cdae5355e",
+    "lib/search-query.cjs": "825bb3a19556304d689e959a2a4000a6c71c7106345f919428c8a21522b5b4df",
+    "lib/server.cjs": "d857010bd0cb00bf7ed2658421b874c49fab458ebede9c742ee400d3b52ed72e",
+    "lib/store.cjs": "2f683ce84b880123f4fc7940d005b0d0bcc6eade80dfa92e5ac266744fd21f15",
+    "lib/stroke-geometry.cjs": "1acbbf37cab936e90f751693c91bc926daa01172555dbae51d497e515acbb755",
+    "lib/study-advanced.cjs": "52813d203e51dc74e476b0b967f752d70e8eafbd02729806d482f4036fde0018",
+    "lib/study-capture.cjs": "a5977757ce1b0c1745fbdb25270433ed7fa4746e4b0f28ff4c1b90a97a85c776",
+    "lib/study-clipboard.cjs": "e337e0d1f5d2e04c8b1913556cebe9e4c667f0f55a16808af77468a3df8c7dbd",
+    "lib/study-content.cjs": "4cef2e19fd96cb2d6ace5e6e3c2352854cc5ee3d754528ad8646d00be94136f5",
+    "lib/study-dictionary.cjs": "339d5315a611f96a11a042bc501e798bd054a64744ee3bfe6db91b8250535c9a",
+    "lib/study-emphasis.cjs": "b2d4b394c961ec2bd03d9ecd084fb26b8d506f38666363e5c447c95dc518cef9",
+    "lib/study-export.cjs": "0fc30841d0211cf68f8dfb19dbb1eee3d619b32ff932e51e7c0b4af675881687",
+    "lib/study-history.cjs": "d74c4642e470d321dbf2a6e632db1d4f8bd0b1aa22c7e708c81395e15a2661c0",
+    "lib/study-image-worker.cjs": "c4610acd89cff460cf42a96b3912587f64e7dde2b3817e6d9016b4cafc6f73d3",
+    "lib/study-ink-tools.cjs": "36d33880291f24f884650ace95bba38cbe3a3b920a06193779064d735862a3af",
+    "lib/study-ink.cjs": "a5caa48d1c63a1dd0dce1de6fb825d867a3d8147a02807baaca4c31fb0e7cc80",
+    "lib/study-learning.cjs": "15a14b356ae11dc6f4baf3febc368466d5f3694262764118949075e0f33a4ce1",
+    "lib/study-links.cjs": "20a931e8d61835c8dd133318b1d84d0273e4aa7b0d54c15aa16828fd40988592",
+    "lib/study-media.cjs": "24e3414f2404f98aa1cdd73a297ba2328aa248fe7649ba20b4a56a5d482b655b",
+    "lib/study-model.cjs": "d275169fc73b3a51d5e8076057a6b27cc73c57666c09a320f1c4959804c36eb9",
+    "lib/study-navigation.cjs": "776b9c7e0db4c56f38e49df16074e17bc71eb152d5ade90431ac7c55f9ff345b",
+    "lib/study-notebooks.cjs": "500dd5c16bec2a56f80f7c3b0e18f087d525d0a6d1ca74772e4826372c759cb2",
+    "lib/study-optimize.cjs": "c9b760eff26b8800161ef560269768040fff15d2578093e0928909533044766c",
+    "lib/study-organize.cjs": "ddc244754152c39a883a6d0bbee4b606df7fe4367fbeba288d95831c6f109a4a",
+    "lib/study-package.cjs": "663be528545df5285466361bab7d6012b27291ac41a2b6ed23875e42cd644dd0",
+    "lib/study-review.cjs": "af32c6f5e12e3e0fb7f4bd4be680e3fdd70793d34391bfca3ff417ebe68e67bd",
+    "lib/study-ruler.cjs": "ef6bc4825fed8f5b6bc13ec9a724b273f5ea43d20efce2b15aac9035f17e6d5f",
+    "lib/study-tools.cjs": "c9fba81bcbe0e7a3998e87cdca797af5ca98294da8bb099ca43cd23384c97bb1",
+    "lib/study-tree.cjs": "5584643f46a79e4ff55c5772a1f84aa576357ddec8ab42b7aa9c51820f4e0820",
+    "lib/study-versions.cjs": "571b9e68d2a638bed7e40f183c223e95b010440e89ea5ca4684a21f71280cdbb",
+    "lib/study-workspace.cjs": "398ca71cd1f093af2c92e40dbef773eef4bf1c62ea6863d6bb82785ebeb15bcd",
+    "lib/study.cjs": "4be1929c00d900b33abcdb17d926d4b46623c6f7e4b7977c7bb6387acef7ad21",
+    "lib/text-offsets.cjs": "4f9b91927976f5461186ee54891d6bac895567d0524c0b0c4cff64a6779a9525",
+    "lib/virtual-document.cjs": "e3fb3a6a7491e9e77d71785caeb5848a5a5103989b0c4814cca622b4c13e82cc",
+    "lib/web.cjs": "9ab5cbcaa0b76e200affaeeda3ce33f9f6e0485206d0640a9dce715330b86f54",
+    "lib/worker-jobs.cjs": "b6a95f6db4388680dabebc0a60adfa1bbdf81bbb1998535ea706b1cad15e82b5",
+    "ui/advanced.css": "2ba55a3a7d907fea25dd45607ab69f31f22b4098dc0c83812c7b6d4c481fd1f9",
+    "ui/app.js": "01bed02a2649b3a326ed334ea3f2c5f24b0202a361d40f8e01aca18eb32aa73f",
+    "ui/av-reader.js": "6a576514301579407f93d27a8e32f1593efacf8f248c4d008e01ce50a89dadad",
+    "ui/av-study.js": "8f7f61fe9d373c0671b10bbdba504f28555fdb8fdee44188d0f82cf2bc58b69f",
+    "ui/backup-tools.js": "77ae0c34a9be6a7381d3602f7cc7ccddeff7b1e946cbdca5f20f39b07ea7df36",
+    "ui/bookmarks.js": "0dcc65e6e93178b1d7fec503b062aa60b651a46c84cf3eeb986ee96b3f19a7c8",
+    "ui/branch-layout.mjs": "414017f91f1f8366e31650ce1b8bde4c1aa4c90fbde77cdc15664c7a8caf0ab0",
+    "ui/capture-devices.js": "5373905ee12a2378221d7511e48ef053b5c1ddf58adaadc7de9743fd5d08c37e",
+    "ui/card-ink.js": "3f53ca973092f80112b18581fa8902bdfab7c2212212236a4c499b97481d7e36",
+    "ui/comparison-tools.js": "b42123eae7da8a8d3f6d420e5ab5226e483efe57fd064f6c7a95f565b94853a6",
+    "ui/content.css": "1d23cd0e1d81829d8f9e2855defb30b0951ddf8cda633633c88ea7660bb8e1eb",
+    "ui/dictionary-ranges.mjs": "b7be58c003f34fec0b3e7017d73371e42e40a51f6787dfe9e032f241dcfcd063",
+    "ui/dictionary-settings.js": "81dc704205f52c383da4c5b09ba29bd9ec2db0aeea471fb776ffd4bf2d7772c5",
+    "ui/dom.js": "a17e632050bd9ee623e2aa12917c9292e457d8759ccf0251c899824e3a61d10a",
+    "ui/icon.svg": "8804accaae2ff60794e80dd877701752ebb46998207f26065e537f63d3324c85",
+    "ui/image-ink.js": "125fa2d474288d5c768506454db1dd7da828736fca3fe357b6a11bf091ebcf1d",
+    "ui/index.html": "2edc7b231b43974cf7b82ba8bf084cbfd97e9b3beb0a619ac4d533d5e1a42071",
+    "ui/ink-binding.mjs": "8f2a7dc0355b08f5c63bcdc80c08b08826e143591a164bc6306ac3c98f4d6244",
+    "ui/ink-gesture.js": "3b4d2e0a99073ba1151e4963ae66c8a195b4136d20371318db5b5486d213f5a7",
+    "ui/ink-recognition.mjs": "bd648a0bf651941dfb7011ba7cbf64de4689268f83be9b8105ad440417d35ae7",
+    "ui/ink-rulers.css": "c245040cfb6e6bfa534f9169a866499bcfc80fa8cce14eb5da4f1e4610b5e91f",
+    "ui/ink-rulers.js": "4b12e0edb44ff4dc065a353cecaf8726cbfcbae4b23f195878b9fc49833d31a4",
+    "ui/ink-shapes.mjs": "1f362a0926bca7f7d53fc97d7e6df46bdd6ac5af476260acb6a70c06e9ee1175",
+    "ui/ink-toolbar.css": "0af180275b7a0c1392e6b07694054d4786a3b9623d90f74fe4ef92310c961210",
+    "ui/ink-toolbar.js": "30c4212871cedce52aca60085c2a5d1935d15c55fe3272326890d650e0df3d36",
+    "ui/ink-tools.js": "22756a8c4815f6e6aad6ebe13e95334f9706c73322e45f28d738d203ade69e70",
+    "ui/library-drag.js": "b445e5af3775da87ec6b60a2b3e122953dd17616cb32d65f869546b63e4ab85b",
+    "ui/library-previews.js": "f2579bb199d3d6a88ea32128f438b858bc9ab7fe8df26bc61683b965601fdbf3",
+    "ui/library-selection.js": "3a74076bb2f0ede43799163da83c1c126aff4b33f2d586e3092a7112d377d531",
+    "ui/library-view.js": "9ab34fd675b486f82bd41242a1a09bf5f49050f7f2261a1c67820a2c8e781a0a",
+    "ui/library.css": "f0d8132e218d116714e0837c5ed2e89a6b6eb36cd5ea845710b056e17a24452b",
+    "ui/library.js": "50445eb156ab6d23223c67db9a577ece9ff1bd3d6ae757e016d0b0c98f74725a",
+    "ui/map-interaction.mjs": "14d7e68dda18070540f555f14a82fdff7b7840a1d276ed99c0ede1ee3b4db2b2",
+    "ui/map-tools.js": "7e8872777683bec3bbc068ff55c2537bf61161567cee8bdc29e42d13ae9c651e",
+    "ui/map-viewport.js": "090c5ec41201c68088ae10aee358d9c541b1a805d87130e10ec061fa2d8de39f",
+    "ui/organize.css": "800cd5cd8cd13df50aa9f384b6813a22e4fa1318c6b210c4c1217126b359e2e0",
+    "ui/outline.js": "96f8eeee8ef4b3f7e4ac2f550d1cae5064ef7e4334ce07b3170c707fa29bff64",
+    "ui/page-layout.js": "982943dac921ff6563235acd1bd31c896148a0e8b376f94485155626ba0acab0",
+    "ui/page-slices.mjs": "2c0aa315666fa8134ccf4c3a217150d1f43e86fcec9e265cc4a69b12837fcc39",
+    "ui/pdf-geometry.mjs": "ffd31e3635d102e6b7fde63b2b091bc6905ddf77b07efaaca887e0e1decf104c",
+    "ui/pdf-gestures.mjs": "ca5cf1029d6c3362bd6b5d0312146ac086d4695130d5df4f5d2618c173bc9619",
+    "ui/pdf-layout-view.js": "20807d01cbdaeb0fced669873bc204a50cb111ae45c0cb81026a7afe766e6f34",
+    "ui/pdf-reader.css": "7f9be880340fb8e8aa201ec3b96e7edfafdf22912aa97074baa536125da63562",
+    "ui/pdf-reader.js": "0598b153a9d0d2c8f37eaa153fd2dda7a8cbcf1637e52d3fe217648018f45712",
+    "ui/presentation-pointers.js": "41abefa9de173ca09e26218b162ad42822211d9f91b0f2426379033dcad2a29f",
+    "ui/reader-appearance.js": "3f8a9bd7d297f828606040931fb0f62880220b514545e3b88700f80d0464b0ff",
+    "ui/reader-dictionary.js": "1b7f2f5935697ada390af26a9c012d6857f2888a4ad8c84b92f0b13c6614832b",
+    "ui/reader-tools.js": "baf2d942a7be7579c5afabe7ee5a50434624768df62f95abc86d72bf57ed35a1",
+    "ui/reader.js": "e66f56e4459476907cbf182acd3ef150db8c4788e5d58002726ceaeadae6bdb3",
+    "ui/review-faces.js": "f0af7aca7f7a6e93ec2be15995762695cc16a1b984569aec3c99c9246ba7fb6f",
+    "ui/rpc-client.mjs": "cc191f5031f550463103ffc9fd8444643e1972c4979cef861a1272709a5509ef",
+    "ui/ruler-geometry.mjs": "2c9e95b288379c007a337f46d0581cb816ed59f219f3ba85cd86525edd018b2e",
+    "ui/selection-utils.mjs": "b0afbaf1f80e3e72dfc623eebfd8cfc7071647e611f4777c2e4c76faa67aa32e",
+    "ui/study-advanced.js": "740c5810fe4a8f7e71e9c645ea72716ffe9997ced15eb4d9bbdc76b7a26b8f78",
+    "ui/study-boards.js": "e1c5b3795c3d4ae52fa3c0381d0900f63230ae0a1ea9cbf7df48dc09c63df530",
+    "ui/study-content.js": "7bd40d894e14d9212e761edcf9e65b15c38d281acace59f9848949630d275f96",
+    "ui/study-emphasis.js": "182a0275c4bf2f156b1637fd726ae41c5759f93a330cf33d612a444ab7637a51",
+    "ui/study-excerpts.js": "df6772998fd7e5cd4ed1babd6181fde5c8a9dc45ef5bf6bc811edc99dd4a5ffe",
+    "ui/study-export.js": "5573b6584e980a3484ade0423770b74479639cb1922d362b7013978c29825ca9",
+    "ui/study-ink.js": "fb0af413b46d646c25ec3f78b63d6f48885b6bf21fff6f8b11ba8ab441427580",
+    "ui/study-learning.js": "559c865d0c8489de048b521c2a273f8d6a6b43113988d0b5b403768749dd8b1f",
+    "ui/study-map-layout.mjs": "bfd4d059f53b487072fcf998a205890504c50a3d02c942ce05251648d399c11b",
+    "ui/study-map.js": "1f17be1308fdd66f4e9ddeb814036d4852dbf722946d53d3aa5fa7c541f99e0f",
+    "ui/study-organize.js": "26453dd0901b036de86346c6259812ad45598d59afb0d832bca2fd18d558728e",
+    "ui/study-toolbar.js": "2af72ce080ad7342befbaa7fea029e63b17ac2a99b43ab0a3adea9e883b96a4d",
+    "ui/study-tools.js": "d635f8a19f3a5b45ae00281be410c1a3f924b0acc4cf567f84d44516543523c3",
+    "ui/study-workbench.js": "019cf5dfde2bedafe94bc00568214351becaea647e36f6e14f2efd01752f1d6e",
+    "ui/study.css": "cc991f52c106c75f7ca077926531d47799eef4a0ea87895f0df751b2b8cbdad7",
+    "ui/study.js": "68f5755203d76bbd8751434eca26a74a7167b145b376a4e4e69ded089ec3c342",
+    "ui/style.css": "b2dadf63c16830180e642374754e17097c846dfcf05c60011b63f7e42d20e9b0",
+    "ui/transient-ink.js": "215953843652d001ee0e96a1a29fb1abef10ef6431d8cb287a7cfa464839755a",
+    "ui/transport.js": "e844667509ea0e4829b2f12f418414533999425e513d608421d9902be04e95d6",
+    "ui/viewport-index.mjs": "d86ec4f3619fbb47aa1645916a18db93cc9bf3606242a8e72b7517522a10b7b6",
+    "ui/workspace-tools.js": "87ca58bc9fca6d11486ca4f3b9d44c53720f949630a025cfb6d2c0a801c832b0"
+  },
+  "notes": [
+    "Previous failures are retained; the final complete run must independently pass.",
+    "Test libraries are isolated; other host processes were not globally controlled.",
+    "10k text cards and 1.125 GiB binary backups are different workloads; neither proves all local MarginNote parity."
+  ]
+}

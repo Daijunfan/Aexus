@@ -1,0 +1,24 @@
+Channel source identification artwork
+
+X logo: X Corp.
+Official download: https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-logo.zip
+Original file: logo.svg (white logo, unmodified)
+Guidelines: https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-brand-guidelines.pdf
+Displayed in its original white on a black background.
+
+YouTube icon: Google LLC / YouTube
+Official resource page: https://brand.youtube/youtube-icon/
+Official download: https://www.gstatic.com/marketing-cms/78/29/3e68a1414bb28d0b7e47b44c3c91/youtube-icon.zip
+Original file: YouTube_Icon/Digital/01 Red/yt_icon_red_digital.png (unmodified)
+Guidelines: https://brand.youtube/color/
+Application attribution guidance: https://developers.google.com/youtube/terms/branding-guidelines
+
+These marks identify collected content sources, not Agents Company or an endorsed
+partnership. Their owners retain trademark and artwork rights; they are not
+relicensed under the host project's GPL license. File hashes and provenance are
+recorded in src/renderer/src/assets/channel-icons/sources.json. Public redistribution
+review remains pending in licenses/release-review.json; this notice is not approval.
+
+Telegram channel photos are independently fetched from each configured channel's
+own profile and are user data, not bundled artwork. They are not sourced from a
+forwarded message author and are not covered by the host application's license.
