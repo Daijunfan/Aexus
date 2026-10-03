@@ -4141,7 +4141,7 @@ web.import 生成自包含 HTML，记录原 URL、保存时间和可下载的内
 
 ## Compatibility
 
-Agents Company CLI Plugin Contract v1；CommonJS runtime/CLI；Node >=22.13。运行依赖锁定并随 build:plugin 产物携带。UI 是相对静态资源，使用宿主 rpc/events/data 路由；独立 serve 使用等价的令牌回环服务，无 Electron 依赖。UI 完成初始化发送 ready；关闭先 flush 未完成写入，未保存草稿或保存失败会明确拒绝 flush。宿主仅负责窗口，不参与领域逻辑。
+Avalon CLI Plugin Contract v1；CommonJS runtime/CLI；Node >=22.13。运行依赖锁定并随 build:plugin 产物携带。UI 是相对静态资源，使用宿主 rpc/events/data 路由；独立 serve 使用等价的令牌回环服务，无 Electron 依赖。UI 完成初始化发送 ready；关闭先 flush 未完成写入，未保存草稿或保存失败会明确拒绝 flush。宿主仅负责窗口，不参与领域逻辑。
 
 PDF 使用 PDF.js 原页画布与可选择文本层；Core 使用同版本提取原目录/全文。DOC 为纯文本读取（不保留旧 Word 图文版式）；DOCX、EPUB、MOBI/KF8 为流式正文，不能承诺所有排版与商业阅读器逐像素一致。RTF 需要 macOS 系统 textutil，其余核心格式不需要 Calibre/Office。ODT/FB2 是结构化文本读取。DRM 电子书不支持。扫描 PDF 可看原页，OCR 不在本轮范围。
 网页抓取只允许公开 HTTP(S) 资源；每次重定向与图片下载都检查地址，拒绝内网和 DNS 重绑定。页面本体/图片大小、数量与超时有界。需要登录、客户端渲染或反爬验证的页面可能无法自动提取。项目不代表 MarginNote 官方，不兼容其私有数据库；图标为独立绘制的相近蓝白视觉。

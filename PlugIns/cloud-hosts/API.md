@@ -8,9 +8,9 @@ workspace: required
 
 ## Purpose
 
-统一管理 Agents Company 的 SSH 云主机、账号、密码、私钥、系统类型、连接状态及目录浏览。Team 只引用已有主机 ID 和远端工作目录，不再复制账号配置。
+统一管理 Avalon 的 SSH 云主机、账号、密码、私钥、系统类型、连接状态及目录浏览。Team 只引用已有主机 ID 和远端工作目录，不再复制账号配置。
 
-这是宿主服务型插件：独立 CLI、插件 UI 和员工 mailbox 都调用同一套宿主 `host.*` Core API。启动 Agents Company 或无窗口运行 `agents serve`，不需要 Electron 窗口。插件不启动自己的 Agent，也不维护第二套 SSH 连接。
+这是宿主服务型插件：独立 CLI、插件 UI 和员工 mailbox 都调用同一套宿主 `host.*` Core API。启动 Avalon 或无窗口运行 `agents serve`，不需要 Electron 窗口。插件不启动自己的 Agent，也不维护第二套 SSH 连接。
 
 ## Workspace
 
@@ -116,7 +116,7 @@ Team 在 sessions.json 中只保存 `hostId` 和 `directory`。旧版云端 Team
 
 ## Compatibility
 
-契约 agents-company.cli/v1、Node 22+。独立 CLI 依赖本机运行中的 Agents Company Core 服务（`agents serve` 即可）；UI 不是依赖。数据由共享平台服务持有，插件代码可独立升级，边界仅为上述公开 API。Linux/macOS/Windows SSH 执行复用宿主 Tunnel，云端 Agent 的命令仍禁止在本机回退执行。
+契约 agents-company.cli/v1、Node 22+。独立 CLI 依赖本机运行中的 Avalon Core 服务（`agents serve` 即可）；UI 不是依赖。数据由共享平台服务持有，插件代码可独立升级，边界仅为上述公开 API。Linux/macOS/Windows SSH 执行复用宿主 Tunnel，云端 Agent 的命令仍禁止在本机回退执行。
 
 ### Employee identities
 

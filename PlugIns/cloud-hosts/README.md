@@ -1,6 +1,6 @@
 # Cloud Hosts
 
-Agents Company 的 CLI-first 云端工作台：主机管理、持久 SSH 终端、原生 RDP 和内嵌 VNC。所有业务操作通过共享 `host.*` Core API，无需创建员工，也不需要 Electron 窗口即可从 CLI 使用。
+Avalon 的 CLI-first 云端工作台：主机管理、持久 SSH 终端、原生 RDP 和内嵌 VNC。所有业务操作通过共享 `host.*` Core API，无需创建员工，也不需要 Electron 窗口即可从 CLI 使用。
 
 - 概览：主机搜索、系统、认证、指纹与缓存连接状态；仅显式刷新触发 SSH 检查。
 - 终端：xterm.js + 现有 SSH PTY，支持会话恢复、Ctrl+C、Unicode、窗口缩放。

@@ -10,7 +10,7 @@
 
 ## 运行
 
-1.14 增加文件夹渲染模式和 Agents Company 插件包。使用 `--workspace /absolute/folder`
+1.14 增加文件夹渲染模式和 Avalon 插件包。使用 `--workspace /absolute/folder`
 将现有工作文件夹作为数据源；普通 Markdown/文本、CSV、图片和 PDF 直接映射为页面，
 结构化页面、数据库和记录保存为 `Documents/*.mininotion.json`。CLI、独立窗口及
 宿主中的嵌入界面共享该文件夹的同一个后端服务。
@@ -22,7 +22,7 @@ npm start -- --workspace /absolute/folder
 npm run build:plugin -- --out ../Agents-company/plugins/mininotion
 ```
 
-文件夹模式不读取独立 App 的个人数据，也不启动自身 Agent。在 Agents Company
+文件夹模式不读取独立 App 的个人数据，也不启动自身 Agent。在 Avalon
 中由 Team 员工使用注入的 CLI/API；独立原生数据模式保持原有功能。
 详见 [CLI 文件夹模式](CLI.md#文件夹模式与宿主插件) 和插件包内生成的 `API.md`。
 

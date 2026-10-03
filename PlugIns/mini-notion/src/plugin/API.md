@@ -10,7 +10,7 @@ workspace: required
 
 Render and edit notes, planning databases and calendar views inside the selected
 filesystem workspace. The GUI and CLI share one backend. This profile never starts
-its own AI agent; use the employees supplied by Agents Company.
+its own AI agent; use the employees supplied by Avalon.
 
 All hosted renderer requests use the same declared CLI methods. This includes
 `ui.register {ready?:boolean}` for client readiness; it never creates a window.
@@ -75,7 +75,7 @@ mininotion api page.create --data '{"title":"设计笔记","parentId":"MAIN_PAGE
 mininotion api fs.path --data '{"pageId":"MAIN_PAGE_ID"}'
 ```
 
-When creating a Work employee in Agents Company, select **绑定已有文件夹** and
+When creating a Work employee in Avalon, select **绑定已有文件夹** and
 use `fs.path`'s `absoluteDirectory` under the Team root. The equivalent user-side
 host commands are:
 
@@ -279,7 +279,7 @@ retains its existing desktop features. The host discovers this package from its
 manifest and does not import MiniNotion-specific domain code.
 
 
-### Presentation in Agents Company
+### Presentation in Avalon
 
 默认界面为白色/中性灰与对应深色模式，参考 [Notion 的侧栏与页面导航](https://www.notion.com/help/navigate-with-the-sidebar)。
 页面 `color` 仍通过 CLI 编辑并持久保存，用于页面标签和事件侧边标识，正文保持中性纸面。
@@ -377,4 +377,4 @@ In 1.22.1, `overview.get` / `overview.render` reminder items expose their effect
 
 宿主专用的 `assistant.list {}`、`assistant.send {employeeId,text,clientMessageId}` 和 `assistant.read {employeeId,messageId}` 也可经 `agents plugin call mininotion METHOD --params JSON` 或宿主绑定 CLI 调用。send 的 clientMessageId 复用 Core 私聊重试机制；read 仅投影该 messageId 对应原生回合的文字回复与错误，不包括后续无关回合、不确认用户已读。
 
-这些方法不启动 MiniNotion 独立 Agent、不创建员工、不得任意调用宿主 API。方法 schema 标记 `agentAccess:operator`，普通员工不能因插件工作空间授权获得此入口；用户/全局管理者仍通过原 requestHost 进入 session.status/list/send/transcript/info 的当前身份及目标授权。独立 App 使用原空间 Agent；文件夹模式只有在 Agents Company 宿主中支持选区 AI。普通 API 覆盖报告独立统计文件夹后端方法，assistant 方法由宿主交互测试及确定性协议 fixture 验证。
+这些方法不启动 MiniNotion 独立 Agent、不创建员工、不得任意调用宿主 API。方法 schema 标记 `agentAccess:operator`，普通员工不能因插件工作空间授权获得此入口；用户/全局管理者仍通过原 requestHost 进入 session.status/list/send/transcript/info 的当前身份及目标授权。独立 App 使用原空间 Agent；文件夹模式只有在 Avalon 宿主中支持选区 AI。普通 API 覆盖报告独立统计文件夹后端方法，assistant 方法由宿主交互测试及确定性协议 fixture 验证。

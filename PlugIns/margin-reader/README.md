@@ -29,7 +29,7 @@
 当前功能、快捷键与验证范围见 [READ_MAP_WORKSPACE.md](docs/READ_MAP_WORKSPACE.md)。下列0.8及更早章节作为开发记录保留，不代表当前仍提供学习／复习界面。
 
 
-Agents Company 的独立、CLI-first 本地阅读与学习插件。提供文库、学习集、彩色摘录图片卡片和跨文档脑图；支持本地 FSRS 复习；不包含 OCR 或 DRM 解密。
+Avalon 的独立、CLI-first 本地阅读与学习插件。提供文库、学习集、彩色摘录图片卡片和跨文档脑图；支持本地 FSRS 复习；不包含 OCR 或 DRM 解密。
 
 v0.1.1：已修复大分块上传和博客保存。在 Mac 上使用用户下载的《AI Systems Performance Engineering》（22,817,987 字节、1,061 页、516 个目录项）完成真实 UI 导入；文件 SHA-256 一致，翻页、搜索、目录跳转和重开通过。英文博客 CLI 与中文博客 UI 导入及断外网重开均通过。验证记录见 [REPAIR_STATUS.md](REPAIR_STATUS.md)。
 
@@ -107,7 +107,7 @@ npm run test:performance # 当前版本的同机合成性能样本
 
 已修复员工通信目录引发的 `events.json` 通知循环；CLI 返回文库、折叠/展开 PDF、重新解析正文、编辑目录和切换主题会更新同作用范围的已打开窗口。全局学习卡片检索支持标签以及 `limit` / `offset` 分页，用 `nextOffset` 继续，直到 `null`，不再静默丢弃第 500 条之后的结果。
 
-“全部功能”仍遵守 Agents Company 的授权目录：员工不能访问父目录、同级员工或其他 Team。查看该员工的学习集和文档，请使用 `agents plugin open margin-reader --employee EMPLOYEE_ID`；默认侧栏文库、Team 根目录与员工文库不是一份共享数据库。实际目录由宿主提供，不应自行推算。
+“全部功能”仍遵守 Avalon 的授权目录：员工不能访问父目录、同级员工或其他 Team。查看该员工的学习集和文档，请使用 `agents plugin open margin-reader --employee EMPLOYEE_ID`；默认侧栏文库、Team 根目录与员工文库不是一份共享数据库。实际目录由宿主提供，不应自行推算。
 
 复现本轮完整验收：
 
@@ -201,7 +201,7 @@ OCR 按用户要求不做；其余工作围绕本地阅读、整理与复习展�
 
 拖动时，目标文件夹的卡片与左侧树行同时高亮，松手前显示「松开移动到…」或「松开导入到…」。无效的自身/子目录目标显示红色拒绝状态。拖入文件夹后保留当前视图；外部导入通过 `import.finish` 的 `activate:false` 完成，全部写操作仍使用现有 CLI/Core API。
 
-验证：`npm run test:library`、`npm run test:library:native`；原生验证使用真实 Agents Company 应用、隔离临时文库及隐藏窗口。详情见 [VERIFICATION.md](VERIFICATION.md)。
+验证：`npm run test:library`、`npm run test:library:native`；原生验证使用真实 Avalon 应用、隔离临时文库及隐藏窗口。详情见 [VERIFICATION.md](VERIFICATION.md)。
 
 ## PDF 阅读模式（v0.2.0）
 
@@ -263,7 +263,7 @@ npm run build:plugin -- --out ../../build/plugins/margin-reader
 
 `npm run test:card-source` 使用隔离临时文库，检查单击卡片标题／图片、同页不同位置、重复回源、跨 PDF、大纲／卡片盒及逐页模式。验收要求标注实际落在 PDF 视口内，每次只发送一次鼠标点击，不能只检查 DOM 中存在标注。测试已纳入标准员工验收。
 
-## 接入 Agents Company
+## 接入 Avalon
 
 ```sh
 node ../../bin/agents plugin install \
@@ -274,7 +274,7 @@ node ../../bin/agents plugin install \
 
 当前构建仅写入本插件的 `dist-plugin/`；不会自动替换已安装插件或正在运行的应用。请以实际宿主加载目录为准；历史复制到用户插件目录的记录不表示本轮产物已安装。测试不启动收费模型会话。
 
-本目录遵循 Agents Company 父仓库的版本管理；开发修改限定在本插件目录。插件名称和 SVG 图标为独立作品，不代表 MarginNote 官方或其商业产品。蓝白图标参考其阅读器视觉，在插件界面与 favicon 中使用。宿主现有插件栏只显示名称首字母，当前协议没有自定义图标字段；此插件不会擅自修改宿主协议。
+本目录遵循 Avalon 父仓库的版本管理；开发修改限定在本插件目录。插件名称和 SVG 图标为独立作品，不代表 MarginNote 官方或其商业产品。蓝白图标参考其阅读器视觉，在插件界面与 favicon 中使用。宿主现有插件栏只显示名称首字母，当前协议没有自定义图标字段；此插件不会擅自修改宿主协议。
 
 ## CLI 独立使用
 
@@ -301,7 +301,7 @@ node cli.cjs --workspace /tmp/reader-library url https://example.com --folder Bo
 node cli.cjs --workspace /tmp/reader-library serve
 ```
 
-命令输出仅限本机访问的随机令牌 URL，手动打开即可。Ctrl+C 关闭服务。宿主中则由 Agents Company 管理渲染服务及窗口。
+命令输出仅限本机访问的随机令牌 URL，手动打开即可。Ctrl+C 关闭服务。宿主中则由 Avalon 管理渲染服务及窗口。
 
 ## 数据与安全
 

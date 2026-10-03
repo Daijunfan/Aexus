@@ -79,7 +79,7 @@ Cloud Hosts bundles unmodified noVNC 1.7.0 (MPL-2.0), xterm.js 6.0.0 and xterm F
 
 ## Original presentation artwork
 
-Application, Cloud Hosts, Margin Reader, local-computer and generic security-Linux icons are original Agents Company vector artwork under Apache-2.0. Engine and operating-system names identify compatible third-party products and do not imply endorsement. No extracted Finder/MarginNote icons are included.
+Application, Cloud Hosts, Margin Reader, local-computer and generic security-Linux icons are original Agents Company (now Avalon) vector artwork under Apache-2.0. Engine and operating-system names identify compatible third-party products and do not imply endorsement. No extracted Finder/MarginNote icons are included.
 
 The local 0.49.9 candidate restores the eight previously imported OpenAI pet atlases from `learn.chatgpt.com` and the original OpenAI/Codex and Claude identification glyphs from project history. These vendor assets are not covered by the application Apache or community MIT notices. Original sprite URLs and checksums are recorded in the pet manifest; public redistribution review is pending in `licenses/release-review.json`. Named avatar IDs render their own original artwork again.
 

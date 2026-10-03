@@ -8,7 +8,7 @@ version: 0.15.0
 
 ## Purpose
 
-本模块集成自 `Modules/Tunnel`，作为 Agents Company 的内部功能模块。
+本模块集成自 `Modules/Tunnel`，作为 Avalon 的内部功能模块。
 Agent 进程、模型请求及认证保留在 Mac；项目命令与文件工具通过 SSH 路由到所属 Team 指定的云主机。
 不注册为插件，不安装另一个 APP，不修改全局 CLI、Shell 或 SSH 配置。
 原 Tunnel 项目及其私有连接资料保留在原处，没有打包进本项目。
