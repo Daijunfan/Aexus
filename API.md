@@ -1441,182 +1441,77 @@ still verifies current foreground status for every acknowledgement.
 
 ### Group conversations and explicit mentions
 
-A group is a user-managed conversation independent of organizational Teams. Create it
-from a Team to initially include that Team's current employees, then select any additional
-employees across Teams. The membership is an editable snapshot: future hires are not
-silently added. `addTeams` imports their current members again when explicitly requested.
-Removing a group member does not remove that employee, change its Team, or stop its already
-running private work. A removed member cannot receive queued group work or publish new updates.
+Chat groups are independent of Company Teams. Every `chat.send` and `chat.post`
+message is delivered to all current employee members; an Agent author receives no
+self-echo. Mentions select work targets, not who can see the message.
+
+- A user `chat.send` assigns work to explicit mentions and the current Agent author
+  of a same-group `replyTo`. Without either target, it assigns work to all members.
+- An employee `chat.send` assigns work only to explicitly mentioned employees within
+  the sender's control authority.
+- Other recipients receive `awareness`: the message enters their existing native
+  conversation context without a work assignment. `chat.post` uses this mode for all peers.
 
 ```sh
-agents chat create --name "Launch room" --team "Product" --members '["EXTRA_EMPLOYEE_ID"]' --json
-agents chat list --json
+agents chat create --name "Launch room" --members '["EMPLOYEE_A","EMPLOYEE_B"]' --json
 agents chat get GROUP_ID --json
-agents chat update GROUP_ID --patch '{"name":"Release room","addTeams":["Engineering"]}' --json
-agents chat update GROUP_ID --patch '{"members":["EMPLOYEE_A","EMPLOYEE_B"],"expectedRevision":4}' --json
-agents chat history GROUP_ID --limit 50 --json
+agents chat send GROUP_ID --text "Check the release checklist." --mentions '["EMPLOYEE_A"]' --json
+agents chat context GROUP_ID --message MESSAGE_ID --json
 agents chat history GROUP_ID --before 25 --limit 50 --json
+agents chat post GROUP_ID --reply-to MESSAGE_ID --text "Checks passed." --kind result --json
 ```
 
-An employee may belong to multiple groups and administer multiple channels at once.
-Assignments are independent of each other and of the employee's company Team/role;
-removing one membership does not remove another. All deliveries use the employee's
-existing native session and FIFO. Group and channel names need not be unique: route
-by the current message's stable IDs, never a previous conversation or the active UI.
+Use stable group/employee/message IDs. Typed names are not explicit mentions.
+An employee may join multiple groups; membership grants access only to those groups,
+not other members' private conversations or employee-control authority.
 
-```sh
-# Authenticated employee: discover only groups/channels you currently belong to.
-agents chat list --json
-agents channel list --json
-agents channel get CHANNEL_ID --json
-# Each call explicitly selects its destination and a message in that destination.
-agents chat post GROUP_A --reply-to MESSAGE_A --text "Reply for group A." --client-message-id reply-a --json
-# No reply for group B: do not call a publication API.
-agents channel message-post CHANNEL_C --reply-to USER_MESSAGE_C --text "Reply for channel C." --client-message-id reply-c --json
-```
+`chat.create {name,team?,members?,ownerId?}` supports up to 200 employees. An Agent
+creator is the Owner and must be a member; the user may select a member as Owner.
+`chat.update {id,name?,members?,addTeams?,expectedRevision?}` replaces supplied members
+and adds current employees from supplied Teams. Owner/Admin manage membership and
+moderation; only Owner or the human user dissolves a group. See
+[conversation roles](docs/CONVERSATION_CONTROLS.md).
 
-The human user or an Agent may create a group with an explicitly identifiable Agent Owner. Only its actual Owner/Admin edits membership or moderates; only Owner dissolves the group. Company rank, including Secretary, confers no group office. Groups accept up to 200 employees. `chat.create {name,team?,members?,ownerId?}` deduplicates the
-selected identities. `chat.update {id,name?,members?,addTeams?,expectedRevision?}` replaces
-an explicitly supplied member list, then adds explicitly selected Teams. An optional
-revision rejects stale edits. The UI exposes the same create/edit/member-selection APIs.
-`chat.get` returns current identity-only members and unread metadata. Its latest preview
-may include `lastMessage.author` with the authenticated author kind; older previews without
-that optional field retain their stored `authorName` without guessing an identity. `chat.history`
-returns `{messages,nextBefore}` in chronological order, default 50/max 100 messages.
-Every message has a stable ID, sequence, actual author, timestamp, text, kind, mentions,
-optional replyTo and per-recipient deliveries. No private transcript content is inserted
-without an explicit publication.
+`chat.get` returns group/member identities and unread metadata. `chat.history`
+returns `{messages,nextBefore}` in chronological order, with `limit` 1–100 (default 50).
+`chat.context` returns the selected message, current policy, shared workspace and
+latest 20 public messages. Messages retain their author, ID, sequence, time, mentions,
+reply reference and per-recipient delivery.
 
-```sh
-# @one or @several: use stable IDs from chat.get, never ambiguous display names.
-agents chat send GROUP_ID --text "Check the release checklist." --mentions '["EMPLOYEE_A"]' --client-message-id request-001 --json
-# @all current members.
-agents chat send GROUP_ID --text "Confirm your part of the release." --mentions all --client-message-id request-002 --view all --json
-# The operator's message without mentions goes to every current member.
-agents chat send GROUP_ID --text "Release review is at 15:00." --json
-# Publish shared context without assigning work (operator-only message kind).
-agents chat post GROUP_ID --kind message --text "A reference note for the group." --json
-```
-
-`chat.send {id,text,mentions?:string[]|"all",clientMessageId?,viewId?,replyTo?}` and
-nonnull `chat.post` publish to all current employee members. An Agent author is excluded
-from its own recipient list because it already knows what it posted; there is no native
-self-echo. `deliveries` freezes this membership snapshot when the message is accepted.
-
-Each delivery has `mode:"work"|"awareness"`; old records without mode mean work.
-For an operator `chat.send`, work targets are the union of explicit mentions and the
-original Agent author of a valid same-group reply who is still a member. If neither
-provides a target, the existing default is work for all current members. For an employee
-`chat.send`, only explicit mentions assign work and every such target must remain within
-the sender's existing control scope. Everyone else receives awareness. Every nonnull
-`chat.post`, including operator `kind:"message"`, delivers awareness only.
-
-`replyTo` identifies the original author as a main conversation partner; explicit @
-participants and the ordinary reply's authentic author/body are supplied by Core in the
-native prompt. Names typed as plain text are not an explicit mention. Cross-conversation
-snapshots and external news do not automatically select another employee; departed
-authors are not added back to the group. A reply/mention does not require a public response.
-
-Awareness uses the recipient's existing session and queue for a bounded reading turn.
-It does not dispatch the formal work prompt or create a private user/assistant work
-message, change an existing private reply receipt, replace an unrelated current task,
-or add another engine identity or execution queue. Busy recipients keep their normal
-FIFO ordering. Work recipients keep the original engine, host, workspace and credentials;
-only Governor work targets receive captured task-view context.
-
-Work authorization is checked before publication, after async preparation and at dispatch.
-Awareness has a narrower group-message delegation bound to the authenticated sender,
-group/message and frozen recipient, with current membership and credential rechecks.
-It cannot be submitted by clients or reused for arbitrary session control. Group membership
-still grants no cross-Team management, workspace or private-conversation authority.
-An Employee can inform a Governor in the same group, but cannot use this to obtain
-`session.send` or other management permissions over that Governor.
-
-Statuses remain `pending`, `routing`, `queued`, `running`, `completed`, `failed` and
-`interrupted`, with session/queue/task IDs when available. Awareness completion means
-that context was received and acknowledged, not that a work task was completed.
-Failures remain separate per recipient. A stable clientMessageId returns the same
-accepted message on an identical retry; different content with the same key fails.
-`mentions` retains explicit participants, and `broadcast:true` retains the operator's
-untargeted work-broadcast marker. Retries, including @all and after membership changes,
-never add recipients or change their accepted modes. Legacy publications without
-deliveries are not retroactively delivered. Restart marks uncertain active deliveries
-interrupted and never replays them automatically. Public employee replies are themselves
-new group messages, while silent acknowledgments never create another message.
+Deliveries freeze the current recipients and `work|awareness` mode when accepted.
+They use each employee's existing native session and FIFO. Busy recipients queue
+normally. Statuses are `pending`, `routing`, `queued`, `running`, `completed`, `failed`
+and `interrupted`; an awareness completion means reading, not completed work.
+Identical `clientMessageId` retries return the accepted message; changed payloads fail.
+Restarts mark uncertain active deliveries interrupted rather than replaying them.
 
 ### Private reading, deliberate publication and group mutes
 
-A shared delivery first runs a brief private reading turn in the employee's existing
-native session and FIFO. This turn has no tools, cannot post, and is not a work assignment.
-Core records deliveredAt/readAt when the native turn succeeds, after checking current
-task authority and membership again. No fixed wording, JSON, empty post or acknowledgment
-tool is required. Failed/interrupted reading does not release work; history queries
-alone do not create receipts.
+Core first sends the full message and its author/targets into the recipient's native
+context. The tool-free reading stage records `deliveredAt/readAt` on success.
+`work` then starts the assigned task; `awareness` completes after reading.
+Publication requires an explicit `chat.post`, `channel.message-post` or response-stage
+`agents_company_discussion_post` call. Ordinary assistant output stays private.
 
-For mode=work, Core then dispatches the original accepted work prompt. For
-mode=awareness, reading completes the delivery without a response stage. Employee
-public replies reach other members as awareness only; reading them cannot generate
-another public-reply wave. Awareness stays in native context without inserting private
-user/assistant work messages. Ordinary work output remains in the employee transcript.
-
-Silence requires no API call. Publish only a useful human-facing answer or update:
-
-```sh
-agents chat post GROUP_ID --reply-to REQUEST_ID --text "Checks passed; details are in my workspace." --kind result --client-message-id report-001 --json
-```
-
-chat.post and channel.message-post reject text:null; their CLI no longer supports
---silent. Empty/whitespace Agent posts and placeholder-only null, undefined or None
-strings are rejected before creating messages or deliveries. Operator attachment-only
-group messages remain supported. Historical messages are not removed or rewritten.
-
-The native agents_company_discussion_post is an optional publication tool during an
-active shared response stage, never a read-confirmation tool. It requires:
+The response-stage tool takes the exact current conversation/message IDs:
 
 ```json
-{"conversationType":"group","conversationId":"cg_actual_id","messageId":"gm_actual_id","text":"A useful public answer."}
+{"conversationType":"group","conversationId":"cg_actual_id","messageId":"gm_actual_id","text":"Reply text"}
 ```
 
-Destination and message must match the current shared work request. Text is a nonempty
-string, capped at 2,000 Unicode characters. Core checks captured employee credentials,
-task identity, membership and mute state. Reading, initialization, unrelated private
-turns, revoked identities, wrong IDs and late calls cannot publish. An identical scoped
-retry returns its first result; different text after publication is rejected. Further
-intentional updates use the explicit post API and separate retry IDs. The tool advises
-nextAction=end_turn to avoid repeating a public reply.
-
-No acknowledgment-only messages are created. Old acknowledgmentOf and ackMessageId
-remain readable for history compatibility. Explicit replies to a delivered replyTo may
-record the author's factual receipt, never the user's group/private reading state.
-
-Group/channel work does not generate or overwrite private lastReply. Messages private
-chat and the Company employee conversation share that one private receipt. Group and
-channel user receipts remain independent. Full work details stay in the original
-employee transcript and native history, not another session.
-
-Startup removes an old incorrect private unread marker only when its full reply hash
-exactly matches an existing group/channel delivery task and the saved assistant text.
-Genuine private, already-read and unprovable older records remain untouched; histories
-and user-read timestamps are not rewritten.
-
-Requests still queue normally while reading. Steer waits until reading ends; Stop keeps
-its existing cancellation behavior. Codex disables work environments and inherited tools
-while reading, then resumes the same thread for work. Active background terminals block
-that switch without being stopped. Ordinary work restores the environment after reading;
-/review and /compact remain refused until restoration because their protocols cannot
-carry the environment override.
+Core checks task identity, credentials, membership and mute state. Agent posts require
+nonempty text, at most 2,000 Unicode characters; user posts allow 16,000 and attachment-only
+messages. Null and placeholder-only posts are invalid. Kind is `summary`, `decision`,
+`blocker`, `question` or `result`; `message` is user-only.
 
 ```sh
-agents chat mute GROUP_ID --member EMPLOYEE_ID --json
 agents chat mute GROUP_ID --member EMPLOYEE_ID --for 3600 --json
-agents chat mute GROUP_ID --member all --for 900 --json
 agents chat mute GROUP_ID --member EMPLOYEE_ID --off --json
 ```
 
-The user or Secretary may change mutes. Omitted duration is indefinite; all also covers
-future members and combines with individual restrictions. Expiry is checked per post,
-without a timer. Muting blocks employee public posts, not private reading, work,
-membership or management authority. Operator messages remain available.
+Current Owner/Admin or the human user may mute. Omitted duration is indefinite.
+Mute restricts posting while preserving reading, membership and private work.
+Group/channel user read receipts remain independent of private-chat receipts.
 
 ### Correcting an operator's published message
 
@@ -1670,22 +1565,10 @@ publishes as the authenticated member; authors cannot be supplied or impersonate
 supported employee kinds are `summary`, `decision`, `blocker`, `question`, and `result`,
 defaulting to summary. The operator may additionally use `kind:"message"` for a
 context-only publication. Agent posts are capped at 2,000 Unicode characters; user messages
-at 16,000. Null acknowledgment posts are rejected; to remain silent, make no call.
+at 16,000. Agent posts require nonempty text.
 
-Use group posts for a relevant reply to the participants, including ordinary questions,
-stories and casual conversation, or a short outcome, decision, blocker or coordination
-question. Work/awareness describes delivery routing, not whether a user request is valid.
-Recipients who do not need to contribute make no publication call. Keep full reasoning,
-internal decisions about answering, tool traces, large code/logs, credentials,
-and unrelated private conversation text in the employee's private work page. Every routed
-request includes this reporting policy and the exact group/message IDs in its engine
-context. The user-visible private message remains the original request. Private final
-answers are **not** automatically copied into groups or marked as private unread for
-group/channel work. chat.post informs others through tool-free awareness. Null is rejected.
-Team members may read only groups they
-belong to, including Governors; group visibility does not grant access to one another's
-private conversations. The shared API reference includes these tools; discovery and
-execution authorization remain separate.
+`chat.post` publishes to the selected group; ordinary private replies are not copied
+into it. Public replies enter other members' native context as awareness.
 
 ### Group read receipts and removal
 
@@ -1694,7 +1577,7 @@ agents chat acknowledge GROUP_ID --message MESSAGE_ID --json
 agents chat delete GROUP_ID --json
 ```
 
-Creation, membership editing, muting and deletion are available to the user or Secretary. Human read acknowledgment remains user-only. An Agent
+Group administration follows current Owner/Admin authority, with the human recovery override. Human read acknowledgment remains user-only. An Agent
 cannot mark the user's group or private messages read. A group's exact-message read cursor
 is shared across views/clients; reading a brief group update does not mark an unseen full
 private reply read. The UI retains foreground, visibility, and short dwell checks for both
@@ -1866,7 +1749,7 @@ Operator message-post remains explicit context-only publication.
 Reading has no tools and generates a recipient receipt only after native success.
 The optional bound agents_company_discussion_post tool is available in the shared
 response stage for an explicit nonempty answer, with the same exact-target checks as
-groups. Ordinary output is private; news/awareness never invite another public reply.
+groups. Ordinary output is private; news and awareness deliveries have a reading stage only.
 Channel work preserves existing private lastReply and its read state.
 
 ### Other conversation history
@@ -3258,7 +3141,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 | <code>agents chat context</code> | <code>ID [--message ID]</code> | Read published group context and concise reporting policy | Shared views / group conversations | chat |
 | <code>agents chat send</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--mentions JSON&#124;all] [--client-message-id ID] [--view ID] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Deliver to current members; mentions and user replies select work, other recipients receive context | Shared views / group conversations | chat |
 | <code>agents chat edit</code> | <code>ID --message MESSAGE_ID --text TEXT [--file PATH] --expected-revision N</code> | User-only: correct own published group text or caption without changing accepted tasks or receipts | Group message editing | operator |
-| <code>agents chat post</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result&#124;message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]</code> | Deliberately publish a nonempty public reply; silence requires no API call | Shared views / group conversations | chat |
+| <code>agents chat post</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result&#124;message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]</code> | Publish a public group message to all current members | Shared views / group conversations | chat |
 | <code>agents chat acknowledge</code> | <code>ID --message ID</code> | User-only: mark group messages read; private receipts remain separate | Shared views / group conversations | operator |
 | <code>agents system info</code> | <code>—</code> | Read Core host OS, architecture and deployment capabilities | 后端信息 | identity |
 | <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user or Secretary) | 后端目录选择 | operator |

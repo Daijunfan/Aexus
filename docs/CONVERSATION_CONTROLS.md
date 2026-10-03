@@ -18,6 +18,10 @@ Conversation notifications contain literal saved text. Core posts it to this con
 
 The human application user retains an administrative recovery override through the same APIs. This does not create a human Owner/Admin membership and is not conferred on any Company Agent, including Secretary. Owner, Admin and Member offices are always held by existing Agent employees. UI office labels remain English in all interface languages.
 
+## Shared group context
+
+Messages from `chat.send` and `chat.post` reach every current group member. Mentions select work targets; other members read the message in their existing native context. Conversation membership and Company authority remain separate.
+
 ## Group offices
 
 | Action | Member | Admin | Owner |

@@ -5020,7 +5020,7 @@
   {
     "name": "chat.post",
     "args": "ID [--text TEXT] [--images JSON] [--files JSON] [--kind summary|decision|blocker|question|result|message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]",
-    "summary": "Deliberately publish a nonempty public reply; silence requires no API call",
+    "summary": "Publish a public group message to all current members",
     "gui": "Shared views / group conversations",
     "inputSchema": {
       "type": "object",
@@ -5034,7 +5034,7 @@
           "type": "string",
           "minLength": 0,
           "maxLength": 16000,
-          "description": "Explicit public text only. Agents require nonempty content (max 2000 Unicode characters); null/undefined placeholder strings are rejected. Operators allow attachment-only posts and max 16000 characters. Receipt is automatic; do not call to remain silent. Muted employees cannot publish."
+          "description": "Explicit public text only. Agents require nonempty content (max 2000 Unicode characters); null/undefined placeholder strings are rejected. Operators allow attachment-only posts and max 16000 characters. Core records reading receipts. Muted employees cannot publish."
         },
         "images": {
           "type": "array",

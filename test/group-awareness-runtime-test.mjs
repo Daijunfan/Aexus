@@ -43,7 +43,7 @@ try{
  release(b);await waitDone(targeted.id);await waitIdle()
  await unchanged(b);await unchanged(c);assert.equal(work(a).length,baseline.get(a.id).works+1)
  assert.equal((await status(b)).currentTask,undefined);assert.equal((await status(c)).currentTask,undefined)
- for(const p of [b,c]){const ack=phases(p).find(value=>value.phase==='ack'&&value.text.includes(targeted.id));assert.equal(ack.thread,baseline.get(p.id).thread);assert.deepEqual(ack.environments,[])}
+ for(const p of [b,c]){const ack=phases(p).find(value=>value.phase==='ack'&&value.text.includes(targeted.id));assert.equal(ack.thread,baseline.get(p.id).thread);assert.deepEqual(ack.environments,[]);assert.ok(ack.text.includes(targeted.text),'unmentioned members receive the complete message');const context=JSON.parse(ack.text.split('[Group request]\n')[1].split('\n')[0]);assert.deepEqual(context.author,targeted.author);assert.deepEqual(context.addressedTo,[a.id]);assert.equal(context.directlyAddressed,false);assert.equal(context.acknowledgment.mode,'awareness')}
  assert.equal((await history()).messages.length,1,'silent ACKs add no public messages')
  console.log('PASS one primary work delivery and real all-member awareness, without private history/old reply pollution')
 

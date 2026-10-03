@@ -110,33 +110,13 @@ Messages 与原会话复用相同权限、历史和员工身份。`session.inbox
 
 ## 群聊与共享视图
 
-`view.list` 返回共用视图定义与数据 API；`view.select company|messages` 仅切换展示，Company 缺省为 All Team。员工、原生会话、权限、绑定及私聊的 exact-reply 已读记录只有一份；在 Messages 阅读后，Company 使用同一 readAt，不再重复标红。
+群成员可读取本群消息、共享上下文并在未禁言时发布。群组 Owner/Admin 管理成员和禁言，Owner 解散群组，用户保留恢复入口；Company 职位不授予群内治理或他人私聊权限。
 
-用户可创建群组并指定 Agent Owner；Agent 创建群组时自己担任 Owner。成员编辑、禁言、静音及通知要求实际 Owner/Admin，解散群组要求 Owner，用户保留外部恢复入口；用户已读确认仍仅用户。成员可以包含多个 Team 的员工，加入群组不会改变 Team、职位、目录或控制权限。`chat.list/get/history/context/post` 对所有职位开放，但 Core 每次只允许读取或发布自己所属群组；Governor 同样不能读取未加入的群聊。返回的成员信息只含身份，不包括他人的私聊内容或文件。
+`chat.send`、`chat.post` 投递到发送时的全部当前成员，Agent 作者不接收自己的发文。用户消息的 mentions 与同群回复原作者确定工作对象；未指定对象时全员处理。员工只能向其控制权限内的显式 mentions 分配工作，其余成员接收上下文。`chat.post` 不分配正式工作。
 
-`chat.edit {id,messageId,text,expectedRevision}` 仅用户可用，且只能修改作者为用户的群聊正文或附件说明。Employee、Manager 和 Governor 都不能调用；默认 API 发现不列出它，`--all` 可读说明但不授予权限。每次实际修改增加 `editRevision` 并记录 `editedAt`；旧消息的初始修订号为 0，同文重试幂等，冲突修订拒绝。该操作不修改作者、序号、原始时间、附件、mentions、投递状态、引用快照、原始发送去重键或已读游标，不创建新的任务、回执或编辑历史内容库。已接受的路由及排队任务仍使用原始提示和已验证的引用；新增引用继续核对当前正文。最新预览可更新，但会话排序时间不变。
+全员在各自原生会话与 FIFO 中阅读。Core 校验凭据和成员资格后记录接收/已读；awareness 表示知悉，work 随后执行任务。公开发言使用明确的发布 API，普通会话输出保持私有。发言不改变员工控制权限或工作区范围。
 
-每条公开 `chat.send` 和非空 `chat.post` 都向发送时的当前员工成员投递；Agent 作者不再接收自己的发文，避免自回声。`deliveries` 保存固定接收者及 mode，新增成员不会被补进已接受消息的重试。mode 为 work 或 awareness，旧记录缺失时按 work 兼容；旧的无 delivery 公告不会被追补执行。
-
-用户 `chat.send` 的工作对象是显式 mentions 与有效同群 replyTo 原 Agent 作者的并集；两者皆空时仍向全员分配工作。员工 `chat.send` 只有显式 mentions 可以分配正式工作，并继续逐目标检查原有控制权限；其余成员接收 awareness。员工无 mentions 发送、以及任何非空 `chat.post`，均只把上下文送达其他成员。replyTo 的真实原作者、正文和主要对话对象由 Core 传入提示，不根据显示名猜人，不从跨会话或外部新闻引用自动扩展对象，也不加入已离群作者。
-
-awareness 是绑定真实发起身份、当前群、消息及固定接收者的窄范围投递，不是普通 session.send 授权。它复用原生会话和原队列，重新检查凭据与成员资格；不会增加管理控制、读取他人私聊或切换执行主机。普通 Employee 可以向同群 Governor 发布共享上下文，但仍不能直接控制其会话或获得 Governor 权限。接收者仍使用自己的身份与原权限。
-
-共享投递先在原生会话进行无工具的私有阅读。成功结束后，Core 重新校验任务、发送者授权和成员资格，记录接收者 deliveredAt/readAt。失败或中断不释放正式工作；不要求模型输出固定文字或调用确认 API。work 随后执行原任务，awareness 到此结束。
-
-chat.post、channel.message-post 仅用于明确发布。text:null、空白及单独的 null/undefined/None 占位串不能作为员工公开消息；CLI --silent 已移除。不想发言就不调用发布 API。普通文字、JSON、思考和最终答复不会自动进群。用户附件消息保留。
-
-agents_company_discussion_post 是正式共享响应阶段的可选发布工具，参数为 conversationType、conversationId、messageId、text:string。当前任务、冻结来源、员工凭据、成员资格和禁言由 Core 检查。填另一个群或旧任务、阅读、初始化及无共享任务的私聊阶段均被拒绝；相同内容重试只返回原结果，不生成重复消息。
-
-公开回复只以 awareness 送给其他成员，不产生确认消息。旧 acknowledgmentOf/ackMessageId 保留历史兼容。明确回复仍可记录作者对所回复请求的接收证据；history/context 查询不等于阅读回执。
-
-chat.mute 与 conversation.mute 使用真实会话 Owner/Admin；用户保留恢复入口。群组全员禁言作用于当前和未来的 Member，Owner/Admin 可继续发言；单人禁言对该人有效。禁言阻止公开发言，不阻止私有阅读和工作，不改变成员、目录或公司管理权限；有效期在发布时检查。
-
-Codex 在受限阅读和普通工作间通过原生 idle actor unsubscribe 后 resume 同一 threadId 切换，保留历史、主机、模型与身份，不重启引擎进程。切换前若原生后台终端仍活动，就明确拒绝本次阅读，不停止终端、不标记已读；待其自然结束或用户明确停止后再重试。成功接收 awareness 后也可能暂留受限确认环境，下一条普通工作恢复原环境；之前的 /review、/compact 明确拒绝。
-
-员工通过 `chat.context` 获取具体请求和发布规则，再用 `chat.post` 明确发布面向参与者的实际答复，kind 仍为 summary/decision/blocker/question/result。日常聊天、故事、提问与工作任务都是有效用户请求；work/awareness 只是投递分工，静默已读不等于忽略被交付的请求。作者取自认证身份，不接受伪造；员工单条上限 2000 字符。内部推理、工作详情、工具日志和私聊回复不自动镜像入群。API 不自动判断所有敏感信息，发布者仍应遵守返回的共享策略。
-
-群组、频道与私聊的用户已读独立。群组/频道来源的工作不创建或覆盖 lastReply，保留此前真实私聊的已读或未读；详情仍保存在原员工会话。Messages 私聊与 Company 员工会话共用同一回执。阅读群组不能清除真实私聊未读。启动时仅在原回复校验值精确匹配群组/频道任务及保存正文时撤销旧错误红点；真实私聊、已读及来源不明记录保留，不删除历史或伪造阅读时间。两种已读操作都只允许用户，窗口隐藏、被遮挡、后台读取或 Agent 查询都不代用户确认。删除群组仅移除群组记录，保留可恢复群聊文件与全部员工、工作区、原生历史和独立调度。
+用户的群聊、频道和私聊已读独立；Agent 不能代用户确认。用户仅可编辑本人发布的消息。删除群组保留可恢复历史、员工、工作区及独立调度。接口参数见 [API.md](API.md)。
 
 ## Plan 与自主排期
 

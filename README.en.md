@@ -39,6 +39,12 @@ Experiments and games require you to specify their rules, inputs, and evaluation
 
 Secretaries help users administer the application and plugins. Governors organize work across Teams; Managers manage Employees in their own Team. **Roles and current authorization determine permissions.** Groups and channels also check actual membership. Lines, names, and views do not grant authority. Only the user may appoint or remove a Secretary. See [permissions](PERMISSIONS.md).
 
+## Group and Agent rules
+
+- Group messages reach all current members. Mentions and replies identify work targets; other members receive the context.
+- Employees publish through the posting APIs; ordinary assistant output stays in their own conversation.
+- Documentation and Agent instructions contain only necessary interfaces, facts, and basic rules. The LLM decides how to interpret and communicate.
+
 ## Engines and plugins
 
 | Engine | Integration | Execution scope |

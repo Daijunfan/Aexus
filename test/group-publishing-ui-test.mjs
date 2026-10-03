@@ -26,6 +26,7 @@ try{
  const composer=page.getByRole('textbox',{name:'Group message',exact:true});await composer.fill('Good morning');await composer.press('Enter');await expect(composer).toHaveValue('');await settled();await expect(page.locator('.group-message')).toHaveCount(4)
  const h=await history();assert.equal(h[0].text,'Good morning');assert.equal(h[0].broadcast,true);assert.equal(h.filter(m=>m.author.kind==='agent').length,3);assert.ok(!h.some(m=>m.text==='null'||m.text.includes('No public reply needed')||m.text.includes('Private details')))
  for(const p of people)assert.deepEqual((await f.status(p.id)).lastReply,replies.get(p.id))
+ await page.getByRole('button',{name:'All Conversations',exact:true}).click()
  for(const p of [a,c])await expect(page.locator('[data-employee="'+p.id+'"]').getByText('Unread',{exact:true})).toHaveCount(0)
  await expect(page.locator('[data-employee="'+b.id+'"]').getByText('Unread',{exact:true})).toBeVisible()
  checks.push('Team-assisted cross-Team group; one no-mention greeting and three deliberate replies; no private/null output leaked; only the pre-existing private unread remains')

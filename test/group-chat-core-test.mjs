@@ -33,7 +33,7 @@ try{
  assert.equal((await f.cli('chat','get',group.id)).unread,true)
  const duplicate=await f.call(at,'chat','post',group.id,'--kind','blocker','--text',post.text,'--client-message-id','first-update');assert.equal(duplicate.id,post.id)
  await deny(at,'chat.post',{id:group.id,text:'Changed payload',clientMessageId:'first-update'})
- const context=await f.call(at,'chat','context',group.id,'--message',post.id);assert.equal(context.policy.maxCharacters,2000);assert.match(context.policy.guidance,/Keep full reasoning/)
+ const context=await f.call(at,'chat','context',group.id,'--message',post.id);assert.equal(context.policy.maxCharacters,2000);assert.match(context.policy.guidance,/ordinary assistant output remains private/)
  await f.cli('chat','acknowledge',group.id,'--message',post.id);assert.equal((await f.cli('chat','get',group.id)).unread,false)
  const send=await f.cli('chat','send',group.id,'--text','Investigate the launch issue.','--mentions',JSON.stringify([a.id,a.id]),'--client-message-id','launch-task','--view','all')
  assert.deepEqual(send.mentions,[a.id]);await f.until(async()=>!(await f.status(a.id)).busy,'single mention finished')

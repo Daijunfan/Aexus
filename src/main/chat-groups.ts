@@ -123,7 +123,7 @@ function append(group:ChatGroup,args:Record<string,any>,targets:string[],kind:Ch
  const all=messages(group.id),quote=args.replyQuote===undefined?undefined:quoteShape(args.replyQuote),fingerprint=createHash('sha256').update(JSON.stringify([text,broadcast?[]:[...targets].sort(),kind,args.replyTo??null,args.viewId??null,...(quote?[quote]:[]),...(args.replyConversation?[args.replyConversation,!!args.replyTextOnly]:[]),...(attachments.length?[attachments.map(file=>[file.path,file.bytes,file.kind])]:[])])).digest('hex')
  const previous=all.find(message=>message.clientMessageId===clientMessageId&&authorEquals(message.author,principal))
  if(previous){if(previous.fingerprint!==fingerprint)throw Error('Client message ID already used with different content');return {message:previous,created:false}}
- if(principal.kind==='agent'&&emptyAgentPost(args.text))throw Error('Public replies require nonempty text, not null/undefined. To remain silent, do not call the publication API')
+ if(principal.kind==='agent'&&emptyAgentPost(args.text))throw Error('Public replies require nonempty text')
   if(principal.kind==='agent'&&effectiveChatMute(group,principal.employeeId)!==undefined)throw Error('You are muted in this group; reading and private work remain available')
  if(args.crossReply&&principal.kind!=='operator')throw Error('Only the user may quote another conversation')
  const original=args.replyTo===undefined||args.crossReply?undefined:all.find(message=>message.id===args.replyTo)
@@ -175,7 +175,7 @@ export function postChatMessage(args:Record<string,any>,acknowledgment=false,pre
  authorize('chat.post');fields(args,['id','text','kind','replyTo','replyQuote','replyConversation','replyTextOnly','crossReply','images','files','clientMessageId']);const group=requireGroup(args.id),kind=args.kind??'summary'
  if(kind==='message')operator();else if(!GROUP_PUBLISH_POLICY.kinds.includes(kind))throw Error('Use summary, decision, blocker, question or result')
  const principal=requestContext().principal
- if(args.text===null)throw Error('Null publication is not supported. Core records receipts; to remain silent, do not call chat.post')
+ if(args.text===null)throw Error('Null publication is not supported')
  const appended=append(group,args,[],kind,false,[],acknowledgment),message=appended.message
  if(principal.kind==='agent'&&args.replyTo&&!args.crossReply&&messages(group.id).some(item=>item.id===args.replyTo&&item.deliveries.some(delivery=>delivery.employeeId===principal.employeeId)))acknowledgeDelivery(group,args.replyTo,principal.employeeId,message.id)
  if(appended.created)void routeChatMessage(group,message,new Map(),new Map(),prepare).catch(error=>console.error('[Group publication delivery failed]',(error as Error).message))
@@ -214,7 +214,7 @@ export function chatTaskPrompt(context:ChatTaskContext|undefined,employeeId:stri
  const reply=message.reply??(original?{id:original.id,author:original.author,authorName:original.authorName,text:message.replyQuote?.text??original.text,...(message.replyQuote?{quote:message.replyQuote}:{})}:undefined)
  const base='[Group request]\n'+JSON.stringify({conversationType:'group',conversationId:group.id,groupId:group.id,groupName:group.name,messageId:message.id,sequence:message.sequence,sender:message.authorName,author:message.author,createdAt:message.createdAt,broadcast:!!message.broadcast,addressedTo,directlyAddressed:addressedTo.includes(employeeId),acknowledgment:chatAcknowledgmentPolicy(context,employeeId),...(reply?{replyTo:message.replyTo,reply}:{})})+'\n'+text
  if(reading)return base
- return base+'\n\n[Group reporting]\n'+GROUP_PUBLISH_POLICY.guidance+'\n[Shared workspace]\n'+JSON.stringify(workspaceForMember('group:'+group.id,employeeId))+'\nUse agents conversation file '+JSON.stringify('group:'+group.id)+' --operation list --json to inspect shared files. Use your memberDirectory for modifications; your personal Workspace remains available.\nUse agents chat context '+group.id+' --message '+message.id+' --json for shared context. For earlier public messages use agents chat history '+group.id+' --before '+message.sequence+' --limit 50 --json; choose 1–100 per page and use nextBefore as --before for older pages. recentMessages is only the latest 20 discussions. No acknowledgment API is needed. Only when a public reply is useful, explicitly publish it with agents chat post '+group.id+' --reply-to '+message.id+' --text "Your reply to the conversation" --json. Keep private reasoning and tool details in this employee conversation. Do not treat group membership as permission to control other employees.'
+ return base+'\n\n[Group reporting]\n'+GROUP_PUBLISH_POLICY.guidance+'\n[Shared workspace]\n'+JSON.stringify(workspaceForMember('group:'+group.id,employeeId))+'\nRead shared context with agents chat context '+group.id+' --message '+message.id+' --json. Older messages: agents chat history '+group.id+' --before '+message.sequence+' --limit 50 --json; use nextBefore for the next page. Publish with agents chat post '+group.id+' --reply-to '+message.id+' --text "Reply text" --json. Workspace writes are limited to your memberDirectory or personal Workspace.'
 }
 type PrepareGroupAttachments=(employee:string,groupId:string,message:ChatMessage)=>Promise<{images:string[];files:string[]}>
 const sending=new SingleFlight<ChatMessage>()

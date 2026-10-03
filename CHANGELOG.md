@@ -2,6 +2,12 @@
 
 > 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
 
+## 0.56.3 — Shared context and concise Agent rules
+
+- Verify all-member group delivery in the same native conversation; mentions select work targets and other members receive awareness.
+- Reduce reading/publication/API-tool prompts and group documentation to basic API and authority rules; update both READMEs and generated guides.
+- Place group author avatars outside message bubbles while preserving message identity, replies and read receipts.
+
 ## 0.56.0 — Anexus identity and everyday collaboration
 
 - Rebrand the product as Anexus while retaining its icon, durable identities, workspace/data locations and CLI compatibility; add the anexus alias and safe legacy app upgrade.
