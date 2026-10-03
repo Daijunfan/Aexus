@@ -1,6 +1,6 @@
 # Licensing and redistribution
 
-The complete Anexus distribution is published under **GNU GPL v3** (`LICENSE`), including its bundled GPL MiniNotion functionality. The earlier Apache-2.0 host material and notices remain in `licenses/host-original-Apache-2.0.txt`; the compatible permissive components retain their own notices. This does not relicense vendor runtimes, services or trademarks.
+The complete Avalon distribution is published under **GNU GPL v3** (`LICENSE`), including its bundled GPL MiniNotion functionality. The earlier Apache-2.0 host material and notices remain in `licenses/host-original-Apache-2.0.txt`; the compatible permissive components retain their own notices. This does not relicense vendor runtimes, services or trademarks.
 
 ## Bundled open-source components
 

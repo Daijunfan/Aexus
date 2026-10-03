@@ -1,4 +1,4 @@
-# Anexus 管理工作入口
+# Avalon 管理工作入口
 
 先执行 `agents auth whoami --json` 和 `agents management roles --json`，再通过 `agents api docs` 读取共享索引，按需读取 `core/api`、`core/permissions` 或所属插件的方法文档。
 

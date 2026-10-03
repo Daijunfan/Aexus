@@ -22,7 +22,7 @@ if(check){if(sourceApi!==api)throw Error('Root API command index is stale')}
 else fs.writeFileSync(path.join(root,'API.md'),api)
 const scheduler=read('SCHEDULER.md').replace(/^---\n[\s\S]*?\n---\n\n/,'').replace(/^# Host scheduler CLI API/m,'### Host scheduler CLI API')
 const guide=[
-  '# Anexus Manager CLI 完整手册','',
+  '# Avalon Manager CLI 完整手册','',
   read('docs/managers/INTRO.md').trim(),'',
   '## 根项目 API 全文','',
   api.replace(/\[`(PlugIns\/[^`]+)`\]\(PlugIns\/[^)]+\)/g,'`$1`').trim(),'',

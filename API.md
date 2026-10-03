@@ -4,7 +4,7 @@ Start `npm run serve` (no window), or open the desktop. Both expose the same
 Core over a private Unix socket on macOS/Linux or a data-directory-scoped named
 pipe on Windows. The default data directory is `~/AgentsCompany`.
 Run `node bin/agents help` for help. Every data command accepts `--json`.
-Anexus also provides `node bin/anexus` (or installed `anexus`); it is an alias of
+Avalon also provides `node bin/anexus` (or installed `anexus`); it is an alias of
 `agents` with the same commands, authentication, data directory and API protocol.
 
 ## Native API execution and focused discovery
@@ -406,7 +406,7 @@ Team nameplates open the scoped file browser for every Team type. `plugin.call` 
 the plugin's own CLI also supports full JSON-RPC envelopes.
 
 `plugin.open` opens or focuses one independent native window per plugin/workspace,
-sharing Anexus's Dock icon. The plugin loads directly at the top level;
+sharing Avalon's Dock icon. The plugin loads directly at the top level;
 the company canvas stays in the main window. `view.open {kind:"plugin",pluginId}`
 is a compatibility alias. With `agents serve`, the same API creates a live HTTP
 view and presentation state with `attached:false`, without loading Electron.
@@ -971,7 +971,7 @@ Manager 自己创建的同 Team Employee，以及 Governor 在任意 Team 创建
 
 ## 员工职位：Secretary / Governor / Manager / Employee
 
-权限属于 `managementRole`，不属于名字、Team、工作目录或视图。Secretary 是最高应用管理职位，帮助用户操作 Anexus 及全部已授权插件，组织与委派具体业务工作；完整矩阵见 [PERMISSIONS.md](PERMISSIONS.md)。
+权限属于 `managementRole`，不属于名字、Team、工作目录或视图。Secretary 是最高应用管理职位，帮助用户操作 Avalon 及全部已授权插件，组织与委派具体业务工作；完整矩阵见 [PERMISSIONS.md](PERMISSIONS.md)。
 
 ```sh
 agents management roles --json
@@ -2659,7 +2659,7 @@ agents card native-bind EMPLOYEE_ID REMOTE_NATIVE_SESSION_UUID
 
 `engine.remote-check` checks SSH connectivity, the real remote folder, CLI version, Codex app-server or Claude stream-json support, and login status without sending a model prompt. `authentication` is `configured` or `unknown`; a definite sign-out is an error. It cannot prove remaining quota. The employee form runs this check after choosing the Cloud Team or engine and disables creation until it succeeds. `card.create` repeats the check **before** creating a default folder or employee record. Missing CLI, host failures or an out-of-scope path fail closed. The session page reuses the existing streaming/approval/file/terminal UI; a small cloud beneath the pet marks the process location, independently of its busy lamp.
 
-`engine.remote-sessions` lists native histories on that host under the Team root. `card.native-bind` accepts an existing native UUID only when its remote cwd exactly matches the employee cwd and the employee has no prior conversation. It imports readable messages into the host transcript, then resumes through the remote CLI. A manually bound history is marked `external`: removing the employee removes its host view, **not** the remote original. Native histories created by Anexus retain remote deletion ownership. Both types carry `hostId`, SSH endpoint/OS and original directory with every reference, so deletion or cloning cannot target a Mac record or another host. Codex remote cloning uses `thread/fork`; Claude remote cloning is explicitly rejected until a reliable native fork interface is available, leaving the source untouched. An existing running terminal process is not taken over; only its persisted history can be resumed. SSH disconnects never retry a model turn or fall back to the Mac.
+`engine.remote-sessions` lists native histories on that host under the Team root. `card.native-bind` accepts an existing native UUID only when its remote cwd exactly matches the employee cwd and the employee has no prior conversation. It imports readable messages into the host transcript, then resumes through the remote CLI. A manually bound history is marked `external`: removing the employee removes its host view, **not** the remote original. Native histories created by Avalon retain remote deletion ownership. Both types carry `hostId`, SSH endpoint/OS and original directory with every reference, so deletion or cloning cannot target a Mac record or another host. Codex remote cloning uses `thread/fork`; Claude remote cloning is explicitly rejected until a reliable native fork interface is available, leaving the source untouched. An existing running terminal process is not taken over; only its persisted history can be resumed. SSH disconnects never retry a model turn or fall back to the Mac.
 
 New Cloud Native employees can still bind an existing session after their first hidden initialization. Core allows this only when its exact native-ID evidence still identifies a fresh, successfully initialized context with no public conversation. Any accepted ordinary or shared-message task clears that evidence, including silent awareness; cloned, external and legacy contexts do not gain eligibility merely because their public transcript is empty. Binding archives the owned initialization reference, preserves the selected history as `external`, and queues the same read-only initialization in that bound context before work. It never deletes or transfers ownership of the external original.
 

@@ -1,6 +1,6 @@
-# Anexus CLI Plugin Contract v1
+# Avalon CLI Plugin Contract v1
 
-插件是一份独立的软件包：领域逻辑和数据归插件自己的 CLI/API；Anexus
+插件是一份独立的软件包：领域逻辑和数据归插件自己的 CLI/API；Avalon
 负责发现插件、提供 Team 工作目录、安装文档与启动器，以及承载渲染界面。
 宿主不根据 Team 名称识别软件，也不导入插件的业务类型。
 

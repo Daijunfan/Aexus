@@ -1,20 +1,20 @@
-# Anexus
+# Avalon
 
 [简体中文](README.md) · [English](README.en.md)
 
 **Open, CLI-first infrastructure for coding-agent interaction, organization, and workspaces.**
 
-Anexus connects existing coding agents—Codex, Claude Code, Cline, and Pi—to one Core. Use the interface or let agents collaborate through the same CLI / API. Build large software projects, handle everyday tasks, run work and social interaction experiments, or create games and simulations. You define the goals, roles, rules, and workflow.
+Avalon connects existing coding agents—Codex, Claude Code, Cline, and Pi—to one Core. Use the interface or let agents collaborate through the same CLI / API. Build large software projects, handle everyday tasks, run work and social interaction experiments, or create games and simulations. You define the goals, roles, rules, and workflow.
 
-![Anexus: coding-agent teams in a shared workspace](docs/images/cover.png)
+![Avalon: coding-agent teams in a shared workspace](docs/images/cover.png)
 
 Actual run: Claude Code, Cline and Pi collaborate across local, Linux and Windows workspaces. The pictured Codex connection failed and is not counted as a successful engine run.
 
-[Downloads](https://github.com/Daijunfan/Agents-Company/releases) · [Installation & deployment](docs/DEPLOYMENT.md) · [CLI / API reference](API.md) · [Permissions](PERMISSIONS.md) · [Contributing](CONTRIBUTING.md)
+[Downloads](https://github.com/Daijunfan/Avalon/releases) · [Installation & deployment](docs/DEPLOYMENT.md) · [CLI / API reference](API.md) · [Permissions](PERMISSIONS.md) · [Contributing](CONTRIBUTING.md)
 
 ## One Core, many uses
 
-Anexus adds identity, Teams, messaging, files, scheduling, and plugins around traditional coding agents. Engines execute work; Core manages application permissions, workspaces, and collaboration records. Electron, browsers, CLI, and native agent tools use the same authenticated operations.
+Avalon adds identity, Teams, messaging, files, scheduling, and plugins around traditional coding agents. Engines execute work; Core manages application permissions, workspaces, and collaboration records. Electron, browsers, CLI, and native agent tools use the same authenticated operations.
 
 | What you want to do | Existing capabilities you can combine |
 | --- | --- |
@@ -60,6 +60,10 @@ Complete source for three plugins lives in `PlugIns/`, with their own CLIs, comm
 
 Plugin work materials and credentials live outside application binaries. Upgrades do not automatically relocate existing bound directories.
 
+## Share Avalon
+
+Project homepage: [https://github.com/Daijunfan/Avalon](https://github.com/Daijunfan/Avalon). Use this URL when sharing the project.
+
 ## Getting started
 
 1. Open the desktop application or connect to your own Core browser backend.
@@ -74,6 +78,8 @@ Regular engine checks do not call a model. An explicit test call asks for confir
 Requires Node.js **22.18+** (**22.19+** for Pi; validation baseline: Node 24) and npm. SSH / POSIX terminals need Python and OpenSSH. Local Windows terminals use ConPTY.
 
 ```sh
+git clone https://github.com/Daijunfan/Avalon.git
+cd Avalon
 npm ci
 npm run setup
 npm run build:plugins
@@ -83,6 +89,8 @@ npm run dev
 
 ### CLI and browser
 
+Existing 0.56.1 packages retain `Anexus.app` and the `anexus` command as compatible entry points to the same Core.
+
 ```sh
 npm run build:server
 npm run build:web
@@ -91,7 +99,7 @@ node bin/anexus serve --web --port 5151
 
 In another terminal, run `node bin/anexus web token`. Open `http://127.0.0.1:5151` and enter the token to establish an authenticated session. Keep tokens out of URLs. Use HTTPS or SSH forwarding from another computer.
 
-`anexus` and the existing `agents` command use the same parser and Core. Existing scripts, API names, `AGENTS_COMPANY_*` variables, the default `~/AgentsCompany` data directory, and employee / native-session identities remain compatible. The GitHub repository is still [Daijunfan/Agents-Company](https://github.com/Daijunfan/Agents-Company).
+`anexus` and the existing `agents` command use the same parser and Core. Existing scripts, API names, `AGENTS_COMPANY_*` variables, the default `~/AgentsCompany` data directory, and employee / native-session identities remain compatible. The GitHub repository is [Daijunfan/Avalon](https://github.com/Daijunfan/Avalon).
 
 Do not open the same data directory simultaneously from the desktop and a separate backend. See [deployment](docs/DEPLOYMENT.md) for installation, storage, and configuration.
 
@@ -99,7 +107,7 @@ Do not open the same data directory simultaneously from the desktop and a separa
 
 The main deployment patterns are Mac desktop, Windows desktop, and a Linux Core / Web backend accessed from another device's browser. Validate each on its target operating system; a local build does not establish that another platform passed. Strict process isolation currently supports macOS only.
 
-Anexus is a single-user, self-hosted application accessible from multiple devices. Execution hosts, operating-system privileges, native engine permissions, and Core application authority have separate boundaries; see [security](SECURITY.md). Upgrades never automatically increase existing employees' permissions.
+Avalon is a single-user, self-hosted application accessible from multiple devices. Execution hosts, operating-system privileges, native engine permissions, and Core application authority have separate boundaries; see [security](SECURITY.md). Upgrades never automatically increase existing employees' permissions.
 
 ```sh
 npm run typecheck

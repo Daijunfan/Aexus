@@ -1,5 +1,7 @@
 # Changelog
 
+> 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
+
 ## 0.56.0 — Anexus identity and everyday collaboration
 
 - Rebrand the product as Anexus while retaining its icon, durable identities, workspace/data locations and CLI compatibility; add the anexus alias and safe legacy app upgrade.

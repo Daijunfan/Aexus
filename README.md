@@ -1,20 +1,20 @@
-# Anexus
+# Avalon
 
 [简体中文](README.md) · [English](README.en.md)
 
 **为 Coding Agent 增加交互、组织与工作空间的开放基础设施，CLI 优先。**
 
-Anexus 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
+Avalon 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
 
-![Anexus：同一工作空间中的 Coding Agent 团队](docs/images/cover.png)
+![Avalon：同一工作空间中的 Coding Agent 团队](docs/images/cover.png)
 
 真实运行截图：Claude Code、Cline 和 Pi 协作处理本机、Linux 与 Windows 工作目录；图中 Codex 连接失败，未计入本次成功执行。
 
-[下载安装包](https://github.com/Daijunfan/Agents-Company/releases) · [安装与部署](docs/DEPLOYMENT.md) · [全部 CLI / API](API.md) · [权限说明](PERMISSIONS.md) · [参与开发](CONTRIBUTING.md)
+[下载安装包](https://github.com/Daijunfan/Avalon/releases) · [安装与部署](docs/DEPLOYMENT.md) · [全部 CLI / API](API.md) · [权限说明](PERMISSIONS.md) · [参与开发](CONTRIBUTING.md)
 
 ## 一个 Core，多种用法
 
-Anexus 在传统 Coding Agent 外提供身份、Team、消息、文件、调度和插件能力。引擎负责执行；Core 管理应用内权限、工作空间和协作记录。Electron、浏览器、CLI 和 Agent 原生工具调用同一套认证操作。
+Avalon 在传统 Coding Agent 外提供身份、Team、消息、文件、调度和插件能力。引擎负责执行；Core 管理应用内权限、工作空间和协作记录。Electron、浏览器、CLI 和 Agent 原生工具调用同一套认证操作。
 
 | 你想做的事 | 可组合的现有能力 |
 | --- | --- |
@@ -60,6 +60,10 @@ Secretary 协助用户管理应用与插件，Governor 跨 Team 组织工作，M
 
 插件工作资料与凭据位于应用安装包之外。已有工作目录不会因升级自动移动。
 
+## 分享 Avalon
+
+项目主页：[https://github.com/Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。对外分享统一使用这个地址。
+
 ## 开始使用
 
 1. 启动桌面版，或连接自己的 Core 浏览器后端。
@@ -74,6 +78,8 @@ Secretary 协助用户管理应用与插件，Governor 跨 Team 组织工作，M
 需要 Node.js **22.18+**（Pi 需要 **22.19+**；验证基线为 Node 24）和 npm。SSH / POSIX 终端需要 Python 与 OpenSSH；Windows 本地终端使用 ConPTY。
 
 ```sh
+git clone https://github.com/Daijunfan/Avalon.git
+cd Avalon
 npm ci
 npm run setup
 npm run build:plugins
@@ -83,6 +89,8 @@ npm run dev
 
 ### CLI 与浏览器
 
+现有 0.56.1 安装包仍使用 `Anexus.app` 和 `anexus` 命令名；这些兼容入口连接同一 Core。
+
 ```sh
 npm run build:server
 npm run build:web
@@ -91,7 +99,7 @@ node bin/anexus serve --web --port 5151
 
 另开终端运行 `node bin/anexus web token`，在 `http://127.0.0.1:5151` 输入令牌登录。令牌用于建立认证会话，不放入 URL。异机访问使用 HTTPS 或 SSH 转发。
 
-`anexus` 与原有 `agents` 命令使用同一个解析器与 Core。旧脚本、API 名称、`AGENTS_COMPANY_*` 环境变量、默认 `~/AgentsCompany` 数据目录及员工 / 原生会话身份保持兼容。项目的 GitHub 地址仍为 [Daijunfan/Agents-Company](https://github.com/Daijunfan/Agents-Company)。
+`anexus` 与原有 `agents` 命令使用同一个解析器与 Core。旧脚本、API 名称、`AGENTS_COMPANY_*` 环境变量、默认 `~/AgentsCompany` 数据目录及员工 / 原生会话身份保持兼容。项目的 GitHub 地址为 [Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。
 
 不要让桌面和独立后端同时打开同一个数据目录。安装、存储与部署细节见[部署文档](docs/DEPLOYMENT.md)。
 

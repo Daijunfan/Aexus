@@ -1,10 +1,10 @@
 # Security policy
 
-Anexus can execute code, change files and operate registered remote hosts. Deploy it as an authenticated, single-owner development system. It is not a hardened multi-tenant service and does not isolate mutually untrusted people sharing one Core instance.
+Avalon can execute code, change files and operate registered remote hosts. Deploy it as an authenticated, single-owner development system. It is not a hardened multi-tenant service and does not isolate mutually untrusted people sharing one Core instance.
 
 ## Reporting
 
-Do not include credentials, customer data, private hostnames, real transcripts or exploitable production details in public issues. Use [GitHub private vulnerability reporting](https://github.com/Daijunfan/Agents-Company/security/advisories) to send sensitive reports to the repository maintainers. Private vulnerability reporting is enabled. Please include affected versions, a minimal reproduction and impact without exposing third-party credentials.
+Do not include credentials, customer data, private hostnames, real transcripts or exploitable production details in public issues. Use [GitHub private vulnerability reporting](https://github.com/Daijunfan/Avalon/security/advisories) to send sensitive reports to the repository maintainers. Private vulnerability reporting is enabled. Please include affected versions, a minimal reproduction and impact without exposing third-party credentials.
 
 ## Trust boundaries
 

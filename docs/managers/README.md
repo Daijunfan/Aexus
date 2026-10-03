@@ -1,4 +1,4 @@
-# Anexus Manager 文档源
+# Avalon Manager 文档源
 
 本目录保存 Manager 手册的源文件，不作为员工 Workspace。`npm run docs:managers` 根据根项目 `API.md`、`SCHEDULER.md` 和命令注册表更新这里的文档。
 

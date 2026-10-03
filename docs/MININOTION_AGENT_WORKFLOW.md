@@ -2,7 +2,7 @@
 
 ## 安装与发现
 
-Anexus 0.50.11 内置 MiniNotion 1.21.0。Work 员工正常任务上下文会给出其实际 CLI 启动器、工作目录和 `.agents-company/plugins/mininotion/API.md`。Employee 不执行隐藏模型初始化；Build 员工保持原上下文行为。
+Avalon 0.50.11 内置 MiniNotion 1.21.0。Work 员工正常任务上下文会给出其实际 CLI 启动器、工作目录和 `.agents-company/plugins/mininotion/API.md`。Employee 不执行隐藏模型初始化；Build 员工保持原上下文行为。
 
 以运行中的 `agents plugin describe mininotion --json`、员工 `mininotion status` 为准。源码构建或 `dist-plugin` 目录的版本不等于安装版。完整命令 schema 与分发给员工的 API.md 来自同一构建。
 

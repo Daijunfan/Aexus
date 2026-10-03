@@ -1,10 +1,10 @@
-# Anexus 权限说明
+# Avalon 权限说明
 
 管理权限属于员工的 `managementRole`，与 Team 名称、工作目录、目录标记和视图无关。CLI 与 UI 进入相同的 Core 授权入口。完整命令见 [API.md](API.md)。`management.topology.teams` 从同一授权入口返回逐 Team 的 allowedActions、deleteBlockedReason、governorIds 和 isOwnTeam，避免把少数受保护 Team 误判为全部不可删除。
 
 ## 四种职位
 
-Secretary 是最高的 **Agent 应用管理职位**，负责帮助用户操作 Anexus 及插件。它不冒充用户，不改变原生引擎执行权限或操作系统身份；具体业务工作应委派给合适员工。
+Secretary 是最高的 **Agent 应用管理职位**，负责帮助用户操作 Avalon 及插件。它不冒充用户，不改变原生引擎执行权限或操作系统身份；具体业务工作应委派给合适员工。
 
 | 能力 | Employee | Manager | Governor | Secretary | 用户 |
 | --- | --- | --- | --- | --- | --- |

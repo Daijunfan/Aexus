@@ -1,4 +1,4 @@
-# Anexus contributor instructions
+# Avalon contributor instructions
 
 Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIBUTING.md`, `SECURITY.md`, `API.md` and `PERMISSIONS.md` before changing execution or authority. Do not launch child Agents unless the task explicitly requests them.
 
