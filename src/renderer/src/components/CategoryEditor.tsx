@@ -1,0 +1,46 @@
+import {useEffect,useRef,useState,type ReactNode} from 'react'
+import {createPortal} from 'react-dom'
+import type {ConversationFolder,MessengerState} from '../../../shared/messenger'
+import {matchesCategory,inCategory,type CategoryInclude,type CategoryEntry} from '../../../shared/message-categories'
+import {api} from '../api'
+import {translate as uiText,useI18n} from '../i18n'
+import {useSurfaceMotion} from '../chat/surfaceMotion'
+import {useDialogFocus} from '../office/useDialogFocus'
+import {Icon} from './Icon'
+import {BackButton} from './BackButton'
+import {useMessenger} from './useMessenger'
+export type FolderConversation={key:string;title:string;description:string;avatar?:ReactNode;archived?:boolean;kind?:CategoryEntry['kind'];platform?:string;enabled?:boolean}
+
+export function ConversationFolderEditor({folder,conversations,onClose,onSaved}:{folder?:ConversationFolder;conversations:FolderConversation[];onClose:()=>void;onSaved:(id:string)=>void}){
+ useI18n()
+ const messenger=useMessenger()!,surface=useSurfaceMotion<HTMLDivElement>('dialog'),alive=useRef(true),busy=useRef(false),named=useRef(!!folder)
+ const initial=folder?.include,[id]=useState(()=>folder?.id??'mf_'+crypto.randomUUID()),[revision,setRevision]=useState(folder?.revision??0),[name,setName]=useState(folder?.name??''),[selected,setSelected]=useState(folder?.conversations??[]),[excluded,setExcluded]=useState(folder?.excluded??[]),[include,setInclude]=useState<CategoryInclude|undefined>(initial)
+ const [mode,setMode]=useState(initial==='private'||initial==='groups'?initial:initial?'platform':'custom'),[platform,setPlatform]=useState<CategoryInclude>(initial&&['telegram','x','youtube'].includes(initial)?initial:'telegram'),[query,setQuery]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState('')
+ useDialogFocus('.conversation-folder-editor',true,()=>document.getElementById('message-folder-'+id)??document.getElementById('message-folder-add'))
+ useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[])
+ useEffect(()=>{const key=(event:KeyboardEvent)=>{if(event.key==='Escape'&&!event.isComposing){event.preventDefault();event.stopImmediatePropagation();if(!busy.current)onClose()}};window.addEventListener('keydown',key,true);return()=>window.removeEventListener('keydown',key,true)},[onClose])
+ const entry=(item:FolderConversation):CategoryEntry=>({key:item.key,kind:item.kind??item.key.split(':')[0] as CategoryEntry['kind'],platform:item.platform,enabled:item.enabled})
+ const known=new Set(conversations.map(item=>item.key)),choices:FolderConversation[]=[...conversations,...selected.filter(key=>!known.has(key)).map(key=>({key,title:uiText('Unavailable conversation'),description:key,enabled:false}))]
+ const selection={conversations:selected,include,excluded},checked=(item:FolderConversation)=>inCategory(selection,entry(item)),chosen=choices.filter(checked)
+ const scope=choices.filter(item=>mode==='custom'||matchesCategory(mode==='platform'?platform:mode as CategoryInclude,entry(item))),shown=scope.filter(item=>(item.title+' '+item.description).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+ const titleFor=(value:string)=>value==='private'?uiText('Private chats'):value==='groups'?uiText('Groups'):value==='telegram'?'Telegram':value==='youtube'?'YouTube':value==='x'?'X':''
+ const change=(next:string,nextPlatform=platform)=>{setMode(next);setQuery('');setSelected([]);setExcluded([]);setInclude(next==='custom'?undefined:next==='platform'?nextPlatform:next as CategoryInclude);if(!named.current)setName(titleFor(next==='platform'?nextPlatform:next))}
+ const toggle=(item:FolderConversation)=>{const key=item.key;if(matchesCategory(include,entry(item))){setExcluded(previous=>checked(item)?[...new Set([...previous,key])]:previous.filter(value=>value!==key));setSelected(previous=>previous.filter(value=>value!==key))}else setSelected(previous=>previous.includes(key)?previous.filter(value=>value!==key):[...previous,key])}
+ const selectAll=()=>{if(mode!=='custom'&&!query){setInclude(mode==='platform'?platform:mode as CategoryInclude);setExcluded([]);setSelected([])}else{setSelected(previous=>[...new Set([...previous,...shown.map(item=>item.key)])]);setExcluded(previous=>previous.filter(key=>!shown.some(item=>item.key===key)))}}
+ const clear=()=>{setInclude(undefined);setExcluded([]);setSelected([])}
+ const save=async()=>{if(busy.current||!name.trim())return;busy.current=true;setSaving(true);setError('');try{await messenger.saveFolder({id,name:name.trim(),conversations:selected,include:include??null,excluded,expectedRevision:revision});if(alive.current)onSaved(id)}catch(cause){if(alive.current)setError((cause as Error).message)}finally{busy.current=false;if(alive.current)setSaving(false)}}
+ const reload=async()=>{if(busy.current)return;busy.current=true;setSaving(true);try{const state=await api.call<MessengerState>('messenger.state'),current=state.folders?.find(value=>value.id===id);if(!current)throw Error('Unknown conversation folder');if(alive.current){setName(current.name);setSelected(current.conversations);setExcluded(current.excluded??[]);setInclude(current.include);setMode(current.include==='private'||current.include==='groups'?current.include:current.include?'platform':'custom');if(current.include&&['telegram','x','youtube'].includes(current.include))setPlatform(current.include);setRevision(current.revision);setError('')}}catch(cause){if(alive.current)setError((cause as Error).message)}finally{busy.current=false;if(alive.current)setSaving(false)}}
+ const close=()=>{if(!busy.current)onClose()}
+ return createPortal(<div ref={surface} className="group-editor-overlay"><div className="group-editor-backdrop" onClick={close}/><section className="group-editor conversation-folder-editor" role="dialog" aria-modal="true" aria-label={uiText(folder?'Edit category':'Create category')} aria-busy={saving}>
+  <header><BackButton disabled={saving} ariaLabel="Close category editor" onClick={close}/><div><span>{uiText('YOUR CONVERSATIONS')}</span><h2>{uiText(folder?'Edit category':'Create category')}</h2></div></header>
+  <div className="category-presets" role="group" aria-label={uiText('Category type')}>{[['custom','Custom selection','checklist'],['private','All private chats','person'],['groups','All groups','organization'],['platform','Social platform','radio-tower']].map(([value,label,icon])=><button key={value} type="button" disabled={saving} aria-pressed={mode===value} onClick={()=>change(value)}><Icon name={icon}/><span>{uiText(label)}</span></button>)}</div>
+  {mode==='platform'&&<label className="category-platform">{uiText('Platform')}<select aria-label={uiText('Social platform')} disabled={saving} value={platform} onChange={event=>{const next=event.target.value as CategoryInclude;setPlatform(next);change('platform',next)}}><option value="telegram">Telegram</option><option value="x">X</option><option value="youtube">YouTube</option></select><small>{uiText('Each channel or author appears as a separate social element.')}</small></label>}
+  <label>{uiText('Category name')}<input autoFocus name="conversation-folder-name" value={name} maxLength={80} disabled={saving} placeholder={uiText('e.g. Daily reading')} onChange={event=>{named.current=true;setName(event.target.value)}} onKeyDown={event=>{if(event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();void save()}}}/></label>
+  <p className="group-editor-note">{uiText(include?'New matching conversations are included automatically.':'Mix any conversations in a category. A conversation can belong to more than one.')}</p>
+  <label className="group-member-search"><Icon name="search"/><input aria-label={uiText('Search category conversations')} placeholder={uiText('Search conversations…')} value={query} onChange={event=>setQuery(event.target.value)}/></label>
+  <div className="group-member-heading"><strong>{uiText(mode==='platform'?'Social elements':'Conversations')}</strong><span>{uiText('{0} selected',[chosen.length])}</span><button disabled={saving||!shown.length} onClick={selectAll}>{uiText(query?'Select shown':'Select all')}</button><button disabled={saving||!chosen.length} onClick={clear}>{uiText('Deselect all')}</button></div>
+  <div className="group-member-options folder-conversation-options">{shown.map(item=><label key={item.key}><input type="checkbox" disabled={saving} aria-label={uiText('Include {0}',[item.title])} checked={checked(item)} onChange={()=>toggle(item)}/>{item.avatar&&<span className="folder-conversation-avatar">{item.avatar}</span>}<span><strong>{item.title}</strong><small>{item.description}{item.archived?' · '+uiText('Archived'):''}</small></span></label>)}{!shown.length&&<p>{uiText(mode==='platform'?'No followed social elements on this platform.':'No conversations found')}</p>}</div>
+  {error&&<div className="message-folder-error" role="alert">{uiText(error)}{folder&&<button disabled={saving} onClick={()=>void reload()}>{uiText('Load latest')}</button>}</div>}
+  <footer><button disabled={saving} onClick={close}>{uiText('Cancel')}</button><button className="primary" disabled={saving||!name.trim()} onClick={()=>void save()}>{uiText(saving?'Saving…':folder?'Save category':'Create category')}</button></footer>
+ </section></div>,document.body)
+}

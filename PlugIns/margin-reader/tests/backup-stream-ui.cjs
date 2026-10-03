@@ -7,7 +7,7 @@ const { create, expect } = require('./ui-session.cjs');
     const { page, api } = f;
     await api('fs.write', { path: 'source.md', content: '# 本地恢复测试\n\n完整原文。' });
     const doc = await api('document.open', { path: 'source.md', activate: false });
-    let set = await api('study.create', { title: 'UI backup study' });
+    let set = await api('study.create', {mapMode:'cards', title: 'UI backup study' });
     set = await api('study.documents.add', { setId: set.id, expectedRevision: set.revision, paths: ['source.md'] });
     set = await api('study.note.create', { setId: set.id, expectedRevision: set.revision, title: 'Durable UI note', text: 'Saved before backup.' });
     await page.goto(f.server.url); await page.locator('body[data-ready=true]').waitFor();

@@ -4,9 +4,6 @@ const labels={source:'回源',image:'截图',edit:'编辑',preview:'Markdown',pa
 export class StudyTools {
   constructor(study){
     this.study=study;this.defaultColors=[...study.colors];this.defaultHex={...study.hex};
-    const bar=document.createElement('span');bar.className='study-tool-presets';bar.innerHTML='<select id="capture-tool-select" aria-label="摘录工具预设"></select><select id="pen-tool-select" aria-label="手写工具预设"></select><button id="study-tools-customize">工具 / 模板</button>';$('study-capture-tools').after(bar);
-    for(const [id,kind] of [['capture-tool-select','capture'],['pen-tool-select','ink']])$(id).onchange=run(()=>$(id).value?study.change('study.tool.apply',{toolId:$(id).value}):kind==='capture'?study.organization.captureSettings():study.inkTools.configure());
-    $('study-tools-customize').onclick=()=>this.menu();
   }
   render(set){
     const colorKey=JSON.stringify(set.palette);if(this.colorKey!==colorKey){
@@ -15,8 +12,6 @@ export class StudyTools {
       const swatches=this.study.excerpts.palette.querySelector('.study-swatches');swatches.innerHTML=this.study.colors.map(([color,label])=>`<button data-color="${escape(color)}" aria-label="标注${escape(label)}并保存" title="${escape(label)}" style="background:${this.study.hex[color]}"></button>`).join('');swatches.querySelectorAll('button').forEach(b=>b.onclick=()=>this.study.excerpts.save(b.dataset.color));
       for(const id of ['study-ink-color','card-ink-color','study-color-filter']){const select=$(id);if(!select)continue;const value=select.value;select.innerHTML=(id==='study-color-filter'?'<option value="">全部颜色</option>':'')+this.study.colors.map(([v,t])=>`<option value="${escape(v)}">${escape(t)}</option>`).join('');if(![...select.options].some(o=>o.value===value)&&value)select.add(new Option(value,value));select.value=value;}
     }
-    const key=JSON.stringify([set.id,set.tools,set.activeTools]);if(this.key===key)return;this.key=key;
-    for(const [id,kind] of [['capture-tool-select','capture'],['pen-tool-select','ink']]){const el=$(id);el.innerHTML=`<option value="">${kind==='capture'?'摘录':'笔刷'} · 当前设置</option>`+set.tools.filter(t=>t.kind===kind&&!t.deletedAt).map(t=>`<option value="${t.id}">${escape(t.title)}</option>`).join('');el.value=set.tools.some(t=>t.id===set.activeTools[kind]&&!t.deletedAt)?set.activeTools[kind]:'';}
   }
   menu(){
     showDialog({title:'工具与便携样式',html:'<div class="organize-actions">'+[['save-capture','保存当前摘录工具'],['save-ink','保存当前笔刷'],['manage','重命名 / 复制 / 删除工具'],['palette','自定义颜色栏'],['menus','自定义卡片菜单'],['export','导出样式模板'],['import','导入样式模板']].map(([id,title])=>`<button type="button" data-template-action="${id}">${title}</button>`).join('')+'</div>',onSubmit:null,afterOpen:()=>{$('dialog-fields').querySelectorAll('[data-template-action]').forEach(b=>b.onclick=run(()=>{closeDialog();return this.action(b.dataset.templateAction);}));}});

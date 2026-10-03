@@ -31,7 +31,15 @@ export function validateRule(value: ScheduleRule): ScheduleRule {
     if(value.day!=='last'&&(!Number.isInteger(value.day)||value.day<1||value.day>31))throw Error('Monthly day must be 1..31 or last')
     return {kind:'monthly',day:value.day,time:clock(value.time),timezone:zone(value.timezone)}
   }
-  throw new Error('rule.kind must be once, interval, weekly or monthly')
+  if(value?.kind==='event'){
+    if(!['signal','channel.posted'].includes(value.event))throw Error('Choose signal or channel.posted')
+    if(Object.keys(value).some(key=>!['kind','event','channelId','cooldownSeconds'].includes(key)))throw Error('Unknown event rule field')
+    if(value.event==='channel.posted'?(typeof value.channelId!=='string'||!value.channelId.trim()):value.channelId!==undefined)throw Error('channelId is required only for channel.posted')
+    const cooldownSeconds=value.cooldownSeconds??60
+    if(!Number.isInteger(cooldownSeconds)||cooldownSeconds<0||cooldownSeconds>86400)throw Error('Event cooldown must be 0–86400 seconds')
+    return {kind:'event',event:value.event,...(value.channelId?{channelId:value.channelId}:{}),cooldownSeconds}
+  }
+  throw new Error('rule.kind must be once, interval, weekly, monthly or event')
 }
 export function validateWindow(value?: ScheduleWindow | null): ScheduleWindow | undefined {
   if (value == null) return undefined
@@ -68,6 +76,7 @@ function nextWindow(window: ScheduleWindow, after: number): number {
 }
 /** Strictly after the supplied instant. DST gap is shifted forward; overlap runs once, earlier offset. */
 function nextRule(rule: ScheduleRule, after: number): number | null {
+  if(rule.kind==='event')return null
   if (rule.kind === 'once') return ms(rule.at) > after ? ms(rule.at) : null
   if (rule.kind === 'interval') {
     const anchor = ms(rule.anchor), period = rule.everySeconds * 1000

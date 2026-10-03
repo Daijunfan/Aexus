@@ -1,8 +1,19 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {createHash,randomUUID} from 'node:crypto'
+import {directoryName,needsDirectoryName} from '../shared/directory-names'
+import {directoryPath,migrationLink} from './directory-aliases'
+
+/** Normalize only newly-created folder components; file names and existing paths retain identity. */
+export function directoryDestination(root:string,value:string,folder=false){
+  workspacePath(root,value,folder)
+  const parts=value.split(/[\\/]/),limit=parts.length-(folder?0:1)
+  for(let i=0;i<limit;i++)if(parts[i]&&parts[i]!=='.'&&parts[i]!=='..'&&!parts[i].startsWith('.')&&needsDirectoryName(parts[i],parts.slice(0,i+1).join('/'))&&!fs.existsSync(path.join(root,...parts.slice(0,i+1))))parts[i]=directoryName(parts[i])
+  return parts.join('/')
+}
 
 export function workspacePath(root:string,value='.',write=false) {
+  value=directoryPath(root,value)
   const file=path.resolve(root,value),part=path.relative(root,file)
   if(part==='..'||part.startsWith('..'+path.sep)||path.isAbsolute(part))throw new Error('文件路径超出工作目录')
   let parent=file;while(!fs.existsSync(parent))parent=path.dirname(parent)
@@ -14,6 +25,10 @@ export function workspacePath(root:string,value='.',write=false) {
 const hash=(value:Buffer)=>createHash('sha256').update(value).digest('hex')
 const imageMime=(bytes:Buffer)=>bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?'image/png':bytes.subarray(0,3).equals(Buffer.from([255,216,255]))?'image/jpeg':/^GIF8[79]a$/.test(bytes.subarray(0,6).toString())?'image/gif':bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP'?'image/webp':undefined
 export function workspaceFiles(root:string,operation:string,args:Record<string,any>) {
+  args={...args,path:directoryPath(root,args.path||'.'),...(args.to!==undefined?{to:directoryPath(root,String(args.to))}:{})}
+  if(operation==='mkdir')args={...args,path:directoryDestination(root,args.path||'.',true)}
+  if(operation==='write')args={...args,path:directoryDestination(root,args.path||'.')}
+  if(operation==='move')args={...args,to:directoryDestination(root,String(args.to),fs.lstatSync(workspacePath(root,args.path)).isDirectory())}
   const file=workspacePath(root,args.path||'.',['write','mkdir','move','trash'].includes(operation))
   if(operation==='copy-info'){
     if(!fs.existsSync(file))return {exists:false}
@@ -41,7 +56,7 @@ export function workspaceFiles(root:string,operation:string,args:Record<string,a
     const data=Buffer.from(args.data,'base64'),fd=fs.openSync(file,args.offset===0?'wx':'r+',(Number(args.mode)||0o600)|0o600)
     try{if(fs.fstatSync(fd).size!==args.offset)throw Error('Transfer offset mismatch');let done=0;while(done<data.length)done+=fs.writeSync(fd,data,done,data.length-done,args.offset+done);if(args.final)fs.fchmodSync(fd,Number(args.mode)||0o600);return {bytes:data.length}}finally{fs.closeSync(fd)}
   }
-  if(operation==='list')return {root,path:path.relative(root,file),entries:fs.readdirSync(file,{withFileTypes:true}).filter(e=>args.hidden||!e.name.startsWith('.')).map(e=>{const child=path.join(file,e.name),stat=fs.lstatSync(child);return {name:e.name,path:path.relative(root,child),directory:e.isDirectory(),symlink:e.isSymbolicLink(),bytes:stat.size,modifiedAt:stat.mtimeMs}}).sort((a,b)=>Number(b.directory)-Number(a.directory)||a.name.localeCompare(b.name))}
+  if(operation==='list')return {root,path:path.relative(root,file),entries:fs.readdirSync(file,{withFileTypes:true}).filter(e=>(args.hidden||!e.name.startsWith('.'))&&(args.hidden||!migrationLink(root,path.relative(root,path.join(file,e.name))))).map(e=>{const child=path.join(file,e.name),stat=fs.lstatSync(child);return {name:e.name,path:path.relative(root,child),directory:e.isDirectory(),symlink:e.isSymbolicLink(),bytes:stat.size,modifiedAt:stat.mtimeMs}}).sort((a,b)=>Number(b.directory)-Number(a.directory)||a.name.localeCompare(b.name))}
   if(operation==='read-image'){
     if(fs.statSync(file).size>10*1024*1024)throw new Error('图片不能超过 10 MB')
     const bytes=fs.readFileSync(file),mimeType=imageMime(bytes)

@@ -8,8 +8,8 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
   await fs.writeFile(path.join(f.workspace,'book.pdf'),pdfFixture());
   await api('fs.write',{path:'reading.html',content:'<h1>Reading reference</h1><p>中文🙂 条件<strong>概率</strong> 与 <em>Introduction</em> are related.</p><p><code>Introduction</code> remains code.</p><p>Term near the end.</p>'});
   const flow=await api('document.open',{path:'reading.html',activate:false}),pdf=await api('document.open',{path:'book.pdf',activate:false});
-  let reader=await api('study.create',{title:'Reading owner'});reader=await api('study.documents.add',{setId:reader.id,expectedRevision:reader.revision,paths:['reading.html','book.pdf']});
-  let dictionary=await api('study.create',{title:'External glossary'});
+  let reader=await api('study.create',{mapMode:'cards',title:'Reading owner'});reader=await api('study.documents.add',{setId:reader.id,expectedRevision:reader.revision,paths:['reading.html','book.pdf']});
+  let dictionary=await api('study.create',{mapMode:'cards',title:'External glossary'});
   const change=async(method,p)=>dictionary=await api(method,{setId:dictionary.id,expectedRevision:dictionary.revision,...p});
   await change('study.note.create',{title:'Selected submap',submap:true});const rootId=dictionary.cards[0].id;
   await change('study.note.create',{title:'条件概率；Introduction',text:'**DEFINITION_BODY** with $p(x)$',parentId:rootId});const definition=dictionary.cards.find(c=>c.parentId===rootId).id;

@@ -13,7 +13,7 @@ const root=path.resolve(__dirname,'..');
   browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Users/djf/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell'});
   const page=await browser.newPage({viewport:{width:1520,height:1000}});page.on('pageerror',e=>report.browserErrors.push(e.message));page.setDefaultTimeout(15000);
   await fs.writeFile(path.join(workspace,'recall.pdf'),require('./fixtures.cjs').pdfFixture());
-  let s=await api('study.create',{title:'Recall workflow'});
+  let s=await api('study.create',{mapMode:'cards',title:'Recall workflow'});
   const change=async(method,p={})=>{s=await api('study.get',{setId:s.id});s=await api(method,{setId:s.id,expectedRevision:s.revision,...p});return s;};
   await change('study.documents.add',{paths:['recall.pdf']});const doc=await api('document.open',{path:'recall.pdf',activate:false});
   const captured=await api('study.card.create',{setId:s.id,expectedRevision:s.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),title:'Source question',text:'',color:'yellow',locator:{page:1},selection:{rects:[{page:1,x:.12,y:.15,width:.55,height:.13}]}});

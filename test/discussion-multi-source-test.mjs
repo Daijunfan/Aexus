@@ -38,7 +38,7 @@ void started.catch(error=>{console.error(error.message);process.exit(1)});
  await rpc('group.add',{name:'Multi-source studio'})
  const hub=await f.create('Shared participant','Multi-source studio'),peer=await f.create('Quiet participant','Multi-source studio'),outside=await f.create('Outside','Multi-source studio')
  const hubToken=await f.token(hub.id),peerToken=await f.token(peer.id),outsideToken=await f.token(outside.id)
- const file=(person,suffix)=>path.join(f.control,person.id+suffix),answer=(person,value)=>fs.writeFileSync(file(person,'.ack-tool.json'),JSON.stringify(value)),hold=person=>fs.writeFileSync(file(person,'.hold-ack'),''),release=person=>fs.rmSync(file(person,'.hold-ack'),{force:true})
+ const file=(person,suffix)=>path.join(f.control,person.id+suffix),answer=(person,value)=>{fs.rmSync(file(person,'.ack-tool.json'),{force:true});fs.writeFileSync(file(person,'.ack-output.txt'),JSON.stringify(value))},hold=person=>fs.writeFileSync(file(person,'.hold-ack'),''),release=person=>fs.rmSync(file(person,'.hold-ack'),{force:true})
  const phases=person=>fs.existsSync(file(person,'-phases.jsonl'))?fs.readFileSync(file(person,'-phases.jsonl'),'utf8').trim().split('\n').filter(Boolean).map(line=>JSON.parse(line)):[]
  const work=person=>phases(person).filter(value=>value.phase==='work'),readStarts=person=>phases(person).filter(value=>value.phase==='ack'&&!value.finishedAt)
  const idle=()=>f.until(async()=>(await Promise.all([f.status(hub.id),f.status(peer.id)])).every(status=>!status.busy),'all shared queues idle')
@@ -48,12 +48,12 @@ void started.catch(error=>{console.error(error.message);process.exit(1)});
  const baselineHub=await identity(hub),baselinePeer={identity:await identity(peer),transcript:(await transcript(peer)).items,lastReply:(await f.status(peer.id)).lastReply,works:work(peer).length}
  const rooms=[]
  for(const type of ['group','group','channel','channel']){
-  const room=await rpc(type==='group'?'chat.create':'channel.create',{name:'Same visible name',...(type==='group'?{members:[hub.id,peer.id]}:{})})
+  const room=await rpc(type==='group'?'chat.create':'channel.create',{name:'Same visible name',...(type==='group'?{members:[hub.id,peer.id]}:{engine:{kind:'external',location:'local',name:'Fixture publisher'}})})
   if(type==='channel')await rpc('channel.update',{id:room.id,adminIds:[hub.id,peer.id],expectedRevision:room.revision})
   rooms.push({type,id:room.id,name:room.name})
  }
  const [g1,g2,c1,c2]=rooms,context=(room,id,token=hubToken)=>rpc(room.type==='group'?'chat.context':'channel.context',{id:room.id,[room.type==='group'?'messageId':'entryId']:id},token)
- const channelFields=['id','name','kind','createdAt','updatedAt','adminIds','revision'].sort()
+ const channelFields=['id','name','kind','createdAt','updatedAt','adminIds','revision','engine'].sort()
  const discovered=await rpc('channel.list',{},hubToken);assert.deepEqual(discovered.map(room=>room.id).sort(),[c1.id,c2.id].sort());for(const room of discovered)assert.deepEqual(Object.keys(room).sort(),channelFields)
  assert.deepEqual(await rpc('channel.list',{},outsideToken),[]);await deny('channel.get',{id:c1.id},outsideToken);await deny('channel.get',{id:'ch_unknown'},hubToken)
  assert.ok('savedCount' in (await rpc('channel.list')).find(room=>room.id===c1.id),'operator list retains the full channel view')
@@ -86,14 +86,13 @@ void started.catch(error=>{console.error(error.message);process.exit(1)});
   const reading=readings[index],meta=JSON.parse(reading.text.split('\n')[1]),accepted=reading.text.match(/\[(?:Group request|Channel context)\]\n([^\n]+)/)
   assert.deepEqual([meta.conversationType,meta.conversationId,meta.messageId],[room.type,room.id,requests[index].id])
   assert.ok(accepted,'The accepted source context is present');const detail=JSON.parse(accepted[1]);assert.equal(room.type==='group'?detail.groupName:detail.channelName,room.name)
-  const native=phases(hub).find(value=>value.phase==='discussion-tool'&&value.input.messageId===requests[index].id)
-  assert.deepEqual(native.input,{conversationType:room.type,conversationId:room.id,messageId:requests[index].id,text:null})
+  assert.equal(reading.readingTools,false);assert.equal(reading.documentationTools,false);assert.ok(!phases(hub).some(value=>value.phase==='discussion-tool'&&value.input.messageId===requests[index].id))
   assert.ok((await delivery(room,requests[index].id,hub)).readAt);assert.equal((await history(room)).length,1)
   assert.equal(reading.thread,baselineHub.threadId)
   const formal=work(hub)[index+1],formalContext=JSON.parse(formal.text.match(/\[(?:Group request|Channel context)\]\n([^\n]+)/)[1]);assert.deepEqual([formalContext.conversationType,formalContext.conversationId,formalContext.messageId??formalContext.entryId],[room.type,room.id,requests[index].id]);assert.equal(formal.thread,baselineHub.threadId)
  }
  assert.equal(work(hub).length,5);assert.equal(work(peer).length,baselinePeer.works)
- checks.push('Four same-name sources queue independently on one native identity; source kind/ID/name/message ID and explicit native tool target stay correlated')
+ checks.push('Four same-name sources queue independently on one native identity; source kind/ID/name/message ID and tool-free private reading stay correlated')
 
  for(const [index,room] of rooms.entries()){
   const count=readStarts(hub).length;assert.equal((await send(room,'Shared request from source '+index)).id,requests[index].id);assert.equal(readStarts(hub).length,count)
@@ -105,18 +104,15 @@ void started.catch(error=>{console.error(error.message);process.exit(1)});
  await deny('session.send',{employee:peer.id,text:'Membership is not control authority'},hubToken)
  checks.push('Same retry keys are independent across rooms; public API replies reach only the specified room, foreign reply IDs are rejected, observers read without public/private chatter')
 
+ // A native publication attempt during reading is unavailable regardless of destination.
  const unaffected=await Promise.all([g2,c1,c2].map(room=>history(room)))
- for(const [label,override] of [['wrong-kind',{conversationType:'channel'}],['wrong-room',{conversationId:g2.id}],['wrong-message',{messageId:requests[2].id}]]){
-  hold(hub);answer(hub,{text:null});const request=await send(g1,'Reject '+label,'reject-'+label)
-  await f.until(async()=>{const state=await f.status(hub.id);return state.acknowledging&&state.currentTask.chat.messageId===request.id},'held negative reading')
-  answer(hub,{text:null,...override});const works=work(hub).length;release(hub)
-  const failed=await f.until(async()=>{const value=await delivery(g1,request.id,hub);return value.status==='failed'&&value},label+' rejected')
-  assert.equal(failed.readAt,undefined);assert.equal(failed.ackMessageId,undefined);assert.equal(work(hub).length,works)
-  const invocation=phases(hub).filter(value=>value.phase==='discussion-tool').at(-1);assert.equal(invocation.result.result.isError,true);assert.match(invocation.result.result.content[0].text,/target|match|source|conversation/i)
-  await idle();assert.equal((await history(g1)).filter(value=>value.replyTo===request.id).length,0);answer(hub,{text:null})
- }
- assert.deepEqual(await Promise.all([g2,c1,c2].map(room=>history(room))),unaffected)
- checks.push('A native tool with wrong conversation kind, room ID or message ID fails without read, publication, work or changes to another source')
+ hold(hub);fs.writeFileSync(file(hub,'.ack-tool.json'),JSON.stringify({text:'MUST_NOT_PUBLISH',conversationId:g2.id}));const bad=await send(g1,'Reading must not invoke a publisher','reject-reading-tool')
+ await f.until(async()=>{const state=await f.status(hub.id);return state.acknowledging&&state.currentTask.chat.messageId===bad.id},'held negative reading')
+ fs.writeFileSync(file(hub,'.ack-tool.json'),JSON.stringify({text:'MUST_NOT_PUBLISH',conversationId:g2.id}));const workBefore=work(hub).length;release(hub)
+ const failed=await f.until(async()=>{const value=await delivery(g1,bad.id,hub);return value.status==='failed'&&value},'reading publication rejected')
+ assert.equal(failed.readAt,undefined);assert.equal(failed.ackMessageId,undefined);assert.equal(work(hub).length,workBefore);await idle();answer(hub,{text:null})
+ assert.deepEqual(await Promise.all([g2,c1,c2].map(room=>history(room))),unaffected);assert.ok(!(await history(g1)).some(item=>item.text==='MUST_NOT_PUBLISH'))
+ checks.push('Reading cannot publish or cross sources; native failure does not release work or alter another room')
 
  await rpc('chat.update',{id:g1.id,members:[peer.id]})
  await deny('chat.context',{id:g1.id},hubToken);await context(g2,requests[1].id);await context(c1,requests[2].id);await context(c2,requests[3].id)

@@ -14,14 +14,14 @@ export function initializeManagement(){
   const previous=readStore(),legacy=previous.access?.version!==2
   const legacyGlobal=(card:typeof previous.sessions[number])=>legacy&&(previous.access?.globalManagerIds?.includes(card.id)||!!previous.access?.managerTeam&&card.group===previous.access.managerTeam)
   const remote=(card:typeof previous.sessions[number])=>card.kind==='cloud-native-worker'||employeeSettings(previous,card).mode==='cloud'
-  const invalid=previous.sessions.some(card=>remote(card)&&(isSupervisor(card.managementRole)||legacyGlobal(card)))
+  const invalid=previous.sessions.some(card=>remote(card)&&rolePolicy(card.managementRole).requiresLocal)
   const changedLines=JSON.stringify(previous.access?.relations??[])!==JSON.stringify(managementRelations(previous.sessions,previous.access?.bindings))
   if(!legacy&&!invalid&&!changedLines&&!previous.access?.managerTeam&&!previous.access?.globalManagerIds.length)return
   if(previous.sessions.length){mkdirSync(join(APP_HOME,'backups'),{recursive:true});writeFileSync(join(APP_HOME,'backups',`before-employee-roles-${Date.now()}.json`),JSON.stringify(previous,null,2),{mode:0o600})}
   const store=readStore();store.access??=emptyAccess();store.access.version=2
   for(const card of store.sessions){
     card.managementRole??='employee';card.accessMode??='trusted'
-    if(remote(card)&&isSupervisor(card.managementRole))card.managementRole='employee'
+    if(remote(card)&&rolePolicy(card.managementRole).requiresLocal)card.managementRole='employee'
     else if(!remote(card)&&legacyGlobal(card))card.managementRole='governor'
   }
   delete store.access.managerTeam;store.access.globalManagerIds=[]

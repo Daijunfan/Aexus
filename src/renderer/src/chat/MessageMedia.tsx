@@ -15,18 +15,23 @@ export function MessageMedia(props:Props){const background=useAudioPlaybackAvail
 function InlineMedia({conversation,path,name,kind}:Props){
  useI18n()
  const [current,setCurrent]=useMessageRowState('media:'+kind+':'+path,0)
- const root=useRef<HTMLDivElement>(null),media=useRef<HTMLVideoElement&HTMLAudioElement>(null),grant=useRef<MediaInfo|null>(null),opening=useRef<Promise<void>|null>(null),mounted=useRef(true),visible=useRef(true),resume=useRef(current),playIntent=useRef(0)
+ const root=useRef<HTMLDivElement>(null),media=useRef<HTMLVideoElement&HTMLAudioElement>(null),grant=useRef<MediaInfo|null>(null),opening=useRef<Promise<void>|null>(null),mounted=useRef(true),visible=useRef(true),resume=useRef(current),playIntent=useRef(0),loadVersion=useRef(0),loaded=useRef(false),authenticated=useRef(true)
  const [src,setSrc]=useState(''),[ready,setReady]=useState(false),[playing,setPlaying]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState(''),[duration,setDuration]=useState(0),[buffered,setBuffered]=useState(0),[volume,setVolume]=useState(preferences.volume),[muted,setMuted]=useState(preferences.muted),[rate,setRate]=useState(preferences.rates[kind]),[fullscreen,setFullscreen]=useState(false)
  useMessageOwner(playing||fullscreen)
  const release=()=>{const id=grant.current?.id;grant.current=null;if(id)void api.call('messenger.media-close',{id}).catch(()=>{})}
- const unload=()=>{if(media.current&&media.current.readyState>0)resume.current=media.current.currentTime;media.current?.pause();media.current?.removeAttribute('src');media.current?.load();release();setSrc('');setReady(false);setBuffered(0);setPlaying(false);setLoading(false)}
- useEffect(()=>{mounted.current=true;const element=media.current,auth=api.onEvent(event=>{if(event.channel==='client:authentication'&&!event.payload.authenticated){playIntent.current++;unload()}}),off=element?watchMedia(element,()=>{playIntent.current++;element.pause()}):()=>{};const observer=new IntersectionObserver(entries=>{visible.current=entries.some(entry=>entry.isIntersecting);if(!visible.current&&media.current?.paused)unload();else if(visible.current&&!grant.current&&!opening.current)void open().catch(()=>{if(mounted.current){setLoading(false);setError(mediaPlaybackError)}})},{rootMargin:'150px'});if(root.current)observer.observe(root.current);return()=>{mounted.current=false;auth();off();playIntent.current++;observer.disconnect();element?.pause();element?.removeAttribute('src');element?.load();release()}},[conversation,path])
+ // Capture only an attached, decoded source. Teardown events must not replace its saved position with zero.
+ const remember=(element:HTMLMediaElement|null=media.current)=>{if(loaded.current&&grant.current&&element&&Number.isFinite(element.currentTime)){resume.current=element.currentTime;setCurrent(element.currentTime)}}
+ const detach=(element:HTMLMediaElement|null=media.current)=>{remember(element);loaded.current=false;loadVersion.current++;opening.current=null;release();element?.pause();element?.removeAttribute('src');element?.load()}
+ const unload=()=>{detach();setSrc('');setReady(false);setBuffered(0);setPlaying(false);setLoading(false)}
+ useEffect(()=>{mounted.current=true;const element=media.current,auth=api.onEvent(event=>{if(event.channel==='client:authentication'){authenticated.current=!!event.payload.authenticated;if(!authenticated.current){playIntent.current++;unload()}}}),off=element?watchMedia(element,()=>{playIntent.current++;element.pause()}):()=>{};const observer=new IntersectionObserver(entries=>{visible.current=entries.some(entry=>entry.isIntersecting);if(!visible.current&&media.current?.paused)unload();else if(visible.current&&authenticated.current&&!grant.current&&!opening.current)void open().catch(()=>{if(mounted.current){setLoading(false);setError(mediaPlaybackError)}})},{rootMargin:'150px'});if(root.current)observer.observe(root.current);return()=>{detach(element);mounted.current=false;auth();off();playIntent.current++;observer.disconnect()}},[conversation,path])
  useEffect(()=>{const element=media.current;if(element){element.volume=volume;element.muted=muted;element.playbackRate=rate}},[volume,muted,rate,src])
  useEffect(()=>{const change=()=>setFullscreen(document.fullscreenElement===root.current);document.addEventListener('fullscreenchange',change);return()=>document.removeEventListener('fullscreenchange',change)},[])
  useEffect(()=>{if(!playing)return;let frame=0;const tick=()=>{const element=media.current;if(element)setCurrent(element.currentTime);frame=requestAnimationFrame(tick)};frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame)},[playing])
  const open=()=>{
   if(opening.current)return opening.current
-  const work=(async()=>{setLoading(true);setError('');const value=await api.call<MediaInfo>('messenger.media-open',{conversation,path});if(!mounted.current||!visible.current&&media.current?.paused){void api.call('messenger.media-close',{id:value.id}).catch(()=>{});return}release();grant.current=value;const url=sourceUrl(value.id);setSrc(url);if(media.current){media.current.src=url;media.current.load()}})()
+  if(!authenticated.current)return Promise.reject(Error('Sign in to preview media.'))
+  const version=++loadVersion.current
+  const work=(async()=>{setLoading(true);setError('');const value=await api.call<MediaInfo>('messenger.media-open',{conversation,path});if(!mounted.current||!authenticated.current||version!==loadVersion.current||!visible.current&&media.current?.paused){void api.call('messenger.media-close',{id:value.id}).catch(()=>{});return}remember();loaded.current=false;release();grant.current=value;const url=sourceUrl(value.id);setSrc(url);if(media.current){media.current.src=url;media.current.load()}})()
   opening.current=work
   void work.finally(()=>{if(opening.current===work)opening.current=null}).catch(()=>{})
   return work
@@ -34,17 +39,17 @@ function InlineMedia({conversation,path,name,kind}:Props){
  const changeVolume=(value:number)=>{preferences.volume=value;setVolume(value)}
  const changeMute=(value:boolean)=>{preferences.muted=value;setMuted(value)}
  const changeRate=()=>{const values=[.75,1,1.25,1.5,2],value=values[(values.indexOf(rate)+1)%values.length];preferences.rates[kind]=value;setRate(value)}
- const play=async()=>{const intent=++playIntent.current;if(media.current)claimMedia(media.current);visible.current=true;try{if(!grant.current||error)await open();const element=media.current;if(!element||!mounted.current||intent!==playIntent.current)return;if(element.ended)element.currentTime=0;element.volume=preferences.volume;element.muted=preferences.muted;element.playbackRate=preferences.rates[kind];setVolume(preferences.volume);setMuted(preferences.muted);setRate(preferences.rates[kind]);await element.play()}catch(cause){if(mounted.current){setPlaying(false);setLoading(false);if((cause as Error).name==='AbortError')return;setError((cause as Error).name==='NotAllowedError'?'Press play to start playback.':mediaPlaybackError)}}}
+ const play=async()=>{const intent=++playIntent.current;if(media.current)claimMedia(media.current);visible.current=true;try{if(!grant.current||error)await open();const element=media.current;if(!element||!mounted.current||!authenticated.current||!grant.current||intent!==playIntent.current)return;if(element.ended)element.currentTime=0;element.volume=preferences.volume;element.muted=preferences.muted;element.playbackRate=preferences.rates[kind];setVolume(preferences.volume);setMuted(preferences.muted);setRate(preferences.rates[kind]);await element.play()}catch(cause){if(mounted.current){setPlaying(false);setLoading(false);if((cause as Error).name==='AbortError')return;setError((cause as Error).name==='NotAllowedError'?'Press play to start playback.':mediaPlaybackError)}}}
  const toggle=()=>{if(media.current&&!media.current.paused)media.current.pause();else void play()}
  const seek=(value:number)=>{const element=media.current;if(!element||!duration)return;element.currentTime=Math.max(0,Math.min(duration,value));resume.current=element.currentTime;setCurrent(element.currentTime)}
  const toggleFullscreen=async()=>{try{if(document.fullscreenElement===root.current)await document.exitFullscreen();else await root.current?.requestFullscreen()}catch{setError('Fullscreen is unavailable in this window.')}}
  const events={
-  onLoadedMetadata:()=>{const element=media.current;if(element){setDuration(Number.isFinite(element.duration)?element.duration:0);if(resume.current>0&&resume.current<element.duration)element.currentTime=resume.current;setLoading(false)}},
-  onLoadedData:()=>setReady(true),
-  onTimeUpdate:()=>{if(media.current&&media.current.readyState>0){resume.current=media.current.currentTime;setCurrent(media.current.currentTime)}},
+  onLoadedMetadata:()=>{const element=media.current;if(mounted.current&&grant.current&&element){setDuration(Number.isFinite(element.duration)?element.duration:0);if(resume.current>0&&resume.current<element.duration)element.currentTime=resume.current;loaded.current=true;setLoading(false)}},
+  onLoadedData:()=>{if(mounted.current&&grant.current)setReady(true)},
+  onTimeUpdate:()=>remember(),
   onProgress:()=>{const element=media.current;if(element&&element.buffered.length)setBuffered(element.buffered.end(element.buffered.length-1))},
   onPlay:()=>{for(const other of document.querySelectorAll<HTMLMediaElement>('[data-message-media]'))if(other!==media.current)other.pause();setPlaying(true);setError('')},
-  onPause:()=>{setPlaying(false);if(!visible.current)unload()},onWaiting:()=>setLoading(true),onPlaying:()=>setLoading(false),onSeeking:()=>setLoading(true),onSeeked:()=>setLoading(false),onEnded:()=>{setPlaying(false);setLoading(false)},
+  onPause:()=>{setPlaying(false);if(!visible.current&&grant.current)unload()},onWaiting:()=>setLoading(true),onPlaying:()=>setLoading(false),onSeeking:()=>setLoading(true),onSeeked:()=>setLoading(false),onEnded:()=>{setPlaying(false);setLoading(false)},
   onError:()=>{if(src&&mounted.current){setLoading(false);setPlaying(false);setError(mediaPlaybackError)}}
  }
  const key=(event:React.KeyboardEvent)=>{

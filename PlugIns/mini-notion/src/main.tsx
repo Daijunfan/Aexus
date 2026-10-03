@@ -8,6 +8,8 @@ import './styles.css';
 import './appearance.css';
 import './icons.css';
 import './notion-local.css';
+import './styles/events.css';
+import './content/editor-tools.css';
 import './styles/themes.css';
 
 if(new URLSearchParams(location.search).get('hosted')==='1')installPluginBridge();

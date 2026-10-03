@@ -1,7 +1,7 @@
 ---
 schema: agents-company.cli/v1
 plugin: margin-reader
-version: '0.7.0'
+version: '0.9.4'
 workspace: required
 ---
 
@@ -9,7 +9,11 @@ workspace: required
 
 ## Purpose
 
-CLI-first、本地优先的文档阅读器。PDF 原页阅读，DOC/DOCX、EPUB、MOBI/KF8 和常见文本/图片读取；公开网页正文与图片离线保存；真实文件树、大文件夹视图；原文目录提取、自定义章节、缩进、退级、排序、全文搜索和阅读位置保存。
+0.9.4统一移动、选择与父子关系工具的主题拖放预览；拖到目标主体修改父主题，拖出脑图松开取消，重叠旧位置不再挡住目标。保留完整资料封面、并排阅读与原文定位。公开接口和员工权限不变，见 docs/DRAG_COVER_FINISH.md。
+
+0.9.3修复 Ctrl/Cmd+S 与退出，增加原文拖入、可撤销的所选节点删除、区域、大纲和主题任务时间图。新命令为 study.cards.remove、study.mindmap.tasks.plan/export、study.mindmap.zone.move；全部复用当前授权工作区的 Core，独立主题不要求原文来源。见 docs/MINDMAP_USABILITY.md。
+
+0.9.2增加完整资料封面与统一主题拖放：主题A拖到B后B成为父主题，后代跟随；总览缩略节点也可直接操作。study.cards.move的expandParent可在同一次撤销操作中展开目标。界面提供文档阅读与无限脑图，可单独查看或并排阅读，并自由交换左右和调整分栏宽度；卡片盒、学习大纲和复习面板已退休，旧数据与API保留兼容。CLI-first、本地优先的文档阅读器。PDF 原页阅读，DOC/DOCX、EPUB、MOBI/KF8 和常见文本/图片读取；公开网页正文与图片离线保存；真实文件树、大文件夹视图；原文目录提取、自定义章节、缩进、退级、排序、全文搜索和阅读位置保存。
 v0.7.0 提供图层/压感/套索、脑图手写、文档对照、笔记本/页面组合、留白、复合卡片、牌组/遮挡/挖空/参数训练，并保留学习集、摘录与独立笔记卡、标签检索、关联、大纲/卡片/脑图视图、撤销重做、离线 FSRS 复习、PDF 手写与文档书签；不含 OCR 或 DRM 解密。
 
 ## Workspace
@@ -490,6 +494,7 @@ Validate and persist a jump/reading position. Positions use last-write-wins.
 | --- | --- | --- | --- |
 | id | string | 是 | Stable document ID returned by document.open. |
 | locator | object | 是 | PDF: {page:1,pageOffset:0}; legacy offset remains accepted; audio/video: {time:0,endTime?:10}; flow document: {section:0,anchor:"heading-id"}. |
+| activate | boolean | 否 | Default true selects the document. False checkpoints an already-open reader without overriding later navigation. |
 
 ### settings.get
 
@@ -547,6 +552,168 @@ Persist preferences through the same API used by the renderer.
 | currentFolder | string | 否 | Current folder path. |
 | lastDocument | string / null | 否 | Last open document ID or null. |
 
+### study.mindmap.design.list
+
+List reusable local mind-map designs, including recoverably archived entries, with a conflict-check version.
+
+性质：读取；员工访问：workspace。
+
+无参数。
+
+### study.mindmap.design.save
+
+Create or revise a reusable visual design. Capture a study or supply validated settings; no topic text or identities are copied.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| expectedVersion | string | 是 | Version from study.mindmap.design.list. |
+| designId | string | 否 | Saved design UUID in this workspace. |
+| title | string | 是 | Design title, 1–80 characters. |
+| setId | string | 否 | Study UUID in this authorized workspace. |
+| expectedRevision | number | 否 | Current study revision. |
+| settings | object | 否 | Optional visual settings instead of a source study. Supports catalog skeletons/themes, palette, levelStyles, shapes, fonts and spacing; excludes content, offsets and annotations. |
+
+### study.mindmap.design.archive
+
+Archive or restore a saved design without changing maps that already used it.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| designId | string | 是 | Saved design UUID in this workspace. |
+| expectedVersion | string | 是 | Version from study.mindmap.design.list. |
+| archived | boolean | 否 | Default true; false restores the design. |
+
+### study.mindmap.design.apply
+
+Apply a saved design in one undoable study transaction. Preserves topic identities, explicit per-topic overrides, sources and structural annotations.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| designId | string | 是 | Saved design UUID in this workspace. |
+| expectedVersion | string | 是 | Version from study.mindmap.design.list. |
+| setId | string | 是 | Study UUID in this authorized workspace. |
+| expectedRevision | number | 是 | Current study revision. |
+
+### study.mindmap.design.export
+
+Export a portable JSON design to a new file inside the workspace. No source text, IDs or images are included.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| designId | string | 是 | Saved design UUID in this workspace. |
+| expectedVersion | string | 是 | Version from study.mindmap.design.list. |
+| path | string | 是 | New relative JSON destination, must not exist. |
+
+### study.mindmap.design.import
+
+Inspect a portable design by default; explicitly apply=true to add it after checking source and library versions.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| path | string | 是 | Existing relative design JSON. |
+| apply | boolean | 否 | Default false: read-only inspection. True saves an independent design. |
+| expectedVersion | string | 否 | Version from study.mindmap.design.list. |
+| expectedSourceVersion | string | 否 | SHA-256 from prior inspection, required when applying. |
+| title | string | 否 | Optional imported design title. |
+
+### study.mindmap.arrange
+
+Position, align, distribute or reset floating topics and free-positioned main branches. Uses shared geometry and one undo transaction.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID in this authorized workspace. |
+| expectedRevision | number | 是 | Current study revision. |
+| cardIds | array | 是 | 1–1000 root or eligible main-topic IDs; descendants follow their root. |
+| action | string | 是 | Arrange operation. 可选：place, left, right, top, bottom, center-x, center-y, distribute-x, distribute-y, reset |
+| positions | array | 否 | For place: one {cardId,x,y} model-space top-left target per chosen root. Each coordinate is within ±1000000000; viewport panning has no content-edge constraint. |
+
+### study.mindmap.collapse
+
+Expand a complete subtree or show a specified number of descendant levels in one reversible transaction.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID in this authorized workspace. |
+| expectedRevision | number | 是 | Current study revision. |
+| cardIds | array | 是 | 1–10000 selected branch roots. |
+| level | number | 是 | -1 expands all; 0 shows only selected roots; 1 keeps one descendant level. |
+
+### study.mindmap.equation.preview
+
+Render a bounded local mathematical or chemical LaTeX equation as SVG without writing study data or loading remote resources.
+
+性质：读取；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| latex | string | 是 | 1–2000 LaTeX characters. Supports base, AMS and mhchem commands. |
+
+### study.mindmap.pitch.plan
+
+Read the complete automatic presentation plan, including chunked large branches and explicit per-topic visibility.
+
+性质：读取；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID in this authorized workspace. |
+
+### study.mindmap.tasks.plan
+
+Read a paginated timeline over existing topic task fields; no schedule or second task store is created.
+
+性质：读取；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID. |
+| rootId | string | 否 | Optional branch root UUID. |
+| offset | number | 否 | Zero-based offset. |
+| limit | number | 否 | Result count; default 100. |
+
+### study.mindmap.tasks.export
+
+Export topic tasks to an Excel-readable UTF-8 CSV or all-day ICS calendar, preserving original files and refusing overwrites.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID. |
+| expectedRevision | number | 是 | Latest study revision. |
+| rootId | string | 否 | Optional branch root UUID. |
+| format | string | 是 | Local task format. 可选：csv, ics |
+| path | string | 是 | New workspace-relative destination with matching extension. |
+
+### study.mindmap.zone.move
+
+Translate every floating branch in a zone and its fixed frame in one reversible transaction.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID in the current authorized workspace. |
+| expectedRevision | number | 是 | Current study revision. A stale edit is rejected without retry. |
+| decorationId | string | 是 | Existing zone UUID. |
+| dx | number | 是 | Horizontal movement in model coordinates. |
+| dy | number | 是 | Vertical movement in model coordinates. |
+
 ### study.mindmap.catalog
 
 Read all map structures, original themes, node shapes, line/arrow styles and creation templates.
@@ -565,7 +732,8 @@ Configure compact mind-map rendering without replacing the original study cards;
 | --- | --- | --- | --- |
 | setId | string | 是 | Study UUID in the current authorized workspace. |
 | expectedRevision | number | 是 | Current study revision. A stale edit is rejected without retry. |
-| patch | object | 是 | enabled; theme; structure; line; lineWidth .5–12; colorMode branch/level/single; #RRGGBB background/textColor; spacing 12–100; branchSpacing 30–220; autoBalance, sameLevelWidth, gradient, shadow, showImages, showTags, motion, minimap; numbering none/decimal/hierarchy/roman/alpha; fontFamily; fontSize 12–32; topicShape, rootShape; topicWidth 100–600. Null resets an override. See catalog for enums. |
+| patch | object | 是 | enabled defaults true for an unconfigured study; showImages defaults false; titleLines 0–8 (default 0, complete titles); skeleton from catalog.skeletons; palette 2–12 hex colors; centralColor; levelStyles 1–8 validated level objects (shape,fill solid/soft/white/none,size -6..12,bold,line,paddingX,paddingY,borderWidth,borderDash); freeBranches, flexibleFloating, topicOverlap, smartGuides; numberPrefix/numberSuffix; showSources (default false); theme; structure; line; lineWidth .5–12; colorMode branch/level/single; #RRGGBB background/textColor; spacing 12–100; branchSpacing 30–220; autoBalance, sameLevelWidth, gradient, shadow, showImages, showTags, motion, minimap; numbering none/decimal/hierarchy/roman/alpha; fontFamily; fontSize 12–32; topicShape, rootShape; topicWidth 100–600. Null resets an override. See catalog for enums. pitch {layout auto/grid/list/split/map,delivery topics/branches/step,theme map/light/dark,ratio 16:9/4:3,notes,images}. |
+| topicPitch | object | 否 | Optional atomic per-topic presentation settings {cardId,visible,layout}. |
 
 ### study.mindmap.topics.update
 
@@ -579,11 +747,11 @@ Atomically style selected topics, markers, task labels and non-overlapping rich-
 | expectedRevision | number | 是 | Current study revision. A stale edit is rejected without retry. |
 | cardIds | array | 是 | 1–1000 existing card UUIDs; source snapshots and card IDs are preserved. |
 | reset | boolean | 否 | Clear explicit topic styles before applying the patch. |
-| patch | object | 是 | shape; fill/textColor/borderColor/branchColor #RRGGBB; borderWidth 0–10; borderDash solid/dash/dot; fontFamily/fontSize 10–48; bold/italic/underline/strike; align left/center/right; width 100–800; structure; side auto/left/right; numbering; branchLine/branchWidth .5–12; shadow/gradient/showImage/showNote; priority 0–9, progress 0–100, status none/todo/doing/done/blocked, symbol, flagColor; task {start,due YYYY-MM-DD,assignee,estimate}; runs [{start,end,bold,italic,underline,strike,color}] use sorted disjoint UTF-16 ranges, at most 100. Null resets a field. |
+| patch | object | 是 | pitch {visible,layout auto/grid/list/split/map}; equation {latex (1–2000 characters),scale .2–4}, null removes it; shape; fill/textColor/borderColor/branchColor #RRGGBB; borderWidth 0–10; borderDash solid/dash/dot; fontFamily/fontSize 10–48; bold/italic/underline/strike; align left/center/right; width 100–800; structure; side auto/left/right; numbering; branchLine/branchWidth .5–12; shadow/gradient/showImage/showNote; priority 0–9, progress 0–100, status none/todo/doing/done/blocked, symbol, flagColor; task {start,due YYYY-MM-DD,assignee,estimate}; runs [{start,end,bold,italic,underline,strike,color}] use sorted disjoint UTF-16 ranges, at most 100. Null resets a field. |
 
 ### study.mindmap.decoration.set
 
-Create or edit a source-preserving boundary, callout or summary bracket. Summary creates an editable topic which can have subtopics.
+Create or edit a source-preserving boundary, callout, summary bracket or floating-branch zone. Summary creates an editable topic which can have subtopics.
 
 性质：写入；员工访问：workspace。
 
@@ -592,9 +760,9 @@ Create or edit a source-preserving boundary, callout or summary bracket. Summary
 | setId | string | 是 | Study UUID in the current authorized workspace. |
 | expectedRevision | number | 是 | Current study revision. A stale edit is rejected without retry. |
 | decorationId | string | 否 | Existing annotation UUID; omit to create. |
-| kind | string | 否 | Required for creation. 可选：boundary, summary, callout |
+| kind | string | 否 | Required for creation. 可选：boundary, summary, callout, zone |
 | cardIds | array | 否 | 1–1000 existing card UUIDs; source snapshots and card IDs are preserved. |
-| style | object | 否 | title; shape from catalog.boundaries; color/fill/textColor #RRGGBB; opacity 0–1; dash solid/dash/dot; width .5–10; fontSize 10–32; padding 8–80. Callout requires one topic. Summary requires attached siblings. |
+| style | object | 否 | title; shape from catalog.boundaries; color/fill/textColor #RRGGBB; opacity 0–1; dash solid/dash/dot; width .5–10; fontSize 10–32; padding 8–80. Callout requires one topic. Summary requires attached siblings. Zone groups floating roots and also supports collapsed,autoResize,titleHidden,zIndex -500..500,frame {x,y,width,height}; frames have minimum size 100. |
 
 ### study.mindmap.decoration.remove
 
@@ -623,7 +791,7 @@ Style or reconnect an existing same-map relationship through the same versioned 
 | to | string | 否 | Optional new destination topic UUID. |
 | label | string | 否 | Optional description, max 200 UTF-16 units. |
 | reset | boolean | 否 | Clear custom visual style first. |
-| patch | object | 否 | line from catalog.lines; color/textColor #RRGGBB; width .5–12; dash solid/dash/dot; start/end from catalog.arrows; fontSize 10–32; bold; followTopic; bendX/bendY -1000..1000; optional normalized startX,startY,endX,endY. |
+| patch | object | 否 | line from catalog.lines; color/textColor #RRGGBB; width .5–12; dash solid/dash/dot; start/end from catalog.arrows; fontSize 10–32; bold; followTopic; avoidTopics (default true when no manual bend); bendX/bendY -1000..1000; optional normalized startX,startY,endX,endY. |
 
 ### study.mindmap.template.apply
 
@@ -640,7 +808,7 @@ Append an editable original diagram template; never deletes existing cards or do
 
 ### study.mindmap.export
 
-Export the shared complete geometry as SVG, PNG or image-based PDF to a new workspace file.
+Export the shared complete geometry as SVG, PNG or searchable vector PDF to a new workspace file.
 
 性质：写入；员工访问：workspace。
 
@@ -648,11 +816,14 @@ Export the shared complete geometry as SVG, PNG or image-based PDF to a new work
 | --- | --- | --- | --- |
 | setId | string | 是 | Study UUID in the current authorized workspace. |
 | expectedRevision | number | 是 | Current study revision. A stale edit is rejected without retry. |
-| format | string | 是 | Output format. 可选：svg, png, pdf |
+| format | string | 是 | Output format. 可选：svg, png, pdf, pptx |
 | path | string | 是 | New workspace-relative file; extension must match format. Existing destinations are rejected. |
+| content | string | 否 | Export map geometry or the automatic presentation. PPTX always exports presentation slides. 可选：map, pitch |
 | scope | string | 否 | all expands all topics; visible preserves focus and collapse state. 可选：all, visible |
 | rootId | string | 否 | Optional branch root UUID. |
-| includeImages | boolean | 否 | Include immutable excerpt images, default true. SVG budget 64 MiB, images 32 MiB; PNG/PDF at most 24 MP and 8192 pixels per dimension. |
+| pdfMode | string | 否 | PDF defaults to vector text and curves; raster is an explicit compatibility fallback. 可选：vector, raster |
+| paper | string | 否 | Vector PDF page dimensions. auto fits the entire map up to 14000 points; A4/A3 fit the complete map onto one landscape page. 可选：auto, A4, A3 |
+| includeImages | boolean | 否 | Allow images enabled in map/topic settings, default true. Hidden inline images remain in card data; set showImages/showImage true to include them in the diagram. SVG budget 64 MiB, images 32 MiB; PNG/raster PDF at most 24 MP and 8192 pixels per dimension. |
 
 ### study.mindmap.query
 
@@ -1312,7 +1483,10 @@ Create an independent text card without requiring a source document or image.
 | color | string | 否 | Highlight color. |
 | tags | array | 否 | At most 30 unique text tags, each 1–60 characters. |
 | submap | boolean | 否 | Create an empty submap root. |
+| x | number | 否 | Optional floating world x; requires y and no parent. |
+| y | number | 否 | Optional floating world y; requires x and no parent. |
 | parentId | string | 否 | Optional parent card UUID. |
+| zoneId | string | 否 | Optional existing zone UUID for a new floating topic. |
 
 ### study.cards.query
 
@@ -1338,7 +1512,8 @@ Remember the study workbench view for this study set.
 | --- | --- | --- | --- |
 | setId | string | 是 | Study set UUID. |
 | expectedRevision | number | 是 | Current study-set revision; stale writes fail with CONFLICT. |
-| view | string | 是 | Workbench view. 可选：map, outline, cards, review |
+| view | string | 是 | map or documents alone; split shows both together. Other values are legacy compatibility. 可选：map, documents, split, outline, cards, review |
+| documentId | string / null | 否 | Optional member document for documents/split. Null shows the document picker. Split without a value retains the active member or opens the first available source. |
 
 ### study.undo
 
@@ -1464,12 +1639,13 @@ List independent study sets without duplicating source files.
 
 ### study.create
 
-Create an empty study set.
+Create an empty study set. New and unconfigured studies use compact topics; explicit cards mode retains the excerpt-card layout.
 
 性质：写入；员工访问：workspace。
 
 | 参数 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
+| mapMode | string | 否 | Initial map presentation; default topics. Switch later with study.mindmap.configure enabled. 可选：topics, cards |
 | title | string | 是 | Study set title, 1–200 characters. |
 | description | string | 否 | Optional description, up to 4000 characters. |
 | folderId | string / null | 否 | Optional study-folder UUID; null or omitted creates at the root. |
@@ -1572,7 +1748,10 @@ Create a colored excerpt and durable PNG snapshot in the shared headless Core.
 | selection | object | 否 | PDF {rects:[{page,x,y,width,height}]} normalized to the rendered page, or {polygon:{page,points:[[x,y],...]}} for lasso capture. Flow {start,end} UTF-16 offsets in sanitized article textContent. Omit for text-only CLI cards. |
 | color | string | 是 | Highlight color. |
 | title | string | 否 | Optional card title. |
-| parentId | string | 否 | Optional parent card UUID. |
+| parentId | string / null | 否 | Optional parent card UUID; explicit null creates a root and bypasses preset grouping. An explicit parent expands in the same undo step. |
+| x | number | 否 | Optional floating world x; requires y and parentId:null. |
+| y | number | 否 | Optional floating world y; requires x and parentId:null. |
+| zoneId | string | 否 | Optional existing zone UUID for a new floating excerpt. |
 | password | string | 否 | PDF password for this request only; never saved. |
 
 ### study.card.update
@@ -3200,6 +3379,19 @@ Create or reuse chapter cards directly from a document outline.
 | nodeIds | array | 否 | Optional selected chapter IDs. |
 | title | string | 否 | Root-card title. |
 
+### study.cards.remove
+
+Recoverably remove selected topics in one atomic undo step. Default promote keeps unselected children under the nearest surviving parent; subtree removes complete branches. Originals and attachments remain recoverable.
+
+性质：写入；员工访问：workspace。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| setId | string | 是 | Study UUID in the assigned workspace. |
+| expectedRevision | number | 是 | Latest study revision. |
+| cardIds | array | 是 | 1–10000 selected card UUIDs; duplicate and nested selections are handled once. |
+| mode | string | 否 | Default promote; subtree includes all descendants. 可选：promote, subtree |
+
 ### study.cards.move
 
 Move selected branches together with stable IDs, cycle prevention and one reversible transaction.
@@ -3214,6 +3406,8 @@ Move selected branches together with stable IDs, cycle prevention and one revers
 | parentId | string / null | 否 | Destination parent, null means roots. |
 | index | number | 否 | Sibling insertion index. |
 | positions | array | 否 | Optional {cardId,x,y} for each selected root in world coordinates. |
+| expandParent | boolean | 否 | Expand the destination parent in the same undo transaction, so a dropped branch remains visible. |
+| side | string | 否 | Optional mind-map branch side, committed with the move and undone in the same step. 可选：auto, left, right |
 
 ### study.card.insert
 
@@ -3650,7 +3844,7 @@ node cli.cjs --workspace /absolute/library api reader.position.set --data '{"id"
 
 study.note.create 新建独立文本卡，source/image/imageAsset 为 null；UI 与 CLI 均无需先创建文档。study.cards.query 以 query/tag/color/documentId 交集筛选卡片。study.link.add/remove 维护同集跨分支的单向/双向关联，删除卡片时关联随卡片进入回收站，恢复时仅恢复两端仍有效的关联。
 
-study.view.set 保存 map/outline/cards/review 视图。study.undo/redo 在事务锁内恢复本学习集最近编辑（最多 30 步、8 MiB 元数据），revision 只递增；新编辑清空 redo。图片不复制、不删除。视图切换、打开/删除/恢复整个学习集及导出不进入编辑历史。该历史用于撤销，不是备份。大于历史容量的编辑仍可保存，但旧的撤销项会被移除。
+当前界面仅提供 documents/map。study.view.set 保存 documents/map；outline/cards/review 仅作为旧调用和数据的兼容值，不再提供对应界面。study.undo/redo 在事务锁内恢复本学习集最近编辑（最多 30 步、8 MiB 元数据），revision 只递增；新编辑清空 redo。图片不复制、不删除。视图切换、打开/删除/恢复整个学习集及导出不进入编辑历史。该历史用于撤销，不是备份。大于历史容量的编辑仍可保存，但旧的撤销项会被移除。
 
 study.review.configure 设置正反面并加入或暂停复习。study.review.queue 使用服务端当前时间给出到期 cardIds；preview 返回 again/hard/good/easy 四个下次到期时间；grade 保存 ts-fsrs 5.4.2 计算的调度和日志。默认不启用随机扰动；可设置 retention/maximumInterval，并通过本机历史训练 w。全程离线、不调用模型；不复刻 MarginNote 的私有默认参数。每次评分必须携带当前 revision，重复提交不会重复计分。可通过 study.undo 撤销最近评分。
 
@@ -3839,7 +4033,9 @@ ready 后调用 library.backup.job.publish 发布为标准 margin-reader.backup/
 
 ## 侧栏与主页面操作
 
-学习集、我的文库使用相同的独行分类按钮，各自下方仅保留目录树。学习集的新建、文件夹新建、导入及学习集回收站在右侧学习集主页面；全库卡片盒和工具查找移至窗口右上角工具区。
+学习集、我的文库使用相同的独行分类按钮，各自下方仅保留目录树。两个区域按可见内容自然排列，不预留半屏高度；收起学习集文件夹时文库立即上移，展开或增加条目时自然下移。两棵树共用一个滚动区域，顶部标题和底部回收站固定。进入新学习集时展开其父目录，后续刷新尊重手动收起的状态。
+
+学习集的新建、文件夹新建、导入及学习集回收站在右侧学习集主页面；全库卡片盒和工具查找移至窗口右上角工具区。
 
 文库文件名与路径搜索在右侧文库页面，支持已载入目录中的子文件夹结果；输入不会筛掉侧栏条目。搜索结果可打开、生成原文缩略图或批量选择；清空／Escape 返回当前文件夹，进入搜索到的文件夹会清空查询。文库与学习集主页中 Cmd/Ctrl F 聚焦各自搜索；Cmd/Ctrl O 仍用于导入文件，Cmd/Ctrl K 仍用于查找工具。
 
@@ -3848,19 +4044,29 @@ ready 后调用 library.backup.job.publish 发布为标准 margin-reader.backup/
 
 # 思维导图工作台
 
+0.9.3 的保存、删除、原文拖入、区域、大纲和任务视图改进及验收边界见 [MINDMAP_USABILITY.md](MINDMAP_USABILITY.md)。
+
+当前版本0.8.0。完整操作和新能力见 [MINDMAP_COMPLETION.md](MINDMAP_COMPLETION.md)，逐项范围见 [XMIND_COVERAGE.md](XMIND_COVERAGE.md)。
+
 本模块与摘录卡片使用同一份学习集、同一张卡片 ID、同一套版本与撤销历史。它借鉴 XMind 的结构、样式与编辑工作流，采用独立实现与自制主题、图形及图标，不包含商业客户端、商标壁纸或私有贴纸库。
+
+## 原生视觉参照
+
+本轮按16张XMind官方原图审阅与重构。入口“骨架 / 配色”提供54种自主实现的骨架缩略图，按9个结构家族分组；配色独立于骨架。精确参照、拖动行为、复杂结构与验证方法见 [XMIND_VISUAL_REFERENCE.md](XMIND_VISUAL_REFERENCE.md)。
 
 ## 入口与阅读兼容
 
-进入学习集，在脑图上方点击“思维导图”切换紧凑主题视图。原有摘录卡片仍可切回；旧文库不会因安装而自动改版或改写原件。主题视图仍支持单击摘录回到 PDF／HTML 的准确位置、在原文取消标注、卡片笔记与评论、标签、图片和手写。多选主题后继续使用原来的批量操作与可恢复删除。
+打开新建或未单独设置显示方式的学习集，默认使用紧凑主题脑图。已有文库采用同一只读默认值，无需迁移或改写卡片；明确选择过资料卡片模式的学习集继续保留该选择。顶部“主题脑图／资料卡片”按钮显示当前模式，点击可切换。主题视图仍支持单击摘录回到 PDF／HTML 的准确位置、在原文取消标注、卡片笔记与评论、标签、图片和手写。多选主题后继续使用原来的批量操作与可恢复删除。
 
 Cmd/Ctrl K 的工具搜索包含主题、格式、模板、关系、概要、外框、演示及导出。未开启主题视图时，搜索会说明入口所需状态。
 
 ## 结构与可视化
 
-13 种结构：均衡思维导图、左右逻辑图、上下组织图、左右树状图、横向／纵向时间轴、左右鱼骨图、矩阵、括号图。主分支可以单独指定结构和左右方位；提供自动平衡、分支与主题间距、同级等宽、全图或分支编号。矩阵绘制表格分区，括号图绘制实际括号。结构不是一张静态图片，所有主题仍能编辑、折叠、移动、聚焦和回源。
+15 个方向结构选项：均衡思维导图、左右逻辑图、上下组织图、左右树状图、横向／纵向时间轴、左右鱼骨图、矩阵、括号图及横纵树形表格。主分支可以单独指定结构和左右方位；提供自动平衡、分支与主题间距、同级等宽、全图或分支编号。矩阵绘制表格分区，括号图绘制实际括号。结构不是一张静态图片，所有主题仍能编辑、折叠、移动、聚焦和回源。
 
-12 套自制配色方案同时设置画布、中心主题、主分支及后代颜色。提供彩虹分支、层级配色和单色模式，31 种节点轮廓、5 种分支线型、11 种关系端点选项和9种外框选项。目录计数包含“无轮廓／无箭头”等明确选项；它们不表示与商业产品同名资源逐项完全相同。
+13 套自制配色方案同时设置画布、中心主题、主分支及后代颜色。提供彩虹分支、层级配色和单色模式，31 种节点轮廓、5 种分支线型、11 种关系端点选项和9种外框选项。目录计数包含“无轮廓／无箭头”等明确选项；它们不表示与商业产品同名资源逐项完全相同。
+
+默认经典骨架配晴空色板：中心与主分支实色，下级文字和下划线。标题默认完整换行，可设置1–8行限制；完整内容始终保留在卡片中，悬浮预览与详情面板可阅读和编辑。截图与标签默认不占用节点空间，悬停预览按钮可查阅，单击预览按钮打开原有非模态编辑器与原图。仍可逐主题或全图开启图片和标签。历史自由节点位置在新尺寸下发生覆盖时，仅在布局投影中避让，存储坐标不被改写。
 
 格式面板支持填充、文字、边框、线型、粗细、字体、字号、加粗、斜体、下划线、对齐、固定宽度、图片／标签／笔记摘要显示，以及标题局部文字范围格式。默认颜色计算可读对比度；用户显式输入的文字颜色会按输入保留。
 
@@ -3868,7 +4074,7 @@ Cmd/Ctrl K 的工具搜索包含主题、格式、模板、关系、概要、外
 
 ## 组织与编辑
 
-Enter 增加同级主题，Shift Enter 在前方插入，Tab 增加子主题并进入原位编辑；空格或双击编辑标题，Shift Enter 在编辑框中换行，Escape 放弃输入。方向键按实际几何在主题间选择。拖动与 Shift 多选继续走同一套版本校验；单击一个已多选主题会恢复单选。
+从中心按Enter增加主分支；普通主题按Enter增加同级，Shift Enter在前方插入，Cmd/Ctrl Enter插入父主题；Tab增加子主题并进入原位编辑；空格或双击编辑标题，Shift Enter 在编辑框中换行，Escape 放弃输入。方向键按实际几何在主题间选择。拖动与 Shift 多选继续走同一套版本校验；单击一个已多选主题会恢复单选。
 
 外框可以包含同级主题并修改范围、文字、颜色和轮廓。概要创建真正可编辑的总结主题，它可以继续拥有子主题。删除概要括号只移除视觉关系，不隐式删除总结文字及其后代。复制完整分支与跨学习集剪切会携带完全包含的外框、概要和总结子树；跨集撤销恢复双方内容。
 
@@ -3882,13 +4088,13 @@ Enter 增加同级主题，Shift Enter 在前方插入，Tab 增加子主题并�
 
 导图始终保留完整模型。通常只挂载视口附近主题；缩放到一次出现超过600个主题时，用按样式合批的图形总览表示所有主题，关系路径也合批。总览不是截断结果；点击可回到可读细节，搜索、焦点、导出和批量操作仍遍历完整内容。总览保留高精度 pointerdown 命中，避免点击事件取整使亚像素主题落到相邻主题。
 
-导航缩略图可拖动定位。专注模式扩大工作区；演示模式使用公开的持久化演示队列，以当前主题和分支上下文构造页面，提供切换动画、笔记及回源。极大分支单页最多显示81个上下文主题并明确提示；队列并不因此删去后续主题。
+导航缩略图可拖动定位。专注模式扩大工作区；演示模式使用公开的持久化演示队列，以当前主题和分支上下文构造页面，提供切换动画、笔记及回源。自动演示按每页最多6个子主题分页；逐主题、按分支及逐步展开队列均保留全部主题。支持网格、列表、图文及导图版式，完整笔记进入演讲者笔记。
 
 本机合成万主题测试不等价于商业 XMind 同机对比，也不代表万张重图片、实体数位笔或其它平台已经验收。性能数据、动画检查和实际构建指纹以本轮 artifacts 的机器报告为准。
 
 ## 导出与文件交换
 
-`study.mindmap.export` 提供 SVG、PNG、PDF。SVG 保留矢量主题、文字、图形、关系线、标记及手写，摘录图片以内嵌图像保存。PNG和PDF由有界图像渲染，PDF为单页图像型输出，不声称是全矢量PDF。完整导出默认展开全部分支，可另选当前可见范围或分支。SVG上限64MiB，图像素材32MiB，位图最多2400万像素且单边不超过8192；超大图会缩小。已有目标文件一律拒绝覆盖。
+`study.mindmap.export` 提供 SVG、PNG、矢量PDF和可编辑PPTX。SVG 保留矢量主题、文字、图形、关系线、标记及手写，开启了行内显示的摘录图片以内嵌图像保存；默认精简导图不导出隐藏截图，完整学习集包仍保留全部原图。SVG同时保留完整标题的可访问文字。PDF默认保留可搜索文字和矢量曲线，本机字体缺字明确报错；PNG与显式pdfMode:raster才使用有界图像。PPTX输出自动编排的演示页，保留可编辑标题、笔记及公式矢量图和兼容图像。完整导出默认展开全部分支，可另选当前可见范围或分支。SVG上限64MiB，图像素材32MiB，位图最多2400万像素且单边不超过8192；超大图会缩小。已有目标文件一律拒绝覆盖。
 
 JSON `.xmind` 工作簿提供检查、导入、导出：一个学习集对应一个画布；导入产生独立的新ID，不覆盖已有学习集。支持主题层级、主要结构、标签、纯文本笔记、部分标准样式、优先级、图片、关系、范围外框及概要；自己的扩展字段保留更多格式与内容。文库原文绑定和跨集引用只能转为可读来源说明，不能宣称是商业客户端内的实时PDF回源。
 
@@ -3898,7 +4104,7 @@ JSON `.xmind` 工作簿提供检查、导入、导出：一个学习集对应一
 
 ## 员工与冲突
 
-所有持久编辑、结构、样式、标记、分组、替换、导入导出和模板都通过 `runtime.request`；没有浏览器私有业务状态或额外模型代理。员工使用当前宿主生成的作用范围启动器与凭据，14个新增接口均纳入正式员工覆盖。
+所有持久编辑、结构、样式、标记、分组、替换、导入导出和模板都通过 `runtime.request`；没有浏览器私有业务状态或额外模型代理。员工使用当前宿主生成的作用范围启动器与凭据，0.8.0新增的设计、公式、排版、折叠及演示命令与原有公开接口一起纳入正式员工覆盖。
 
 格式草稿保留在窗口内存。并发编辑返回冲突，不自动重试覆盖；切换导图显示方式也保留未保存表单。关闭、换文档和宿主退出会检查未保存内容。草稿不承诺崩溃恢复。
 

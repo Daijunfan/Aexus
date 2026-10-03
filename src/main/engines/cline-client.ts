@@ -5,15 +5,16 @@ import {spawnEmployeeProcess} from '../agent-process-isolation'
 import {terminateTree} from '../platform'
 import {childEnv} from '../exec'
 import {engineExecutable} from './executable'
-import {engineEnvironment} from './configuration'
+import {engineProcessEnvironment} from './configuration'
 import type {RemoteLaunch} from '../tunnel'
 import {prepareClineCompatibility,type ClineMcpBridge} from './cline-compat'
 
 export type AcpPermission={sessionId:string;toolCall:{toolCallId:string;title?:string;kind?:string;rawInput?:Record<string,unknown>};options:{optionId:string;kind:string}[]}
-export async function clineClient(options:{cwd:string;directory:string;employeeId?:string;model?:string;remoteLaunch?:RemoteLaunch;mcpBridge?:ClineMcpBridge;env?:NodeJS.ProcessEnv;onUpdate?:(update:any)=>void;onPermission?:(request:AcpPermission)=>Promise<any>}){
+export async function clineClient(options:{cwd:string;directory:string;workRoot?:string;employeeId?:string;model?:string;remoteLaunch?:RemoteLaunch;mcpBridge?:ClineMcpBridge;env?:NodeJS.ProcessEnv;onUpdate?:(update:any)=>void;onPermission?:(request:AcpPermission)=>Promise<any>}){
   fs.mkdirSync(options.directory,{recursive:true,mode:0o700})
-  const compatibility=await prepareClineCompatibility(options.directory,options.remoteLaunch,options.mcpBridge,options.model)
-  const env={...childEnv(),...engineEnvironment('cline'),...options.env,...(options.remoteLaunch?{HOME:options.directory,USERPROFILE:options.directory}:{}),CLINE_DIR:options.directory,CLINE_DATA_DIR:options.directory+'/data',CLINE_SESSION_BACKEND_MODE:'local',CLINE_PROVIDER:compatibility.provider,CLINE_MODEL:compatibility.model,CLINE_LOG_ENABLED:'0'}
+  const providerEnv={...engineProcessEnvironment('cline',childEnv(options.cwd,options.workRoot)),...options.env}
+  const compatibility=await prepareClineCompatibility(options.directory,options.remoteLaunch,options.mcpBridge,options.model,providerEnv.CLINE_API_KEY)
+  const env={...providerEnv,...(options.remoteLaunch?{HOME:options.directory,USERPROFILE:options.directory}:{}),CLINE_DIR:options.directory,CLINE_DATA_DIR:options.directory+'/data',CLINE_SESSION_BACKEND_MODE:'local',CLINE_PROVIDER:compatibility.provider,CLINE_MODEL:compatibility.model,CLINE_LOG_ENABLED:'0'}
   const secrets=Object.entries(env).filter(([name,value])=>/key|token|password/i.test(name)&&value&&value.length>8).map(([,value])=>value!)
   const redact=(text:string)=>secrets.reduce((value,secret)=>value.replaceAll(secret,'[redacted]'),text)
   const args=['--acp','--auto-approve','false','--config',options.directory,'--data-dir',options.directory+'/data']

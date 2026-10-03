@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),{create,expect}=require('./ui-session.cjs');
 (async()=>{const f=await create('keyword-boards');let failure;
  try{
-  const {page,api}=f;let s=await api('study.create',{title:'标题词条分组'});
+  const {page,api}=f;let s=await api('study.create',{mapMode:'cards',title:'标题词条分组'});
   const get=()=>api('study.get',{setId:s.id}),change=async(method,p={})=>s=await api(method,{setId:s.id,expectedRevision:(await get()).revision,...p});
   await change('study.note.create',{title:'Probability； Bayes',text:'First definition',tags:['数学']});const a=s.cards[0].id;
   await change('study.note.create',{title:'probability; Evidence',text:'Second definition',tags:['推理']});const b=s.cards.at(-1).id;

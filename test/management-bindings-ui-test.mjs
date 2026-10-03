@@ -22,7 +22,7 @@ const mutate=(token,operation,source,target)=>call(token,'management',operation,
 const normal=async source=>{
  await expect(source).toHaveCount(1);await expect(source).toHaveAttribute('data-active','false');await expect(source).toHaveAttribute('data-temporary','false')
  const style=await source.locator('.management-line').evaluate(el=>({stroke:getComputedStyle(el).stroke,dash:getComputedStyle(el).strokeDasharray,marker:el.getAttribute('marker-end'),path:el.getAttribute('d')}))
- assert.notEqual(style.stroke,'rgb(50, 188, 120)');assert.equal(style.dash,'none');assert.match(style.marker,/^url\(#/);assert.ok(style.path)
+ assert.notEqual(style.stroke,'rgb(20, 122, 78)');assert.equal(style.dash,'none');assert.match(style.marker,/^url\(#/);assert.ok(style.path)
 }
 try{
  await page.locator('.infinite-canvas').waitFor()
@@ -62,7 +62,7 @@ try{
  const task=(await cli('session','info','--employee',worker.id)).currentTask
  await mutate(mt,'unbind',manager,worker)
  await expect(line(manager,worker)).toHaveAttribute('data-temporary','true');await expect(line(manager,worker)).toHaveAttribute('data-active','true')
- await expect(line(manager,worker).locator('.management-line')).toHaveCSS('stroke','rgb(50, 188, 120)')
+ await expect(line(manager,worker).locator('.management-line')).toHaveCSS('stroke','rgb(20, 122, 78)')
  assert.equal((await cli('session','info','--employee',worker.id)).currentTask.messageId,task.messageId)
  for(const source of [peer,governor])await normal(line(source,worker))
  fs.unlinkSync(hold);await expect.poll(async()=>(await status(worker)).busy).toBe(false)

@@ -5,6 +5,7 @@ export type ScheduleRule =
   | { kind: 'interval'; everySeconds: number; anchor: string }
   | { kind: 'weekly'; time: string; days: number[]; timezone: string }
   | { kind: 'monthly'; time: string; day: number | 'last'; timezone: string }
+  | { kind: 'event'; event: 'signal' | 'channel.posted'; channelId?: string; cooldownSeconds: number }
 export type ScheduleWindow = { start: string; end: string; timezone: string; days?: number[] }
 export type ScheduledAction = {
   type: 'agent'
@@ -12,6 +13,8 @@ export type ScheduledAction = {
   engine: import('./types').Engine
   prompt: string
   viewId?: string
+  /** Explicit employee publishing destination; membership is checked again at execution. */
+  channelId?: string
   model?: string
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
   thinking?: boolean
@@ -34,14 +37,15 @@ export type ScheduleSpec = {
   /** Maximum scheduled occurrences, including skipped ones. Manual runs do not consume this limit. */
   maxOccurrences?: number | null
 }
-export type ScheduledJob = ScheduleSpec & { delegation?:Delegation; id: string; createdAt: string; updatedAt: string; nextAt: string | null; disabledReason?: string; revision?:number; occurrences?:number; clientRequestId?:string; requestFingerprint?:string; createdBy?:import('./management').PrincipalRef }
+export type ScheduledJob = ScheduleSpec & { delegation?:Delegation; id: string; createdAt: string; updatedAt: string; nextAt: string | null; disabledReason?: string; revision?:number; occurrences?:number; clientRequestId?:string; requestFingerprint?:string; createdBy?:import('./management').PrincipalRef; eventClaims?:Array<{id:string;at:string}> }
 export type ScheduleRun = {
   delegation?:Delegation
   id: string
   jobId: string
   jobName: string
   action: ScheduledAction
-  trigger: 'scheduled' | 'manual'
+  trigger: 'scheduled' | 'manual' | 'event'
+  event?: {id:string;type:'signal'|'channel.posted';channelId?:string}
   scheduledAt: string
   startedAt: string
   finishedAt?: string

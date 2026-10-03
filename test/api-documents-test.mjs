@@ -11,7 +11,7 @@ const root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(
 const keys=['AGENTS_COMPANY_HOME','AGENTS_COMPANY_PACKAGE_ROOT','AGENTS_COMPANY_BUILTIN_PLUGINS','AGENTS_COMPANY_PLUGIN_DIRS'],previous=Object.fromEntries(keys.map(key=>[key,process.env[key]])),checks=[]
 try{
  fs.mkdirSync(resources);fs.mkdirSync(plugins);fs.writeFileSync(path.join(resources,'package.json'),'{"name":"agents-company"}')
- for(const file of ['API.md','PERMISSIONS.md','PLAN.md','SCHEDULER.md','ARCHITECTURE.md'])fs.copyFileSync(path.join(root,file),path.join(resources,file))
+ for(const file of ['API.md','PERMISSIONS.md','PLAN.md','SCHEDULER.md','ARCHITECTURE.md','docs/CONVERSATION_WORKSPACES.md','docs/CONVERSATION_CONTROLS.md','docs/SECRETARY_API_PARITY.md']){fs.mkdirSync(path.dirname(path.join(resources,file)),{recursive:true});fs.copyFileSync(path.join(root,file),path.join(resources,file))}
  const makePlugin=(id,version)=>{
   const directory=path.join(plugins,id);fs.mkdirSync(directory,{recursive:true})
   const api=`---\nschema: agents-company.cli/v1\nplugin: ${id}\n---\n# ${id} ${version}\n\n${['Purpose','Workspace','Quick start','Commands','Files','Errors','Compatibility'].map(title=>'## '+title+'\n\nFixture '+title+'\n').join('\n')}`
@@ -33,7 +33,7 @@ try{
  const parsed=JSON.parse(execFileSync(process.execPath,[path.join(root,'bin/agents'),'plugin','call','mininotion','page.create','--employee','fixture-employee','--params','{"title":"..."}','--json'],{env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8'}))
  assert.equal(parsed.cmd,'plugin.call');assert.equal(parsed.args.employee,'fixture-employee');assert.equal(parsed.args.method,'page.create');assert.deepEqual(parsed.args.params,{title:'...'})
  checks.push('Short default index separates all three Core views from installed plugins without injecting the full command catalogue')
- for(const [id,file] of [['api','API.md'],['permissions','PERMISSIONS.md'],['plan','PLAN.md'],['scheduler','SCHEDULER.md'],['architecture','ARCHITECTURE.md']]){
+ for(const [id,file] of [['api','API.md'],['permissions','PERMISSIONS.md'],['plan','PLAN.md'],['scheduler','SCHEDULER.md'],['architecture','ARCHITECTURE.md'],['conversation-workspaces','docs/CONVERSATION_WORKSPACES.md'],['conversation-controls','docs/CONVERSATION_CONTROLS.md'],['secretary-api','docs/SECRETARY_API_PARITY.md']]){
   const result=readApiDocument('core/'+id),source=fs.readFileSync(path.join(resources,file),'utf8');assert.equal(result.markdown,source);assert.equal(fs.readFileSync(result.path,'utf8'),source)
  }
  assert.equal(readApiDocument('plugin/mininotion/api').markdown,first.api);assert.equal(JSON.parse(readApiDocument('plugin/fixture-notes/schema').markdown).version,'2.0.0');assert.equal(fs.existsSync(path.join(temp,'runtime-started')),false)
@@ -50,6 +50,18 @@ try{
  for(const id of ['../API.md','core/../../sessions.json','plugin/mininotion/runtime','unknown'])assert.throws(()=>readApiDocument(id),/Unknown API document/)
  fs.rmSync(path.join(plugins,'fixture-notes'),{recursive:true});assert.throws(()=>readApiDocument('plugin/fixture-notes/api'),/Unknown API document/);assert.ok(!readApiDocument().markdown.includes('fixture-notes'))
  checks.push('Only catalogued document IDs resolve; runtime/private paths and removed plugins cannot be read through the API')
+ // Warm caches must follow file identity, not just a plugin's advertised version.
+ const schemaFile=path.join(first.directory,'schema.json'),originalSchema=fs.readFileSync(schemaFile,'utf8'),times=fs.statSync(schemaFile)
+ fs.writeFileSync(schemaFile,originalSchema.replace('Read a fixture record','View a fixture record'));fs.utimesSync(schemaFile,times.atime,times.mtime)
+ assert.equal(JSON.parse(readApiDocument('plugin/mininotion/command/fixture.read').markdown).description,'View a fixture record')
+ fs.writeFileSync(schemaFile,'{');assert.throws(()=>readApiDocument(),/JSON|property|Unexpected/i)
+ fs.writeFileSync(schemaFile,originalSchema);assert.equal(JSON.parse(readApiDocument('plugin/mininotion/command/fixture.read').markdown).description,'Read a fixture record')
+ const projected=readApiDocument('core/plan');fs.writeFileSync(projected.path,'stale local copy');readApiDocument('core/plan');assert.equal(fs.readFileSync(projected.path,'utf8'),projected.markdown)
+ fs.unlinkSync(projected.path);readApiDocument('core/plan');assert.equal(fs.readFileSync(projected.path,'utf8'),projected.markdown)
+ fs.unlinkSync(projected.path);fs.symlinkSync(path.join(resources,'PLAN.md'),projected.path);assert.throws(()=>readApiDocument(),/symlink/);fs.unlinkSync(projected.path);readApiDocument()
+ const cliFile=path.join(first.directory,'cli.cjs'),originalCli=fs.readFileSync(cliFile);fs.unlinkSync(cliFile);fs.symlinkSync(path.join(resources,'PLAN.md'),cliFile)
+ assert.throws(()=>readApiDocument(),/escapes/);fs.unlinkSync(cliFile);fs.writeFileSync(cliFile,originalCli);readApiDocument()
+ checks.push('Warm caches track same-version/same-size edits, reject corrupt schemas and escaped symlinks, and repair deleted or modified public projections')
  const out=path.join(root,'artifacts/api-documents');fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({passed:true,checks,defaultIndexCharacters:index.markdown.length,scope:'Isolated source module, disposable resources/plugins/Core home; no real employee or model.'},null,2))
  console.log('PASS '+checks.join('; '))
 }finally{for(const key of keys)if(previous[key]===undefined)delete process.env[key];else process.env[key]=previous[key];fs.rmSync(temp,{recursive:true,force:true})}

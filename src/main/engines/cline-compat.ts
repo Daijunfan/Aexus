@@ -1,4 +1,5 @@
 import {DOCUMENTATION_TOOL} from '../documentation-tool'
+import {API_TOOL} from '../api-tool'
 import {DISCUSSION_TOOL} from '../discussion-tool'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -11,7 +12,7 @@ import {processProvider} from './configuration'
 
 export type ClineMcpBridge={tools:{name:string;description:string;inputSchema:Record<string,unknown>}[];call:(name:string,args:Record<string,unknown>,signal:AbortSignal,callId?:string)=>Promise<unknown>;close:()=>void}
 
-const cloudTools=['execute','read_file','write_file','edit_file','list_files'].map(name=>'tunnel__'+name).concat('tunnel__'+DISCUSSION_TOOL.name,'tunnel__'+DOCUMENTATION_TOOL.name)
+const cloudTools=['execute','read_file','write_file','edit_file','list_files'].map(name=>'tunnel__'+name).concat('tunnel__'+DISCUSSION_TOOL.name,'tunnel__'+DOCUMENTATION_TOOL.name,'tunnel__'+API_TOOL.name)
 const readJson=(file:string)=>fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{}
 const writeJson=(file:string,value:unknown)=>{const temporary=file+'.'+randomUUID()+'.tmp';fs.writeFileSync(temporary,JSON.stringify(value),{mode:0o600});fs.renameSync(temporary,file)}
 
@@ -47,7 +48,7 @@ export function projectClineRequest(body:any,directory:string,remote=false){
 /** Employee-local compatibility relay. No extra inference, binary patch, global
  * Cline configuration, external proxy service, credentials in URLs, or workspace file reads.
  * The random loopback route is private; only the configured provider is reachable. */
-export async function prepareClineCompatibility(directory:string,remote?:RemoteLaunch,bridge?:ClineMcpBridge,model?:string){
+export async function prepareClineCompatibility(directory:string,remote?:RemoteLaunch,bridge?:ClineMcpBridge,model?:string,apiKey?:string){
   if(remote&&!bridge)throw Error('Cloud Cline requires the Core-owned Tunnel transport')
   const images=path.join(directory,'company-images'),settings=path.join(directory,'data','settings')
   fs.mkdirSync(images,{recursive:true,mode:0o700});fs.mkdirSync(settings,{recursive:true,mode:0o700})
@@ -92,8 +93,8 @@ export async function prepareClineCompatibility(directory:string,remote?:RemoteL
       }
       const body=projectClineRequest(input,images,!!remote)
       const payload=Buffer.from(JSON.stringify(body)),url=new URL(target.toString().replace(/\/$/,'')+'/chat/completions')
-      const headers={...request.headers,host:url.host,'content-length':String(payload.length),'content-type':'application/json','accept-encoding':'identity'}
-      delete headers.connection;delete headers['transfer-encoding']
+      const headers:http.OutgoingHttpHeaders={...request.headers,...(apiKey?{authorization:'Bearer '+apiKey}:{}),host:url.host,'content-length':String(payload.length),'content-type':'application/json','accept-encoding':'identity'}
+      delete headers.connection;delete headers['transfer-encoding'];delete headers['x-api-key'];delete headers['api-key']
       upstream=(url.protocol==='https:'?https:http).request(url,{method:'POST',headers},result=>{
         response.writeHead(result.statusCode??502,result.headers);result.pipe(response)
         result.on('error',()=>response.destroy())

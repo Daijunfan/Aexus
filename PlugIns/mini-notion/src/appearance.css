@@ -538,10 +538,6 @@
   border-radius: 6px;
   margin-block: 5px;
 }
-
-.hourly-event-time {
-  color: var(--muted);
-}
 .hourly-event,
 :root[data-theme='dark'] .hourly-event {
   border-left-color: color-mix(in srgb, var(--view-card-ink) 45%, var(--view-card-bg));

@@ -7,7 +7,7 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
  try{
   const {page,api}=f;
   const output=await fs.readFile(path.join(__dirname,'../artifacts/interaction-current.txt'),'utf8').then(s=>s.trim(),()=>f.output);
-  let set=await api('study.create',{title:'知识工作台'});
+  let set=await api('study.create',{mapMode:'cards',title:'知识工作台'});
   const get=()=>api('study.get',{setId:set.id});
   const change=async(method,p={})=>{set=await get();return set=await api(method,{setId:set.id,expectedRevision:set.revision,...p});};
   await change('study.note.create',{title:'设计原则',text:'清晰的结构，可靠的操作。',color:'blue',tags:['设计']});const a=set.cards[0].id;

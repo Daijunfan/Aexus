@@ -92,7 +92,7 @@ Governor 目标还必须提供 `--view VIEW_ID`，见下文“Governor 任务的
 | `schedule schema` | `{}` | 机器可读的字段、默认值、运行策略 |
 | `schedule status` | `{}` | 是否运行、错误、活动 run ID、持久化路径 |
 | `schedule list [--employee ID --source NAME]` | `{employee?,source?}` | 查询排期 |
-| `schedule get ID` | `{id}` | 完整配置和 nextAt，null 表示没有下一次 |
+| `schedule get ID` | `{id}` | 完整配置和 nextAt；事件规则等待时为 null，不代表已完成 |
 | `schedule create --spec @job.json` | `{spec}` | 创建排期；也可使用上述 flags |
 | `schedule update ID --patch @patch.json` | `{id,patch}` | 顶层部分更新；action/rule/window 提供完整对象；活动任务先取消 |
 | `schedule pause ID` | `{id}` | 暂停后续触发，不停止当前轮 |
@@ -100,8 +100,9 @@ Governor 目标还必须提供 `--view VIEW_ID`，见下文“Governor 任务的
 | `schedule preview [ID [--patch JSON] / --spec @job.json] --after ISO --count 5` | `{id?,spec?,patch?,after?,count?}` | 只计算未来时间，不执行；保存任务的 patch 预览保留已用次数且不写入；count 1–100 |
 | `schedule run ID` | `{id}` | 明确立即执行一次，即使排期暂停/已结束；忽略日历和工作时段，保留超时与权限；不消耗 nextAt |
 | `schedule history [ID] --employee ID --limit 50` | `{id?,employee?,limit?}` | 最新在前；保留最近 1000 条完成记录及全部活动记录 |
+| `schedule trigger ID --event-id KEY` | `{id,eventId}` | 向 signal 事件规划发送去重信号；校验当前调用者和原委派，无法伪造原生事件 |
 | `schedule cancel RUN_ID` | `{id:runId}` | 终止该次执行，等待引擎停止；不暂停后续排期 |
-| `schedule delete ID` | `{id}` | 先暂停并取消活动执行，再删除排期；保留审计记录 |
+| `schedule delete [ID \| --ids JSON]` | `{id,expectedRevision?}` 或 `{ids,expectedRevisions?}` | 整批校验确切 ID、权限与修订后暂停并取消活动执行，再删除排期；保留审计记录 |
 
 配置例子（`engine` 创建时可省略；下例为 Claude；Codex 使用 effort，不接受 thinking）：
 
@@ -186,8 +187,39 @@ Saved-job preview accepts `{id,patch?,after?,count?}`. A patch is temporary and 
 
 ## Plan extension (additive v1)
 
-Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; scheduling others retains existing control limits. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
+Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; scheduling others requires a strictly lower role within the existing Team/global control scope. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
 
 ## Read-model layout extension
 
 `plan.durationMinutes` (1–43,200) supplies an optional future work estimate. It is not a timeout, scheduling reservation or automatic stop time. Timeline uses actual timestamps for recorded attempts, displays missing estimates as instants, and uses half-open spans at date boundaries. `plan.analytics` counts all authorized matching schedules or retained actual runs; `plan.feed` never fabricates activity from forecasts. See `docs/PLAN_VIEW_PARITY.md` for APIs and interactive cases.
+
+## Plan 统一调度与严格下行权限
+
+所有角色的定时、重复、事件触发员工工作统一使用本 API，并能在 Core Plan 中查询和调整。Employee 只能给自己排期；Manager 可给自己及本 Team 的 Employee 排期；Governor 可给自己及全局 Employee/Manager 排期；Secretary 可给自己及全局 Employee/Manager/Governor 排期。任何 Agent 均不能给其他同级或上级安排任务。用户可调整全部员工规划。一般管理/消息权限不因这一独立的调度规则改变。
+
+`schedule.create/update/preview/run/resume/trigger` 等目标操作均受同一权限边界保护；原委派在实际执行和异步准备之后再次复核。新增 `action.channelId` 明确关联员工引擎频道，要求目标持续具有发布成员身份。旧 UI 的 `source:channel:ID` 仅迁移为经过校验的频道引用，不授予权限。移除成员会停用关联任务。
+
+新增 `rule:{kind:"event",event:"signal"|"channel.posted",channelId?,cooldownSeconds?}`。信号通过 `schedule.trigger {id,eventId}` 提交；原生新帖事件仅由首次成功发布产生。冷却默认 60 秒，可选 0–86400 秒。每个任务保存最近 256 个事件 claim，并利用保留的运行历史去重；暂停/过期/冷却/不在工作窗口的事件不执行，不存在隐藏重试队列。已接受的忙碌事件保留 skipped 记录并消耗次数。重启不会补放离线事件。
+
+事件计划立即出现在 Plan，等待时 nextAt 为 null；预览不虚构日期，日历展示真实执行记录。事件与定时任务共用原有持久化、保留策略、执行器和取消入口，不另建计时器或员工会话。频道表单复用完整 PlanEditor，尚未配置发布计划时明确显示自动发布未配置。详细字段和 CLI 示例见 PLAN.md 的 Unified automation 章节。
+
+专项复验：`node test/plan-authority-core-test.mjs` 与 `node test/plan-authority-ui-test.mjs`，均使用隔离构建/数据和确定性协议替身。
+
+## Record administration and bulk cleanup
+
+For task discovery use `plan.query`: it returns IDs/revisions, names, target identity,
+role/Team, exact rules/times and current action capabilities. `schedule.list/get` retain
+the raw-job contract. Secretary reads all Plan records, including orphaned schedules;
+maintenance of missing-target records is separated from actual execution authorization.
+A removed target can be cleaned up or reassigned, never implicitly recreated or run.
+See PLAN.md for the canonical permission and null-identity behavior.
+
+`schedule.delete` accepts either `id` with optional `expectedRevision`, or `ids` with
+an optional complete `expectedRevisions` map. Every selected record is preflighted
+before any side effect; deletion preserves run history and workspace files. A pending
+deletion cannot be re-enabled by a concurrent update/resume. `pause`, `resume` and `run`
+also accept `--expected-revision` to guard against a changed task.
+
+## Conversation notices are separate from Plan
+
+Current conversation offices (Group Owner/Admin/Member, channel Admin) are independent of Company managementRole. Only actual conversation Owner/Admin configures mute, quiet mode and fixed-text notifications; Company Secretary has no conversation-office bypass. Owner alone dissolves groups or transfers ownership, with the human user's external recovery override. `conversation.notice-*` posts saved text through an independent Core timer/storage without running an Agent or entering Plan. Plan `schedule.*` remains the exclusive API for scheduled employee work. See [CONVERSATION_CONTROLS.md](docs/CONVERSATION_CONTROLS.md) for the current, detailed boundary.

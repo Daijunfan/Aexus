@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),path=require('node:path'),{createCanv
 const {create,expect}=require('./ui-session.cjs');
 (async()=>{const f=await create('image-marks');let failure;
  try{const {page,api}=f,canvas=createCanvas(200,100),ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,200,100);ctx.fillStyle='#2070d0';ctx.fillRect(20,20,50,30);ctx.fillStyle='#d03020';ctx.fillRect(160,10,30,30);
-  let set=await api('study.create',{title:'图片标记定位'});const change=async(m,p={})=>set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});
+  let set=await api('study.create',{mapMode:'cards',title:'图片标记定位'});const change=async(m,p={})=>set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});
   await change('study.media.import',{kind:'image',title:'旋转与裁剪',contentBase64:(await canvas.encode('png')).toString('base64')});const id=set.cards[0].id,original=set.cards[0].mediaId,blue={x:.1,y:.2,width:.25,height:.3},red={x:.8,y:.1,width:.15,height:.3};
   await change('study.card.emphasis.set',{cardId:id,images:[{...blue,group:'蓝色'},{...red,group:'红色'}]});await change('study.review.configure',{cardId:id,enabled:true,occlusions:[blue,red],occlusionGroups:[1,2]});await api('study.open',{setId:set.id});await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');
   const menu=async action=>{await page.locator(`.study-card[data-card-id="${id}"] .study-card-more`).click();await page.locator(`[data-action="${action}"]`).click();};

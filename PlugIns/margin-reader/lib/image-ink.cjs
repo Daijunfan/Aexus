@@ -19,7 +19,7 @@ function frame(card,width,height,appearance={}){
 async function cardFrame(set,card){
  const {layoutStudy}=await import('../ui/study-map-layout.mjs');let box=layoutStudy(set.cards,set.map,set.appearance).positions.get(card.id);
  if(!box)box=layoutStudy([{...card,parentId:null,inMap:true}],{...set.map,focusId:null,submapId:null},set.appearance).positions.get(card.id);
- return set.map?.mindmap?.enabled?(box.imageBounds||null):frame(card,box.width,box.height,set.appearance);
+ return set.map?.mindmap?.enabled!==false?(box.imageBounds||null):frame(card,box.width,box.height,set.appearance);
 }
 function check(s){assert(s.points.length>=2&&s.points.length<=2048&&s.points.every(p=>p.every(Number.isFinite)&&Math.abs(p[0])<=1000&&Math.abs(p[1])<=1000)&&Number.isFinite(s.width)&&s.width>0,'INVALID_PARAMS','Image-bound ink exceeds the supported coordinate range.');return s;}
 function clipped(s,rect){return G.clip(s.points,rect).map((points,i)=>({...s,id:i?s.id&&randomUUID():s.id,points}));}

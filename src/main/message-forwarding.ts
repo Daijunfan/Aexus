@@ -1,3 +1,4 @@
+import {SingleFlight} from './single-flight'
 import {createHash} from 'node:crypto'
 import {join} from 'node:path'
 import {APP_HOME} from '../shared/protocol'
@@ -11,7 +12,7 @@ import {employeeReady} from '../shared/types'
 import type {MessengerMessage,ForwardStatus,ForwardResult} from '../shared/messenger'
 
 type Receipt={fingerprint:string;status:'preparing'|'sent'|'failed'|'uncertain'|'interrupted';stage?:'copying'|'dispatch';to?:string;count?:number;downstreamKey?:string;result?:ForwardResult;error?:string;createdAt:number}
-const file=join(APP_HOME,'message-forwards.json'),active=new Map<string,Promise<unknown>>()
+const file=join(APP_HOME,'message-forwards.json'),active=new SingleFlight<ForwardResult>()
 const receipts=()=>readJson<Record<string,Receipt>>(file,()=>({}))
 const save=(key:string,value:Receipt)=>{const state=receipts();state[key]=value;atomicJson(file,state,true)}
 function requestId(value:unknown):asserts value is string{if(typeof value!=='string'||!value||value.length>160)throw Error('Provide a stable forwarding request ID')}
@@ -60,7 +61,7 @@ export async function forwardMessages(args:Record<string,any>,call:(command:stri
  if(kind==='group'&&text.length>16000)throw Error('The forwarded group message exceeds 16000 characters. Select fewer messages.')
  const receipt:Receipt={fingerprint,status:'preparing',stage:'copying',to:args.to,count:selected.length,downstreamKey:'forward:'+createHash('sha256').update(args.clientMessageId).digest('hex'),createdAt:Date.now()};save(key,receipt)
  let accepted=false
- const work=(async()=>{try{
+ return active.run(key,async()=>{try{
   const images:string[]=[],files:string[]=[]
   for(const attachment of attachments){
     const info=await call('transfer.download-info',{from:attachment.from}),upload=await call('messenger.upload-begin',{conversation:args.to,name:info.name??attachment.path.split(/[\\/]/).at(-1),bytes:info.bytes})
@@ -75,7 +76,5 @@ export async function forwardMessages(args:Record<string,any>,call:(command:stri
   accepted=true
   const result:ForwardResult={to:args.to,count:selected.length,status:kind==='group'?'posted':'queued',messageId:sent.messageId??sent.id??null}
   save(key,{...receipt,status:'sent',result});return result
- }catch(error){if(!accepted)save(key,{...receipt,status:receipt.stage==='copying'?'failed':(error as {code?:string}).code==='PRIVATE_SEND_INTERRUPTED'?'interrupted':'uncertain',error:(error as Error).message});throw error}})()
- active.set(key,work)
- try{return await work}finally{active.delete(key)}
+ }catch(error){if(!accepted)save(key,{...receipt,status:receipt.stage==='copying'?'failed':(error as {code?:string}).code==='PRIVATE_SEND_INTERRUPTED'?'interrupted':'uncertain',error:(error as Error).message});throw error}})
 }

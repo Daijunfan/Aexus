@@ -4,7 +4,7 @@ const {create,expect}=require('./ui-session.cjs');
 (async()=>{
  const f=await create('responsive-workbench');let failure;
  try{
-  let set=await f.api('study.create',{title:'可读性与工具区域'});
+  let set=await f.api('study.create',{mapMode:'cards',title:'可读性与工具区域'});
   for(let i=0;i<24;i++)set=await f.api('study.note.create',{setId:set.id,expectedRevision:set.revision,title:'Card '+i+' · 清晰可见',text:'Visible content 内容与脚注按钮都应位于卡片内。',tags:['readability']});
   await f.api('study.open',{setId:set.id});await f.api('study.view.set',{setId:set.id,expectedRevision:set.revision,view:'cards'});
   await f.page.goto(f.server.url);await f.page.waitForSelector('body[data-ready=true]');

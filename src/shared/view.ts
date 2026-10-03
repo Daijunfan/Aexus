@@ -9,11 +9,12 @@ export type ViewState = {
   employee?: string
   chatId?: string
   channelId?: string
+  sourceId?: string
   planViewId?: string
   settings?: TeamSettings
   tools?:'skills'|'mcp'|'account'|'usage'|'config'|'export'|'background'
   details?: boolean
   shared?: boolean
   /** Return from an existing workbench or editor to its originating direct message. */
-  returnTo?: {kind:'messages';employee?:string;chatId?:string;channelId?:string}|{kind:'plan';planViewId?:string}
+  returnTo?: {kind:'messages';employee?:string;chatId?:string;channelId?:string;sourceId?:string}|{kind:'plan';planViewId?:string}
 }

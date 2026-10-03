@@ -4,7 +4,7 @@ const {create,expect}=require('./ui-session.cjs');
 (async()=>{
  const f=await create('boards-ui'),{api,page,pass}=f;let error;
  try{
-  let a=await api('study.create',{title:'Workspace alpha'}),b=await api('study.create',{title:'Workspace beta'});
+  let a=await api('study.create',{mapMode:'cards',title:'Workspace alpha'}),b=await api('study.create',{mapMode:'cards',title:'Workspace beta'});
   a=await api('study.note.create',{setId:a.id,expectedRevision:a.revision,title:'Alpha topic',tags:['shared'],color:'blue'});
   b=await api('study.note.create',{setId:b.id,expectedRevision:b.revision,title:'Beta topic',tags:['shared'],color:'purple'});
   await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');

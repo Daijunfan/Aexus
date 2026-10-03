@@ -1,0 +1,2808 @@
+{
+  "plan.schema": {
+    "fields": []
+  },
+  "plan.query": {
+    "fields": [
+      [
+        "filter",
+        "filter",
+        "json",
+        false,
+        true
+      ],
+      [
+        "sort",
+        "sort",
+        "text",
+        false,
+        false
+      ],
+      [
+        "direction",
+        "direction",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "plan.calendar": {
+    "fields": [
+      [
+        "from",
+        "from",
+        "text",
+        false,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ],
+      [
+        "timezone",
+        "timezone",
+        "text",
+        false,
+        false
+      ],
+      [
+        "filter",
+        "filter",
+        "json",
+        false,
+        true
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "plan.timeline": {
+    "fields": [
+      [
+        "from",
+        "from",
+        "text",
+        false,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ],
+      [
+        "timezone",
+        "timezone",
+        "text",
+        false,
+        false
+      ],
+      [
+        "filter",
+        "filter",
+        "json",
+        false,
+        true
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "plan.analytics": {
+    "fields": [
+      [
+        "metric",
+        "metric",
+        "text",
+        false,
+        false
+      ],
+      [
+        "groupBy",
+        "group-by",
+        "text",
+        false,
+        false
+      ],
+      [
+        "filter",
+        "filter",
+        "json",
+        false,
+        true
+      ],
+      [
+        "outcomes",
+        "outcomes",
+        "json",
+        false,
+        true
+      ],
+      [
+        "from",
+        "from",
+        "text",
+        false,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "plan.feed": {
+    "fields": [
+      [
+        "filter",
+        "filter",
+        "json",
+        false,
+        true
+      ],
+      [
+        "outcomes",
+        "outcomes",
+        "json",
+        false,
+        true
+      ],
+      [
+        "from",
+        "from",
+        "text",
+        false,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ],
+      [
+        "before",
+        "before",
+        "text",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "plan.views": {
+    "fields": []
+  },
+  "plan.view-create": {
+    "fields": [
+      [
+        "spec",
+        "spec",
+        "json",
+        true,
+        false
+      ]
+    ]
+  },
+  "plan.view-update": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "patch",
+        "patch",
+        "json",
+        true,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "plan.view-delete": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.file-download": {
+    "fields": [
+      [
+        "postId",
+        "post",
+        "text",
+        true,
+        false
+      ],
+      [
+        "fileId",
+        "file",
+        "text",
+        true,
+        false
+      ]
+    ]
+  },
+  "channel.file-status": {
+    "fields": [
+      [
+        "postId",
+        "post",
+        "text",
+        true,
+        false
+      ],
+      [
+        "fileId",
+        "file",
+        "text",
+        true,
+        false
+      ]
+    ]
+  },
+  "channel.connection": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.avatar-image": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.timeline": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "kind",
+        "kind",
+        "text",
+        false,
+        false
+      ],
+      [
+        "beforeEntry",
+        "before-entry",
+        "text",
+        false,
+        false
+      ],
+      [
+        "cursor",
+        "cursor",
+        "text",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.history": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "before",
+        "before",
+        "number",
+        false,
+        false
+      ],
+      [
+        "around",
+        "around",
+        "text",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.context": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "entryId",
+        "entry",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.source-image": {
+    "fields": [
+      [
+        "sourceId",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.settings": {
+    "fields": [
+      [
+        "patch",
+        "patch",
+        "json",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.list": {
+    "fields": []
+  },
+  "channel.get": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.sources": {
+    "fields": [
+      [
+        "channelId",
+        "channel",
+        "text",
+        false,
+        false
+      ],
+      [
+        "plugin",
+        "plugin",
+        "text",
+        false,
+        false
+      ],
+      [
+        "includeDisabled",
+        "include-disabled",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.create": {
+    "fields": [
+      [
+        "name",
+        "name",
+        "text",
+        false,
+        false
+      ],
+      [
+        "engine",
+        "engine",
+        "json",
+        false,
+        false
+      ],
+      [
+        "avatar",
+        "avatar",
+        "json",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.update": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "name",
+        "name",
+        "text",
+        false,
+        false
+      ],
+      [
+        "adminIds",
+        "admins",
+        "json",
+        false,
+        false
+      ],
+      [
+        "engine",
+        "engine",
+        "json",
+        false,
+        false
+      ],
+      [
+        "avatar",
+        "avatar",
+        "json",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.source-update": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "patch",
+        "patch",
+        "json",
+        true,
+        false
+      ]
+    ]
+  },
+  "channel.source-remove": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.posts": {
+    "fields": [
+      [
+        "channelId",
+        "channel",
+        "text",
+        false,
+        false
+      ],
+      [
+        "sourceId",
+        "source",
+        "text",
+        false,
+        false
+      ],
+      [
+        "saved",
+        "saved",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "query",
+        "query",
+        "text",
+        false,
+        false
+      ],
+      [
+        "cursor",
+        "cursor",
+        "text",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.post": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.delete": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.image": {
+    "fields": [
+      [
+        "channelId",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "postId",
+        "post",
+        "text",
+        false,
+        false
+      ],
+      [
+        "mediaId",
+        "media",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.export": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.collectors": {
+    "fields": []
+  },
+  "channel.collector-revoke": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "channel.collector-config": {
+    "fields": [
+      [
+        "sinceRevision",
+        "since-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.directory": {
+    "fields": [
+      [
+        "type",
+        "type",
+        "text",
+        false,
+        false
+      ],
+      [
+        "query",
+        "query",
+        "text",
+        false,
+        false
+      ],
+      [
+        "folder",
+        "folder",
+        "text",
+        false,
+        false
+      ],
+      [
+        "archived",
+        "archived",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.social": {
+    "fields": [
+      [
+        "platform",
+        "platform",
+        "text",
+        false,
+        false
+      ],
+      [
+        "includeDisabled",
+        "include-disabled",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.reorder": {
+    "fields": [
+      [
+        "scope",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "order",
+        "order",
+        "json",
+        true,
+        false
+      ],
+      [
+        "expectedOrder",
+        "expected-order",
+        "json",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.media-open": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "path",
+        "path",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.media-info": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "messenger.media-read": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ]
+    ],
+    "defaults": {
+      "offset": 0
+    }
+  },
+  "messenger.media-close": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "messenger.gallery": {
+    "fields": [
+      [
+        "conversation",
+        "conversation",
+        "text",
+        false,
+        false
+      ],
+      [
+        "anchor",
+        "anchor",
+        "json",
+        false,
+        false
+      ],
+      [
+        "through",
+        "through",
+        "json",
+        false,
+        false
+      ],
+      [
+        "direction",
+        "direction",
+        "text",
+        false,
+        false
+      ],
+      [
+        "query",
+        "query",
+        "text",
+        false,
+        false
+      ],
+      [
+        "author",
+        "author",
+        "text",
+        false,
+        false
+      ],
+      [
+        "order",
+        "order",
+        "text",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.upload-begin": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "name",
+        "name",
+        "text",
+        false,
+        false
+      ],
+      [
+        "bytes",
+        "bytes",
+        "number",
+        true,
+        false
+      ]
+    ]
+  },
+  "messenger.reference": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        1,
+        "text",
+        false,
+        false
+      ],
+      [
+        "quote",
+        "quote",
+        "json",
+        false,
+        false
+      ],
+      [
+        "textOnly",
+        "text-only",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.forward": {
+    "fields": [
+      [
+        "messages",
+        "messages",
+        "json",
+        true,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ],
+      [
+        "comment",
+        "comment",
+        "text",
+        false,
+        false
+      ],
+      [
+        "textOnly",
+        "text-only",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "retry",
+        "retry",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "clientMessageId",
+        "client-message-id",
+        "text",
+        false,
+        false
+      ]
+    ],
+    "defaults": {
+      "textOnly": false,
+      "retry": false
+    }
+  },
+  "messenger.forward-draft": {
+    "fields": [
+      [
+        "value",
+        "data",
+        "json",
+        true,
+        false
+      ],
+      [
+        "expectedClientMessageId",
+        "expected-client-message-id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.forward-status": {
+    "fields": [
+      [
+        "clientMessageId",
+        "client-message-id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.state": {
+    "fields": []
+  },
+  "messenger.folder-save": {
+    "fields": [
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "name",
+        "name",
+        "text",
+        false,
+        false
+      ],
+      [
+        "conversations",
+        "conversations",
+        "json",
+        true,
+        false
+      ],
+      [
+        "include",
+        "include",
+        "text",
+        false,
+        false
+      ],
+      [
+        "excluded",
+        "excluded",
+        "json",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.folder-delete": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.conversation": {
+    "fields": [
+      [
+        "conversations",
+        "conversations",
+        "json",
+        true,
+        false
+      ],
+      [
+        "patch",
+        "patch",
+        "json",
+        true,
+        false
+      ]
+    ]
+  },
+  "messenger.message": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        1,
+        "text",
+        false,
+        false
+      ],
+      [
+        "ids",
+        "ids",
+        "json",
+        false,
+        false
+      ],
+      [
+        "patch",
+        "patch",
+        "json",
+        true,
+        false
+      ]
+    ]
+  },
+  "messenger.search": {
+    "fields": [
+      [
+        "conversation",
+        "conversation",
+        "text",
+        false,
+        false
+      ],
+      [
+        "query",
+        "query",
+        "text",
+        false,
+        false
+      ],
+      [
+        "filter",
+        "filter",
+        "text",
+        false,
+        false
+      ],
+      [
+        "author",
+        "author",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.naming": {
+    "fields": [
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "apply",
+        "apply",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.tree": {
+    "fields": []
+  },
+  "assets.children": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "hidden",
+        "hidden",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.search": {
+    "fields": [
+      [
+        "query",
+        "query",
+        "text",
+        false,
+        false
+      ],
+      [
+        "root",
+        "root",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ],
+      [
+        "hidden",
+        "hidden",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "refresh",
+        "refresh",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.file": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "operation",
+        "operation",
+        "text",
+        true,
+        false
+      ],
+      [
+        "path",
+        "path",
+        "text",
+        false,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ],
+      [
+        "content",
+        "content",
+        "text",
+        false,
+        false
+      ],
+      [
+        "hash",
+        "hash",
+        "text",
+        false,
+        false
+      ],
+      [
+        "create",
+        "create",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "hidden",
+        "hidden",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "trashId",
+        "trash-id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.workspace": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.workspaces": {
+    "fields": [
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.file": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "operation",
+        "operation",
+        "text",
+        false,
+        false
+      ],
+      [
+        "path",
+        "path",
+        "text",
+        false,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "text",
+        false,
+        false
+      ],
+      [
+        "content",
+        "content",
+        "text",
+        false,
+        false
+      ],
+      [
+        "hash",
+        "hash",
+        "text",
+        false,
+        false
+      ],
+      [
+        "create",
+        "create",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "hidden",
+        "hidden",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.copy": {
+    "fields": [
+      [
+        "from",
+        "from",
+        "json",
+        true,
+        false
+      ],
+      [
+        "to",
+        "to",
+        "json",
+        true,
+        false
+      ]
+    ]
+  },
+  "conversation.transfer": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "cancel",
+        "cancel",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.policy": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.role": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "role",
+        "role",
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.mute": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "member",
+        "member",
+        "text",
+        false,
+        false
+      ],
+      [
+        "muted",
+        "muted",
+        "boolean-value",
+        false,
+        false
+      ],
+      [
+        "durationSeconds",
+        "duration-seconds",
+        "number",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.silence": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "silent",
+        "silent",
+        "boolean-value",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-list": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-get": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-create": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "spec",
+        "spec",
+        "json",
+        false,
+        false
+      ],
+      [
+        "clientRequestId",
+        "client-request-id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-update": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "patch",
+        "patch",
+        "json",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-delete": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-preview": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "rule",
+        "rule",
+        "json",
+        false,
+        false
+      ],
+      [
+        "from",
+        "from",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.notice-history": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "card.profile": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "view.list": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "chat.list": {
+    "fields": []
+  },
+  "chat.create": {
+    "fields": [
+      [
+        "name",
+        "name",
+        "text",
+        false,
+        false
+      ],
+      [
+        "ownerId",
+        "owner-id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "team",
+        "team",
+        "text",
+        false,
+        false
+      ],
+      [
+        "members",
+        "members",
+        "json",
+        false,
+        false
+      ]
+    ]
+  },
+  "chat.delete": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "chat.get": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "chat.history": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "around",
+        "around",
+        "text",
+        false,
+        false
+      ],
+      [
+        "before",
+        "before",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "chat.context": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "messageId",
+        "message",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "chat.acknowledge": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "messageId",
+        "message",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "system.info": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "engine.list": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "engine.install-status": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "engine.cancel-install": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "engine.login-status": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "engine.cancel-login": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "transfer.upload-commit": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "transfer.upload-abort": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "auth.whoami": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "auth.agent-token": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "auth.revoke": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "management.roles": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "management.decide": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "decision",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "card.management-role": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "role",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "card.access-mode": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "mode",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "shared.info": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "transfer.list": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "transfer.get": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "transfer.cancel": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "schedule.schema": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "schedule.status": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "schedule.get": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "schedule.pause": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "schedule.resume": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "schedule.delete": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "ids",
+        "ids",
+        "json",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ],
+      [
+        "expectedRevisions",
+        "expected-revisions",
+        "json",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "schedule.run": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "schedule.trigger": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "eventId",
+        "event-id",
+        "text",
+        true,
+        false
+      ]
+    ]
+  },
+  "schedule.cancel": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "settings.get": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "view.get": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "view.close": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "session.inbox": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "session.rename": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "title",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "host.fingerprints": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "host.get": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "host.remove": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "host.check": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "host.credentials": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "card.native-bind": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "sessionId",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.interrupt": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.close": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.activity": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.snapshot": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "approval.list": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "config.engine": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "engine",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "config.model": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "model",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "config.permission": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "mode",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "config.thinking": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "enabled",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "external.open": {
+    "fields": [
+      [
+        "url",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "engine.inspect": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "section",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.background": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.queue": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "session.dequeue": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "messageId",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "team-view.list": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "team-view.remove": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "team-view.select": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "group.rename": {
+    "fields": [
+      [
+        "name",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "nextName",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "group.migrate": {
+    "fields": [
+      [
+        "name",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "room.layout": {
+    "fields": [
+      [
+        "name",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "plugin.list": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "plugin.describe": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "plugin.install": {
+    "fields": [
+      [
+        "path",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "plugin.windows": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "plugin.mode": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "mode",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "plugin.dismiss": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "plugin.close": {
+    "fields": [
+      [
+        "viewId",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "terminal.close": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  }
+}

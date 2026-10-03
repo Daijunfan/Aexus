@@ -15,7 +15,7 @@ import { PageIcon } from '../ui';
 import { pageLink } from '../core/links';
 import { iconColors } from '../core/icons';
 import { AppearanceTheme } from '../appearance';
-import { blockBackgrounds } from '../core/appearance';
+import { ColorSwatch } from '../content/SelectionColors';
 import { rememberColor } from '../content/shortcuts';
 import { selectedBlocks } from '../core/blocks';
 
@@ -172,19 +172,7 @@ export function BlockMenu({ pageId }: { pageId: string }) {
                   key={color}
                   className="bn-menu-item"
                   icon={
-                    <span
-                      aria-hidden="true"
-                      className="block-color-sample"
-                      style={{
-                        color: field === 'textColor' ? tone[theme] : undefined,
-                        background:
-                          field === 'backgroundColor' && color !== 'default'
-                            ? blockBackgrounds[color as keyof typeof blockBackgrounds][theme]
-                            : undefined,
-                      }}
-                    >
-                      A
-                    </span>
+                    <ColorSwatch color={color} background={field === 'backgroundColor'} />
                   }
                   checked={block.props[field] === color}
                   onClick={() => {

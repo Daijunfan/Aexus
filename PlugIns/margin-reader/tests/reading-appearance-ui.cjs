@@ -4,7 +4,7 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
 (async()=>{
  const f=await create('reading-appearance-ui'),{page,api,pass}=f;let error;
  try{
-  await fs.writeFile(path.join(f.workspace,'source.pdf'),pdfFixture());let set=await api('study.create',{title:'Appearance'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['source.pdf']});
+  await fs.writeFile(path.join(f.workspace,'source.pdf'),pdfFixture());let set=await api('study.create',{mapMode:'cards',title:'Appearance'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['source.pdf']});
   const doc=await api('document.open',{path:'source.pdf',activate:false});for(const title of ['lowercase title','Linked target'])set=await api('study.note.create',{setId:set.id,expectedRevision:set.revision,title,text:'Visible card body'});
   const [a,b]=set.cards.map(c=>c.id);set=await api('study.link.add',{setId:set.id,expectedRevision:set.revision,from:a,to:b});await api('study.open',{setId:set.id,documentId:doc.id});
   await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');

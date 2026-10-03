@@ -33,6 +33,16 @@ export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:str
   data[engine]=value;atomicJson(file,data,true);return publicEngineConfiguration(engine)
 }
 export function setManagedEngine(engine:EngineId,executable:string,sdkPath?:string){const data=all();data[engine]={...data[engine],path:undefined,managedPath:executable,...(sdkPath?{sdkPath}:{})};atomicJson(file,data,true)}
+/** Provider credentials never cross engine boundaries. Process adapters use saved keys only. */
+export function engineProcessEnvironment(engine:EngineId,base:NodeJS.ProcessEnv):NodeJS.ProcessEnv{
+  const env={...base},processAdapter=engine==='cline'||engine==='pi'
+  for(const name of Object.keys(env)){
+    const claude=/^(ANTHROPIC_|CLAUDE_CODE_USE_|CLAUDE_CONFIG_DIR$|CLAUDE_API_KEY$|CLAUDE_CODE_API_KEY$)/.test(name)
+    const openai=name.startsWith('OPENAI_'),processKey=['CLINE_API_KEY','DEEPSEEK_API_KEY','PI_API_KEY'].includes(name)
+    if(processKey||claude&&engine!=='claude'||openai&&(processAdapter||engine==='claude'))delete env[name]
+  }
+  return {...env,...engineEnvironment(engine)}
+}
 export function engineEnvironment(engine:EngineId):NodeJS.ProcessEnv{
   const config=engineConfiguration(engine),env:NodeJS.ProcessEnv={}
   if(config.baseUrl)env[engine==='claude'?'ANTHROPIC_BASE_URL':'OPENAI_BASE_URL']=config.baseUrl

@@ -9,7 +9,7 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
    const original=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
    navigator.mediaDevices.getUserMedia=async constraints=>{window.__testDeviceRequests.push(constraints);const stream=await original(constraints);window.__testDeviceStreams.push(stream);return stream;};
   });
-  await fs.writeFile(path.join(f.workspace,'notes.pdf'),pdfFixture());let set=await api('study.create',{title:'Device capture fixture'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['notes.pdf']});
+  await fs.writeFile(path.join(f.workspace,'notes.pdf'),pdfFixture());let set=await api('study.create',{mapMode:'cards',title:'Device capture fixture'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['notes.pdf']});
   const doc=await api('document.open',{path:'notes.pdf',activate:false});await api('study.open',{setId:set.id});
   await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');assert.equal(await page.evaluate(()=>window.__testDeviceRequests.length),0);
   await page.click('#study-camera');assert.equal(await page.evaluate(()=>window.__testDeviceRequests.length),0);

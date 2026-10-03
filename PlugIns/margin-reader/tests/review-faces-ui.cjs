@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),path=require('node:path');
 const {create,expect}=require('./ui-session.cjs');
 (async()=>{const f=await create('review-faces');let failure;
- try{const {page,api}=f;let set=await api('study.create',{title:'正反面验收'});const change=async(m,p={})=>{set=await api('study.get',{setId:set.id});return set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});};
+ try{const {page,api}=f;let set=await api('study.create',{mapMode:'cards',title:'正反面验收'});const change=async(m,p={})=>{set=await api('study.get',{setId:set.id});return set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});};
   await change('study.note.create',{title:'学习问题',text:'**完整正文** $x^2$'});const id=set.cards[0].id;
   await change('study.card.update',{cardId:id,note:'原卡片笔记'});await change('study.comment.add',{cardId:id,text:'正面提示',reviewSide:'front'});await change('study.comment.add',{cardId:id,text:'背面补充解释',reviewSide:'back'});
   await change('study.review.configure',{cardId:id,enabled:true,cloze:'{{c2::法国}} 的首都是 {{c1::巴黎::城市}}'});await api('study.open',{setId:set.id});await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');await page.click('[data-study-view=review]');
@@ -19,7 +19,7 @@ const {create,expect}=require('./ui-session.cjs');
   await page.click('#study-review-reveal');await page.click('[data-grade=good]');await expect(page.locator('.study-review-empty')).toContainText('完成');set=await api('study.get',{setId:set.id});assert.equal(set.cards[0].review.logs.length,1);await page.click('#study-undo');await expect(page.locator('#study-review-answer')).toBeVisible();assert.equal((await api('study.get',{setId:set.id})).cards[0].review.logs.length,0);
   f.pass('Changing question extraction, re-hiding, grading and undo use the same persisted review state');
   await page.screenshot({path:path.join(f.output,'review-back.png')});
-  let images=await api('study.create',{title:'图片分组'});const fixtureCanvas=require('@napi-rs/canvas').createCanvas(120,80),ctx=fixtureCanvas.getContext('2d');ctx.fillStyle='#42aa66';ctx.fillRect(0,0,120,80);
+  let images=await api('study.create',{mapMode:'cards',title:'图片分组'});const fixtureCanvas=require('@napi-rs/canvas').createCanvas(120,80),ctx=fixtureCanvas.getContext('2d');ctx.fillStyle='#42aa66';ctx.fillRect(0,0,120,80);
   images=await api('study.media.import',{setId:images.id,expectedRevision:images.revision,kind:'image',title:'图像题',contentBase64:(await fixtureCanvas.encode('png')).toString('base64')});const imageId=images.cards[0].id;
   images=await api('study.review.configure',{setId:images.id,expectedRevision:images.revision,cardId:imageId,enabled:true,occlusions:[{x:0,y:0,width:.2,height:.2},{x:.3,y:.3,width:.2,height:.2},{x:.6,y:.6,width:.2,height:.2}],occlusionGroups:[1,1,2]});await api('study.open',{setId:images.id});await page.reload();await page.waitForSelector('body[data-ready=true]');await page.click('[data-study-view=review]');await expect(page.locator('.study-occlusion')).toHaveCount(3);await page.click('#study-review-reveal');await expect(page.locator('.study-occlusion')).toHaveCount(1);await expect(page.locator('#study-review-answer')).toBeHidden();await page.click('#study-review-reveal');await expect(page.locator('.study-occlusion')).toHaveCount(0);await expect(page.locator('#study-review-answer')).toBeVisible();
   f.pass('Real image masks in one group disappear together, with the remaining group still hidden');

@@ -1,42 +1,24 @@
-import {openCodexDiscussion} from './codex-discussion'
-import type {EngineStart,EngineDriver,EngineHost} from './contract'
-import {type Live,sandboxFor,codexEffort} from '../sessions'
-import {readStore,patchSession} from '../store'
-import {isInitializer} from '../initialization-state'
-import {employeeInstructions} from '../plugins/documents'
-import {codexModels,allCodexModels,runCodexTurn} from '../codex'
-import {withCodexSessionApi} from '../native-sessions'
-import {nativeCodexRequest,hasNativeCodexSession,nativeCodexBusy,closeNativeCodexSession} from '../codex-native'
-import {nativeSessionRefs} from '../../shared/types'
-import {activeModel,fastTier} from '../../shared/engine-commands'
-import {nativeRequestHandler,cancelApprovals} from '../approvals'
+import {engineState} from './state'
+import { openCodexDiscussion } from './codex-discussion'
+import type { EngineStart,EngineDriver,EngineHost } from './contract'
+import type { Live } from '../sessions'
+import { sandboxFor,codexEffort } from './session-support'
+import { readStore,patchSession } from '../store'
+import { employeeInstructions } from '../plugins/documents'
+import { codexModels,allCodexModels,runCodexTurn } from '../codex'
+import { withCodexSessionApi } from '../native-sessions'
+import { nativeCodexRequest,hasNativeCodexSession,nativeCodexBusy,closeNativeCodexSession } from '../codex-native'
+import { nativeSessionRefs } from '../../shared/types'
+import { activeModel,fastTier } from '../../shared/engine-commands'
+import { nativeRequestHandler,cancelApprovals } from '../approvals'
 export async function openCodex(context:EngineStart){
   const {args,card,kind,engine,cardId,sessionId,cwd,workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,provider,permissionMode,host}=context
-  const {live,info,emit,rememberMeta,rememberTerminalCommands,privateTurns,dispatchQueued}=host
+  const {register,isOpen,metadata,emit,rememberMeta,rememberTerminalCommands,isPrivateTurn,dispatchQueued}=host
 
-    const state: Live = {
-      cardId,privateInitialization:isInitializer(cardId),
-      kind,nativeOrigin:card?.nativeOrigin,
-      engine,
-      driver: null as never,
-      q: null as never,
-      input: null as never,
-      sessionId: null,
-      threadId: args.threadId,
-      cwd,
-      workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,
-      model: args.model,
-      thinkingEnabled: false,
-      planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
-      effort: args.effort,
-      sandbox: sandboxFor(permissionMode),
-      permissionMode,
-      running: false,
-      queue: []
-    }
+    const state=engineState(context,{nativeOrigin:card?.nativeOrigin,workRoot,permissionRoot,nativeRemote,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,effort:args.effort,threadId:args.threadId})
     state.bootstrapInstructions=employeeInstructions(readStore().sessions.find(card=>card.id===cardId)!,readStore())
     state.driver=createCodexDriver(state,sessionId,host)
-    live.set(sessionId, state)
+    register(sessionId, state)
     rememberMeta(sessionId, {
       engine,
       cwd,
@@ -64,14 +46,14 @@ export async function openCodex(context:EngineStart){
     })
     // Ask the installed CLI for current account/model capabilities without inference.
     void withCodexSessionApi(allCodexModels,nativeRemote?{nativeRemote}:{}).then(models=>{
-      if(live.has(sessionId)&&models.length)rememberMeta(sessionId,{models})
+      if(isOpen(sessionId)&&models.length)rememberMeta(sessionId,{models})
     }).catch(()=>{}) // Offline engines keep the official local cache above.
     return { sessionId, cwd:remote?.directory??cwd, engine }
 }
 
 /** Serialize user turns over the employee’s native connection. */
 async function pumpCodex(s:Live,sessionId:string,host:EngineHost,discussionUrl:()=>Promise<string>){
-  const {live,emit,rememberMeta,privateTurns,dispatchQueued,sessionInfo}=host
+  const {isOpen,emit,rememberMeta,isPrivateTurn,dispatchQueued,sessionInfo}=host
   if (s.running) return
   s.running = true
   try {
@@ -94,13 +76,13 @@ async function pumpCodex(s:Live,sessionId:string,host:EngineHost,discussionUrl:(
         serviceTier:s.fastMode?fastTier(activeModel(sessionInfo(sessionId)?.models??[],s.model))?.id:undefined,
         signal: abort.signal,
         approvalPolicy:s.workRoot||s.remote&&!s.nativeRemote||['dontAsk','bypassPermissions'].includes(s.permissionMode)?'never':'on-request',
-        onRequest:async(...args)=>{if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化不能申请额外权限或等待用户回答，请检查配置后重试。'});throw Error('Interactive requests are unavailable during initialization')};return nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&(!s.remote||!!s.nativeRemote)&&!s.planMode)(...args)},
+        onRequest:async(...args)=>{if(isPrivateTurn(sessionId)){emit('session:error',{sessionId,message:'初始化不能申请额外权限或等待用户回答，请检查配置后重试。'});throw Error('Interactive requests are unavailable during initialization')};return nativeRequestHandler(sessionId,()=>emit('session:changed',{sessionId}),!s.workRoot&&(!s.remote||!!s.nativeRemote)&&!s.planMode)(...args)},
         onEvent: (ev) => {
           if(ev.kind==='input-receipt'){if(taskId)emit('session:receipt',{sessionId,taskId,stage:ev.stage});return}
           if(ev.kind==='notice'&&ev.level==='error')failure=ev.text
           if(ev.kind==='notice'&&ev.level==='error'&&s.nativeRemote){emit('session:error',{sessionId,message:ev.text});return}
           if(ev.kind==='child-thread'){const card=readStore().sessions.find(c=>c.id===s.cardId);if(card)patchSession(s.cardId,{nativeSessions:[...nativeSessionRefs(card),{engine:'codex',id:ev.threadId,origin:s.nativeOrigin}]});return}
-          if(ev.kind==='background-turn'){if(!live.has(sessionId))return;s.running=ev.busy;rememberMeta(sessionId,{busy:ev.busy});emit(ev.busy?'session:turn-start':'session:turn-end',{sessionId});if(!ev.busy)dispatchQueued(s,sessionId);return}
+          if(ev.kind==='background-turn'){if(!isOpen(sessionId))return;s.running=ev.busy;rememberMeta(sessionId,{busy:ev.busy});emit(ev.busy?'session:turn-start':'session:turn-end',{sessionId});if(!ev.busy)dispatchQueued(s,sessionId);return}
           if(ev.kind==='usage'){rememberMeta(sessionId,{usage:ev.usage});return}
           if (ev.kind === 'thread') {
             const prior=readStore().sessions.find(card=>card.id===s.cardId)
@@ -110,11 +92,11 @@ async function pumpCodex(s:Live,sessionId:string,host:EngineHost,discussionUrl:(
             emit('session:resolved', { sessionId, threadId: ev.threadId })
             return
           }
-          if (!live.has(sessionId)) return
+          if (!isOpen(sessionId)) return
           emit('session:codex', { sessionId, event: ev })
         }
       })}catch(error){failure=error instanceof Error?error.message:String(error)}
-      if (!live.has(sessionId)) return
+      if (!isOpen(sessionId)) return
       s.abort = undefined
       rememberMeta(sessionId, { busy: false })
       emit('session:result',{sessionId,success:!failure,error:failure})

@@ -2,7 +2,7 @@ import { codeLanguages, codeLanguageAliases, normalizeCodeLanguage } from '../co
 import { saveAsset } from '../content/assets';
 import { ButtonBlock } from '../actions/ButtonBlock';
 import { MousePointer2 } from 'lucide-react';
-import { useEffect, useRef, useState, useContext } from 'react';
+import { useEffect, useRef, useState, useContext, createContext } from 'react';
 import { EmojiPicker } from './Pickers';
 import { emojis, matchesIcon } from '../core/iconSearch';
 import { AllSelection } from '@tiptap/pm/state';
@@ -16,7 +16,6 @@ import {
 import { createCodeBlockSpec } from '@blocknote/core/blocks';
 import { zh } from '@blocknote/core/locales';
 import {
-  filterSuggestionItems,
   insertOrUpdateBlockForSlashMenu,
   SyntaxHighlightingExtension,
 } from '@blocknote/core/extensions';
@@ -34,6 +33,7 @@ import {
   useCreateBlockNote,
   FormattingToolbar,
   FormattingToolbarController,
+  type FormattingToolbarProps,
   getFormattingToolbarItems,
   SideMenu,
   SideMenuController,
@@ -52,7 +52,7 @@ import {
 } from 'lucide-react';
 import { useWorkspace } from '../store';
 import { PageIcon } from '../ui';
-import { plainText, defaultDatabase, isInternalPage, ancestors } from '../model';
+import { plainText, defaultDatabase, isInternalPage } from '../model';
 import { InlineDatabaseSpec } from '../database/InlineDatabase';
 import type { Page, JsonBlock } from '../types';
 import { EditorPageContext, syncedBlockSpec } from '../content/SyncedBlock';
@@ -63,6 +63,9 @@ import { Bookmark, Breadcrumb } from '../content/ReferenceBlocks';
 import { Equation, InlineMath } from '../content/Math';
 import { Sigma, Copy, Trash2 } from 'lucide-react';
 import { iconColors } from '../core/icons';
+import { ColorSwatch } from '../content/SelectionColors';
+import { CategorizedSlashMenu } from '../content/SlashCategories';
+import { SelectionAssistant, type SelectionAIRequest } from '../content/SelectionAssistant';
 
 // Stable component identities keep the open block menu mounted during editor/store updates.
 function EditorBlockMenu() {
@@ -71,6 +74,29 @@ function EditorBlockMenu() {
 }
 function EditorSideMenu() {
   return <SideMenu dragHandleMenu={EditorBlockMenu} />;
+}
+
+const EditorToolbarContext = createContext<{
+  commentSelection: () => void;
+  sendSelectionToAgent: (event: React.MouseEvent<HTMLButtonElement>) => void;
+} | null>(null);
+function EditorFormattingToolbar(props: FormattingToolbarProps) {
+  const handlers = useContext(EditorToolbarContext)!;
+  return (
+    <FormattingToolbar {...props}>
+      {getFormattingToolbarItems(props.blockTypeSelectItems)}
+      <button
+        className="block-comment-button"
+        title="评论"
+        aria-label="评论所选内容"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={handlers.commentSelection}
+      >
+        <MessageSquare size={16} />
+      </button>
+      <button data-selection-ai className="block-comment-button" title="发送选区给 Agent" aria-label="发送选区给 Agent" onMouseDown={(event) => event.preventDefault()} onClick={handlers.sendSelectionToAgent}><Bot size={16}/></button>
+    </FormattingToolbar>
+  );
 }
 
 const Callout = createReactBlockSpec(
@@ -256,9 +282,10 @@ export function Editor({
   autoFocus?: boolean;
   readOnly?: boolean;
 }) {
-  const { patch, workspace, create, navigate, notify, getCurrentPage, setCommentPanel, setAgentPanel, command, blockTarget } =
+  const { patch, workspace, create, navigate, notify, getCurrentPage, setCommentPanel, command, blockTarget } =
     useWorkspace();
   const editorContainer = useRef<HTMLDivElement>(null);
+  const [selectionAI, setSelectionAI] = useState<SelectionAIRequest | null>(null);
   const editor = useCreateBlockNote({
     schema,
     dropCursor: multiColumnDropCursor,
@@ -334,11 +361,13 @@ export function Editor({
       quote: window.getSelection()?.toString() || plainText(block.content),
     });
   };
-  const sendSelectionToAgent = () => {
-    const root = [page, ...ancestors(workspace!.pages, page.id)].find((page) => page.space);
-    if (!root) return;
+  const sendSelectionToAgent = (event: React.MouseEvent<HTMLButtonElement>) => {
     const block = editor.getSelection()?.blocks[0] || editor.getTextCursorPosition().block;
-    setAgentPanel({ pageId: root.id, context: { pageId: page.id, title: page.title, blockId: block.id, quote: window.getSelection()?.toString() || plainText(block.content) } });
+    const rect = event.currentTarget.getBoundingClientRect();
+    setSelectionAI({ context: { pageId: page.id, title: page.title, blockId: block.id,
+      quote: editor.getSelectedText() || plainText(block.content) },
+      x: Math.max(8, Math.min(rect.left, window.innerWidth - 388)),
+      y: Math.max(8, Math.min(rect.bottom + 8, window.innerHeight - 420)), id: Date.now() });
   };
   useEffect(() => {
     const element = editorContainer.current;
@@ -418,6 +447,7 @@ export function Editor({
 
   return (
     <EditorPageContext.Provider value={{ pageId: page.id, theme, readOnly: readOnly || page.locked }}>
+      <EditorToolbarContext.Provider value={{ commentSelection, sendSelectionToAgent }}>
       <div ref={editorContainer} className="note-editor" data-editor-page={page.id} data-block-target={blockTarget?.pageId === page.id ? blockTarget.blockId : undefined} spellCheck={workspace!.settings.spellcheck}>
         {blockTarget?.pageId === page.id && <style>{`
           @keyframes block-anchor-${blockTarget.request} { from { background-color: var(--selected); } to { background-color: transparent; } }
@@ -445,34 +475,14 @@ export function Editor({
           }}
         >
           <SideMenuController sideMenu={EditorSideMenu} />
-          <FormattingToolbarController
-            formattingToolbar={(props) => (
-              <FormattingToolbar {...props}>
-                {getFormattingToolbarItems(props.blockTypeSelectItems)}
-                <button
-                  className="block-comment-button"
-                  title="评论"
-                  aria-label="评论所选内容"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={commentSelection}
-                >
-                  <MessageSquare size={16} />
-                </button>
-                <button className="block-comment-button" title="发送选区给 Agent" aria-label="发送选区给 Agent" onMouseDown={(event) => event.preventDefault()} onClick={sendSelectionToAgent}><Bot size={16}/></button>
-              </FormattingToolbar>
-            )}
-          />
-          <SuggestionMenuController
-            triggerCharacter="/"
-            getItems={async (query) =>
-              filterSuggestionItems(
-                [
+          <FormattingToolbarController formattingToolbar={EditorFormattingToolbar} />
+          <CategorizedSlashMenu items={[
                   ...getDefaultReactSlashMenuItems(editor),
                   ...Object.entries(iconColors).flatMap(([color, tone]) => (['textColor', 'backgroundColor'] as const).map(field => ({
                     title: tone.name + (field === 'backgroundColor' ? '背景' : '文字'),
                     subtext: field === 'backgroundColor' ? '更改当前块的背景色' : '更改当前块的文字颜色',
                     aliases: [color + (field === 'backgroundColor' ? ' background' : ''), tone.name + (field === 'backgroundColor' ? '背景' : '')],
-                    group: '颜色', icon: <span className="block-color-sample" style={{ color: tone[theme] }}>A</span>,
+                    group: '颜色', icon: <ColorSwatch color={color} background={field === 'backgroundColor'} />,
                     onItemClick: () => { rememberColor(field, color); editor.updateBlock(editor.getTextCursorPosition().block, { props: { [field]: color } }); },
                   }))),
                   { title: '复制块', aliases: ['duplicate', '复制'], group: '操作', icon: <Copy size={20} />,
@@ -487,7 +497,7 @@ export function Editor({
                     icon: <MousePointer2 size={20} />,
                     onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'button' }),
                   },
-                  ...getMultiColumnSlashMenuItems(editor),
+                  ...getMultiColumnSlashMenuItems(editor).map(item => ({ ...item, group: '高级块' })),
                   {
                     title: '同步块',
                     subtext: '同一份内容，在多处同步编辑',
@@ -612,11 +622,7 @@ export function Editor({
                     icon: <ListTree size={20} />,
                     onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'tableOfContents' }),
                   },
-                ],
-                query,
-              )
-            }
-          />
+          ]} />
           <SuggestionMenuController
             triggerCharacter=":"
             minQueryLength={2}
@@ -648,7 +654,9 @@ export function Editor({
             }
           />
         </BlockNoteView>
+        <SelectionAssistant request={selectionAI} pageId={page.id} />
       </div>
+      </EditorToolbarContext.Provider>
     </EditorPageContext.Provider>
   );
 }

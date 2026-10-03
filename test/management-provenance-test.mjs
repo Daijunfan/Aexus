@@ -29,8 +29,8 @@ try{
  assert.equal((await f.raw(managerToken,'management','topology','--team','B','--creator','operator')).ok,false)
  assert.equal((await f.request(managerToken,'management.topology',{creator:42})).ok,false)
  assert.deepEqual((await f.call(managerToken,'session','list')).sessions.find(n=>n.id===mine.id).createdBy,mine.createdBy)
- const docs=(await f.call(managerToken,'api','docs')).markdown;assert.match(docs,/--creator self/);assert.match(docs,/--creator unknown/)
- assert.match(fs.readFileSync(path.join(manager.cwd,'.agents-company','employees',manager.id,'API.md'),'utf8'),/createdByMe/)
+ const docs=(await f.call(managerToken,'api','docs','core/api')).markdown;assert.match(docs,/--creator self/);assert.match(docs,/--creator unknown/)
+ assert.match(fs.readFileSync((await f.call(managerToken,'api','docs','core/api')).path,'utf8'),/createdByMe/)
  assert.ok((await f.call(managerToken,'api','describe','management.topology')).args.includes('--creator'))
  // Seed one legacy record only in the stopped, isolated fixture store.
  await f.stop();const file=path.join(f.env.AGENTS_COMPANY_HOME,'sessions.json'),store=JSON.parse(fs.readFileSync(file));delete store.sessions.find(n=>n.id===legacy.id).createdBy;fs.writeFileSync(file,JSON.stringify(store));await f.start()

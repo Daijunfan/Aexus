@@ -1,4 +1,4 @@
-import {engineEnvironment} from './engines/configuration'
+import {engineProcessEnvironment} from './engines/configuration'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
@@ -17,7 +17,7 @@ export function deepSeekProvider(cwd?:string){
     const file=path.join(cwd!,'.claude',name)
     if(fs.existsSync(file)){const local=JSON.parse(fs.readFileSync(file,'utf8'));settings={...settings,...local,env:{...settings.env,...local.env}}}
   }
-  const env={...settings.env,...process.env,...engineEnvironment('claude')}
+  const env=engineProcessEnvironment('claude',{...settings.env,...process.env})
   const deepseek=/api\.deepseek\.com/i.test(env.ANTHROPIC_BASE_URL??'')||Object.entries(env).some(([key,value])=>/^ANTHROPIC_.*MODEL(?:_NAME)?$/.test(key)&&/^deepseek-/i.test(String(value)))
   return deepseek?{env,defaultModel:settings.model as string|undefined}:undefined
 }

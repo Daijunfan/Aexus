@@ -23,7 +23,8 @@ async function initialize(active){
  for(const operation of operations){const reply=await nativeTool('agents_company_documentation',{operation,...(operation==='document'?{document:'core/api'}:{})});if(reply.error||reply.result?.isError)throw Error(reply.error?.message??reply.result.content?.[0]?.text??'Documentation tool failed');results[operation]=JSON.parse(reply.result.content.find(item=>item.type==='text').text)}
  note('read',{operations,identity:results.identity,index:results.index,bytes:operations.map(operation=>JSON.stringify(results[operation]).length)})
 }
-async function readWorkDocument(){
+async function readWorkDocument(text){
+ const post=workPostArgs(text,control,employee);if(post){const result=await nativeTool('agents_company_discussion_post',post);note('work-publication',{input:post,result});if(result.error||result.result?.isError)throw Error(result.error?.message??result.result?.content?.[0]?.text??'Publication failed')}
  const file=path.join(control,employee+'.work-document.json');if(!fs.existsSync(file))return
  const input=JSON.parse(fs.readFileSync(file,'utf8')),result=await nativeTool('agents_company_documentation',input)
  if(result.error||result.result?.isError)throw Error(result.error?.message??result.result?.content?.[0]?.text??'Documentation tool failed')
@@ -36,7 +37,7 @@ async function acknowledgmentText(text,active){
  // A fixture scenario chooses an actual tool request. Final response text is never parsed into a call.
  while(active===generation&&fs.existsSync(file('.hold-ack')))await new Promise(resolve=>setTimeout(resolve,20))
  if(active!==generation)return ''
- if(explicit||process.env.AC_CHAT_ACK_MANUAL!=='1'&&!hasOutput){
+ if(explicit){
   const input={conversationType:policy.conversationType,conversationId:policy.conversationId,messageId:policy.messageId,text:null,...(explicit?JSON.parse(fs.readFileSync(toolFile,'utf8')):{})},callId='fixture-discussion-'+crypto.randomUUID()
   const result=await nativeTool('agents_company_discussion_post',input,callId);note('discussion-tool',{input,result,callId,at:Date.now()})
  }
@@ -81,10 +82,18 @@ rl.on('line',line=>{
         event('item/completed',{threadId:thread,turnId:turn,item:{id:'answer',type:'agentMessage',text:ack?ackText:hidden?(fs.existsSync(path.join(control,employee+'.bad-ok'))?'NOT_READY':'OK'):(fs.existsSync(path.join(control,employee+'.reply.txt'))?fs.readFileSync(path.join(control,employee+'.reply.txt'),'utf8'):'VISIBLE_REPLY')}})
         event('turn/completed',{threadId:thread,turn:{id:turn,status:'completed'}})
       }
-      void (ack?acknowledgmentText(text,active).then(value=>{ackText=value}):hidden?initialize(active):readWorkDocument()).then(()=>{if(active===generation)timer=setInterval(complete,50)},error=>{if(active===generation)event('turn/completed',{threadId:thread,turn:{id:turn,status:'failed',error:{message:(ack?'Fixture acknowledgment failed: ':'Fixture initialization failed: ')+error.message}}})});return
+      void (ack?acknowledgmentText(text,active).then(value=>{ackText=value}):hidden?initialize(active):readWorkDocument(text)).then(()=>{if(active===generation)timer=setInterval(complete,50)},error=>{if(active===generation)event('turn/completed',{threadId:thread,turn:{id:turn,status:'failed',error:{message:(ack?'Fixture acknowledgment failed: ':'Fixture initialization failed: ')+error.message}}})});return
     }
     case 'turn/interrupt':generation++;clearInterval(timer);result({});return event('turn/completed',{threadId:thread,turn:{id:turn,status:'interrupted'}})
     default:return result({})
   }
 })
 process.on('SIGTERM',()=>{clearInterval(timer);process.exit(0)});rl.on('close',()=>process.exit(0))
+
+function workPostArgs(text,control,employee){
+ const file=path.join(control,employee+'.work-post.json');if(!fs.existsSync(file))return
+ const marker=text.includes('[Group request]\n')?'[Group request]\n':text.includes('[Channel context]\n')?'[Channel context]\n':undefined
+ if(!marker)return
+ const context=JSON.parse(text.split(marker)[1].split('\n')[0])
+ return {conversationType:context.conversationType,conversationId:context.conversationId,messageId:context.messageId??context.entryId,...JSON.parse(fs.readFileSync(file,'utf8'))}
+}

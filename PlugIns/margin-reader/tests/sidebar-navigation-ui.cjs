@@ -11,7 +11,7 @@ const {create,expect}=require('./ui-session.cjs');
   await api('fs.write',{path:'横向移动/章节/参考资料.md',content:'# 参考资料\n\nNested original'});
   await api('fs.write',{path:'AI Systems.md',content:'# AI Systems\n\nRoot document'});
   let library=await api('study.library.get');library=await api('study.folder.create',{expectedRevision:library.revision,title:'课程'});const folder=library.folders[0];
-  const set=await api('study.create',{title:'横向移动',folderId:folder.id});
+  const set=await api('study.create',{mapMode:'cards',title:'横向移动',folderId:folder.id});
   await api('settings.set',{homeSection:'library',activeStudySet:null,lastDocument:null,currentFolder:'.'});
   await page.goto(f.server.url);await page.locator('body[data-ready=true]').waitFor();
   const sameHeaders=async()=>{

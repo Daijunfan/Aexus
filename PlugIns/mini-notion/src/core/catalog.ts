@@ -1,3 +1,4 @@
+import { assistantCommands } from './assistantCommands';
 import { folderCommands } from './folderCatalog.ts';
 import { commandExamples } from './commandExamples.ts';
 import type { CommandDefinition } from './protocol.ts';
@@ -8,6 +9,7 @@ const json = (description: string) => ({ type: 'json' as const, description });
 const flag = (description: string) => ({ type: 'boolean' as const, description });
 const list = (description: string) => ({ type: 'list' as const, description });
 export const commands: CommandDefinition[] = [
+  ...assistantCommands,
   ...folderCommands,
   { method: 'guide', description: 'Agent 实操手册：从原生页面、Markdown、数据库视图到宿主子任务与验收', arguments: [arg('topic', 'start / pages / blocks / databases / delegation / verify', false)] },
   { method: 'block.validate', description: '只读校验正文块并生成规范结构；不写页面', options: { blocks: { ...json('原生块数组；table 单元格为字符串/行内数组'), required: true } }, examples: [{ blocks: [{ type: 'table', content: { type: 'tableContent', rows: [{ cells: ['模块', '职责'] }, { cells: ['Core', '共享后端'] }] } }] }] },

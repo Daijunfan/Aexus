@@ -5,7 +5,7 @@ const {PDFDocument,StandardFonts}=require('pdf-lib'),{create,expect}=require('./
  const f=await create('fragment-navigation-ui'),{page,api,pass}=f;let error;
  try{
   const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica),sheet=pdf.addPage([500,2500]);sheet.drawText('First excerpt',{x:50,y:2240,size:20,font});sheet.drawText('Second excerpt exact target',{x:50,y:350,size:20,font});await fs.writeFile(path.join(f.workspace,'tall.pdf'),await pdf.save());
-  let s=await api('study.create',{title:'Multi-fragment source'});s=await api('study.documents.add',{setId:s.id,expectedRevision:s.revision,paths:['tall.pdf']});const doc=await api('document.open',{path:'tall.pdf',activate:false});
+  let s=await api('study.create',{mapMode:'cards',title:'Multi-fragment source'});s=await api('study.documents.add',{setId:s.id,expectedRevision:s.revision,paths:['tall.pdf']});const doc=await api('document.open',{path:'tall.pdf',activate:false});
   const params=y=>({documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),text:'',locator:{page:1,pageOffset:y},selection:{rects:[{page:1,x:.1,y,width:.7,height:.035}]}});
   const capture=await api('study.card.create',{setId:s.id,expectedRevision:s.revision,title:'Two source regions',color:'yellow',...params(.09)});
   s=await api('study.get',{setId:s.id});const appended=await api('study.excerpt.append',{setId:s.id,expectedRevision:s.revision,cardId:capture.card.id,...params(.85)});

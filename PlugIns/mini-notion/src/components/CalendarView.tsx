@@ -1,5 +1,7 @@
+import { EventSummary } from './EventSummary';
+import { eventDescription, eventPresenter, eventValue } from '../scheduling/presentation';
 import {AppSelect} from './AppSelect';
-import { isDateProperty, propertyDateValue } from '../database/propertySchema';
+import { isDateProperty } from '../database/propertySchema';
 import { useContext, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { AppearanceTheme, recordAppearanceStyle } from '../appearance';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
@@ -16,7 +18,7 @@ import {
   moveScheduledRecord,
   parseDay,
 } from '../database/dates';
-import { dateWall, dateText } from '../database/dateValue';
+import { dateText } from '../database/dateValue';
 import { defaultTemplateId } from '../database/templatesModel';
 import { SubitemPreview } from '../database/RecordTitle';
 import { useWorkspace } from '../store';
@@ -63,6 +65,8 @@ export function CalendarView({
       !(column.system === 'subItems' && db.subItems && subItemDisplay(currentView) === 'card'),
   );
   const weeks = calendarWeeks(page, currentView, rows);
+  const describe = eventPresenter(workspace!, page, currentView);
+  const byId = new Map(rows.map(row => [row.id, row]));
   const ranges = new Map(rows.map((row) => [row.id, scheduledRange(row, dateProperty, endProperty)]));
   const readonlyDates = dateProperty?.type !== 'date' || (!!endProperty && endProperty.type !== 'date');
   const today = dateKey(new Date());
@@ -132,36 +136,11 @@ export function CalendarView({
   const properties = (row: Page, labels = true) =>
     displayed.flatMap((column) => {
       const value = readProperty(row, column, workspace!.pages);
-      const text = isDateProperty(column)
-        ? dateText(value)
-        : Array.isArray(value)
-          ? value.join('、')
-          : value === false
-            ? ''
-            : value === true
-              ? '是'
-              : String(value);
-      return text ? [labels ? `${column.name}：${text}` : text] : [];
+      const text = isDateProperty(column) ? dateText(value) : eventValue(value, workspace!.pages);
+      return text && text !== describe(row).owner && text !== describe(row).status ? [labels ? `${column.name}：${text}` : text] : [];
     });
-  const fullDate = (row: Page) =>
-    dateText(propertyDateValue(row, dateProperty)) +
-    (endProperty && propertyDateValue(row, endProperty)
-      ? ` → ${dateText(propertyDateValue(row, endProperty))}`
-      : '');
-  const eventContent = (row: Page, continuedBefore = false, continuedAfter = false) => {
-    const time = dateWall(propertyDateValue(row, dateProperty)).slice(11, 16);
-    return (
-      <>
-        <span className="calendar-event-main">
-          {continuedBefore ? <ChevronLeft size={12} /> : <PageIcon icon={row.icon} size={13} />}
-          {time && !continuedBefore && <span className="calendar-event-time">{time}</span>}
-          <span className="calendar-event-title">{row.title || '无标题'}</span>
-          {continuedAfter && <ChevronRight size={12} />}
-        </span>
-        <span className="calendar-event-meta">{properties(row, false).join(' · ')}</span>
-      </>
-    );
-  };
+  const eventContent = (row: Page, before = false, after = false, detailed = false) =>
+    <EventSummary detailed={detailed} info={{ ...describe(row), title: `${before ? '← ' : ''}${row.title || '无标题'}${after ? ' →' : ''}` }} />;
   const dayRows = dayPanel
     ? rows.filter((row) => {
         const range = ranges.get(row.id)!;
@@ -219,6 +198,7 @@ export function CalendarView({
           <ChevronRight size={16} />
         </IconButton>
       </div>
+      <div className="calendar-month-scroll" tabIndex={0} aria-label="日历网格，可横向滚动">
       <div className="calendar-weekdays">
         {['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((day) => (
           <span key={day}>{day}</span>
@@ -236,6 +216,7 @@ export function CalendarView({
         {weeks.map((item) => (
           <div
             className="calendar-week-row"
+            style={{ '--calendar-visible-slots': Math.min(calendarVisibleSlots, Math.max(1, item.totalSlotCount)) } as CSSProperties}
             key={item.dates[0]}
             onDragOver={(event) => {
               if (
@@ -301,7 +282,7 @@ export function CalendarView({
             })}
             <div className="calendar-events">
               {item.events.map((segment) => {
-                const row = rows.find((row) => row.id === segment.id)!;
+                const row = byId.get(segment.id)!;
                 const range = ranges.get(row.id)!;
                 return (
                   <button
@@ -324,7 +305,7 @@ export function CalendarView({
                       drag(event, row, item.dates[segment.startColumn + offset]);
                     }}
                     onClick={() => open(row.id)}
-                    title={[row.title || '无标题', fullDate(row), ...properties(row)].join('\n')}
+                    title={eventDescription(describe(row))}
                   >
                     {eventContent(row, segment.continuedBefore, segment.continuedAfter)}
                   </button>
@@ -333,6 +314,7 @@ export function CalendarView({
             </div>
           </div>
         ))}
+      </div>
       </div>
       {dayPanel && (
         <Popover x={dayPanel.x} y={dayPanel.y} width={340} role="dialog" label={`${dayPanel.date} 的全部日程`} onClose={() => setDayPanel(null)}>
@@ -348,17 +330,13 @@ export function CalendarView({
               {dayRows.map((row) => (
                 <div className="calendar-day-item" key={row.id} style={recordAppearanceStyle(row, theme, workspace!.settings.appearance)}>
                   <button
-                    title={[row.title || '无标题', fullDate(row), ...properties(row)].join('\n')}
+                    title={eventDescription(describe(row))}
                     onClick={() => {
                       setDayPanel(null);
                       open(row.id);
                     }}
                   >
-                    <span className="calendar-day-item-title">
-                      <PageIcon icon={row.icon} size={14} />
-                      <span>{row.title || '无标题'}</span>
-                    </span>
-                    <small>{fullDate(row)}</small>
+                    {eventContent(row, false, false, true)}
                     {properties(row).length > 0 && <small>{properties(row).join(' · ')}</small>}
                   </button>
                   {db.subItems && subItemDisplay(currentView) === 'card' && (

@@ -1,0 +1,14 @@
+/* Dragging owns only the row transform; content, selection and menu actions stay intact. */
+.message-sortable{position:relative;isolation:isolate;overflow-anchor:none}
+.message-sortable>[data-sort-key]{position:relative}
+.message-contacts.message-sortable>[data-sort-key]{touch-action:pan-y}
+.message-category-tabs.message-sortable>[data-sort-key]{touch-action:pan-x}
+.message-sortable>[data-sort-key]>[data-sort-start],.message-category-tabs.message-sortable>[data-sort-key]{cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.message-sortable>[data-sort-dragging=true]{z-index:5;will-change:transform;content-visibility:visible!important;border-radius:14px;box-shadow:0 10px 26px color-mix(in srgb,var(--message-accent,var(--accent)) 22%,transparent),0 0 0 1px color-mix(in srgb,var(--message-accent,var(--accent)) 38%,transparent)}
+.message-contacts>[data-sort-dragging=true]>.message-contact{background:var(--bg-elev)}
+.message-contacts>[data-sort-dragging=true]>.message-contact.selected{background:var(--message-accent,var(--accent))}
+.message-category-tabs.message-sortable>[data-sort-dragging=true]{background:var(--bg-elev);color:var(--message-accent,var(--accent));border-color:var(--message-accent,var(--accent))}
+.message-sortable[data-sorting] .message-row-menu,.message-sortable[data-sorting] .message-restore-conversation{visibility:hidden}
+body[data-message-sorting],body[data-message-sorting] *{cursor:grabbing!important;-webkit-user-select:none!important;user-select:none!important}
+.message-sort-status{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.message-sortable>[data-sort-key],.message-sortable>[data-sort-key]>.message-contact{transition:none!important}}

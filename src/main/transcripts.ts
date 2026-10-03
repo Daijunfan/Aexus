@@ -1,3 +1,5 @@
+import {removeIndexedConversation} from './message-index-client'
+import {fileVersion,ReadCache} from './read-cache'
 import type {MessageAttachment} from '../shared/message-attachments'
 import type {MessageQuote} from '../shared/message-quotes'
 import type {PrincipalRef} from '../shared/management'
@@ -8,11 +10,10 @@ import type {PrincipalRef} from '../shared/management'
 
 import {messagePreview,messageReply,type MessagePreview} from '../shared/messages'
 import type {StoredSession} from '../shared/types'
-import {statSync} from 'node:fs'
 import {atomicJson,readJson} from './atomic-file'
 import { apply, applyCodex, applyAgent, renderTranscript,uid } from '../shared/transcript'
 import type { Item, Session,MessageReply } from '../shared/types'
-import { mkdirSync, readFileSync, writeFileSync,rmSync } from 'node:fs'
+import { mkdirSync,rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { APP_HOME } from '../shared/protocol'
 
@@ -110,9 +111,9 @@ export function resolveMessageReply(id:string,target:unknown,quote?:MessageQuote
 }
 
 /** Note the user's own turn, which the engines echo but the mirror needs at once. */
-export function recordUser(sessionId: string, text: string,images?:string[],reply?:MessageReply,author?:PrincipalRef,files?:MessageAttachment[],taskId?:string) {
+export function recordUser(sessionId: string, text: string,images?:string[],reply?:MessageReply,author?:PrincipalRef,files?:MessageAttachment[],taskId?:string,sourceView?:import('../shared/message-source').MessageSourceView) {
   const s = conv(sessionId)
-  const item:Extract<Item,{role:'user'}>={role:'user',id:'u'+uid(),createdAt:Date.now(),text,images,...(taskId?{outbound:{taskId}}:{}),...(files?.length?{files}:{}),...(author?{author}:{}),...(reply?{reply}:{})}
+  const item:Extract<Item,{role:'user'}>={role:'user',id:'u'+uid(),createdAt:Date.now(),text,images,...(sourceView?{sourceView}:{}),...(taskId?{outbound:{taskId}}:{}),...(files?.length?{files}:{}),...(author?{author}:{}),...(reply?{reply}:{})}
   conversations.set(sessionId, {
     ...s,
     busy: true,
@@ -144,8 +145,19 @@ export function markTurnEnd(sessionId: string): void {
   conversations.set(sessionId, { ...s, busy: false, open: false })
 }
 
+const activeTranscript=(id:string)=>conversations.get(id)??conversations.get([...cards].find(([,owner])=>owner===id)?.[0]??'')
+const itemVersions=new WeakMap<Item[],number>()
+let nextItemVersion=0
+/** Weak revision tokens do not retain old reducer arrays in the query cache. */
+export function transcriptVersion(id:string):string|number {
+  const active=activeTranscript(id)
+  if(active){let version=itemVersions.get(active.items);if(version===undefined){version=++nextItemVersion;itemVersions.set(active.items,version)}return version}
+  if(!/^[a-z0-9_-]+$/i.test(id))throw new Error('无效的会话 ID')
+  return fileVersion(join(directory,`${id}.json`))
+}
+
 export function transcriptItems(sessionId: string): Item[] {
-  const active=conversations.get(sessionId)??conversations.get([...cards].find(([,owner])=>owner===sessionId)?.[0]??'')
+  const active=activeTranscript(sessionId)
   if(active)return active.items
   if(!/^[a-z0-9_-]+$/i.test(sessionId))throw new Error('无效的会话 ID')
   return readJson<Item[]>(join(directory,`${sessionId}.json`),()=>[],Array.isArray)
@@ -166,24 +178,16 @@ export function forget(sessionId: string): void {
 }
 
 export function deleteTranscript(cardId:string):void {
+  removeIndexedConversation("employee:"+cardId)
   for(const [id,owner] of cards)if(owner===cardId){conversations.delete(id);cards.delete(id)}
   conversations.delete(cardId)
   rmSync(join(directory,`${cardId}.json`),{force:true});rmSync(join(directory,`${cardId}.json.previous`),{force:true})
 }
 
-// Cache bounded previews only. Open histories reuse their reducer array; closed histories use file revisions.
-const previewCache=new Map<string,{stamp:string;items?:Item[];preview:MessagePreview}>()
+// Inbox and full-message projections use the same revision and eviction policy.
+const previewCache=new ReadCache<MessagePreview>(256,256*1024)
 export function transcriptPreview(card:StoredSession):MessagePreview{
-  const active=conversations.get(card.id)??conversations.get([...cards].find(([,owner])=>owner===card.id)?.[0]??'')
-  let stamp=card.lastReply?.id??''
-  if(!active){
-    try{const stat=statSync(join(directory,`${card.id}.json`));stamp+=`:${stat.ino}:${stat.size}:${stat.mtimeMs}:${stat.ctimeMs}`}
-    catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;stamp+=':missing'}
-  }
-  const previous=previewCache.get(card.id)
-  if(previous?.stamp===stamp&&previous.items===active?.items)return previous.preview
-  const preview=messagePreview(active?.items??transcriptItems(card.id),card.lastReply)
-  previewCache.delete(card.id);previewCache.set(card.id,{stamp,items:active?.items,preview})
-  if(previewCache.size>256)previewCache.delete(previewCache.keys().next().value!)
-  return preview
+  const version=JSON.stringify([transcriptVersion(card.id),card.lastReply?.id,card.lastReply?.createdAt,card.lastReply?.itemId])
+  const preview=previewCache.get(card.id,version,()=>messagePreview(transcriptItems(card.id),card.lastReply),value=>Buffer.byteLength(JSON.stringify(value)))
+  return {...preview,...(preview.author?{author:{...preview.author}}:{})}
 }

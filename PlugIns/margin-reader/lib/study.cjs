@@ -17,6 +17,7 @@ function createStudies(store,localReading) {
   const capture = createCapture(store), media = require('./study-media.cjs').createMedia(store), exports = require('./study-export.cjs').createExports(store);
   const av=require('./av-document.cjs').createAV(store,media);
   async function request(method,p) {
+    if(method.startsWith('study.mindmap.tasks.'))return require('./mindmap-tasks.cjs').request(store,method,p);
     if(method==='study.excerpt.repair')return capture.repair(p);
     if(method==='study.av.excerpt')return av.excerpt(p);
     if(method==='document.av.info')return av.info(p);
@@ -98,12 +99,13 @@ function createStudies(store,localReading) {
         const now=new Date().toISOString(), id=randomUUID();
         assert(typeof (p.description||'')==='string'&&(p.description||'').length<=4000,'INVALID_PARAMS','Description exceeds 4000 characters.');
         const set={id,title:M.title(p.title),description:p.description||'',revision:1,documentIds:[],cards:[],cardTrash:[],createdAt:now,updatedAt:now};
+        if(p.mapMode==='cards')set.map={mindmap:{enabled:false}};
         state.studySets[id]=set;require('./study-library.cjs').assignNew(state,id,p.folderId);return {setId:id};
       }
       const set=M.findSet(state,p.setId,method==='study.restore');
       if(method==='study.open') {
         if(p.documentId){assert(set.documentIds.includes(p.documentId),'NOT_MEMBER','Document is not in this study set.');findDocument(state,p.documentId);}
-        state.settings.activeStudySet=set.id;state.settings.lastDocument=p.documentId||null;return {setId:set.id};
+        const documentId=p.documentId||(set.view==='split'?await require('./study-view.cjs').splitDocument(store,state,set):null);state.settings.activeStudySet=set.id;state.settings.lastDocument=documentId;return {setId:set.id};
       }
       if(method==='study.export') {
         const rel=relative(p.path),file=await safePath(store.workspace,rel);await parentExists(store.workspace,rel);assert(!(await exists(file)),'ALREADY_EXISTS','Export destination exists.');
@@ -128,6 +130,7 @@ function createStudies(store,localReading) {
       else if(method==='study.toc.import')await require('./outline-batch.cjs').importStudy(store,state,set,p);
       else if(require('./study-tools.cjs').methods.has(method))await require('./study-tools.cjs').request(store,state,set,method,p);
       else if(method==='study.cards.move')require('./study-tree.cjs').move(set,p);
+      else if(method==='study.cards.remove')require('./study-tree.cjs').remove(set,p);
       else if(method==='study.card.insert'){assert((p.text||'').length<=20000,'INVALID_PARAMS','Card body exceeds 20000 characters.');require('./study-tree.cjs').insert(set,p);}
       else if(method==='study.map.preferences'){const {setId,expectedRevision,...patch}=p;assert(Object.keys(patch).length,'INVALID_PARAMS','Supply a map preference.');set.map={...set.map,tools:{...set.map?.tools,...patch}};}
       else if(require('./study-notebooks.cjs').writes.has(method))await require('./study-notebooks.cjs').request(store,state,set,method,p,rollback);
@@ -141,12 +144,12 @@ function createStudies(store,localReading) {
       else if(method==='study.card.reference'){const target=M.findSet(state,p.targetSetId),original=M.card(target,p.targetCardId),node=require('./study-advanced.cjs').note(set,original.title,original.text);node.reference={setId:target.id,cardId:original.id};}
       else if(method==='study.ink.add')await require('./study-ink.cjs').add(store,state,set,p);
       else if(method==='study.ink.remove')require('./study-ink.cjs').remove(set,p);
-      else if(method==='study.view.set'){set.view=p.view;if(p.view==='review'&&(!set.reviewSession?.id||set.reviewSession.finished))require('./study-learning.cjs').startSession(state,set,{mode:'scheduled',sort:'due'});}
+      else if(method==='study.view.set')await require('./study-view.cjs').setView(store,state,set,p);
       else if(method==='study.note.create') {
         assert(set.cards.length<10000,'TOO_LARGE','A study set supports at most 10000 cards.');
         assert((p.text||'').length<=20000,'INVALID_PARAMS','Note exceeds 20000 characters.');
         const now=new Date().toISOString(),node={id:randomUUID(),kind:'note',title:M.title(p.title),text:p.text||'',note:'',tags:M.tags(p.tags||[]),color:M.color(p.color||'yellow'),source:null,image:null,parentId:null,collapsed:false,createdAt:now,updatedAt:now};
-        if(p.submap)node.submap=true;set.cards.push(node);if(p.parentId)M.move(set,node,p.parentId);
+        if(p.x!==undefined||p.y!==undefined){assert(!p.parentId&&Number.isFinite(p.x)&&Number.isFinite(p.y),'INVALID_PARAMS','Floating placement requires x and y and no parent.');node.position={x:p.x,y:p.y};}if(p.submap)node.submap=true;set.cards.push(node);if(p.parentId)M.move(set,node,p.parentId);require('./mindmap-zones.cjs').attach(set,p.zoneId,node);
       } else if(method==='study.link.add') {
         const target=p.toSetId?M.findSet(state,p.toSetId):set;M.card(set,p.from);M.card(target,p.to);assert(target.id!==set.id||p.from!==p.to,'INVALID_PARAMS','Choose two different cards.');
         assert((p.label||'').length<=200,'INVALID_PARAMS','Link label exceeds 200 characters.');set.links??=[];
@@ -175,6 +178,7 @@ function createStudies(store,localReading) {
         const entry=set.cardTrash.find(t=>t.id===p.trashId);assert(entry,'NOT_FOUND','Removed card group not found.');
         const ids=new Set([...set.cards,...entry.cards].map(c=>c.id));
         for(const c of entry.cards){if(c.parentId&&!ids.has(c.parentId))c.parentId=null;set.cards.push(c);}
+        for(const move of entry.promoted||[]){const c=set.cards.find(c=>c.id===move.cardId);if(c&&c.parentId===move.to&&ids.has(move.from)&&!M.subtree(set.cards,c.id).has(move.from))c.parentId=move.from;}
         set.cards=M.order(set.cards);set.cardTrash=set.cardTrash.filter(t=>t!==entry);
         set.links??=[];for(const link of entry.links||[])if(ids.has(link.from)&&(link.toSetId&&link.toSetId!==set.id||ids.has(link.to))&&!set.links.some(l=>l.id===link.id))set.links.push(link);
       } else if(method.startsWith('study.card.')) {
@@ -204,12 +208,7 @@ function createStudies(store,localReading) {
           card.updatedAt=new Date().toISOString();
         } else if(method==='study.card.move'){M.move(set,card,p.parentId??null,p.index);if(p.x!==undefined||p.y!==undefined){assert(p.x!==undefined&&p.y!==undefined&&(!card.parentId||M.card(set,card.parentId).submap),'INVALID_PARAMS','Free positions require a root or submap child and both coordinates.');card.position={x:p.x,y:p.y};}else delete card.position;}
         else if(method==='study.card.remove') {
-          const ids=p.mode==='subtree'?M.subtree(set.cards,card.id):new Set([card.id]);
-          const removed=set.cards.filter(c=>ids.has(c.id));if(ids.has(set.map?.focusId))set.map.focusId=null;if(ids.has(set.map?.submapId))set.map.submapId=null;
-          if(p.mode!=='subtree')for(const c of set.cards)if(c.parentId===card.id)c.parentId=card.parentId;
-          set.cards=M.order(set.cards.filter(c=>!ids.has(c.id)));
-          const attached=l=>ids.has(l.from)||(!l.toSetId||l.toSetId===set.id)&&ids.has(l.to);const links=(set.links||[]).filter(attached);set.links=(set.links||[]).filter(l=>!attached(l));
-          set.cardTrash.push({id:randomUUID(),removedAt:new Date().toISOString(),cards:removed,links});
+          require('./study-tree.cjs').remove(set,{...p,cardIds:[card.id]});
         } else fail('METHOD_NOT_FOUND',`Unknown study method: ${method}`);
       } else fail('METHOD_NOT_FOUND',`Unknown study method: ${method}`);
       M.touch(set);return {setId:set.id};

@@ -1,26 +1,26 @@
-import {useId} from 'react'
+import {memo,useId} from 'react'
+import {DEFAULT_MESSAGE_WALLPAPER,type MessageWallpaperSettings} from '../../../shared/message-wallpaper'
+import {WALLPAPER_MOTIFS,WALLPAPER_FILLERS,WALLPAPER_TILE_SIZE,wallpaperMarks,wallpaperSpeckles} from './wallpaper-patterns'
 
-// Original contour-loom engraving for Agents Company: nested cells, woven lines and stippled paper.
-// Geometry is calculated once, then repeated by native SVG patterns; no assets or animation.
-function cell(cx:number,cy:number,rx:number,ry:number,rotation:number,rings:number){
- const cos=Math.cos(rotation),sin=Math.sin(rotation)
- return Array.from({length:rings},(_,ring)=>{
-  const scale=.26+ring*.145
-  return Array.from({length:65},(_,step)=>{const angle=step*Math.PI/32,wave=1+.13*Math.sin(angle*3+.4)+.055*Math.cos(angle*5),x=Math.cos(angle)*rx*wave*scale,y=Math.sin(angle)*ry*wave*scale;return (step?'L':'M')+(cx+x*cos-y*sin).toFixed(1)+','+(cy+x*sin+y*cos).toFixed(1)}).join('')+'Z'
- }).join(' ')
-}
-const contours=[cell(94,86,69,48,-.35,6),cell(284,65,35,43,.52,5),cell(94,268,39,25,.3,5)].join(' ')
-const weave=Array.from({length:7},(_,i)=>{const y=i*5.5;return `M18 ${200+y}C60 ${151+y} 98 ${149+y} 139 ${184+y}S213 ${231+y} 252 ${188+y}S316 ${149+y} 346 ${177+y}`}).join(' ')
-const stitches='M182 35l6 3m-6 6 6 3m-6 6 6 3m-6 6 6 3M207 285l6-3m-6-6 6-3m-6-6 6-3M25 98l-4 4m4 5-4 4m4 5-4 4M303 273l4 5m6-7 4 5m6-7 4 5'
-export function MessageWallpaper(){
- const id='contour-loom-'+useId().replaceAll(':',''),grain=id+'-grain'
- return <div className="message-wallpaper" aria-hidden="true"><div className="message-wallpaper-mesh"/><svg className="message-wallpaper-pattern" width="100%" height="100%" focusable="false"><defs>
-  <pattern id={grain} width="28" height="28" patternUnits="userSpaceOnUse"><path d="M4 6h.1M18 21h.1" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity=".34"/><path d="m23 4 1.2 1.2" stroke="currentColor" strokeWidth=".5" opacity=".2"/></pattern>
-  <pattern id={id} width="360" height="320" patternUnits="userSpaceOnUse" patternTransform="scale(.86) rotate(-7)"><g fill="none" stroke="currentColor" strokeWidth=".85" strokeLinecap="round" strokeLinejoin="round">
-   <path d={contours} opacity=".94"/><path d={weave} opacity=".78"/><path d={stitches} strokeWidth="1.1" opacity=".64"/>
-   <path d="M172 92c13-16 36-13 39 2s-13 28-28 23-13-13-6-21 21-5 23 4-9 17-15 10M263 283c10-11 26-7 25 5s-16 18-22 8 5-17 12-11" opacity=".68"/>
-   <path d="M177 144h12m-6-6v12M25 266h8m-4-4v8M335 47h8m-4-4v8M151 296h7m-3.5-3.5v7" opacity=".46"/>
-   <path d="M49 34h.1M215 30h.1M334 113h.1M28 157h.1M157 77h.1M222 133h.1M175 258h.1M322 237h.1M229 307h.1" strokeWidth="2.1" opacity=".66"/>
-  </g><path d={weave} fill="none" stroke="var(--bg-elev)" strokeWidth=".65" opacity=".2" transform="translate(0 1.65)"/></pattern>
- </defs><rect width="100%" height="100%" fill={`url(#${grain})`}/><rect width="100%" height="100%" fill={`url(#${id})`}/></svg></div>
-}
+const wrappedOffsets=(value:number,margin:number)=>[0,...(value<margin?[WALLPAPER_TILE_SIZE]:[]),...(value+margin>WALLPAPER_TILE_SIZE?[-WALLPAPER_TILE_SIZE]:[])]
+
+/** One small vector tile is repeated by the browser, independent of conversation length. */
+export const MessageWallpaper=memo(function MessageWallpaper({settings}:{settings?:Partial<MessageWallpaperSettings>}){
+ const {pattern,layout,density,opacity}={...DEFAULT_MESSAGE_WALLPAPER,...settings},id='wallpaper-'+useId().replace(/[^\w-]/g,'')
+ const motifs=pattern==='none'?null:WALLPAPER_MOTIFS[pattern],marks=pattern==='none'?[]:wallpaperMarks(pattern,layout),scale=100/density
+ return <div className="message-wallpaper" aria-hidden="true" data-wallpaper-pattern={pattern} data-wallpaper-layout={layout} data-wallpaper-density={density} data-wallpaper-opacity={opacity}>
+  <div className="message-wallpaper-mesh"/>
+  {motifs&&opacity>0&&<svg className="message-wallpaper-pattern" width="100%" height="100%" focusable="false" style={{opacity:opacity/100}}><defs>
+   {motifs.map(([name,d],index)=><path key={name} id={id+'-motif-'+index} d={d}/>)}
+   <pattern id={id} width={WALLPAPER_TILE_SIZE} height={WALLPAPER_TILE_SIZE} patternUnits="userSpaceOnUse" patternTransform={'scale('+scale+')'}>
+    <g fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+     {marks.flatMap((mark,index)=>{
+      const copies=(value:number)=>wrappedOffsets(value,mark.size*.72)
+      return copies(mark.x).flatMap(dx=>copies(mark.y).map(dy=><use key={index+':'+dx+':'+dy} href={'#'+id+'-motif-'+mark.motif} transform={`translate(${mark.x+dx} ${mark.y+dy}) rotate(${mark.angle}) scale(${mark.size/24}) translate(-12 -12)`}/>))
+     })}
+     {pattern!=='none'&&wallpaperSpeckles(pattern,layout).flatMap((point,index)=>wrappedOffsets(point.x,3).flatMap(dx=>wrappedOffsets(point.y,3).map(dy=><path key={`f${index}:${dx}:${dy}`} d={WALLPAPER_FILLERS[layout==='ordered'?2:index%4]} opacity={layout==='ordered'?.52:.72} strokeWidth={index%4===2?1.8:1} transform={`translate(${point.x+dx} ${point.y+dy})`}/>)))}
+    </g>
+   </pattern>
+  </defs><rect width="100%" height="100%" fill={'url(#'+id+')'}/></svg>}
+ </div>
+})

@@ -1,4 +1,5 @@
 import {DOCUMENTATION_TOOL} from '../documentation-tool'
+import {API_TOOL} from '../api-tool'
 import {DISCUSSION_TOOL} from '../discussion-tool'
 import type {Options} from '@anthropic-ai/claude-agent-sdk'
 import type {EffortLevel,PermissionMode} from '../../shared/types'
@@ -13,7 +14,7 @@ import {spawnRemoteAgent} from '../remote-agent-process'
 import {spawnEmployeeProcess} from '../agent-process-isolation'
 import {deepSeekProvider,deepSeekModel,deepSeekEffort,deepSeekPicker} from '../claude-provider'
 import {engineExecutable} from './executable'
-import {engineEnvironment} from './configuration'
+import {engineProcessEnvironment} from './configuration'
 export function buildOptions(args: {
   employeeId?:string
   cwd: string
@@ -34,7 +35,7 @@ export function buildOptions(args: {
   fastMode?: boolean
   effort?: EffortLevel
 }): Options {
-  const env={...childEnv(args.cwd,args.workRoot),...engineEnvironment('claude'),...(args.employeeId?agentEnvironment(args.employeeId):{})}
+  const env={...engineProcessEnvironment('claude',childEnv(args.cwd,args.workRoot)),...(args.employeeId?agentEnvironment(args.employeeId):{})}
   const instructions=args.employeeId?employeeInstructions(readStore().sessions.find(card=>card.id===args.employeeId)!,readStore()):''
   const opts: Options = {
     cwd: args.cwd,
@@ -66,7 +67,7 @@ export function buildOptions(args: {
       disallowedTools:['Bash','PowerShell','Read','Write','Edit','Glob','Grep','NotebookEdit','Agent','Task','Skill','WebFetch','WebSearch','EnterWorktree','ExitWorktree'],
       systemPrompt:{type:'preset',preset:'claude_code',snapshot:false,append:[launch.instructions,args.employeeId?employeeInstructions(readStore().sessions.find(card=>card.id===args.employeeId)!,readStore()):''].filter(Boolean).join('\n\n')},allowDangerouslySkipPermissions:false,
       hooks:{PreToolUse:[{hooks:[async(input:any)=>{
-        if(args.isAcknowledging?.()||args.isInitializing?.()||[DISCUSSION_TOOL.name,DOCUMENTATION_TOOL.name].some(name=>input.tool_name==='mcp__agents_company__'+name))return {hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:input.tool_name==='mcp__agents_company__'+(args.isAcknowledging?.()?DISCUSSION_TOOL.name:DOCUMENTATION_TOOL.name)?'allow':'deny',permissionDecisionReason:args.isAcknowledging?.()?'Only the bound discussion tool is available during shared reading':args.isInitializing?.()?'Only the documentation tool is available during initialization':'Documentation discovery is read-only; the discussion tool requires an active reading stage'}}
+        if(args.isAcknowledging?.()||args.isInitializing?.()||[DISCUSSION_TOOL.name,DOCUMENTATION_TOOL.name,API_TOOL.name].some(name=>input.tool_name==='mcp__agents_company__'+name))return {hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:!args.isAcknowledging?.()&&(input.tool_name==='mcp__agents_company__'+DOCUMENTATION_TOOL.name||!args.isInitializing?.()&&[DISCUSSION_TOOL.name,API_TOOL.name].some(name=>input.tool_name==='mcp__agents_company__'+name))?'allow':'deny',permissionDecisionReason:args.isAcknowledging?.()?'No tools are available during private context reading':args.isInitializing?.()?'Only the documentation tool is available during initialization':'Documentation discovery is read-only; publication requires an active shared response stage'}}
         const planning=args.isPlanning?.()??args.planMode
         const allowed=cloudToolAllowed(input.tool_name,planning)
         return {hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:allowed?'allow':'deny',permissionDecisionReason:planning?'计划模式只允许读取文件；请切换到执行模式后修改。':'云主机模式仅允许 Tunnel 远端工具'}}
@@ -88,7 +89,7 @@ export function buildOptions(args: {
     opts.effort=(deepSeekEffort(args.effort)??'high') as Options['effort']
     opts.settings={...opts.settings,...deepSeekPicker,fastMode:false}
   }
-  if(args.employeeId){if(!args.nativeRemote)opts.spawnClaudeCodeProcess=options=>spawnEmployeeProcess(args.employeeId,options.command,options.args,{cwd:options.cwd,env:options.env,signal:options.signal});opts.disallowedTools=[...new Set([...(opts.disallowedTools??[]),'Agent','Task'])]}
+  if(args.employeeId){if(!args.nativeRemote)opts.spawnClaudeCodeProcess=options=>spawnEmployeeProcess(args.employeeId,options.command,options.args,{cwd:options.cwd,env:engineProcessEnvironment('claude',options.env),signal:options.signal});opts.disallowedTools=[...new Set([...(opts.disallowedTools??[]),'Agent','Task'])]}
   return opts
 }
 

@@ -4,12 +4,13 @@ import {api} from '../api'
 import {createRefreshQueue,retainEqual} from '../snapshot'
 import {useReadingPosition} from './useReadingPosition'
 
-export function useChannelDiscussion(id:string,container:RefObject<HTMLElement|null>){
+export function useChannelDiscussion(id:string,container:RefObject<HTMLElement|null>,enabled=true){
  const [messages,setMessages]=useState<ChannelMessage[]>([]),[before,setBefore]=useState<number|null>(null),[loading,setLoading]=useState(true),[more,setMore]=useState(false),[error,setError]=useState('')
  const alive=useRef(true),loaded=useRef(messages),initial=useRef(false),pending=useRef(new Set<string>()),keepPosition=useReadingPosition(container,messages)
  loaded.current=messages
  const merge=(items:ChannelMessage[])=>{keepPosition();setMessages(previous=>{const next=new Map(previous.map(message=>[message.id,message]));for(const item of items)next.set(item.id,item);return retainEqual(previous,[...next.values()].sort((a,b)=>a.sequence-b.sequence))})}
  const refresh=useMemo(()=>createRefreshQueue(async()=>{
+  if(!enabled){setLoading(false);return}
   const ids=[...pending.current];pending.current.clear()
   try{
    const page=await api.call<ChannelHistory>('channel.history',{id,limit:100})
@@ -20,10 +21,10 @@ export function useChannelDiscussion(id:string,container:RefObject<HTMLElement|n
    if(!initial.current){initial.current=true;setBefore(page.nextBefore)}
    setError('')
   }catch(cause){if(alive.current)setError((cause as Error).message)}finally{if(alive.current)setLoading(false)}
- }),[id,keepPosition])
+ }),[id,enabled,keepPosition])
  useEffect(()=>{
   alive.current=true;void refresh();let timer:ReturnType<typeof setTimeout>|undefined
-  const off=api.onEvent(event=>{if(event.channel!=='channel:changed'||event.payload.kind!=='messages'||event.payload.channelIds&&!event.payload.channelIds.includes(id))return;for(const key of event.payload.messageIds??[])pending.current.add(key);if(!timer)timer=setTimeout(()=>{timer=undefined;void refresh()},40)})
+  const off=api.onEvent(event=>{if(!enabled||event.channel!=='channel:changed'||event.payload.kind!=='messages'||event.payload.channelIds&&!event.payload.channelIds.includes(id))return;for(const key of event.payload.messageIds??[])pending.current.add(key);if(!timer)timer=setTimeout(()=>{timer=undefined;void refresh()},40)})
   return()=>{alive.current=false;clearTimeout(timer);off()}
  },[id,refresh])
  const loadMore=async()=>{if(before===null||more)return;setMore(true);try{const page=await api.call<ChannelHistory>('channel.history',{id,before,limit:100});if(alive.current){merge(page.messages);setBefore(page.nextBefore);setError('')}}catch(cause){if(alive.current)setError((cause as Error).message)}finally{if(alive.current)setMore(false)}}

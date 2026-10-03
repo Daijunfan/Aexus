@@ -9,7 +9,7 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin({exclude:['unified','remark-parse','remark-gfm','remark-rehype']})],
     build: {
       rollupOptions: {
-        input: { index: resolve(__dirname, 'src/main/index.ts'), daemon: resolve(__dirname, 'src/main/daemon.ts') }
+        input: { index: resolve(__dirname, 'src/main/index.ts'), daemon: resolve(__dirname, 'src/main/daemon.ts'), 'asset-index-worker':resolve(__dirname,'src/main/asset-index-worker.ts'), 'message-index-worker':resolve(__dirname,'src/main/message-index-worker.ts') }
       }
     }
   },

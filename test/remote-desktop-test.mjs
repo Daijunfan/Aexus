@@ -13,7 +13,7 @@ try{
   const env={...process.env,AGENTS_COMPANY_HOME:desktopHome,AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WEB_URL:'http://127.0.0.1:'+port};delete env.ELECTRON_RUN_AS_NODE
   app=await electron.launch({args:[path.join(f.root,'out/main/index.js')],env})
   const page=await app.firstWindow(),errors=[];page.on('pageerror',error=>errors.push(error.message))
-  await page.locator('.web-login input').fill(token);await page.getByRole('button',{name:'进入工作空间'}).click()
+  await page.locator('.web-login input').fill(token);await page.getByRole('button',{name:'Enter workspace'}).click()
   await expect(page.locator('.employee')).toHaveCount(1)
   assert.equal(await page.evaluate(()=>window.agents.mode),'web')
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences().sandbox),true)

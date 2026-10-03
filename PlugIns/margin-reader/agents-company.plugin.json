@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "margin-reader",
   "name": "Margin Reader",
-  "version": "0.7.0",
+  "version": "0.9.4",
   "description": "CLI-first 阅读与学习 · 学习集 · 摘录图片卡片 · 跨文档脑图",
   "runtime": "runtime.cjs",
   "renderer": "ui/index.html",

@@ -1,0 +1,43 @@
+/* Keep BlockNote's selection/focus behavior; turn its color samples into solid swatches. */
+.bn-color-picker-dropdown .bn-color-icon { font-size: 0 !important; width: 20px !important; height: 20px !important; }
+.bn-color-picker-dropdown [data-test^="text-color-"] .bn-color-icon { background: currentColor !important; }
+.bn-color-picker-dropdown [data-test="background-color-default"] .bn-color-icon { background: var(--bg); }
+.slash-category-menu { width: min(560px, calc(100vw - 24px)); border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); box-shadow: var(--shadow); overflow: hidden; }
+.bn-suggestion-menu.slash-category-menu { max-width: calc(100vw - 24px); max-height: inherit; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.slash-category-tabs, .slash-category-edit-tabs { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; padding: 8px; border-bottom: 1px solid var(--line); }
+.slash-category-tabs { flex-shrink: 0; }
+.slash-category-tabs > button[aria-label] { position: sticky; right: 0; background: var(--bg); margin-left: auto; }
+.slash-category-tabs > button, .slash-category-edit-tabs > button { flex: 0 0 auto; white-space: nowrap; padding: 6px 9px; border-radius: 6px; font-size: 12px; touch-action: none; }
+.slash-category-tabs > button[aria-selected="true"], .slash-category-edit-tabs > .active { background: var(--selected); color: var(--blue); }
+.slash-category-tabs > button[data-category] { cursor: grab; }
+.slash-category-tabs > button[data-category]:active { cursor: grabbing; }
+.slash-category-items { max-height: 290px; min-height: 0; overflow-y: auto; padding: 4px; }
+.slash-category-items > button { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border-radius: 6px; padding: 9px; }
+.slash-category-items > button[aria-selected="true"] { background: var(--hover); }
+.slash-item-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 28px; }
+.slash-category-items strong { display: block; font-size: 13px; font-weight: 500; }
+.slash-category-items small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.slash-category-editor label { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.slash-category-editor > label { margin-top: 14px; }
+.slash-category-editor p { font-size: 12px; color: var(--muted); }
+.slash-category-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 270px; overflow-y: auto; padding-block: 8px; }
+.slash-category-choices input { width: auto; }
+.selection-ai-chat { position: fixed; z-index: 300; width: min(380px, calc(100vw - 16px)); max-height: calc(100vh - 16px); display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); box-shadow: var(--shadow); overflow: hidden; font-size: 13px; }
+.selection-ai-chat header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.selection-ai-chat header span { flex: 1; min-width: 0; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; }
+.selection-ai-chat button { display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; padding: 4px; }
+.selection-ai-settings { padding: 10px 12px; border-bottom: 1px solid var(--line); overflow: auto; max-height: 230px; flex-shrink: 0; }
+.selection-ai-settings label { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 12px; }
+.selection-ai-settings select, .selection-ai-settings textarea { width: 100%; }
+.selection-ai-messages { min-height: 54px; max-height: 250px; overflow-y: auto; padding: 12px; overscroll-behavior: contain; }
+.selection-ai-user { padding: 8px 10px; border-radius: 8px; background: var(--hover); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 90px; overflow-y: auto; }
+.selection-ai-reply { line-height: 1.6; overflow-wrap: anywhere; }
+.selection-ai-reply pre { overflow-x: auto; padding: 8px; background: var(--hover); border-radius: 6px; }
+.selection-ai-reply table { border-collapse: collapse; font-size: 12px; }
+.selection-ai-reply :is(th, td) { border: 1px solid var(--line); padding: 4px; }
+.selection-ai-status { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.selection-ai-messages [role="alert"] { color: var(--content-red-text, #d44c47); }
+.selection-ai-chat form { display: flex; gap: 6px; align-items: flex-end; padding: 10px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.selection-ai-chat form textarea { flex: 1; min-width: 0; height: 66px; max-height: 150px; resize: vertical; font-size: 12px; }
+.selection-ai-chat form button { background: var(--blue); color: white; padding: 8px; flex: 0 0 33px; height: 33px; }
+.selection-ai-chat form button:disabled { opacity: .45; }

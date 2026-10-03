@@ -1,12 +1,16 @@
 'use strict';
 const assert=require('node:assert/strict');
 exports.exercise=async({api,deny})=>{
- const catalog=await api('study.mindmap.catalog');assert.equal(Object.keys(catalog.themes).length,12);assert.equal(Object.keys(catalog.structures).length,13);
+ const catalog=await api('study.mindmap.catalog');assert.equal(Object.keys(catalog.themes).length,13);assert.equal(Object.keys(catalog.structures).length,15);
  let set=await api('study.create',{title:'Employee mind-map studio'});const change=async(method,p={})=>set=await api(method,{setId:set.id,expectedRevision:set.revision,...p});
+ assert.equal(set.map.mindmap.enabled,true);await change('study.mindmap.configure',{patch:{theme:'petal',titleLines:2,showImages:false}});
  await change('study.mindmap.template.apply',{template:'brainstorm'});const root=set.cards[0].id,branches=set.cards.filter(c=>c.parentId===root).map(c=>c.id);
- await change('study.mindmap.configure',{patch:{enabled:true,structure:'mindmap',theme:'midnight',motion:true,numbering:'hierarchy'}});
+ await change('study.mindmap.configure',{patch:{enabled:true,skeleton:'classic',structure:'mindmap',theme:'midnight',motion:true,numbering:'hierarchy'}});
  await change('study.mindmap.topics.update',{cardIds:[branches[0]],patch:{shape:'hexagon',priority:2,progress:75,status:'doing',symbol:'idea',task:{due:'2026-11-01'},fill:'#E9DFFE',textColor:'#30284F'}});
+ await change('study.cards.move',{cardIds:[branches[0]],parentId:root,index:1,side:'left'});assert.equal(set.cards.find(c=>c.id===branches[0]).mindmap.side,'left');
  const found=await api('study.mindmap.query',{setId:set.id,filter:{priority:2,status:'doing'},limit:1});assert.equal(found.cards[0].id,branches[0]);
+ const tasks=await api('study.mindmap.tasks.plan',{setId:set.id});assert(tasks.tasks.some(t=>t.id===branches[0]));
+ for(const format of ['csv','ics'])assert((await api('study.mindmap.tasks.export',{setId:set.id,expectedRevision:set.revision,format,path:'Exports/employee-tasks.'+format})).tasks>0);
  await change('study.mindmap.decoration.set',{kind:'boundary',cardIds:branches,style:{title:'Grouped ideas',shape:'cloud'}});const boundary=set.lastMindmapDecoration;
  await change('study.mindmap.decoration.set',{kind:'summary',cardIds:branches.slice(0,2),style:{title:'Conclusions'}});assert(set.cards.some(c=>c.title==='Conclusions'));
  await change('study.mindmap.decoration.remove',{decorationId:boundary});assert(!set.map.mindmap.items.some(i=>i.id===boundary));await change('study.undo');assert(set.map.mindmap.items.some(i=>i.id===boundary));
@@ -21,5 +25,9 @@ exports.exercise=async({api,deny})=>{
  const archive=await api('study.mindmap.xmind.export',{setIds:[set.id],expectedRevisions:{[set.id]:set.revision},path:'Exports/employee-map.xmind'});assert.equal(archive.sheets,1);
  const inspection=await api('study.mindmap.xmind.inspect',{path:archive.path});assert.equal(inspection.sheets[0].topics,set.cards.length);
  const imported=await api('study.mindmap.xmind.import',{path:archive.path,expectedVersion:inspection.sourceVersion});const copy=await api('study.get',{setId:imported.setId});assert.equal(copy.cards.length,set.cards.length);assert.notEqual(copy.id,set.id);assert.equal(copy.map.mindmap.theme,'midnight');
+ let zoneSet=await api('study.create',{title:'Employee local zones'});const zoneChange=async(method,p={})=>zoneSet=await api(method,{setId:zoneSet.id,expectedRevision:zoneSet.revision,...p});
+ await zoneChange('study.note.create',{title:'Independent employee topic',x:100,y:120});const topic=zoneSet.cards[0].id;
+ await zoneChange('study.mindmap.decoration.set',{kind:'zone',cardIds:[topic],style:{title:'Employee zone'}});const zone=zoneSet.lastMindmapDecoration;
+ await zoneChange('study.mindmap.zone.move',{decorationId:zone,dx:30,dy:20});assert.deepEqual(zoneSet.cards[0].position,{x:130,y:140});
  console.log('PASS Employee mind-map layouts, themes, topic styles, summaries, relationships, search/replace, outline entry and SVG/PNG/PDF/JSON-XMind exchange share the authorized Core');
 };

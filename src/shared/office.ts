@@ -1,3 +1,4 @@
+import {directoryName} from './directory-names.ts'
 /** Stable skin IDs; anime and chibi variants stay adjacent in the flat picker. */
 export const FATE_CHARACTERS = [
   {id:'saber',name:'Saber',identity:'Saber · 阿尔托莉雅',color:'#315a9c'},
@@ -81,7 +82,7 @@ export const AVATAR_LABELS: Record<AvatarKind, string> = {
   cat: '小猫', fox: '狐狸', rabbit: '兔子', panda: '熊猫', penguin: '企鹅', robot: '机器人', cloud: '云朵终端', codex:'Codey',dewey:'Dewey',fireball:'Fireball',rocky:'Rocky',seedy:'Seedy',stacky:'Stacky',bsod:'BSOD','null-signal':'Null Signal'
 }
 export function employeeDirectoryName(title: string): string {
-  return title.trim().toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '') || 'employee'
+  return directoryName(title,'employee')
 }
 
 export const OFFICIAL_COLORS:Record<OfficialAvatar,string>={codex:'#638df1',dewey:'#29b6ea',fireball:'#f8a52b',rocky:'#b4a075',seedy:'#9ea652',stacky:'#796887',bsod:'#188ada','null-signal':'#bf382f',hoots:'#a27648'}

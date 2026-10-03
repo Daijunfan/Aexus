@@ -45,7 +45,7 @@ try{
   await Promise.all(pairs.map(([auth,,target])=>call(auth,'session','send','--employee',target.id,'--text','Held communication fixture')))
   for(const [,source,target] of pairs)await expect(line(source,target)).toHaveAttribute('data-active','true')
   await expect(line(governor,unbound)).toHaveAttribute('data-temporary','true')
-  await expect(line(manager,worker).locator('.management-line')).toHaveCSS('stroke','rgb(50, 188, 120)')
+  await expect(line(manager,worker).locator('.management-line')).toHaveCSS('stroke','rgb(20, 122, 78)')
   await expect(page.locator('.office-connections')).toHaveCSS('animation-name','management-flow')
   await expect(page.locator('.management-connection[data-active=true]')).toHaveCount(0,{timeout:2000})
   const elapsedMs=Math.round(performance.now()-start);assert.ok(elapsedMs<1500,'communication cue exceeded its bounded display window')

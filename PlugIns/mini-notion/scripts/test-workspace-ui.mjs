@@ -39,10 +39,12 @@ const cli = async (...args) => {
 const team = '文件夹验收团队';
 const api = (method, params = {}) => cli('plugin', 'call', 'mininotion', method, '--team', team, '--params', JSON.stringify(params));
 const employeeApi = (employee, method, params = {}) => cli('plugin', 'call', 'mininotion', method, '--employee', employee.id, '--params', JSON.stringify(params));
+const employeeTokens=new Map();
 const boundCli = async (employee, method, params = {}) => {
-  const binary = process.platform === 'win32' ? process.execPath : path.join(employee.cwd, '.agents-company/bin/mininotion');
-  const prefix = process.platform === 'win32' ? [path.join(root, 'build/plugins/mini-notion/backend/cli.cjs'), '--workspace', employee.cwd] : [];
-  return JSON.parse((await run(binary, [...prefix, 'api', method, '--data', JSON.stringify(params)], { cwd: employee.cwd, env, timeout: 30000, maxBuffer: 16e6 })).stdout);
+  await expect.poll(async()=>(await cli('session','status','--employee',employee.id))[0].initialization.status).toBe('ready');
+  if(!employeeTokens.has(employee.id))employeeTokens.set(employee.id,(await cli('auth','agent-token',employee.id)).token);
+  const value=JSON.parse((await run(process.execPath,[path.join(root,'bin/agents'),'plugin','call','mininotion',method,'--employee',employee.id,'--params',JSON.stringify(params),'--json'],{cwd:employee.cwd,env:{...env,AGENTS_COMPANY_TOKEN:employeeTokens.get(employee.id)},timeout:30000,maxBuffer:16e6})).stdout);
+  assert.ok(value.ok,value.error);return value.data;
 };
 const app = await electron.launch({ executablePath: require('electron'), args: [root], env });
 const company = await app.firstWindow();
@@ -105,7 +107,7 @@ try {
   assert.equal(employeeB.cwd, secondLocation.absoluteDirectory);
   for (const employee of [employeeA, employeeB]) {
     await cli('workspace', 'docs', '--employee', employee.id);
-    assert.match(fs.readFileSync(path.join(employee.cwd, '.agents-company/plugins/mininotion/API.md'), 'utf8'), /fs\.path/);
+    const guide=await cli('api','docs','plugin/mininotion/api');assert.match(guide.markdown,/fs\.path/);assert.equal(fs.existsSync(path.join(employee.cwd,'.agents-company/plugins/mininotion/API.md')),false);
     assert.equal((await boundCli(employee, 'fs.info')).root, employee.cwd);
   }
   ok('two real temporary employees bind different existing main-page folders and receive CLI manuals');

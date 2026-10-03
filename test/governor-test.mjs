@@ -15,7 +15,7 @@ try{
  const roles=await call(e,'management','roles');assert.deepEqual(roles.map(x=>x.value),['employee','manager','governor','secretary']);assert.equal(roles[2].userManaged,false);assert.equal(roles[3].userManaged,true)
  assert.equal((await call(g,'auth','whoami')).managementRole,'governor');assert.ok(governor.cwd.startsWith(folder))
  await call(g,'group','add','CreatedByGovernor');await call(g,'group','remove','CreatedByGovernor')
- const cloudDenied=await raw(null,'card','create','--title','CloudGovernor','--group','B','--kind','cloud-native-worker','--management-role','governor');assert.equal(cloudDenied.ok,false);assert.match(cloudDenied.error,/Mac|本地/)
+ const cloudDenied=await raw(null,'card','create','--title','CloudGovernor','--group','B','--kind','cloud-native-worker','--management-role','governor');assert.equal(cloudDenied.ok,false);assert.match(cloudDenied.error,/Cloud Team|云主机|cloud/),assert.ok(!fs.existsSync(path.join(f.env.AGENTS_COMPANY_PROJECTS,'B','CloudGovernor')))
  fs.writeFileSync(path.join(named.cwd,'.agents-company-manager'),'not an authorization')
  assert.equal((await call(await token(named.id),'auth','whoami')).globalManager,false,'folder and Team names confer no rights')
  await cli('group','rename','A','Renamed');assert.equal((await call(g,'auth','whoami')).globalManager,true)

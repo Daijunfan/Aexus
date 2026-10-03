@@ -25,7 +25,7 @@ try{
  await expect.poll(async()=>(await cli('session','status','--employee',card.id))[0].initialization.status).toBe('ready')
  await expect(page.locator(`[data-card-id="${card.id}"] .employee-management`)).toHaveText('Governor')
  await cli('view','open','employee','--employee',card.id);await expect(page.locator('.management-role-settings select')).toHaveValue('governor');await expect(page.locator('.global-manager')).toHaveCount(0)
- await expect(page.locator('.management-role-settings')).toContainText('跨 Team')
+ await expect(page.locator('.management-role-settings')).toContainText('across Teams')
  await page.locator('.management-role-settings select').selectOption('manager');await expect.poll(async()=>(await cli('session','list')).sessions.find(c=>c.id===card.id).managementRole).toBe('manager')
  await cli('view','close');await page.locator('.add-employee').click();await page.locator('select[name=kind]').selectOption('cloud-native-worker')
  await expect(page.locator('select[name=managementRole] option[value=governor]')).toHaveJSProperty('disabled',true)

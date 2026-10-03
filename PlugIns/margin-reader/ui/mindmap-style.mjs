@@ -1,3 +1,5 @@
+import {avoidTopics} from './mindmap-obstacles.mjs';
+import {roundedRoute} from './mindmap-routing.mjs';
 import {readableColor,contrast} from './color-contrast.mjs';
 import {CATALOG} from './mindmap-catalog.mjs';
 export {CATALOG};
@@ -5,32 +7,52 @@ export const escapeXml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&am
 const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 export function mix(a,b,f){const A=rgb(a),B=rgb(b);return '#'+A.map((v,i)=>Math.round(v*(1-f)+B[i]*f).toString(16).padStart(2,'0')).join('');}
 export function contrastInk(fill){const values=rgb(fill).map(v=>{const n=v/255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;});return values[0]*.2126+values[1]*.7152+values[2]*.0722>.36?'#243042':'#FFFFFF';}
-export function mapStyle(options={}){const t=CATALOG.themes[options.theme]||CATALOG.themes.radiance;return {...t,...options,paper:options.background||t.paper,ink:options.textColor||t.ink,line:options.line||t.line,spacing:options.spacing??26,branchSpacing:options.branchSpacing??66,fontSize:options.fontSize??16,fontFamily:options.fontFamily||'system-ui',numbering:options.numbering||'none',autoBalance:options.autoBalance!==false};}
+export function mapStyle(options={}){
+ options=Object.fromEntries(Object.entries(options||{}).filter(([,v])=>v!==undefined&&v!==null));
+ const theme=options.theme||'radiance',t=CATALOG.themes[theme]||CATALOG.themes.radiance;
+ const skeleton=options.skeleton||(theme==='petal'||theme==='pastel'?'rounded':theme==='business'?'logical':theme==='mono'?'minimal':'classic'),sk=CATALOG.skeletons[skeleton]||CATALOG.skeletons.classic;
+ return {...t,...options,skeleton,structure:options.structure||sk.structure,levels:options.levelStyles?.length?options.levelStyles.map((v,i)=>({...sk.levels[Math.min(i,sk.levels.length-1)],...v})):sk.levels,paper:options.background||t.paper,ink:options.textColor||t.ink,line:options.line||sk.line,spacing:options.spacing??sk.spacing,branchSpacing:options.branchSpacing??sk.branchSpacing,titleLines:options.titleLines??0,fontSize:options.fontSize??16,fontFamily:options.fontFamily||'system-ui',numbering:options.numbering||'none',autoBalance:options.autoBalance!==false};
+}
 export function topicStyle(card,config,depth=0,branch=0){
- const p=card.mindmap||{},theme=mapStyle(config),colors=theme.palette,index=theme.colorMode==='single'?0:theme.colorMode==='level'?depth:branch;
- const accent=p.branchColor||colors[((index%colors.length)+colors.length)%colors.length];
- const colored=depth===0||theme.fill==='solid'&&depth===1;
- const fill=p.fill||(colored?accent:theme.fill==='dark'?mix(theme.paper,accent,.16):theme.fill==='white'?theme.paper:mix('#FFFFFF',accent,depth===1?.16:.075));
- return {...p,depth,branch,accent,fill,textColor:p.textColor||readableColor(colored?contrastInk(fill):theme.ink,fill),borderColor:p.borderColor||(theme.fill==='dark'?mix(theme.paper,accent,.7):mix(fill,accent,.4)),borderWidth:p.borderWidth??(depth===0?0:1.2),borderDash:p.borderDash||'solid',fontSize:p.fontSize??theme.fontSize+(depth===0?6:depth===1?1:0),fontFamily:p.fontFamily||theme.fontFamily,bold:p.bold??depth<2,shape:p.shape||(depth===0?theme.rootShape:theme.topicShape||theme.shape),align:p.align||'center',shadow:p.shadow??theme.shadow,gradient:p.gradient??theme.gradient??depth===0,numbering:p.numbering||theme.numbering,line:p.branchLine||theme.line,lineWidth:p.branchWidth||theme.lineWidth||Math.max(1.3,3.2-depth*.45),showImage:(p.showImage??theme.showImages??true)&&Boolean(card.image),showTags:theme.showTags!==false};
+ const p=card.mindmap||{},theme=mapStyle(config),l=theme.levels[Math.min(depth,theme.levels.length-1)],colors=theme.palette,index=theme.colorMode==='single'?0:theme.colorMode==='level'?depth:branch;
+ const accent=p.branchColor||colors[((index%colors.length)+colors.length)%colors.length],dark=theme.fill==='dark';
+ const kind=l.fill,solid=kind==='solid',fill=p.fill||(solid?(depth===0?config?.centralColor||accent:accent):kind==='none'||kind==='white'?theme.paper:dark?mix(theme.paper,accent,.2):mix('#FFFFFF',accent,theme.fill==='pastel'?.68:.18));
+ const shape=p.shape||(depth===0?theme.rootShapeOverride:theme.topicShape)||l.shape;
+ return {...p,depth,branch,accent,fill,textColor:p.textColor||readableColor(solid?contrastInk(fill):theme.ink,fill),borderColor:p.borderColor||accent,borderWidth:p.borderWidth??l.borderWidth??(kind==='white'||shape==='underline'?1.15:0),borderDash:p.borderDash||l.borderDash||'solid',fontSize:p.fontSize??theme.fontSize+l.size,fontFamily:p.fontFamily||theme.fontFamily,bold:p.bold??l.bold,shape:depth===0?(p.shape||config?.rootShape||shape):shape,align:p.align||(depth===0||!['none','underline'].includes(shape)?'center':'left'),shadow:p.shadow??config?.shadow??false,gradient:p.gradient??config?.gradient??false,numbering:p.numbering||theme.numbering,line:p.branchLine||config?.line||l.line||theme.line,lineWidth:p.branchWidth||theme.lineWidth||Math.max(1.2,4.4-depth*1.25),lineColor:theme.fill==='pastel'?mix('#FFFFFF',accent,.48):accent,showImage:(p.showImage??theme.showImages??false)&&Boolean(card.image),showTags:theme.showTags===true,showSources:theme.showSources===true,paddingY:l.paddingY??(['none','underline'].includes(shape)?7:12),paddingX:l.paddingX??(['none','underline'].includes(shape)?9:18)};
 }
 export function labelWidth(text,fontSize){let n=0;for(const c of text){if(/[\u0300-\u036f\ufe00-\ufe0f\u200d]/u.test(c))continue;n+=/\s/.test(c)?.32:/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Extended_Pictographic}]/u.test(c)?1:/[MW@#%]/.test(c)?.85:/[ilI.,'!:;]/.test(c)?.28:.58;}return n*fontSize;}
-export function wrapLabel(text,width,size){const lines=[];let line='',at=0,start=0;for(const c of String(text)){if(c==='\n'||line&&labelWidth(line+c,size)>width){lines.push({text:line,start,end:at});line='';start=at+(c==='\n'?1:0);}if(c!=='\n')line+=c;at+=c.length;}lines.push({text:line,start,end:at});return lines;}
+export function wrapLabel(text,width,size){
+ const lines=[];let line='',at=0,start=0;
+ const emit=value=>{const shown=value.trimEnd();lines.push({text:shown,start,end:start+shown.length});};
+ for(const c of String(text)){
+  if(c==='\n'){emit(line);line='';start=++at;continue;}
+  if(line&&labelWidth(line+c,size)>width){const split=line.match(/^(.*\s)\S*$/u)?.[1].length||0;
+   if(split){emit(line.slice(0,split));line=line.slice(split);start+=split;}
+   else{emit(line);line='';start=at;}
+  }
+  line+=c;at+=c.length;
+ }
+ emit(line);return lines;
+}
 export function numberLabel(n,parents,mode){if(mode==='none')return '';if(mode==='hierarchy')return parents.join('.')+' ';if(mode==='alpha'){let v=n,s='';do{s=String.fromCharCode(65+(v-1)%26)+s;v=Math.floor((v-1)/26);}while(v>0);return s+'. ';}if(mode==='roman'){const values=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let v=n,out='';for(const [k,s] of values)while(v>=k){out+=s;v-=k;}return out+'. ';}return n+'. ';}
 export function topicBox(card,style,config,prefix=''){
  const insets={diamond:[.26,.26,.26],triangle:[.28,.43,.08],star:[.29,.28,.28],heart:[.22,.3,.28],pentagon:[.18,.2,.1],ellipse:[.16,.15,.15],'double-ellipse':[.17,.16,.16],circle:[.17,.17,.17],cloud:[.15,.18,.2],hexagon:[.12,.03,.03],octagon:[.08,.05,.05],callout:[.06,.03,.23],document:[.06,.03,.18],cylinder:[.06,.18,.13],shield:[.13,.03,.23]};
  const [side,top,bottom]=insets[style.shape]||[.03,0,0];
- const width=style.width||config.topicWidth||Math.min(360,Math.max(style.depth===0?190:120,(labelWidth(prefix+card.title,style.fontSize)+44)/(1-side*2)));
- const padX=Math.max(22,width*side),lines=wrapLabel(prefix+card.title,Math.max(30,width-padX*2),style.fontSize);
+ const width=style.width||config.topicWidth||Math.min(style.depth===0?320:260,Math.max(style.depth===0?180:style.shape==='none'||style.shape==='underline'?50:96,Math.max(labelWidth(prefix+card.title,style.fontSize)+style.paddingX*2,(card.mindmap?.equation?.width||0)*(card.mindmap?.equation?.scale||1)+style.paddingX*2)/(1-side*2)));
+ const padX=Math.max(style.paddingX??22,width*side),lines=wrapLabel(prefix+card.title,Math.max(30,width-padX*2),style.fontSize);
+ if(config.titleLines&&lines.length>config.titleLines){lines.length=config.titleLines;const last=lines.at(-1);while(last.text&&labelWidth(last.text+'…',style.fontSize)>width-padX*2){const chars=Array.from(last.text),removed=chars.pop();last.text=chars.join('');last.end-=removed.length;}last.ellipsis=true;}
  const markerCount=['priority','progress','status','symbol','flagColor'].filter(k=>style[k]!==undefined&&style[k]!==null&&(style[k]!==0||k==='progress')&&style[k]!=='none').length;
- const markers=markerCount?27:0,tags=style.showTags&&card.tags?.length?26:0,source=card.source||card.anchor||card.reference||style.task?.due?22:card.note?20:0;
+ const markers=markerCount?27:0,tags=style.showTags&&card.tags?.length?26:0,source=style.showSources&&(card.source||card.anchor||card.reference)||style.task?.due?22:0;
  const imageLeft=Math.max(12,padX-4),imageWidth=width-imageLeft*2;
  const imageHeight=style.showImage?Math.min(120,Math.max(58,imageWidth*card.image.height/card.image.width)):0;
  const titleHeight=lines.length*style.fontSize*1.45,extra=style.showNote&&card.note?Math.min(3,wrapLabel(card.note,width-28,12).length)*17+8:0;
- const body=titleHeight+24+markers+tags+source+(imageHeight?imageHeight+10:0)+extra;
+ const titleBottom=style.paddingY??12;
+ const equation=card.mindmap?.equation,mathScale=equation?Math.min(equation.scale||1,Math.max(20,width-padX*2)/equation.width,180/equation.height):0,mathWidth=equation?equation.width*mathScale:0,mathHeight=equation?equation.height*mathScale+12:0;
+ const body=titleHeight+titleBottom*2+markers+mathHeight+tags+source+(imageHeight?imageHeight+10:0)+extra;
  let height=body/(1-top-bottom),actualWidth=width;
  if(style.shape==='circle'){height=Math.max(width,height);actualWidth=height;}
- const padTop=12+height*top,padBottom=height*bottom;
- return {width:actualWidth,height,lines,markers,tags,source,imageHeight,imageLeft:imageLeft+(actualWidth-width)/2,imageWidth,titleHeight,padX,padTop,padBottom,prefix,extra};
+ const padTop=titleBottom+height*top,padBottom=height*bottom;
+ return {width:actualWidth,height,lines,markers,mathWidth,mathHeight,tags,source,imageHeight,imageLeft:imageLeft+(actualWidth-width)/2,imageWidth,titleHeight,titleBottom,padX,padTop,padBottom,prefix,extra};
 }
 export function shapePath(shape,w,h){
  const p=(coords)=>'M'+coords.map(([x,y])=>`${x*w},${y*h}`).join(' L')+' Z';
@@ -40,7 +62,7 @@ export function shapePath(shape,w,h){
  case'underline':return `M0,${h} H${w}`;
  case'bracket':return `M${w*.07},0 H0 V${h} H${w*.07} M${w*.93},0 H${w} V${h} H${w*.93}`;
  case'pill':return rect(Math.min(w,h)/2);
- case'rounded':return rect(Math.min(14,h/3));
+ case'rounded':return rect(Math.min(18,h/3));
  case'ellipse':case'circle':return `M0,${h/2} A${w/2},${h/2} 0 1 0 ${w},${h/2} A${w/2},${h/2} 0 1 0 0,${h/2} Z`;
  case'double-ellipse':return shapePath('ellipse',w,h)+` M5,${h/2} A${w/2-5},${h/2-5} 0 1 0 ${w-5},${h/2} A${w/2-5},${h/2-5} 0 1 0 5,${h/2} Z`;
  case'diamond':return p([[.5,0],[1,.5],[.5,1],[0,.5]]);
@@ -88,7 +110,14 @@ export function relationshipRoute(link,positions){
  const centerA=[a.x+a.width/2,a.y+a.height/2],centerB=[b.x+b.width/2,b.y+b.height/2];
  const port=(r,t,x,y)=>{if(x!==undefined&&y!==undefined)return[r.x+r.width*x,r.y+r.height*y];const dx=t[0]-(r.x+r.width/2),dy=t[1]-(r.y+r.height/2),k=1/Math.max(Math.abs(dx)/(r.width/2),Math.abs(dy)/(r.height/2),.0001);return[r.x+r.width/2+dx*k,r.y+r.height/2+dy*k];};
  const start=port(a,centerB,v.startX,v.startY),end=port(b,centerA,v.endX,v.endY),mid=[(start[0]+end[0])/2+(v.bendX??0),(start[1]+end[1])/2+(v.bendY??-54)];
- const d=v.line==='straight'?`M${start} L${end}`:v.line==='elbow'||v.line==='rounded'?`M${start} L${mid[0]},${start[1]} L${mid[0]},${end[1]} L${end}`:`M${start} Q${mid} ${end}`;
- const label=v.line==='straight'?[(start[0]+end[0])/2,(start[1]+end[1])/2]:[(start[0]+2*mid[0]+end[0])/4,(start[1]+2*mid[1]+end[1])/4];
+ let d=v.line==='straight'?`M${start} L${end}`:v.line==='elbow'||v.line==='rounded'?`M${start} L${mid[0]},${start[1]} L${mid[0]},${end[1]} L${end}`:`M${start} Q${mid} ${end}`;
+ let label=v.line==='straight'?[(start[0]+end[0])/2,(start[1]+end[1])/2]:[(start[0]+2*mid[0]+end[0])/4,(start[1]+2*mid[1]+end[1])/4];
+ let points;
+ if(v.avoidTopics!==false&&v.bendX===undefined&&v.bendY===undefined){const sample=Array.from({length:25},(_,i)=>{const t=i/24;if(v.line==='straight')return [start[0]+(end[0]-start[0])*t,start[1]+(end[1]-start[1])*t];return [(1-t)**2*start[0]+2*t*(1-t)*mid[0]+t*t*end[0],(1-t)**2*start[1]+2*t*(1-t)*mid[1]+t*t*end[1]];});
+  points=avoidTopics(positions,[link.from,link.to],v.line==='elbow'||v.line==='rounded'?[start,[mid[0],start[1]],[mid[0],end[1]],end]:sample);
+  if(points){d=roundedRoute(points,10);const lengths=points.slice(1).map((p,i)=>Math.hypot(p[0]-points[i][0],p[1]-points[i][1])),half=lengths.reduce((n,v)=>n+v,0)/2;let at=0;for(let i=0;i<lengths.length;i++){if(at+lengths[i]>=half){const t=(half-at)/lengths[i];label=[points[i][0]+(points[i+1][0]-points[i][0])*t,points[i][1]+(points[i+1][1]-points[i][1])*t];break;}at+=lengths[i];}
+   return {d,start,end,mid,label,points,autoRouted:true,box:{x:Math.min(...points.map(p=>p[0]))-100,y:Math.min(...points.map(p=>p[1]))-35,width:Math.max(...points.map(p=>p[0]))-Math.min(...points.map(p=>p[0]))+200,height:Math.max(...points.map(p=>p[1]))-Math.min(...points.map(p=>p[1]))+70}};
+  }
+ }
  return {d,start,end,mid,label,box:{x:Math.min(...[start,end,mid].map(p=>p[0]))-100,y:Math.min(...[start,end,mid].map(p=>p[1]))-35,width:Math.max(...[start,end,mid].map(p=>p[0]))-Math.min(...[start,end,mid].map(p=>p[0]))+200,height:Math.max(...[start,end,mid].map(p=>p[1]))-Math.min(...[start,end,mid].map(p=>p[1]))+70}};
 }

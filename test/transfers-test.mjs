@@ -9,7 +9,7 @@ const run=promisify(execFile),root=path.resolve(import.meta.dirname,'..'),temp=f
 const dirs=Object.fromEntries(['home','shared','local','cloud','outside','bin'].map(n=>[n,path.join(temp,n)]));for(const d of Object.values(dirs))fs.mkdirSync(d)
 fs.writeFileSync(path.join(dirs.bin,'ssh'),`#!/usr/bin/env python3\nimport os,sys\nif 'offline' in sys.argv:sys.stderr.write('fixture disconnected');sys.exit(255)\nos.execv('/bin/sh',['sh','-c',sys.argv[-1]])\n`,{mode:0o755})
 const env={...process.env,AGENTS_COMPANY_HOME:dirs.home,AGENTS_COMPANY_SHARED_DIR:dirs.shared,AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_BUILTIN_PLUGINS:path.join(root,'build/plugins'),AGENTS_COMPANY_TUNNEL_DIR:path.join(root,'Modules/Tunnel'),PATH:dirs.bin+':'+process.env.PATH}
-const proc=spawn(process.execPath,[path.join(root,'bin/agents'),'serve'],{env,stdio:['ignore','ignore','pipe']});let stderr='';proc.stderr.on('data',x=>stderr+=x)
+const proc=spawn(process.execPath,process.env.AGENTS_COMPANY_TEST_CORE_ENTRY?[process.env.AGENTS_COMPANY_TEST_CORE_ENTRY]:[path.join(root,'bin/agents'),'serve'],{env,stdio:['ignore','ignore','pipe']});let stderr='';proc.stderr.on('data',x=>stderr+=x)
 const done=new Promise(r=>proc.once('exit',r))
 const cli=async(...args)=>{const r=JSON.parse((await run(process.execPath,[path.join(root,'bin/agents'),...args,'--json'],{env,timeout:60000})).stdout);assert.ok(r.ok,r.error);return r.data}
 const until=async f=>{for(let i=0;i<300;i++){const v=await f();if(v)return v;await new Promise(r=>setTimeout(r,30))}throw Error('Timed out: '+stderr)}

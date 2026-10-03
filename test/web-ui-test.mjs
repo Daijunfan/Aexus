@@ -70,6 +70,7 @@ try{
     await win.locator('header button').last().click();await expect(win).toHaveCount(0,{timeout:20000});pass(id+' loads in an isolated iframe and acknowledges save before close')
   }
   await rpc('view.open',{kind:'settings'});await expect(page.getByRole('dialog',{name:'Application settings'})).toBeVisible()
+  const engines=page.locator('.settings-engines');if(!await engines.evaluate(el=>el.open))await engines.locator(':scope > summary').click();
   for(const id of ['codex','claude','cline','pi'])await expect(page.locator(`[data-engine-health="${id}"]`)).toBeVisible()
   await page.screenshot({path:path.join(out,'web-engine-settings.png')});pass('engine detection/configuration/install UI is available in the same settings page')
   await page.getByRole('button',{name:'Close settings',exact:true}).click()

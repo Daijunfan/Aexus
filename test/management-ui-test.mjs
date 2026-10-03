@@ -43,7 +43,7 @@ try{
  const childStream=await follow(child.id),userStream=await follow(user.id)
  await expect(createdLine).toHaveAttribute('data-active','true');await expect(createdLine).toHaveAttribute('data-temporary','false')
  await expect(temporaryLine).toHaveAttribute('data-temporary','true');await expect(temporaryLine).toHaveAttribute('data-active','true')
- await expect(createdLine.locator('.management-line')).toHaveCSS('stroke','rgb(50, 188, 120)')
+ await expect(createdLine.locator('.management-line')).toHaveCSS('stroke','rgb(20, 122, 78)')
  await expect(page.locator('.office-connections')).toHaveCSS('animation-name','management-flow')
  assert.notEqual(await temporaryLine.locator('.management-line').evaluate(el=>getComputedStyle(el).strokeDasharray),'none')
  await expect(page.locator(`[data-card-id="${manager.id}"]`)).toHaveAttribute('data-state','communicating')

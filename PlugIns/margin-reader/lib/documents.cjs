@@ -118,7 +118,7 @@ async function documentCommand(store, method, p) {
       } else fail('METHOD_NOT_FOUND', 'Unknown bookmark method.');
       doc.revision++; doc.updatedAt = new Date().toISOString(); return bookmarks();
     }
-    if (method === 'reader.position.set') { doc.position = validateLocator(p.locator, parsed); state.settings.lastDocument = doc.id; return { id: doc.id, locator: doc.position }; }
+    if (method === 'reader.position.set') { doc.position = validateLocator(p.locator, parsed); if(p.activate!==false)state.settings.lastDocument = doc.id; return { id: doc.id, locator: doc.position }; }
     if (method === 'document.export') {
       const rel = relative(p.path); const target = await safePath(store.workspace, rel); await parentExists(store.workspace, rel); assert(!(await exists(target)), 'ALREADY_EXISTS', 'Export destination exists.');
       let content;

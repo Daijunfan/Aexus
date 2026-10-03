@@ -131,7 +131,7 @@ export type StoredSession = {
   model?: string
   planMode?: boolean
   usage?: Record<string,unknown>
-  pendingMessages?: {id:string;text:string;images?:string[];files?:string[];delegation?:Delegation;viewId?:string}[]
+  pendingMessages?: {id:string;text:string;images?:string[];files?:string[];delegation?:Delegation;viewId?:string;sourceView?:import('./message-source').MessageSourceView}[]
   remoteAdmin?: boolean
   fastMode?: boolean
   fastModeState?: string
@@ -207,7 +207,7 @@ export type MessageReply={id:string;role:'user'|'assistant';author?:PrincipalRef
 /** Outgoing evidence belongs to this task; incoming employee reply receipts are separate. */
 export type OutboundReceipt={taskId:string;deliveredAt?:number;readAt?:number}
 export type Item =
-  | { role: 'user'; id: string; createdAt?:number; author?:PrincipalRef; outbound?:OutboundReceipt; text: string; images?:string[];files?:MessageAttachment[];reply?:MessageReply }
+  | { role: 'user'; id: string; createdAt?:number; author?:PrincipalRef; sourceView?:import('./message-source').MessageSourceView; outbound?:OutboundReceipt; text: string; images?:string[];files?:MessageAttachment[];reply?:MessageReply }
   | { role: 'assistant'; id: string; createdAt?:number; blocks: Block[] }
   | { role: 'notice'; id: string; createdAt?:number; text: string; tone: 'info' | 'error' }
 

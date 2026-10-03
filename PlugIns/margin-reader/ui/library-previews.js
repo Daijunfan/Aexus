@@ -51,9 +51,10 @@ export class LibraryPreviews {
     const img = document.createElement('img'); img.className = 'document-thumbnail'; img.draggable = false;
     img.alt = `${result.title || card.dataset.path}${result.format === 'pdf' ? ' · PDF 封面' : ' · 内容缩略图'}`;
     img.decoding = 'async'; img.src = `data:image/png;base64,${result.contentBase64}`;
-    art.querySelector('.document-thumbnail')?.remove(); art.prepend(img); art.classList.add('has-thumbnail');
+    art.querySelector('.document-thumbnail')?.remove();
+    const sheet=art.querySelector('.document-cover-sheet')||art;sheet.style.setProperty('--cover-aspect',`${result.width} / ${result.height}`);sheet.prepend(img);art.classList.add('has-thumbnail');
     const details=card.querySelector('.study-document-preview-detail');
-    if(details)details.textContent=result.pageCount?`${result.pageCount} 页`:result.excerpt||'';
+    if(details)details.textContent=result.pageCount?`${result.pageCount} 页`:details.dataset.summary==='pages'?'':result.excerpt||'';
     if(result.excerpt)card.querySelector('.collection-document-excerpt')?.replaceChildren(document.createTextNode(result.excerpt));
     card.dataset.preview = 'ready';
   }

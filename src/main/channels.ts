@@ -1,4 +1,10 @@
+import {controlChanged} from './conversation-policy'
+import {channelDocuments,channelFileStatus,downloadChannelFile} from './channel-files'
+import {notifyChannelSchedule,reconcileSchedules} from './scheduler/service'
 import {validatedChannelImage,putSourceAvatar,sourceAvatar,readSourceAvatar} from './channel-avatars'
+import {channelEngine,validateChannelEngine,storeChannelEngine,syncEmployeeSources,createProcessSource,employeePublishingSource,sourceEmployee,collectorAllowsSource,authorizeSourcePublisher,assertExternalChannel,recordCollectorActivity,channelConnection,putChannelAvatar,customChannelAvatar,readChannelAvatar} from './channel-engines'
+import {readStore} from './store'
+import type {ChannelEngineInput} from '../shared/channels'
 import {updateChannelAdmins,channelAdminIds,freezeChannelNews,deliverChannelNews,channelHistory,channelContext,sendChannelMessage,postChannelMessage} from './channel-discussion'
 import {channelTimeline} from './channel-timeline'
 import fs from 'node:fs'
@@ -30,7 +36,7 @@ function settings(patch?:Record<string,unknown>){
 }
 function channelRow(id:unknown){const row=one('SELECT * FROM channels WHERE id=?',text(id,'channel ID'));if(!row)throw fail('Unknown news channel','CHANNEL_NOT_FOUND',404);return row}
 function sourceRow(id:unknown){const row=one('SELECT * FROM sources WHERE id=?',text(id,'source ID'));if(!row)throw fail('Unknown news source','SOURCE_NOT_FOUND',404);return row}
-const record=(row:Row):ChannelRecord=>({id:row.id,name:row.name,kind:row.kind,createdAt:row.created_at,updatedAt:row.updated_at,adminIds:channelAdminIds(row.id),revision:row.revision})
+const record=(row:Row):ChannelRecord=>({id:row.id,name:row.name,kind:row.kind,createdAt:row.created_at,updatedAt:row.updated_at,adminIds:channelAdminIds(row.id),revision:row.revision,engine:channelEngine(row.id)})
 const unreadEntries="SELECT p.id,'news' AS kind,p.published_at AS time FROM posts p JOIN sources s ON s.id=p.source_id LEFT JOIN channel_user_reads r ON r.entry_id=p.id WHERE s.channel_id=? AND p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) AND r.entry_id IS NULL UNION ALL SELECT m.id,'message' AS kind,m.created_at AS time FROM channel_messages m LEFT JOIN channel_user_reads r ON r.entry_id=m.id WHERE m.channel_id=? AND json_extract(m.author,'$.kind')='agent' AND r.entry_id IS NULL"
 function readSummary(id:string,now=Date.now()):ChannelReadSummary{const first=one('SELECT id,kind,COUNT(*) OVER() AS count FROM ('+unreadEntries+') ORDER BY time,id COLLATE BINARY LIMIT 1',id,now,id);return {unreadCount:Number(first?.count??0),...(first?{firstUnread:{id:first.id,kind:first.kind}}:{})}}
 function readEntryIds(input:unknown){if(!Array.isArray(input)||input.length>200||input.some(id=>typeof id!=='string'||!id||id!==id.trim()))throw fail('Choose up to 200 channel entry IDs');return [...new Set(input)] as string[]}
@@ -48,9 +54,11 @@ function channelReadState(args:Record<string,any>):ChannelReadState{
 }
 function acknowledgeChannel(args:Record<string,any>):ChannelAcknowledgment{
  if(requestContext().principal.kind!=='operator')throw fail('Only the user may mark channel entries read','FORBIDDEN',403)
- fields(args,['id','entryIds','all']);if(args.all!==undefined&&args.all!==true||args.all===true&&args.entryIds!==undefined||args.all===undefined&&args.entryIds===undefined)throw fail('Choose entryIds or all:true')
+ fields(args,['id','entryIds','all','sourceId']);if(args.sourceId!==undefined&&args.all!==true)throw fail('Source reading requires explicit all:true');if(args.all!==undefined&&args.all!==true||args.all===true&&args.entryIds!==undefined||args.all===undefined&&args.entryIds===undefined)throw fail('Choose entryIds or all:true')
  const channel=channelRow(args.id),ids=args.all?[]:readEntryIds(args.entryIds),now=Date.now(),changedIds:string[]=[]
+ if(args.sourceId!==undefined&&sourceRow(args.sourceId).channel_id!==channel.id)throw fail('Source belongs to another channel')
  const result=transaction(()=>{
+  if(args.sourceId!==undefined){const count=Number(run("INSERT INTO channel_user_reads(entry_id,read_at) SELECT p.id,? FROM posts p LEFT JOIN channel_user_reads r ON r.entry_id=p.id WHERE p.source_id=? AND p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) AND r.entry_id IS NULL",now,args.sourceId,now).changes);return {acknowledged:true as const,id:channel.id,all:true as const,acknowledgedCount:count,...readSummary(channel.id,now)}}
   if(args.all){const count=Number(run('INSERT INTO channel_user_reads(entry_id,read_at) SELECT id,? FROM ('+unreadEntries+')',now,channel.id,now,channel.id).changes);return {acknowledged:true as const,id:channel.id,all:true as const,acknowledgedCount:count,...readSummary(channel.id,now)}}
   const entries=ids.map(id=>userReadEntry(channel.id,id,now)).filter((row):row is Row=>!!row)
   for(const row of entries)if(row.incoming&&Number(run('INSERT INTO channel_user_reads(entry_id,read_at) VALUES(?,?) ON CONFLICT(entry_id) DO UPDATE SET read_at=excluded.read_at WHERE channel_user_reads.read_at IS NULL',row.id,now).changes))changedIds.push(row.id)
@@ -65,16 +73,56 @@ function source(row:Row):ChannelSource{
 }
 function channelView(row:Row):ChannelView{
  const counts=one("SELECT COUNT(*) AS count,SUM(p.saved_at IS NOT NULL) AS saved FROM posts p JOIN sources s ON s.id=p.source_id WHERE s.channel_id=? AND p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?)",row.id,Date.now())!
- const last=one("SELECT p.id,p.title,p.published_at,s.name FROM posts p JOIN sources s ON s.id=p.source_id WHERE s.channel_id=? AND p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) ORDER BY p.published_at DESC,p.id DESC LIMIT 1",row.id,Date.now())
+ const last=one("SELECT p.id,p.title,p.published_at,p.telegram,s.name FROM posts p JOIN sources s ON s.id=p.source_id WHERE s.channel_id=? AND p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) ORDER BY p.published_at DESC,p.id DESC LIMIT 1",row.id,Date.now())
+ const customAvatar=customChannelAvatar(row.id)
  const avatar=row.kind==='telegram'?one("SELECT s.id,a.sha256 FROM sources s JOIN source_avatars a ON a.source_id=s.id WHERE s.channel_id=? AND s.plugin='telegram' ORDER BY s.created_at LIMIT 1",row.id):undefined
  const lastMessage=one('SELECT id,text,created_at,author_name,author FROM channel_messages WHERE channel_id=? ORDER BY sequence DESC LIMIT 1',row.id)
- return {...record(row),...readSummary(row.id),...(lastMessage?{lastMessage:{id:lastMessage.id,text:lastMessage.text,createdAt:lastMessage.created_at,authorName:lastMessage.author_name,author:JSON.parse(lastMessage.author)}}:{}),...(avatar?{avatar:{sourceId:avatar.id,sha256:avatar.sha256}}:{}),sourceCount:Number(one('SELECT COUNT(*) AS count FROM sources WHERE channel_id=? AND enabled=1',row.id)!.count),postCount:Number(counts.count),savedCount:Number(counts.saved??0),...(last?{lastPost:{id:last.id,title:last.title,publishedAt:last.published_at,sourceName:last.name}}:{})}
+ const subscriberCount=last?.telegram?JSON.parse(last.telegram).subscriberCount:undefined
+ return {...(subscriberCount!==undefined?{subscriberCount}:{}),...record(row),...readSummary(row.id),...(lastMessage?{lastMessage:{id:lastMessage.id,text:lastMessage.text,createdAt:lastMessage.created_at,authorName:lastMessage.author_name,author:JSON.parse(lastMessage.author)}}:{}),...(customAvatar?{avatar:customAvatar}:avatar?{avatar:{sourceId:avatar.id,sha256:avatar.sha256}}:{}),sourceCount:Number(one('SELECT COUNT(*) AS count FROM sources WHERE channel_id=? AND enabled=1',row.id)!.count),postCount:Number(counts.count),savedCount:Number(counts.saved??0),...(last?{lastPost:{id:last.id,title:last.title,publishedAt:last.published_at,sourceName:last.name}}:{})}
 }
 function createChannel(name:string,kind:ChannelRecord['kind']='custom'){
  const now=Date.now(),id='nc_'+randomUUID();run('INSERT INTO channels(id,name,kind,created_at,updated_at) VALUES(?,?,?,?,?)',id,name,kind,now,now);return channelRow(id)
 }
-function defaultChannel(plugin:ChannelSource['plugin'],name:string){return plugin==='telegram'?createChannel(name,plugin):one('SELECT * FROM channels WHERE kind=? ORDER BY created_at LIMIT 1',plugin)??createChannel(plugin==='x'?'X':'YouTube',plugin)}
-function sourceIdentity(plugin:ChannelSource['plugin'],locator:string){
+function configurePublishingEngine(id:string,input:ChannelEngineInput){
+ const previous=channelEngine(id)
+ storeChannelEngine(id,input)
+ if(input.kind==='employees')return undefined
+ const sources=all('SELECT id FROM sources WHERE channel_id=?',id).map(row=>String(row.id))
+ if(!sources.length)sources.push(createProcessSource(id,input.name))
+ const collectorId=input.collectorId??(previous.kind==='external'?previous.collectorId:undefined)
+ const issued=collectorId?undefined:addCollector({name:input.name,sourceIds:sources})
+ storeChannelEngine(id,{...input,collectorId:collectorId??issued!.collector.id})
+ return issued?{collectorId:issued.collector.id,token:issued.token}:undefined
+}
+function createConfiguredChannel(args:Record<string,any>){
+ fields(args,['name','engine','avatar']);const name=text(args.name,'channel name'),engine=validateChannelEngine(args.engine)
+ const result=transaction(()=>{
+  const row=createChannel(name),setup=configurePublishingEngine(row.id,engine)
+  if(engine.kind==='employees'){run('UPDATE channels SET admin_ids=? WHERE id=?',JSON.stringify(engine.employeeIds),row.id);syncEmployeeSources(row.id)}
+  if(args.avatar!==undefined)putChannelAvatar(row.id,args.avatar)
+  return {...channelView(channelRow(row.id)),...(setup?{setup}:{})}
+ })
+ changed('channels',{channelIds:[result.id]});return result
+}
+function updateConfiguredChannel(args:Record<string,any>){
+ fields(args,['id','name','adminIds','engine','avatar','expectedRevision']);const row=channelRow(args.id)
+ if(args.expectedRevision!==undefined&&args.expectedRevision!==row.revision)throw Error('Channel changed; reload before saving')
+ if(['name','adminIds','engine','avatar'].every(key=>args[key]===undefined))throw fail('Provide a channel name, avatar, engine or administrators')
+ const name=args.name===undefined?row.name:text(args.name,'channel name'),engine=args.engine===undefined?undefined:validateChannelEngine(args.engine)
+ if(engine?.kind==='employees'&&args.adminIds!==undefined)throw fail('Choose engine employeeIds or adminIds, not both')
+ const adminIds=engine?.kind==='employees'?engine.employeeIds:args.adminIds
+ const result=transaction(()=>{
+  const setup=engine?configurePublishingEngine(row.id,engine):undefined
+  if(adminIds!==undefined)updateChannelAdmins(row.id,adminIds,args.expectedRevision)
+  run('UPDATE channels SET name=?,updated_at=?,revision=revision+? WHERE id=?',name,Date.now(),adminIds===undefined?1:0,row.id)
+  syncEmployeeSources(row.id)
+  if(args.avatar!==undefined)putChannelAvatar(row.id,args.avatar)
+  return {...channelView(channelRow(row.id)),...(setup?{setup}:{})}
+ })
+ changed('channels',{channelIds:[row.id]});controlChanged('channel:'+row.id);reconcileSchedules();return result
+}
+function defaultChannel(plugin:ChannelSourceInput['plugin'],name:string){return plugin==='telegram'?createChannel(name,plugin):one('SELECT * FROM channels WHERE kind=? ORDER BY created_at LIMIT 1',plugin)??createChannel(plugin==='x'?'X':'YouTube',plugin)}
+function sourceIdentity(plugin:ChannelSourceInput['plugin'],locator:string){
  const value=locator.trim().replace(/\/+$/,'');if(plugin==='telegram')return value
  const url=value.match(/^https?:\/\/([^/?#]+)(\/[^?#]*)?(?:[?#].*)?$/i),hosts=plugin==='x'?['x.com','www.x.com','twitter.com','www.twitter.com','mobile.twitter.com']:['youtube.com','www.youtube.com','m.youtube.com']
  const invalid=()=>fail(plugin==='x'?'Use a valid X author handle or profile URL':'Use a YouTube author handle or channel homepage URL','INVALID_SOURCE_LOCATOR')
@@ -99,20 +147,24 @@ function addSource(args:ChannelSourceInput):ChannelSource{
  if(existing){if(sourceIdentity(args.plugin,existing.locator)!==identity)throw fail('An existing source cannot change authors; follow a new source instead','SOURCE_ID_CONFLICT',409);return updateSource(existing.id,{...(args.name!==undefined?{name}:{}),enabled:args.enabled??true,...(args.pollSeconds!==undefined?{pollSeconds:args.pollSeconds}:{}),...(args.channelId?{channelId:args.channelId}:{})})}
  if(one('SELECT id FROM sources WHERE target_id=?',targetId))throw fail('Target ID is already used by another source','SOURCE_ID_CONFLICT',409)
  if(args.plugin==='telegram'&&args.channelId)throw fail('A Telegram subscription creates its own channel')
+ if(args.channelId)assertExternalChannel(args.channelId)
  const row=transaction(()=>{const channel=args.channelId?channelRow(args.channelId):defaultChannel(args.plugin,name),now=Date.now(),id='ns_'+randomUUID();run('INSERT INTO sources VALUES(?,?,?,?,?,?,?,?,?,?)',id,args.plugin,targetId,locator,name,Number(args.enabled??true),args.pollSeconds===undefined?{telegram:300,x:3600,youtube:7200}[args.plugin]:positive(args.pollSeconds,'poll interval'),channel.id,now,now);return sourceRow(id)})
  changed('sources',{channelIds:[row.channel_id]});return source(row)
 }
 function updateSource(id:unknown,patch:ChannelSourcePatch):ChannelSource{
  if(!patch||typeof patch!=='object'||Array.isArray(patch))throw fail('Provide a source patch');fields(patch as any,['name','locator','enabled','pollSeconds','channelId']);const row=sourceRow(id)
+ if(row.plugin==='employee')throw fail('Manage publishing employees through channel membership, not source settings')
+ if(row.plugin==='process'&&(patch.locator!==undefined||patch.channelId!==undefined&&patch.channelId!==row.channel_id))throw fail('A process source keeps its configured identity and channel')
  if(patch.enabled!==undefined&&typeof patch.enabled!=='boolean')throw fail('enabled must be boolean')
  if(patch.locator!==undefined&&sourceIdentity(row.plugin,text(patch.locator,'source locator',4096))!==sourceIdentity(row.plugin,row.locator))throw fail('An existing source cannot change authors; follow a new source instead','SOURCE_ID_CONFLICT',409)
- if(patch.channelId!==undefined){channelRow(patch.channelId);if(row.plugin==='telegram'&&patch.channelId!==row.channel_id)throw fail('Telegram subscriptions keep their one-to-one channel')}
+ if(patch.channelId!==undefined){channelRow(patch.channelId);assertExternalChannel(patch.channelId);if(row.plugin==='telegram'&&patch.channelId!==row.channel_id)throw fail('Telegram subscriptions keep their one-to-one channel')}
  run('UPDATE sources SET name=?,enabled=?,poll_seconds=?,channel_id=?,updated_at=? WHERE id=?',patch.name===undefined?row.name:text(patch.name,'source name'),patch.enabled===undefined?row.enabled:Number(patch.enabled),patch.pollSeconds===undefined?row.poll_seconds:positive(patch.pollSeconds,'poll interval'),patch.channelId??row.channel_id,Date.now(),row.id)
  changed('sources',{channelIds:[...new Set([row.channel_id,patch.channelId??row.channel_id])]});return source(sourceRow(row.id))
 }
 export function getChannelPost(id:unknown):ChannelPost{requireAppAdministrator();return projected(livePost(id))}
-export function getChannel(id:unknown):ChannelRecord{const value=record(channelRow(id)),principal=requestContext().principal;if(principal.kind==='agent'&&!isAppAdministrator(principal)&&!value.adminIds.includes(principal.employeeId))throw fail('Not a channel administrator','FORBIDDEN',403);return value}
-export function listChannels():ChannelRecord[]{const rows=all('SELECT * FROM channels ORDER BY created_at,id'),principal=requestContext().principal;return isAppAdministrator(principal)?rows.map(channelView):rows.map(record).filter(value=>principal.kind==='agent'&&value.adminIds.includes(principal.employeeId))}
+function memberRecord(row:Row):ChannelRecord{const value=record(row);if(value.engine?.kind==='external')value.engine={kind:'external',location:value.engine.location};return value}
+export function getChannel(id:unknown):ChannelRecord{const row=channelRow(id),principal=requestContext().principal,value=isAppAdministrator(principal)?record(row):memberRecord(row);if(principal.kind==='agent'&&!isAppAdministrator(principal)&&!value.adminIds.includes(principal.employeeId))throw fail('Not a channel administrator','FORBIDDEN',403);return value}
+export function listChannels():ChannelRecord[]{const rows=all('SELECT * FROM channels ORDER BY created_at,id'),principal=requestContext().principal;return isAppAdministrator(principal)?rows.map(channelView):rows.map(memberRecord).filter(value=>principal.kind==='agent'&&value.adminIds.includes(principal.employeeId))}
 export function listChannelSources(args:{channelId?:string;plugin?:string;includeDisabled?:boolean}={}):ChannelSource[]{requireAppAdministrator();fields(args as any,['channelId','plugin','includeDisabled']);const where:string[]=[],values:SQLInputValue[]=[];if(args.channelId){where.push('channel_id=?');values.push(args.channelId)}if(args.plugin){where.push('plugin=?');values.push(args.plugin)}if(!args.includeDisabled)where.push('enabled=1');return all('SELECT * FROM sources'+(where.length?' WHERE '+where.join(' AND '):'')+' ORDER BY created_at,id',...values).map(source)}
 export function queryChannelPosts(args:Record<string,any>={}):ChannelPostPage{
  requireAppAdministrator();fields(args,['channelId','sourceId','saved','query','media','links','messageOrder','cursor','offset','limit']);const limit=args.limit??50,offset=args.offset??0;if(!Number.isSafeInteger(limit)||limit<1||!Number.isSafeInteger(offset)||offset<0)throw fail('Invalid news limit or offset')
@@ -141,29 +193,49 @@ function savePost(id:unknown,saved:unknown){
 }
 function deletePost(id:unknown){const row=one(postSelect+' WHERE p.id=?',text(id,'post ID'));if(row&&row.state==='active'){expire(row,'deleted');changed('posts',{channelIds:[row.channel_id],postIds:[row.id]})};return {id,deleted:true}}
 function activeSource(id:unknown,collector?:ChannelCollector){
- const sourceId=text(id,'source ID');if(collector&&collector.sourceIds!=='all'&&!collector.sourceIds.includes(sourceId))throw fail('Collector cannot publish this source','SOURCE_FORBIDDEN',403)
- const row=sourceRow(sourceId);if(!row.enabled)throw fail('Source is disabled; refresh collector configuration','SOURCE_DISABLED',409);return row
+ const sourceId=text(id,'source ID'),row=sourceRow(sourceId)
+ if(collector){if(!collectorAllowsSource(row,collector))throw fail('Collector cannot publish this source','SOURCE_FORBIDDEN',403)}else authorizeSourcePublisher(row)
+ if(!row.enabled)throw fail('Source is disabled; refresh collector configuration','SOURCE_DISABLED',409);return row
 }
-function itemState(sourceId:string,externalId:string,publishedAt:number){const id=postId(sourceId,externalId),row=one('SELECT * FROM posts WHERE id=?',id),now=Date.now(),expiresAt=row?.expires_at??Math.min(publishedAt+NEWS_RETENTION_MS,now+NEWS_RETENTION_MS);if(row&&row.published_at!==publishedAt)throw fail('An existing item cannot change its publishedAt','POST_ID_CONFLICT',409);return {id,row,now,expiresAt}}
+function publicationSource(args:{sourceId?:string;channelId?:string},collector?:ChannelCollector){
+ if((args.sourceId===undefined)===(args.channelId===undefined))throw fail('Choose sourceId or channelId, not both')
+ if(args.channelId!==undefined){if(collector)throw fail('Collector publication requires its sourceId','SOURCE_FORBIDDEN',403);return activeSource(employeePublishingSource(args.channelId).id)}
+ return activeSource(args.sourceId,collector)
+}
+function itemState(sourceId:string,externalId:string,publishedAt:number){const src=sourceRow(sourceId),engine=channelEngine(src.channel_id),retention=engine.kind==='external'&&engine.fileStorage?7*24*60*60*1000:NEWS_RETENTION_MS;const id=postId(sourceId,externalId),row=one('SELECT * FROM posts WHERE id=?',id),now=Date.now(),expiresAt=row?.expires_at??Math.min(publishedAt+retention,now+retention);if(row&&row.published_at!==publishedAt)throw fail('An existing item cannot change its publishedAt','POST_ID_CONFLICT',409);return {id,row,now,expiresAt}}
+function telegramInfo(value:unknown,plugin:string):import('../shared/channels').TelegramPostInfo|undefined{
+ if(value===undefined)return undefined
+ if(plugin!=='telegram'||!value||typeof value!=='object'||Array.isArray(value))throw fail('Telegram metadata requires a Telegram source')
+ const input=value as Record<string,any>;fields(input,['groupId','views','subscriberCount','reactions'])
+ if(input.groupId!==undefined&&(typeof input.groupId!=='string'||!/^\d{1,30}$/.test(input.groupId)))throw fail('Invalid Telegram album ID')
+ for(const field of ['views','subscriberCount'])if(input[field]!==undefined&&(!Number.isSafeInteger(input[field])||input[field]<0))throw fail('Invalid Telegram count')
+ if(input.reactions!==undefined&&(!Array.isArray(input.reactions)||input.reactions.length>32||input.reactions.some((reaction:any)=>!reaction||typeof reaction.emoji!=='string'||reaction.emoji.length>64||!Number.isSafeInteger(reaction.count)||reaction.count<0)))throw fail('Invalid Telegram reactions')
+ return input
+}
 function publish(args:ChannelPublishInput,collector?:ChannelCollector):ChannelPublishResult{
- fields(args as any,['sourceId','externalId','publishedAt','title','body','url','authorName','authorUrl','avatarMediaId','mediaIds','contentHash']);const src=activeSource(args.sourceId,collector),externalId=text(args.externalId,'external item ID',1024),publishedAt=timestamp(args.publishedAt),item=itemState(src.id,externalId,publishedAt)
+ fields(args as any,['sourceId','channelId','externalId','publishedAt','title','body','url','authorName','authorUrl','avatarMediaId','mediaIds','files','telegram','contentHash']);const src=publicationSource(args,collector),externalId=text(args.externalId,'external item ID',1024),publishedAt=timestamp(args.publishedAt),item=itemState(src.id,externalId,publishedAt)
  if(typeof args.title!=='string'||args.title.length>1000||typeof args.body!=='string'||Buffer.byteLength(args.body)>1024*1024)throw fail('News requires a title up to 1000 characters and a body up to 1 MiB')
+ const telegram=telegramInfo(args.telegram,src.plugin);
+ const files=channelDocuments(args.files),engine=channelEngine(src.channel_id);if(files.length&&(engine.kind!=='external'||!engine.fileStorage))throw fail('Configure cloud file storage before publishing document metadata');
  const ids=args.mediaIds??[];if(!Array.isArray(ids)||ids.length>16||ids.some(id=>typeof id!=='string')||new Set(ids).size!==ids.length)throw fail('Choose up to 16 unique uploaded images')
- const title=args.title.trim(),body=args.body,url=webUrl(args.url),authorName=optionalText(args.authorName,'author name'),authorUrl=webUrl(args.authorUrl),avatar=optionalText(args.avatarMediaId,'avatar media ID'),payloadHash=hash(JSON.stringify([title,body,url??null,authorName??null,authorUrl??null,avatar??null,ids])),contentHash=optionalText(args.contentHash,'content hash',128)??payloadHash
- if(!title&&!body.trim()&&!ids.some(id=>id!==avatar)&&!url)throw fail('News requires text, a body image or a source URL')
+ const employeeId=sourceEmployee(src.id),employeeName=employeeId?readStore().sessions.find(card=>card.id===employeeId)?.title:undefined
+ if(employeeId&&args.authorName!==undefined&&args.authorName!==employeeName)throw fail('Cannot publish as another author','CHANNEL_PUBLISH_FORBIDDEN',403)
+ const title=args.title.trim(),body=args.body,url=webUrl(args.url),authorName=employeeName??optionalText(args.authorName,'author name'),authorUrl=webUrl(args.authorUrl),avatar=optionalText(args.avatarMediaId,'avatar media ID'),payloadHash=hash(JSON.stringify([title,body,url??null,authorName??null,authorUrl??null,avatar??null,ids,...(files.length?[files]:[]),...(telegram?[telegram]:[])])),contentHash=optionalText(args.contentHash,'content hash',128)??payloadHash
+ if(!title&&!body.trim()&&!ids.some(id=>id!==avatar)&&!files.length&&!url)throw fail('News requires text, a body image or a source URL')
  const result=(status:ChannelPublishResult['status'],storedHash=contentHash):ChannelPublishResult=>({id:item.id,channelId:src.channel_id,status,contentHash:storedHash,expiresAt:item.expiresAt})
  if(item.row&&['deleted','expired'].includes(item.row.state))return result(item.row.state,item.row.content_hash)
  if(item.row?.state==='active'&&item.row.saved_at===null&&item.expiresAt<=item.now){expire(item.row,'expired');changed('posts',{channelIds:[src.channel_id],postIds:[item.id]});return result('expired',item.row.content_hash)}
  if(item.row?.state==='active'&&item.row.payload_hash===payloadHash&&item.row.content_hash===contentHash)return result('duplicate')
  if(item.expiresAt<=item.now)return result('expired',item.row?.content_hash??contentHash)
+ for(const file of files)if(file.thumbnailMediaId&&!ids.includes(file.thumbnailMediaId))throw fail('Document thumbnail must be an uploaded image in this item');
  for(const id of [...ids,...(avatar?[avatar]:[])])if(!one('SELECT id FROM media WHERE id=? AND post_id=? AND source_id=?',id,item.id,src.id))throw fail('Media is not an uploaded image for this source item','MEDIA_SCOPE_MISMATCH',403)
  if(item.row?.content_hash===contentHash&&item.row.payload_hash!==payloadHash)throw fail('Content hash was reused for a different payload','CONTENT_HASH_CONFLICT',409)
  transaction(()=>{run(`INSERT INTO posts(id,source_id,external_id,state,title,body,url,author_name,author_url,avatar_media_id,published_at,received_at,updated_at,expires_at,saved_at,content_hash,payload_hash,media_ids,forget_at) VALUES(?,?,?,'active',?,?,?,?,?,?,?,?,?,?,NULL,?,?,?,NULL)
- ON CONFLICT(id) DO UPDATE SET title=excluded.title,body=excluded.body,url=excluded.url,author_name=excluded.author_name,author_url=excluded.author_url,avatar_media_id=excluded.avatar_media_id,updated_at=excluded.updated_at,content_hash=excluded.content_hash,payload_hash=excluded.payload_hash,media_ids=excluded.media_ids`,item.id,src.id,externalId,title,body,url??null,authorName??null,authorUrl??null,avatar??null,publishedAt,item.now,item.now,item.expiresAt,contentHash,payloadHash,JSON.stringify(ids));if(!item.row)freezeChannelNews(src.channel_id,item.id)})
- changed('posts',{channelIds:[src.channel_id],postIds:[item.id]});if(!item.row)deliverChannelNews(src.channel_id,item.id);return result(item.row?'updated':'created')
+ ON CONFLICT(id) DO UPDATE SET title=excluded.title,body=excluded.body,url=excluded.url,author_name=excluded.author_name,author_url=excluded.author_url,avatar_media_id=excluded.avatar_media_id,updated_at=excluded.updated_at,content_hash=excluded.content_hash,payload_hash=excluded.payload_hash,media_ids=excluded.media_ids`,item.id,src.id,externalId,title,body,url??null,authorName??null,authorUrl??null,avatar??null,publishedAt,item.now,item.now,item.expiresAt,contentHash,payloadHash,JSON.stringify(ids));run('UPDATE posts SET remote_files=?,telegram=? WHERE id=?',JSON.stringify(files),telegram?JSON.stringify(telegram):null,item.id);if(!item.row)freezeChannelNews(src.channel_id,item.id,sourceEmployee(src.id))})
+ changed('posts',{channelIds:[src.channel_id],postIds:[item.id]});if(!item.row){notifyChannelSchedule(src.channel_id,item.id,sourceEmployee(src.id));deliverChannelNews(src.channel_id,item.id)}return result(item.row?'updated':'created')
 }
 function mediaPut(args:ChannelMediaInput,collector?:ChannelCollector){
- fields(args as any,['sourceId','externalId','publishedAt','mediaKey','name','mimeType','data']);const src=activeSource(args.sourceId,collector),externalId=text(args.externalId,'external item ID',1024),publishedAt=timestamp(args.publishedAt),item=itemState(src.id,externalId,publishedAt),key=text(args.mediaKey,'media key',1024),name=text(args.name,'image filename',255)
+ fields(args as any,['sourceId','channelId','externalId','publishedAt','mediaKey','name','mimeType','data']);const src=publicationSource(args,collector),externalId=text(args.externalId,'external item ID',1024),publishedAt=timestamp(args.publishedAt),item=itemState(src.id,externalId,publishedAt),key=text(args.mediaKey,'media key',1024),name=text(args.name,'image filename',255)
  if(item.row?.state==='deleted')throw fail('News was deleted; do not replay it','POST_DELETED',410)
  if(item.row?.state==='expired'||item.expiresAt<=item.now)throw fail('News is outside the 48-hour receive window','POST_EXPIRED',410)
  const {data,sha256,extension}=validatedChannelImage(args),id='nm_'+hash(JSON.stringify([item.id,key,sha256])),old=one('SELECT * FROM media WHERE id=?',id)
@@ -173,25 +245,35 @@ function mediaPut(args:ChannelMediaInput,collector?:ChannelCollector){
  return {media:media(one('SELECT * FROM media WHERE id=?',id)!),duplicate:false}
 }
 function collectorRecord(row:Row):ChannelCollector{return {id:row.id,name:row.name,sourceIds:JSON.parse(row.source_ids),createdAt:row.created_at,...(row.revoked_at!==null?{revokedAt:row.revoked_at}:{})}}
-function addCollector(args:Record<string,any>){
- fields(args,['name','sourceIds']);const name=text(args.name,'collector name'),sourceIds=args.sourceIds??'all';if(sourceIds!=='all'&&(!Array.isArray(sourceIds)||!sourceIds.length||sourceIds.some((id:unknown)=>typeof id!=='string')))throw fail('Choose all or explicit source IDs')
- if(sourceIds!=='all')for(const id of sourceIds)sourceRow(id)
+function addCollector(args:Record<string,any>):{collector:ChannelCollector;token:string}{
+ fields(args,['name','sourceIds','channelId']);const name=text(args.name,'collector name')
+ if(args.channelId!==undefined){
+  if(args.sourceIds!==undefined)throw fail('Choose channelId or sourceIds, not both')
+  const channel=channelRow(args.channelId);assertExternalChannel(channel.id)
+  const result=transaction(()=>{const sources=all('SELECT id FROM sources WHERE channel_id=?',channel.id).map(row=>String(row.id));if(!sources.length)sources.push(createProcessSource(channel.id,name));const issued=addCollector({name,sourceIds:sources}),engine=channelEngine(channel.id);if(engine.kind!=='external')throw fail('Choose an external channel');storeChannelEngine(channel.id,{...engine,collectorId:issued.collector.id});run('UPDATE channels SET revision=revision+1,updated_at=? WHERE id=?',Date.now(),channel.id);return issued})
+  changed('channels',{channelIds:[channel.id]});return result
+ }
+ const sourceIds=args.sourceIds??'all';if(sourceIds!=='all'&&(!Array.isArray(sourceIds)||!sourceIds.length||sourceIds.some((id:unknown)=>typeof id!=='string')))throw fail('Choose all or explicit source IDs')
+ if(sourceIds!=='all')for(const id of sourceIds)if(sourceRow(id).plugin==='employee')throw fail('Collector credentials cannot include employee publishing sources')
  const id='ncc_'+randomUUID(),token='news_'+randomBytes(32).toString('hex');run('INSERT INTO collectors VALUES(?,?,?,?,?,NULL)',id,name,hash(token),JSON.stringify(sourceIds==='all'?'all':[...new Set(sourceIds)]),Date.now());return {collector:collectorRecord(one('SELECT * FROM collectors WHERE id=?',id)!),token}
 }
 function authenticateCollector(token:unknown):ChannelCollector{if(typeof token!=='string'||token.length>512)throw fail('Invalid collector token','COLLECTOR_UNAUTHORIZED',401);const row=one('SELECT * FROM collectors WHERE token_hash=? AND revoked_at IS NULL',hash(token));if(!row)throw fail('Invalid or revoked collector token','COLLECTOR_UNAUTHORIZED',401);return collectorRecord(row)}
 function collectorConfig(args:Record<string,any>,collector?:ChannelCollector):CollectorConfig{
  fields(args,['sinceRevision']);const current=revision('config_revision');if(args.sinceRevision!==undefined&&!Number.isSafeInteger(args.sinceRevision))throw fail('Invalid configuration revision')
  if(args.sinceRevision===current)return {revision:current,changed:false}
- return {revision:current,changed:true,targets:all('SELECT * FROM sources ORDER BY created_at,id').filter(row=>!collector||collector.sourceIds==='all'||collector.sourceIds.includes(row.id)).map(row=>({sourceId:row.id,targetId:row.target_id,plugin:row.plugin,locator:row.locator,name:row.name,enabled:!!row.enabled,pollSeconds:row.poll_seconds}))}
+ return {revision:current,changed:true,targets:all('SELECT * FROM sources ORDER BY created_at,id').filter(row=>row.plugin!=='employee'&&(!collector||collectorAllowsSource(row,collector))).map(row=>({...(channelEngine(row.channel_id).kind==='external'&&(channelEngine(row.channel_id) as import('../shared/channels').ChannelEngineInput&{fileStorage?:unknown}).fileStorage?{collectFiles:true}:{}),sourceId:row.id,targetId:row.target_id,plugin:row.plugin,locator:row.locator,name:row.name,enabled:!!row.enabled,pollSeconds:row.poll_seconds}))}
 }
 /** This capability never becomes an operator/employee principal or enters the general dispatcher. */
 export function channelCollectorRequest(token:unknown,command:string,args:Record<string,any>={}){
  const collector=authenticateCollector(token)
+ const execute=()=>{
  if(command==='channel.collector-config')return collectorConfig(args,collector)
  if(command==='channel.media-put')return mediaPut(args as ChannelMediaInput,collector)
  if(command==='channel.publish')return publish(args as ChannelPublishInput,collector)
  if(command==='channel.source-avatar-put'){fields(args,['sourceId','name','mimeType','data']);const src=activeSource(args.sourceId,collector),before=sourceAvatar(src.id),result=putSourceAvatar(args as any);if(before?.sha256!==result.sha256)changed('sources',{channelIds:[src.channel_id]});return result}
  throw fail('Collector tokens only permit source configuration reads and news/image submission','COLLECTOR_FORBIDDEN',403)
+ }
+ const result=execute();recordCollectorActivity(collector.id);return result
 }
 export function channelFileEndpoint(ref:Partial<ChannelFileRef>):{root:string;path:string;name:string;mimeType:string;bytes:number}{
  requireAppAdministrator();const parts=ref.path?.split('/'),id=ref.postId??parts?.[0],mediaId=ref.mediaId??parts?.[1],post=livePost(id);channelRow(ref.channelId)
@@ -203,14 +285,20 @@ export function channelRequest(command:string,args:Record<string,any>={}){
  authorize(command,args)
  if(command==='channel.timeline')return channelTimeline(args)
  switch(command){case 'channel.list':fields(args,[]);return listChannels();case 'channel.get':fields(args,['id']);return getChannel(args.id);case 'channel.history':return channelHistory(args);case 'channel.context':return channelContext(args);case 'channel.message-send':return sendChannelMessage(args);case 'channel.message-post':return postChannelMessage(args)}
+ if(command==='channel.publish')return publish(args as ChannelPublishInput)
+ if(command==='channel.media-put')return mediaPut(args as ChannelMediaInput)
  requireAppAdministrator()
  switch(command){
+  case 'channel.file-download':fields(args,['postId','fileId']);return downloadChannelFile(text(args.postId,'post ID'),text(args.fileId,'file ID'))
+  case 'channel.file-status':fields(args,['postId','fileId']);return channelFileStatus(text(args.postId,'post ID'),text(args.fileId,'file ID'))
+  case 'channel.connection':fields(args,['id']);channelRow(args.id);return channelConnection(args.id,getChannelSettings())
+  case 'channel.avatar-image':fields(args,['id']);channelRow(args.id);return readChannelAvatar(args.id)
   case 'channel.read-state':return channelReadState(args)
   case 'channel.acknowledge':return acknowledgeChannel(args)
   case 'channel.settings':fields(args,['patch']);return settings(args.patch)
   case 'channel.sources':return listChannelSources(args)
-  case 'channel.create':fields(args,['name']);{const row=createChannel(text(args.name,'channel name'));changed('channels',{channelIds:[row.id]});return channelView(row)}
-  case 'channel.update':fields(args,['id','name','adminIds','expectedRevision']);{const row=channelRow(args.id);if(args.expectedRevision!==undefined&&args.expectedRevision!==row.revision)throw Error('Channel changed; reload before saving');if(args.name===undefined&&args.adminIds===undefined)throw Error('Provide a channel name or administrators');transaction(()=>{if(args.adminIds!==undefined)updateChannelAdmins(row.id,args.adminIds,args.expectedRevision);if(args.name!==undefined)run('UPDATE channels SET name=?,updated_at=?,revision=revision+? WHERE id=?',text(args.name,'channel name'),Date.now(),args.adminIds===undefined?1:0,row.id)});changed('channels',{channelIds:[row.id]});return channelView(channelRow(row.id))}
+  case 'channel.create':return createConfiguredChannel(args)
+  case 'channel.update':return updateConfiguredChannel(args)
   case 'channel.source-add':return addSource(args as ChannelSourceInput)
   case 'channel.source-update':fields(args,['id','patch']);return updateSource(args.id,args.patch)
   case 'channel.source-remove':fields(args,['id']);return updateSource(args.id,{enabled:false})

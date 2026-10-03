@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 exports.exercise=async({api,deny})=>{
- let set=await api('study.create',{title:'Employee map handwriting binding'});
+ let set=await api('study.create',{mapMode:'cards',title:'Employee map handwriting binding'});
  const change=async(method,params={})=>set=await api(method,{setId:set.id,expectedRevision:set.revision,...params});
  await change('study.note.create',{title:'Bound owner'});const owner=set.cards[0].id;
  await change('study.note.create',{title:'Independent card'});const other=set.cards[1].id;

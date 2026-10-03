@@ -70,7 +70,7 @@ exports.exercise = async function exercise(call) {
   const notebook = await api('pdf.compose', { path: 'Books/notebook.pdf', pages: [{ documentId: pdf.id, expectedSourceVersion: pdf.sourceVersion, page: 2, rotation: 90 }, { blank: true, paper: 'grid' }], activate: false });
   assert.equal(notebook.pageCount, 2);
 
-  let set = await api('study.create', { title: 'Employee learning' });
+  let set = await api('study.create', {mapMode:'cards', title: 'Employee learning' });
   const change = async (method, params = {}) => set = await api(method, { setId: set.id, expectedRevision: set.revision, ...params });
   await change('study.update', { description: 'Real scoped employee API acceptance' });
   assert((await api('study.list')).sets.some(item => item.id === set.id));
@@ -124,7 +124,7 @@ exports.exercise = async function exercise(call) {
   await change('study.undo'); assert.equal((await api('study.review.stats', { setId: set.id })).reviews, 0);
   await change('study.redo'); assert.equal((await api('study.review.stats', { setId: set.id })).reviews, 1);
   await deny('study.review.optimize', { setId: set.id, expectedRevision: set.revision }, 'INSUFFICIENT_HISTORY');
-  const other = await api('study.create', { title: 'Reference destination' });
+  const other = await api('study.create', {mapMode:'cards', title: 'Reference destination' });
   await api('study.card.reference', { setId: other.id, expectedRevision: other.revision, targetSetId: set.id, targetCardId: a });
   await change('study.cards.group', { cardIds: [a,b], title: 'Summary' });
   const summary = set.cards.find(card => card.title === 'Summary').id;
@@ -146,6 +146,7 @@ exports.exercise = async function exercise(call) {
   await require('./agent-binding-surface.cjs').exercise({api,deny});
   await require('./agent-study-library-surface.cjs').exercise({api,deny});
   await require('./agent-mindmap-surface.cjs').exercise({api,deny});
+  await require('./agent-mindmap-completion.cjs').exercise({api,deny});
   const expected = require('../schema.json').commands.map(command => command.method);
   const missing = expected.filter(method => !success.has(method) && !guarded.has(method));
   assert.deepEqual(missing, [], 'Every declared method must be exercised through the employee launcher');

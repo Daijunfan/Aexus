@@ -1,3 +1,5 @@
+import { EventIndicators } from '../components/EventSummary';
+import { eventSignals } from '../scheduling/presentation';
 import { ChevronRight, Plus, ArrowUpRight } from 'lucide-react';
 import { useWorkspace } from '../store';
 import { IconButton, PageIcon } from '../ui';
@@ -19,6 +21,7 @@ export function RecordTitle({
 }) {
   const { command, notify, workspace } = useWorkspace();
   const row = entry.page;
+  const signals = eventSignals(row, workspace!.pages);
   const nested = database.database?.subItems && subItemDisplay(view) === 'nested';
   const childCount = database.database?.subItems
     ? workspace!.pages.filter((page) => page.subItemOf === row.id && !page.trashedAt).length
@@ -44,7 +47,9 @@ export function RecordTitle({
         ))}
       <button className="database-row-title" onClick={() => onOpen(row.id)}>
         <PageIcon icon={row.icon} size={16} />
-        <strong>{row.title || '无标题'}</strong>
+        <span className="record-title-copy"><strong>{row.title || '无标题'}</strong>
+          {(signals.repeat || signals.reminders > 0) && <span className="record-event-flags"><EventIndicators {...signals} /></span>}
+        </span>
         <ArrowUpRight size={13} />
       </button>
       {!!childCount && <small className="subitem-count">{childCount}</small>}

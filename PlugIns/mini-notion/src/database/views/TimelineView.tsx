@@ -1,12 +1,13 @@
+import { EventSummary } from '../../components/EventSummary';
+import { eventDescription, eventPresenter } from '../../scheduling/presentation';
 import {AppSelect} from '../../components/AppSelect';
 import { AppearanceTheme, recordAppearanceStyle } from '../../appearance';
 import { isDateProperty } from '../propertySchema';
 import { useContext, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, CalendarRange, SlidersHorizontal } from 'lucide-react';
 import { useWorkspace } from '../../store';
-import { IconButton, PageIcon } from '../../ui';
+import { IconButton } from '../../ui';
 import { groupRows, type RowGroup } from '../model';
-import type { Page } from '../../types';
 import type { ViewProps } from './types';
 import {
   dateKey as key,
@@ -39,6 +40,7 @@ export function TimelineView({ page, view, rows, updateView, openRow, addRow }: 
   const grid = useRef<HTMLDivElement>(null);
   const [connection, setConnection] = useState<{ from: string; x: number; y: number } | null>(null);
   const [drag, setDrag] = useState<{ id: string; start: string; end: string } | null>(null);
+  const describe = eventPresenter(workspace!, page, view);
   const dates = page.database!.columns.filter(isDateProperty);
   const { start: startColumn, end: endColumn } = scheduleFields(page, view);
   const readonlyDates = startColumn?.type !== 'date' || (!!endColumn && endColumn.type !== 'date');
@@ -237,9 +239,12 @@ export function TimelineView({ page, view, rows, updateView, openRow, addRow }: 
             const left = start ? Math.round((start.getTime() - origin.getTime()) / dayMs) * config.width : 0;
             const duration =
               start && end ? Math.max(1, Math.round((end.getTime() - start.getTime()) / dayMs) + 1) : 1;
+            const info = describe(row), visibleLeft = Math.max(0, left);
+            const visibleWidth = Math.max(0, Math.min(width, left + duration * config.width - 4) - visibleLeft);
             return (
               <div className="timeline-row" key={row.id}>
-                <div className="timeline-row-name" title={row.title || '无标题'}>
+                <div className="timeline-row-name" title={eventDescription(info)}>
+                  <div className="timeline-row-info">
                   <RecordTitle
                     entry={item}
                     database={page}
@@ -247,6 +252,8 @@ export function TimelineView({ page, view, rows, updateView, openRow, addRow }: 
                     onViewChange={updateView}
                     onOpen={openRow}
                   />
+                    <small>{info.when} · {info.status}</small>
+                  </div>
                 </div>
                 <div
                   className="timeline-lane"
@@ -258,30 +265,32 @@ export function TimelineView({ page, view, rows, updateView, openRow, addRow }: 
                     if (date) patch(row.id, { values: { ...row.values, [startColumn.id]: key(date) } });
                   }}
                 >
-                  {start && end && (
+                  {start && end && visibleWidth > 0 && (
                     <div
-                      className={`timeline-bar ${duration * config.width < 140 ? 'short-bar' : ''} ${drag?.id === row.id ? 'dragging' : ''}`}
+                      className={`timeline-bar ${visibleWidth < 180 ? 'short-bar' : ''} ${drag?.id === row.id ? 'dragging' : ''}`}
                       data-timeline-id={row.id}
+                      data-label-side={width - visibleLeft - visibleWidth < 230 && visibleLeft > 230 ? 'before' : 'after'}
                       role="button"
                       tabIndex={0}
                       aria-label={`${row.title} ${key(start)} 至 ${key(end)}`}
-                      style={{ ...recordAppearanceStyle(row, theme, workspace!.settings.appearance), left, width: duration * config.width - 4 }}
+                      style={{ ...recordAppearanceStyle(row, theme, workspace!.settings.appearance), left: visibleLeft, width: Math.max(8, visibleWidth) }}
                       onPointerDown={(e) => dragBar(e, row.id, start, end, false)}
+                      onClick={() => { if (readonlyDates || page.locked || row.locked) openRow(row.id); }}
                       onKeyDown={(e) => {
-                        if (e.target === e.currentTarget && e.key === 'Enter') openRow(row.id);
+                        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRow(row.id); }
                       }}
-                      title={`${row.title || '无标题'} · ${key(start)} → ${key(end)}`}
+                      title={eventDescription(info)}
                     >
-                      <span>{row.title || '无标题'}</span>
+                      <EventSummary info={info} />
                       {page.database!.dependencies?.enabled && !page.locked && (
                         <DependencyHandle row={row} rows={rows} onConnection={setConnection} />
                       )}
-                      {
+                      {!readonlyDates && !page.locked && !row.locked && (
                         <div
                           className="timeline-resize"
                           onPointerDown={(e) => dragBar(e, row.id, start, end, true)}
                         />
-                      }
+                      )}
                     </div>
                   )}
                   <span

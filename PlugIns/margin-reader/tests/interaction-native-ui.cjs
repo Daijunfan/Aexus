@@ -16,7 +16,7 @@ const {_electron:electron,expect}=require(path.join(host,'node_modules/@playwrig
   const cli=async(...args)=>{const reply=JSON.parse((await exec(process.execPath,[path.join(host,'bin/agents'),...args,'--json'],{env,timeout:60000,maxBuffer:16*1024*1024})).stdout);assert(reply.ok,reply.error);return reply.data;};
   await cli('plugin','install',path.join(root,'dist-plugin'));const api=(method,params={})=>cli('plugin','call','margin-reader',method,'--params',JSON.stringify(params));
   const workspace=(await api('system.info')).workspace;assert(workspace.startsWith(temp+path.sep));
-  let set=await api('study.create',{title:'原生窗口交互验收'});set=await api('study.note.create',{setId:set.id,expectedRevision:set.revision,title:'原生卡片',text:'Shared Core body',color:'purple'});const id=set.cards[0].id;
+  let set=await api('study.create',{mapMode:'cards',title:'原生窗口交互验收'});set=await api('study.note.create',{setId:set.id,expectedRevision:set.revision,title:'原生卡片',text:'Shared Core body',color:'purple'});const id=set.cards[0].id;
   await api('study.open',{setId:set.id});
   const opened=app.waitForEvent('window');await cli('plugin','open','margin-reader');page=await opened;
   page.on('pageerror',error=>report.errors.push(error.message));page.setDefaultTimeout(15000);await page.setViewportSize({width:1440,height:960});await page.waitForSelector('body[data-ready=true]');

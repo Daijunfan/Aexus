@@ -1,6 +1,7 @@
 'use strict';
 const {parentPort,workerData:a}=require('node:worker_threads');
 async function run(){
+ if(a.format==='pdf'&&a.pdfMode!=='raster')return require('./mindmap-vector-pdf.cjs').render(a);
  const {createCanvas,loadImage}=require('@napi-rs/canvas'),width=Math.max(1,Math.ceil(a.width*a.scale)),height=Math.max(1,Math.ceil(a.height*a.scale));
  const source=a.svg.replace(/width="\d+" height="\d+"/,`width="${width}" height="${height}"`),image=await loadImage(Buffer.from(source));
  const canvas=createCanvas(width,height),ctx=canvas.getContext('2d');ctx.drawImage(image,0,0,width,height);const png=await canvas.encode('png');

@@ -4,6 +4,7 @@ import {createContext,useCallback,useContext,useEffect,useMemo,useRef,useState} 
 import {onPluginFlush} from '../plugins'
 import {api} from '../api'
 import {createRefreshQueue} from '../snapshot'
+import {mergeOrder,sameOrder} from '../../../shared/messenger-order'
 import {EMPTY_MESSENGER,hasDraftContent,type MessengerState,type ConversationPreferences,type MessagePreferences,type MessageDraft,type ForwardDraftInput} from '../../../shared/messenger'
 
 export type MessageTarget={conversation:string;id:string;quote?:MessageQuote}
@@ -26,7 +27,11 @@ export function useMessengerState(enabled:boolean){
  const mutate=useCallback(async(command:string,args:Record<string,unknown>)=>{try{const next=await api.call<MessengerState>(command,args);accept(next);setError('');return true}catch(cause){setError((cause as Error).message);return false}},[accept])
  const conversations=useCallback((ids:string[],patch:ConversationPreferences)=>mutate('messenger.conversation',{conversations:ids,patch}),[mutate])
  const message=useCallback((conversation:string,id:string,patch:MessagePreferences)=>mutate('messenger.message',{conversation,id,patch}),[mutate])
- const saveFolder=useCallback(async(values:{id:string;name:string;conversations:string[];expectedRevision:number})=>{const next=await api.call<MessengerState>('messenger.folder-save',values);accept(next);setError('');return next},[accept])
+ const reorder=useCallback(async(scope:string,order:string[]|null,expectedOrder:string[])=>{
+  try{accept(await api.call<MessengerState>('messenger.reorder',{scope,order,expectedOrder}));setError('');return true}
+  catch(cause){const message=(cause as Error).message;try{const current=await api.call<MessengerState>('messenger.state');accept(current);const saved=current.orders?.[scope]??[];if(order===null?!saved.length:sameOrder(mergeOrder(saved,order),saved)){setError('');return true}}catch{}setError(message);return false}
+ },[accept])
+ const saveFolder=useCallback(async(values:{id:string;name:string;conversations:string[];expectedRevision:number;include?:import('../../../shared/message-categories').CategoryInclude|null;excluded?:string[]})=>{const next=await api.call<MessengerState>('messenger.folder-save',values);accept(next);setError('');return next},[accept])
  const deleteFolder=useCallback(async(id:string,expectedRevision:number)=>{const next=await api.call<MessengerState>('messenger.folder-delete',{id,expectedRevision});accept(next);setError('');return next},[accept])
  const saveForward=useCallback(async(value:ForwardDraftInput|null,expectedClientMessageId?:string)=>{const next=await api.call<MessengerState>('messenger.forward-draft',{value,expectedClientMessageId});accept(next);return next.pendingForward},[accept])
  const flushDrafts=useCallback(async()=>{
@@ -51,6 +56,10 @@ export function useMessengerState(enabled:boolean){
  const toggleSelection=useCallback((conversation:string,id:string)=>setSelection(previous=>({conversation,ids:previous?.conversation===conversation?previous.ids.includes(id)?previous.ids.filter(value=>value!==id):[...previous.ids,id]:[id]})),[])
  const draft=useCallback(async(conversation:string,value:Omit<MessageDraft,'updatedAt'>,expectedClientMessageId?:string)=>{if(expectedClientMessageId!==undefined&&getDraft(conversation)?.clientMessageId!==expectedClientMessageId)return true;queueDraft(conversation,{...value,...(expectedClientMessageId!==undefined?{expectedClientMessageId}:{})});try{await flushDrafts();return true}catch{return false}},[flushDrafts,queueDraft,getDraft])
  const clearDraft=useCallback((conversation:string,clientMessageId:string)=>draft(conversation,{text:''},clientMessageId),[draft])
+ const prepareSend=useCallback(async(conversation:string,value:Omit<MessageDraft,'updatedAt'>)=>{
+  if(!await draft(conversation,value))throw Error('Your draft could not be saved. Try again before leaving.')
+  if(getDraft(conversation)?.clientMessageId!==value.clientMessageId)throw Object.assign(Error('Draft changed before sending. Review it and try again.'),{code:'DRAFT_CHANGED'})
+ },[draft,getDraft])
  const navigate=useCallback(async(target:MessageTarget,from?:MessageTarget,current=from?.conversation)=>{try{
   if(target.conversation!==current){const [kind,id]=target.conversation.split(':');await api.call('view.open',{kind:'messages',...(kind==='group'?{chatId:id}:kind==='channel'?{channelId:id}:{employee:id})})}
   setNavigationReturn(from?{from,viewing:target.conversation}:null);setJump(target)
@@ -67,7 +76,7 @@ export function useMessengerState(enabled:boolean){
  },[flushDrafts,draft,accept,getDraft])
  useEffect(()=>onPluginFlush(flushDrafts),[flushDrafts])
  useEffect(()=>()=>{clearTimeout(draftTimer.current);void flushDrafts().catch(()=>{})},[flushDrafts])
- return useMemo(()=>({replyTarget,setReplyTarget,replyIntent,setReplyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,refresh,library,setLibrary,jump,setJump,forward,setForward,selection,setSelection,toggleSelection,messages}),[replyTarget,replyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,refresh,library,jump,forward,selection,toggleSelection,messages])
+ return useMemo(()=>({replyTarget,setReplyTarget,replyIntent,setReplyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,reorder,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,prepareSend,refresh,library,setLibrary,jump,setJump,forward,setForward,selection,setSelection,toggleSelection,messages}),[replyTarget,replyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,reorder,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,prepareSend,refresh,library,jump,forward,selection,toggleSelection,messages])
 }
 export type MessengerController=ReturnType<typeof useMessengerState>
 export const MessengerContext=createContext<MessengerController|null>(null)

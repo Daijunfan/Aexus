@@ -133,3 +133,6 @@ SOFTWARE.
 - Source: https://github.com/colinhacks/zod
 - License: MIT; full notice: `licenses/zod-4.6.5-MIT.txt`.
 - Used for the Claude SDK tool's explicit message ID and nullable public-text arguments.
+
+### tiny-pinyin 1.3.2
+MIT-licensed directory-name romanization library by creeperyang. License: `licenses/tiny-pinyin-1.3.2-MIT.txt`. Source: https://github.com/creeperyang/pinyin.

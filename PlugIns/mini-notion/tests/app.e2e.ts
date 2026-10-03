@@ -1637,7 +1637,7 @@ test('weekly hourly resizing can extend a meeting across days without changing i
   expect(grid.days[0].events[0].continuesAfter).toBe(true);
   expect(grid.days[1].events[0].continuesBefore).toBe(true);
   expect(grid.days[2].events[0].minuteEnd).toBe(11 * 60);
-  await expect(page.locator('[data-hour-date="2026-09-08"] .hourly-event-title')).toBeInViewport();
+  await expect(page.locator('[data-hour-date="2026-09-08"] .hourly-event .event-title')).toBeInViewport();
   await expect(page.locator('.peek-panel')).toHaveCount(0);
   const saved = (await cli('page', 'get', row.id)).values.date;
   const lastHandle = await page.locator('.hourly-resize').boundingBox();

@@ -9,7 +9,7 @@ export class DocumentTextbox {
     const button = document.createElement('button'); button.id = 'document-textbox'; button.type = 'button';
     button.innerHTML = icon('edit') + '<span>文本框</span>';
     button.title = '在原页点击放置文本框，也可拖入文字'; button.setAttribute('aria-pressed', 'false');
-    $('study-extend-note').after(button); button.onclick = run(() => this.toggle());
+    $('study-region').after(button); button.onclick = run(() => this.toggle());
     const scroller = $('reader-scroll');
     scroller.addEventListener('pointerdown', event => {
       if (!this.active || event.button !== 0) return;

@@ -1,3 +1,4 @@
+import {createReady,readyEmployee,acceptedMessage} from './fixtures/ui-contracts.mjs'
 // Receipt lifecycle regression: disposable Core and hidden renderer, no paid inference.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -28,7 +29,7 @@ const documentFocus=async active=>page.evaluate(active=>{
 },active)
 try{
  await page.locator('.infinite-canvas').waitFor();await call('group.add',{name:'Receipt fixture'})
- const a=await call('card.create',{title:'Reader A',group:'Receipt fixture',engine:'codex',model:'gpt-6-luna'}),b=await call('card.create',{title:'Reader B',group:'Receipt fixture',engine:'codex',model:'gpt-6-luna'})
+ const a=await createReady(call,{title:'Reader A',group:'Receipt fixture',engine:'codex',model:'gpt-6-luna'}),b=await createReady(call,{title:'Reader B',group:'Receipt fixture',engine:'codex',model:'gpt-6-luna'})
  for(const person of [a,b]){await call('session.send',{employee:person.id,text:'Reply for reading'});await expect.poll(async()=>(await status(person.id)).busy).toBe(false)}
  await call('view.open',{kind:'messages',employee:a.id});await page.locator('.reply-seen-marker').waitFor();await wait(800)
  assert.equal((await status(a.id)).lastReply.readAt,undefined,'hidden renderer must not acknowledge')
@@ -59,6 +60,7 @@ try{
  await page.getByRole('button',{name:'New group',exact:true}).click();await expect(page.getByRole('dialog',{name:'New group',exact:true})).toBeVisible()
  await documentFocus(true);await wait(900);assert.equal((await status(b.id)).lastReply.readAt,undefined)
  await page.keyboard.press('Escape');await expect(page.getByRole('dialog',{name:'New group',exact:true})).toHaveCount(0)
+ fs.mkdirSync(path.join(root,'artifacts/slimming-final'),{recursive:true});fs.writeFileSync(path.join(root,'artifacts/slimming-final/modal-receipt.json'),JSON.stringify({state:await status(b.id),dom:await page.evaluate(()=>{const transcript=document.querySelector('.transcript'),marker=transcript?.querySelector('.reply-seen-marker'),r=marker?.getBoundingClientRect();return {focus:document.hasFocus(),visibility:document.visibilityState,active:document.activeElement?.outerHTML,transcript:transcript?.getBoundingClientRect().toJSON(),scrollTop:transcript?.scrollTop,scrollHeight:transcript?.scrollHeight,marker:r?.toJSON(),hit:r&&document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)?.outerHTML,dialogs:[...document.querySelectorAll('[role=dialog]')].map(el=>el.outerHTML.slice(0,1000)),viewportRows:[...document.querySelectorAll('[data-chat-item]')].map(el=>({id:el.dataset.chatItem,rect:el.getBoundingClientRect().toJSON()}))}})},null,2));
  await expect.poll(async()=>!!(await status(b.id)).lastReply.readAt,{timeout:3500,message:'Closing a covering dialog resumes receipt observation'}).toBe(true)
  assert.deepEqual(errors,[])
  console.log('PASS receipt recovery: native focus races, background denial, exact long-reply visibility, modal close, shared inbox/canvas unread and untouched other employees; hidden fixture only')

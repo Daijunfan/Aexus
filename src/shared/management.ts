@@ -1,7 +1,7 @@
 import {rolePolicy,type ManagementRole} from './roles'
 export type {ManagementRole} from './roles'
 export type PrincipalRef={kind:'operator'}|{kind:'agent';employeeId:string}
-export type Delegation={requestedBy:PrincipalRef;relationId?:string;globalGrantId?:string;requestId:string;credentialHash?:string;selfSchedule?:true;groupNotice?:{groupId:string;messageId:string;employeeId:string};channelNotice?:{channelId:string;entryId:string;employeeId:string}}
+export type Delegation={requestedBy:PrincipalRef;relationId?:string;globalGrantId?:string;requestId:string;credentialHash?:string;selfSchedule?:true;schedule?:{channelId?:string;eventChannelId?:string};groupNotice?:{groupId:string;messageId:string;employeeId:string};channelNotice?:{channelId:string;entryId:string;employeeId:string}}
 export type RequestContext={principal:PrincipalRef;requestId:string;credentialHash?:string;clientId?:string}
 export type ManagementRelation={id:string;managerId:string;employeeId:string;state:'pending'|'active';requestedBy:PrincipalRef;approvedBy?:PrincipalRef;createdAt:number;updatedAt:number;origin?:'binding'}
 /** Explicit visual overrides, including disabled creation lines. Never used for authorization. */
@@ -30,7 +30,7 @@ export function managementRelations(cards:Parameters<typeof creationRelations>[0
     const key=pair(binding.managerId,binding.employeeId)
     if(!binding.enabled){edges.delete(key);continue}
     const source=nodes.get(binding.managerId),target=nodes.get(binding.employeeId)
-    if(!source||!target||source.deleting||target.deleting||source.id===target.id||source.kind==='cloud-native-worker')continue
+    if(!source||!target||source.deleting||target.deleting||source.id===target.id)continue
     const policy=rolePolicy(source.managementRole)
     if(!policy.controls.includes(target.managementRole??'employee')||(policy.scope!=='global'&&source.group!==target.group))continue
     // Rebinding an original creator keeps the historical edge ID and provenance.
@@ -39,15 +39,15 @@ export function managementRelations(cards:Parameters<typeof creationRelations>[0
   return [...edges.values()]
 }
 
-/** Management requires a local engine and an effective local workspace. */
+/** Only roles explicitly marked requiresLocal constrain engine/workspace location. */
 export function assertManagementKind(card:{kind?:string;group?:string;managementRole?:ManagementRole},global=false,cloudWorkspace=false){
-  if((card.kind==='cloud-native-worker'||cloudWorkspace)&&(rolePolicy(card.managementRole).requiresLocal||global))throw new Error('管理职位必须在 Core 所在主机本地运行且使用本地工作区；云端工作环境只能担任 Employee')
+  if((card.kind==='cloud-native-worker'||cloudWorkspace)&&rolePolicy(card.managementRole).requiresLocal)throw new Error('Secretary 必须在 Core 所在主机本地运行且使用本地工作区；Manager / Governor 可使用云端环境')
 }
 export function hasGlobalRole(_access:ManagementAccess|undefined,card:ManagedIdentity|undefined){
-  return !!card&&!card.deleting&&card.kind!=='cloud-native-worker'&&rolePolicy(card.managementRole).scope==='global'
+  return !!card&&!card.deleting&&rolePolicy(card.managementRole).scope==='global'
 }
 
-export type CurrentTask={messageId:string;delegation:Delegation;startedAt:number;runId?:string;viewId?:string;chat?:import('./chat-groups').SharedTaskContext}
+export type CurrentTask={messageId:string;delegation:Delegation;startedAt:number;runId?:string;viewId?:string;sourceView?:import('./message-source').MessageSourceView;chat?:import('./chat-groups').SharedTaskContext}
 
 /** Live communication or a running task with authenticated delegation; never completed-call replay.
  * highlighted is a short visual cue, independent of this record's actual lifetime. */

@@ -26,6 +26,8 @@ export type SpaceFileRecord = {
   modifiedAt?: number;
 };
 export type AgentContext = { pageId: string; blockId?: string; quote?: string; title?: string };
+export type SlashCategory = { id: string; name: string; commands: string[] };
+export type SelectionAISettings = { prompt: string; mode: 'send' | 'edit'; employeeId?: string };
 export type AgentMessage = {
   id: string;
   conversationId?: string;
@@ -323,6 +325,8 @@ export type Workspace = {
     authorName?: string;
     authorEmail?: string;
     desktopNotifications?: boolean;
+    slashCategories?: SlashCategory[];
+    selectionAI?: SelectionAISettings;
   };
 };
 export type Version = { id: string; at: number; page: Page };

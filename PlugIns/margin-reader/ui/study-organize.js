@@ -7,11 +7,9 @@ export class StudyOrganization {
   constructor(study) {
     this.study=study;this.map=study.map;
     const tools=document.createElement('div');tools.className='study-organization-tools';
-    tools.innerHTML='<select id="study-submap-selector" aria-label="脑图层级"><option value="">主脑图</option></select><button id="study-organize">整理 / 批量</button><button id="study-boards">筛选看板</button><button id="study-capture-tools">摘录自动化</button><button id="study-appearance">样式</button>';
+    tools.innerHTML='<select id="study-submap-selector" aria-label="脑图层级"><option value="">主脑图</option></select>';
     this.map.board.querySelector('.study-map-toolbar').after(tools);
     $('study-submap-selector').onchange=run(()=>study.change('study.submap.open',{cardId:$('study-submap-selector').value||null}));
-    $('study-organize').onclick=()=>this.actions();$('study-boards').onclick=()=>this.boards();
-    $('study-capture-tools').onclick=()=>this.captureSettings();$('study-appearance').onclick=run(()=>this.appearance());
     this.map.board.addEventListener('click',e=>{
       const card=e.target.closest('[data-card-id]');if(!card||e.target.closest('button'))return;
       if(e.metaKey||e.ctrlKey){e.preventDefault();e.stopImmediatePropagation();const id=card.dataset.cardId;const multi=this.study.advanced.selected;multi.has(id)?multi.delete(id):multi.add(id);this.study.advanced.selection();this.paintListSelection();}
@@ -21,7 +19,7 @@ export class StudyOrganization {
   paintListSelection(){const ids=new Set(this.ids());this.map.board.querySelectorAll('.study-list-card').forEach(el=>el.classList.toggle('selected',ids.has(el.dataset.cardId)));}
   render(set){
     const select=$('study-submap-selector');select.innerHTML='<option value="">主脑图</option>'+set.submaps.map(s=>`<option value="${s.id}">${escape(s.title)}</option>`).join('');select.value=set.map?.submapId||'';
-    $('study-organize').textContent=this.ids().length?`整理 / 批量 (${this.ids().length})`:'整理 / 批量';this.paintListSelection();
+    select.hidden=!set.submaps?.length;this.paintListSelection();
   }
   requireSelection(){const ids=this.ids();if(!ids.length)throw new Error('先选择卡片。Shift / Command 点击可多选。');return ids;}
   actions(){
@@ -59,7 +57,7 @@ export class StudyOrganization {
   }
   captureSettings(){
     const set=this.study.current,p=set.captureSettings||{};
-    showDialog({title:'摘录自动化',html:field('inMap','自动加入脑图',p.inMap===false?'no':'yes',{choices:[['yes','加入脑图'],['no','仅收进卡片盒']]})+field('organize','自动归档',p.organize||'none',{choices:[['none','指定位置 / 顶层'],['document','按来源文档'],['toc','按原文目录']]})+field('parentId','指定父卡片',p.parentId||'',{choices:[['','顶层'],...set.cards.map(c=>[c.id,c.title])]})+field('color','默认颜色',p.color||'yellow',{choices:this.study.colors})+field('tags','自动标签',(p.tags||[]).join(', '))+field('annotationStyle','标注样式',p.annotationStyle||'highlight',{choices:[['highlight','高亮'],['underline','下划线'],['strike','删除线'],['box','框线']]})+field('review','自动加入复习',p.review?'yes':'no',{choices:[['no','不自动加入'],['yes','自动加入']]})+field('deckId','默认复习牌组',p.deckId||'',{choices:[['','未分组'],...set.decks.filter(d=>!d.deletedAt).map(d=>[d.id,d.title])]}),onSubmit:v=>this.study.change('study.capture.settings',{inMap:v.inMap==='yes',organize:v.organize,parentId:v.parentId||null,color:v.color,tags:tags(v.tags),annotationStyle:v.annotationStyle,review:v.review==='yes',deckId:v.deckId||null},set.revision)});
+    showDialog({title:'摘录自动化',html:field('inMap','自动加入脑图',p.inMap===false?'no':'yes',{choices:[['yes','加入脑图'],['no','仅保留原文标注，暂不显示在脑图']]})+field('organize','自动归档',p.organize||'none',{choices:[['none','指定位置 / 顶层'],['document','按来源文档'],['toc','按原文目录']]})+field('parentId','指定父卡片',p.parentId||'',{choices:[['','顶层'],...set.cards.map(c=>[c.id,c.title])]})+field('color','默认颜色',p.color||'yellow',{choices:this.study.colors})+field('tags','自动标签',(p.tags||[]).join(', '))+field('annotationStyle','标注样式',p.annotationStyle||'highlight',{choices:[['highlight','高亮'],['underline','下划线'],['strike','删除线'],['box','框线']]}),onSubmit:v=>this.study.change('study.capture.settings',{inMap:v.inMap==='yes',organize:v.organize,parentId:v.parentId||null,color:v.color,tags:tags(v.tags),annotationStyle:v.annotationStyle},set.revision)});
   }
   async appearance(){
     const set=this.study.current,s=set.appearance||{};const available=await api('system.fonts');const fontChoices=[['system','系统字体'],['serif','衬线字体'],['mono','等宽字体'],...available.fonts.map(name=>[name,name])];

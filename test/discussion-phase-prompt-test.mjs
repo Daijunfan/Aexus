@@ -11,7 +11,7 @@ process.env.AGENTS_COMPANY_HOME=home;fs.mkdirSync(home);fs.symlinkSync(path.join
 let core
 try{
  fs.writeFileSync(path.join(home,'sessions.json'),JSON.stringify({sessions:[{id:'reader',title:'Reader',engine:'codex',kind:'worker',group:'Studio',cwd:temp,createdAt:1,initialization:{status:'ready'},managementRole:'employee'}],groups:['Studio'],rooms:{}}))
- await build({stdin:{contents:"export * from './src/main/chat-groups';export * from './src/main/channels';export {channelTaskPrompt} from './src/main/channel-discussion';export {run,all} from './src/main/channel-store';export {withCaller,operatorContext} from './src/main/authorization'",resolveDir:root,sourcefile:'phase-prompt-entry.ts'},outfile:entry,bundle:true,platform:'node',format:'cjs',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'})
+ await build({stdin:{contents:"export * from './src/main/chat-groups';export * from './src/main/channels';export {channelTaskPrompt,recordChannelDelivery} from './src/main/channel-discussion';export {run,all} from './src/main/channel-store';export {withCaller,operatorContext} from './src/main/authorization'",resolveDir:root,sourcefile:'phase-prompt-entry.ts'},outfile:entry,bundle:true,platform:'node',format:'cjs',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'})
  core=createRequire(import.meta.url)(entry)
  const op=fn=>core.withCaller(core.operatorContext(),fn),delegation={requestedBy:{kind:'operator'},requestId:'fixture'},metadata=prompt=>JSON.parse(prompt.split('\n')[1])
  const group=op(()=>core.createChatGroup({name:'Real group identity',members:['reader']})),file=path.join(home,'chats',group.id+'.json')
@@ -34,9 +34,10 @@ try{
  }
  assert.deepEqual(core.all('SELECT * FROM channel_deliveries'),before);assert.deepEqual(JSON.parse(fs.readFileSync(file,'utf8')),[original,request])
  const reader=fn=>core.withCaller({principal:{kind:'agent',employeeId:'reader'},requestId:'explicit-receipt'},fn)
- reader(()=>core.postChatMessage({id:group.id,replyTo:request.id,text:null}));reader(()=>core.channelRequest('channel.message-post',{id:source.channelId,replyTo:question.id,text:null}))
+ // Simulate the Core's successful native completion, never an Agent null post.
+ core.updateChatDelivery('reader',groupContext,{deliveredAt:200,readAt:201});core.recordChannelDelivery('reader',{channelId:source.channelId,entryId:question.id},{deliveredAt:200,readAt:201})
  assert.equal(metadata(op(()=>core.chatTaskPrompt(groupContext,'reader',delegation,accepted))).acknowledgment.acknowledged,true)
  const acknowledged=metadata(op(()=>core.channelTaskPrompt({channelId:source.channelId,entryId:question.id},'reader',delegation,question.text))).acknowledgment
  assert.equal(acknowledged.acknowledged,true);assert.equal(typeof acknowledged.readAt,'number','formal context reflects the explicit receipt rather than inviting a second ACK')
- console.log('PASS group/channel ACK projections preserve authentic context without response/history instructions or writes; formal prompts retain guidance and show acknowledged:true after explicit receipts; no engines')
+ console.log('PASS group/channel ACK projections preserve authentic context without response/history instructions or writes; formal prompts retain guidance and show acknowledged:true after native completion receipts; no engines')
 }finally{core?.closeChannels();if(previous===undefined)delete process.env.AGENTS_COMPANY_HOME;else process.env.AGENTS_COMPANY_HOME=previous;fs.rmSync(temp,{recursive:true,force:true})}

@@ -26,7 +26,7 @@ async function fixture(){
   report.sourceHash=digest(bytes);
   server=await require(path.join(pluginRoot,'lib/server.cjs')).startServer({workspace,pluginRoot});
   const api=async(method,params={})=>{const r=await server.runtime.request({jsonrpc:'2.0',id:randomUUID(),method,params});assert(!r.error,JSON.stringify(r.error));return r.result;};
-  let set=await api('study.create',{title:'Single-click PDF navigation'});
+  let set=await api('study.create',{mapMode:'cards',title:'Single-click PDF navigation'});
   const change=async(method,params={})=>{set=await api('study.get',{setId:set.id});set=await api(method,{setId:set.id,expectedRevision:set.revision,...params});return set;};
   await change('study.documents.add',{paths:['first.pdf','second.pdf']});
   const first=await api('document.open',{path:'first.pdf',activate:false}),second=await api('document.open',{path:'second.pdf',activate:false});

@@ -41,7 +41,7 @@ async function main() {
     const asset = await fetch(new URL(`data/original/${doc.id}`, base)).then(r => r.text()); assert.match(asset, /Host Reader/); pass('host scoped original-document asset route works');
     assert.equal((await fetch(new URL('/rpc', view.url))).status, 404); pass('unguarded host HTTP root has no plugin API');
     await cli('plugin','close',view.id); await assert.rejects(fetch(view.url)); pass('closing a host view releases its HTTP listener');
-    let study = await call('study.create', { title: 'Offline workbench' });
+    let study = await call('study.create', {mapMode:'cards', title: 'Offline workbench' });
     const change = async (method, params = {}) => study = await call(method, { setId: study.id, expectedRevision: study.revision, ...params });
     await change('study.note.create', { title: 'Question', text: 'Answer', tags: ['CLI'] }); const cardId = study.cards[0].id;
     await change('study.review.configure', { cardId, enabled: true });

@@ -24,7 +24,7 @@ agents schedule create --name 'Sunday review' --employee EMPLOYEE_ID --time 17:0
 agents schedule preview JOB_ID --count 5 --json
 ```
 
-Every employee can schedule itself. `self` resolves from the authenticated Agent ID, never a name, directory or caller-supplied identity. A user must provide an explicit employee ID. Managers and Governors can schedule others within the same control scope as their existing management APIs. Ordinary employees gain no authority over other employees. Non-global callers list/edit their own authored jobs; user/Governor visibility follows existing scheduler rules.
+Every employee can schedule itself. `self` resolves from the authenticated Agent ID, never a name, directory or caller-supplied identity. A user must provide an explicit employee ID. A Manager may schedule only its own Team’s Employees; a Governor may schedule Employees and Managers globally; a Secretary may schedule Employees, Managers and Governors globally. Every role may schedule itself. No Agent may schedule a different peer or a superior, including another Secretary. Ordinary employees gain no authority over other employees. Non-global callers retain their own authored-job scope. Secretary can read the complete Plan database, including missing-target records; mutation and execution capabilities are returned per row.
 
 Self scheduling carries a Core-created, self-target-only delegation. This does not open direct `session.send` authority for Employees or let callers supply delegation fields. Roles and credential revocation are rechecked before a run starts and after asynchronous startup. A removed employee or revoked authority disables affected future work. Governor targets still require `action.viewId` / `--view` with a stable Company subview ID.
 ## When to run
@@ -47,13 +47,13 @@ agents schedule create --name 'Month-end report' --employee self --time 17:00 --
 agents schedule create --name 'Check three times' --employee self --every-seconds 3600 --max-occurrences 3 --prompt 'Check the task status and report changes.' --json
 ```
 
-`maxOccurrences` is optional (1–1,000,000 or null). It counts claimed scheduled occurrences, including missed/busy skips; manual runs do not consume it. `occurrences` is Core-owned. Once the limit is reached, nextAt becomes null; increase/clear the limit before resuming. Editing a job preserves its consumed count. `until` is an exclusive absolute end instant; when both limits exist, the earlier condition stops future scheduling.
+`maxOccurrences` is optional (1–1,000,000 or null). It counts claimed scheduled occurrences, including accepted event triggers and missed/busy skips; manual runs do not consume it. `occurrences` is Core-owned. Once the limit is reached, nextAt becomes null; increase/clear the limit before resuming. Editing a job preserves its consumed count. `until` is an exclusive absolute end instant; when both limits exist, the earlier condition stops future scheduling.
 
 `window:{start,end,timezone,days?}` limits scheduled execution to a local work window. It may cross midnight, belongs to its starting weekday and excludes its end. `window:null` clears it. `timeoutSeconds` defaults to 1800; `graceSeconds` defaults to 60. Both accept integers 1–86,400. A task is stopped when its permitted window, timeout or until ends. Invalid dates, zones, ranges and enabled schedules with no future occurrence fail before persistence.
 
 ## Create and edit safely
 
-`action` contains `{type:"agent",employeeId,prompt,engine?,model?,effort?,thinking?,viewId?}`. Core infers/pins the employee's actual engine. Prompt is sent to the existing employee conversation. Notes are planning metadata and are not injected as a task. Optional model/effort/thinking overrides apply only to the scheduled run and original employee preferences are restored.
+`action` contains `{type:"agent",employeeId,prompt,engine?,model?,effort?,thinking?,viewId?,channelId?}`. Core infers/pins the employee's actual engine. Prompt is sent to the existing employee conversation. Notes are planning metadata and are not injected as a task. Optional model/effort/thinking overrides apply only to the scheduled run and original employee preferences are restored.
 ```json
 {
   "cmd": "schedule.create",
@@ -75,7 +75,7 @@ agents schedule create --name 'Check three times' --employee self --every-second
 
 Create returns the canonical ScheduledJob including `id,action,rule,nextAt,enabled,revision,occurrences,createdAt,updatedAt,plan?`. Read-only provenance and delegation are Core-owned. Use `schedule.update {id,patch,expectedRevision?}` to reject stale edits. The patch is top-level: action/rule/window/plan are complete replacement objects when supplied. Omit optional objects to retain them; null clears window/until/maxOccurrences. Active jobs must finish or have their active run cancelled before updating.
 
-`plan` metadata has `priority:low|normal|high|urgent` (normal default), up to 20 unique `tags` (1–40 characters each), and `notes` (up to 16,000 characters). Job names are 1–160 characters; prompts are 1–64,000. Metadata cannot grant permissions or forge a run status. UI state is derived from the canonical job and latest retained run: scheduled, running, paused, completed, attention. Completed means the schedule has no future occurrence; it does not certify a business result.
+`plan` metadata has `priority:low|normal|high|urgent` (normal default), up to 20 unique `tags` (1–40 characters each), and `notes` (up to 16,000 characters). Job names are 1–160 characters; prompts are 1–64,000. Metadata cannot grant permissions or forge a run status. UI state is derived from the canonical job and latest retained run: scheduled, running, paused, completed, attention. An enabled, unexhausted event rule with no nextAt remains scheduled / waiting for event. Completed means the schedule has no remaining occurrence; it does not certify a business result.
 
 ```sh
 agents schedule update JOB_ID --patch '{"plan":{"priority":"urgent","tags":["release"],"notes":"Wait for approval."}}' --expected-revision 1 --json
@@ -99,9 +99,9 @@ agents view open plan --plan-view VIEW_ID --json
 agents plan view-delete VIEW_ID --json
 ```
 
-`plan.query {filter?,sort?,direction?,offset?,limit?}` returns `{rows,total,offset,hasMore,counts,facets}`. `facets.tags` contains the unique tags from all schedules visible to the caller, before presentation filters or pagination; it never bypasses scheduler authorization. Rows are canonical jobs plus `status`, an identity-only `employee` relation and `lastRun?`. Filters support search, employee ID/self, Team, states, priorities and tags (all requested tags must match). Multiple filters combine; no filter expands authorization. Sort supports nextAt/name/updatedAt/priority, asc/desc; tie-breaking uses stable job IDs. Offset is nonnegative, limit is 1–500 (default 100). Counts describe the complete filtered set; rows are paginated. No full transcripts are loaded for the database.
+`plan.query {filter?,sort?,direction?,offset?,limit?}` returns `{rows,total,offset,hasMore,counts,facets}`. `facets.tags` contains the unique tags from all schedules visible to the caller, before presentation filters or pagination; it never bypasses scheduler authorization. Rows are canonical jobs plus `status`, an identity-only `employee` relation and `lastRun?`. Filters support search, employee ID/self, Team, publishing channel ID (`filter.channel`), states, priorities and tags (all requested tags must match). Multiple filters combine; no filter expands authorization. Sort supports nextAt/name/updatedAt/priority, asc/desc; tie-breaking uses stable job IDs. Offset is nonnegative, limit is 1–500 (default 100). Counts describe the complete filtered set; rows are paginated. No full transcripts are loaded for the database.
 
-`plan.views` includes immutable Table, Board, Timeline, Calendar, Planner, List, Gallery, Chart, Feed and Form presets, plus saved views available to the caller. A saved view stores name, layout, groupBy (status/employee/priority), filter, sort, direction and optional display options. Saved views are caller-owned; the user can manage all, Agents manage only their own. Saving a self filter resolves it to the author's stable employee ID. Deleting a view never deletes schedules. Views share data, not permission grants; operators may still see different records from limited Agents using the same filtering criteria.
+`plan.views` includes immutable Table, Board, Timeline, Calendar, Planner, List, Gallery, Chart, Feed and Form presets, plus saved views available to the caller. A saved view stores name, layout, groupBy (status/employee/priority), filter, sort, direction and optional display options. Saved views retain their original owner; the user and Secretary can administer all saved views, while other Agents manage only their own. Saving a self filter resolves it to the author's stable employee ID. Deleting a view never deletes schedules. Views share data, not permission grants; operators may still see different records from limited Agents using the same filtering criteria.
 
 ## Calendar
 
@@ -115,7 +115,7 @@ Calendar output is bounded: default 500/max 2000 events, up to 100 future dates 
 
 ## Persistence, safety and compatibility
 
-Schedules remain in `schedules.json` v1 with additive optional fields. Existing jobs, identities, workspaces, model settings, native histories and permissions are not migrated to a second store. Saved presentation definitions live in `plan-views.json`; transient UI state remains client-specific. `schedule:changed` and `plan:changed` notify views, without polling every transcript or rewriting employee state. Plan's role-specific API handbook is generated for existing employees at the normal bootstrap points.
+Schedules remain in `schedules.json` v1 with additive optional fields. Existing jobs, identities, workspaces, model settings, native histories and permissions are not migrated to a second store. Saved presentation definitions live in `plan-views.json`; transient UI state remains client-specific. `schedule:changed` and `plan:changed` notify views, without polling every transcript or rewriting employee state. Plan API documentation is shared through the current Core document catalog.
 The Core process must remain running and the computer awake. `agents serve` works without a desktop window. This feature does not install a login service, power on a host or wake macOS from sleep. Busy employees are skipped rather than interrupting manual work. Late runs beyond grace are skipped; a backlog is never replayed in a burst. A run claim is persisted before external execution, and a restart marks unfinished runs interrupted rather than replaying them. This is not a claim of exactly-once external side effects: inspect the employee's actual history/files after an uncertain failure.
 
 Calendar calculations reuse the existing Temporal-based scheduler. Plan borrows database presentation patterns from MiniNotion but does not replace that plugin's document data or reminders. Existing `schedule.*`, `view.*`, message/group APIs, shared read receipts and management bindings remain available.
@@ -170,3 +170,73 @@ schedule reuses its request identity when retrying unchanged content after a los
 Editing and previews do not run a task. Active runs remain protected by Core; Run now
 executes the saved schedule and explicitly excludes unsaved edits. Existing timing,
 occurrence counts, history, permissions and employee identities stay in the scheduler.
+
+## Unified automation, employee channels and events
+
+All roles use Core `schedule.*` for employee timed, repeated and event-triggered work, and read the resulting IDs through `plan.query`. Do not implement employee automation with ad-hoc sleep loops, shell cron, a second timer service or a plugin’s document reminders. Those plugin reminders and infrastructure housekeeping are separate from employee work. Public identity instructions disclose the same Plan contract to every role. API enforcement checks identity, not claims in a prompt.
+
+The channel settings panel lists actual Plan rows and reuses the complete PlanEditor. A channel with no plan explicitly says automatic publishing is not configured; choosing publishers never starts inference or invents a frequency. The user saves the desired rule once, then can edit that same job in either surface. `action.channelId` binds an existing employee-engine channel; it does not grant membership or publishing authority. Only a current publisher may be the target. Core adds explicit `channel.publish` instructions with a stable run ID and publication timestamp; private replies are not automatically published. The older channel UI’s `source:"channel:ID"` is normalized to this verified association without duplicating jobs.
+
+```sh
+agents schedule create --name 'Channel digest' --employee EMPLOYEE_ID --channel CHANNEL_ID --time 09:00 --timezone Asia/Shanghai --prompt 'Research and publish a source-linked digest.' --paused --json
+agents plan query --filter '{"channel":"CHANNEL_ID"}' --json
+agents schedule create --name 'Process incoming signal' --employee self --on-event signal --cooldown-seconds 60 --prompt 'Process the authorized event.' --json
+agents schedule trigger JOB_ID --event-id webhook-delivery-42 --json
+agents schedule create --name 'Review incoming posts' --employee self --on-event channel.posted --event-channel CHANNEL_ID --cooldown-seconds 60 --prompt 'Read the referenced new post and report findings.' --json
+```
+
+An event rule is `{kind:"event",event:"signal"|"channel.posted",channelId?,cooldownSeconds?}`. The cooldown defaults to 60 seconds (0–86400). Only channel.posted requires channelId. Signal jobs are activated by `schedule.trigger {id,eventId}`, whose nonempty eventId is at most 160 characters. The current caller must have permission over the saved task; execution keeps and rechecks the original author’s delegation. Channel events come from Core after a first successful publication. Updates, duplicate submissions and the target employee’s own publications do not emit work for that target. External collector credentials cannot invoke schedule APIs or forge native events.
+
+The target must remain a member of the event source channel. The scheduling Agent must also be a source member, except for the existing Secretary application-administration scope. A publishing task cannot subscribe to its own destination. Changing membership, role, credentials or target invalidates affected future work; permissions are also checked after asynchronous session preparation. Previously permitted same-rank delegations are disabled on restart, preserving IDs and history.
+
+Event claims and real runs use the same schedules.json, run reservation, executor, cancellation and run history. Each job retains its last 256 claimed event IDs plus deduplication against retained run history; this protection survives restart but is bounded, not a permanent inbox. Paused, expired, quota-exhausted, out-of-window and cooldown events return ignored without running. Busy attempts are recorded as skipped and consume the accepted occurrence, without a retry queue. Automatic events observed while Core is offline are not replayed. Deleting a plan preserves audit history.
+
+Waiting event plans have nextAt:null and appear in the Plan database as waiting, not completed. Preview validates the rule and returns no predicted timestamps. Calendar and Timeline show only their actual recorded attempts. The user can edit, pause, resume, run explicitly or delete the same record through existing Plan controls. Event metadata in history identifies the source; trigger is event rather than scheduled/manual.
+
+## Secretary task discovery and cleanup
+
+Use `plan.query` first, without an employee filter when the user refers to all tasks.
+Each row includes the canonical task ID/revision, name, action/prompt, rule, timezone,
+nextAt, cutoff/window, consumed count, latest run, identity-only employee relation with
+`role`, and `allowedActions` / `blockedActions`. The response also includes the Core
+`now` and `hostTimezone`. For weekly/monthly rules, `timing.timezone` is the rule zone;
+absolute instants and intervals are represented by their exact rule timestamps and
+have no invented recurrence timezone. Query search matches task/employee IDs, titles,
+Team, role, prompts, notes and tags. `offset/limit/hasMore` expose all pages.
+
+`target` retains the stable employee ID and stored engine even when its employee was
+removed. `exists:false` and null title/role/Team mark unavailable legacy information.
+Secretary can read, pause and delete these records, or edit disabled metadata; a full
+replacement action can reassign one to a current permitted target. It cannot run or
+resume a missing employee. Read-only saved-rule preview can inspect timing without
+requiring the missing employee to execute anything.
+
+Secretary can read other Secretaries' schedules for application administration, but
+cannot modify or execute a different live same-rank target. Existing strict downward
+scheduling and explicit user-only permissions remain enforced. `allowedActions` is a
+current preflight hint, not an authorization token; mutations recheck current state.
+
+` schedule.delete {id,expectedRevision?}` preserves the single-record contract.
+` schedule.delete {ids,expectedRevisions?}` accepts 1–100 unique selected IDs. A supplied
+revision map must cover exactly those IDs. All records, permissions and revisions are
+checked before any record is paused or any run is cancelled. Deletion then prevents
+concurrent edits/resumption, cancels existing runs and removes only selected schedules.
+Audit history, employees and workspace files remain. This preflight guarantee does
+not claim filesystem transactions or external exactly-once execution; on transport
+failure, query the remaining IDs before retrying. There is no implicit delete-all.
+
+```sh
+agents plan query --limit 100 --json
+agents schedule get JOB_ID --json
+agents schedule delete --ids '["JOB_A","JOB_B","JOB_C"]' --expected-revisions '{"JOB_A":2,"JOB_B":1,"JOB_C":3}' --json
+agents plan query --json
+```
+
+Task editor confirmations and pause/resume use the displayed revision. Saved-view
+create/update/delete still use `plan.view-*`; all ten layouts, filtering, sorting,
+grouping and saved display options share those APIs. Transient cursor/focus and native
+window state are presentation actions and do not require a parallel scheduling API.
+
+## Conversation notices are separate from Plan
+
+Current conversation offices (Group Owner/Admin/Member, channel Admin) are independent of Company managementRole. Only actual conversation Owner/Admin configures mute, quiet mode and fixed-text notifications; Company Secretary has no conversation-office bypass. Owner alone dissolves groups or transfers ownership, with the human user's external recovery override. `conversation.notice-*` posts saved text through an independent Core timer/storage without running an Agent or entering Plan. Plan `schedule.*` remains the exclusive API for scheduled employee work. See [CONVERSATION_CONTROLS.md](docs/CONVERSATION_CONTROLS.md) for the current, detailed boundary.

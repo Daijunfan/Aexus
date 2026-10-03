@@ -4,15 +4,15 @@
 
 这是由根 API、调度规范和注册表生成的全局参考手册，不是权限凭据。所有角色初始化只读取真实身份和 `agents api docs` 的共享短索引；之后按需用 `agents api describe COMMAND --all --json` 或 `agents api docs DOCUMENT` 阅读，不把整册手册自动载入上下文。Core 的 Company、Messages、Plan 三视图与 MiniNotion 等独立插件分列，执行权限仍由 Core 检查。
 
-Governor / Manager / Employee 是员工自身的职位。Manager 管理本 Team 全部 Employee；Governor 跨 Team 管理团队与员工，并可调整其他 Governor 的位置。Governor 的创建、删除、晋升、降级仅限用户；禁止借整个 Team 删除或克隆绕过。
+Governor / Manager / Employee 是员工自身的职位。Manager 管理本 Team 全部 Employee；Governor 跨 Team 管理团队与员工，并可调整其他 Governor 的位置。Governor 的任免由用户或 Secretary 操作；Governor 自己不能借整个 Team 删除或克隆绕过。
 
-管理职位必须在 Core 所在主机本地运行与工作，所属 Team 可任意。在 Cloud Team 创建管理职位需 `--work-environment local`。不需要绑定 Agents-Managers 文件夹，加入旧管理 Team 不会继承权限。
+Manager/Governor 的职位与执行位置独立，可在 Cloud Team 使用 `workEnvironment:team` 或明确选择 `local`。已支持的原生云端引擎也允许这两个职位；Secretary 保留 Core 本地要求。加入旧管理 Team 或工作目录不会继承权限。
 
 公司员工通过 `agents card create` 登记。Employee / Manager / Governor 都完成简短隐藏初始化，待 ready 后再派发任务；不执行文档示例或预加载全部 API。使用真实员工 ID 调用 `session.*` / `schedule.*`；引擎内置子 Agent 不替代公司员工。
 
 Team 与员工可改显示名，既有目录与归属保持固定。所有公司管理操作走 CLI，不直接修改宿主 JSON。返回发送成功只表示请求已接受，完成状态需继续查询。
 
-按操作系统建队先使用 `host list --summary --json`，按 os / distribution 选择已登记主机。云端使用 `group add NAME --mode cloud --host-id ID --directory-mode default`；Team/View 名称不代表操作系统。用 topology 的团队绑定和员工 workspace 字段核验；Cloud Team 中 Manager 用 local，招的 Employee 继承 team。完整步骤见下文“Governor: four actual operating-system teams”。
+按操作系统建队先使用 `host list --summary --json`，按 os / distribution 选择已登记主机。云端使用 `group add NAME --mode cloud --host-id ID --directory-mode default`；Team/View 名称不代表操作系统。用 topology 的团队绑定和员工 workspace 字段核验；Cloud Team 中 Manager/Governor 可以明确选择 team 云端或 local 本地环境，不隐式切换；下属仍使用各自固定工作环境。完整步骤见下文“Governor: four actual operating-system teams”。
 
 ## 根项目 API 全文
 
@@ -22,6 +22,161 @@ Start `npm run serve` (no window), or open the desktop. Both expose the same
 Core over a private Unix socket on macOS/Linux or a data-directory-scoped named
 pipe on Windows. The default data directory is `~/AgentsCompany`.
 Run `node bin/agents help` for help. Every data command accepts `--json`.
+
+## Native API execution and focused discovery
+
+Two native tools cover application work: `agents_company_documentation` reads the
+identity/index/exact schema, and `agents_company_api {command,args?}` executes an
+existing Core command using the current employee identity. It uses the same dispatcher
+as desktop, browser and CLI, with no shell or operator token. Start Plan work with
+`{"command":"plan.query","args":{}}`; use the returned task IDs and revisions.
+
+`api.list {prefix?,search?,all?}` narrows the catalog without changing its permission
+filter. `api.describe {command,all?}` returns the exact command contract. Deprecated
+`management.request/decide/team/global` and `config.engine` are absent from normal
+API discovery; `--all` describes their replacement or retained compatibility behavior.
+No second task store, duplicated CRUD tool family or nested `api.call` Core route exists.
+
+```sh
+agents api list --prefix schedule. --json
+agents api describe schedule.delete --all --json
+agents api call plan.query --args '{"limit":50}' --json
+agents api call schedule.delete --args '{"ids":["JOB_A","JOB_B"],"expectedRevisions":{"JOB_A":2,"JOB_B":4}}' --json
+```
+
+`agents api call` is a CLI spelling for a raw existing command payload, including
+parameters without a short flag. It uses the same authenticated transport and returns
+the same result/error. It neither launches a service nor grants execution permission.
+
+Native read-only calls require no extra approval. Writes require a user decision in
+Ask/acceptEdits/auto, are permitted without another prompt in Full access, and are
+rejected in dontAsk or native planning mode. Mixed/unknown operations default to writes;
+`conversation.file` read operations and unpatched `channel.settings` are classified
+from their arguments. Initialization and private shared-message reading cannot use
+the executor. Credential, current turn and permissions are checked again after waiting
+for approval. Native permission is independent of application role authority.
+
+Errors are returned as tool errors; successful calls contain `{ok:true,data}`.
+There is no automatic write retry. Read back after an uncertain response and use the
+existing request keys/revision checks instead of guessing whether a mutation occurred.
+
+The full GUI/API comparison and Plan workflow are available as `core/secretary-api`
+(`docs/SECRETARY_API_PARITY.md`).
+
+## All Conversations and dynamic categories
+
+`messenger.directory` lists current workers, groups, parent channels and social elements
+without loading messages, starting engines or acknowledging reads. It is available to
+the user and Secretary. The UI uses the same category/type predicates over live catalogs.
+
+```sh
+agents messenger directory --type groups --json
+agents messenger directory --type private --query "Research" --json
+agents messenger directory --type x --query "@author" --json
+agents messenger directory --folder CATEGORY_ID --archived include --offset 0 --limit 100 --json
+```
+
+Types: `all`, `private` (all workers, including management roles), `groups`, `channels`
+(parent channel containers), `telegram`, `x`, `youtube` (individual social elements).
+Search matches names, Team/role/engine labels, group member names or platform/accounts.
+`archived` is `exclude` by default, `only`, or `include`; `limit` is 1–200, default 100.
+The result contains `entries`, `total`, `hasMore`, `offset` and per-type `counts`.
+Counts include the search/category/archive constraints but precede the type selection.
+
+Dynamic categories must store `include: private|groups|telegram|x|youtube` rather than
+a one-time ID list. They follow creation and deletion immediately; source rules also
+follow subscription enable/disable. Explicit `conversations` and `excluded` selections
+remain intentional overrides. Category names are labels and never silently determine
+membership. Convert an old static category with `messenger.folder-save`, preserving its
+ID/name and passing `conversations:[]`, the intended `include` and `expectedRevision`.
+Deleting a category never deletes its objects, histories or workspaces.
+
+The All Conversations button is independent of category tabs. Selecting it clears the
+current category, type and search. Switching categories clears old search/type filters,
+so a previous platform query cannot hide a group or worker category. Archived objects
+remain in the existing unified archive and are queryable with `--archived include`.
+
+## Employee profile across views
+
+```sh
+agents card profile EMPLOYEE_ID --json
+agents card profile EMPLOYEE_ID --offset 12 --limit 12 --json
+```
+
+`card.profile {id,offset?,limit?}` is a read-only `employee.read` projection. It returns
+`employee`, `company`, `memberships`, `plans` and `canEditProfile`. No engine opens,
+read receipt changes or directory creation occur merely by viewing the profile.
+`offset` is nonnegative; `limit` defaults to 12 and accepts 1–100.
+
+Company identity includes Team, management role, fixed engine, personal workspace,
+Team root and execution location. Memberships describe current groups as `member`
+and current channel administrator assignments as `administrator`, independent of
+Company management rank. Each entry includes the stable conversation reference,
+shared root and the employee's named first-level subdirectory. Applications use
+these returned paths rather than reconstructing them from display names.
+
+Plans are paginated summaries with total/status counts, actual rule and state,
+nextAt and event capability. Waiting event rules have no invented future date;
+completed or paused event tasks remain distinguishable. No action prompts,
+credentials, private message bodies or other employees' private files are returned.
+Current target access is rechecked after the asynchronous plan read; non-application
+administrators see only conversation memberships within their own member scope.
+
+Employee Details keeps management role and engine read-only. The existing separate
+role-management API retains its authorization; profile edits only change supported
+display fields. Character choices are loaded after an explicit change request.
+Company and Messages use the same profile and original employee identity.
+
+The user opens **Workspaces → User originals** to edit shared root files through
+`conversation.file`. Employee APIs keep originals and peer folders read-only while
+allowing their own named subfolder and explicit copying to the personal Workspace.
+See [CONVERSATION_WORKSPACES.md](docs/CONVERSATION_WORKSPACES.md) for exact operations.
+
+## Custom categories and social elements
+
+Messages has no mandatory All category. Users can name, reorder and delete every
+category. With no category configured, the existing inbox remains accessible;
+deleting a category never deletes its employees, groups, subscriptions or history.
+
+```sh
+agents messenger social --platform x --json
+agents messenger folder-save --name "People" --conversations '[]' --include private --json
+agents messenger folder-save --name "Groups" --conversations '[]' --include groups --json
+agents messenger folder-save --name "X reading" --conversations '[]' --include x --json
+agents messenger folder-save --name "Chosen authors" --conversations '["source:SOURCE_ID"]' --json
+agents view open messages --source SOURCE_ID --json
+```
+
+`messenger.folder-save` accepts `include: private|groups|telegram|x|youtube` and
+`excluded: string[]`. Rule categories include future matching entries. Explicit
+`conversations` are additional inclusions. `include:null` removes an existing rule;
+omitting it preserves the current rule on update. All category updates retain
+`expectedRevision` conflict checks. The editor's Deselect all clears the rule and
+starts a manual selection, so unchosen/new authors do not enter that manual list.
+
+`source:SOURCE_ID` is a list reference, not a new chat history. It can be used in
+category membership, `messenger.reorder` and `messenger.conversation` preferences.
+`messenger.social` returns stable source IDs, current parent channel IDs, labels,
+platforms, independently counted unread articles and the latest retained article.
+Default discovery returns enabled sources; `--include-disabled` also exposes retained
+identities, so existing selections/archive entries remain recoverable. It does not
+subscribe to anything, fetch remote content, create channels, mark reads or start agents.
+
+Opening a social element filters the original `channel.posts` queries by `sourceId`,
+including older pages, search, saved articles and live updates. Shared discussion,
+channel membership and workspaces remain on the original parent channel, reachable
+through Open shared channel. Unfiltered channel navigation is still supported.
+
+```sh
+# Human-only explicit acknowledgment of this source's current retained articles.
+# Other authors and the parent channel's discussion remain unchanged.
+agents channel acknowledge CHANNEL_ID --all --source SOURCE_ID --json
+```
+
+The source must currently belong to the supplied channel. Ordinary channel
+administrators cannot mark human reads. Source archive/preferences never mutate
+private or group read receipts. Archived chats is shown only while there is at
+least one archived existing entry, and disappears after the last restoration.
 
 ## Shared API documentation
 
@@ -58,8 +213,8 @@ The native tool is `agents_company_documentation`. Its `operation` is `identity`
 `index`, `document` (with a catalogued `document` ID), or `describe` (with one Core
 `command`). It cannot execute commands or read arbitrary files. Initialization must
 successfully call `identity` and `index` before returning `OK`; saying that they were
-read is insufficient. The shared-message acknowledgment stage uses its separate
-explicit discussion tool and does not permit documentation discovery.
+read is insufficient. The shared-message reading stage has no tools. Core records receipt only after
+that native turn succeeds; no acknowledgment API call is required.
 
 Company, Messages and Plan are the three **Core views**. Plan uses `agents plan`
 and `agents schedule` over Core scheduling records. **MiniNotion is a separate
@@ -136,9 +291,9 @@ agents card create --title Cline-Worker --group "Cloud Team" --engine cline --ki
 agents card create --title Pi-Worker --group "Cloud Team" --engine pi --kind worker --work-environment team --model deepseek-flash --thinking off --json
 ```
 
-Equivalent JSON: `card.create {title,group,engine:"cline"|"pi",kind:"worker",workEnvironment:"team",model:"deepseek-flash",thinking:false}`. Cline/Pi execute on the Core host and use the Cloud Team's existing MCP Tunnel for commands and files: `execute`, `read_file`, `write_file`, `edit_file`, `list_files`. Local tools are blocked in cloud mode even with Full access. Ask/Edit/Don't ask permissions still apply; Cline Plan permits remote reads only. Failures never switch execution to the local workspace. Cloud-native workers and Work/plugin directories remain unsupported for these two adapters.
+Equivalent JSON: `card.create {title,group,engine:"cline"|"pi",kind:"worker",workEnvironment:"team",model:"deepseek-flash",thinking:false}`. Cline/Pi execute on the Core host and use the Cloud Team's existing MCP Tunnel for commands and files: `execute`, `read_file`, `write_file`, `edit_file`, `list_files`. Local tools are blocked in cloud mode even with Full access. Ask/Edit/Don't ask permissions still apply; Cline Plan permits remote reads only. Failures never switch execution to the local workspace. Work/plugin employees are also supported: they use their assigned plugin workspace, employee-authenticated CLI and existing file/API permissions. Cline/Pi cloud-native execution is not implemented; choose a Core-local worker with Tunnel explicitly.
 
-Manager/Governor runtime and workspace requirements are unchanged. In a Cloud Team they require `kind:"worker",workEnvironment:"local"`; their Employees normally use `workEnvironment:"team"`. This discovery API does not grant hiring or cross-Team authority. Only the user can create or assign a Governor.
+Manager/Governor may use local workspaces, Tunnel cloud workspaces or supported cloud-native engines without changing their role scope. Secretary retains its Core-local requirement. This discovery API does not grant hiring or cross-Team authority; Governor appointment remains user/Secretary-authorized.
 
 `engine.inspect SESSION_ID capabilities|mcp|usage|config` reports the selected adapter's own data and never uses Codex as a substitute for Cline/Pi. A Tunnel `status:"configured"` entry is configuration metadata, not a live connectivity result. Unsupported native skills/account/quota inspection is reported explicitly.
 
@@ -307,9 +462,43 @@ Regular `session.send/enqueue` messages accept an optional `clientMessageId`
 (`--client-message-id ID`, a trimmed nonempty string up to 160 characters). Reuse
 the same ID and content after a lost response. IDs belong to the authenticated
 sender and stable employee; `send` and `enqueue` share the same attempt. Changed
-content, attachments, reply or task-view scope with the same ID is rejected.
+content, attachments, reply, source presentation or task-view scope with the same ID is rejected.
 Current authority is checked again before returning a saved confirmation. Confirming
 an accepted attempt does not reopen its engine or reread expired source attachments.
+
+`session.send/enqueue/steer` accept optional `sourceView:"company"|"messages"|"plan"`
+(CLI `--source-view`). This is the sender-declared presentation for that message,
+independent of Governor's `viewId` / `--view` target Team scope. All roles receive
+this context; authorization and execution host remain unchanged. Omitted source
+stays unknown, including CLI/Agent sends: Core does not inspect a different client's
+current screen or reuse the preceding message's source.
+
+The desktop/Web composer captures the originating presentation before awaiting
+its first send. A workbench opened from Messages or Plan retains that origin.
+Queues and unchanged retries preserve this snapshot even after navigation or reload;
+editing content or explicitly sending as a new request captures the new origin.
+New receipt records also bind an unknown origin, so adding/changing it under an
+existing key rejects. Pre-upgrade accepted receipts remain confirmable without
+replaying work or inventing historical provenance.
+
+The employee receives a small per-message source block beside the original request:
+Company suggests considering organization/delegation APIs; Messages suggests checking
+existing conversations and using group collaboration when the task calls for it;
+Plan suggests the existing schedule APIs. Explicit message instructions and the
+employee's role take priority. No branch automatically creates a group, broadcasts,
+starts a schedule or restricts work to one view. Discover relevant APIs with the
+shared documentation tool as needed. Source metadata is not a grant of authority.
+
+`currentTask.sourceView`, queue entries and user transcript items expose known
+origins. The user message body, copy/quote text, author and attachments are unchanged.
+The active task bar and the message's hover description show its origin. Steer
+uses the new appended message's source without replacing the original task's source.
+
+```sh
+agents session send --employee SECRETARY_ID --source-view company --text 'Assign the implementation work.' --client-message-id REQUEST_A --json
+agents session send SESSION_ID 'Discuss the release with the team.' --source-view messages --json
+agents session steer SESSION_ID 'Prioritize this issue.' --source-view messages --json
+```
 
 Keyed responses are `{sent:true,status:"accepted"|"queued",employeeId,clientMessageId,
 messageId?,queueId?,id?}`; `id` is the queue ID when present. These are Core acceptance
@@ -729,7 +918,7 @@ agents card create --title "Reviewer" --group "Build Team" --engine codex --mode
 
 `settings.get/set` 的 `defaultCodexModel`、`defaultClaudeModel` 为之后创建的员工保存默认模型；空字符串恢复系统默认。`card.create --model` 优先于设置；各角色初始化和之后的会话均使用创建时选定的模型。修改默认模型不更改已有员工。云端原生引擎未提供本机设置中的默认模型时，使用该远端模型列表的默认项。新员工表单切换 Coding Agent 时重新读取模型，不沿用另一引擎的选择。
 
-职位为 `managementRole: employee|manager|governor`，执行位置独立为 `kind: worker|cloud-native-worker`。Manager / Governor 必须在 Mac 运行并使用 Mac 本地工作目录，但所属 Team 可以是 Cloud Team。在 Cloud Team 创建 Manager 时，CLI 使用 `--work-environment local`；界面选择 Manager 会自动切换到 Mac 本地工作区。远端工作的本地 Worker 和 Cloud Native Worker 只能担任 Employee。创建、赋予职位、全局授权和启动入口共同执行限制。Mac 本地 Manager 使用同一组 `session.*`、`schedule.*` 和 `card.*` API 管理本 Team 的两类云端 Employee；云端执行失败不回退本机。
+职位由 `managementRole` 决定，执行位置由 `kind: worker|cloud-native-worker` 决定。Manager / Governor 可在本地或云端工作，创建和任免不隐式改主机或工作目录。Core 与云端原生员工通过各自身份使用同一组 `session.*`、`schedule.*`、`card.*` API；Manager 本 Team、Governor 全局角色范围及严格下行排期保持不变。启动不会将云端 Manager/Governor 降为 Employee。
 
 ```bash
 agents card create --title 'Cloud Lead' --group 'Cloud Team' --kind worker \
@@ -815,7 +1004,7 @@ UI、用户 CLI 和员工 CLI 共用 Core。调用身份来自可信 IPC 或可�
 
 Team 表示组织归属，并提供默认工作环境。员工的 `workEnvironment` 缺省为 `team`，继承 Team；在 Cloud Team 中可选择 `local`，保持成员归属，同时使用 Mac 本地工作区。`kind: worker` 表示引擎在 Mac，`cloud-native-worker` 表示引擎在绑定云主机。
 
-管理职位的引擎和实际工作目录必须都在 Core 主机。因此 Cloud Team 可以同时包含 Mac 本地 Manager、本地引擎操作云端的 Employee、云端原生 Employee。云端原生引擎不能选择 `local`，Work 插件员工不能绕过插件目录规则。工作环境创建后固定；已有员工不自动改运行位置。
+Cloud Team 可同时包含本地工作区员工、Core 引擎操作云端的员工和云端原生员工；Manager/Governor 不受位置限制，Secretary 仍需 Core 本地环境。云端原生引擎不能选择 `local`，Work 插件员工不能绕过插件目录规则。工作环境创建后固定；已有员工不自动改运行位置。
 
 ```sh
 agents workspace suggest --team "Cloud Team" --work-environment local --json
@@ -1062,6 +1251,35 @@ provided, removes only the folder, and returns state. Existing conversations,
 archives, favorites, messages and drafts remain. All is built in and has no editable
 folder record.
 
+`messenger.reorder {scope,order,expectedOrder?}` saves display positions in the same
+Messenger state, under optional `orders:{[scope]:string[]}`. Scope is `categories`,
+`all`, `favorites`, `archive` or an existing folder ID. Category keys are `all` and
+folder IDs; conversation keys use the existing employee/group/channel references.
+All can change position but remains built in and cannot be renamed or deleted.
+Submitted IDs must exist, be unique, and number at most 10000; folder-scoped targets
+must belong to that folder. A partial order replaces those keys in their existing
+slots, preserving hidden/filtered positions. Unranked new items follow saved items.
+
+The UI previews moves locally and commits once on release. Each category has its
+own conversation order, independent of All, Favorites and Archive. Manual positions
+take precedence over the automatic pinned/recent sort without changing pin, unread,
+archive or favorite flags. New activity does not move manually arranged rows.
+`order:null` restores the original automatic ordering for that scope. The menu can
+also restore the default category order. Desktop supports dragging and Alt+arrow
+keys; touch uses hold-then-drag. Escape, lost focus and outside drops cancel.
+
+`expectedOrder` compares only the stored order of that scope (`[]` when absent), so
+unrelated draft or preference writes do not create conflicts. An identical result
+is a no-op, including an unchanged retry. A stale different order rejects; the UI
+re-reads authoritative state without replaying the mutation. Category deletion
+removes its saved positions but never its conversations, histories or drafts.
+
+```sh
+agents messenger reorder categories --order '["FOLDER_ID","all"]' --expected-order '[]' --json
+agents messenger reorder all --order '["channel:CHANNEL_ID","employee:EMPLOYEE_ID","group:GROUP_ID"]' --expected-order '[]' --json
+agents messenger reorder all --order null --json
+```
+
 `messenger.conversation {conversations,patch}` validates every target before an atomic
 bulk write. Boolean fields are `pinned`, `favorite`, `archived`, and `unread`. The latter
 is a personal reminder independent of the exact native reply receipt. Archive only
@@ -1080,7 +1298,7 @@ Channel discussion (`cm_`) supports the ordinary personal save/pin/hide/reaction
 annotations without rewriting its public text. Search, references and forwarding
 retain the real operator/administrator author. Other news actions use the channel API.
 
-`messenger.draft {conversation,text,images?,files?,mentions?,replyTo?,replyQuote?,replyConversation?,replyTextOnly?,clientMessageId?,viewId?,expectedClientMessageId?}` persists text and
+`messenger.draft {conversation,text,images?,files?,mentions?,replyTo?,replyQuote?,replyConversation?,replyTextOnly?,clientMessageId?,viewId?,sourceView?,expectedClientMessageId?}` persists text and
 references without uploading or sending. Text is limited to 100000 characters; image
 and mention limits match the existing composer contracts. Empty drafts clear the record.
 Actual sends still validate workspace and member authority through the original APIs.
@@ -1106,12 +1324,12 @@ scope through the existing Core deduplication; it does not create a new message 
 new employee delivery. A changed send payload gets a new identity. Successful sends
 conditionally clear only their submitted draft. Private sends use the acceptance
 contract above; preserving a draft does not make an interrupted queue durable.
-Channel drafts persist text, mentions and same-channel replyTo through the same
-draft interface. Channel images/files and cross-conversation or selected-quote
-draft fields are rejected rather than silently dropped by its composer.
-Attachment uploads remain private/group conversations; channel discussion does not
-accept attachments. A draft may reference retained channel news; an expired or
-deleted source becomes unavailable rather than a permanent hidden copy.
+Channel drafts persist text, images/files, mentions and same-channel replyTo through
+the same draft interface. Cross-conversation and selected-quote draft fields remain
+unsupported. Group/channel uploads live in the persistent shared conversation folder;
+sending combines the user's text with a file-list notification, without copying file
+bytes or image inputs into employee conversations. A draft may reference retained
+channel news; an expired or deleted news source remains unavailable.
 
 `messenger.search {conversation?,query?,filter?,author?,offset?,limit?}` reads full public
 histories, including group messages outside the currently loaded UI page. Filters are
@@ -1245,11 +1463,11 @@ agents channel list --json
 agents channel get CHANNEL_ID --json
 # Each call explicitly selects its destination and a message in that destination.
 agents chat post GROUP_A --reply-to MESSAGE_A --text "Reply for group A." --client-message-id reply-a --json
-agents chat post GROUP_B --reply-to MESSAGE_B --silent --json
+# No reply for group B: do not call a publication API.
 agents channel message-post CHANNEL_C --reply-to USER_MESSAGE_C --text "Reply for channel C." --client-message-id reply-c --json
 ```
 
-The user or Secretary can create groups, edit membership, mute and delete groups. Groups accept up to 200 employees. `chat.create {name,team?,members?}` deduplicates the
+The human user or an Agent may create a group with an explicitly identifiable Agent Owner. Only its actual Owner/Admin edits membership or moderates; only Owner dissolves the group. Company rank, including Secretary, confers no group office. Groups accept up to 200 employees. `chat.create {name,team?,members?,ownerId?}` deduplicates the
 selected identities. `chat.update {id,name?,members?,addTeams?,expectedRevision?}` replaces
 an explicitly supplied member list, then adds explicitly selected Teams. An optional
 revision rejects stale edits. The UI exposes the same create/edit/member-selection APIs.
@@ -1318,113 +1536,79 @@ deliveries are not retroactively delivered. Restart marks uncertain active deliv
 interrupted and never replays them automatically. Public employee replies are themselves
 new group messages, while silent acknowledgments never create another message.
 
-### Employee acknowledgments and group mutes
+### Private reading, deliberate publication and group mutes
+
+A shared delivery first runs a brief private reading turn in the employee's existing
+native session and FIFO. This turn has no tools, cannot post, and is not a work assignment.
+Core records deliveredAt/readAt when the native turn succeeds, after checking current
+task authority and membership again. No fixed wording, JSON, empty post or acknowledgment
+tool is required. Failed/interrupted reading does not release work; history queries
+alone do not create receipts.
+
+For mode=work, Core then dispatches the original accepted work prompt. For
+mode=awareness, reading completes the delivery without a response stage. Employee
+public replies reach other members as awareness only; reading them cannot generate
+another public-reply wave. Awareness stays in native context without inserting private
+user/assistant work messages. Ordinary work output remains in the employee transcript.
+
+Silence requires no API call. Publish only a useful human-facing answer or update:
 
 ```sh
-# Authenticated employee: deliberately publish a public reply when useful.
-agents chat post GROUP_ID --reply-to REQUEST_ID --text "I have read the request." --json
-# Any recipient, including an explicitly addressed employee: acknowledge silently.
-agents chat post GROUP_ID --reply-to REQUEST_ID --silent --json
-# Operator moderation: indefinite, timed, whole-group and removal.
+agents chat post GROUP_ID --reply-to REQUEST_ID --text "Checks passed; details are in my workspace." --kind result --client-message-id report-001 --json
+```
+
+chat.post and channel.message-post reject text:null; their CLI no longer supports
+--silent. Empty/whitespace Agent posts and placeholder-only null, undefined or None
+strings are rejected before creating messages or deliveries. Operator attachment-only
+group messages remain supported. Historical messages are not removed or rewritten.
+
+The native agents_company_discussion_post is an optional publication tool during an
+active shared response stage, never a read-confirmation tool. It requires:
+
+```json
+{"conversationType":"group","conversationId":"cg_actual_id","messageId":"gm_actual_id","text":"A useful public answer."}
+```
+
+Destination and message must match the current shared work request. Text is a nonempty
+string, capped at 2,000 Unicode characters. Core checks captured employee credentials,
+task identity, membership and mute state. Reading, initialization, unrelated private
+turns, revoked identities, wrong IDs and late calls cannot publish. An identical scoped
+retry returns its first result; different text after publication is rejected. Further
+intentional updates use the explicit post API and separate retry IDs. The tool advises
+nextAction=end_turn to avoid repeating a public reply.
+
+No acknowledgment-only messages are created. Old acknowledgmentOf and ackMessageId
+remain readable for history compatibility. Explicit replies to a delivered replyTo may
+record the author's factual receipt, never the user's group/private reading state.
+
+Group/channel work does not generate or overwrite private lastReply. Messages private
+chat and the Company employee conversation share that one private receipt. Group and
+channel user receipts remain independent. Full work details stay in the original
+employee transcript and native history, not another session.
+
+Startup removes an old incorrect private unread marker only when its full reply hash
+exactly matches an existing group/channel delivery task and the saved assistant text.
+Genuine private, already-read and unprovable older records remain untouched; histories
+and user-read timestamps are not rewritten.
+
+Requests still queue normally while reading. Steer waits until reading ends; Stop keeps
+its existing cancellation behavior. Codex disables work environments and inherited tools
+while reading, then resumes the same thread for work. Active background terminals block
+that switch without being stopped. Ordinary work restores the environment after reading;
+/review and /compact remain refused until restoration because their protocols cannot
+carry the environment override.
+
+```sh
 agents chat mute GROUP_ID --member EMPLOYEE_ID --json
 agents chat mute GROUP_ID --member EMPLOYEE_ID --for 3600 --json
 agents chat mute GROUP_ID --member all --for 900 --json
 agents chat mute GROUP_ID --member EMPLOYEE_ID --off --json
 ```
 
-Before an unacknowledged delivery proceeds, Core runs a brief internal reading/
-acknowledgment turn in the recipient's existing native session, using the accepted
-text, reply context and attachments. The native tool
-`agents_company_discussion_post({conversationType:"group"|"channel",conversationId,messageId,text:string|null})` explicitly submits a
-receipt through the existing authenticated post API. Its employee identity and exact
-group/channel entry are bound before the turn; it is unavailable outside that reading
-stage. All four tool fields are required. `conversationType` distinguishes `group`
-from `channel`; `conversationId` is the supplied groupId/channelId, and `messageId`
-is that messageId/entryId. Core checks all three against the captured delivery even
-when the employee belongs to both destinations. A missing, stale, or mismatched
-routing field fails without publishing or marking either conversation read. For example:
-
-```json
-{"conversationType":"group","conversationId":"cg_actual_id","messageId":"gm_actual_id","text":null}
-```
-
-Copy the real IDs from the received context. `null` (Python `None`) is a silent
-receipt; the literal string `"None"` is text. The tool remains limited to the current
-reading stage. The native tool result includes `nextAction:"end_turn"`: finish with OK and
-no further tools. Core then sends the formal response task separately. Reading-stage
-context contains only the accepted source/reply metadata and body, without history
-or publication instructions; those appear in the response-stage prompt.
-Later deliberate replies use the explicitly targeted post APIs above,
-with their own current membership, mute and reply authorization checks. This is a scoped
-native tool, not an additional public CLI command.
-
-The default is `text:null`, including for explicitly addressed, unmuted employees.
-A nonempty value deliberately publishes that exact human-facing reply or brief receipt;
-it must not contain private reasoning or plans about whether or how to respond. Ordinary
-assistant text, JSON, thoughts and final output never publish or mark a message read.
-Only an accepted tool call or an explicit authenticated post API acknowledgment counts.
-If a receipt is already recorded, do not publish another acknowledgment in the response
-stage. A silent receipt does not dismiss an addressed user's question, story, casual
-conversation or task.
-
-For work mode, an accepted acknowledgment releases the original work prompt. For
-awareness mode, that reading turn completes the delivery directly: no formal work turn,
-private user message or new private reply is generated. Sending returns after queue
-acceptance rather than model output. Missing or rejected acknowledgments and interruption do not release
-work. Additional messages may queue during acknowledgment; Steer is rejected until it
-ends. Native identity and ordinary queue/Stop behavior remain intact.
-
-When the reading-stage tool deliberately publishes a public reply, Core marks the new message
-with read-only `acknowledgmentOf`. It is delivered to the other current members as
-awareness with `required:"silent-only"`: their model reads the context and explicitly
-submits `text:null`. Visible tool submissions are rejected for silent-only or muted
-recipients; the model must choose a silent receipt instead. Core never converts output
-or a rejected public submission into a silent read.
-Clients cannot submit or forge acknowledgmentOf. This ends mechanical acknowledgment
-chains while ordinary explicit public posts remain visible to the whole group.
-
-Codex switches the idle native actor between restricted reading and ordinary work with
-`thread/unsubscribe` followed by resume of the same threadId. Native history, execution
-host, model and employee identity remain unchanged. Before unloading an actor, Core
-checks its native background terminals: any active terminal explicitly rejects the
-reading attempt without stopping that terminal or marking the message read. Let it
-finish, or explicitly stop it, before retrying the delivery.
-
-The restricted acknowledgment environments remain until the next ordinary work turn
-restores the original workspace. This also applies after successful awareness;
-`/review` and `/compact` are explicitly refused in between because those special native
-operations cannot carry the environment override. No engine process restart is used.
-
-Only the authenticated employee in a message's frozen deliveries may acknowledge it.
-Nonnull replies whose replyTo names such a message also record acknowledgment for that
-employee, while still publishing the new reply to the other current members. Reading
-history/context alone does not acknowledge it. Internal required is silent-or-visible
-normally and silent-only for acknowledgment-derived messages; legacy visible remains
-a compatibility type, not a requirement imposed on new addressed recipients.
-
-A silent acknowledgment returns
-`{acknowledged:true,groupId,messageId,employeeId,deliveredAt,readAt,ackMessageId?}`.
-It creates no history message, sequence, preview, user unread badge or receipt cursor
-change. Repeating it preserves the original timestamps. `chat.history` and `chat.context`
-reads alone do not acknowledge a request. Recipient `chat.context` returns an
-`acknowledgment` policy containing `required`, `acknowledged` and `muted` for the requested
-message. A previously accepted acknowledgment remains valid after a mute expires.
-
-Each delivery may include factual `deliveredAt`, authenticated acknowledgment `readAt`
-and the first visible acknowledgment's `ackMessageId`. Being in the local queue is not
-proof of native acceptance and does not itself set these timestamps. An authenticated
-acknowledgment proves receipt and fills a missing `deliveredAt`. These employee receipts
-never mark the operator's private replies read or change `lastReply.readAt`.
-
-`chat.mute {id,member:"all"|EMPLOYEE_ID,muted,durationSeconds?}` is operator-only and
-returns the current `ChatGroupView`. Omit duration for an indefinite mute. Stored
-`mutes` maps `all` or employee IDs to expiry milliseconds, with `null` for indefinite;
-members expose effective `mutedUntil` when currently muted. An all-member mute also
-covers future members and combines with individual restrictions. Removing an individual
-restriction does not bypass an active all-member mute. Core checks expiry on publication;
-no background expiry timer is needed. Muted employees can read, receive work and silently
-acknowledge, but cannot publish new visible posts or sends. The operator remains able to
-publish and send. Muting does not revoke permissions, remove members or stop tasks.
+The user or Secretary may change mutes. Omitted duration is indefinite; all also covers
+future members and combines with individual restrictions. Expiry is checked per post,
+without a timer. Muting blocks employee public posts, not private reading, work,
+membership or management authority. Operator messages remain available.
 
 ### Correcting an operator's published message
 
@@ -1478,19 +1662,19 @@ publishes as the authenticated member; authors cannot be supplied or impersonate
 supported employee kinds are `summary`, `decision`, `blocker`, `question`, and `result`,
 defaulting to summary. The operator may additionally use `kind:"message"` for a
 context-only publication. Agent posts are capped at 2,000 Unicode characters; user messages
-at 16,000. `text:null` is the separate authenticated recipient acknowledgment described above.
+at 16,000. Null acknowledgment posts are rejected; to remain silent, make no call.
 
 Use group posts for a relevant reply to the participants, including ordinary questions,
 stories and casual conversation, or a short outcome, decision, blocker or coordination
 question. Work/awareness describes delivery routing, not whether a user request is valid.
-Recipients who do not need to contribute may acknowledge silently. Keep full reasoning,
+Recipients who do not need to contribute make no publication call. Keep full reasoning,
 internal decisions about answering, tool traces, large code/logs, credentials,
 and unrelated private conversation text in the employee's private work page. Every routed
 request includes this reporting policy and the exact group/message IDs in its engine
 context. The user-visible private message remains the original request. Private final
-answers are **not** automatically copied into groups. Nonnull `chat.post` informs the
-other members through awareness, while null creates no message or further delivery.
-Automatic acknowledgment messages require silent-only subsequent acknowledgment. Team members may read only groups they
+answers are **not** automatically copied into groups or marked as private unread for
+group/channel work. chat.post informs others through tool-free awareness. Null is rejected.
+Team members may read only groups they
 belong to, including Governors; group visibility does not grant access to one another's
 private conversations. The shared API reference includes these tools; discovery and
 execution authorization remain separate.
@@ -1519,15 +1703,34 @@ start inference. With administrators configured, newly created external news is
 delivered to those administrators for a real silent reading turn in their existing
 sessions. User discussion may assign work as described below. Collectors keep
 their own source credentials and retention; they gain no employee or discussion
-authority. Channel management remains user-only. The context/history/message-post
+authority. Channel management is available to the user or Secretary. The context/history/message-post
 operations also admit currently assigned administrators, with a Core membership check.
+Creation requires `engine`: `{kind:"employees",employeeIds:[...]}` or an external process
+`{kind:"external",location:"local"|"remote",name,host?,endpoint?,collectorId?}`. Remote processes
+require both host and a receiver URL reachable from that process. Employee publishers use
+`channel.publish`/`channel.media-put` with channelId; Core binds authorship to their own current
+membership. External collectors continue to use sourceId and separate credentials. Ordinary
+employee channel reads do not expose external connection addresses or credential IDs.
+
+`channel.connection {id}` exposes process configuration, source IDs and the last authenticated
+request to application administrators. It does not claim live reachability. A new dedicated
+token is returned once in `setup` at creation; `channel.collector-add {name,channelId}` replaces
+the binding without changing unrelated channels. Creating a channel does not start a process
+or task. Employee channel settings can create an existing `schedule.create` agent task with
+explicit cadence and enablement. See [CHANNELS.md](docs/CHANNELS.md) for setup and publication examples.
+
+`channel.create` and `channel.update` accept `avatar:{name,mimeType,data}` for independently
+retained PNG/JPEG/GIF/WebP bytes up to 8 MiB. `channel.update {id,avatar:null}` restores the default
+image; `channel.avatar-image {id}` reads custom image bytes. Names, membership, connection and
+avatar edits support expectedRevision on update. Engine kind is fixed once configured.
 
 ```sh
 agents channel list --json
 agents channel source-add --data '{"plugin":"telegram","locator":"https://t.me/example","name":"Example news"}' --json
 agents channel source-add --data '{"plugin":"x","locator":"@example"}' --json
 agents channel source-add --data '{"plugin":"youtube","locator":"https://youtube.com/@example"}' --json
-agents channel create --name Research --json
+agents channel create --name Research --engine '{"kind":"external","location":"local","name":"Research worker"}' --json
+agents channel create --name 'Team news' --engine '{"kind":"employees","employeeIds":["EMPLOYEE_ID"]}' --json
 agents channel source-update SOURCE_ID --patch '{"channelId":"CHANNEL_ID"}' --json
 agents channel sources --include-disabled --json
 agents channel source-remove SOURCE_ID --json
@@ -1540,7 +1743,7 @@ agents channel export POST_ID --json
 
 The initial channel list is empty. Each Telegram source creates its own channel;
 X and YouTube lazily create one default aggregate channel each. X/YouTube sources
-can be routed to any existing channel, including a Telegram source’s channel;
+can be routed to any external-engine channel, including a Telegram source’s channel;
 that source keeps its fixed corresponding channel. Routing projects all retained posts, including
 saved posts, through the source's current channel without changing post IDs or
 copying content. Unfollowing disables the source while preserving its identity,
@@ -1580,7 +1783,8 @@ contentHash, saved/savedAt and local media descriptors
 `{id,name,mimeType,bytes,sha256}`. `channel.get {id}` returns just the channel
 identity, effective adminIds and revision; `channel.list` adds source/post/saved
 counts, the latest retained post, optional lastMessage (including actual author),
-and a Telegram source avatar `{sourceId,sha256}` when one has been uploaded.
+and a Telegram source avatar `{sourceId,sha256}` when one has been uploaded. An independent
+custom channel image takes priority and adds channelId to that avatar descriptor.
 
 Unsaved news expires at `min(publishedAt + 48 hours, receivedAt + 48 hours)`;
 updates and retries never extend that deadline. Core rejects expired replay,
@@ -1615,7 +1819,7 @@ agents channel history CHANNEL_ID --limit 100 --json
 agents channel context CHANNEL_ID --entry POST_OR_MESSAGE_ID --json
 # Authenticated administrator, in a user discussion actually delivered to them:
 agents channel message-post CHANNEL_ID --reply-to USER_MESSAGE_ID --text "A concise result." --kind result --json
-agents channel message-post CHANNEL_ID --reply-to ENTRY_ID --silent --json
+# No public reply needed: do not call message-post.
 ```
 
 `channel.list` is also available to initialized employees, Managers and Governors,
@@ -1640,23 +1844,22 @@ use the original employee engine, session, queue and permission checks. User tex
 is limited to 16000 Unicode characters. `replyTo` can identify retained `np_` news
 or a `cm_` discussion message; external authors never become employees by name.
 
-`channel.message-post {id,text:string|null,replyTo?,kind?,clientMessageId?}` accepts
+`channel.message-post {id,text:string,replyTo?,kind?,clientMessageId?}` accepts
 concise administrator replies (up to 2000 Unicode characters). A public Agent reply
 must trace to a user-authored or Core-marked Secretary management discussion delivered to that Agent; it cannot
 be an unsolicited post in response to a news-only delivery. A user question about that
 news is a normal discussion; reply to its user message through this API. Ordinary
 questions, stories and casual conversation are valid requests as well as work tasks. Other current
 administrators receive the reply as silent-only awareness, without a self-echo.
-The internal acknowledgmentOf marker is read-only and cannot be submitted by API.
-`text:null` / CLI `--silent` records only the authenticated frozen recipient's real
-read acknowledgment. It creates no message, sequence, preview or further delivery.
-Operator message-post is an explicit context-only publication.
+The historical acknowledgmentOf marker remains read-only. No acknowledgment-only
+publications are created. Null, empty Agent text and --silent are rejected.
+Operator message-post remains explicit context-only publication.
 
-The reading stage uses the same bound `agents_company_discussion_post` native tool
-described for groups. Ordinary assistant text, JSON, thoughts and final output are
-never channel posts or read confirmations. If the acknowledgment has already been
-recorded, the subsequent response stage does not send another receipt; it may publish
-the actual user-facing answer explicitly with `channel.message-post`.
+Reading has no tools and generates a recipient receipt only after native success.
+The optional bound agents_company_discussion_post tool is available in the shared
+response stage for an explicit nonempty answer, with the same exact-target checks as
+groups. Ordinary output is private; news/awareness never invite another public reply.
+Channel work preserves existing private lastReply and its read state.
 
 ### Other conversation history
 
@@ -2248,6 +2451,18 @@ explicit Apply action; appearance autosave never submits these drafts. Engine ma
 and license details are collapsed separately. Shared display defaults and current-view
 defaults reset independently from employee defaults.
 
+### Messages wallpaper
+
+The Messages settings tab includes five original micro-pattern collections (Daydream, Botanical, Cosmos, Studio, Geometry) and No pattern. Every collection supports ordered or naturally scattered placement, density and ink opacity with a live preview of the actual conversation renderer. The default uses small Daydream drawings in a deterministic scattered arrangement, density 115 and opacity 16.
+
+`settings.get.messageWallpaper` contains `{pattern,layout,density,opacity}`. `settings.set {messageWallpaper:{...}}` merges only supplied fields: pattern is `daydream|botanical|cosmos|studio|geometric|none`, layout is `ordered|scattered`, density is 70–160 (%) and opacity is 0–45 (%). Unknown fields or out-of-range values reject the complete patch before persistence.
+
+`agents settings set --message-wallpaper '{"pattern":"botanical","layout":"ordered","density":130,"opacity":16}' --json` uses the same API; JSON files are supported through `@file`. The native API tool also uses the unchanged authenticated settings dispatcher.
+
+All private chats, groups, channel timelines and post views share one Messages decoration preference. Company, Plan, message data and execution permissions are unchanged. Color themes remain independent. Changing density/opacity is debounced and close/navigation flushes pending updates; late acknowledgements cannot remove newer local fields. Reset wallpaper restores only decoration; Reset Messages settings restores this view's color and wallpaper. No pattern keeps the theme's background wash without SVG marks.
+
+The renderer repeats a small SVG tile (50 original motifs across five collections); layout is deterministic and bounded independently of message count or viewport size. Scattered tiles wrap edge motifs for seamless repeats. No downloaded art, remote requests, image files, animation loops or second background store are introduced.
+
 Canvas zoom accepts 0.25–8 (default 2.5); pan accepts 0.25–4 (default 1). The sidebar width
 range is 56–96 (default 64), with employee snapping enabled by default. These remain existing
 Core preferences; appearance edits do not change canvas geometry or execution permissions.
@@ -2721,8 +2936,8 @@ Small character avatars now use dedicated static head/shoulder or silhouette cro
 ### Message files and group media
 
 `messenger.upload-begin CONVERSATION --name NAME --bytes N` is user-only. It creates
-a unique conversation attachment directory and returns the chunk-upload protocol
-plus its planned `path`. Use consecutive `transfer.upload-chunk` calls, then
+a uniquely named upload in the group/channel workspace root (or the existing private
+attachment directory) and returns the chunk-upload protocol plus its planned `path`. Use consecutive `transfer.upload-chunk` calls, then
 `upload-commit`; `upload-abort` removes incomplete staging bytes. Each regular file
 is at most 2 GiB; messages accept up to 16 combined files/images. Browser and desktop
 uploads send bytes, never interpret a browser-local path as a Core path.
@@ -2735,9 +2950,11 @@ searches filenames and public messages. Images keep their existing image protoco
 `chat.send/post --images JSON --files JSON` publishes paths uploaded to `group:ID`.
 Attachment publication is currently user-only. Core keeps group media outside
 employee workspaces. Every public send/post reaches the current recipient snapshot,
-using work or awareness mode as described above. Published attachments are copied into
-each recipient's own workspace when required by its native input, with the same scoped
-delegation and membership rechecks before queueing. `chat.file ID --path PATH [--operation info|image|read|chunk]
+using work or awareness mode as described above. Group/channel recipients receive one
+text notification containing the user's original text and all file names, types, sizes
+and shared references. No attachment bytes or private-chat images/files are dispatched,
+and no automatic workspace copy occurs. Employees explicitly read shared files or copy
+them into their own named group folder or unchanged personal Workspace as needed. `chat.file ID --path PATH [--operation info|image|read|chunk]
 [--offset N]` lets members read only published group attachments. Images use the
 existing 10 MiB PNG/JPEG/GIF/WebP preview limit; other formats and larger images can
 be uploaded as ordinary downloadable files.
@@ -2834,38 +3051,133 @@ or draft audio pauses the background player. Explicit source navigation uses the
 conversation/message ID. Media Session controls are registered only while audio owns the
 session, when the client supports those actions.
 
+## Group and channel workspaces
+
+Full API and worked examples: [Conversation workspaces](docs/CONVERSATION_WORKSPACES.md),
+also available through `agents api docs core/conversation-workspaces --json`.
+
+`conversation.workspace {conversation,employee?}` and `conversation.workspaces {employee?}`
+return stable named shared folders and member subfolders. `conversation.file` supports
+list/read/image/info/chunk/write/mkdir/move/trash/restore. All current members can read;
+Agent mutations are limited to their own subfolder. Root user originals and peer folders
+are read-only through Core. These checks do not sandbox arbitrary same-account native tools.
+`conversation.copy {from,to}` explicitly copies between a shared folder and the caller's
+personal workspace, or into their named member folder; it does not overwrite destinations.
+`conversation.transfer {id,cancel?}` reports/cancels only the caller's copy.
+
+New attachments use `@workspace/relative-path`; completed uploads are shared immediately,
+and pressing Send notifies the members. Renaming a conversation or employee does not move
+an existing workspace. The API returns the stable actual path. Old group attachments
+remain at their original locations and stay readable through `chat.file`.
+
+Messages has one **Archived chats** entry for employees, groups and channels, with direct
+Restore controls. Archive/restore uses `messenger.conversation` with `patch.archived`, and
+does not alter files, memberships, histories or read receipts. Only Company displays the
+labelled Add Team and Add Employee controls. Employee work pages can browse both their
+personal Workspace and joined group/channel member folders without changing native identity.
+
+## Plan automation and channel schedules
+
+Timed, recurring and event-triggered employee work uses the same Core `schedule.*` records visible in Plan. All roles may schedule themselves; other targets must be strictly lower roles within their existing Team/global management scope. No Agent can schedule another peer or a superior, including Secretary peers. The user can edit all plans. The complete contract is in PLAN.md and SCHEDULER.md.
+
+`action.channelId` associates an employee publishing task with a channel whose membership is rechecked at execution. Channel settings reuse the full Plan editor and show current jobs from `plan.query {filter:{channel:CHANNEL_ID}}`; editing retains the same job ID and supports revision checks. An unconfigured employee channel does not silently create or start jobs.
+
+`rule:{kind:"event",event:"signal"|"channel.posted",channelId?,cooldownSeconds?}` uses the existing executor, run history and occurrence quota. `channelId` is required only for channel.posted; signal rules instead accept `schedule.trigger {id,eventId}`. CLI: `agents schedule create --employee self --name NAME --prompt TEXT --on-event signal --cooldown-seconds 60`, then `agents schedule trigger JOB_ID --event-id KEY`. Use `--on-event channel.posted --event-channel CHANNEL_ID` for actual new publications, and `--channel CHANNEL_ID` for a publishing destination. Native events cannot be forged through the signal API.
+
+Event schedules wait with nextAt:null; Plan shows waiting, while calendar dates derive from real runs only. Claims use bounded persistent deduplication (last 256 event IDs plus retained runs). Paused, expired, cooldown and out-of-window events are ignored; busy accepted attempts are recorded as skipped, without a separate retry queue. Credential/role/channel revocation also affects events. See PLAN.md for exact source permissions and offline behavior.
+
+## Mention editing and independent engine credentials
+
+Group and channel mention pickers follow the current caret/selection, including middle-of-draft edits, full-width ＠ and IME completion. Choosing a member removes only the query before the caret, retains the suffix and restores insertion position. Recipients continue to use stable employee-ID chips and the existing chat/channel send APIs.
+
+`engine.configure` stores Cline, Pi and Claude credentials independently. Cline/Pi use only their own saved key and provider URL: no fallback to Claude native settings or a globally inherited DeepSeek key. Their spawned environments exclude Anthropic/OpenAI credentials from other engines. Cline’s local compatibility relay pins upstream Bearer authentication to the configured Cline key; it does not forward a stale personal key. Claude retains its own configuration and does not import Cline/Pi keys. Empty key fields in the UI retain that engine’s existing key; API `apiKey:""` clears only the selected engine.
+
+
+## Cloud documents and channel storage
+
+An external channel may bind `engine.fileStorage: {hostId,directory}` to an existing
+Cloud Hosts record and the collector's content-addressed media root. Its collector
+configuration advertises `collectFiles:true`. The collector sends only
+`channel.publish.files` metadata: `{id,name,mimeType,bytes,sha256,thumbnailMediaId?}`.
+Original document bytes remain on the cloud host; paths are always derived as
+`directory/SHA256_PREFIX/SHA256`, never supplied arbitrarily by the collector.
+The existing validated image protocol handles optional document thumbnails.
+
+```sh
+agents channel file-download --post POST_ID --file FILE_ID --json
+agents channel file-status --post POST_ID --file FILE_ID --json
+agents conversation workspace channel:CHANNEL_ID --json
+```
+
+`channel.file-download {postId,fileId}` is human-only and starts an existing SSH
+transfer into the channel's shared workspace. `channel.file-status` reports
+not-downloaded/queued/running/completed/failed, byte progress and the saved relative
+path. Wait for completed: acceptance is not completion. Files up to 2 GiB are
+streamed in chunks; size and SHA-256 are verified before atomic commit. A conflicting
+user filename is retained, and a new suffix is used. Repeated downloads reuse the
+completed copy. The channel Files button opens the same storage interface as groups.
+
+For document channels, cloud posts and files expire seven days after publication.
+The worker automatically removes expired records and unreferenced file bytes.
+Initial backfill is the last 48 hours. Ordinary channels retain their existing
+48-hour policy. Saving a local post does not extend cloud cache lifetime. Documents
+explicitly copied into the local channel workspace survive cloud expiration, post
+deletion and Core restart. SSH failure never reads a same-named file on the Mac.
+
+
+Telegram document publications may include `telegram: {groupId,views,subscriberCount,reactions}`
+with original platform counts. Same-source document messages sharing groupId render
+as one ordered album while retaining every original post ID and download/read scope.
+Document thumbnails use original Telegram images; `thumbnailOrigin: generated` is a
+first-page preview shown after the user downloads that PDF, with the red folded PDF
+icon retained beforehand. No source filename, size, caption or publication time is replaced.
+
+## Conversation governance and static notifications
+
+Group offices use Owner / Admin / Member and are held by Agent employees. They are independent of Company managementRole. Admins may appoint/revoke other Admins; only Owner transfers ownership or dissolves a group. The human user retains recovery access without occupying an Agent office. Existing unowned groups require explicit assignment.
+
+Use `conversation.policy` to discover current offices, moderation state, revision and allowedActions. `conversation.role/mute/silence` require the current expectedRevision. Company Secretary is not a substitute for a conversation Admin. Legacy chat.update/delete/mute enforce the same office boundary. Group-wide mute restricts Members; channel-wide mute restricts all publishers. Quiet mode keeps notice messages and unread state but suppresses the connected application's attention banner.
+
+`conversation.notice-list/get/create/update/delete/preview/history` manage fixed-text notifications. They use a separate Core timer and conversation-notices.sqlite, never Plan schedules, employee work queues or model calls. Creation requires a stable clientRequestId and spec {name,text,publisherId,rule,enabled}; rule is once, interval or weekly (all weekdays gives daily). Updates and deletion require expectedRevision. The automatic published message has noticeId, occurrenceId, scheduledFor and silent metadata. Replaying a pending occurrence after restart cannot duplicate its message. Revoked creators or publishers disable future publication; recurring downtime does not produce a backlog.
+
+Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs core/conversation-controls` for the role matrix, exact schemas, quiet/mute distinction, creator/publisher constraints, timezone and recovery behavior. Employee automation, research and article publishing workflows still use Plan `schedule.*`; a static notification never substitutes for such work.
+
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 275 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 305 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
 | <code>agents plan schema</code> | <code>—</code> | Discover all ten layouts, fields, policies, authorized targets and mutation APIs | Plan database | schedule |
-| <code>agents plan query</code> | <code>[--filter JSON&#124;@file --sort nextAt&#124;name&#124;updatedAt&#124;priority --direction asc&#124;desc --offset N --limit N]</code> | Query canonical scheduler records as a filtered database; status and nextAt are computed | Plan database | schedule |
+| <code>agents plan query</code> | <code>[--filter JSON&#124;@file --sort nextAt&#124;name&#124;updatedAt&#124;priority --direction asc&#124;desc --offset N --limit N]</code> | Find real task IDs/revisions, assigned people/roles/Teams, complete rules/times and allowedActions; includes removed-target records for Secretary | Plan database | schedule |
 | <code>agents plan calendar</code> | <code>--from ISO --to ISO [--timezone IANA --filter JSON&#124;@file --limit N]</code> | Return bounded future occurrences and recorded runs in a maximum 93-day range | Plan database | schedule |
 | <code>agents plan timeline</code> | <code>--from ISO --to ISO [--timezone IANA --filter JSON&#124;@file --limit N]</code> | Project forecast estimates and actual/ongoing run spans, including overlaps; no inferred duration from timeout | Plan database | schedule |
 | <code>agents plan analytics</code> | <code>[--metric schedules&#124;runs --group-by status&#124;employee&#124;team&#124;priority --filter JSON --outcomes JSON --from ISO --to ISO]</code> | Aggregate the complete authorized data set, never just the current UI page; explicitly distinguish schedules and retained runs | Plan database | schedule |
 | <code>agents plan feed</code> | <code>[--filter JSON --outcomes JSON --from ISO --to ISO --before CURSOR --limit N]</code> | Read actual retained execution activity with stable cursor pagination, including removed schedules when authorized | Plan database | schedule |
-| <code>agents plan views</code> | <code>—</code> | List built-in and caller-owned saved database views | Plan database | schedule |
+| <code>agents plan views</code> | <code>—</code> | List built-in and authorized saved views; Secretary administers user-created views | Plan database | schedule |
 | <code>agents plan view-create</code> | <code>--spec JSON&#124;@file</code> | Save any of ten database layouts with filters, sorting, grouping and presentation options | Plan database | schedule |
-| <code>agents plan view-update</code> | <code>ID --patch JSON&#124;@file [--expected-revision N]</code> | Update an owned saved view without changing schedules; options are a complete replacement object | Plan database | schedule |
-| <code>agents plan view-delete</code> | <code>ID [--expected-revision N]</code> | Remove an owned saved view only; schedules and histories remain | Plan database | schedule |
+| <code>agents plan view-update</code> | <code>ID --patch JSON&#124;@file [--expected-revision N]</code> | Update an authorized saved view without changing schedules; options are a complete replacement object | Plan database | schedule |
+| <code>agents plan view-delete</code> | <code>ID [--expected-revision N]</code> | Remove an authorized saved view only; schedules and histories remain | Plan database | schedule |
+| <code>agents channel file-download</code> | <code>--post POST_ID --file FILE_ID</code> | User-only: copy a cloud document into this channel shared workspace, with SHA-256 verification; cloud cache retention never removes the local copy | Download to channel | operator |
+| <code>agents channel file-status</code> | <code>--post POST_ID --file FILE_ID</code> | Read cloud-to-channel download progress and the saved relative workspace path; never starts a download | Channel document progress | operator |
+| <code>agents channel connection</code> | <code>ID</code> | Read configured process origin, receiver URL, source IDs and last authenticated contact; saving configuration never claims a live connection | Channel connection | operator |
+| <code>agents channel avatar-image</code> | <code>ID</code> | User or Secretary: read the independently retained custom channel avatar | Channel avatar | operator |
 | <code>agents channel read-state</code> | <code>ID --entries JSON</code> | User or Secretary: read personal reading state for retained channel entries; does not acknowledge or execute anything | Channel unread state | operator |
-| <code>agents channel acknowledge</code> | <code>ID (--entries JSON &#124; --all)</code> | User-only: mark specific visible entries or explicitly mark all current unread channel entries read, independently of Agent delivery receipts | Channel user reading | operator |
+| <code>agents channel acknowledge</code> | <code>ID (--entries JSON &#124; --all [--source SOURCE_ID])</code> | User-only: mark specific visible entries or explicitly mark all current unread channel entries read, independently of Agent delivery receipts | Channel user reading | operator |
 | <code>agents channel timeline</code> | <code>ID [--kind all&#124;news&#124;message] [--before-entry ID] [--cursor CURSOR] [--limit N]</code> | Read retained channel news and discussion with full content; choose 1–100 entries and paginate older history. Administrators may read their channels; no read receipts or model calls. | Channel history | chat |
 | <code>agents channel history</code> | <code>ID [--before N] [--around ID] [--limit N]</code> | Discussion messages only, excluding news. Use channel.timeline for the visible news feed or mixed history. | Channel discussion | chat |
 | <code>agents channel context</code> | <code>ID [--entry ID]</code> | Read retained news or discussion context within a current channel administrator assignment | Channel discussion | chat |
-| <code>agents channel message-send</code> | <code>ID --text TEXT [--file PATH] [--mentions JSON&#124;all] [--reply-to ID] [--client-message-id ID]</code> | User or Secretary: share a channel message with all current administrators and assign work to its dialogue targets | Channel composer | operator |
-| <code>agents channel message-post</code> | <code>ID [--text TEXT &#124; --silent] [--file PATH] [--reply-to ID] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result] [--client-message-id ID]</code> | A current administrator may acknowledge silently or reply within a received user or Secretary management discussion; news cannot trigger public discussion | Channel replies | chat |
+| <code>agents channel message-send</code> | <code>ID [--text TEXT] [--file PATH] [--images JSON] [--files JSON] [--mentions JSON&#124;all] [--reply-to ID] [--client-message-id ID]</code> | User or Secretary: share a channel message with all current administrators and assign work to its dialogue targets | Channel composer | operator |
+| <code>agents channel message-post</code> | <code>ID [--text TEXT] [--file PATH] [--images JSON] [--files JSON] [--reply-to ID] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result] [--client-message-id ID]</code> | Deliberately publish a nonempty reply within a received user or Secretary discussion; no acknowledgment call is needed | Channel replies | chat |
 | <code>agents channel source-avatar-put</code> | <code>--data JSON&#124;@file</code> | Submit a source-scoped identity image using the collector capability; this grants no message or membership permissions | Channel source identity | operator |
 | <code>agents channel source-image</code> | <code>SOURCE_ID</code> | User or Secretary: read the original independently retained source avatar bytes | Channel avatar | operator |
 | <code>agents channel settings</code> | <code>[--patch JSON]</code> | User or Secretary: read or configure the local collector listener; disabled by default | News channel connection | operator |
 | <code>agents channel list</code> | <code>—</code> | List your current administrator channel identities; the user additionally receives retained-item summaries | News channels | chat |
 | <code>agents channel get</code> | <code>ID</code> | Read one channel identity as the user or a current administrator without scanning news histories | News channels | chat |
 | <code>agents channel sources</code> | <code>[--channel ID] [--plugin telegram&#124;x&#124;youtube] [--include-disabled]</code> | User or Secretary: list authoritative subscriptions, routes and retained author avatars | News subscriptions | operator |
-| <code>agents channel create</code> | <code>--name NAME</code> | User or Secretary: create a custom news channel, not a group or employee | News channels | operator |
-| <code>agents channel update</code> | <code>ID [--name NAME] [--admins JSON] [--expected-revision N]</code> | User or Secretary: rename a channel or assign independent channel administrators without changing company roles | Channel administrators | operator |
+| <code>agents channel create</code> | <code>--name NAME --engine JSON [--avatar JSON&#124;@file]</code> | User or Secretary: explicitly choose employee or external-process publishing; an issued collector token is returned once in setup | Channel publishing engine | operator |
+| <code>agents channel update</code> | <code>ID [--name NAME] [--admins JSON] [--engine JSON] [--avatar JSON&#124;null] [--expected-revision N]</code> | Update channel identity, publishing membership or external connection without changing company roles or engine type; null avatar restores the default | Channel settings | operator |
 | <code>agents channel source-add</code> | <code>--data JSON&#124;@file</code> | User or Secretary: follow a source; Telegram creates a one-to-one channel, X/YouTube default to aggregators | News subscriptions | operator |
 | <code>agents channel source-update</code> | <code>ID --patch JSON&#124;@file</code> | User or Secretary: change source settings or route all retained news, including saved items | News subscriptions | operator |
 | <code>agents channel source-remove</code> | <code>ID</code> | User or Secretary: unfollow a source while retaining its identity and saved news | News subscriptions | operator |
@@ -2875,12 +3187,15 @@ session, when the client supports those actions.
 | <code>agents channel delete</code> | <code>POST_ID</code> | User or Secretary: delete local news and images with bounded replay protection | News deletion | operator |
 | <code>agents channel image</code> | <code>CHANNEL_ID --post POST_ID --media MEDIA_ID</code> | User or Secretary: read a published local news image, never staging or arbitrary URLs | News images | operator |
 | <code>agents channel export</code> | <code>POST_ID</code> | User or Secretary: export a retained news article and original local images | News download | operator |
-| <code>agents channel collector-add</code> | <code>--name NAME [--sources JSON&#124;all]</code> | User or Secretary: issue a separate source-scoped collector token; plaintext is returned once | News collector connection | operator |
+| <code>agents channel collector-add</code> | <code>--name NAME [--sources JSON&#124;all &#124; --channel ID]</code> | Issue a source-scoped credential or bind a replacement process credential to an external channel; plaintext is returned once | News collector connection | operator |
 | <code>agents channel collectors</code> | <code>—</code> | User or Secretary: list collector metadata without tokens or token hashes | News collector connection | operator |
 | <code>agents channel collector-revoke</code> | <code>ID</code> | User or Secretary: revoke a news collector credential | News collector connection | operator |
 | <code>agents channel collector-config</code> | <code>[--since-revision N]</code> | Read authoritative collector targets; external access requires the dedicated channel capability | Collector protocol | operator |
-| <code>agents channel media-put</code> | <code>--data JSON&#124;@file</code> | Publish one bounded local news image; collector access is source/item scoped | Collector protocol | operator |
-| <code>agents channel publish</code> | <code>--data JSON&#124;@file</code> | Publish or update an in-window news item without resetting retention or user deletion | Collector protocol | operator |
+| <code>agents channel media-put</code> | <code>--data JSON&#124;@file</code> | Upload an item-scoped image: employee publishers use channelId, external collectors use sourceId; the authenticated employee identity is enforced | Channel publishing | chat |
+| <code>agents channel publish</code> | <code>--data JSON&#124;@file</code> | Publish an article using a current employee channelId or an external sourceId. Scheduled employees may publish without a discussion parent; identity, deduplication and retention remain enforced | Channel publishing | chat |
+| <code>agents messenger directory</code> | <code>[--type all&#124;private&#124;groups&#124;channels&#124;telegram&#124;x&#124;youtube] [--query TEXT] [--folder ID] [--archived exclude&#124;only&#124;include] [--offset N] [--limit N]</code> | User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution | All Conversations and type filtering | operator |
+| <code>agents messenger social</code> | <code>[--platform telegram&#124;x&#124;youtube] [--include-disabled]</code> | User or Secretary: list each social element with stable source ID, parent channel, latest publication and per-source unread count; no reads acknowledged | Social category picker | operator |
+| <code>agents messenger reorder</code> | <code>SCOPE --order JSON&#124;null [--expected-order JSON]</code> | User or Secretary: persist category or mixed conversation positions in categories/all/favorites/archive/a folder ID; null restores automatic order, unrelated drafts and hidden positions remain unchanged | Message drag ordering | operator |
 | <code>agents messenger media-open</code> | <code>CONVERSATION --path PATH</code> | User-only: open a client-scoped audio/video preview with a bounded lifetime; no inference | Media playback | operator |
 | <code>agents messenger media-info</code> | <code>ID</code> | User-only: validate the owned media preview and file version | Media playback | operator |
 | <code>agents messenger media-read</code> | <code>ID --offset N</code> | User-only: read at most 256 KiB from an owned media preview at a validated offset | Media playback | operator |
@@ -2892,34 +3207,56 @@ session, when the client supports those actions.
 | <code>agents messenger forward-draft</code> | <code>--data JSON&#124;null [--expected-client-message-id ID]</code> | User-only: retain or discard one forwarding setup; discarding never cancels accepted work | Resume forwarding | operator |
 | <code>agents messenger forward-status</code> | <code>--client-message-id ID</code> | User-only: check a forwarding receipt without sending, reading sources or starting work | Forwarding result | operator |
 | <code>agents messenger state</code> | <code>—</code> | User or Secretary: read persisted conversation preferences, saved messages, reactions and drafts | Messages organization | operator |
-| <code>agents messenger folder-save</code> | <code>--name NAME --conversations JSON [--id ID] [--expected-revision N]</code> | User or Secretary: create or update a personal folder of private, group and channel conversations without moving their content | Conversation folders | operator |
+| <code>agents messenger folder-save</code> | <code>--name NAME --conversations JSON [--include private&#124;groups&#124;telegram&#124;x&#124;youtube&#124;null] [--excluded JSON] [--id ID] [--expected-revision N]</code> | User or Secretary: create or update a personal folder of private, group and channel conversations without moving their content | Conversation folders | operator |
 | <code>agents messenger folder-delete</code> | <code>ID [--expected-revision N]</code> | User or Secretary: remove a personal conversation folder while retaining every conversation and message | Conversation folders | operator |
 | <code>agents messenger conversation</code> | <code>--conversations JSON --patch JSON</code> | User or Secretary: pin, favorite, archive or mark conversations unread in one atomic update | Messages list and bulk actions | operator |
 | <code>agents messenger message</code> | <code>CONVERSATION [MESSAGE_ID &#124; --ids JSON] --patch JSON</code> | User or Secretary: save, pin, react to or hide an existing public message; native history stays intact | Messages actions | operator |
 | <code>agents messenger draft</code> | <code>CONVERSATION --data JSON</code> | User or Secretary: persist a draft and its send identity, or conditionally clear the matching draft; never sends or opens an engine | Messages composer | operator |
 | <code>agents messenger search</code> | <code>[--conversation REF] [--query TEXT] [--filter all&#124;saved&#124;pinned&#124;media&#124;audio&#124;files&#124;links] [--author all&#124;you&#124;employee] [--offset N] [--limit N]</code> | User or Secretary: search full public histories and saved/media/link references without inference or read acknowledgements | Messages search and shared content | operator |
+| <code>agents assets naming</code> | <code>[--id PREVIEW_ID --apply]</code> | User-only: preview or apply English directory names across managed and externally bound workspaces, retaining identities and legacy references | English folder names | operator |
+| <code>agents assets tree</code> | <code>—</code> | User-only: read the fixed Company, Messages and Plan workspace tree | Files and assets | workspace |
+| <code>agents assets children</code> | <code>ID [--hidden] [--offset N] [--limit N]</code> | User-only: lazily page one real directory and its direct nonempty-folder count | Files and assets tree | workspace |
+| <code>agents assets search</code> | <code>[--query TEXT] [--root ID] [--offset N] [--limit N] [--hidden] [--refresh]</code> | User-only: page background-indexed files with their Team, employee, group or channel ownership | Asset list | workspace |
+| <code>agents assets file</code> | <code>ID --operation list&#124;read&#124;image&#124;info&#124;chunk&#124;write&#124;mkdir&#124;move&#124;trash&#124;restore [--path PATH] [--to PATH] [--content TEXT] [--hash HASH] [--create] [--hidden] [--offset N] [--trash-id ID]</code> | User-only: use existing workspace operations without changing scope or member permissions | Asset file editor | workspace |
+| <code>agents conversation workspace</code> | <code>CONVERSATION [--employee ID]</code> | Read the shared folder and named member workspaces; members may read all shared files but write only their own subfolder | Group / channel workspace | chat |
+| <code>agents conversation workspaces</code> | <code>[--employee ID]</code> | List an employee’s group/channel workspaces without changing their personal workspace or execution host | Employee workspace selector | chat |
+| <code>agents conversation file</code> | <code>CONVERSATION --operation list&#124;read&#124;image&#124;info&#124;chunk&#124;write&#124;mkdir&#124;move&#124;trash&#124;restore [--path PATH] [--to PATH] [--content TEXT] [--hash HASH] [--create] [--hidden] [--offset N] [--id TRASH_ID]</code> | Operate shared files with current membership checks; user uploads and other member folders are read-only for Agents | Shared file browser | chat |
+| <code>agents conversation copy</code> | <code>--from JSON --to JSON</code> | Copy a shared file/folder to your named member folder or personal workspace; source is retained and existing destinations are never overwritten | Shared workspace copy | chat |
+| <code>agents conversation transfer</code> | <code>ID [--cancel]</code> | Read or cancel your shared-workspace copy; queued is not completed, and a restart does not replay copies | Shared workspace copy progress | chat |
+| <code>agents conversation policy</code> | <code>CONVERSATION</code> | Read independent Owner/Admin/Member offices, moderation state and allowed actions; Company rank grants no conversation office | Conversation administration | chat |
+| <code>agents conversation role</code> | <code>CONVERSATION --employee ID --role owner&#124;admin&#124;member --expected-revision N</code> | Owner/Admin may appoint or revoke Admins; only Owner transfers ownership. In channels member removes an Admin; channels have no Owner office. | Conversation roles | chat |
+| <code>agents conversation mute</code> | <code>CONVERSATION --member ID&#124;all --muted true&#124;false [--duration-seconds N] --expected-revision N</code> | Owner/Admin changes public posting restrictions; all restricts Member posting in groups, all publishers in channels. Never changes Company work permissions. | Conversation moderation | chat |
+| <code>agents conversation silence</code> | <code>CONVERSATION --silent true&#124;false --expected-revision N</code> | Owner/Admin enables quiet conversation notices: messages remain in history, but no notice attention banner is raised; not member posting mute | Quiet notices | chat |
+| <code>agents conversation notice-list</code> | <code>CONVERSATION [--offset N --limit N]</code> | Owner/Admin lists independent static notifications; these IDs never belong to Plan | Conversation notifications | chat |
+| <code>agents conversation notice-get</code> | <code>CONVERSATION --id ID</code> | Read one notification rule, saved text, publishing identity and next occurrence; no model work | Notification details | chat |
+| <code>agents conversation notice-create</code> | <code>CONVERSATION --spec JSON&#124;@file --client-request-id ID</code> | Owner/Admin creates an idempotent static notice. Required spec: name, text, publisherId, rule, enabled. Once/interval/weekly (all days=daily), independent of Plan. | New notification | chat |
+| <code>agents conversation notice-update</code> | <code>CONVERSATION --id ID --patch JSON&#124;@file --expected-revision N</code> | Edit text/rule/publisher or pause/resume with enabled. Rechecks conversation authority; no Plan or employee queue edits. | Edit or pause notification | chat |
+| <code>agents conversation notice-delete</code> | <code>CONVERSATION --id ID --expected-revision N</code> | Remove an independent notification and cancel pending occurrences; published messages and audit history remain | Delete notification | chat |
+| <code>agents conversation notice-preview</code> | <code>CONVERSATION --rule JSON&#124;@file [--from ISO]</code> | Read the next five notice occurrences in the stated timezone. No notification, agent or Plan task is created. | Notification preview | chat |
+| <code>agents conversation notice-history</code> | <code>CONVERSATION [--id ID --limit N --offset N]</code> | Read bounded static notice publication/skipped/cancelled history, including removed notices; no model logs or Plan history | Notification history | chat |
+| <code>agents card profile</code> | <code>ID [--offset N] [--limit N]</code> | Read employee identity, authorized memberships, named workspaces and paged Plan tasks without opening an engine or changing read receipts | Employee profile | employee.read |
 | <code>agents view list</code> | <code>—</code> | List application views and their shared data contracts | Shared views / group conversations | operator |
 | <code>agents view select</code> | <code>company&#124;messages&#124;plan [--team-view ID]</code> | Select a presentation mode; Company defaults to All Team | Shared views / group conversations | operator |
 | <code>agents chat list</code> | <code>—</code> | List groups for the current authenticated member | Shared views / group conversations | chat |
-| <code>agents chat create</code> | <code>--name NAME [--team TEAM] [--members JSON]</code> | User-only: create a group from Team members and selected employees | Shared views / group conversations | operator |
-| <code>agents chat update</code> | <code>ID --patch JSON</code> | User-only: edit group name and membership | Shared views / group conversations | operator |
-| <code>agents chat delete</code> | <code>ID</code> | Remove a group; preserve employees and private conversations | Shared views / group conversations | operator |
-| <code>agents chat mute</code> | <code>ID --member EMPLOYEE_ID&#124;all [--for SECONDS &#124; --off]</code> | User-only: mute visible employee posts; reading, silent acknowledgments and work remain available | Group member moderation | operator |
+| <code>agents chat create</code> | <code>--name NAME [--team TEAM] [--members JSON] [--owner-id ID]</code> | Create a group with an Agent Owner; Agent creators own their group, user selects ownerId (defaults to first selected member) | Shared views / group conversations | chat |
+| <code>agents chat update</code> | <code>ID --patch JSON</code> | Conversation Owner/Admin: edit group name and membership; Company role does not confer access | Shared views / group conversations | chat |
+| <code>agents chat delete</code> | <code>ID</code> | Conversation Owner (or the human user) removes a group; Admin cannot dissolve it; employees and private history are retained | Shared views / group conversations | chat |
+| <code>agents chat mute</code> | <code>ID --member EMPLOYEE_ID&#124;all [--for SECONDS &#124; --off]</code> | Conversation Owner/Admin: mute visible posts; Company rank grants no moderation; reading and work remain available | Group member moderation | chat |
 | <code>agents chat get</code> | <code>ID</code> | Read group metadata and member identities | Shared views / group conversations | chat |
 | <code>agents chat history</code> | <code>ID [--before SEQUENCE &#124; --around MESSAGE_ID] [--limit 50]</code> | Read published group messages with pagination | Shared views / group conversations | chat |
 | <code>agents chat file</code> | <code>ID --path PATH [--operation info&#124;image&#124;read&#124;chunk] [--offset N]</code> | Read a published group attachment as an authenticated member | Group attachments | chat |
 | <code>agents chat context</code> | <code>ID [--message ID]</code> | Read published group context and concise reporting policy | Shared views / group conversations | chat |
 | <code>agents chat send</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--mentions JSON&#124;all] [--client-message-id ID] [--view ID] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Deliver to current members; mentions and user replies select work, other recipients receive context | Shared views / group conversations | chat |
 | <code>agents chat edit</code> | <code>ID --message MESSAGE_ID --text TEXT [--file PATH] --expected-revision N</code> | User-only: correct own published group text or caption without changing accepted tasks or receipts | Group message editing | operator |
-| <code>agents chat post</code> | <code>ID [--text TEXT &#124; --silent] [--images JSON] [--files JSON] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result&#124;message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]</code> | Publish shared context to current members, or silently acknowledge without creating a new message | Shared views / group conversations | chat |
+| <code>agents chat post</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result&#124;message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]</code> | Deliberately publish a nonempty public reply; silence requires no API call | Shared views / group conversations | chat |
 | <code>agents chat acknowledge</code> | <code>ID --message ID</code> | User-only: mark group messages read; private receipts remain separate | Shared views / group conversations | operator |
 | <code>agents system info</code> | <code>—</code> | Read Core host OS, architecture and deployment capabilities | 后端信息 | identity |
-| <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user only) | 后端目录选择 | operator |
+| <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user or Secretary) | 后端目录选择 | operator |
 | <code>agents engine capabilities</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi</code> | Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference | 创建员工能力检查 | identity |
 | <code>agents engine list</code> | <code>—</code> | List registered Coding Agent adapters and public configuration | 引擎管理 | operator |
 | <code>agents engine check</code> | <code>--engine ID [--team NAME] [--force]</code> | Check executable, protocol and authentication without inference | 引擎检测 | operator |
 | <code>agents engine probe</code> | <code>--engine ID --confirm [--model ID]</code> | Explicit, potentially billed OK-only inference on the Core host; temporary workspace and 45s timeout | 引擎测试调用 | operator |
-| <code>agents engine configure</code> | <code>--engine ID --data JSON&#124;@file</code> | Set an executable path, encrypted key, or Cline/Pi compatible baseUrl and exact model ID (user only) | 引擎配置 | operator |
+| <code>agents engine configure</code> | <code>--engine ID --data JSON&#124;@file</code> | Set an executable path, encrypted key, or Cline/Pi compatible baseUrl and exact model ID (user or Secretary) | 引擎配置 | operator |
 | <code>agents engine install-plan</code> | <code>--engine ID</code> | Read the pinned official package and Core-host install destination | 引擎安装 | operator |
 | <code>agents engine install</code> | <code>--engine ID --confirm</code> | Install a pinned engine into application storage, never global PATH | 引擎安装 | operator |
 | <code>agents engine install-status</code> | <code>ID</code> | Read bounded installation progress without credentials | 引擎安装 | operator |
@@ -2937,7 +3274,7 @@ session, when the client supports those actions.
 | <code>agents auth whoami</code> | <code>—</code> | Read authenticated caller and management role | 管理与协同 | identity |
 | <code>agents auth agent-token</code> | <code>ID</code> | Issue or read an employee API credential (user only) | 管理与协同 | operator |
 | <code>agents auth revoke</code> | <code>ID</code> | Revoke employee API credentials (user only) | 管理与协同 | operator |
-| <code>agents api list</code> | <code>[--all]</code> | List caller-authorized APIs, or the full read-only command catalog with --all | 管理与协同 | identity |
+| <code>agents api list</code> | <code>[--prefix DOMAIN --search TEXT --all]</code> | Discover callable APIs by domain or keyword; all includes retired and permission-restricted metadata, never authority | 管理与协同 | identity |
 | <code>agents api describe</code> | <code>COMMAND [--all]</code> | Read an API schema; --all includes commands outside the caller execution authority | 管理与协同 | identity |
 | <code>agents api docs</code> | <code>[DOCUMENT &#124; --document DOCUMENT]</code> | Read the shared documentation index or a Core/plugin document; no execution authority is granted | 管理与协同 | identity |
 | <code>agents avatar list</code> | <code>[--query NAME] [--style default&#124;anime&#124;chibi] [--all]</code> | Discover exact avatar IDs, character names, styles and aliases from the live picker catalog; no inference | 人物形象目录 | identity |
@@ -2968,22 +3305,23 @@ session, when the client supports those actions.
 | <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 | operator |
 | <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 | schedule |
 | <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID&#124;self --prompt TEXT (--after-seconds N &#124; --at ISO &#124; --time HH:mm &#124; --every-seconds N) [--enabled true&#124;false&#124;on&#124;off &#124; --paused] [--view VIEW_ID --days 7 --timezone IANA --month-day last --max-occurrences N --client-request-id KEY --duration-minutes N]</code> | Schedule an existing employee or yourself; enabled by default; --paused or --enabled false disables automatic runs; Governor requires --view; retry-safe clientRequestId | Plan task editor | schedule |
+| <code>agents schedule list</code> | <code>[--employee ID --source NAMESPACE]</code> | Read raw saved schedules, including orphan records for application administrators; prefer plan.query for people, times and capabilities | Plan database | schedule |
+| <code>agents schedule get</code> | <code>ID</code> | Read the exact saved configuration and revision, even when its employee was removed; discover IDs through plan.query | Plan task editor | schedule |
+| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID&#124;self --prompt TEXT (--after-seconds N &#124; --at ISO &#124; --time HH:mm &#124; --every-seconds N &#124; --on-event signal&#124;channel.posted) [--enabled true&#124;false&#124;on&#124;off &#124; --paused] [--view VIEW_ID --days 7 --timezone IANA --month-day last --max-occurrences N --client-request-id KEY --duration-minutes N --channel ID --event-channel ID --cooldown-seconds N]</code> | Schedule an existing employee or yourself; enabled by default; --paused or --enabled false disables automatic runs; Governor requires --view; retry-safe clientRequestId | Plan task editor | schedule |
 | <code>agents schedule update</code> | <code>ID --patch @file.json [--expected-revision N]</code> | Update an idle schedule; full action/rule replacement, optional revision; retains execution count | Plan task editor | schedule |
-| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule pause</code> | <code>ID [--expected-revision N]</code> | Pause future triggers without stopping the current run | Plan task editor | schedule |
+| <code>agents schedule resume</code> | <code>ID [--expected-revision N]</code> | Resume future triggers after rechecking the current target and original delegation | Plan task editor | schedule |
+| <code>agents schedule delete</code> | <code>[ID &#124; --ids JSON] [--expected-revision N &#124; --expected-revisions JSON]</code> | Delete selected schedules, including orphaned records for Secretary; preflight all IDs and revisions before any cancellation; retain run history | Plan task editor | schedule |
 | <code>agents schedule preview</code> | <code>[ID [--patch JSON&#124;@file] &#124; --spec @file.json] [--after ISO --count N]</code> | Preview saved or draft occurrences without executing; a saved job retains its consumed quota | Plan preview | schedule |
-| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 | schedule |
+| <code>agents schedule run</code> | <code>ID [--expected-revision N]</code> | Run once now; may use a model, does not consume the next occurrence | Plan task editor | schedule |
+| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run and job IDs, exact execution times and outcomes; deletion preserves authorized history | Plan execution history | schedule |
+| <code>agents schedule trigger</code> | <code>ID --event-id KEY</code> | Submit a deduplicated signal to an event schedule; current caller and original scheduling authority are checked; native channel events cannot be forged | Plan event rule | schedule |
+| <code>agents schedule cancel</code> | <code>ID</code> | Cancel an active run, preserving its history | Plan task editor | schedule |
 | <code>agents settings get</code> | <code>—</code> | Read independent Company, Messages and Plan appearances, shared controls and default employee models | 应用设置 | operator |
 | <code>agents engine models</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
-| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan &#124; --view-appearance JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
+| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan &#124; --view-appearance JSON&#124;@file] [--message-wallpaper JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
 | <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
-| <code>agents view open</code> | <code>home&#124;messages&#124;plan&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID &#124; --chat GROUP_ID &#124; --channel CHANNEL_ID] [--plugin ID] [--plan-view ID]</code> | Open a form, workspace, news channel or employee conversation | 打开资料或会话 | operator |
+| <code>agents view open</code> | <code>home&#124;messages&#124;plan&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID &#124; --chat GROUP_ID &#124; --channel CHANNEL_ID] [--source SOURCE_ID] [--plugin ID] [--plan-view ID]</code> | Open a form, workspace, news channel or employee conversation | 打开资料或会话 | operator |
 | <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
 | <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 | operator |
 | <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open | operator |
@@ -2992,7 +3330,7 @@ session, when the client supports those actions.
 | <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” | operator |
 | <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Rename an employee and its one conversation without moving the folder | 会话名称 / 员工名牌 | operator |
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card | employee.message |
-| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Send a message to a Worker session | 对话输入框 | employee.message |
+| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--source-view company&#124;messages&#124;plan] [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Send a message to a Worker session | 对话输入框 | employee.message |
 | <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 | operator |
 | <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 | operator |
 | <code>agents host terminal-open</code> | <code>&lt;id&gt; [--directory PATH --cols N --rows N]</code> | Open a persistent SSH PTY without an employee | Cloud Hosts 工作台 | operator |
@@ -3037,11 +3375,11 @@ session, when the client supports those actions.
 | <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 | operator |
 | <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 | operator |
 | <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 | operator |
-| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 | operator |
+| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt; [--source-view company&#124;messages&#124;plan]</code> | Append instructions to the active native turn with optional per-message presentation context | 运行中追加 | operator |
 | <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 | operator |
 | <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 | operator |
 | <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review | operator |
-| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Queue a message after the active turn | 排队发送 | employee.message |
+| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--source-view company&#124;messages&#124;plan] [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Queue a message after the active turn | 排队发送 | employee.message |
 | <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 | employee.read |
 | <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 | employee.message |
 | <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 | operator |
@@ -3117,7 +3455,7 @@ session, when the client supports those actions.
 | <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 | operator |
 | <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 | operator |
 
-另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。
+另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。`agents api call COMMAND --args JSON|@file --json` 将参数原样转发至该规范 Core 命令，不增加嵌套 Core 接口。
 <!-- END GENERATED CLI COMMAND INDEX -->
 
 ## 定时任务完整规范
@@ -3211,7 +3549,7 @@ Governor 目标还必须提供 `--view VIEW_ID`，见下文“Governor 任务的
 | `schedule schema` | `{}` | 机器可读的字段、默认值、运行策略 |
 | `schedule status` | `{}` | 是否运行、错误、活动 run ID、持久化路径 |
 | `schedule list [--employee ID --source NAME]` | `{employee?,source?}` | 查询排期 |
-| `schedule get ID` | `{id}` | 完整配置和 nextAt，null 表示没有下一次 |
+| `schedule get ID` | `{id}` | 完整配置和 nextAt；事件规则等待时为 null，不代表已完成 |
 | `schedule create --spec @job.json` | `{spec}` | 创建排期；也可使用上述 flags |
 | `schedule update ID --patch @patch.json` | `{id,patch}` | 顶层部分更新；action/rule/window 提供完整对象；活动任务先取消 |
 | `schedule pause ID` | `{id}` | 暂停后续触发，不停止当前轮 |
@@ -3219,8 +3557,9 @@ Governor 目标还必须提供 `--view VIEW_ID`，见下文“Governor 任务的
 | `schedule preview [ID [--patch JSON] / --spec @job.json] --after ISO --count 5` | `{id?,spec?,patch?,after?,count?}` | 只计算未来时间，不执行；保存任务的 patch 预览保留已用次数且不写入；count 1–100 |
 | `schedule run ID` | `{id}` | 明确立即执行一次，即使排期暂停/已结束；忽略日历和工作时段，保留超时与权限；不消耗 nextAt |
 | `schedule history [ID] --employee ID --limit 50` | `{id?,employee?,limit?}` | 最新在前；保留最近 1000 条完成记录及全部活动记录 |
+| `schedule trigger ID --event-id KEY` | `{id,eventId}` | 向 signal 事件规划发送去重信号；校验当前调用者和原委派，无法伪造原生事件 |
 | `schedule cancel RUN_ID` | `{id:runId}` | 终止该次执行，等待引擎停止；不暂停后续排期 |
-| `schedule delete ID` | `{id}` | 先暂停并取消活动执行，再删除排期；保留审计记录 |
+| `schedule delete [ID \| --ids JSON]` | `{id,expectedRevision?}` 或 `{ids,expectedRevisions?}` | 整批校验确切 ID、权限与修订后暂停并取消活动执行，再删除排期；保留审计记录 |
 
 配置例子（`engine` 创建时可省略；下例为 Claude；Codex 使用 effort，不接受 thinking）：
 
@@ -3305,292 +3644,39 @@ Saved-job preview accepts `{id,patch?,after?,count?}`. A patch is temporary and 
 
 ## Plan extension (additive v1)
 
-Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; scheduling others retains existing control limits. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
+Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; scheduling others requires a strictly lower role within the existing Team/global control scope. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
 
 ## Read-model layout extension
 
 `plan.durationMinutes` (1–43,200) supplies an optional future work estimate. It is not a timeout, scheduling reservation or automatic stop time. Timeline uses actual timestamps for recorded attempts, displays missing estimates as instants, and uses half-open spans at date boundaries. `plan.analytics` counts all authorized matching schedules or retained actual runs; `plan.feed` never fabricates activity from forecasts. See `docs/PLAN_VIEW_PARITY.md` for APIs and interactive cases.
 
-## 全部 CLI 命令索引
+## Plan 统一调度与严格下行权限
 
-下面 275 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+所有角色的定时、重复、事件触发员工工作统一使用本 API，并能在 Core Plan 中查询和调整。Employee 只能给自己排期；Manager 可给自己及本 Team 的 Employee 排期；Governor 可给自己及全局 Employee/Manager 排期；Secretary 可给自己及全局 Employee/Manager/Governor 排期。任何 Agent 均不能给其他同级或上级安排任务。用户可调整全部员工规划。一般管理/消息权限不因这一独立的调度规则改变。
 
-| 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
-| --- | --- | --- | --- | --- |
-| <code>agents plan schema</code> | <code>—</code> | Discover all ten layouts, fields, policies, authorized targets and mutation APIs | Plan database | schedule |
-| <code>agents plan query</code> | <code>[--filter JSON&#124;@file --sort nextAt&#124;name&#124;updatedAt&#124;priority --direction asc&#124;desc --offset N --limit N]</code> | Query canonical scheduler records as a filtered database; status and nextAt are computed | Plan database | schedule |
-| <code>agents plan calendar</code> | <code>--from ISO --to ISO [--timezone IANA --filter JSON&#124;@file --limit N]</code> | Return bounded future occurrences and recorded runs in a maximum 93-day range | Plan database | schedule |
-| <code>agents plan timeline</code> | <code>--from ISO --to ISO [--timezone IANA --filter JSON&#124;@file --limit N]</code> | Project forecast estimates and actual/ongoing run spans, including overlaps; no inferred duration from timeout | Plan database | schedule |
-| <code>agents plan analytics</code> | <code>[--metric schedules&#124;runs --group-by status&#124;employee&#124;team&#124;priority --filter JSON --outcomes JSON --from ISO --to ISO]</code> | Aggregate the complete authorized data set, never just the current UI page; explicitly distinguish schedules and retained runs | Plan database | schedule |
-| <code>agents plan feed</code> | <code>[--filter JSON --outcomes JSON --from ISO --to ISO --before CURSOR --limit N]</code> | Read actual retained execution activity with stable cursor pagination, including removed schedules when authorized | Plan database | schedule |
-| <code>agents plan views</code> | <code>—</code> | List built-in and caller-owned saved database views | Plan database | schedule |
-| <code>agents plan view-create</code> | <code>--spec JSON&#124;@file</code> | Save any of ten database layouts with filters, sorting, grouping and presentation options | Plan database | schedule |
-| <code>agents plan view-update</code> | <code>ID --patch JSON&#124;@file [--expected-revision N]</code> | Update an owned saved view without changing schedules; options are a complete replacement object | Plan database | schedule |
-| <code>agents plan view-delete</code> | <code>ID [--expected-revision N]</code> | Remove an owned saved view only; schedules and histories remain | Plan database | schedule |
-| <code>agents channel read-state</code> | <code>ID --entries JSON</code> | User or Secretary: read personal reading state for retained channel entries; does not acknowledge or execute anything | Channel unread state | operator |
-| <code>agents channel acknowledge</code> | <code>ID (--entries JSON &#124; --all)</code> | User-only: mark specific visible entries or explicitly mark all current unread channel entries read, independently of Agent delivery receipts | Channel user reading | operator |
-| <code>agents channel timeline</code> | <code>ID [--kind all&#124;news&#124;message] [--before-entry ID] [--cursor CURSOR] [--limit N]</code> | Read retained channel news and discussion with full content; choose 1–100 entries and paginate older history. Administrators may read their channels; no read receipts or model calls. | Channel history | chat |
-| <code>agents channel history</code> | <code>ID [--before N] [--around ID] [--limit N]</code> | Discussion messages only, excluding news. Use channel.timeline for the visible news feed or mixed history. | Channel discussion | chat |
-| <code>agents channel context</code> | <code>ID [--entry ID]</code> | Read retained news or discussion context within a current channel administrator assignment | Channel discussion | chat |
-| <code>agents channel message-send</code> | <code>ID --text TEXT [--file PATH] [--mentions JSON&#124;all] [--reply-to ID] [--client-message-id ID]</code> | User or Secretary: share a channel message with all current administrators and assign work to its dialogue targets | Channel composer | operator |
-| <code>agents channel message-post</code> | <code>ID [--text TEXT &#124; --silent] [--file PATH] [--reply-to ID] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result] [--client-message-id ID]</code> | A current administrator may acknowledge silently or reply within a received user or Secretary management discussion; news cannot trigger public discussion | Channel replies | chat |
-| <code>agents channel source-avatar-put</code> | <code>--data JSON&#124;@file</code> | Submit a source-scoped identity image using the collector capability; this grants no message or membership permissions | Channel source identity | operator |
-| <code>agents channel source-image</code> | <code>SOURCE_ID</code> | User or Secretary: read the original independently retained source avatar bytes | Channel avatar | operator |
-| <code>agents channel settings</code> | <code>[--patch JSON]</code> | User or Secretary: read or configure the local collector listener; disabled by default | News channel connection | operator |
-| <code>agents channel list</code> | <code>—</code> | List your current administrator channel identities; the user additionally receives retained-item summaries | News channels | chat |
-| <code>agents channel get</code> | <code>ID</code> | Read one channel identity as the user or a current administrator without scanning news histories | News channels | chat |
-| <code>agents channel sources</code> | <code>[--channel ID] [--plugin telegram&#124;x&#124;youtube] [--include-disabled]</code> | User or Secretary: list authoritative subscriptions, routes and retained author avatars | News subscriptions | operator |
-| <code>agents channel create</code> | <code>--name NAME</code> | User or Secretary: create a custom news channel, not a group or employee | News channels | operator |
-| <code>agents channel update</code> | <code>ID [--name NAME] [--admins JSON] [--expected-revision N]</code> | User or Secretary: rename a channel or assign independent channel administrators without changing company roles | Channel administrators | operator |
-| <code>agents channel source-add</code> | <code>--data JSON&#124;@file</code> | User or Secretary: follow a source; Telegram creates a one-to-one channel, X/YouTube default to aggregators | News subscriptions | operator |
-| <code>agents channel source-update</code> | <code>ID --patch JSON&#124;@file</code> | User or Secretary: change source settings or route all retained news, including saved items | News subscriptions | operator |
-| <code>agents channel source-remove</code> | <code>ID</code> | User or Secretary: unfollow a source while retaining its identity and saved news | News subscriptions | operator |
-| <code>agents channel posts</code> | <code>[--channel ID] [--source ID] [--saved] [--query TEXT] [--cursor CURSOR] [--limit N]</code> | User or Secretary: page current news and permanent saved items with stable item identities | News feed | operator |
-| <code>agents channel post</code> | <code>POST_ID</code> | User or Secretary: read a retained news item with current channel routing | News detail | operator |
-| <code>agents channel save</code> | <code>POST_ID on&#124;off</code> | User or Secretary: retain a news item and its local images permanently, or resume its original expiry | Saved news | operator |
-| <code>agents channel delete</code> | <code>POST_ID</code> | User or Secretary: delete local news and images with bounded replay protection | News deletion | operator |
-| <code>agents channel image</code> | <code>CHANNEL_ID --post POST_ID --media MEDIA_ID</code> | User or Secretary: read a published local news image, never staging or arbitrary URLs | News images | operator |
-| <code>agents channel export</code> | <code>POST_ID</code> | User or Secretary: export a retained news article and original local images | News download | operator |
-| <code>agents channel collector-add</code> | <code>--name NAME [--sources JSON&#124;all]</code> | User or Secretary: issue a separate source-scoped collector token; plaintext is returned once | News collector connection | operator |
-| <code>agents channel collectors</code> | <code>—</code> | User or Secretary: list collector metadata without tokens or token hashes | News collector connection | operator |
-| <code>agents channel collector-revoke</code> | <code>ID</code> | User or Secretary: revoke a news collector credential | News collector connection | operator |
-| <code>agents channel collector-config</code> | <code>[--since-revision N]</code> | Read authoritative collector targets; external access requires the dedicated channel capability | Collector protocol | operator |
-| <code>agents channel media-put</code> | <code>--data JSON&#124;@file</code> | Publish one bounded local news image; collector access is source/item scoped | Collector protocol | operator |
-| <code>agents channel publish</code> | <code>--data JSON&#124;@file</code> | Publish or update an in-window news item without resetting retention or user deletion | Collector protocol | operator |
-| <code>agents messenger media-open</code> | <code>CONVERSATION --path PATH</code> | User-only: open a client-scoped audio/video preview with a bounded lifetime; no inference | Media playback | operator |
-| <code>agents messenger media-info</code> | <code>ID</code> | User-only: validate the owned media preview and file version | Media playback | operator |
-| <code>agents messenger media-read</code> | <code>ID --offset N</code> | User-only: read at most 256 KiB from an owned media preview at a validated offset | Media playback | operator |
-| <code>agents messenger media-close</code> | <code>ID</code> | User-only: release a media preview and stop future reads | Media playback | operator |
-| <code>agents messenger gallery</code> | <code>[--conversation REF] [--anchor JSON] [--direction around&#124;before&#124;after&#124;first&#124;last] [--through JSON] [--query TEXT] [--author all&#124;you&#124;employee] [--order oldest&#124;newest] [--limit N]</code> | User or Secretary: page full public image history around stable source cursors, without reading image bytes or acknowledging messages | Historical image gallery | operator |
-| <code>agents messenger upload-begin</code> | <code>CONVERSATION --name NAME --bytes N</code> | User-only: allocate a unique conversation attachment and begin a chunked upload | Message attachments | operator |
-| <code>agents messenger reference</code> | <code>CONVERSATION MESSAGE_ID [--quote JSON] [--text-only]</code> | User-only: resolve a public cross-conversation reference without sending, opening an engine or acknowledging a message | Reply destination preview | operator |
-| <code>agents messenger forward</code> | <code>--messages JSON --to REF --client-message-id ID [--comment TEXT] [--text-only] [--retry]</code> | User-only: deliberately forward selected public messages through existing Core send/queue paths, with durable retry protection | Message forwarding | operator |
-| <code>agents messenger forward-draft</code> | <code>--data JSON&#124;null [--expected-client-message-id ID]</code> | User-only: retain or discard one forwarding setup; discarding never cancels accepted work | Resume forwarding | operator |
-| <code>agents messenger forward-status</code> | <code>--client-message-id ID</code> | User-only: check a forwarding receipt without sending, reading sources or starting work | Forwarding result | operator |
-| <code>agents messenger state</code> | <code>—</code> | User or Secretary: read persisted conversation preferences, saved messages, reactions and drafts | Messages organization | operator |
-| <code>agents messenger folder-save</code> | <code>--name NAME --conversations JSON [--id ID] [--expected-revision N]</code> | User or Secretary: create or update a personal folder of private, group and channel conversations without moving their content | Conversation folders | operator |
-| <code>agents messenger folder-delete</code> | <code>ID [--expected-revision N]</code> | User or Secretary: remove a personal conversation folder while retaining every conversation and message | Conversation folders | operator |
-| <code>agents messenger conversation</code> | <code>--conversations JSON --patch JSON</code> | User or Secretary: pin, favorite, archive or mark conversations unread in one atomic update | Messages list and bulk actions | operator |
-| <code>agents messenger message</code> | <code>CONVERSATION [MESSAGE_ID &#124; --ids JSON] --patch JSON</code> | User or Secretary: save, pin, react to or hide an existing public message; native history stays intact | Messages actions | operator |
-| <code>agents messenger draft</code> | <code>CONVERSATION --data JSON</code> | User or Secretary: persist a draft and its send identity, or conditionally clear the matching draft; never sends or opens an engine | Messages composer | operator |
-| <code>agents messenger search</code> | <code>[--conversation REF] [--query TEXT] [--filter all&#124;saved&#124;pinned&#124;media&#124;audio&#124;files&#124;links] [--author all&#124;you&#124;employee] [--offset N] [--limit N]</code> | User or Secretary: search full public histories and saved/media/link references without inference or read acknowledgements | Messages search and shared content | operator |
-| <code>agents view list</code> | <code>—</code> | List application views and their shared data contracts | Shared views / group conversations | operator |
-| <code>agents view select</code> | <code>company&#124;messages&#124;plan [--team-view ID]</code> | Select a presentation mode; Company defaults to All Team | Shared views / group conversations | operator |
-| <code>agents chat list</code> | <code>—</code> | List groups for the current authenticated member | Shared views / group conversations | chat |
-| <code>agents chat create</code> | <code>--name NAME [--team TEAM] [--members JSON]</code> | User-only: create a group from Team members and selected employees | Shared views / group conversations | operator |
-| <code>agents chat update</code> | <code>ID --patch JSON</code> | User-only: edit group name and membership | Shared views / group conversations | operator |
-| <code>agents chat delete</code> | <code>ID</code> | Remove a group; preserve employees and private conversations | Shared views / group conversations | operator |
-| <code>agents chat mute</code> | <code>ID --member EMPLOYEE_ID&#124;all [--for SECONDS &#124; --off]</code> | User-only: mute visible employee posts; reading, silent acknowledgments and work remain available | Group member moderation | operator |
-| <code>agents chat get</code> | <code>ID</code> | Read group metadata and member identities | Shared views / group conversations | chat |
-| <code>agents chat history</code> | <code>ID [--before SEQUENCE &#124; --around MESSAGE_ID] [--limit 50]</code> | Read published group messages with pagination | Shared views / group conversations | chat |
-| <code>agents chat file</code> | <code>ID --path PATH [--operation info&#124;image&#124;read&#124;chunk] [--offset N]</code> | Read a published group attachment as an authenticated member | Group attachments | chat |
-| <code>agents chat context</code> | <code>ID [--message ID]</code> | Read published group context and concise reporting policy | Shared views / group conversations | chat |
-| <code>agents chat send</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--mentions JSON&#124;all] [--client-message-id ID] [--view ID] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Deliver to current members; mentions and user replies select work, other recipients receive context | Shared views / group conversations | chat |
-| <code>agents chat edit</code> | <code>ID --message MESSAGE_ID --text TEXT [--file PATH] --expected-revision N</code> | User-only: correct own published group text or caption without changing accepted tasks or receipts | Group message editing | operator |
-| <code>agents chat post</code> | <code>ID [--text TEXT &#124; --silent] [--images JSON] [--files JSON] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result&#124;message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]</code> | Publish shared context to current members, or silently acknowledge without creating a new message | Shared views / group conversations | chat |
-| <code>agents chat acknowledge</code> | <code>ID --message ID</code> | User-only: mark group messages read; private receipts remain separate | Shared views / group conversations | operator |
-| <code>agents system info</code> | <code>—</code> | Read Core host OS, architecture and deployment capabilities | 后端信息 | identity |
-| <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user only) | 后端目录选择 | operator |
-| <code>agents engine capabilities</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi</code> | Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference | 创建员工能力检查 | identity |
-| <code>agents engine list</code> | <code>—</code> | List registered Coding Agent adapters and public configuration | 引擎管理 | operator |
-| <code>agents engine check</code> | <code>--engine ID [--team NAME] [--force]</code> | Check executable, protocol and authentication without inference | 引擎检测 | operator |
-| <code>agents engine probe</code> | <code>--engine ID --confirm [--model ID]</code> | Explicit, potentially billed OK-only inference on the Core host; temporary workspace and 45s timeout | 引擎测试调用 | operator |
-| <code>agents engine configure</code> | <code>--engine ID --data JSON&#124;@file</code> | Set an executable path, encrypted key, or Cline/Pi compatible baseUrl and exact model ID (user only) | 引擎配置 | operator |
-| <code>agents engine install-plan</code> | <code>--engine ID</code> | Read the pinned official package and Core-host install destination | 引擎安装 | operator |
-| <code>agents engine install</code> | <code>--engine ID --confirm</code> | Install a pinned engine into application storage, never global PATH | 引擎安装 | operator |
-| <code>agents engine install-status</code> | <code>ID</code> | Read bounded installation progress without credentials | 引擎安装 | operator |
-| <code>agents engine cancel-install</code> | <code>ID</code> | Cancel an application-owned installation | 引擎安装 | operator |
-| <code>agents engine login</code> | <code>--engine codex</code> | Start official Codex device authorization on the Core host | Codex 登录 | operator |
-| <code>agents engine login-status</code> | <code>ID</code> | Read device authorization progress | Codex 登录 | operator |
-| <code>agents engine cancel-login</code> | <code>ID</code> | Cancel a pending device authorization | Codex 登录 | operator |
-| <code>agents transfer upload-begin</code> | <code>--to JSON&#124;@file --name NAME --bytes N</code> | Begin a scoped upload with a hidden staging file | 浏览器文件上传 | operator |
-| <code>agents transfer upload-chunk</code> | <code>ID --offset N --data BASE64&#124;--data-file FILE</code> | Write the next bounded upload chunk | 浏览器文件上传 | operator |
-| <code>agents transfer upload-commit</code> | <code>ID</code> | Atomically publish a completed upload without overwriting existing files | 浏览器文件上传 | operator |
-| <code>agents transfer upload-abort</code> | <code>ID</code> | Cancel and clean an upload owned by this client | 浏览器文件上传 | operator |
-| <code>agents transfer download-save</code> | <code>--from JSON --path PATH [--overwrite]</code> | User-only: stream a scoped download to a Core-host file, or choose a destination in the desktop | Save attachment | operator |
-| <code>agents transfer download-info</code> | <code>--from JSON&#124;@file</code> | Read download size and version | 浏览器文件下载 | operator |
-| <code>agents transfer download-chunk</code> | <code>--from JSON&#124;@file --offset N [--modified-at N]</code> | Read a bounded file chunk and reject a changed version | 浏览器文件下载 | operator |
-| <code>agents auth whoami</code> | <code>—</code> | Read authenticated caller and management role | 管理与协同 | identity |
-| <code>agents auth agent-token</code> | <code>ID</code> | Issue or read an employee API credential (user only) | 管理与协同 | operator |
-| <code>agents auth revoke</code> | <code>ID</code> | Revoke employee API credentials (user only) | 管理与协同 | operator |
-| <code>agents api list</code> | <code>[--all]</code> | List caller-authorized APIs, or the full read-only command catalog with --all | 管理与协同 | identity |
-| <code>agents api describe</code> | <code>COMMAND [--all]</code> | Read an API schema; --all includes commands outside the caller execution authority | 管理与协同 | identity |
-| <code>agents api docs</code> | <code>[DOCUMENT &#124; --document DOCUMENT]</code> | Read the shared documentation index or a Core/plugin document; no execution authority is granted | 管理与协同 | identity |
-| <code>agents avatar list</code> | <code>[--query NAME] [--style default&#124;anime&#124;chibi] [--all]</code> | Discover exact avatar IDs, character names, styles and aliases from the live picker catalog; no inference | 人物形象目录 | identity |
-| <code>agents connector get</code> | <code>--manager ID --employee ID</code> | Read endpoint anchors and 24 availablePoints, including all four corners of the uniform employee frame | 连线端点 | layout.read |
-| <code>agents connector set</code> | <code>--manager ID --employee ID [--source auto&#124;top&#124;right&#124;bottom&#124;left --source-offset 0.5] [--target auto&#124;top&#124;right&#124;bottom&#124;left --target-offset 0.5] [--points JSON&#124;@file &#124; --auto-route]</code> | Persist endpoint sides and offsets; does not create management authority or a relation | 点击人物周围点位 / 拖动端点吸附 | layout.write |
-| <code>agents connector segment</code> | <code>--manager ID --employee ID --index N --x X --y Y</code> | Move an orthogonal segment in source-Team coordinates; preserve attached employees | 拖动任意折线段 | layout.write |
-| <code>agents connector reset</code> | <code>--manager ID --employee ID</code> | Restore automatic source and head-top target routing | 恢复自动连接点 | layout.write |
-| <code>agents office layout</code> | <code>[--team NAME] [--view VIEW_ID]</code> | Read authorized Team bounds, employee coordinates and permitted layout actions; no filesystem access | Agent 布局工具 | layout.read |
-| <code>agents session acknowledge</code> | <code>--employee ID --reply-id ID</code> | User-only acknowledgement of the exact displayed reply; stale acknowledgements do not clear newer replies | 可见回复已读 | operator |
-| <code>agents management relayout</code> | <code>--team NAME</code> | Group related employees and fit this Team without changing the viewport | 整理团队拓扑 | layout.write |
-| <code>agents management topology</code> | <code>[--team NAME] [--teams-only] [--creator self&#124;others&#124;operator&#124;unknown&#124;EMPLOYEE_ID]</code> | Read teams with isOwnTeam, employeeCount, governorIds, allowedActions and deleteBlockedReason; employee nodes include creation provenance and allowedActions | 管理与协同 | topology |
-| <code>agents management activity</code> | <code>[--team NAME]</code> | Read live communication and delegated tasks; highlighted is a maximum 600ms visual cue, not task completion | 管理交互连线 | topology |
-| <code>agents management roles</code> | <code>—</code> | List employee-owned role policies: Employee, Manager and Governor, scopes and protected lifecycle rules | 职位权限 | identity |
-| <code>agents management bind</code> | <code>--employee ID [--manager ID]</code> | Add one persistent source-to-employee arrow; multiple managers allowed; permissions, true createdBy and positions unchanged | 常驻有向连线 | relation |
-| <code>agents management unbind</code> | <code>--employee ID [--manager ID] &#124; RELATION_ID</code> | Remove only the selected persistent arrow, including a creator line; does not revoke control or stop work; idempotent | 取消常驻连线 | relation |
-| <code>agents management request</code> | <code>--employee ID [--manager ID]</code> | Deprecated permission request; use management.bind for a visual arrow without granting authority | 已停用的管理关系操作 | relation |
-| <code>agents management decide</code> | <code>ID approve&#124;deny</code> | Deprecated permission approval; visual bindings need no approval workflow | 已停用的管理关系操作 | operator |
-| <code>agents management team</code> | <code>—</code> | Deprecated discovery only; Team and folder membership no longer grant authority | 旧接口兼容 | operator |
-| <code>agents management global</code> | <code>ID on&#124;off</code> | User or Secretary compatibility alias: assign Governor or demote to Manager; Secretary lifecycle remains user-only | 旧接口兼容 | operator |
-| <code>agents card management-role</code> | <code>ID employee&#124;manager&#124;governor&#124;secretary</code> | Assign a role; Secretary administers the app and lower roles, only the user appoints or removes Secretaries | 管理与协同 | operator |
-| <code>agents card access-mode</code> | <code>ID trusted&#124;isolated</code> | Set trusted or isolated engine execution | 管理与协同 | operator |
-| <code>agents session status</code> | <code>[--employee ID]</code> | Read lightweight employee activity without full transcripts | 管理与协同 | employee.read |
-| <code>agents shared info</code> | <code>—</code> | Locate the checkout Shared directory | 共享中转站物理目录 | operator |
-| <code>agents view shared</code> | <code>on&#124;off</code> | Show or hide the shared transfer drawer without closing the conversation | 共享中转站侧栏 | operator |
-| <code>agents transfer start</code> | <code>--from JSON&#124;@file --to JSON&#124;@file</code> | Copy a file or directory between local, shared and Team/employee workspaces | 跨工作区拖放复制 | operator |
-| <code>agents transfer list</code> | <code>—</code> | List transfer progress and results for this service run | 传输列表 | operator |
-| <code>agents transfer get</code> | <code>ID</code> | Read a transfer result and byte progress | 传输进度 | operator |
-| <code>agents transfer cancel</code> | <code>ID</code> | Cancel a queued or running copy; preserve source files | 取消传输 | operator |
-| <code>agents schedule schema</code> | <code>—</code> | Describe the host scheduling contract | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule status</code> | <code>—</code> | Read scheduler health and active runs | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule list</code> | <code>[--employee ID --source PLUGIN]</code> | List persistent schedules | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule get</code> | <code>ID</code> | Read a schedule | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule create</code> | <code>--spec @file.json &#124; --name NAME --employee ID&#124;self --prompt TEXT (--after-seconds N &#124; --at ISO &#124; --time HH:mm &#124; --every-seconds N) [--enabled true&#124;false&#124;on&#124;off &#124; --paused] [--view VIEW_ID --days 7 --timezone IANA --month-day last --max-occurrences N --client-request-id KEY --duration-minutes N]</code> | Schedule an existing employee or yourself; enabled by default; --paused or --enabled false disables automatic runs; Governor requires --view; retry-safe clientRequestId | Plan task editor | schedule |
-| <code>agents schedule update</code> | <code>ID --patch @file.json [--expected-revision N]</code> | Update an idle schedule; full action/rule replacement, optional revision; retains execution count | Plan task editor | schedule |
-| <code>agents schedule pause</code> | <code>ID</code> | Pause future occurrences | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule resume</code> | <code>ID</code> | Resume from the next future occurrence | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule delete</code> | <code>ID</code> | Cancel active runs and delete the schedule, keeping audit history | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule preview</code> | <code>[ID [--patch JSON&#124;@file] &#124; --spec @file.json] [--after ISO --count N]</code> | Preview saved or draft occurrences without executing; a saved job retains its consumed quota | Plan preview | schedule |
-| <code>agents schedule run</code> | <code>ID</code> | Run once now without consuming the next scheduled occurrence | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule history</code> | <code>[ID] [--employee ID --limit N]</code> | Read durable run status and conversation IDs | CLI 调度基础，供插件复用 | schedule |
-| <code>agents schedule cancel</code> | <code>RUN_ID</code> | Cancel an active scheduled turn | CLI 调度基础，供插件复用 | schedule |
-| <code>agents settings get</code> | <code>—</code> | Read independent Company, Messages and Plan appearances, shared controls and default employee models | 应用设置 | operator |
-| <code>agents engine models</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
-| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan &#124; --view-appearance JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
-| <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
-| <code>agents view open</code> | <code>home&#124;messages&#124;plan&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID &#124; --chat GROUP_ID &#124; --channel CHANNEL_ID] [--plugin ID] [--plan-view ID]</code> | Open a form, workspace, news channel or employee conversation | 打开资料或会话 | operator |
-| <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
-| <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 | operator |
-| <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open | operator |
-| <code>agents session inbox</code> | <code>—</code> | Read bounded direct-message previews for authorized employees; no model calls, terminal startup or read acknowledgements | Messages conversation list | employee.read |
-| <code>agents session list</code> | <code>[--live] [--summary]</code> | List stored cards (or live sessions with --live) | The company floor | employee.read |
-| <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” | operator |
-| <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Rename an employee and its one conversation without moving the folder | 会话名称 / 员工名牌 | operator |
-| <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card | employee.message |
-| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Send a message to a Worker session | 对话输入框 | employee.message |
-| <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 | operator |
-| <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 | operator |
-| <code>agents host terminal-open</code> | <code>&lt;id&gt; [--directory PATH --cols N --rows N]</code> | Open a persistent SSH PTY without an employee | Cloud Hosts 工作台 | operator |
-| <code>agents host terminal-list</code> | <code>&lt;id&gt;</code> | List host PTYs | Cloud Hosts 工作台 | operator |
-| <code>agents host terminal-read</code> | <code>&lt;id&gt; --terminal ID [--cursor N --wait-ms N]</code> | Read incremental host PTY output, optionally waiting up to 15000ms for new data | Cloud Hosts 工作台 | operator |
-| <code>agents host terminal-input</code> | <code>&lt;id&gt; --terminal ID --data TEXT&#124;--file FILE [--enter]</code> | Send host PTY input and control keys | Cloud Hosts 工作台 | operator |
-| <code>agents host terminal-resize</code> | <code>&lt;id&gt; --terminal ID --cols N --rows N</code> | Resize a host PTY | Cloud Hosts 工作台 | operator |
-| <code>agents host terminal-close</code> | <code>&lt;id&gt; --terminal ID</code> | Close a host PTY | Cloud Hosts 工作台 | operator |
-| <code>agents host desktop-list</code> | <code>&lt;id&gt;</code> | List active remote desktop transports | Cloud Hosts 工作台 | operator |
-| <code>agents host desktop-open</code> | <code>&lt;id&gt;</code> | Open configured RDP or VNC transport; does not imply desktop login | Cloud Hosts 工作台 | operator |
-| <code>agents host desktop-launch</code> | <code>&lt;id&gt; --session ID</code> | Launch native RDP client on the Core machine | Cloud Hosts 工作台 | operator |
-| <code>agents host desktop-close</code> | <code>&lt;id&gt; --session ID</code> | Close desktop transport and SSH forward | Cloud Hosts 工作台 | operator |
-| <code>agents host exec</code> | <code>&lt;id&gt; --command COMMAND&#124;--command-file FILE [--directory PATH --timeout SECONDS]</code> | Execute a management command exclusively on the registered remote host | 远端管理命令 | operator |
-| <code>agents host list</code> | <code>[--os linux&#124;macos&#124;windows] [--distribution ubuntu&#124;kali&#124;ID] [--summary] [--credentials]</code> | Discover the shared host registry; credentials optionally includes passwords and SSH files for authorized Manager/Governor hosts; no SSH probes | Cloud Hosts 插件 | topology |
-| <code>agents host get</code> | <code>&lt;id&gt;</code> | Read a cloud host connection record; Governor all hosts, Manager its Team host | Cloud Hosts 插件 | host.read |
-| <code>agents host create</code> | <code>--data @host.json</code> | Create a cloud host in the shared registry | Cloud Hosts 插件 | operator |
-| <code>agents host update</code> | <code>&lt;id&gt; --data @patch.json</code> | Edit host connection and credentials | Cloud Hosts 插件 | operator |
-| <code>agents host remove</code> | <code>&lt;id&gt;</code> | Remove an unbound cloud host | Cloud Hosts 插件 | operator |
-| <code>agents host check</code> | <code>&lt;id&gt;</code> | Check SSH connectivity without requiring a Team working directory | Cloud Hosts 插件与 Team 连接灯 | operator |
-| <code>agents host directories</code> | <code>&lt;id&gt; [--path PATH]</code> | Browse existing directories on a registered cloud host | Cloud Hosts 插件 | operator |
-| <code>agents host credentials</code> | <code>&lt;id&gt;</code> | Read authorized host password and registered private key, known_hosts and SSH config contents | Cloud Hosts 插件 | host.read |
-| <code>agents engine remote-check</code> | <code>--team NAME --engine codex&#124;claude [--directory PATH]</code> | Check a Cloud Team native CLI, protocol, authentication and workspace before hiring | Cloud Native Worker 创建前检查 | operator |
-| <code>agents engine remote-sessions</code> | <code>--team NAME --engine codex&#124;claude</code> | List native sessions on the selected Cloud Team host | 绑定已有云端会话 | operator |
-| <code>agents card native-bind</code> | <code>&lt;employee-id&gt; &lt;native-session-id&gt;</code> | Bind an existing remote native session without taking deletion ownership | 绑定远端原生会话 | operator |
-| <code>agents session follow</code> | <code>&lt;id&gt; [--raw]</code> | Stream a session’s events until its turn ends | Watching the transcript | employee.read |
-| <code>agents session transcript</code> | <code>&lt;id&gt; &#124; --employee ID [--limit N] [--thinking]</code> | Read the full conversation by default, or its last 1–1000 items with --limit; no read acknowledgment | The transcript pane | employee.read |
-| <code>agents session interrupt</code> | <code>&lt;id&gt;</code> | Stop the current turn | The “■ Stop” button | employee.message |
-| <code>agents session close</code> | <code>&lt;id&gt;</code> | Close a live engine while retaining the employee and history | CLI 显式结束引擎 | operator |
-| <code>agents session info</code> | <code>&lt;id&gt;</code> | Show a live session’s engines, models, commands | The toolbar dropdowns | employee.read |
-| <code>agents session activity</code> | <code>&lt;id&gt;</code> | Current speech, published thinking or tool preview; null when idle | 员工活动气泡 | employee.read |
-| <code>agents session snapshot</code> | <code>&lt;id&gt;</code> | Full frontend state | The conversation and toolbar | employee.read |
-| <code>agents session search</code> | <code>&lt;query&gt;</code> | Search employees and workspaces | Office search | operator |
-| <code>agents approval list</code> | <code>&lt;id&gt;</code> | Pending tool permissions | Permission requests | operator |
-| <code>agents approval respond</code> | <code>&lt;id&gt; &lt;requestId&gt; allow&#124;deny [--answers JSON] [--form JSON]</code> | Answer a tool permission | Allow / Decline | operator |
-| <code>agents config engine</code> | <code>&lt;card-or-live-id&gt; ENGINE</code> | Retired: always rejects; delete the employee and create a new one to choose another engine | 创建后引擎固定 | operator |
-| <code>agents config model</code> | <code>&lt;id&gt; &lt;model&gt;</code> | Change model | Model dropdown | employee.configure |
-| <code>agents config remote-admin</code> | <code>&lt;id&gt; on&#124;off</code> | Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution | 远端主机管理权限 | operator |
-| <code>agents config permission</code> | <code>&lt;id&gt; &lt;mode&gt;</code> | Change permission mode | 🔒 dropdown | operator |
-| <code>agents config thinking</code> | <code>&lt;id&gt; on&#124;off</code> | Toggle thinking | 🧠 toggle | employee.configure |
-| <code>agents config effort</code> | <code>&lt;id&gt; &lt;level&#124;default&gt;</code> | Change effort level | ⚡ dropdown | employee.configure |
-| <code>agents config plan</code> | <code>&lt;id&gt; on&#124;off</code> | Switch the official planning mode | 计划模式 | employee.configure |
-| <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 | operator |
-| <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 | operator |
-| <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 | operator |
-| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt;</code> | Append instructions to the active native turn | 运行中追加 | operator |
-| <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 | operator |
-| <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 | operator |
-| <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review | operator |
-| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Queue a message after the active turn | 排队发送 | employee.message |
-| <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 | employee.read |
-| <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 | employee.message |
-| <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 | operator |
-| <code>agents view tools</code> | <code>&lt;skills&#124;mcp&#124;account&#124;usage&#124;config&#124;export&#124;off&gt;</code> | Open or close the engine tools panel | 引擎工具面板 | operator |
-| <code>agents config fast</code> | <code>&lt;id&gt; on&#124;off</code> | Set the official Fast service tier | Fast 速度开关 | employee.configure |
-| <code>agents commands run</code> | <code>&lt;id&gt; /command [args]</code> | Execute a discovered slash command through shared Core | 斜杠命令 | operator |
-| <code>agents commands list</code> | <code>&lt;id&gt; [--filter X] [--all]</code> | Slash commands available to a session | The “/” menu | operator |
-| <code>agents commands complete</code> | <code>&lt;id&gt; &lt;name&gt;</code> | What Tab would insert | Tab/⏎ in the “/” menu | operator |
-| <code>agents group list</code> | <code>—</code> | List departments | Department headings | operator |
-| <code>agents team-view list</code> | <code>—</code> | List All Team and saved Team views with the active selection | 顶部视图标签 | operator |
-| <code>agents team-view create</code> | <code>--name NAME [--teams @teams.json]</code> | Create and select a named view of existing Teams | ＋ 添加视图 | operator |
-| <code>agents team-view update</code> | <code>ID --patch @patch.json</code> | Rename, reorder, or change Team membership of a custom view | 编辑或拖动视图 | operator |
-| <code>agents team-view remove</code> | <code>ID</code> | Delete a custom view without deleting Teams | 删除视图 | operator |
-| <code>agents team-view select</code> | <code>all&#124;ID</code> | Select a saved Team view and its canvas viewport | 切换视图 | operator |
-| <code>agents group add</code> | <code>&lt;name&gt; [--mode work&#124;build&#124;cloud] [--plugin ID] [--host-id ID] [--directory-mode default&#124;bind] [--remote-dir PATH] [--os linux&#124;macos&#124;windows] [--distribution ID]</code> | Create a real cloud Team with host-id; directory-mode default creates a new remote child folder; os/distribution assert actual host, never labels | “+ Department” | operator |
-| <code>agents group configure</code> | <code>&lt;name&gt; --mode work&#124;build&#124;cloud [--plugin ID] [--host-id ID --remote-dir PATH]</code> | Configure a legacy unbound Team; created Team bindings are fixed | 创建 Team 时配置工作方式 | operator |
-| <code>agents group remove</code> | <code>&lt;name&gt; [name ...] [--delete-workspace]</code> | Delete selected Teams and all their employees; optionally delete their employee folders after one batch preflight | 侧栏编辑 · 多选团队 · 一次确认删除 | operator |
-| <code>agents room place</code> | <code>&lt;name&gt; --col N --row N [--w N --h N]</code> | Position a department’s room on the floor | Dragging a room by its sign | layout.write |
-| <code>agents card rename</code> | <code>&lt;cardId&gt; &lt;title&gt;</code> | Rename an employee without moving its working folder | 员工资料中的名字 | operator |
-| <code>agents card move</code> | <code>&lt;cardId&gt; &lt;same-group&gt; [--before id]</code> | Reorder within the existing Team; group and directory are fixed | 同 Team 内排序 | operator |
-| <code>agents card remove</code> | <code>&lt;cardId&gt; [cardId ...] [--delete-workspace]</code> | Remove selected employees and owned sessions; optionally delete all their folders after one batch preflight | 侧栏编辑 · 多选员工 · 一次确认删除 | employee.delete |
-| <code>agents card clone</code> | <code>&lt;id&gt; --title NAME [--directory-mode default&#124;bind] [--cwd PATH]</code> | Clone an employee with an independent native conversation | 克隆员工 | operator |
-| <code>agents card initialize</code> | <code>&lt;employee-id&gt; [--model ID] [--effort LEVEL]</code> | Retry read-only initialization: every role reads its identity and the shared documentation index | 员工重试初始化 | employee.message |
-| <code>agents card create</code> | <code>--title NAME [--group TEAM] [--character NAME --avatar-style anime&#124;chibi &#124; --avatar ID] [--profession TEXT] [--management-role employee&#124;manager&#124;governor&#124;secretary] [--kind worker&#124;cloud-native-worker] [--work-environment team&#124;local] [--engine E] [--model ID] [--thinking on&#124;off] [--effort LEVEL]</code> | Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; discover appearances with avatar.list and verify via session.status | 添加员工 | employee.create |
-| <code>agents card avatar</code> | <code>&lt;employee-id&gt; [--avatar ID &#124; --character NAME --avatar-style anime&#124;chibi]</code> | Set only a controlled employee appearance and its default palette; Manager own Team, Governor across Teams; discover IDs with avatar.list | 员工人物形象 | employee.configure |
-| <code>agents card update</code> | <code>&lt;cardId&gt; [--title NAME] [--avatar ID &#124; --character NAME --avatar-style STYLE] [--profession TEXT]</code> | Application-wide general profile editing; supervisors use card.avatar for appearance; Team and folder stay fixed | 员工资料 | operator |
-| <code>agents group rename</code> | <code>&lt;name&gt; &lt;newName&gt;</code> | Rename a Team without renaming or moving its workspace folder | Team 名称 | operator |
-| <code>agents room design</code> | <code>&lt;name&gt; [--theme sage] [--wall windows] [--desk oak]</code> | Replace room surfaces and furnishings | 空间设计 | operator |
-| <code>agents group migrate</code> | <code>&lt;name&gt;</code> | Move a legacy Team into its managed directory, preserving files | 修复旧工作目录 | operator |
-| <code>agents group root</code> | <code>&lt;name&gt; &lt;absolute-folder&gt;</code> | Bind a legacy unbound Team; an existing Team root cannot be changed | 创建 Team 时选择文件夹 | operator |
-| <code>agents room bounds</code> | <code>&lt;name&gt; --x N --y N --width N --height N [--shape S] [--arrangement A]</code> | Move and resize a canvas room | 拖动、缩放 Team | layout.write |
-| <code>agents room layout</code> | <code>&lt;name&gt;</code> | Computed bounds and full-size employee positions | Team 画布布局 | layout.read |
-| <code>agents card place</code> | <code>&lt;id&gt; --x N --y N [--snap on&#124;off] [--zoom N]</code> | Place an employee freely or snap to nearby seats | 拖动员工 | layout.write |
-| <code>agents canvas view</code> | <code>[--view VIEW_ID]</code> | Read viewport position and zoom | 画布视野 | operator |
-| <code>agents canvas set</code> | <code>--x N --y N --zoom N [--view VIEW_ID]</code> | Pan and zoom the canvas | 平移、缩放画布 | operator |
-| <code>agents plugin list</code> | <code>—</code> | List installed software plugins | Team 工作空间插件 | plugin |
-| <code>agents plugin describe</code> | <code>&lt;id&gt;</code> | Read a plugin manifest, API schema and Markdown guide | 插件信息 | plugin |
-| <code>agents plugin install</code> | <code>&lt;directory&gt;</code> | Install a compatible local plugin package | CLI 安装插件 | operator |
-| <code>agents plugin call</code> | <code>&lt;id&gt; &lt;method&gt; --team NAME [--params JSON] [--raw]</code> | Invoke the shared plugin runtime; raw preserves the JSON-RPC error/result envelope | 插件中的操作 | plugin |
-| <code>agents plugin open</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open or focus an independent plugin window | 独立插件窗口 | operator |
-| <code>agents plugin windows</code> | <code>—</code> | List plugin window state, also in headless mode | 独立插件窗口 | operator |
-| <code>agents plugin place</code> | <code>&lt;windowId&gt; --x N --y N --width N --height N</code> | Move and resize a plugin window | 独立插件窗口 | operator |
-| <code>agents plugin mode</code> | <code>&lt;windowId&gt; normal&#124;minimized&#124;maximized&#124;fullscreen</code> | Change native plugin window state | 插件窗口最小化、还原与全屏 | operator |
-| <code>agents plugin dismiss</code> | <code>&lt;windowId&gt;</code> | Save and close an independent plugin window | 独立插件窗口 | operator |
-| <code>agents plugin view</code> | <code>&lt;id&gt; [--team NAME&#124;--employee ID]</code> | Open a plugin view in its managed root or selected scope | Team 工作空间 | operator |
-| <code>agents plugin close</code> | <code>&lt;viewId&gt;</code> | Close an embedded plugin view | 关闭工作空间 | operator |
-| <code>agents workspace docs</code> | <code>--team NAME &#124; --employee ID</code> | Prepare shared documentation and authorized CLI entry points without copying handbooks into the workspace | 自动准备 Agent 文档 | workspace |
-| <code>agents workspace suggest</code> | <code>--team NAME [--work-environment team&#124;local]</code> | Suggest an external workspace directory without changing files | 默认工作目录 | operator |
-| <code>agents workspace choose</code> | <code>[--path PATH]</code> | Choose a folder in the desktop directory picker | 选择文件夹 | operator |
-| <code>agents remote check</code> | <code>--team NAME &#124; --employee ID &#124; --remote-host HOST --remote-dir PATH</code> | Check SSH and the target working directory; return remote OS details | 云端工作目录诊断 | operator |
-| <code>agents terminal open</code> | <code>--employee ID [--cols N --rows N]</code> | Open a PTY in the employee working directory | 新建终端 | operator |
-| <code>agents terminal list</code> | <code>[--employee ID]</code> | List employee terminals | 终端标签 | operator |
-| <code>agents terminal read</code> | <code>ID [--cursor N]</code> | Read terminal output since an offset | 终端输出 | operator |
-| <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 | operator |
-| <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 | operator |
-| <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 | operator |
-| <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 | workspace |
-| <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 | workspace |
-| <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 | workspace |
-| <code>agents workspace write</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID] --content TEXT&#124;--base64-file IMAGE_B64 [--hash HASH]</code> | Save text or a PNG/JPEG/GIF/WebP image in a workspace | 保存文件或粘贴截图 | workspace |
-| <code>agents workspace mkdir</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Create a folder | 新建文件夹 | workspace |
-| <code>agents workspace move</code> | <code>&lt;path&gt; --to PATH [--shared&#124;--team NAME&#124;--employee ID]</code> | Rename or move a file | 重命名文件 | workspace |
-| <code>agents workspace trash</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Move a file to recoverable workspace trash | 移到回收站 | workspace |
-| <code>agents workspace restore</code> | <code>--id ID [--shared&#124;--team NAME&#124;--employee ID]</code> | Restore a trashed file | 撤销删除 | workspace |
-| <code>agents ui view</code> | <code>—</code> | Which view is showing (home or a session) | The screen itself | operator |
-| <code>agents ui dom</code> | <code>[--sel CSS]</code> | Query the live interface | The screen itself | operator |
-| <code>agents ui text</code> | <code>—</code> | All visible text, as rendered | The screen itself | operator |
-| <code>agents ui click</code> | <code>&lt;selector&gt;</code> | Click an element in the interface | That click | operator |
-| <code>agents ui type</code> | <code>&lt;selector&gt; &lt;text&gt;</code> | Type into an input | That typing | operator |
-| <code>agents ui wait</code> | <code>&lt;selector&gt; [--timeout ms]</code> | Wait for an element to appear | Waiting for the UI to catch up | operator |
-| <code>agents ui style</code> | <code>&lt;selector&gt;</code> | Computed styles of an element | How it actually looks | operator |
-| <code>agents ui screenshot</code> | <code>&lt;path&gt; [--privacy]</code> | Capture a fresh desktop frame; privacy hides Team paths, activity bubbles and dimensions only during export | Rendered interface | operator |
-| <code>agents ui drag</code> | <code>&lt;selector&gt; --dx N --dy N</code> | Drag a rendered component | 拖动控件 | operator |
-| <code>agents ui wheel</code> | <code>&lt;selector&gt; --dx N --dy N [--zoom]</code> | Pan or zoom with the mouse wheel | 画布滚轮 | operator |
+`schedule.create/update/preview/run/resume/trigger` 等目标操作均受同一权限边界保护；原委派在实际执行和异步准备之后再次复核。新增 `action.channelId` 明确关联员工引擎频道，要求目标持续具有发布成员身份。旧 UI 的 `source:channel:ID` 仅迁移为经过校验的频道引用，不授予权限。移除成员会停用关联任务。
 
-另外还有不通过 socket 的 `agents help` 和 `agents serve`。前者查看终端帮助，后者启动无窗口服务；同一数据目录不要重复启动服务。
+新增 `rule:{kind:"event",event:"signal"|"channel.posted",channelId?,cooldownSeconds?}`。信号通过 `schedule.trigger {id,eventId}` 提交；原生新帖事件仅由首次成功发布产生。冷却默认 60 秒，可选 0–86400 秒。每个任务保存最近 256 个事件 claim，并利用保留的运行历史去重；暂停/过期/冷却/不在工作窗口的事件不执行，不存在隐藏重试队列。已接受的忙碌事件保留 skipped 记录并消耗次数。重启不会补放离线事件。
+
+事件计划立即出现在 Plan，等待时 nextAt 为 null；预览不虚构日期，日历展示真实执行记录。事件与定时任务共用原有持久化、保留策略、执行器和取消入口，不另建计时器或员工会话。频道表单复用完整 PlanEditor，尚未配置发布计划时明确显示自动发布未配置。详细字段和 CLI 示例见 PLAN.md 的 Unified automation 章节。
+
+专项复验：`node test/plan-authority-core-test.mjs` 与 `node test/plan-authority-ui-test.mjs`，均使用隔离构建/数据和确定性协议替身。
+
+## Record administration and bulk cleanup
+
+For task discovery use `plan.query`: it returns IDs/revisions, names, target identity,
+role/Team, exact rules/times and current action capabilities. `schedule.list/get` retain
+the raw-job contract. Secretary reads all Plan records, including orphaned schedules;
+maintenance of missing-target records is separated from actual execution authorization.
+A removed target can be cleaned up or reassigned, never implicitly recreated or run.
+See PLAN.md for the canonical permission and null-identity behavior.
+
+`schedule.delete` accepts either `id` with optional `expectedRevision`, or `ids` with
+an optional complete `expectedRevisions` map. Every selected record is preflighted
+before any side effect; deletion preserves run history and workspace files. A pending
+deletion cannot be re-enabled by a concurrent update/resume. `pause`, `resume` and `run`
+also accept `--expected-revision` to guard against a changed task.
+
+## Conversation notices are separate from Plan
+
+Current conversation offices (Group Owner/Admin/Member, channel Admin) are independent of Company managementRole. Only actual conversation Owner/Admin configures mute, quiet mode and fixed-text notifications; Company Secretary has no conversation-office bypass. Owner alone dissolves groups or transfers ownership, with the human user's external recovery override. `conversation.notice-*` posts saved text through an independent Core timer/storage without running an Agent or entering Plan. Plan `schedule.*` remains the exclusive API for scheduled employee work. See [CONVERSATION_CONTROLS.md](docs/CONVERSATION_CONTROLS.md) for the current, detailed boundary.

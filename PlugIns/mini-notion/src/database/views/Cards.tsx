@@ -1,3 +1,5 @@
+import { EventIndicators } from '../../components/EventSummary';
+import { eventSignals, eventValue } from '../../scheduling/presentation';
 import { coverPresentation } from '../../presentation';
 import { isSelectProperty, isReadOnlyProperty } from '../propertySchema';
 import { useContext } from 'react';
@@ -29,6 +31,7 @@ function RecordCard({
   const { setPageMenu, workspace } = useWorkspace();
   const theme = useContext(AppearanceTheme);
   const { view, page, openRow, columns } = props;
+  const signals = eventSignals(row, workspace!.pages);
   const preview = view.cardPreview || (gallery ? 'content' : 'none');
   const readOnlyGroup = [view.groupBy, view.subGroupBy].some((id) =>
     page.database!.columns.some(
@@ -68,6 +71,7 @@ function RecordCard({
           <PageIcon icon={row.icon} size={16} />
           {row.title || '无标题'}
         </strong>
+        {(signals.repeat || signals.reminders > 0) && <span className="record-event-flags"><EventIndicators {...signals} /></span>}
         {columns
           .filter(
             (c) =>
@@ -88,7 +92,7 @@ function RecordCard({
             return (
               <small key={column.id}>
                 {column.type === 'date' && <Calendar size={12} />}
-                <span>{Array.isArray(value) ? value.join('、') : value === true ? '☑' : String(value)}</span>
+                <span>{eventValue(value, workspace!.pages)}</span>
               </small>
             );
           })}
@@ -397,6 +401,7 @@ export function FeedView(props: ViewProps) {
               <PageIcon icon={row.icon} size={24} />
               <h3>{row.title || '无标题'}</h3>
             </button>
+            <span className="record-event-flags"><EventIndicators {...eventSignals(row, workspace!.pages)} /></span>
             <div className="feed-record-properties">
               {props.columns.map((column) => (
                 <div key={column.id}>

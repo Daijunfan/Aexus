@@ -10,10 +10,11 @@ const root=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtem
 const env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1440',AGENTS_COMPANY_HEIGHT:'960'}
 delete env.ELECTRON_RUN_AS_NODE
 const require=createRequire(import.meta.url),{_electron:electron,expect}=require('@playwright/test'),run=promisify(execFile)
-const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env}),page=await app.firstWindow()
+const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[process.env.AGENTS_COMPANY_PROFILE_APPLICATION||root],env}),page=await app.firstWindow()
 const cli=async(...args)=>{const reply=JSON.parse((await run(process.execPath,[root+'/bin/agents',...args,'--json'],{env,timeout:20000})).stdout);assert.ok(reply.ok,reply.error);return reply.data}
 try{
   await page.locator('.infinite-canvas').waitFor()
+  await cli('settings','set','--language','zh-CN')
   await cli('group','add','Near');await cli('group','add','Far')
   await cli('room','bounds','Near','--x','0','--y','0');await cli('room','bounds','Far','--x','9000','--y','5000')
   await expect(page.locator('.canvas-overview')).toHaveCount(0)

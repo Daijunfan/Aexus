@@ -2,9 +2,10 @@ import http from 'node:http'
 import {randomBytes} from 'node:crypto'
 import {DISCUSSION_TOOL,invokeDiscussionTool} from './discussion-tool'
 import {DOCUMENTATION_TOOL,invokeDocumentationTool} from './documentation-tool'
+import {API_TOOL,invokeApiTool} from './api-tool'
 import type {Live} from './sessions'
 
-/** Per-session native tools. Discovery is read-only; publication remains bound to its reading stage. */
+/** Per-session native tools. Discovery is read-only; publication remains bound to its shared response stage. */
 export async function openDiscussionMcp(state:Live){
  const route='/discussion/'+randomBytes(24).toString('hex')
  const server=http.createServer(async(request,response)=>{
@@ -13,17 +14,19 @@ export async function openDiscussionMcp(state:Live){
   let input:any
   try{
    const chunks:Buffer[]=[];let bytes=0
-   for await(const chunk of request){bytes+=chunk.length;if(bytes>16*1024){response.writeHead(413);response.end();return}chunks.push(chunk)}
-   input=JSON.parse(Buffer.concat(chunks).toString('utf8'))
+   for await(const chunk of request){bytes+=chunk.length;if(bytes>16*1024*1024){response.writeHead(413);response.end();return}chunks.push(chunk)}
+   try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch(error){if(bytes>16*1024){response.writeHead(413);response.end();return}throw error}
+   // Larger requests are reserved for the generic API's domain-bounded file/image payloads.
+   if(bytes>16*1024&&!(input.method==='tools/call'&&input.params?.name===API_TOOL.name)){response.writeHead(413);response.end();return}
    if(input.jsonrpc!=='2.0'||typeof input.method!=='string')throw Error('Invalid discussion tool request')
    if(input.method==='notifications/initialized'){response.writeHead(202);response.end();return}
    let result:unknown
    if(input.method==='initialize')result={protocolVersion:input.params?.protocolVersion??'2024-11-05',capabilities:{tools:{}},serverInfo:{name:'agents-company-discussion',version:'1'}}
    else if(input.method==='ping')result={}
-   else if(input.method==='tools/list')result={tools:[DISCUSSION_TOOL,DOCUMENTATION_TOOL]}
+   else if(input.method==='tools/list')result={tools:state.acknowledging?[]:state.privateInitialization?[DOCUMENTATION_TOOL]:[DOCUMENTATION_TOOL,API_TOOL,DISCUSSION_TOOL]}
    else if(input.method==='tools/call'){
     try{
-     const invoke=input.params?.name===DISCUSSION_TOOL.name?invokeDiscussionTool:input.params?.name===DOCUMENTATION_TOOL.name?invokeDocumentationTool:undefined
+     const invoke=input.params?.name===DISCUSSION_TOOL.name?invokeDiscussionTool:input.params?.name===DOCUMENTATION_TOOL.name?invokeDocumentationTool:input.params?.name===API_TOOL.name?invokeApiTool:undefined
      if(!invoke)throw Error('Unknown Agents Company tool')
      if(input.id===undefined)throw Error('Discussion tool calls require a request ID')
      const value=await invoke(state,input.params.arguments,String(input.id),controller.signal)

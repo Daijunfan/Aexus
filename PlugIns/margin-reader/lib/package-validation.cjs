@@ -17,7 +17,7 @@ function settings(set){
   if(set.navigation?.mode)S.assert(['off','both','map-to-document','document-to-map'].includes(set.navigation.mode),'INVALID_PACKAGE','Invalid linkage mode.');
   const map=set.map||{};if(map.layout)S.assert(['tree','down','radial'].includes(map.layout),'INVALID_PACKAGE','Invalid map layout.');
   if(map.branchStyle)S.assert(require('./study-organize.cjs').STYLES.includes(map.branchStyle),'INVALID_PACKAGE','Invalid branch style.');
-  if(set.view)S.assert(['map','cards','outline','review'].includes(set.view),'INVALID_PACKAGE','Invalid study view.');
+  if(set.view)S.assert(['map','documents','split','cards','outline','review'].includes(set.view),'INVALID_PACKAGE','Invalid study view.');
   array(set.boards||[],100);for(const board of set.boards||[]){array(board.groupBy||[],2);S.assert((board.groupBy||[]).every(k=>['color','tag','keyword','document','chapter','created','updated','kind','inMap'].includes(k)),'INVALID_PACKAGE','Invalid board grouping.');require('./study-organize.cjs').sorted([],board.sort||'outline');}
   array(set.layers||[],64);array(set.decks||[],100);array(set.links||[],50000);
   if(set.linkSettings?.dictionarySetIds){array(set.linkSettings.dictionarySetIds,1000);set.linkSettings.dictionarySetIds.forEach(id);}

@@ -41,14 +41,18 @@ const model=http.createServer(async(req,res)=>{
    else if(operation){content=[{type:'tool_use',id:'tool_initialization_'+operation,name:documentationName,input:{operation}}];stop='tool_use'}
    else content=[{type:'text',text:'OK'}]
   }
-  else if(!ack){workRequests.push({label,at:Date.now()});content=[{type:'text',text:'WORK_COMPLETED_'+label}]}
+  else if(!ack){
+   if(!test.workRecorded){workRequests.push({label,at:Date.now()});test.workRecorded=true}
+   if(label==='public'&&!test.posted){test.posted=true;const current=JSON.parse(prompt.split('[Group request]\n')[1].split('\n')[0]),id='tool_work_'+label;test.toolCall={id,messageId:current.messageId,text:test.text,at:Date.now()};content=[{type:'tool_use',id,name:toolName,input:{conversationType:'group',conversationId:current.groupId,messageId:current.messageId,text:test.text}}];stop='tool_use'}
+   else content=[{type:'text',text:'WORK_COMPLETED_'+label}]
+  }
   else if(label==='output-only')content=[{type:'text',text:'{"text":"ACK_PRIVATE_JSON_MUST_NOT_PUBLISH"}'}]
   else{
    assert.ok(entry,'Native reading prompt includes exact bound message ID')
    const step=test.step++,callId='tool_'+label+'_'+step
    if(step===0){content=[{type:'text',text:'{"text":"ACK_PRIVATE_PLAN_MUST_NOT_PUBLISH"}'},{type:'tool_use',id:callId,name:'Bash',input:{command:`printf FORBIDDEN > '${marker}'`,description:'Synthetic forbidden ACK write'}}];stop='tool_use'}
    else if(step===1){content=[{type:'tool_use',id:callId,name:'Read',input:{file_path:privateFile}}];stop='tool_use'}
-   else if(step===2){test.toolCall={id:callId,messageId:entry,text:test.text,at:Date.now()};content=[{type:'tool_use',id:callId,name:toolName,input:{conversationType:scope.conversationType,conversationId:scope.conversationId,messageId:entry,text:test.text}}];stop='tool_use'}
+   else if(step===2){test.readingToolCall={id:callId,messageId:entry,text:test.text,at:Date.now()};content=[{type:'tool_use',id:callId,name:toolName,input:{conversationType:scope.conversationType,conversationId:scope.conversationId,messageId:entry,text:test.text}}];stop='tool_use'}
    else content=[{type:'text',text:'{"text":"ACK_PRIVATE_FINAL_MUST_NOT_PUBLISH"}'}]
   }
   const message={id:'fixture-message-'+(++requestNumber),type:'message',role:'assistant',model:body.model,content:[],stop_reason:null,stop_sequence:null,usage:{input_tokens:1,output_tokens:1}}
@@ -97,25 +101,21 @@ try{
   const before=(await history()).length,beforeWork=workRequests.length
   const message=await rpc('chat.send',{id:group.id,text:'ACK_NATIVE_CLAUDE_CASE='+label,mentions:[card.id],clientMessageId:'native-claude-'+label})
   const done=await wait(async()=>{const d=await delivery(message.id);return ['completed','failed','interrupted'].includes(d?.status)&&d},label+' delivery')
-  if(label==='output-only'){
-   assert.equal(done.status,'failed');assert.match(done.error,/not acknowledged through its tool\/API/);assert.equal(done.readAt,undefined);assert.equal(done.ackMessageId,undefined);assert.equal(workRequests.length,beforeWork);assert.equal((await history()).length,before+1)
-   checks.push('Ordinary JSON output without a tool call neither publishes nor marks read, and formal work does not run')
-  }else{
-   assert.equal(done.status,'completed',JSON.stringify(done));assert.ok(done.readAt&&done.deliveredAt)
-   for(const step of [0,1]){const result=results.get('tool_'+label+'_'+step);assert.ok(result?.is_error,JSON.stringify(result));assert.match(JSON.stringify(result.content),/denied|blocked|only.*discussion|reading/i)}
+  assert.equal(done.status,'completed',JSON.stringify(done));assert.ok(done.readAt&&done.deliveredAt);assert.equal(workRequests.length,beforeWork+1);assert.ok(workRequests.at(-1).at>=done.readAt)
+  if(label!=='output-only'){
+   for(const step of [0,1,2]){const result=results.get('tool_'+label+'_'+step);assert.ok(result?.is_error,JSON.stringify(result));assert.match(JSON.stringify(result.content),/denied|blocked|only|reading|unavailable/i)}
    assert.equal(fs.existsSync(marker),false)
-   const toolResult=results.get(scenario.toolCall.id);assert.ok(toolResult&&!toolResult.is_error,JSON.stringify(toolResult));assert.ok(JSON.stringify(toolResult.content).includes(label==='public'?text:'acknowledged'))
-   assert.equal(scenario.toolCall.messageId,message.id);assert.equal(workRequests.length,beforeWork+1);assert.ok(workRequests.at(-1).at>=done.readAt)
-   if(label==='public'){const reply=(await history()).find(item=>item.id===done.ackMessageId);assert.equal(reply.text,text);assert.equal(reply.replyTo,message.id);assert.equal(reply.acknowledgmentOf,message.id);assert.deepEqual(reply.author,{kind:'agent',employeeId:card.id});assert.equal((await history()).length,before+2)}
-   else{assert.equal(done.ackMessageId,undefined);assert.equal((await history()).length,before+1)}
-   checks.push(label+': actual MCP tool_use receives a successful API result; Bash/Read are rejected even with bypass permission; work starts after accepted receipt')
   }
-  await wait(async()=>!(await f.status(card.id)).busy,label+' idle')
-  nativeIds.push((await rpc('session.info',{employee:card.id})).claudeSessionId)
-  assert.ok((await history()).every(item=>!item.text.includes('ACK_PRIVATE_')))
-  assert.ok(!(await rpc('session.transcript',{employee:card.id})).text.includes('ACK_PRIVATE_'))
+  if(label==='public'){
+   const result=results.get(scenario.toolCall.id);assert.ok(result&&!result.is_error,JSON.stringify(result));assert.ok(JSON.stringify(result.content).includes(text));assert.equal(scenario.toolCall.messageId,message.id)
+   const reply=(await history()).find(item=>item.id===done.ackMessageId);assert.equal(reply.text,text);assert.equal(reply.replyTo,message.id);assert.equal(reply.acknowledgmentOf,undefined);assert.deepEqual(reply.author,{kind:'agent',employeeId:card.id});assert.equal((await history()).length,before+2)
+  }else{assert.equal(done.ackMessageId,undefined);assert.equal((await history()).length,before+1)}
+  await wait(async()=>!(await f.status(card.id)).busy,label+' idle');nativeIds.push((await rpc('session.info',{employee:card.id})).claudeSessionId)
+  assert.equal((await f.status(card.id)).lastReply,undefined,'shared work never creates private unread');assert.ok((await history()).every(item=>!item.text.includes('ACK_PRIVATE_')));assert.ok(!(await rpc('session.transcript',{employee:card.id})).text.includes('ACK_PRIVATE_'))
+  checks.push(label+': native reading cannot use Bash/Read/publisher, ordinary output stays private, native success releases work, only deliberate response-stage publication is public')
   console.log('PASS actual Claude '+label)
  }
+
  assert.ok(nativeIds.every(id=>id&&id===nativeIds[0]),'Reading, work and later requests retain one native session')
  const transcript=await rpc('session.transcript',{employee:card.id});assert.equal(transcript.items.filter(item=>item.role==='user').length,3)
  const source=(await rpc('session.list')).sessions.find(item=>item.id===card.id);assert.equal(source.permissionMode,'bypassPermissions')

@@ -4,6 +4,7 @@ import {onPluginFlush} from '../plugins'
 
 function mergePatch(previous:PreferencesPatch,next:PreferencesPatch):PreferencesPatch{
  const patch={...previous,...next}
+ if(next.messageWallpaper)patch.messageWallpaper={...previous.messageWallpaper,...next.messageWallpaper}
  if(next.viewAppearance){
   patch.viewAppearance={...previous.viewAppearance}
   for(const view of PRESENTATION_VIEWS)if(next.viewAppearance[view])patch.viewAppearance[view]={...previous.viewAppearance?.[view],...next.viewAppearance[view]}
@@ -13,8 +14,9 @@ function mergePatch(previous:PreferencesPatch,next:PreferencesPatch):Preferences
 
 /** A late acknowledgement must not remove a newer local choice. */
 function acknowledge(changes:PreferencesPatch,sent:PreferencesPatch):PreferencesPatch{
- const {viewAppearance,...shared}=changes
+ const {viewAppearance,messageWallpaper,...shared}=changes
  const patch:PreferencesPatch=Object.fromEntries(Object.entries(shared).filter(([key,next])=>next!==sent[key as keyof PreferencesPatch]))
+ if(messageWallpaper){const rest=Object.fromEntries(Object.entries(messageWallpaper).filter(([key,next])=>next!==sent.messageWallpaper?.[key as keyof typeof messageWallpaper]));if(Object.keys(rest).length)patch.messageWallpaper=rest}
  for(const view of PRESENTATION_VIEWS){
   const fields=viewAppearance?.[view]
   if(!fields)continue

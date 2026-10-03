@@ -1,50 +1,33 @@
-import {z} from 'zod'
-import {DOCUMENTATION_TOOL,invokeDocumentationTool} from '../documentation-tool'
-import {DISCUSSION_TOOL,invokeDiscussionTool} from '../discussion-tool'
-import {randomUUID} from 'node:crypto'
-import type {SDKMessage,SDKUserMessage} from '@anthropic-ai/claude-agent-sdk'
-import {loadClaudeSdk} from './claude-sdk'
-import type {EngineStart,EngineDriver} from './contract'
-import {type Live,AsyncQueue,sandboxFor} from '../sessions'
-import {buildOptions} from './claude-options'
-import {readStore,patchSession} from '../store'
-import {isInitializer} from '../initialization-state'
-import {employeeInstructions} from '../plugins/documents'
-import {deepSeekModels} from '../claude-provider'
-import {cloudToolAllowed} from '../scope'
-import {approvalHandler,elicitationHandler,cancelApprovals} from '../approvals'
-import {nativeSessionRefs} from '../../shared/types'
+import {engineState} from './state'
+import { z } from 'zod'
+import { DOCUMENTATION_TOOL,invokeDocumentationTool } from '../documentation-tool'
+import {API_TOOL,invokeApiTool} from '../api-tool'
+import { DISCUSSION_TOOL,invokeDiscussionTool } from '../discussion-tool'
+import { randomUUID } from 'node:crypto'
+import type { SDKMessage,SDKUserMessage } from '@anthropic-ai/claude-agent-sdk'
+import { loadClaudeSdk } from './claude-sdk'
+import type { EngineStart,EngineDriver } from './contract'
+import type { Live } from '../sessions'
+import { AsyncQueue,sandboxFor } from './session-support'
+import { buildOptions } from './claude-options'
+import { readStore,patchSession } from '../store'
+import { employeeInstructions } from '../plugins/documents'
+import { deepSeekModels } from '../claude-provider'
+import { cloudToolAllowed } from '../scope'
+import { approvalHandler,elicitationHandler,cancelApprovals } from '../approvals'
+import { nativeSessionRefs } from '../../shared/types'
 export async function openClaude(context:EngineStart){
   const {args,card,kind,engine,cardId,sessionId,cwd,workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,provider,permissionMode,host}=context
-  const {live,info,emit,rememberMeta,rememberTerminalCommands,privateTurns,dispatchQueued}=host
+  const {register,isOpen,metadata,emit,rememberMeta,rememberTerminalCommands,isPrivateTurn,dispatchQueued}=host
   const input = new AsyncQueue<SDKUserMessage>(),inputTasks=new Map<string,string>(),idleWaiters=new Set<()=>void>()
-  const state: Live = {
-    cardId,privateInitialization:isInitializer(cardId),
-    kind,nativeOrigin:card?.nativeOrigin,
-    engine,
-    provider,
-    driver: null as never,
-    q: null as never,
-    input,
-    sessionId: null,
-    cwd,
-    workRoot,permissionRoot,remote,nativeRemote,remoteLaunch,
-    model: args.model,
-    thinkingEnabled: args.thinking !== false,
-    planMode:args.planMode??false,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,
-    effort: args.effort,
-    sandbox: sandboxFor(permissionMode),
-    permissionMode,
-    running: false,
-    queue: []
-  }
+  const state=engineState(context,{nativeOrigin:card?.nativeOrigin,workRoot,permissionRoot,nativeRemote,fastMode:args.fastMode??false,remoteAdmin:args.remoteAdmin??false,effort:args.effort,input,provider,thinkingEnabled:args.thinking!==false})
 
-  const discussionName='mcp__agents_company__'+DISCUSSION_TOOL.name,documentationName='mcp__agents_company__'+DOCUMENTATION_TOOL.name
-  const coreToolAllowed=(name:string)=>state.acknowledging?name===discussionName:name===documentationName
+  const discussionName='mcp__agents_company__'+DISCUSSION_TOOL.name,documentationName='mcp__agents_company__'+DOCUMENTATION_TOOL.name,apiName='mcp__agents_company__'+API_TOOL.name
+  const coreToolAllowed=(name:string)=>!state.acknowledging&&(name===documentationName||!state.privateInitialization&&(name===apiName||!!state.currentTask?.chat&&name===discussionName))
   const normalApproval=approvalHandler(sessionId, () => emit('session:changed', { sessionId }))
   const approve:typeof normalApproval=async(...args)=>{
-    if(args[0]===discussionName||args[0]===documentationName)return coreToolAllowed(args[0])?{behavior:'allow',updatedInput:args[1]}:{behavior:'deny',message:state.acknowledging?'Only the bound discussion tool is available during shared reading':state.privateInitialization?'Only the documentation tool is available during initialization':'The discussion tool is available only during its reading stage'}
-    if(privateTurns.has(sessionId)||state.privateInitialization){emit('session:error',{sessionId,message:'初始化阅读触发了额外权限请求，请检查文档可读性后重试。'});return {behavior:'deny',message:'Initialization only reads assigned documentation; interactive approvals are disabled'}}
+    if([discussionName,documentationName,apiName].includes(args[0]))return coreToolAllowed(args[0])?{behavior:'allow',updatedInput:args[1]}:{behavior:'deny',message:state.acknowledging?'No tools are available during private context reading':state.privateInitialization?'Only the documentation tool is available during initialization':'Publication is available only during its shared response stage'}
+    if(isPrivateTurn(sessionId)||state.privateInitialization){emit('session:error',{sessionId,message:'初始化阅读触发了额外权限请求，请检查文档可读性后重试。'});return {behavior:'deny',message:'Initialization only reads assigned documentation; interactive approvals are disabled'}}
     return normalApproval(...args)
   }
   const {query,createSdkMcpServer,tool}=await loadClaudeSdk()
@@ -53,19 +36,20 @@ export async function openClaude(context:EngineStart){
     catch(error){return {isError:true,content:[{type:'text' as const,text:(error as Error).message}]}}
   }
   const discussion=createSdkMcpServer({name:'agents_company',tools:[
-    tool(DISCUSSION_TOOL.name,DISCUSSION_TOOL.description,{conversationType:z.enum(['group','channel']),conversationId:z.string(),messageId:z.string(),text:z.string().nullable()},invoke(invokeDiscussionTool)),
-    tool(DOCUMENTATION_TOOL.name,DOCUMENTATION_TOOL.description,{operation:z.enum(['identity','index','document','describe']),document:z.string().optional(),command:z.string().optional()},invoke(invokeDocumentationTool))
+    tool(DISCUSSION_TOOL.name,DISCUSSION_TOOL.description,{conversationType:z.enum(['group','channel']),conversationId:z.string(),messageId:z.string(),text:z.string().min(1).max(2000)},invoke(invokeDiscussionTool)),
+    tool(DOCUMENTATION_TOOL.name,DOCUMENTATION_TOOL.description,{operation:z.enum(['identity','index','document','describe']),document:z.string().optional(),command:z.string().optional()},invoke(invokeDocumentationTool)),
+    tool(API_TOOL.name,API_TOOL.description,{command:z.string().min(1),args:z.object({}).passthrough().optional()},invoke(invokeApiTool))
   ]})
   const options=buildOptions({ ...args, employeeId:cardId,cwd, workRoot, permissionRoot, remote,nativeRemote,remoteLaunch,permissionMode,isPlanning:()=>state.planMode===true,isAcknowledging:()=>!!state.acknowledging,isInitializing:()=>!!state.privateInitialization, resume: args.claudeSessionId })
   const q = query({ prompt: input, options: {
-    ...options,mcpServers:{...options.mcpServers,agents_company:discussion},hooks:remoteLaunch?options.hooks:{...options.hooks,PreToolUse:[{hooks:[async(input:any)=>[discussionName,documentationName].includes(input.tool_name)||state.acknowledging||state.privateInitialization?{hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:coreToolAllowed(input.tool_name)?'allow':'deny',permissionDecisionReason:state.acknowledging?'Only the bound discussion tool is available during shared reading':state.privateInitialization?'Only the documentation tool is available during initialization':'Documentation discovery is read-only; the discussion tool requires an active reading stage'}}:{}]}]},
-    canUseTool: remote&&!nativeRemote?async(tool,input,context)=>([discussionName,documentationName].includes(tool)||cloudToolAllowed(tool,state.planMode===true))?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
-    onElicitation:async(...args)=>{if(privateTurns.has(sessionId)){emit('session:error',{sessionId,message:'初始化不能等待用户回答，请检查引擎配置后重试。'});return {action:'decline'}};return elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))(...args)}
+    ...options,mcpServers:{...options.mcpServers,agents_company:discussion},hooks:remoteLaunch?options.hooks:{...options.hooks,PreToolUse:[{hooks:[async(input:any)=>[discussionName,documentationName,apiName].includes(input.tool_name)||state.acknowledging||state.privateInitialization?{hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:coreToolAllowed(input.tool_name)?'allow':'deny',permissionDecisionReason:state.acknowledging?'No tools are available during private context reading':state.privateInitialization?'Only the documentation tool is available during initialization':'Documentation discovery is read-only; publication requires an active shared response stage'}}:{}]}]},
+    canUseTool: remote&&!nativeRemote?async(tool,input,context)=>([discussionName,documentationName,apiName].includes(tool)||cloudToolAllowed(tool,state.planMode===true))?approve(tool,input,context):{behavior:'deny',message:'云主机员工禁止调用本机工具'}:approve,
+    onElicitation:async(...args)=>{if(isPrivateTurn(sessionId)){emit('session:error',{sessionId,message:'初始化不能等待用户回答，请检查引擎配置后重试。'});return {action:'decline'}};return elicitationHandler(sessionId,()=>emit('session:changed',{sessionId}))(...args)}
   } })
   state.q = q
   state.driver=createClaudeDriver(state,sessionId,host,inputTasks,idleWaiters)
   state.bootstrapInstructions=employeeInstructions(readStore().sessions.find(card=>card.id===cardId)!,readStore())
-  live.set(sessionId, state)
+  register(sessionId, state)
   rememberMeta(sessionId, { engine, cwd, model: args.model, permissionMode,
     thinking: state.thinkingEnabled, thinkingSupported: true, planMode:state.planMode,fastMode:state.fastMode, effort: args.effort,
     claudeSessionId: args.claudeSessionId, busy: false })
@@ -74,7 +58,7 @@ export async function openClaude(context:EngineStart){
     try {
       const [commands, nativeModels] = await Promise.all([q.supportedCommands(), q.supportedModels()])
       const models=provider?deepSeekModels:nativeModels
-      if(!live.has(sessionId))return
+      if(!isOpen(sessionId))return
       rememberMeta(sessionId, {
         engine,
         cwd,
@@ -100,7 +84,7 @@ export async function openClaude(context:EngineStart){
         effort: state.effort
       })
     } catch (err) {
-      if(live.has(sessionId))emit('session:error', { sessionId, message: String(err) })
+      if(isOpen(sessionId))emit('session:error', { sessionId, message: String(err) })
     }
   })()
 
@@ -113,7 +97,7 @@ export async function openClaude(context:EngineStart){
           rememberMeta(sessionId, { claudeSessionId: msg.session_id })
           emit('session:resolved', { sessionId, claudeSessionId: msg.session_id })
         }
-        if (!live.has(sessionId)) continue
+        if (!isOpen(sessionId)) continue
         if(!('parent_tool_use_id' in msg&&msg.parent_tool_use_id)){
           const echoed=msg as {user_message_uuid?:string;user_message_uuids?:string[]},ids=echoed.user_message_uuids??(echoed.user_message_uuid?[echoed.user_message_uuid]:[])
           if(msg.type==='user'&&'isReplay' in msg&&msg.isReplay&&msg.uuid){const taskId=inputTasks.get(msg.uuid);if(taskId)emit('session:receipt',{sessionId,taskId,stage:'delivered'})}
@@ -125,7 +109,7 @@ export async function openClaude(context:EngineStart){
         emit('session:message', { sessionId, message: msg as SDKMessage })
         if (msg.type === 'system' && msg.subtype === 'init') {
           rememberTerminalCommands(sessionId, (msg as any).terminal_slash_commands ?? [])
-          rememberMeta(sessionId, { model: provider?state.model:msg.model,commands:[...new Map([...(msg.slash_commands??[]).map(name=>({name,description:'Claude Code 命令',argumentHint:''})),...(info.get(sessionId)?.commands??[])].map(c=>[c.name,c])).values()] })
+          rememberMeta(sessionId, { model: provider?state.model:msg.model,commands:[...new Map([...(msg.slash_commands??[]).map(name=>({name,description:'Claude Code 命令',argumentHint:''})),...(metadata(sessionId)?.commands??[])].map(c=>[c.name,c])).values()] })
         }
         if(msg.type==='conversation_reset'){
           const saved=readStore().sessions.find(c=>c.id===cardId)!
@@ -144,12 +128,12 @@ export async function openClaude(context:EngineStart){
           cancelApprovals(sessionId);emit('session:result',{sessionId,success:!msg.is_error&&msg.subtype==='success',error:msg.is_error||msg.subtype!=='success'?(('errors' in msg?msg.errors:[]) as string[]).join('; ')||msg.subtype:undefined});emit('session:turn-end', { sessionId });dispatchQueued(state,sessionId)
         }
       }
-      if (live.has(sessionId)) emit('session:end', { sessionId })
+      if (isOpen(sessionId)) emit('session:end', { sessionId })
     } catch (err) {
-      if (live.has(sessionId)) emit('session:error', { sessionId, message: String(err) })
+      if (isOpen(sessionId)) emit('session:error', { sessionId, message: String(err) })
     } finally {
       inputTasks.clear();state.running = false;for(const finish of idleWaiters)finish();idleWaiters.clear()
-      if (live.has(sessionId)) rememberMeta(sessionId, { busy: false })
+      if (isOpen(sessionId)) rememberMeta(sessionId, { busy: false })
     }
   })()
 

@@ -19,7 +19,10 @@ export type EngineDriver={
 }
 /** Engine modules emit into Core; they do not own Team authority or task delegation. */
 export type EngineHost={
-  live:Map<string,Live>;info:Map<string,SessionInfo>;privateTurns:Map<string,Emitter>
+  register:(id:string,state:Live)=>void
+  isOpen:(id:string)=>boolean
+  metadata:(id:string)=>SessionInfo|undefined
+  isPrivateTurn:(id:string)=>boolean
   emit:Emitter;rememberMeta:(id:string,meta:Partial<SessionInfo>)=>void
   rememberTerminalCommands:(id:string,names:string[])=>void
   sessionInfo:(id:string)=>SessionInfo|undefined

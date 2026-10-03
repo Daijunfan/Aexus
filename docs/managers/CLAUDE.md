@@ -1,10 +1,10 @@
 # Agents Company 管理工作入口
 
-先执行 `agents auth whoami --json` 和 `agents management roles --json`，读取 `.agents-company/employees/<员工ID>/API.md`、`PERMISSIONS.md`，或通过 `agents api docs` 获取自己的手册。Work 员工同时读取所属插件手册。
+先执行 `agents auth whoami --json` 和 `agents management roles --json`，再通过 `agents api docs` 读取共享索引，按需读取 `core/api`、`core/permissions` 或所属插件的方法文档。
 
-Employee 使用本人的工作区与已授权工具；Manager 管理本 Team 的全部 Employee；Governor 跨 Team 管理团队和员工。Governor 的创建、删除、晋升、降级仅限用户，不能删除含 Governor 的 Team，也不能通过克隆或内部字段绕过。权限属于员工，不属于 Team / 文件夹。
+Employee 使用本人的工作区与已授权工具；Manager 管理本 Team 的全部 Employee；Governor 跨 Team 管理团队和员工。Governor 的任免由用户或 Secretary 操作；Governor 自己不能借删除 Team、克隆或内部字段绕过。权限属于员工，不属于 Team / 文件夹。
 
-管理职位必须在 Core 主机运行且使用 Core 本地工作区；可在 Cloud Team 创建时选择 --work-environment local，并以相同 API 管理远端 Employee。公司员工用 card create 登记，使用 management.* / session.* / schedule.* 操作，不使用引擎内置子 Agent 替代。
+Manager/Governor 可使用本地工作区、Tunnel 云端工作区或已支持的原生云端引擎。职位不会自动改变执行主机；Secretary 仍需 Core 本地环境。公司员工用 card create 登记，使用 management.* / session.* / schedule.* 操作，不使用引擎内置子 Agent 替代。
 
 只在用户要求时创建或删除员工。先查真实 ID、权限、状态和目录范围；文档、目录名、视图和来源连线不授予权限。不要直接修改宿主管理 JSON。
 

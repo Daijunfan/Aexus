@@ -16,11 +16,12 @@ const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_
 const errors=[];page.on('pageerror',e=>errors.push(e.message))
 const cli=async(...args)=>{const r=JSON.parse((await run(process.execPath,[path.join(root,'bin/agents'),...args,'--json'],{env})).stdout);assert.ok(r.ok,r.error);return r.data}
 try{
- await page.locator('.infinite-canvas').waitFor();await cli('group','add','Pet Studio');await cli('settings','set','--theme','white')
+ await page.locator('.infinite-canvas').waitFor();await cli('settings','set','--language','zh-CN');await cli('engine','configure','--engine','claude','--data',JSON.stringify({sdkPath:root+'/test/fixtures/discussion-claude-sdk.mjs'}));await cli('group','add','Pet Studio');await cli('settings','set','--theme','white')
  const card=await cli('card','create','--title','Original identity','--avatar','marmalade','--group','Pet Studio','--model','gpt-6-luna'),mascot=page.locator(`[data-card-id="${card.id}"] .mascot`)
- await expect(mascot).toHaveAttribute('data-avatar','marmalade')
+ await expect(mascot).toHaveAttribute('data-avatar','marmalade');await expect.poll(async()=>(await cli('session','status','--employee',card.id))[0].initialization.status).toBe('ready')
  for(const avatar of kinds){const updated=await cli('card','update',card.id,'--avatar',avatar),edited=updated.sessions.find(c=>c.id===card.id);assert.equal(edited.avatar,avatar);assert.equal(edited.id,card.id);await expect(mascot).toHaveAttribute('data-avatar',avatar)}
  const claude=await cli('card','create','--title','Claude mark','--avatar','clawd','--engine','claude','--group','Pet Studio')
+ await expect.poll(async()=>(await cli('session','status','--employee',claude.id))[0].initialization.status).toBe('ready');
  for(const theme of ['black','white']){
   await cli('settings','set','--theme',theme)
   for(const [engine,id] of [['codex',card.id],['claude',claude.id]]){

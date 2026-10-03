@@ -4,7 +4,7 @@ const {create,expect}=require('./ui-session.cjs');
 (async()=>{const f=await create('visual-refinement');let failure;
  try{
   const {page,api}=f,base=await fs.readFile(path.join(__dirname,'../artifacts/visual-current.txt'),'utf8').then(s=>s.trim(),()=>path.join(__dirname,'../artifacts/visual-refinement'));await fs.mkdir(base,{recursive:true});
-  const make=async title=>api('study.create',{title}),get=setId=>api('study.get',{setId});
+  const make=async title=>api('study.create',{mapMode:'cards',title}),get=setId=>api('study.get',{setId});
   const change=async(setId,method,p={})=>api(method,{setId,expectedRevision:(await get(setId)).revision,...p});
   const design=await make('设计与产品'),language=await make('语言与表达'),science=await make('科学与发现');
   await api('fs.mkdir',{path:'阅读资料'});
@@ -39,7 +39,7 @@ const {create,expect}=require('./ui-session.cjs');
   f.pass('System reduced-motion takes precedence over full motion, and the explicit reduced mode persists');
   await page.setViewportSize({width:780,height:768});await page.click('#ui-appearance');await expect(page.locator('#dialog-submit')).toBeInViewport();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await choose('uiPalette','mint');await choose('theme','light');await page.screenshot({path:path.join(base,'appearance-compact.png')});await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
-  await page.setViewportSize({width:1520,height:1000});await page.click('[data-study-view=cards]');await expect(page.locator('.study-list-card').first()).toBeVisible();await page.screenshot({path:path.join(base,'cards-mint.png')});
+  await page.setViewportSize({width:1520,height:1000});await page.click('[data-study-view=map]');await expect(page.locator('.mindmap-topic').first()).toBeVisible();await expect(page.locator('#study-cards-panel')).toHaveCount(0);await page.screenshot({path:path.join(base,'map-mint.png')});
   await page.click('#ui-appearance');await page.click('#appearance-reset');await page.click('#dialog-submit');await expect(page.locator('body')).toHaveAttribute('data-ui-palette','azure');assert.equal((await api('settings.get')).uiMotion,'system');
   f.pass('The appearance studio stays usable at 780px, card content remains visible, and reset uses the public settings path');
  }catch(e){failure=e;}await f.finish(failure);

@@ -1,17 +1,18 @@
+import {TopicDrag} from './topic-drag.js';
 import { $, escape, field, showDialog, run, toast } from './dom.js';
 import { api } from './transport.js';
 import { rootSelection, selectedRegion } from './map-interaction.mjs';
 const modes=[['hand','移动 / 阅读'],['select','框选 / 套索'],['clone','复制工具'],['reference','引用工具'],['cut','剪切工具'],['link-one','单向链接'],['link-both','双向链接'],['curve','手绘链接'],['hierarchy','拖绘父子关系']];
 export class MapTools {
  constructor(study){
-  this.study=study;this.map=study.map;this.mode='hand';this.active=null;this.suppress=0;
-  const bar=document.createElement('div');bar.className='map-interaction-tools';bar.innerHTML=`<select id="map-tool-mode" aria-label="脑图操作工具">${modes.map(([id,title])=>`<option value="${id}">${title}</option>`).join('')}</select><select id="map-selection-shape" aria-label="卡片选择方式"><option value="rectangle">矩形</option><option value="lasso">套索</option></select><button id="map-copy">复制</button><button id="map-cut">剪切</button><button id="map-paste">粘贴</button><button id="map-insert">插入节点</button><span id="map-tool-status" role="status"></span>`;
+  this.study=study;this.map=study.map;this.mode='hand';this.active=null;this.suppress=0;this.topicDrag=new TopicDrag(study);this.map.topicDrag=this.topicDrag;
+  const bar=document.createElement('div');bar.className='map-interaction-tools';bar.innerHTML=`<select id="map-tool-mode" aria-label="脑图操作工具">${modes.map(([id,title])=>`<option value="${id}">${title}</option>`).join('')}</select><select id="map-selection-shape" aria-label="主题选择方式"><option value="rectangle">矩形</option><option value="lasso">套索</option></select><button id="map-copy">复制</button><button id="map-cut">剪切</button><button id="map-paste">粘贴</button><button id="map-insert">插入节点</button><span id="map-tool-status" role="status"></span>`;
   this.map.board.querySelector('.study-organization-tools').after(bar);
   $('map-tool-mode').onchange=run(async()=>{this.study.cardInk.modeSet('off');this.study.ink.setMode('off');await this.study.change('study.map.preferences',{mode:$('map-tool-mode').value});});
   $('map-selection-shape').onchange=run(()=>this.study.change('study.map.preferences',{selectionShape:$('map-selection-shape').value}));
   $('map-copy').onclick=run(()=>this.copy('clone'));$('map-cut').onclick=run(()=>this.copy('cut'));$('map-paste').onclick=run(()=>this.paste());$('map-insert').onclick=()=>this.insert();
   const viewport=$('study-map-viewport'),board=this.map.board;
-  board.addEventListener('pointerdown',e=>this.start(e),true);
+  board.addEventListener('pointerdown',e=>{this.suppress=0;this.start(e);},true);
   board.addEventListener('click',e=>{
    if(e.target.closest('button,input,select,textarea'))return;
    const card=e.target.closest('.study-card,.study-list-card');
@@ -40,29 +41,35 @@ export class MapTools {
  ids(){return this.study.organization.ids();}
  toggle(id,multiple){const selected=this.study.advanced.selected;if(!multiple)selected.clear();selected.has(id)?selected.delete(id):selected.add(id);this.map.select(id);this.selection();}
  async copy(mode='clone',cardIds=this.ids()){
-  if(!cardIds.length)throw Error('先选择需要复制或剪切的卡片。');
+  if(!cardIds.length)throw Error('先选择需要复制或剪切的主题。');
   const set=this.study.current,result=await api('study.clipboard.set',{setId:set.id,expectedRevision:set.revision,cardIds,mode,descendants:true});
   this.receipt=result.clipboard;$('map-tool-status').textContent=`${mode==='cut'?'待剪切':mode==='reference'?'引用':'复制'} ${cardIds.length} 个分支`;return result.clipboard;
  }
  async paste(params={},receipt){
-  if(!receipt){const state=await api('study.clipboard.get');if(!state.clipboard)throw Error('还没有复制的卡片。');if(!state.valid)throw Error('源卡片已更新，请重新复制或剪切。');receipt=state.clipboard;}
-  const set=this.study.current,result=await api('study.clipboard.paste',{setId:set.id,expectedRevision:set.revision,clipboardId:receipt.id,parentId:set.map?.submapId||null,...params});
+  const set=this.study.current;if(!set)throw Error('先打开学习集。');
+  if(set.map?.mindmap?.enabled)this.study.mindmapStudio.guard();
+  const parentId=set.map?.mindmap?.enabled&&set.cards.some(c=>c.id===this.map.selected)?this.map.selected:set.map?.submapId||null;
+  if(!receipt){const state=await api('study.clipboard.get');if(!state.clipboard)throw Error('还没有复制的主题。');if(!state.valid)throw Error('源主题已更新，请重新复制或剪切。');receipt=state.clipboard;}
+  if(this.study.current?.id!==set.id)throw Error('学习集已切换，未执行粘贴。');
+  const result=await api('study.clipboard.paste',{setId:set.id,expectedRevision:set.revision,clipboardId:receipt.id,parentId,...params});
+  if(this.study.current?.id!==set.id){await this.study.refreshList();return result;}
   this.study.render(result.set,result.rootIds[0]);await this.study.refreshList();
-  this.study.advanced.selected=new Set(result.rootIds);this.selection();$('map-tool-status').textContent=`已${result.mode==='cut'?'移动':'粘贴'} ${result.cardIds.length} 张卡片`;
+  this.study.advanced.selected=new Set(result.rootIds);this.selection();if(set.map?.mindmap?.enabled)this.map.center(result.rootIds[0]);$('map-tool-status').textContent=`已${result.mode==='cut'?'移动':'粘贴'} ${result.cardIds.length} 个主题`;
   return result;
  }
  insert(card){
   card??=this.study.current?.cards.find(c=>c.id===this.map.selected);if(!card){toast('先选择一个插入位置。');return;}
   const set=this.study.current;
-  showDialog({title:'插入卡片节点',html:field('relation','相对位置','after',{choices:[['before','前方同级'],['after','后方同级'],['parent','插入父节点'],['child','新建子节点']]})+field('title','标题','',{required:true})+'<label class="dialog-field"><span>正文</span><textarea name="text"></textarea></label>',onSubmit:async values=>{const next=await this.study.change('study.card.insert',{cardId:card.id,...values},set.revision);this.map.select(next.lastInsertedCard);this.map.center(next.lastInsertedCard);}});
+  showDialog({title:'插入主题节点',html:field('relation','相对位置','after',{choices:[['before','前方同级'],['after','后方同级'],['parent','插入父节点'],['child','新建子节点']]})+field('title','标题','',{required:true})+'<label class="dialog-field"><span>正文</span><textarea name="text"></textarea></label>',onSubmit:async values=>{const next=await this.study.change('study.card.insert',{cardId:card.id,...values},set.revision);this.map.select(next.lastInsertedCard);this.map.center(next.lastInsertedCard);}});
  }
  editLink(id){
   if(this.study.current?.map?.mindmap?.enabled)return this.study.mindmapStudio.open('relationship',id);
   const set=this.study.current,link=set.links.find(l=>l.id===id);if(!link)return;
   showDialog({title:'编辑脑图连线',html:field('label','链接说明',link.label||'')+field('bidirectional','方向',link.bidirectional?'yes':'no',{choices:[['no','单向 →'],['yes','双向 ↔']]})+field('action','操作','update',{choices:[['update','保存'],['straight','恢复自动曲线'],['remove','移除连线（可撤销）']]}),onSubmit:v=>v.action==='remove'?this.study.change('study.link.remove',{linkId:id},set.revision):this.study.change('study.link.update',{linkId:id,label:v.label,bidirectional:v.bidirectional==='yes',...(v.action==='straight'?{curve:[]}:{})},set.revision)});
  }
- world(event){const box=$('study-map-world').getBoundingClientRect();return [Math.max(0,Math.min(100000,(event.clientX-box.left)/this.map.zoom)),Math.max(0,Math.min(100000,(event.clientY-box.top)/this.map.zoom))];}
+ world(event){const box=$('study-map-world').getBoundingClientRect();return [(event.clientX-box.left)/this.map.zoom,(event.clientY-box.top)/this.map.zoom];}
  start(e){
+  if(this.study.current?.map?.mindmap?.enabled&&['hand','select','hierarchy'].includes(this.mode)&&this.map.window.topicAt(e))return this.topicDrag.start(e);
   if(e.button!==0||!e.target.closest('#study-map-viewport')||e.target.closest('button,input,select,textarea,[data-link-id]')||this.study.cardInk.mode!=='off'||this.active)return;
   const card=e.target.closest('.study-card'),selected=this.study.advanced.selected,multi=card&&selected.has(card.dataset.cardId)&&selected.size>1;
   const mode=this.mode==='hand'&&multi?'move':this.mode;
@@ -99,8 +106,8 @@ export class MapTools {
     }
     if(!moved){if(set.map?.mindmap?.enabled&&mode==='move'){if(e.shiftKey||e.metaKey||e.ctrlKey){selected.has(id)?selected.delete(id):selected.add(id);}else selected.clear();}this.map.select(id);this.selection();return;}
     if(['link-one','link-both','curve','hierarchy'].includes(mode)){
-     if(!targetId||targetId===id)throw Error('拖到另一张卡片上完成连线。');
-     if(mode==='hierarchy')await this.study.change('study.cards.move',{cardIds:[targetId],parentId:id},set.revision);
+     if(!targetId||targetId===id)throw Error('拖到另一个主题上完成连线。');
+     if(mode==='hierarchy')await this.study.change('study.cards.move',{cardIds:[id],parentId:targetId,expandParent:true},set.revision);
      else{
       const a=this.map.layout.positions.get(id),b=this.map.layout.positions.get(targetId),curve=mode==='curve'?points.filter((_,i)=>i%Math.ceil(points.length/60)===0):null;
       if(curve){curve[0]=[a.x+a.width/2,a.y+a.height/2];curve.push([b.x+b.width/2,b.y+b.height/2]);}

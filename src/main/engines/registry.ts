@@ -4,7 +4,7 @@ import spawn from 'cross-spawn'
 import {ENGINE_DEFINITIONS,isEngine,type EngineId,type EngineHealth} from '../../shared/engines'
 import {childEnv} from '../exec'
 import {engineExecutable} from './executable'
-import {engineConfiguration,engineEnvironment,publicEngineConfiguration} from './configuration'
+import {engineConfiguration,engineProcessEnvironment,publicEngineConfiguration} from './configuration'
 import {terminateTree} from '../platform'
 import {checkCloudNative} from '../cloud-native'
 import {claudeSdkPath} from './claude-sdk'
@@ -13,7 +13,7 @@ export function engineList(){return Object.entries(ENGINE_DEFINITIONS).map(([eng
 export function invalidateEngine(engine:EngineId){for(const key of cache.keys())if(key.startsWith(engine+':'))cache.delete(key)}
 async function command(engine:EngineId,args:string[],timeout=12000){
   const executable=engineExecutable(engine)
-  const child=spawn(executable,args,{env:{...childEnv(),...engineEnvironment(engine)},stdio:['ignore','pipe','pipe'],windowsHide:true,detached:process.platform!=='win32'})
+  const child=spawn(executable,args,{env:engineProcessEnvironment(engine,childEnv()),stdio:['ignore','pipe','pipe'],windowsHide:true,detached:process.platform!=='win32'})
   return new Promise<{code:number|null;stdout:string;stderr:string}>((resolve,reject)=>{
     let stdout='',stderr='',settled=false
     const timer=setTimeout(()=>{terminateTree(child,true);finish(Error('Coding Agent 检查超时'))},timeout)

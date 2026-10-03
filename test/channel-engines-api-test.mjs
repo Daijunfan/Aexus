@@ -1,0 +1,95 @@
+// Isolated source-built Core + CLI + HTTP ingress. Native workers use initialization-codex.cjs, never real models.
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import net from 'node:net'
+import assert from 'node:assert/strict'
+import {build} from 'esbuild'
+import {fixtureCore} from './fixtures/headless-core.mjs'
+const root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-channel-engines-')),entry=path.join(temp,'daemon.cjs')
+const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=='
+let f
+try{
+ fs.symlinkSync(path.join(root,'node_modules'),path.join(temp,'node_modules'),'dir')
+ await build({entryPoints:[path.join(root,'src/main/daemon.ts')],outfile:entry,bundle:true,platform:'node',format:'cjs',target:'node22',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'})
+ f=await fixtureCore({},entry)
+ const rpc=async(cmd,args={},token=null)=>{const value=await f.request(token,cmd,args);assert.ok(value.ok,value.error);return value.data}
+ const denied=async(cmd,args={},token=null)=>{const value=await f.request(token,cmd,args);assert.equal(value.ok,false,'Expected rejection: '+cmd);return value}
+ await denied('channel.create',{name:'No engine'});assert.deepEqual(await rpc('channel.list'),[])
+ await f.cli('group','add','Press');await f.cli('group','add','Other')
+ const a=await f.create('Publisher A','Press'),b=await f.create('Publisher B','Press'),outsider=await f.create('Outside','Other'),aToken=await f.token(a.id),bToken=await f.token(b.id),outsideToken=await f.token(outsider.id)
+ assert.ok(Array.isArray((await rpc('session.list',{summary:true})).sessions))
+ await denied('channel.create',{name:'Missing member',engine:{kind:'employees',employeeIds:['not-an-employee']}})
+ await denied('channel.create',{name:'Missing remote address',engine:{kind:'external',name:'Remote',location:'remote'}})
+ await denied('channel.create',{name:'Unsafe endpoint',engine:{kind:'external',name:'Remote',location:'remote',host:'203.0.113.10',endpoint:'http://example.test'}})
+ const beforeCollectors=(await rpc('channel.collectors')).length
+ await denied('channel.create',{name:'Atomic image validation',engine:{kind:'external',location:'local',name:'Discarded'},avatar:{name:'bad.png',mimeType:'image/png',data:'not-base64'}})
+ assert.deepEqual(await rpc('channel.list'),[]);assert.equal((await rpc('channel.collectors')).length,beforeCollectors,'invalid avatar rolls back the channel, source and credential')
+ const internal=await f.cli('channel','create','--name','Research desk','--engine',JSON.stringify({kind:'employees',employeeIds:[a.id,b.id]}),'--avatar',JSON.stringify({name:'desk.png',mimeType:'image/png',data:png}))
+ assert.deepEqual(internal.adminIds,[a.id,b.id]);assert.equal(internal.engine.kind,'employees');assert.equal(internal.setup,undefined);assert.equal(internal.avatar.channelId,internal.id)
+ assert.equal((await f.cli('channel','avatar-image',internal.id)).data,png)
+ assert.equal((await rpc('channel.connection',{id:internal.id})).status,'internal')
+ const sources=await rpc('channel.sources',{channelId:internal.id}),aSource=sources.find(source=>source.locator==='employee:'+a.id),bSource=sources.find(source=>source.locator==='employee:'+b.id)
+ assert.equal(aSource.plugin,'employee');assert.equal((await rpc('channel.collector-config')).targets.some(target=>target.sourceId===aSource.id),false)
+ const remote=await f.cli('channel','create','--name','Remote desk','--engine',JSON.stringify({kind:'external',location:'remote',name:'Cloud collector',host:'203.0.113.10',endpoint:'https://core.example.test/api/channels/collector'}))
+ const local=await rpc('channel.create',{name:'Local desk',engine:{kind:'external',location:'local',name:'Local collector'}})
+ assert.ok(remote.setup.token);assert.ok(local.setup.token);assert.equal((await rpc('channel.connection',{id:remote.id})).status,'waiting')
+ assert.equal((await rpc('channel.connection',{id:remote.id})).engine.host,'203.0.113.10')
+ const listener=net.createServer();await new Promise(resolve=>listener.listen(0,'127.0.0.1',resolve));const port=listener.address().port;await new Promise(resolve=>listener.close(resolve))
+ await rpc('channel.settings',{patch:{enabled:true,port}})
+ const collect=async(token,cmd,args={})=>{const response=await fetch(`http://127.0.0.1:${port}/api/channels/collector`,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({cmd,args})});return response.json()}
+ await f.until(async()=>{try{return (await collect(remote.setup.token,'channel.collector-config')).ok}catch{return false}},'isolated collector listener')
+ const config=(await collect(remote.setup.token,'channel.collector-config')).data,remoteSource=config.targets[0].sourceId,localSource=(await rpc('channel.sources',{channelId:local.id}))[0].id
+ assert.equal(config.targets.length,1);assert.equal(config.targets[0].plugin,'process')
+ assert.equal((await rpc('channel.connection',{id:remote.id})).status,'seen');assert.ok((await rpc('channel.connection',{id:remote.id})).lastSeenAt)
+ const wildcard=await rpc('channel.collector-add',{name:'Legacy wildcard'})
+ assert.deepEqual((await collect(wildcard.token,'channel.collector-config')).data.targets,[],'legacy all credentials exclude both bound processes and employee publishers')
+ const article={externalId:'report-1',publishedAt:Date.now()-1000,title:'Research report',body:'Verified fixture article'}
+ const upload=await rpc('channel.media-put',{channelId:internal.id,externalId:article.externalId,publishedAt:article.publishedAt,mediaKey:'cover',name:'cover.png',mimeType:'image/png',data:png},aToken)
+ assert.ok(upload.media.id)
+ const post=await rpc('channel.publish',{channelId:internal.id,...article,mediaIds:[upload.media.id]},aToken)
+ assert.equal(post.status,'created');assert.equal((await rpc('channel.publish',{channelId:internal.id,...article,mediaIds:[upload.media.id]},aToken)).status,'duplicate')
+ const stored=await rpc('channel.post',{id:post.id});assert.equal(stored.plugin,'employee');assert.equal(stored.authorName,a.title);assert.equal(stored.media[0].id,upload.media.id)
+ const context=await rpc('channel.context',{id:internal.id,entryId:post.id},aToken);assert.equal(context.deliveries.some(delivery=>delivery.employeeId===a.id),false,'the publisher does not receive its own article');assert.equal(context.deliveries.some(delivery=>delivery.employeeId===b.id),true)
+ assert.ok((await rpc('channel.timeline',{id:internal.id},aToken)).entries.some(value=>value.id===post.id))
+ await denied('channel.publish',{channelId:internal.id,...article,externalId:'outside'},outsideToken)
+ await denied('channel.publish',{sourceId:aSource.id,...article,externalId:'spoof'},bToken)
+ await denied('channel.publish',{channelId:internal.id,...article,externalId:'spoof-name',authorName:b.title},aToken)
+ await denied('channel.publish',{channelId:internal.id,sourceId:aSource.id,...article},aToken)
+ await denied('channel.source-update',{id:aSource.id,patch:{channelId:local.id}})
+ await denied('channel.collector-add',{name:'Impossible grant',sourceIds:[aSource.id]})
+ await rpc('channel.update',{id:remote.id,adminIds:[a.id]})
+ assert.deepEqual((await rpc('channel.get',{id:remote.id},aToken)).engine,{kind:'external',location:'remote'},'ordinary channel membership does not reveal connection metadata')
+ await denied('channel.connection',{id:remote.id},aToken)
+ await denied('channel.source-update',{id:remoteSource,patch:{locator:'@fake'}})
+ await denied('channel.publish',{sourceId:remoteSource,...article},aToken)
+ for(const sourceId of [localSource,aSource.id])assert.equal((await collect(remote.setup.token,'channel.publish',{sourceId,...article})).ok,false)
+ assert.equal((await collect(remote.setup.token,'channel.publish',{channelId:internal.id,...article})).ok,false)
+ assert.equal((await collect(remote.setup.token,'channel.publish',{sourceId:remoteSource,...article})).ok,true)
+ const legacy=await rpc('channel.source-add',{plugin:'x',locator:'@legacy'}),narrow=await rpc('channel.collector-add',{name:'Legacy narrow',sourceIds:[legacy.id]})
+ assert.equal((await rpc('channel.get',{id:legacy.channelId})).engine.location,'unconfigured')
+ assert.ok((await collect(narrow.token,'channel.collector-config')).data.targets.some(value=>value.sourceId===legacy.id))
+ await denied('channel.source-update',{id:legacy.id,patch:{channelId:internal.id}})
+ await rpc('channel.source-update',{id:legacy.id,patch:{channelId:remote.id}})
+ assert.equal((await collect(narrow.token,'channel.publish',{sourceId:legacy.id,...article})).ok,false,'moving into a bound engine changes source authorization')
+ assert.equal((await collect(remote.setup.token,'channel.publish',{sourceId:legacy.id,...article})).ok,true)
+ const rotated=await f.cli('channel','collector-add','--name','Replacement','--channel',remote.id)
+ assert.equal((await collect(remote.setup.token,'channel.publish',{sourceId:remoteSource,...article,externalId:'after-rotation'})).ok,false)
+ assert.equal((await collect(rotated.token,'channel.publish',{sourceId:remoteSource,...article,externalId:'after-rotation'})).ok,true)
+ await rpc('channel.update',{id:internal.id,adminIds:[b.id]});await denied('channel.publish',{channelId:internal.id,...article,externalId:'removed'},aToken)
+ assert.equal((await rpc('channel.post',{id:post.id})).id,post.id)
+ const changed=await rpc('channel.update',{id:internal.id,adminIds:[a.id,b.id]})
+ assert.equal((await rpc('channel.sources',{channelId:internal.id})).find(source=>source.locator==='employee:'+a.id).id,aSource.id,'rejoining preserves the same source and history')
+ await denied('channel.update',{id:internal.id,name:'Stale rename',expectedRevision:internal.revision})
+ await denied('channel.update',{id:internal.id,engine:{kind:'external',location:'local',name:'Wrong kind'},expectedRevision:changed.revision})
+ await rpc('channel.save',{id:post.id,saved:true})
+ const task=await rpc('schedule.create',{clientRequestId:'channel-engine-fixture-task',spec:{name:'Paused news task',enabled:false,action:{type:'agent',employeeId:a.id,prompt:'Collect fixture news and call channel.publish with channelId '+internal.id},rule:{kind:'interval',everySeconds:3600},source:'channel:'+internal.id}})
+ assert.ok(task.id)
+ const inventory=JSON.stringify(await rpc('channel.list'));for(const token of [remote.setup.token,local.setup.token,rotated.token])assert.equal(inventory.includes(token),false)
+ await f.stop();await f.start()
+ assert.equal((await rpc('channel.post',{id:post.id})).saved,true);assert.equal((await f.cli('channel','avatar-image',internal.id)).data,png);assert.deepEqual((await f.cli('channel','get',internal.id)).engine.employeeIds,[a.id,b.id])
+ const reset=await f.cli('channel','update',internal.id,'--avatar','null');assert.equal(reset.avatar,undefined)
+ const renamed=await f.cli('channel','update',legacy.channelId,'--name','Custom platform name');assert.equal(renamed.name,'Custom platform name')
+ assert.equal((await rpc('api.describe',{command:'channel.publish'})).permission,'chat')
+ console.log('PASS explicit engine selection; atomic creation/avatar validation; team identity; employee/image publication; spoofing/revocation guards; live HTTP collector binding, rotation and legacy compatibility; paused native schedule; CLI, persistence and avatar reset')
+}finally{await f?.close();fs.rmSync(temp,{recursive:true,force:true})}

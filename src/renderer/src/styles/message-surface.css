@@ -2,7 +2,7 @@
 .message-stage{--thread-width:880px;--message-paper:var(--bg-elev);--message-outgoing:var(--theme-outgoing,#eee2ff);isolation:isolate;background:var(--theme-wash,#d8c9ee)}
 .message-wallpaper{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:linear-gradient(125deg,color-mix(in srgb,var(--theme-wash,#d8c9ee) 91%,var(--accent)),var(--theme-wash-alt,#ebe0f8) 52%,var(--theme-wash,#d8c9ee))}
 .message-wallpaper-mesh{position:absolute;inset:0;background:radial-gradient(ellipse at 6% 24%,var(--theme-wash-alt,#ebe0f8),transparent 51%),radial-gradient(ellipse at 96% 76%,color-mix(in srgb,var(--theme-wash,#d8c9ee) 87%,var(--accent)),transparent 56%);opacity:.58}
-.message-wallpaper-pattern{position:absolute;inset:0;color:color-mix(in srgb,var(--theme-pattern,#9276b333) 76%,color-mix(in srgb,var(--accent) 24%,transparent));opacity:1}
+.message-wallpaper-pattern{position:absolute;inset:0;display:block;color:color-mix(in srgb,var(--accent,#7953ce) 72%,var(--fg,#293343));opacity:.16}
 .message-thread-header{min-height:80px;background:var(--bg-elev);backdrop-filter:blur(18px);padding-block:13px;box-shadow:0 5px 20px color-mix(in srgb,var(--accent) 12%,transparent);margin:14px 16px 0;border:1px solid color-mix(in srgb,var(--bg-elev) 88%,transparent);border-radius:21px}
 .message-thread-header .message-avatar,.message-thread-header>.group-avatar{width:46px;height:46px;border-radius:17px}
 .message-person strong,.group-title strong{font-size:16px;letter-spacing:-.25px}

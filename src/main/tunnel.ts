@@ -1,3 +1,4 @@
+import {directoryName} from '../shared/directory-names'
 import {applicationRoot} from './resources'
 import {terminateTree} from './platform'
 import {cloudHostAskpass} from './cloud-hosts'
@@ -85,7 +86,7 @@ export async function resolveEmployeeWorkspace(store:Store,group:string,title:st
   if(!store.groups.includes(group)||!config.remote)throw new Error('请先配置云主机 Team')
   if(mode!==undefined&&!['default','bind','create','existing'].includes(mode))throw new Error('请选择默认生成或绑定已有文件夹')
   const generated=mode==='default'||(!mode&&!input)
-  const name=title.trim()
+  const name=directoryName(title,'employee')
   if(!generated&&!input?.trim())throw new Error('请选择云端工作文件夹，绑定团队根目录请使用 .')
   if(generated&&(!name||name==='.'||name==='..'||/[\\/\0]/.test(name)))throw new Error('默认文件夹必须与员工同名，名字不能包含路径分隔符')
   const target=cloudDirectory(config,generated?name:input||''),own=store.sessions.some(c=>c.id===id&&c.group===group&&c.cwd===target)

@@ -12,8 +12,9 @@ try{
   const models=await cli('engine','models','--engine',engine);assert.equal(models.defaultModel,'deepseek-flash');assert.ok(models.models.every(m=>m.supportsEffort===false))
   const card=await cli('card','create','--title',engine,'--group','A','--engine',engine)
   assert.equal(card.model,'deepseek-flash');assert.equal(card.thinking,false)
+  await test.ready(card.id)
   const opened=await cli('session','open',card.id),send=async text=>{const accepted=await rpc('session.send',{employee:card.id,text});assert.ok(accepted.messageId);await until(async()=>!(await status(card.id)).busy,'turn completed');return await cli('session','transcript','--employee',card.id)}
-  if(engine==='cline'){assert.equal((await cli('session','list')).sessions.find(c=>c.id===card.id).clineSessionId,undefined);await cli('session','close',opened.sessionId)}
+  if(engine==='cline'){assert.ok((await cli('session','list')).sessions.find(c=>c.id===card.id).clineSessionId,'native initialization retains its Cline session');await cli('session','close',opened.sessionId)}
   await send('UNICODE_FIXTURE');let transcript=await cli('session','transcript','--employee',card.id);assert.ok(JSON.stringify(transcript).includes('春 雨 秋'),'LF framing preserves Unicode paragraph characters')
   await rpc('session.send',{employee:card.id,text:'WRITE_FIXTURE'})
   let current=await status(card.id);await until(async()=>(await cli('approval','list',current.sessionId)).length,'approval pending')

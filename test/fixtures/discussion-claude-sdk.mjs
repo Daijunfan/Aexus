@@ -38,13 +38,13 @@ export function query({prompt,options}){
     note('ack-response',{text:response})
     if(fs.existsSync(file('.ack-preface.txt')))yield {type:'assistant',uuid:randomUUID(),session_id:sessionId,parent_tool_use_id:null,user_message_uuid:uuid,message:{content:[{type:'text',text:fs.readFileSync(file('.ack-preface.txt'),'utf8')}]}}
     while(!closed&&!interrupted&&fs.existsSync(file('.hold-ack')))await new Promise(resolve=>setTimeout(resolve,20))
-    if(!closed&&!interrupted&&(explicit||process.env.AC_CHAT_ACK_MANUAL!=='1'&&!raw)){
+    if(!closed&&!interrupted&&explicit){
      try{
       const args={conversationType:policy.conversationType,conversationId:policy.conversationId,messageId:policy.messageId,text:null,...(explicit?JSON.parse(fs.readFileSync(file('.ack-tool.json'),'utf8')):{})};await nativeTool('agents_company_discussion_post',args)
      }catch(error){failure=error.message}
     }
     if(fs.existsSync(file('.ack-fail')))failure='Fixture acknowledgment failure'
-   }else while(!closed&&!interrupted&&fs.existsSync(file('.hold-user')))await new Promise(resolve=>setTimeout(resolve,20))
+   }else{const post=workPostArgs(text,control,employee);if(post)try{const result=await nativeTool('agents_company_discussion_post',post);note('work-publication',{input:post,result});if(result.isError)throw Error(result.content?.[0]?.text??'Publication failed')}catch(error){failure=error.message};while(!closed&&!interrupted&&fs.existsSync(file('.hold-user')))await new Promise(resolve=>setTimeout(resolve,20))}
    if(closed)return
    if(!interrupted){
     yield {type:'stream_event',uuid:randomUUID(),session_id:sessionId,parent_tool_use_id:null,user_message_uuid:uuid,event:{type:'message_start',message:{id:randomUUID(),role:'assistant',content:[]}}}
@@ -56,4 +56,12 @@ export function query({prompt,options}){
  })()
  Object.assign(q,{supportedCommands:async()=>[],supportedModels:async()=>[{value:'fixture-claude',displayName:'Fixture'}],close:()=>{closed=true},interrupt:async()=>{interrupted=true},setModel:async()=>{},setPermissionMode:async()=>{},setMaxThinkingTokens:async()=>{},applyFlagSettings:async()=>{}})
  return q
+}
+
+function workPostArgs(text,control,employee){
+ const file=path.join(control,employee+'.work-post.json');if(!fs.existsSync(file))return
+ const marker=text.includes('[Group request]\n')?'[Group request]\n':text.includes('[Channel context]\n')?'[Channel context]\n':undefined
+ if(!marker)return
+ const context=JSON.parse(text.split(marker)[1].split('\n')[0])
+ return {conversationType:context.conversationType,conversationId:context.conversationId,messageId:context.messageId??context.entryId,...JSON.parse(fs.readFileSync(file,'utf8'))}
 }

@@ -7,7 +7,7 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
  try{
   const {page,api}=f,output=await fs.readFile(path.join(__dirname,'../artifacts/interaction-current.txt'),'utf8').then(s=>s.trim(),()=>f.output);
   await fs.writeFile(path.join(f.workspace,'source.pdf'),pdfFixture());
-  const doc=await api('document.open',{path:'source.pdf',activate:false});let set=await api('study.create',{title:'原文直接笔记'});
+  const doc=await api('document.open',{path:'source.pdf',activate:false});let set=await api('study.create',{mapMode:'cards',title:'原文直接笔记'});
   set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['source.pdf']});
   const get=()=>api('study.get',{setId:set.id});
   const captured=await api('study.card.create',{setId:set.id,expectedRevision:set.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),title:'Existing excerpt',text:'',color:'yellow',locator:{page:1},selection:{rects:[{page:1,x:.08,y:.06,width:.72,height:.05}]}});

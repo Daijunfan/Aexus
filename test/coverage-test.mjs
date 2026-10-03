@@ -50,18 +50,23 @@ const renderer = rendererFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
 
 // ---- what the terminal exposes ----
 
-const server = ['server.ts','channels.ts'].map(file=>readFileSync(join(ROOT,'src','main',file),'utf8')).join('\n')
+const server = ['server.ts','channels.ts','conversation-workspaces.ts',...readdirSync(join(ROOT,'src/main/commands')).filter(name=>name.endsWith('.ts')).map(name=>'commands/'+name)].map(file=>readFileSync(join(ROOT,'src','main',file),'utf8')).join('\n')
 const cli = readFileSync(join(ROOT, 'bin', 'agents'), 'utf8')
 const protocol = readFileSync(join(ROOT, 'src', 'shared', 'api-registry.ts'), 'utf8')
 
 // Most commands are `case 'x.y':`, but streaming ones are `if (req.cmd === 'x.y')`.
+const {CONVERSATION_CONTROL_APIS}=await import('../src/shared/conversation-control-schema.ts')
+if(!server.includes('CONVERSATION_CONTROL_APIS.has(req.cmd)')||!server.includes('return conversationControlRequest(req.cmd,a)'))throw Error('Conversation controls are not dispatched by Core')
 const serverCommands = new Set([
+  ...CONVERSATION_CONTROL_APIS,
   ...[...server.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]),
-  ...[...server.matchAll(/req\.cmd === '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
+  ...[...server.matchAll(/(?:req\.cmd|command)\s*===\s*'([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
 ])
 const cliCommands = new Set(
-  [...cli.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
+  [...[...cli.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]),...Object.keys(JSON.parse(readFileSync(join(ROOT,'bin/command-inputs.json'),'utf8')))]
 )
+// api.call is local CLI syntax forwarding a chosen canonical command, not a Core endpoint.
+cliCommands.delete('api.call')
 const {COMMANDS}=await import('../src/shared/api-registry.ts')
 const declared=new Set(COMMANDS.map(command=>command.name))
 const managerGuide=readFileSync(join(ROOT,'docs','managers','API.md'),'utf8')
@@ -71,9 +76,16 @@ console.log('CLI / GUI coverage — static check\n')
 console.log('-- the surfaces line up --')
 const registry=JSON.parse(readFileSync(join(ROOT,'docs/managers/commands.json'),'utf8'))
 ok(registry.every(command=>typeof command.permission==='string'&&typeof command.target==='string'),'every API declares an authorization policy and resource target')
+for(const command of ['messenger.social','schedule.get','status','plan.query']){
+ const args=command==='messenger.social'?{platform:'x'}:command==='schedule.get'?{id:'fixture-only'}:command==='plan.query'?{limit:3,filter:{states:['paused']}}:{}
+ const parsed=spawnSync(process.execPath,[join(ROOT,'bin/agents'),'api','call',command,'--args',JSON.stringify(args),'--json'],{env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8'})
+ let request;try{request=JSON.parse(parsed.stdout)}catch{}
+ ok(parsed.status===0&&request?.cmd===command&&JSON.stringify(request?.args)===JSON.stringify(args),'raw CLI forwards canonical command → '+command)
+}
 ok(serverCommands.size > 0, `the server handles commands (${serverCommands.size})`)
 ok(cliCommands.size > 0, `the CLI exposes commands (${cliCommands.size})`)
 
+ok(!declared.has('api.call'),'raw CLI uses no duplicate Core route')
 const missingOnServer = [...cliCommands].filter((c) => !serverCommands.has(c))
 ok(
   missingOnServer.length === 0,

@@ -1,3 +1,4 @@
+import { installTooltips } from './tooltips.js';
 import { BookTurn } from './book-turn.js';
 import { PageTurnQueue } from './page-turn-queue.mjs';
 import { organizeReaderToolbar } from './reader-toolbar.js';
@@ -10,18 +11,18 @@ import { Library } from './library.js';
 import { Outline } from './outline.js';
 import { ReaderRenderer } from './reader.js';
 import { PdfGesture } from './pdf-gestures.mjs';
-import { WorkspaceTools } from './workspace-tools.js';
 import { ReaderTools } from './reader-tools.js';
 import { Bookmarks } from './bookmarks.js';
 import { StudyController } from './study.js';
 decorate();
+installTooltips();
 const state = { settings: null, document: null, opening: false, rendering: false };
 const pdfGesture = new PdfGesture();
 const bookTurn = new BookTurn($('reader-scroll'));
 let pageTurns;
 function cancelPageTurns(){pageTurns?.cancel();bookTurn.cancel();pdfGesture.reset();}
 let readerGesture=false,pendingReflow=false;const blockedReaderPointers=new Set();
-const blockedReflow=()=>readerGesture||Boolean(study?.ink?.dirty||study?.cardInk?.dirty)||Boolean(study?.excerpts?.draft)||Boolean(document.querySelector('.pdf-note[data-editing]'));
+const blockedReflow=()=>readerGesture||Boolean(study?.splitView?.drag)||Boolean(study?.ink?.dirty||study?.cardInk?.dirty)||Boolean(study?.excerpts?.draft)||Boolean(document.querySelector('.pdf-note[data-editing]'));
 const resumeReflow=()=>{if(pendingReflow&&!blockedReflow()){pendingReflow=false;renderDocument().catch(error=>toast(describeError(error),true));}};
 $('reader-scroll').addEventListener('pointerdown',event=>{
   // A turning paper is only a visual copy. Do not begin an annotation against
@@ -53,12 +54,11 @@ const study = new StudyController({
     setReading(true);updateDocumentHeader();outline.render();await renderDocument();
   },
   setSettings,showCollection,redrawDocument:renderDocument, getDocument: () => state.document, getRenderer: () => renderer, getPassword: () => password, openDocument, openFolder, navigate: navigateLocator,
-  beforeNavigate: async () => { study.inspector?.guard();study.mindmapStudio?.guard(); if((study.ink?.dirty||study.cardInk?.dirty))throw new Error('请先保存或放弃尚未保存的笔画。'); await savePosition(); cancelPageTurns(); ++openGeneration; },
+  beforeNavigate: async () => { study.splitView?.guard();study.inspector?.guard();study.mindmapStudio?.guard(); if((study.ink?.dirty||study.cardInk?.dirty))throw new Error('请先保存或放弃尚未保存的笔画。'); await savePosition(); cancelPageTurns(); ++openGeneration; },
   showHome: async () => { const generation=openGeneration;state.document = null; state.opening = false; password = undefined; await renderer.clear(); const settings = await api('settings.get');if(generation!==openGeneration)return;state.settings=settings;setReading(false);applySettings(); }
 });
 library.collection=study.collection;
 const readerTools = new ReaderTools({getStudy:()=>study,prepareNavigation:()=>study.beforeNavigate(),syncNavigation:refreshFromEvent,closeDocument:()=>study.current?study.home(study.current.id):openFolder(library.folder),getDocument:()=>state.document,openDocument:async path=>{const member=study.current?.documents.find(d=>d.path===path);if(member)await study.member(member.id);else await openDocument(path);},created:async doc=>{if(study.current){await study.change('study.documents.add',{paths:[doc.path]});await study.member(doc.id);}else await openDocument(doc.path);await library.refresh();}});
-const workspaceTools=new WorkspaceTools(study,readerTools);
 const readerAppearance=new ReaderAppearance(study,setSettings);
 const presentationPointers=new PresentationPointers();
 organizeReaderToolbar();
@@ -76,7 +76,7 @@ function applySettings() {
   document.body.dataset.studyLayout=settings.studyLayout||'columns';
   document.body.dataset.pdfDarkMode=settings.pdfDarkMode||'original';
   document.documentElement.style.setProperty('--document-brightness',settings.brightness||1);
-  syncPdfControls(); readerAppearance.apply(settings);study.collection.apply(settings);study.documentGallery.apply(settings);
+  syncPdfControls(); readerAppearance.apply(settings);study.splitView?.apply(settings);study.collection.apply(settings);study.documentGallery.apply(settings);
   notifyHost('appearance', { theme: settings.theme === 'dark' ? 'dark' : 'light' });
 }
 async function setSettings(patch) {
@@ -132,7 +132,7 @@ async function savePosition() {
   positionQueue = positionQueue.catch(() => {}).then(async () => {
     savingPosition++;
     try {
-      await api('reader.position.set', draft); saveFailure = null;
+      await api('reader.position.set', {...draft,activate:false}); saveFailure = null;
       $('reader-save-status').textContent = '阅读位置已保存';
     } catch (error) {
       saveFailure = error; positionDraft ||= draft;
@@ -143,7 +143,7 @@ async function savePosition() {
   return positionQueue;
 }
 function positionChanged() {
-  if (pageTurns?.active || !state.document || suppressScroll || state.rendering || $('reader-view').hidden) return;
+  if (pageTurns?.active || study.splitView?.drag || !state.document || suppressScroll || state.rendering || $('reader-view').hidden) return;
   const locator = renderer.currentLocator(state.document);
   if (JSON.stringify(locator) === JSON.stringify(state.document.position)) return;
   positionEpoch++;
@@ -156,7 +156,8 @@ $('reader-scroll').addEventListener('reader-media-position',positionChanged);
 $('reader-scroll').addEventListener('scroll', positionChanged, { passive: true });
 $('reader-save-status').addEventListener('click', run(savePosition));
 async function flush() {
-  study.mindmapStudio?.guard();
+  await flushRequests();
+  study.splitView?.guard();study.mindmapStudio?.guard();
   if(study.backups?.jobs?.busy)throw new Error('备份批次仍在处理，请先暂停并等待当前请求结束。');
   if(study.devices?.dirty)throw new Error('相机 / 录音仍在使用或有未保存的媒体，请先保存或明确取消。');
   if(study.exporter?.busy)throw new Error("学习集导入或导出尚未完成，请稍候再关闭。");
@@ -166,6 +167,14 @@ async function flush() {
   if(document.querySelector('.pdf-note[data-editing],[data-layout-drag]'))throw new Error('留白仍在调整，请完成拖动后再关闭。');
   study.inspector?.guard();study.mindmapStudio?.guard();
   if (modalDirty()) throw new Error('还有尚未保存的对话框内容，请保存或明确取消后再关闭。');
+}
+async function saveChanges(){
+  await flushRequests();
+  const before=study.current;
+  await study.mindmapStudio?.saveDraft();
+  if(before&&study.current?.id===before.id&&study.current.revision!==before.revision)study.inspector?.adoptOwnRevision(study.current,before.revision);
+  await study.inspector?.save();
+  await flush();toast('更改已保存');
 }
 async function showCollection(folderId=null){
   await study.beforeNavigate();if(study.current)await study.leave(false);
@@ -227,7 +236,7 @@ async function navigateLocator(locator) {
   if (!state.document) return;
   await savePosition();
   const id = state.document.id; positionEpoch++;
-  const position = await api('reader.position.set', { id, locator });
+  const position = await api('reader.position.set', { id, locator, activate:false });
   if (state.document?.id !== id) return;
   state.document.position = position.locator; await renderDocument();
 }
@@ -252,7 +261,7 @@ async function refreshFromEvent() {
   const freshSettings = await api('settings.get');
   if(superseded())return;
   const moving=(freshSettings.activeStudySet||null)!==(study.current?.id||null)||(freshSettings.lastDocument||null)!==(state.document?.id||null),toolbar=study.inkTools.toolbar;
-  if(moving&&(study.mindmapStudio?.dirty||study.inspector?.dirty||study.ink?.dirty||study.cardInk?.dirty||$('dialog').open||toolbar.drag||toolbar.busy||!toolbar.panel.hidden||study.inkTools.rulers.drag||study.inkTools.rulers.busy)){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refreshFromEvent().catch(error=>toast(describeError(error),true)),200);return;}
+  if(moving&&(study.splitView?.dirty||study.mindmapStudio?.dirty||study.inspector?.dirty||study.ink?.dirty||study.cardInk?.dirty||$('dialog').open||toolbar.drag||toolbar.busy||!toolbar.panel.hidden||study.inkTools.rulers.drag||study.inkTools.rulers.busy)){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refreshFromEvent().catch(error=>toast(describeError(error),true)),200);return;}
   const old = state.settings;
   state.settings = freshSettings; applySettings(); await readerTools.refresh();
   if(superseded())return;
@@ -315,7 +324,7 @@ pageTurns = new PageTurnQueue({
     try{animation=bookTurn.capture(renderer.pdf.slots[from-1],Math.sign(target-from),doc.kind==='pdf'&&state.settings.pdfMode==='paged'&&state.settings.pdfTurnEffect!=='none');}catch{bookTurn.cancel();}
     try{
       await savePosition();if(!isCurrent())return;
-      positionEpoch++;const result=await api('reader.position.set',{id:doc.id,locator:doc.kind==='pdf'?{page:target}:{section:target-1}});
+      positionEpoch++;const result=await api('reader.position.set',{id:doc.id,locator:doc.kind==='pdf'?{page:target}:{section:target-1},activate:false});
       if(!isCurrent())return;
       state.document.position=result.locator;updatePageIndicators();
       await renderDocument();if(!isCurrent())return;
@@ -360,10 +369,14 @@ $('reader-scroll').addEventListener('wheel', event => {
   else if (action.type === 'turn') pageBy(action.delta).catch(error => toast(describeError(error), true));
 }, { passive: false });
 // Reflow automatically after a window, side panel or search-panel resize.
+let resizeSerial=0;
 const pdfResize = new ResizeObserver(() => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (state.document?.kind === 'pdf' && !state.opening && !$('reader-view').hidden) renderDocument().catch(error => toast(describeError(error), true));
+  const serial=++resizeSerial;clearTimeout(resizeTimer);
+  $('reader-view').dataset.resizePending=String(state.document?.kind==='pdf'&&!$('reader-view').hidden);
+  resizeTimer = setTimeout(async () => {
+    try{if(state.document?.kind==='pdf'&&!state.opening&&!$('reader-view').hidden)await renderDocument();}
+    catch(error){toast(describeError(error),true);}
+    finally{if(serial===resizeSerial)$('reader-view').dataset.resizePending='false';}
   }, 120);
 });
 pdfResize.observe($('reader-scroll'));
@@ -402,6 +415,12 @@ function divider(id, property, minimum, maximum, direction = 1) {
 }
 divider('explorer-divider', 'sidebarWidth', 180, 480); divider('outline-divider', 'outlineWidth', 200, 480, -1);
 // LibraryDrag owns synchronous drag/drop cancellation and destination feedback.
+document.addEventListener('keydown',event=>{
+  if(event.isComposing||event.defaultPrevented||!(event.metaKey||event.ctrlKey)||event.key.toLowerCase()!=='s')return;
+  event.preventDefault();event.stopImmediatePropagation();if(event.repeat)return;
+  if($('dialog').open){if(!$('dialog-submit').hidden)$('dialog-form').requestSubmit();return;}
+  run(saveChanges)();
+},true);
 document.addEventListener('keydown', run(async event => {
   if(event.defaultPrevented)return;
   if(event.target.closest('#study-board')&&!event.metaKey&&!event.ctrlKey)return;
@@ -417,14 +436,13 @@ document.addEventListener('keydown', run(async event => {
     if(state.document){event.preventDefault();$('search-panel').hidden=false;$('search-query').focus();}
     else {const input=study.collection.active?$('study-library-search'):!$('library-view').hidden?$('file-filter'):null;if(input){event.preventDefault();input.focus();input.select();}}
   }
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); await flush(); toast('更改已保存'); }
 }));
 window.addEventListener('message', async event => {
   if (event.source !== parent || event.data?.token !== token || event.data?.type !== 'agents-plugin:flush') return;
   try { await flush(); notifyHost('flushed', { id: event.data.id }); }
   catch (error) { notifyHost('flushed', { id: event.data.id, error: describeError(error) }); }
 });
-window.addEventListener('beforeunload',event=>{if(study.inspector?.dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(study.inspector?.dirty||study.mindmapStudio?.dirty||study.ink?.dirty||study.cardInk?.dirty||modalDirty()){event.preventDefault();event.returnValue='';}});
 window.addEventListener('error', event => { if (event.error) toast(describeError(event.error), true); });
 async function initialize() {
   state.settings = await api('settings.get'); applySettings(); library.folder = state.settings.currentFolder;

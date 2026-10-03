@@ -1,7 +1,7 @@
 import {AppSelect} from '../components/AppSelect';
 import { ScheduleFields } from './ScheduleFields';
 import { useMemo, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, CalendarClock } from 'lucide-react';
 import { Modal } from '../ui';
 import { useWorkspace } from '../store';
 import { defaultRule } from './commands';
@@ -142,11 +142,13 @@ export function RepeatDialog() {
         </details>
         <div className="repeat-preview">
           <strong>接下来的生成时间</strong>
+          <small>{draft.timeZone} · 预览，尚未生成页面</small>
           {preview.error ? (
             <p role="alert">{preview.error}</p>
           ) : preview.dates.length ? (
             preview.dates.map((at) => (
               <span key={at}>
+                <CalendarClock size={14} aria-hidden="true" />
                 {zonedDate(new Date(at).toISOString(), draft.timeZone)
                   .toPlainDateTime()
                   .toString({ smallestUnit: 'minute' })

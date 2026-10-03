@@ -20,7 +20,7 @@ export const PLAN_LAYOUT_CATALOG=[
 export const PLAN_RUN_STATES=['running','succeeded','failed','skipped','cancelled','timed_out','interrupted'] as const
 export type PlanState=typeof PLAN_STATES[number]
 export type PlanLayout=typeof PLAN_LAYOUTS[number]
-export type PlanFilter={search?:string;employee?:string;team?:string;states?:PlanState[];priorities?:typeof PLAN_PRIORITIES[number][];tags?:string[]}
+export type PlanFilter={search?:string;employee?:string;team?:string;channel?:string;states?:PlanState[];priorities?:typeof PLAN_PRIORITIES[number][];tags?:string[]}
 export type PlanViewOptions={
   timezone?:string
   timelineScale?:'day'|'week'|'month'
@@ -31,9 +31,9 @@ export type PlanViewOptions={
 }
 export type PlanViewSpec={name:string;layout:PlanLayout;groupBy:'status'|'employee'|'priority';filter:PlanFilter;sort:'nextAt'|'name'|'updatedAt'|'priority';direction:'asc'|'desc';options?:PlanViewOptions}
 export type PlanView=PlanViewSpec&{id:string;owner?:PrincipalRef;revision:number;builtin?:boolean}
-export type PlanEmployee={id:string;title:string;team:string;avatar?:string;color?:string;engine:string}
-export type PlanRow=ScheduledJob&{status:PlanState;employee:PlanEmployee|null;lastRun?:ScheduleRun}
-export type PlanQuery={rows:PlanRow[];total:number;offset:number;hasMore:boolean;counts:Record<PlanState,number>;facets?:{tags:string[]}}
+export type PlanEmployee={id:string;title:string;team:string;avatar?:string;color?:string;engine:string;role?:import('./roles').ManagementRole}
+export type PlanRow=ScheduledJob&{status:PlanState;employee:PlanEmployee|null;lastRun?:ScheduleRun;target?:{id:string;exists:boolean;role:string|null;title:string|null;team:string|null;engine:string};timing?:{timezone:string|null;kind:ScheduledJob['rule']['kind'];nextAt:string|null;until:string|null;window:ScheduledJob['window']};allowedActions?:string[];blockedActions?:Record<string,string>}
+export type PlanQuery={now?:string;hostTimezone?:string;rows:PlanRow[];total:number;offset:number;hasMore:boolean;counts:Record<PlanState,number>;facets?:{tags:string[]}}
 export type PlanTimeEvent={
   id:string;jobId:string;runId?:string;name:string;employeeId:string;employee:PlanEmployee|null
   at:string;date:string;startAt:string;endAt:string|null;status:string
@@ -50,6 +50,7 @@ export function planState(job:ScheduledJob,run?:ScheduleRun):PlanState{
   if(job.disabledReason)return 'attention'
   if(!job.enabled)return 'paused'
   if(run&&['failed','timed_out','interrupted'].includes(run.status))return 'attention'
+  if(job.rule.kind==='event'&&(!job.until||Date.parse(job.until)>Date.now())&&(!job.maxOccurrences||(job.occurrences??0)<job.maxOccurrences))return 'scheduled'
   if(!job.nextAt)return 'completed'
   return 'scheduled'
 }

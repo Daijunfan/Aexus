@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 exports.exercise=async({api,deny})=>{
  let library=await api('study.library.get');const initial=library.revision;
  library=await api('study.folder.create',{expectedRevision:library.revision,title:'Employee study folder'});const folderId=library.folders.find(f=>f.title==='Employee study folder').id;
- const study=await api('study.create',{title:'Folder scoped study',folderId});library=await api('study.library.get');assert.equal(library.sets.find(s=>s.id===study.id).folderId,folderId);
+ const study=await api('study.create',{mapMode:'cards',title:'Folder scoped study',folderId});library=await api('study.library.get');assert.equal(library.sets.find(s=>s.id===study.id).folderId,folderId);
  library=await api('study.folder.update',{expectedRevision:library.revision,folderId,title:'Employee organized studies'});
  await deny('study.folder.create',{expectedRevision:initial,title:'Stale folder'},'CONFLICT');
  await deny('study.folder.remove',{expectedRevision:library.revision,folderId},'NOT_EMPTY');

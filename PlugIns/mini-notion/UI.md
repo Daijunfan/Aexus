@@ -50,3 +50,17 @@ suite reuses `test/fixtures/mininotion-color-themes.mjs` to check all eight pale
 both tones, wallpaper choices, keyboard navigation, persistence, no editor remount
 and finite/reduced animations. This is visual inspiration from Telegram's paired
 color themes and optional effects, not a claim of pixel parity or messaging features.
+
+
+## Event presentation (1.22.1)
+
+`src/scheduling/presentation.ts` projects one immutable event description (title, actual time range, completion/dependency state, recurring-instance origin, enabled reminders, named owner). `EventSummary.tsx` renders that description in month/hour grids, timelines and overview; `EventIndicators` also labels table/list/board/gallery/feed records. It does not manufacture future pages from a recurring rule.
+
+Month cards retain time and state at narrow widths; the grid scrolls instead of squeezing seven unreadable cells. Crowded days have a counted overflow list. All-day lanes show three summaries plus access to all remaining events. Short timed cards have a 60 px minimum optical height. Collision lanes account for that optical height, while source timestamps, drag offsets and resize durations remain separate; no end time is invented. Week layouts can scroll horizontally under high overlap. Timeline labels remain readable outside short bars and open on click even for locked records; unavailable resize handles are hidden.
+
+Recurring templates, paused rules, generated instances, manually generated instances, upcoming previews and delivered/snoozed notifications are labeled separately. Overview reminders use the same effective snoozed time and matching delivery key as the scheduler, with the reminder's display timezone. DST offset transitions are retained in detailed range labels.
+
+Run `node test/mininotion-event-ui-test.mjs` after the normal plugin build; it is also included in `npm run test:mininotion-ui`. It uses disposable workspaces and the actual renderer/CLI, including a real scheduler fixture without model inference. Presentation tests cover exact/unknown end times, recurrence origins, date zones/DST, people labels, optical collision geometry and reminder projections. The default `timeGridProjection` API geometry stays chronological; optical lanes are presentation-only.
+
+
+1.23.0 编辑器：颜色菜单的 A 替换为实际颜色色块；斜杠顶部提供可拖动的横向分类及分类编辑器，输入搜索词跨分类搜索。选区机器人默认一键发送，在小聊天框流式显示现有 Agent 的回复；框外点击/Escape 关闭，齿轮设置提示词、目标员工和先编辑再发送，输入框支持手动消息。用户偏好保存在原 settings 中，可通过 CLI/API 设置。

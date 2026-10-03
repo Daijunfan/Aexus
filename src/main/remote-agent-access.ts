@@ -36,7 +36,6 @@ export async function prepareRemoteAgentAccess(employeeId:string,target:RemoteTa
   if(!card)throw Error('Unknown employee')
   const global=hasGlobalRole(store.access,card)
   assertManagementKind(card,global,employeeSettings(store,card).mode==='cloud')
-  if(card.kind==='cloud-native-worker')throw Error('Remote management CLI requires a local Coding Agent')
   const bootstrapKey=JSON.stringify([target,card.group,card.managementRole,global])
   const prior=gateways.get(employeeId)
   if(prior?.bootstrapKey===bootstrapKey)return prior.bin

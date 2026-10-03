@@ -6,7 +6,7 @@ import {isEngine,type EngineId} from '../../shared/engines'
 import {childEnv} from '../exec'
 import {terminateTree} from '../platform'
 import {claudeUserSettings,deepSeekProvider,deepSeekPicker} from '../claude-provider'
-import {engineEnvironment} from './configuration'
+import {engineProcessEnvironment} from './configuration'
 import {assertEngineExecutable} from './registry'
 
 /** An explicit, bounded inference check, separate from ordinary no-cost discovery. */
@@ -18,7 +18,7 @@ export async function probeEngine(engine:EngineId,confirm:boolean,model?:string)
   const selected=model||(engine==='codex'?'gpt-6-luna':deepSeekProvider()?'deepseek-flash':'haiku')
   const prompt='Reply with exactly OK. Do not use tools, inspect files, or perform any other task.'
   const args=engine==='codex'?['exec','--ephemeral','--skip-git-repo-check','--sandbox','read-only','--json','--model',selected,'-c','model_reasoning_effort="low"',prompt]:['--print','--settings',JSON.stringify({alwaysThinkingEnabled:false,...(deepSeekProvider()?deepSeekPicker:{})}),'--output-format','json','--tools','','--setting-sources','','--no-session-persistence','--model',selected,prompt]
-  const env:NodeJS.ProcessEnv={...childEnv(),...(engine==='claude'?claudeUserSettings().env:{}),...engineEnvironment(engine)}
+  const env=engineProcessEnvironment(engine,{...childEnv(),...(engine==='claude'?claudeUserSettings().env:{})})
   for(const key of Object.keys(env))if(key.startsWith('AGENTS_COMPANY_TOKEN')||['AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_PORT'].includes(key))delete env[key]
   env.AGENTS_COMPANY_HOME=path.join(cwd,'company')
   const redact=(value:string)=>Object.entries(env).filter(([key,value])=>/key|token|password/i.test(key)&&typeof value==='string'&&value.length>8).reduce((text,[,secret])=>text.replaceAll(secret!,'[redacted]'),value)

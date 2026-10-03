@@ -6,7 +6,7 @@ const {create,expect}=require('./ui-session.cjs');
  try{
   const {page,api}=f;
   await api('fs.write',{path:'selection.html',content:'<h1>Reading safely</h1><p>Vocabulary matching must not change an active selection or its source offsets.</p>'});
-  let set=await api('study.create',{title:'Dictionary selection timing'});
+  let set=await api('study.create',{mapMode:'cards',title:'Dictionary selection timing'});
   set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['selection.html']});
   set=await api('study.note.create',{setId:set.id,expectedRevision:set.revision,title:'Vocabulary',text:'A term definition'});
   const id=set.documentIds[0];await api('study.open',{setId:set.id,documentId:id});

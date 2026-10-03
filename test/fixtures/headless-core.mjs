@@ -20,8 +20,14 @@ export async function fixtureCore(overrides={},entry=process.env.AGENTS_COMPANY_
   const status=async id=>(await cli('session','status','--employee',id))[0]
   const ready=id=>until(async()=>{const s=await status(id);if(s.initialization?.status==='failed')throw Error(s.initialization.error);return s.initialization?.status==='ready'},'ready')
   const start=async()=>{service=spawn(process.execPath,entry?[entry]:[root+'/bin/agents','serve'],{env,stdio:['ignore','ignore','pipe','ipc']});ended=new Promise(resolve=>service.once('exit',resolve));service.stderr.on('data',data=>log=(log+data).slice(-8000));await until(()=>cli('status').catch(()=>false),'daemon')}
-  const stop=async()=>{if(service&&service.exitCode===null&&service.signalCode===null){if(service.connected)service.send({type:'agents-company:shutdown'});else service.kill('SIGTERM');await ended}}
+  const stop=async()=>{if(service&&service.exitCode===null&&service.signalCode===null){
+    const child=service;let timer
+    if(child.connected)child.send({type:'agents-company:shutdown'});else child.kill('SIGTERM')
+    try{await Promise.race([ended,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Disposable Core did not shut down gracefully: '+log)),20000)})])}
+    catch(error){child.kill('SIGKILL');await ended;throw error}finally{clearTimeout(timer)}
+  }}
   const create=async(title,group='A',role='employee')=>{const card=await cli('card','create','--title',title,'--group',group,'--management-role',role,'--engine','codex','--model','gpt-6-luna','--effort','low');await ready(card.id);return card}
+  const received=(id,text)=>until(async()=>(await cli('session','transcript','--employee',id)).items.find(item=>item.role==='user'&&item.text===text),'accepted message: '+text.slice(0,80))
   const token=async id=>(await cli('auth','agent-token',id)).token
   const request=(auth,cmd,args)=>new Promise((resolve,reject)=>{
     const socket=net.connect(controlEndpoint(env.AGENTS_COMPANY_HOME));socket.setEncoding('utf8');let buffer=''
@@ -29,5 +35,5 @@ export async function fixtureCore(overrides={},entry=process.env.AGENTS_COMPANY_
     socket.on('data',data=>{buffer+=data;if(buffer.includes('\n')){socket.end();resolve(JSON.parse(buffer.split('\n')[0]))}})
   })
   await start()
-  return {root,temp,control,env,call,raw,cli,until,status,ready,create,token,request,start,stop,close:async()=>{await stop();fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}}
+  return {root,temp,control,env,call,raw,cli,until,status,ready,create,received,token,request,start,stop,close:async()=>{await stop();fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}}
 }

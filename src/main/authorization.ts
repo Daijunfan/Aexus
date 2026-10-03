@@ -1,11 +1,14 @@
+import {requireConversation} from './conversation-policy'
 import {one as channelRow,liveChannelPost} from './channel-store'
+import {validateScheduleChannels} from './scheduler/channel-policy'
 import {EmployeeInitializationError} from './initialization-state'
 import {credentialActive} from './agent-access'
 import {requestContext,operatorContext,withCaller} from './request-context'
 export {requestContext,operatorContext,withCaller} from './request-context'
 import {COMMANDS} from '../shared/api-registry'
+import {RETIRED_APIS} from '../shared/api-effects'
 import {assertManagementKind,hasGlobalRole,type Delegation,type RequestContext,type PrincipalRef} from '../shared/management'
-import {rolePolicy,roleAllows,isSupervisor,isManagementRole} from '../shared/roles'
+import {rolePolicy,roleAllows,isSupervisor,isManagementRole,roleDescription} from '../shared/roles'
 import {employeeSettings,teamSettings,type StoredSession,type Store} from '../shared/types'
 import {readStore} from './store'
 import {employeeAppearance} from '../shared/avatars'
@@ -28,7 +31,7 @@ export function callerIdentity(context=requestContext(),store=readStore()){
   if(principal.kind==='agent'&&!card)throw Error('Agent identity revoked')
   const settings=card?teamSettings(store,card.group):undefined
   const policy=rolePolicy(card?.managementRole)
-  return {principal,managementRole:card?.managementRole??'employee',roleDescription:policy.description,appAdministrator:principal.kind==='operator'||!!policy.appAdministrator,team:card?.group,globalManager:principal.kind==='operator'||hasGlobalRole(store.access,card),managerTeam:null,globalByTeam:false,accessMode:card?.accessMode??'trusted',
+  return {principal,managementRole:card?.managementRole??'employee',roleDescription:roleDescription(card?.managementRole),appAdministrator:principal.kind==='operator'||!!policy.appAdministrator,team:card?.group,globalManager:principal.kind==='operator'||hasGlobalRole(store.access,card),managerTeam:null,globalByTeam:false,accessMode:card?.accessMode??'trusted',
     ...(card?{employee:{id:card.id,title:card.title,role:card.role,engine:card.engine,model:card.model,kind:card.kind??'worker',cwd:card.cwd,workEnvironment:card.workEnvironment??'team'},teamMode:settings!.mode,...(settings!.pluginId?{pluginId:settings!.pluginId}:{})}:{})}
 }
 let indexedRevision:number|undefined,indexed:{cards:Map<string,StoredSession>}|undefined
@@ -37,9 +40,15 @@ export function canControl(principal:PrincipalRef,targetId:string){
   if(principal.kind==='operator')return true
   const index=managementIndex(),caller=index.cards.get(principal.employeeId),target=index.cards.get(targetId)
   if(!caller||caller.deleting||!target||target.deleting)return false
-  if(caller.kind==='cloud-native-worker')return false
   const policy=rolePolicy(caller.managementRole)
   return policy.controls.includes(target.managementRole??'employee')&&(policy.scope==='global'||policy.scope==='team'&&caller.group===target.group)
+}
+
+/** Scheduling is strictly self or downward; general administration may still include peers. */
+export function canSchedule(principal:PrincipalRef,targetId:string){
+  if(principal.kind==='operator')return true
+  const index=managementIndex(),caller=index.cards.get(principal.employeeId),target=index.cards.get(targetId)
+  return !!caller&&!caller.deleting&&!!target&&!target.deleting&&(caller.id===target.id||rolePolicy(caller.managementRole).schedules.includes(target.managementRole??'employee')&&canControl(principal,targetId))
 }
 
 export function delegationFor(targetId:string,context=requestContext()):Delegation{
@@ -64,6 +73,10 @@ export function validateDelegation(delegation:Delegation|undefined,targetId:stri
     if(notice.employeeId!==targetId||!group?.memberIds.includes(targetId)||!message?.deliveries.some(delivery=>delivery.employeeId===targetId&&delivery.mode==='awareness')||author?.kind!==sender.kind||sender.kind==='agent'&&(author?.kind!=='agent'||author.employeeId!==sender.employeeId||!group.memberIds.includes(sender.employeeId))||!readStore().sessions.some(card=>card.id===targetId&&!card.deleting))throw Error('Group notification is no longer authorized')
     return
   }
+  if(delegation.schedule){
+    authorize('schedule.create',{},targetId,context)
+    validateScheduleChannels(targetId,delegation.schedule,delegation.requestedBy)
+  }
   if(delegation.selfSchedule){
     if(delegation.requestedBy.kind!=='agent'||delegation.requestedBy.employeeId!==targetId)throw Error('Invalid self-schedule delegation')
     authorize('schedule.create',{},targetId,context)
@@ -74,7 +87,7 @@ export function validateDelegation(delegation:Delegation|undefined,targetId:stri
 export function canEditOffice(store:Store,principal:PrincipalRef,team:string,employeeId?:string){
   if(principal.kind==='operator')return true
   const caller=store.sessions.find(card=>card.id===principal.employeeId&&!card.deleting)
-  if(!caller||caller.kind==='cloud-native-worker')return false
+  if(!caller)return false
   const policy=rolePolicy(caller.managementRole)
   if(!roleAllows(caller.managementRole,'layout.write'))return false
   if(policy.scope==='global')return !employeeId||employeeId===caller.id||store.sessions.some(card=>card.id===employeeId&&!card.deleting&&policy.controls.includes(card.managementRole??'employee'))
@@ -83,8 +96,8 @@ export function canEditOffice(store:Store,principal:PrincipalRef,team:string,emp
   const target=store.sessions.find(card=>card.id===employeeId&&!card.deleting)
   return !!target&&target.group===caller.group&&policy.controls.includes(target.managementRole??'employee')
 }
-const USER_ONLY_APIS=new Set([...COMMANDS.filter(command=>(command.name.startsWith('messenger.')||command.name.startsWith('channel.')&&!['channel.list','channel.get','channel.context','channel.history','channel.timeline','channel.message-post'].includes(command.name))).map(command=>command.name),'chat.create','chat.update','chat.delete','chat.edit','chat.mute','chat.acknowledge',"system.directories","engine.list","engine.check","engine.configure","engine.install-plan","engine.install","engine.install-status","engine.cancel-install","engine.login","engine.login-status","engine.cancel-login","transfer.upload-begin","transfer.upload-chunk","transfer.upload-commit","transfer.upload-abort","transfer.download-save","transfer.download-info","transfer.download-chunk",'auth.agent-token','auth.revoke','management.global','management.team','session.acknowledge','ui.click','ui.type','ui.drag','ui.wheel'])
-const HUMAN_ONLY_APIS=new Set(['transfer.upload-begin','transfer.upload-chunk','transfer.upload-commit','transfer.upload-abort','transfer.download-save','transfer.download-info','transfer.download-chunk','auth.agent-token','auth.revoke','session.acknowledge','chat.acknowledge','channel.acknowledge','chat.edit','messenger.forward','messenger.forward-draft','messenger.forward-status','messenger.reference','messenger.media-open','messenger.media-info','messenger.media-read','messenger.media-close','ui.click','ui.type','ui.drag','ui.wheel'])
+const USER_ONLY_APIS=new Set([...COMMANDS.filter(command=>(command.name.startsWith('messenger.')||command.name.startsWith('channel.')&&!['channel.list','channel.get','channel.context','channel.history','channel.timeline','channel.message-post','channel.publish','channel.media-put'].includes(command.name))).map(command=>command.name),'chat.edit','chat.acknowledge',"system.directories","engine.list","engine.check","engine.configure","engine.install-plan","engine.install","engine.install-status","engine.cancel-install","engine.login","engine.login-status","engine.cancel-login","transfer.upload-begin","transfer.upload-chunk","transfer.upload-commit","transfer.upload-abort","transfer.download-save","transfer.download-info","transfer.download-chunk",'auth.agent-token','auth.revoke','management.global','management.team','session.acknowledge','ui.click','ui.type','ui.drag','ui.wheel'])
+const HUMAN_ONLY_APIS=new Set(['assets.naming','assets.tree','assets.children','assets.search','assets.file','channel.file-download','transfer.upload-begin','transfer.upload-chunk','transfer.upload-commit','transfer.upload-abort','transfer.download-save','transfer.download-info','transfer.download-chunk','auth.agent-token','auth.revoke','session.acknowledge','chat.acknowledge','channel.acknowledge','chat.edit','messenger.forward','messenger.forward-draft','messenger.forward-status','messenger.reference','messenger.media-open','messenger.media-info','messenger.media-read','messenger.media-close','ui.click','ui.type','ui.drag','ui.wheel'])
 const humanOnly=(command:string)=>HUMAN_ONLY_APIS.has(command)||command.startsWith('messenger.upload-')
 function authorizeAccess(command:string,args:Record<string,any>={},targetId?:string,context=requestContext()){
   const policy=COMMANDS.find(c=>c.name===command);if(!policy)throw Error('Unknown API command')
@@ -94,15 +107,17 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
   if(caller){
     assertManagementKind(caller,isGlobal(principal),employeeSettings(readStore(),caller).mode==='cloud')
     if(caller.initialization&&caller.initialization.status!=='ready'){
-      const reading=['avatar.list','engine.capabilities','auth.whoami','api.list','api.describe','api.docs','management.roles','management.topology','host.list','plugin.list','plugin.describe','session.status','session.info'].includes(command)||['workspace.list','workspace.read'].includes(command)&&args.employee===caller.id
+      const reading=['card.profile','avatar.list','engine.capabilities','auth.whoami','api.list','api.describe','api.docs','management.roles','management.topology','host.list','plugin.list','plugin.describe','session.status','session.info'].includes(command)||['workspace.list','workspace.read'].includes(command)&&args.employee===caller.id
       if(!reading)throw new EmployeeInitializationError(caller.initialization.status==='failed')
     }
   }
   if(principal.kind==='operator')return
+  if(['chat.update','chat.mute','chat.delete'].includes(command)){requireConversation('group:'+args.id,command==='chat.delete'?'owner':'admin',principal);return}
   const administrator=isAppAdministrator(principal)
   if(humanOnly(command)||!administrator&&(USER_ONLY_APIS.has(command)||command.startsWith('ui.')))throw Error('Only the user may call '+command)
   if(!roleAllows(caller!.managementRole,policy.permission))throw Error('Forbidden: '+command)
   assertRoleBoundaries(command,args,targetId,caller!)
+  if(policy.permission==='schedule'&&targetId&&!canSchedule(principal,targetId))throw Error('Forbidden schedule target: choose yourself or a subordinate within your role scope')
   if(administrator)return
   if(command.startsWith('connector.')){
     if(isGlobal(principal)||args.manager===caller!.id&&canControl(principal,args.employee))return
@@ -162,7 +177,7 @@ export function allowedCommands(context=requestContext(),store=readStore(),all=f
   const principal=context.principal,card=principal.kind==='agent'?store.sessions.find(c=>c.id===principal.employeeId&&!c.deleting):undefined
   if(principal.kind==='agent'&&!card)return []
   if(all)return COMMANDS
-  return COMMANDS.filter(command=>!['management.request','management.decide','management.team'].includes(command.name)).filter(command=>principal.kind==='operator'||!humanOnly(command.name)&&(!!rolePolicy(card?.managementRole).appAdministrator||!USER_ONLY_APIS.has(command.name)&&!command.name.startsWith('ui.'))&&roleAllows(card?.managementRole,command.permission))
+  return COMMANDS.filter(command=>!Object.hasOwn(RETIRED_APIS,command.name)).filter(command=>principal.kind==='operator'||!humanOnly(command.name)&&(!!rolePolicy(card?.managementRole).appAdministrator||!USER_ONLY_APIS.has(command.name)&&!command.name.startsWith('ui.'))&&roleAllows(card?.managementRole,command.permission))
 }
 export function apiDocumentation(context=requestContext(),store=readStore(),document?:string){
   if(context.principal.kind==='agent'&&!store.sessions.some(card=>card.id===(context.principal as {employeeId:string}).employeeId&&!card.deleting))throw Error('Unknown employee for API documentation')

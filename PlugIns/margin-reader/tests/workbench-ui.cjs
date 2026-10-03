@@ -20,7 +20,7 @@ async function main(){
  }
  const scoped=path.relative(await fs.realpath(temp),await fs.realpath(workspace));assert(!scoped.startsWith('..')&&!path.isAbsolute(scoped),'UI test workspace escaped its isolated root');
  page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(30000);await page.setViewportSize({width:1440,height:960});await page.waitForSelector('body[data-ready=true]');
- await page.click('#studies-root');await page.click('#study-create');await page.fill('[name=title]','知识与记忆');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+ await page.click('#studies-root');await page.click('#study-create');await page.fill('[name=title]','知识与记忆');await page.selectOption('#dialog [name=mapMode]','cards');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
  const create=async(title,text,tags)=>{await page.click('#study-add-note');await page.fill('[name=title]',title);await page.fill('[name=text]',text);await page.fill('[name=tags]',tags);await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();};
  await create('主动回忆','先尝试回忆，再核对原文。','学习, 方法');await create('间隔重复','在遗忘之前复习。','学习');
  const id=(await api('study.list')).sets[0].id,get=()=>api('study.get',{setId:id});let set=await get();assert.equal(set.cards.length,2);

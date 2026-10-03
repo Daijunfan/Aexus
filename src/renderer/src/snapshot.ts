@@ -16,15 +16,15 @@ export function retainEqual<T>(previous:T|undefined,next:T):T {
 }
 
 /** One in-flight refresh, one coalesced trailing refresh; callers await published state. */
-export function createRefreshQueue(work:(configuration:boolean,conversation:boolean)=>Promise<void>){
-  let running:Promise<void>|undefined,queued=false,configuration=false,conversation=false
-  return (full=true,detail=true):Promise<void>=>{
-    queued=true;configuration ||= full;conversation ||= detail
+export function createRefreshQueue(work:(configuration:boolean,conversation:boolean,status:boolean)=>Promise<void>){
+  let running:Promise<void>|undefined,queued=false,configuration=false,conversation=false,status=false
+  return (full=true,detail=true,live=true):Promise<void>=>{
+    queued=true;configuration ||= full;conversation ||= detail;status ||= live||detail
     if(!running)running=Promise.resolve().then(async()=>{
       while(queued){
-        const config=configuration,content=conversation
-        queued=false;configuration=false;conversation=false
-        await work(config,content)
+        const config=configuration,content=conversation,live=status
+        queued=false;configuration=false;conversation=false;status=false
+        await work(config,content,live)
       }
     }).finally(()=>{running=undefined})
     return running

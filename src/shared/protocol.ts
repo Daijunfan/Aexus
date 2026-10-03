@@ -1,12 +1,7 @@
 // The wire contract between the app and the `agents` CLI. Both sides import
 // this so a change to the command surface breaks compilation, not runtime.
 
-import {controlEndpoint} from '../../bin/platform.cjs'
-import { homedir } from 'node:os'
-import { join } from 'node:path'
-
-export const APP_HOME = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'AgentsCompany')
-export const SOCKET_PATH = controlEndpoint(APP_HOME)
+export {APP_HOME,SOCKET_PATH} from './core-paths'
 
 export type Request = { cmd: string; args?: Record<string, unknown>; auth?:string }
 // avatar.list {query?,style?,all?}: live catalog for every role, including initialization.

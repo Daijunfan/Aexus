@@ -5,7 +5,7 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
  const f=await create('resize-handwriting');let failure;
  try{
   await fs.writeFile(path.join(f.workspace,'source.pdf'),pdfFixture());
-  const doc=await f.api('document.open',{path:'source.pdf',activate:false});let set=await f.api('study.create',{title:'Resize during handwriting'});
+  const doc=await f.api('document.open',{path:'source.pdf',activate:false});let set=await f.api('study.create',{mapMode:'cards',title:'Resize during handwriting'});
   const refresh=async()=>set=await f.api('study.get',{setId:set.id}),change=async(method,params={})=>{await refresh();return set=await f.api(method,{setId:set.id,expectedRevision:set.revision,...params});};
   await change('study.documents.add',{paths:['source.pdf']});await change('study.ink.settings',{shape:'free',straighten:'off',perfectShape:false,vanish:false});await f.api('study.open',{setId:set.id,documentId:doc.id});
   await f.page.goto(f.server.url);await f.page.waitForSelector('body[data-ready=true]');await f.page.click('#study-pen');

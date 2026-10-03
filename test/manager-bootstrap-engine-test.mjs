@@ -21,17 +21,20 @@ const model=http.createServer(async(req,res)=>{
   for(let wait=0;!employee&&wait<100;wait++)await new Promise(resolve=>setTimeout(resolve,5))
   const wireCount=received.length
   const serialized=JSON.stringify(body)
-  if(wireCount===1){assert.ok(serialized.includes('Agents Company private initialization'),'initialization reaches model');assert.ok(serialized.includes('.agents-company/employees/'),'hidden guide path reaches model');assert.ok(serialized.includes(employee.id),'correct employee identity');assert.ok(serialized.includes('Manager'));if(mode==='work')assert.ok(serialized.includes('mininotion'))}
-  if(initializing&&setupStep===1)assert.ok(serialized.includes('card create'),'the tool actually returns the company API guide')
-  const guide=path.join(employee.cwd,'.agents-company/employees',employee.id,'API.md')
-  const command=initializing?(setupStep++===0?`cat '${guide}'; agents auth whoami --json`:undefined):commands[modelCount++],tool=!!command,replyText=initializing?'OK':'BOOTSTRAP_VERIFIED'
+  const lastUser=(body.input??body.messages??[]).filter(item=>item.role==='user').map(item=>typeof item.content==='string'?item.content:(item.content??[]).filter(part=>part.type==='text'||part.type==='input_text').map(part=>part.text).join('')).filter(Boolean).at(-1)??''
+  const reading=initializing||lastUser.includes('[Agents Company private initialization]')
+  if(wireCount===1){assert.match(serialized,/Agents Company private initialization/);assert.match(serialized,/agents_company_documentation/);assert.doesNotMatch(serialized,/\.agents-company\/employees\//)}
+  const step=reading?setupStep++%3:undefined,operation=step===undefined?undefined:['identity','index'][step]
+  if(initializing&&step===1)assert.ok(serialized.includes(employee.id),'the real documentation tool returns the correct identity')
+  if(initializing&&step===2)assert.match(serialized,/API 文档索引/)
+  const command=reading?undefined:commands[modelCount++],tool=!!operation||!!command,replyText=reading?'OK':'BOOTSTRAP_VERIFIED'
   if(codex){
    assert.equal(body.model,'gpt-6-luna');assert.equal(body.reasoning?.effort,'low')
    const tools=[...(body.tools??[]),...(body.input??[]).filter(item=>item.type==='additional_tools').flatMap(item=>item.tools??[])],names=tools.flatMap(t=>t.type==='namespace'?t.tools.map(x=>x.name):[t.name]),params={cmd:command,workdir:employee.cwd,max_output_tokens:3500}
-   const item=tool?(names.includes('exec_command')?{type:'function_call',id:'fc_'+wireCount,call_id:'call_'+wireCount,name:'exec_command',arguments:JSON.stringify(params)}:{type:'custom_tool_call',id:'fc_'+wireCount,call_id:'call_'+wireCount,name:'exec',input:`const result=await tools.exec_command(${JSON.stringify(params)});text(result)`}):{type:'message',id:'reply_'+wireCount,role:'assistant',content:[{type:'output_text',text:replyText}]}
+   const item=operation?{type:'custom_tool_call',id:'doc_'+wireCount,call_id:'doc_'+wireCount,name:'exec',input:'const doc=ALL_TOOLS.find(x=>x.name.includes("agents_company_documentation"));if(!doc)throw Error("Documentation tool missing");text(await tools[doc.name]('+JSON.stringify({operation})+'));'}:tool?(names.includes('exec_command')?{type:'function_call',id:'fc_'+wireCount,call_id:'call_'+wireCount,name:'exec_command',arguments:JSON.stringify(params)}:{type:'custom_tool_call',id:'fc_'+wireCount,call_id:'call_'+wireCount,name:'exec',input:`const result=await tools.exec_command(${JSON.stringify(params)});text(result)`}):{type:'message',id:'reply_'+wireCount,role:'assistant',content:[{type:'output_text',text:replyText}]}
    res.writeHead(200,{'content-type':'text/event-stream'});for(const event of [{type:'response.created',response:{id:'r'+wireCount,status:'in_progress'}},{type:'response.output_item.done',output_index:0,item},{type:'response.completed',response:{id:'r'+wireCount,status:'completed',output:[item],usage:{input_tokens:1,output_tokens:1,total_tokens:2}}}])res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);res.end()
   }else{
-   const input={command,description:'Use this employee’s authenticated Agents Company CLI'},content=tool?{type:'tool_use',id:'tool_'+wireCount,name:'Bash',input}:{type:'text',text:replyText},message={id:'m'+wireCount,type:'message',role:'assistant',model:body.model,content:[],stop_reason:null,stop_sequence:null,usage:{input_tokens:1,output_tokens:1}}
+   const input=operation?{operation}:{command,description:'Use this employee’s authenticated Agents Company CLI'},content=tool?{type:'tool_use',id:'tool_'+wireCount,name:operation?'mcp__agents_company__agents_company_documentation':'Bash',input}:{type:'text',text:replyText},message={id:'m'+wireCount,type:'message',role:'assistant',model:body.model,content:[],stop_reason:null,stop_sequence:null,usage:{input_tokens:1,output_tokens:1}}
    if(body.stream){res.writeHead(200,{'content-type':'text/event-stream'});for(const event of [{type:'message_start',message},{type:'content_block_start',index:0,content_block:tool?{...content,input:{}}:{type:'text',text:''}},{type:'content_block_delta',index:0,delta:tool?{type:'input_json_delta',partial_json:JSON.stringify(input)}:{type:'text_delta',text:replyText}},{type:'content_block_stop',index:0},{type:'message_delta',delta:{stop_reason:tool?'tool_use':'end_turn',stop_sequence:null},usage:{output_tokens:1}},{type:'message_stop'}])res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);res.end()}
    else res.writeHead(200,{'content-type':'application/json'}).end(JSON.stringify({...message,content:[content],stop_reason:tool?'tool_use':'end_turn'}))
   }
@@ -52,10 +55,11 @@ try{
  for(let i=0;i<100;i++){try{await cli('status');break}catch{await new Promise(resolve=>setTimeout(resolve,40))}}
  await cli('group','add','Ordinary Team','--mode',mode,...(mode==='work'?['--plugin','mininotion']:[]))
  employee=await cli('card','create','--title','Manager','--group','Ordinary Team','--engine',engine,'--management-role','manager','--access-mode',isolation,'--model',engine==='codex'?'gpt-6-luna':'claude-sonnet-4-6','--effort','low')
- const folder=path.join(employee.cwd,'.agents-company/employees',employee.id)
- assert.ok(!fs.existsSync(path.join(employee.cwd,'AGENTS.md')));assert.ok(!fs.existsSync(path.join(employee.cwd,'CLAUDE.md')));assert.match(fs.readFileSync(path.join(folder,'AGENTS.md'),'utf8'),/card create/)
- assert.match(fs.readFileSync(path.join(folder,'API.md'),'utf8'),/### card.create/);assert.ok(!fs.readFileSync(path.join(folder,'API.md'),'utf8').includes('### auth.agent-token'))
- commands=['agents auth whoami --json','agents api docs --json','agents card create --title ManagedEmployee --kind worker --engine codex --model gpt-6-luna --effort low --json','agents management topology --json']
+ assert.ok(!fs.existsSync(path.join(employee.cwd,'AGENTS.md')));assert.ok(!fs.existsSync(path.join(employee.cwd,'CLAUDE.md')))
+ assert.ok(!fs.existsSync(path.join(employee.cwd,'.agents-company/employees',employee.id)),'shared references replace workspace handbook copies')
+ const index=await cli('api','docs'),guide=await cli('api','docs','core/api')
+ assert.ok(fs.existsSync(index.path));assert.match(index.markdown,/core\/api/);assert.match(guide.markdown,/card create/)
+ commands=['agents auth whoami --json','agents api docs core/api --json','agents card create --title ManagedEmployee --kind worker --engine codex --model gpt-6-luna --effort low --json','agents management topology --json']
  if(mode==='work')commands.push(`agents plugin call mininotion status --employee ${employee.id} --json`)
  const initializedBy=Date.now()+60000
  for(;;){if(fixtureError)throw fixtureError;const state=(await cli('session','status','--employee',employee.id))[0];if(state.initialization.status==='failed')throw Error(state.initialization.error);if(state.initialization.status==='ready')break;if(Date.now()>initializedBy)throw Error('Initialization timed out');await new Promise(resolve=>setTimeout(resolve,100))}
@@ -68,6 +72,6 @@ try{
  assert.ok(child,JSON.stringify(transcript.items).slice(-16000));assert.deepEqual(child.createdBy,{kind:'agent',employeeId:employee.id});assert.equal(child.managementRole,'employee')
  assert.ok((await cli('management','topology')).edges.some(edge=>edge.managerId===employee.id&&edge.employeeId===child.id));assert.match(transcript.text,/BOOTSTRAP_VERIFIED/)
  assert.ok(modelCount>=commands.length+1)
- fs.mkdirSync(path.join(root,'artifacts'),{recursive:true});fs.writeFileSync(path.join(root,`artifacts/bootstrap-${engine}-${mode}-${isolation}.json`),JSON.stringify({engine,mode,isolation,requests:modelCount,createdEmployee:child.id,identity:employee.id,transcript:transcript.items},null,2))
+ fs.mkdirSync(path.join(root,'artifacts'),{recursive:true});fs.writeFileSync(path.join(root,`artifacts/bootstrap-${engine}-${mode}-${isolation}.json`),JSON.stringify({engine,mode,isolation,requests:modelCount,sharedDocumentation:true,createdEmployee:child.id,identity:employee.id,transcript:transcript.items},null,2))
  console.log(`PASS real ${engine} / ${mode} / ${isolation}: initial role+CLI instructions on model wire, own identity, API handbook, company employee creation and active relation${mode==='work'?', Work plugin call':''}; fixture only`)
 }catch(error){console.error(log);throw error}finally{service?.kill('SIGTERM');if(ended)await ended;await new Promise(resolve=>model.close(resolve));fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}

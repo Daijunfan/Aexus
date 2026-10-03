@@ -7,7 +7,7 @@ const {PDFDocument,StandardFonts}=require('pdf-lib'),{create,expect}=require('./
   const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica);
   for(let i=0;i<120;i++){const p=pdf.addPage([600,800]);p.drawText('A real selectable page '+(i+1),{x:60,y:690,size:20,font});}
   await fs.writeFile(path.join(f.workspace,'many-pages.pdf'),await pdf.save());
-  const doc=await f.api('document.open',{path:'many-pages.pdf',activate:false});let set=await f.api('study.create',{title:'Virtual PDF annotations'});
+  const doc=await f.api('document.open',{path:'many-pages.pdf',activate:false});let set=await f.api('study.create',{mapMode:'cards',title:'Virtual PDF annotations'});
   set=await f.api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['many-pages.pdf']});
   const captured=await f.api('study.card.create',{setId:set.id,expectedRevision:set.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),title:'Page 1',text:'',color:'yellow',locator:{page:1},selection:{rects:[{page:1,x:.09,y:.09,width:.7,height:.1}]}});
   const file=path.join(f.workspace,'.margin-reader/state.json'),state=JSON.parse(await fs.readFile(file)),raw=state.studySets[set.id],image=await fs.readFile(path.join(f.workspace,'.margin-reader/study-assets',set.id,captured.card.id+'.png'));

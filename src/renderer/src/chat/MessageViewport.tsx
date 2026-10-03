@@ -31,12 +31,13 @@ export function MessageViewport<T extends{id:string}>({items,scrollRef,apiRef,re
  items:readonly T[];scrollRef:RefObject<HTMLDivElement|null>;apiRef:RefObject<MessageViewportHandle|null>;renderItem:(item:T,index:number)=>ReactNode;enabled?:boolean;following:()=>boolean;onProgrammaticScroll:(top:number)=>void
 }){
  const root=useRef<HTMLDivElement>(null),rows=useRef(new Map<string,HTMLDivElement>()),owners=useRef(new Map<string,number>()),rowState=useRef(new Map<string,Map<string,unknown>>()),detailsDefaults=useRef(new WeakMap<HTMLDetailsElement,boolean>()),alive=useRef(true),pendingEnd=useRef(false),navigation=useRef<{cancel:()=>void}|null>(null)
+ const rowRefs=useRef(new Map<string,(node:HTMLDivElement|null)=>void>())
  const [ownerVersion,setOwnerVersion]=useState(0),[activeOwners,setActiveOwners]=useState<string[]>([]),[margin,setMargin]=useState(0),[scrollElement,setScrollElement]=useState<HTMLDivElement|null>(null)
  const callbacks=useRef({following,onProgrammaticScroll});callbacks.current={following,onProgrammaticScroll}
  const indices=useMemo(()=>new Map(items.map((item,index)=>[item.id,index])),[items]),currentIndices=useRef(indices);currentIndices.current=indices
  // The parent's DOM ref attaches after child layout effects on the first mount.
  useEffect(()=>setScrollElement(scrollRef.current),[scrollRef,enabled])
- useEffect(()=>{for(const id of rowState.current.keys())if(!indices.has(id))rowState.current.delete(id)},[indices])
+ useEffect(()=>{for(const id of rowState.current.keys())if(!indices.has(id))rowState.current.delete(id);for(const id of rowRefs.current.keys())if(!indices.has(id))rowRefs.current.delete(id)},[indices])
  const pin=useCallback((id:string)=>{
   const count=owners.current.get(id)??0;owners.current.set(id,count+1);if(!count&&alive.current)setOwnerVersion(value=>value+1)
   let released=false
@@ -118,14 +119,20 @@ export function MessageViewport<T extends{id:string}>({items,scrollRef,apiRef,re
    })
   }
  }),[enabled,pin,scrollRef,virtual])
+ // Stable owner refs keep receipt-only updates from detaching and remeasuring every row.
+ const refFor=(id:string)=>{
+  let attach=rowRefs.current.get(id)
+  if(!attach){attach=node=>{if(node){rows.current.set(id,node);node.querySelectorAll('details').forEach((details,index)=>{if(detailsDefaults.current.has(details))return;detailsDefaults.current.set(details,details.open);const state=rowState.current.get(id),slot='details:'+index;if(state?.has(slot))details.open=state.get(slot) as boolean})}else{rows.current.get(id)?.querySelectorAll('details').forEach((details,index)=>rememberDetails(id,details,index));rows.current.delete(id);rowRefs.current.delete(id)}virtual.measureElement(node)};rowRefs.current.set(id,attach)}
+  return attach
+ }
  const context=useMemo(()=>({handle,pin,state:rowState.current}),[handle,pin])
  useLayoutEffect(()=>{apiRef.current=handle;return()=>{if(apiRef.current===handle)apiRef.current=null}},[apiRef,handle])
- useLayoutEffect(()=>{alive.current=true;return()=>{alive.current=false;navigation.current?.cancel();rowState.current.clear()}},[])
+ useLayoutEffect(()=>{alive.current=true;return()=>{alive.current=false;navigation.current?.cancel();rowState.current.clear();rowRefs.current.clear()}},[])
  if(!enabled)return <ViewportContext.Provider value={context}>{items.map((item,index)=><Fragment key={item.id}>{renderItem(item,index)}</Fragment>)}</ViewportContext.Provider>
  const visible=virtual.getVirtualItems(),children:ReactNode[]=[];let end=margin
  for(const row of visible){
   const item=items[row.index],gap=Math.max(0,row.start-end);end=row.end
-  children.push(<Fragment key={item.id}>{gap>0&&<div className="message-viewport-spacer" aria-hidden="true" style={{height:gap}}/>}<RowContext.Provider value={item.id}><div className="message-viewport-row" data-message-owner={item.id} data-message-last={row.index===items.length-1||undefined} data-index={row.index} ref={node=>{if(node){rows.current.set(item.id,node);node.querySelectorAll('details').forEach((details,index)=>{if(detailsDefaults.current.has(details))return;detailsDefaults.current.set(details,details.open);const state=rowState.current.get(item.id),slot='details:'+index;if(state?.has(slot))details.open=state.get(slot) as boolean})}else{rows.current.get(item.id)?.querySelectorAll('details').forEach((details,index)=>rememberDetails(item.id,details,index));rows.current.delete(item.id)}virtual.measureElement(node)}}>{renderItem(item,row.index)}</div></RowContext.Provider></Fragment>)
+  children.push(<Fragment key={item.id}>{gap>0&&<div className="message-viewport-spacer" aria-hidden="true" style={{height:gap}}/>}<RowContext.Provider value={item.id}><div className="message-viewport-row" data-message-owner={item.id} data-message-last={row.index===items.length-1||undefined} data-index={row.index} ref={refFor(item.id)}>{renderItem(item,row.index)}</div></RowContext.Provider></Fragment>)
  }
  const total=virtual.getTotalSize(),tail=Math.max(0,total-(end-margin))
  return <ViewportContext.Provider value={context}><div ref={root} className="message-viewport" style={{height:total}}>{children}{tail>0&&<div className="message-viewport-spacer" aria-hidden="true" style={{height:tail}}/>}</div></ViewportContext.Provider>

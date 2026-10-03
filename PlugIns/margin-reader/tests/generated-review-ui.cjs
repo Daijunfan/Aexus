@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),path=require('node:path');
 const {create,expect}=require('./ui-session.cjs');
 (async()=>{const f=await create('generated-review');let failure;
- try{const {page,api}=f;let set=await api('study.create',{title:'自动出题'});const change=async(m,p)=>set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});
+ try{const {page,api}=f;let set=await api('study.create',{mapMode:'cards',title:'自动出题'});const change=async(m,p)=>set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});
   await change('study.note.create',{title:'Geography',text:'Paris is in France.'});const id=set.cards[0].id;
   await change('study.card.emphasis.set',{cardId:id,text:[{field:'text',start:0,end:5,quote:'Paris',group:'A'},{field:'text',start:12,end:18,quote:'France',group:'B'}]});await change('study.review.generate',{cardIds:[id]});await api('study.open',{setId:set.id});await page.goto(f.server.url);await page.waitForSelector('body[data-ready=true]');await page.click('[data-study-view=review]');
   const front=page.locator('.study-review-front');await expect(page.locator('.review-face-tools').first()).toContainText('自动出题');await page.click('#study-review-reveal');await expect(front).toContainText('Paris');await page.click('#review-edit-card');await page.fill('[name=text]','Paris IS in France.');await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();await expect(front).toContainText('IS');await expect(front).not.toContainText('Paris');await expect(page.locator('#study-review-answer')).toBeHidden();

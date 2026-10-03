@@ -44,7 +44,7 @@ async function finishAck(text){
  if(current!==request)return
  try{
   const explicit=fs.existsSync(file('.ack-tool.json')),raw=fs.existsSync(file('.ack-output.txt'))
-  if(explicit||process.env.AC_CHAT_ACK_MANUAL!=='1'&&!raw){
+  if(explicit){
    const input={conversationType:ackPolicy.conversationType,conversationId:ackPolicy.conversationId,messageId:ackPolicy.messageId,text:null,...(explicit?JSON.parse(fs.readFileSync(file('.ack-tool.json'),'utf8')):{})},callId='fixture-discussion-'+crypto.randomUUID()
    await nativeTool('agents_company_discussion_post',input,callId)
   }
@@ -74,8 +74,13 @@ async function prompt(r,text){
   }else finishAck(response)
   return
  }
+ const post=control&&employee?workPostArgs(text,control,employee):undefined
+ if(post)try{const result=await nativeTool('agents_company_discussion_post',post);note('work-publication',{input:post,result});if(result.error||result.result?.isError||result.isError)throw Error('Publication failed')}catch(error){finish('',false,error.message);return}
  if(acp&&text.includes('[agents-company-image:')){
-  const {projectClineRequest}=await import(require('node:url').pathToFileURL(path.join(__dirname,'../../src/main/engines/cline-compat.ts')))
+  // Load the real TypeScript module through the same bundling boundary as Core.
+  const compiled=path.join(dir,'fixture-cline-compat.cjs'),sdk=require.resolve('@anthropic-ai/claude-agent-sdk')
+  if(!fs.existsSync(compiled))require('esbuild').buildSync({entryPoints:[path.join(__dirname,'../../src/main/engines/cline-compat.ts')],outfile:compiled,bundle:true,platform:'node',format:'cjs',alias:{'@anthropic-ai/claude-agent-sdk':sdk},external:[sdk,'electron'],logLevel:'silent'})
+  const {projectClineRequest}=require(compiled)
   const projected=projectClineRequest({messages:[{role:'user',content:[{type:'text',text}]}],tools:[]},path.join(dir,'company-images'))
   const images=projected.messages[0].content.filter(p=>p.type==='image_url')
   fs.writeFileSync(path.join(dir,'fixture-image-request.json'),JSON.stringify(projected));finish('IMAGE_RECEIVED '+images.length);return
@@ -113,3 +118,11 @@ let buffer='';process.stdin.setEncoding('utf8');process.stdin.on('data',chunk=>{
  else if(method==='steer')result(r,{})
 }})
 process.stdin.on('end',()=>process.exit(0));process.on('SIGTERM',()=>process.exit(0))
+
+function workPostArgs(text,control,employee){
+ const file=path.join(control,employee+'.work-post.json');if(!fs.existsSync(file))return
+ const marker=text.includes('[Group request]\n')?'[Group request]\n':text.includes('[Channel context]\n')?'[Channel context]\n':undefined
+ if(!marker)return
+ const context=JSON.parse(text.split(marker)[1].split('\n')[0])
+ return {conversationType:context.conversationType,conversationId:context.conversationId,messageId:context.messageId??context.entryId,...JSON.parse(fs.readFileSync(file,'utf8'))}
+}

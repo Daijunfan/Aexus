@@ -1,15 +1,89 @@
 # News channels
 
-Channels are a Core-owned publishing surface. Collection is a separate service: it can
-run on the Core host, another machine, or behind a tunnel. The renderer never calls
-social platforms or reads a collector's configuration files.
+Channels are a Core-owned publishing surface with an explicit employee or external-process
+engine. External collection can run on the Core host, another machine, or behind a tunnel.
+The renderer never calls social platforms or reads a collector's configuration files.
+
+## Publishing engine, channel identity and schedules
+
+`channel.create {name,engine,avatar?}` requires a deliberate engine choice. The shared
+desktop/Web channel manager exposes New channel and Channel settings; the same contracts
+are available to the user or Secretary through Core and CLI. Creation is atomic, including
+image validation, source identities and any dedicated credential. It does not launch a
+process or employee task.
+
+For an employee channel, select existing employees, or add the current members of a Team.
+This is a membership snapshot, not a new Team, employee or native session. Publishing
+membership is the existing channel administrator list; change it through `channel.update`.
+The same employee may publish in several channels. Removing a member immediately revokes
+publication but retains that employee's articles and source identity.
+
+```sh
+agents channel create --name 'Research desk' --engine '{"kind":"employees","employeeIds":["EMPLOYEE_A","EMPLOYEE_B"]}' --json
+agents channel update CHANNEL_ID --admins '["EMPLOYEE_A"]' --expected-revision 1 --json
+# Run with the publishing employee's existing authentication; no discussion parent is needed.
+agents channel publish --data @article.json --json
+```
+
+An employee article uses `{channelId,externalId,publishedAt,title,body,mediaIds?}`.
+Core resolves its source from the authenticated employee and current membership, and supplies
+the actual employee author name. It rejects a different employee's source or author name.
+Upload images first through `channel.media-put` with the same channelId, externalId and
+publishedAt, plus mediaKey/name/mimeType/base64 data. Stable externalId and original Unix
+millisecond publishedAt keep retries idempotent; do not reset them on every retry.
+Articles share the existing timeline, post view, saved state and retention rules. Ordinary
+private answers do not automatically become channel articles, and the author does not receive
+its own news as another awareness turn. Discussion replies keep their separate existing rules.
+
+After creating the channel, Add publishing schedule creates an ordinary `schedule.create`
+agent task. Choose a publishing employee, interval, task prompt and whether to enable runs.
+The editor includes the channel publication contract in the task and uses a clientRequestId
+for retry safety. Without an explicit anchor, the first interval occurs one interval after
+acceptance. Manage/pause the task in Plan. Removing a publisher revokes writes, not that
+employee's independent schedule. No second scheduler or worker queue is created.
+
+External engines require a process name and local/remote location. Remote engines additionally
+require the process IP/hostname and a Core receiver URL reachable **from that process**:
+
+```sh
+agents channel create --name 'Cloud news' --engine '{"kind":"external","location":"remote","name":"News worker","host":"203.0.113.10","endpoint":"https://core.example.com/api/channels/collector"}' --json
+agents channel connection CHANNEL_ID --json
+agents channel collector-add --name 'Replacement worker' --channel CHANNEL_ID --json
+```
+
+`host` records where the process runs; `endpoint` is where it pushes messages, not an SSH
+address or the process's own API. Core does not deploy, log into, or start the cloud process.
+The local collector listener remains loopback-only and disabled until explicitly enabled.
+Use an HTTPS reverse proxy or an HTTP loopback tunnel for remote access. Saving a host does
+not prove reachability. Connection status reports unconfigured, waiting, the last successful
+authenticated request, or a revoked credential; it never asserts that a quiet worker is online.
+
+Creation returns a dedicated token once in `setup`, unless an active collectorId was chosen.
+Pass it as `Authorization: Bearer TOKEN` to the receiver using a POST body `{cmd,args}`.
+Read `channel.collector-config` for source IDs; publish using `sourceId`, not an employee
+channelId. A custom process has a generic `process` source. Telegram/X/YouTube keep their
+existing adapters and may use social sources routed into an external channel. Once explicitly
+bound, only the selected collector credential may publish that channel's external sources;
+a legacy wildcard token does not bypass the binding and cannot reach employee sources.
+Replacing the channel credential invalidates the old credential's access to this channel
+without revoking unrelated channels. Tokens are not returned by later channel reads.
+Existing channels retain their source-scoped compatibility and show an unconfigured origin
+until explicitly configured; no fictitious host is inferred.
+
+Names and avatars are independent of source/article metadata. Upload PNG/JPEG/GIF/WebP up
+to 8 MiB as `avatar:{name,mimeType,data}` during create/update. Original validated bytes are
+stored independently of news expiry. `channel.avatar-image {id}` reads the image; the channel
+view projects `{channelId,sourceId:channelId,sha256}`. A custom image overrides any platform
+icon. Send `avatar:null` to restore the platform/default image. Updating engine location,
+connection, membership, name or avatar supports expectedRevision; a stale save preserves the
+UI draft and offers an explicit reload. Engine kind itself is fixed after configuration.
 
 ## Ownership and routing
 
 - Core stores subscriptions, channel routes, retained articles, original images and
   saved state under `AGENTS_COMPANY_HOME/channels`.
 - Each Telegram subscription owns one channel. X and YouTube start with separate
-  aggregate channels. An X or YouTube author can be moved to any existing channel;
+  aggregate channels. An X or YouTube author can be moved to any external-engine channel;
   all their retained articles, including saved articles, follow the route immediately.
 - Unfollowing disables collection while preserving the author's identity and saved
   articles. Re-following reuses that identity.
@@ -34,7 +108,8 @@ one assignment leaves the others intact. The assignment does not change company
 roles, permissions, engines or workspaces. An authenticated employee can discover
 its own channel identities with `agents channel list` and `agents channel get ID`;
 other channels and user subscription/saved metadata remain inaccessible.
-Channels start without administrators; adding one does not replay older articles.
+Legacy/external channels start without administrators; employee channels start with their
+selected publishers. Adding a member does not replay older articles.
 
 New external articles reach the current administrators through their existing native
 queue as silent-only reading turns. The queue retains a news ID reference rather
@@ -47,27 +122,25 @@ not rewrite the native engine's own history of content it already received.
 The channel composer publishes user discussion to every current administrator. A Secretary who is an actual administrator can also send a management request through channel.message-send, retaining its own Agent author; Core marks that request as its own discussion root.
 Mentions and a reply's administrator author identify the work targets; without a
 target, all administrators receive work. Others receive context only. Administrators
-may publish a concise reply only within a user or Secretary management discussion delivered to them, or use
-`channel.message-post --silent`. A news-only notification does not invite a public
+may publish a concise reply only within a user or Secretary management discussion delivered to them.
+When no public reply is needed, they make no publication call. A news-only notification does not invite a public
 reply; a user's question about news is a normal discussion that may be answered.
 Questions, stories and casual conversation are valid requests as well as work tasks.
 Public administrator replies cause silent-only awareness in the other recipients,
 preventing automatic acknowledgment loops.
 
-During the reading stage, the native tool
-`agents_company_discussion_post({conversationType:"group"|"channel",conversationId,messageId,text:string|null})` is bound to that
-employee and entry. All four fields are required: use conversationType:"channel",
-this channelId as conversationId, and its entryId as messageId. Wrong conversation
-or message IDs are rejected without an acknowledgment, including for another joined
-channel. It normally submits
-`text:null`. Public text is a deliberate reply to people, never private planning.
-Ordinary text, JSON, thoughts and final output cannot publish or mark an entry read.
-A successful native receipt returns `nextAction:"end_turn"`; end the current turn
-with OK and no more tools. History/publication instructions are withheld from the
-reading-stage context and supplied only in the subsequent response-stage task.
-Without an accepted tool/API acknowledgment, formal work stays blocked. Once confirmed,
-the response stage does not repeat the receipt; an actual answer is published explicitly
-with `channel.message-post`. A silent receipt does not dismiss a user's request.
+Reading runs privately without tools. Core records receipt only after native success
+and current-authority checks; no acknowledgment API or special output is needed.
+Awareness ends here. Work targets receive the original task in the same native session.
+Failed or interrupted reading does not start that task.
+
+The optional native agents_company_discussion_post is a response-stage publisher:
+{conversationType:"channel",conversationId:CHANNEL_ID,messageId:ENTRY_ID,text:STRING}.
+It is bound to the current task/employee; wrong or stale IDs, revoked credentials,
+empty text and null are rejected. The ordinary API remains channel.message-post
+--text ... --reply-to .... --silent is removed. Ordinary text/JSON/thoughts never create
+public messages. Reading other employees' posts cannot invoke a publisher. Channel
+work remains in the full employee transcript but creates no private/Company unread.
 
 Channel discussion supports personal save, pin, hide and reactions, message references,
 forwarding, and text/mentions/same-channel reply drafts. News keeps its original 48-hour
@@ -195,3 +268,34 @@ cross-host read/publication probe against a disposable Core. Set
 `AGENTS_COMPANY_COLLECTOR_PROBE` to a private JSON configuration containing the
 authorized `host`, `project`, `probeScript`, and three existing `recordIds` (Telegram,
 X, YouTube). It does not change real collector configuration or publication marks.
+
+## Cloud documents and channel storage
+
+An external channel may bind `engine.fileStorage: {hostId,directory}` to an existing
+Cloud Hosts record and the collector's content-addressed media root. Its collector
+configuration advertises `collectFiles:true`. The collector sends only
+`channel.publish.files` metadata: `{id,name,mimeType,bytes,sha256,thumbnailMediaId?}`.
+Original document bytes remain on the cloud host; paths are always derived as
+`directory/SHA256_PREFIX/SHA256`, never supplied arbitrarily by the collector.
+The existing validated image protocol handles optional document thumbnails.
+
+```sh
+agents channel file-download --post POST_ID --file FILE_ID --json
+agents channel file-status --post POST_ID --file FILE_ID --json
+agents conversation workspace channel:CHANNEL_ID --json
+```
+
+`channel.file-download {postId,fileId}` is human-only and starts an existing SSH
+transfer into the channel's shared workspace. `channel.file-status` reports
+not-downloaded/queued/running/completed/failed, byte progress and the saved relative
+path. Wait for completed: acceptance is not completion. Files up to 2 GiB are
+streamed in chunks; size and SHA-256 are verified before atomic commit. A conflicting
+user filename is retained, and a new suffix is used. Repeated downloads reuse the
+completed copy. The channel Files button opens the same storage interface as groups.
+
+For document channels, cloud posts and files expire seven days after publication.
+The worker automatically removes expired records and unreferenced file bytes.
+Initial backfill is the last 48 hours. Ordinary channels retain their existing
+48-hour policy. Saving a local post does not extend cloud cache lifetime. Documents
+explicitly copied into the local channel workspace survive cloud expiration, post
+deletion and Core restart. SSH failure never reads a same-named file on the Mac.

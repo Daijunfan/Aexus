@@ -39,3 +39,6 @@ import './styles/voice-recorder.css'
 import './styles/emoji-picker.css'
 
 import './styles/channels.css'
+import './styles/employee-profile.css'
+import './styles/message-categories.css'
+import './styles/employee-workbench.css'

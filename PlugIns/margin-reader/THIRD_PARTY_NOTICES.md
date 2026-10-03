@@ -24,6 +24,14 @@ Runtime packages and their license files are retained in the built node_modules 
 | ts-fsrs | 5.4.2 | MIT | https://github.com/open-spaced-repetition/ts-fsrs |
 | word-extractor | 1.0.4 | MIT | https://github.com/morungos/node-word-extractor |
 
+| mathjax-full | 3.2.2 | Apache-2.0 | https://github.com/mathjax/MathJax-src |
+| pdfkit | 0.17.2 | MIT | https://github.com/foliojs/pdfkit |
+| svg-to-pdfkit | 0.1.8 | MIT | https://github.com/alafr/SVG-to-PDFKit |
+
+MathJax uses local base/AMS/mhchem processors with no remote resource loaders. Its speech-rule-engine transitive XML dependency is pinned through an override to @xmldom/xmldom 0.9.12; the independent Mammoth parser remains on 0.8.15. No system fonts are copied into the runtime package; vector PDF embeds only the font subset used by the output.
+
+| pptxgenjs | 4.0.1 | MIT | https://github.com/gitbrent/PptxGenJS |
+
 ## Primary implementation references
 
 - Mozilla PDF.js: https://github.com/mozilla/pdf.js

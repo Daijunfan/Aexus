@@ -7,6 +7,8 @@ const rpc=async(cmd,args)=>{const result=await f.request(null,cmd,args);assert.o
 try{
  await f.cli('group','add','Studio');await f.cli('group','add','Other')
  const a=await f.create('Aster','Studio'),b=await f.create('Rowan','Other'),manager=await f.create('Lead','Studio','manager'),managerToken=await f.token(manager.id)
+ // Initialization now owns a native session; close it before seeding a dormant legacy history.
+ await f.cli('session','close',(await f.status(a.id)).sessionId)
  const directory=path.join(f.env.AGENTS_COMPANY_HOME,'transcripts');fs.mkdirSync(directory,{recursive:true})
  const legacy=[{role:'user',id:'u1700000000000',text:'An earlier question.'},{role:'assistant',id:'old-answer',blocks:[{kind:'thinking',text:'PRIVATE_REASONING_SENTINEL',done:true},{kind:'tool',id:'old-tool',name:'read',input:{secret:'PRIVATE_TOOL_SENTINEL'},result:'PRIVATE_TOOL_SENTINEL',running:false},{kind:'text',text:'A public answer worth discussing.'}]},{role:'assistant',id:'private-only',blocks:[{kind:'thinking',text:'PRIVATE_ONLY_SENTINEL',done:true}]},{role:'notice',id:'old-notice',text:'A status notice.',tone:'info'}]
  fs.writeFileSync(path.join(directory,a.id+'.json'),JSON.stringify(legacy))

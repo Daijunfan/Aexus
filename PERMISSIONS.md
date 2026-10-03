@@ -14,7 +14,8 @@ Secretary 是最高的 **Agent 应用管理职位**，负责帮助用户操作 A
 | 创建、删除 Manager | 不允许 | 不允许 | 全局 | 全局 | 全部 |
 | 创建、删除或变更 Governor 职位 | 不允许 | 不允许 | 不允许 | 允许 | 允许 |
 | 创建、删除或变更 Secretary 职位 | 不允许 | 不允许 | 不允许 | 不允许 | 仅用户 |
-| 管理群组/成员/禁言、频道/订阅/作者/管理员、个人会话分类 | 不允许 | 不允许 | 不允许 | 允许 | 允许 |
+| 群成员、禁言、静音与会话通知 | 取决于群内 Owner/Admin | 同左 | 同左 | 同左，无 Company 豁免 | 管理与恢复入口 |
+| 频道采集服务、订阅、个人会话分类 | 不允许 | 不允许 | 不允许 | 原应用管理范围 | 允许 |
 | 发布群聊或频道回复 | 实际成员/管理员范围 | 同左 | 同左 | 同左，仍以自己的 Agent 身份发布 | 允许 |
 | 本人已读确认、用户消息编辑、跨会话转发、身份凭据及客户端上传下载 | 不允许 | 不允许 | 不允许 | 不允许 | 仅用户 |
 
@@ -24,11 +25,13 @@ Governor 仍不能创建、删除、升降级自己或其他 Governor，不能�
 
 Secretary 可出现在 Company、Messages、Plan 或普通插件 Team 中；视图只过滤展示。它使用 Core 主机的本地引擎和本地工作区，Cloud Team 可选择 `workEnvironment:local`。它没有 Governor 的任务视图绑定。原有 Manager/Governor 能力保留，包括既有全局插件/设置权限。
 
-秘书使用普通认证 Core/CLI 操作管理软件，例如 `chat.create/update`、`channel.source-add/update/remove`、`channel.update --admins`、`messenger.folder-save`、`engine.configure` 和 `plugin.call`。管理读取不要求先加入群/频道；实际公开发言和静默确认仍要求真实成员或管理员身份。秘书作为频道管理员可用 `channel.message-send` 发起管理请求，作者仍是该秘书；只有 Core 在此入口设置的 `requestId=id` 管理根能作为后续讨论根，普通投稿不能伪造。
+秘书使用普通认证 Core/CLI 操作管理软件，例如 `channel.source-add/update/remove`、`messenger.folder-save`、`engine.configure` 和 `plugin.call`。会话内治理另行检查实际职位：chat.update/mute、conversation.role/mute/silence/notice-* 要求本会话 Owner/Admin，chat.delete 要求 Owner；Company Secretary 不获得豁免。应用目录与采集配置元数据仍可按原范围读取，群组正文和频道讨论需真实成员身份。秘书作为频道管理员可用 `channel.message-send` 发起管理请求，作者仍是该秘书；只有 Core 在此入口设置的 `requestId=id` 管理根能作为后续讨论根，普通投稿不能伪造。
 
 用户身份相关入口保持独立：`auth.agent-token/revoke`、`session/chat/channel.acknowledge`、`chat.edit`、`messenger.forward/forward-draft/forward-status/reference`、播放器及上传下载客户端许可、`ui.click/type/drag/wheel` 仍仅用户。秘书通过 Core API 操作软件，不以 UI 模拟或令牌冒充用户；原生引擎的 Ask/Full access 设置仍单独生效。已有 API 的 revision、显式确认和作用域检查继续执行。
 
 私聊 `session.send/enqueue` 的可选 `clientMessageId` 按真实调用者与员工区分。同一请求的重试确认仍检查当前权限、员工身份及初始化状态，不会重新打开引擎；其他调用者不能用相同编号读取或冒用该确认。发送确认不等于员工已读，不改变本人阅读回执。转发草稿及状态查询也不能派发工作；放弃转发草稿不取消已发送的消息或任务。
+
+私聊 `session.send/enqueue/steer` 可携带 `sourceView`（company/messages/plan），由发送客户端声明，仅供理解当前消息。该字段与 Governor 的目标团队视图 viewId 独立，不改变真实作者、角色、委派范围、执行主机或群组成员资格。四种角色均收到来源提示；优先遵循正文，不能仅依据来源自动建群或群发。未提供的来源保持未知，不读取其他客户端的当前界面。排队和未变请求重试保留发送时快照；新回执绑定来源，改变来源的同键请求拒绝，旧回执仍可确认且不补造历史。追加消息单独记录来源，不覆盖原始任务来源。历史正文和引用不包含来源提示词。
 
 频道个人阅读状态通过 `channel.read-state {id,entryIds}` 向用户和 Secretary 只读开放，普通频道管理员不能读取这部分用户信息。`channel.acknowledge {id,entryIds}` 以及用户显式选择的 `{id,all:true}` 仅用户可执行，Secretary 也不能替用户标记已读。频道新新闻与 Agent 回复的未读计数，不等于管理员对群发消息的已读回执；两套状态互不修改。升级前记录保持未知基线，不伪造历史已读时间；查询历史、修改收藏和调整作者归属都不能代替用户阅读。
 
@@ -47,7 +50,7 @@ agents management topology --json
 agents api docs
 ```
 
-Manager / Governor / Secretary 都必须是在 Core 所在主机运行、使用该主机本地工作区的 Local Worker。Core 可以运行于 macOS、Windows 或 Linux；浏览器所在电脑不会自动成为执行主机。它们可以加入 Cloud Team：创建时传 `--work-environment local`，仍通过同一组 `session.*`、`schedule.*`、`card.*` 管理云端 Employee。Cloud Native Worker 和本地引擎的云端工作环境只允许 Employee。运行位置 `kind`、工作环境 `workEnvironment`、职位 `managementRole`、引擎 `permissionMode` 是独立概念。
+Manager / Governor 可使用 Core 本地工作区、Core 引擎加 Tunnel 云端工作区，以及已支持引擎的 Cloud Native Worker。职位选择不会自动改变引擎位置或工作目录，启动恢复保留已授予的职位。Manager 仍仅管理本 Team，Governor 仍按全局角色范围管理；Plan 继续只允许本人或职级下行。Secretary 保留 Core 本地引擎与本地工作区要求。`kind`、`workEnvironment`、`managementRole` 和 `permissionMode` 分别校验；云端身份通过员工专属反向 CLI 通道认证，不能取得用户控制令牌。
 
 新员工默认使用 Ask，Full access 需要用户明确选择。升级保留原有执行权限，不把已有受限配置自动提升。公司职位与引擎执行权限分别校验；`workspace.*` 和 Work 插件仍使用各自明确的文件范围。云端命令失败不会回退到 Core 本机。
 
@@ -107,7 +110,7 @@ Messages 与原会话复用相同权限、历史和员工身份。`session.inbox
 
 `view.list` 返回共用视图定义与数据 API；`view.select company|messages` 仅切换展示，Company 缺省为 All Team。员工、原生会话、权限、绑定及私聊的 exact-reply 已读记录只有一份；在 Messages 阅读后，Company 使用同一 readAt，不再重复标红。
 
-群组创建、编辑成员、删除和禁言允许用户或 Secretary；用户已读确认仍仅用户。成员可以包含多个 Team 的员工，加入群组不会改变 Team、职位、目录或控制权限。`chat.list/get/history/context/post` 对所有职位开放，但 Core 每次只允许读取或发布自己所属群组；Governor 同样不能读取未加入的群聊。返回的成员信息只含身份，不包括他人的私聊内容或文件。
+用户可创建群组并指定 Agent Owner；Agent 创建群组时自己担任 Owner。成员编辑、禁言、静音及通知要求实际 Owner/Admin，解散群组要求 Owner，用户保留外部恢复入口；用户已读确认仍仅用户。成员可以包含多个 Team 的员工，加入群组不会改变 Team、职位、目录或控制权限。`chat.list/get/history/context/post` 对所有职位开放，但 Core 每次只允许读取或发布自己所属群组；Governor 同样不能读取未加入的群聊。返回的成员信息只含身份，不包括他人的私聊内容或文件。
 
 `chat.edit {id,messageId,text,expectedRevision}` 仅用户可用，且只能修改作者为用户的群聊正文或附件说明。Employee、Manager 和 Governor 都不能调用；默认 API 发现不列出它，`--all` 可读说明但不授予权限。每次实际修改增加 `editRevision` 并记录 `editedAt`；旧消息的初始修订号为 0，同文重试幂等，冲突修订拒绝。该操作不修改作者、序号、原始时间、附件、mentions、投递状态、引用快照、原始发送去重键或已读游标，不创建新的任务、回执或编辑历史内容库。已接受的路由及排队任务仍使用原始提示和已验证的引用；新增引用继续核对当前正文。最新预览可更新，但会话排序时间不变。
 
@@ -117,27 +120,27 @@ Messages 与原会话复用相同权限、历史和员工身份。`session.inbox
 
 awareness 是绑定真实发起身份、当前群、消息及固定接收者的窄范围投递，不是普通 session.send 授权。它复用原生会话和原队列，重新检查凭据与成员资格；不会增加管理控制、读取他人私聊或切换执行主机。普通 Employee 可以向同群 Governor 发布共享上下文，但仍不能直接控制其会话或获得 Governor 权限。接收者仍使用自己的身份与原权限。
 
-所有接收员工都可以通过自身认证的 `chat.post {id,replyTo,text:null}`（SDK None、CLI --silent）静默确认，包括被明确 @ 或回复的员工。任何 Agent 都不必公开回复。只有固定投递列表中的本人可以确认；静默确认不创建消息气泡、序号、预览、用户未读或新投递，重复保留首次时间。非空公开回复也可确认它所回复的本人请求，同时作为一条新消息送达其他成员。读取 history/context 本身不伪造确认。
+共享投递先在原生会话进行无工具的私有阅读。成功结束后，Core 重新校验任务、发送者授权和成员资格，记录接收者 deliveredAt/readAt。失败或中断不释放正式工作；不要求模型输出固定文字或调用确认 API。work 随后执行原任务，awareness 到此结束。
 
-投递的 `deliveredAt` 只来自真实接收证据，进入本地队列本身不算原生接收；`readAt` 只由认证员工的上述确认产生，`ackMessageId` 可链接首次公开确认。确认已读也可补全此前缺失的送达时间。这些接收员工回执与用户阅读私聊的 `lastReply.readAt` 完全分离，不能替用户清除未读。
+chat.post、channel.message-post 仅用于明确发布。text:null、空白及单独的 null/undefined/None 占位串不能作为员工公开消息；CLI --silent 已移除。不想发言就不调用发布 API。普通文字、JSON、思考和最终答复不会自动进群。用户附件消息保留。
 
-`chat.mute {id,member:"all"|EMPLOYEE_ID,muted,durationSeconds?}` 允许用户或 Secretary 调用；默认 API 发现对用户和 Secretary 列出。可永久、限时、单独或全员禁言；全员规则也覆盖后来加入的员工，与单独规则叠加。Core 每次发布时按实际时间检查到期，不依赖后台计时器。禁言只拒绝员工的新公开发布，不阻止阅读、接收工作或静默确认，也不影响用户发送。它不改变成员、控制权限或任务执行，不能由员工、Manager 或 Governor 绕过。
+agents_company_discussion_post 是正式共享响应阶段的可选发布工具，参数为 conversationType、conversationId、messageId、text:string。当前任务、冻结来源、员工凭据、成员资格和禁言由 Core 检查。填另一个群或旧任务、阅读、初始化及无共享任务的私聊阶段均被拒绝；相同内容重试只返回原结果，不生成重复消息。
 
-未确认的投递先在同一原生会话运行内部阅读确认轮次。模型须明确调用 `agents_company_discussion_post({conversationType:"group"|"channel",conversationId,messageId,text:string|null})`，由绑定本次员工身份和群消息/频道条目的工具调用原有认证发布 API；工具必须显式提交 conversationType、conversationId、messageId 和 text，前三者逐项匹配本次冻结来源；即使同时属于两个房间，填错目标也拒绝且不产生任何回执。工具只在该阅读阶段有效，不是新公开 CLI。正式回复仍通过 chat.post 或 channel.message-post 明确指定目标 id 及该目标中的 replyTo。通常使用 text:null；非空值就是明确要给参与者看的实际答复或简短确认，不能是内部推理或决定如何回答的计划。普通文字、JSON、思考和最终输出绝不代发或标记已读；未通过工具或显式认证 API 确认就失败，不释放正式工作。原生工具成功结果明确 nextAction=end_turn；模型应以 OK 结束当前轮，由 Core 另发正式响应。确认上下文只保留真实来源/回复/原文，历史读取和公开回复指引只出现在正式阶段。work 在确认后才派发正式响应；awareness 完成确认后直接结束，不写入公开的私聊 user/assistant 工作记录，不改变用户旧私聊已读或无关当前任务。期间可使用原队列，不能通过 Steer 向隐藏确认轮追加工作。
+公开回复只以 awareness 送给其他成员，不产生确认消息。旧 acknowledgmentOf/ackMessageId 保留历史兼容。明确回复仍可记录作者对所回复请求的接收证据；history/context 查询不等于阅读回执。
 
-阅读阶段工具明确发布的公开回复由 Core 标记只读 acknowledgmentOf；该标记不能由 API 提交。后续接收者使用 awareness + silent-only，模型读完后须明确提交 text:null，阻断自动回执互相唤醒。禁言或 silent-only 时提交可见文字会被拒绝，不能将拒绝或普通模型输出自动变成已读。确认已记录后，正式响应阶段不再次确认。正常主动公开讨论仍会送达其他成员。
+chat.mute 与 conversation.mute 使用真实会话 Owner/Admin；用户保留恢复入口。群组全员禁言作用于当前和未来的 Member，Owner/Admin 可继续发言；单人禁言对该人有效。禁言阻止公开发言，不阻止私有阅读和工作，不改变成员、目录或公司管理权限；有效期在发布时检查。
 
 Codex 在受限阅读和普通工作间通过原生 idle actor unsubscribe 后 resume 同一 threadId 切换，保留历史、主机、模型与身份，不重启引擎进程。切换前若原生后台终端仍活动，就明确拒绝本次阅读，不停止终端、不标记已读；待其自然结束或用户明确停止后再重试。成功接收 awareness 后也可能暂留受限确认环境，下一条普通工作恢复原环境；之前的 /review、/compact 明确拒绝。
 
 员工通过 `chat.context` 获取具体请求和发布规则，再用 `chat.post` 明确发布面向参与者的实际答复，kind 仍为 summary/decision/blocker/question/result。日常聊天、故事、提问与工作任务都是有效用户请求；work/awareness 只是投递分工，静默已读不等于忽略被交付的请求。作者取自认证身份，不接受伪造；员工单条上限 2000 字符。内部推理、工作详情、工具日志和私聊回复不自动镜像入群。API 不自动判断所有敏感信息，发布者仍应遵守返回的共享策略。
 
-群组已读和私聊已读各自对应真正展示过的内容：阅读群组摘要不能清除尚未阅读的完整私聊。两种已读操作都只允许用户，窗口隐藏、被遮挡、后台读取或 Agent 查询都不代用户确认。删除群组仅移除群组记录，保留可恢复群聊文件与全部员工、工作区、原生历史和独立调度。
+群组、频道与私聊的用户已读独立。群组/频道来源的工作不创建或覆盖 lastReply，保留此前真实私聊的已读或未读；详情仍保存在原员工会话。Messages 私聊与 Company 员工会话共用同一回执。阅读群组不能清除真实私聊未读。启动时仅在原回复校验值精确匹配群组/频道任务及保存正文时撤销旧错误红点；真实私聊、已读及来源不明记录保留，不删除历史或伪造阅读时间。两种已读操作都只允许用户，窗口隐藏、被遮挡、后台读取或 Agent 查询都不代用户确认。删除群组仅移除群组记录，保留可恢复群聊文件与全部员工、工作区、原生历史和独立调度。
 
 ## Plan 与自主排期
 
 所有 Employee / Manager / Governor / Secretary 都可通过 schedule.create 为自己排期，self 只能解析成认证员工自己的稳定 ID。其他目标继续使用原有 Manager / Governor 控制范围；群组、视图、标签和备注不扩权。自我排期使用后台专用的自目标委派，不开放普通 Employee 的他人会话发送权限。非全局调用者只能查看或修改自己创建的排期，执行与异步准备后复核凭据和目标权限。
 
-Plan 的十种数据库视图（Table / Board / Timeline / Calendar / Planner / List / Gallery / Chart / Feed / Form）共享 schedules.json；status、nextAt、occurrences 由 Core 计算，不能伪造。保存的数据库视图按创建身份限定编辑范围，用户可管理全部；删除视图保留排期。定时器不会关闭或打断已有人工任务，也不会唤醒休眠主机。完整 API 见 PLAN.md 与 schedule.schema。
+Plan 的十种数据库视图（Table / Board / Timeline / Calendar / Planner / List / Gallery / Chart / Feed / Form）共享 schedules.json；status、nextAt、occurrences 由 Core 计算，不能伪造。保存的数据库视图保留创建者身份，用户和 Secretary 可管理全部，其他员工仅能编辑自己创建的视图；删除视图保留排期。定时器不会关闭或打断已有人工任务，也不会唤醒休眠主机。完整 API 见 PLAN.md 与 schedule.schema。
 
 `plan.timeline/analytics/feed` 只投影现有调度权限允许的记录，不绕过角色范围。durationMinutes 仅为预计时长，不授予并发执行或超时豁免。Form 和时间线改期使用 schedule.create/update；Feed 读取不清除私聊未读。历史聚合中的 Team/priority 来自当前仍存在的关联对象；缺失信息明确标为未知。
 
@@ -148,9 +151,11 @@ Plan 的十种数据库视图（Table / Board / Timeline / Calendar / Planner / 
 Message attachment uploads, file forwarding and Core-host download/save are user-only
 operations. Group membership grants `chat.file` reads of explicitly published group
 attachment paths, never unpublished upload staging, another group's files, or a private
-employee workspace. Agents cannot publish arbitrary group file paths. Mention delivery
-copies group attachments into each explicitly selected employee's own workspace and
-rechecks the existing delegation and membership before enqueueing. A file upload, preview, search or download does not start inference. Public group
+employee workspace. Agents cannot publish arbitrary group file paths. Group/channel attachment delivery sends one text-only file notice together with the
+user's original text. It does not copy bytes or private-chat attachments automatically.
+Members use conversation.file to read shared files and conversation.copy to explicitly
+copy originals into their own named subfolder or their unchanged personal Workspace.
+Current membership and delegation are rechecked before enqueueing. A file upload, preview, search or download does not start inference. Public group
 posts notify recipients through the bounded awareness lifecycle; they do not assign
 formal work. Silent acknowledgments create no further delivery.
 
@@ -159,11 +164,19 @@ formal work. Silent acknowledgments create no further delivery.
 音视频预览的 media-open/info/read/close 仅用户可用，许可绑定创建它的客户端；Web Cookie 播放还绑定登录会话。每次读取重新校验原工作区与文件版本，不会随配置变化切换到另一个主机或文件。代理不能获得媒体许可；现有 chat.file 的群成员公开附件读取规则不变。播放不触发推理、消息或已读确认。退出登录撤销活动流，播放器释放许可后不再提供字节。
 
 
+## 群组与频道共享工作区
+
+`conversation.workspace/workspaces/file/copy/transfer` 使用真实成员身份；任何 Agent（包括 Secretary）访问文件都必须是当前群成员或频道管理员。成员可读取共享目录，写入、移动、删除、恢复和复制目标限自己的姓名子目录。用户上传的根目录原件和其他成员目录只读；个人 Workspace 继续可用，允许明确复制到本人 Workspace 后工作。归档不改变权限，移除成员立即撤销 API 访问，但保留已有工作文件。
+
+同名群组用稳定 ID 父目录隔离，同名员工目录映射到真实员工 ID。目录名称在首次创建后保持稳定，重命名显示名称不会移动运行中的工作目录。用户完成上传后文件即对成员共享，发送消息才触发文字通知；临时上传分块不向成员展示。以上为 Core API 授权，不是同一操作系统账号下任意 Trusted 原生进程的文件沙箱，也不会因加入群组而放宽引擎权限。
+
+`Archived chats` 统一显示已归档的员工、群组和频道；Restore 继续调用 `messenger.conversation {patch:{archived:false}}`，不改变历史、未读回执、成员身份或工作区。
+
 ## 自建混合会话分类
 
 `messenger.folder-save/delete` 允许用户或 Secretary 调用，默认 API 发现对二者列出；与其他个人整理操作共用 `messenger.json`。分类只保存已验证的私聊、群聊、频道引用；同一会话可以加入多个分类。每个分类有独立 revision，同名及相同成员重试保持幂等；并发修改同一分类时显式 expectedRevision 冲突拒绝。无关草稿写入不会造成分类冲突。删除分类保留全部会话、消息、草稿、置顶、收藏和归档；固定 All 没有可编辑或删除的分类记录。
 
-频道会话可使用相同的个人置顶、收藏夹、归档和未读提醒；这些仍只影响用户整理状态。新闻文章收藏始终属于频道 Core 中的稳定 postId，不复制到随作者路由变化的 messenger key。`messenger.search` 以同一用户权限合并仍保留的新闻，外部作者不冒充 operator 或 agent。新闻可作为用户明确选择的引用或转发来源；目标仍为已有私聊或群聊，图片复制继续使用原有认证文件传输。频道讨论支持文字、mentions 和 replyTo 草稿及受限管理员发言；尚不接受讨论附件上传。
+频道会话可使用相同的个人置顶、收藏夹、归档和未读提醒；这些仍只影响用户整理状态。新闻文章收藏始终属于频道 Core 中的稳定 postId，不复制到随作者路由变化的 messenger key。`messenger.search` 以同一用户权限合并仍保留的新闻，外部作者不冒充 operator 或 agent。新闻可作为用户明确选择的引用或转发来源；目标仍为已有私聊或群聊，图片复制继续使用原有认证文件传输。频道讨论支持文字、图片、文件、mentions 和同频道 replyTo 草稿。用户附件保存在频道共享根目录；员工仅收到原文与文件清单，不自动收到私聊附件。
 
 `view.open messages --channel` 与返回导航仅选择展示对象，不能签发采集凭据、调用模型或确认其他会话已读。新闻图片读取和下载仍检查文章在当前频道的真实归属；收藏后移动来源不会授予对旧频道路径的继续读取权限。
 
@@ -171,7 +184,11 @@ formal work. Silent acknowledgments create no further delivery.
 
 同一员工可以同时属于多个群组、担任多个频道的管理员，各项成员关系独立；从一处移除不影响其他成员关系或公司职位。`chat.list` 只返回自己加入的群组。`channel.list/get` 现在允许已初始化员工读取自己仍担任管理员的频道身份（ID、名称、类型、管理员和修订信息），不返回用户收藏计数或订阅配置；Employee、Manager、Governor 均不能凭公司职位读取未加入的频道。用户原有完整频道列表保持不变。
 
-频道管理员是独立于公司职位的身份，由用户或 Secretary 通过 channel.update 的 adminIds 指定任意现有员工；不会改变 Employee/Manager/Governor 角色、引擎、宿主、工作区或公司管理权限。频道没有隐藏群、独立模型或第二套任务队列。管理订阅、管理员、收藏、删除、图片与导出允许用户或 Secretary；channel.context、channel.history、channel.message-post 还允许当前频道管理员，且每次由 Core 验证成员身份。界面读新闻不调用模型、不清除私聊或群聊已读。配置管理员后，新的外部新闻会在这些员工原有队列中进行真实静默阅读确认。
+频道 Admin 是独立于公司职位的身份，由用户或实际频道 Admin 通过 conversation.role 任免现有 Agent；旧 channel.update 的 adminIds 写入也必须通过同一成员校验，Company Secretary 没有豁免；不会改变 Employee/Manager/Governor 角色、引擎、宿主、工作区或公司管理权限。频道没有隐藏群、独立模型或第二套任务队列。订阅、采集部署、收藏、频道删除、图片与导出保留用户/Secretary应用管理范围；频道 Admin 任免、禁言、静音、静态通知要求实际会话职位，channel.context、channel.history、channel.message-post 对所有 Agent（含 Secretary）要求当前频道 Admin 身份。界面读新闻不调用模型、不清除私聊或群聊已读。配置管理员后，新的外部新闻会在这些员工原有队列中进行真实静默阅读确认。
+
+新建频道必须显式选择员工或外部进程引擎。员工频道复用 adminIds 作为发布成员；团队快选仅加入当前员工，不改变公司职位。`channel.publish` / `channel.media-put` 使用 chat 权限，但 Core 每次将 channelId 解析为当前认证员工自己的来源；不得冒充其他员工、修改真实作者或向外部引擎来源投稿。撤销成员立即撤销发布权限，保留历史文章；普通私聊回复和静默新闻通知不会自动成为投稿。原生 schedule.create 仍走原有目标员工、权限与调度校验，创建频道不自动启动任务。
+
+频道引擎、头像、连接参数和凭据配置仅用户或 Secretary 可修改；普通成员的 channel.list/get 不返回外部进程地址或凭据 ID。独立头像只允许验证过的图片，恢复默认用 avatar:null。已绑定外部频道要求匹配其 collectorId，旧 all/source-scoped 令牌不能跨入其他绑定频道或员工频道；更换绑定只撤销旧凭据对此频道的访问，不影响无关频道。host 仅是部署记录，认证仍依赖凭据；连接状态只依据成功认证请求时间，不伪造在线状态。
 
 外部采集服务使用独立的 source-scoped capability，不获得 operator 身份或控制令牌，也不扩展既有 `PrincipalRef`。其专用认证入口只允许 `channel.collector-config`、`channel.media-put`、`channel.publish` 和 source 范围的 `channel.source-avatar-put`，每次核对令牌有效性与来源范围；不能修改订阅、路由、用户收藏、Core 设置或调用其他 API。用户签发时只返回一次明文，SQLite 仅存哈希，撤销立即生效。采集服务自己的 cookies、TG session 和其他平台凭据留在其原主机。
 
@@ -179,7 +196,7 @@ formal work. Silent acknowledgments create no further delivery.
 
 Core 是订阅和作者路由的权威。取消订阅仅禁用来源；移动作者保留 sourceId、文章 ID 和收藏，所有仍保留内容随当前路由投影。未收藏新闻按原发布时间与首次接收时间的较早 48 小时截止点清理本地正文和图片，重试或更新不延长时限；收藏连同本地媒体永久保留。删除和过期有窗口内重投保护，旧发布时间在窗口外继续拒绝。清理仅涉及 Core 自己的频道目录，不更改远端采集服务的清理策略或内容。
 
-用户或实际担任管理员的 Secretary 可用 channel.message-send 向发送时其他管理员投递；显式 mentions 与有效同频道回复的原 Agent 作者为工作对象，两者皆空时全员工作，其余只接收 awareness。管理员 channel.message-post 的公开回复必须关联其实际收到的用户讨论，不因单独的外部新闻通知主动发言；用户针对新闻的提问属于正常讨论，可关联该用户消息答复。其他管理员只静默知悉该回复，作者不自回声。阅读阶段使用同一受限发布工具，普通文字、JSON 和思考不会变成频道发言或已读。text:null/--silent 仅为本人固定投递记录确认，不产生公开气泡或继续扇出。任何频道身份都不授予控制其他员工的权力。
+用户或实际担任管理员的 Secretary 可用 channel.message-send 向发送时其他管理员投递；显式 mentions 与有效同频道回复的原 Agent 作者为工作对象，两者皆空时全员工作，其余只接收 awareness。管理员 channel.message-post 的公开回复必须关联其实际收到的用户讨论，不因单独的外部新闻通知主动发言；用户针对新闻的提问属于正常讨论，可关联该用户消息答复。其他管理员只静默知悉该回复，作者不自回声。阅读阶段无工具，由成功的原生轮次记录接收回执；普通文字、JSON 和思考不会变成频道发言。text:null/--silent 已移除，只有明确的非空发布才能创建气泡。任何频道身份都不授予控制其他员工的权力。
 
 `channel.timeline {id,kind?,limit?,beforeEntry?,cursor?}` 对当前频道管理员开放；Secretary/用户仍可管理读取所有频道。它提供新闻与讨论的统一历史：默认最近20条，每页可自主选择1–100条，游标继续取更早内容，超过100条无需一次加载全部。按新闻发布时间/讨论创建时间及稳定ID排序；beforeEntry严格限定当前时间线中位于提问之前的内容，并不是过去时刻的快照。新闻正文完整、带真实作者/平台/时间和媒体描述，不返回用户saved/savedAt偏好。每页重新核对成员、当前来源归属、48小时保留/收藏及删除状态。读取不触发模型、已读或发言，不绕过频道发布限制。旧channel.history及context.recentMessages仅含讨论，不能据此判断新闻为空。
 
@@ -190,3 +207,66 @@ Core 是订阅和作者路由的权威。取消订阅仅禁用来源；移动作
 ## 每个主视图的外观
 
 `settings.set` 沿用既有全局管理能力，Secretary 也可代用户配置。`viewAppearance.company/messages/plan` 分别保存配色与自定义颜色，局部修改在 Core 合并，不会覆盖未提供的其他视图；非法视图、字段或颜色整次拒绝。旧 `theme/themeColor` 仅映射 Messages。界面语言、模型默认值和页面大小继续共用，外观不改变员工、原生会话、工作区、计划权限、画布几何或群消息/新闻数据。设置导航与颜色预览不运行计划任务。
+
+`settings.set {messageWallpaper:{pattern,layout,density,opacity}}` 复用既有设置权限和偏好存储。它只调整 Messages 装饰：五组原创小图案、整齐/散落布局、密度和浓淡；局部修改保留其他字段，非法输入整次拒绝。预览、改变花纹和恢复默认都不读取或修改消息、任务、已读、成员或凭据。Company/Plan 配色和权限保持独立。
+
+### Message 拖动排序
+
+`messenger.reorder` 允许用户或 Secretary 整理 category 与混合会话顺序，沿用个人 Messenger 状态和既有授权。Core 验证 scope、当前会话/分类引用及分类成员；每个 scope 可独立比较 expectedOrder，避免覆盖其他窗口。拖动只保存位置，不读取历史、标记已读、触发员工或改变公司/群组/频道权限。手动顺序不修改置顶/收藏/归档标记；恢复自动排序只删除指定 scope 的位置记录。
+
+## Plan 调度的独立下行边界
+
+所有四种角色都具有 `plan.*` / `schedule.*` 能力和自我排期能力。对他人的排期额外要求严格的职级下行：Manager → 本 Team Employee；Governor → 全局 Employee/Manager；Secretary → 全局 Employee/Manager/Governor。禁止跨员工的同级排期及向上排期，Secretary 的一般应用管理权限也不能绕过此限制。用户可操作全部规划。
+
+调度元数据和视图不授予角色权限。Core 在创建、修改、预览、触发、恢复、执行及异步准备后校验目标和原始委派。旧同级调度在恢复时停用，保留历史和稳定 ID。`action.channelId` 要求目标仍是该员工引擎频道的发布者；channel.posted 事件同时要求目标及普通调度发起者具有来源频道成员资格。Collector 凭据无权调用任何 Plan 调度 API。
+
+所有角色通过本人身份说明获得统一指引：员工自动任务应调用 Core Plan API，读取返回 ID 并核对规则；不要用临时 sleep、cron、第二套调度器或插件文档提醒代替。此行为指引与 API 授权共同工作，不宣称给共享系统账号上的任意 shell 进程提供额外操作系统沙箱。
+
+
+## 跨视图员工资料
+
+`card.profile {id,offset?,limit?}` 复用 employee.read 目标授权，只读返回 Company 身份、可见群组/频道中的真实成员身份、稳定工作目录和分页 Plan 摘要。管理员可读员工不等于能读其未加入的群聊；所有 Agent（包括 Secretary）的会话身份投影均按本人成员关系过滤，用户可管理查看。资料不返回提示词、凭据或私聊正文，不创建目录、不启动引擎、不改变本人已读。异步读排期之后重新核对权限与成员关系。初始化状态不妨碍只读查看身份，仍不能以此启动正式任务。
+
+员工资料中管理职位与编码引擎只读；原有独立任免接口继续按职位能力矩阵授权。更换角色仅在显式展开后使用原外观编辑流程。用户通过资料的 Workspaces 入口可编辑群/频道根目录原件；员工 API 保持根目录只读、本人一级姓名目录可写，并可显式复制到个人 Workspace，所有者和已有会话/目录标识保持不变。
+
+## 云端角色与编码引擎凭据
+
+Manager/Governor 的控制、布局、招聘、身份、反向 CLI 和重启恢复均按职位与 Team 校验，云端位置不再一律拒绝。已有员工的 ID、主机、工作目录、原生历史和引擎不迁移。撤销凭据和职位变化继续立即影响 Core 权限。
+
+Cline/Pi 在 Work 插件目录中使用本人插件授权与专属运行目录；不能借新引擎选择访问其他员工或用户的插件数据。API Key/服务地址按编码引擎独立保存，学校兼容服务和 Claude 的个人服务互不继承。此配置隔离不改变 Trusted 系统账号本身的文件权限。
+
+## Secretary 的 Plan 记录管理与统一 API 工具
+
+Secretary 可查询全部 Plan 排期与保留的执行记录，包含目标员工已删除的任务；这类任务的原 ID、引擎和时间规则仍可读取，已无法确认的旧名字/职位返回 null。秘书可清理、暂停、维护停用记录，或把完整 action 改派到当前有权排期的目标。记录读取和清理不授予执行权限；不同在职 Secretary 的排期仍不可修改、恢复或执行。用户保存的 Plan 数据库视图可由秘书通过原 plan.view-* 管理。
+
+统一原生 agents_company_api 使用启动时绑定的员工凭据，进入 UI/CLI 同一 Core 分发器，不接受调用者自行提交身份、委派或用户 token。查询无需额外批准；写入遵循引擎的 Ask/Full access，原生 planning 模式只读，初始化和静默阅读不开放通用操作。批准后再检查当前任务和有效权限。该工具不扩大当前员工、成员文件或宿主的操作系统权限。
+
+人类已读确认、用户消息作者编辑、跨会话引用/转发授权、用户凭据、权限升级及 Secretary 任免保持原边界。共享原件和其他成员目录的写入仍受成员范围约束。已有 API 可用性审计与 GUI/CLI 对应记录见 docs/SECRETARY_API_PARITY.md；一次成功构建不等于每个外部服务或所有操作系统已实测。
+
+
+## 自定义分类与社交元素
+
+`messenger.social`、规则分类和 source:ID 列表偏好沿用用户/Secretary 的应用管理授权。普通员工不能查询或改动用户分类；社交元素不创建新频道、身份或执行权限。`channel.acknowledge --all --source` 仍仅用户，按当前父频道校验并只确认该来源的保留文章，不修改其他作者或私聊/群组回执。分类 include/excluded 只过滤列表，删除分类不删除原消息或订阅。
+
+## 云端文档与频道存储
+
+外部频道 fileStorage 由用户或 Secretary 显式绑定既有 Cloud Hosts hostId 和云端内容寻址媒体目录。采集器只能提交本来源文件名、MIME、大小、SHA-256 和缩略图等元数据；不能指定任意主机路径、取得用户凭据或自动写入 Mac。channel.file-download 仅用户可调用，复用现有 SSH 传输与频道 conversation.workspace。每次远端读取核对当前帖子、路由和绑定，提交前校验大小与 SHA-256；同名用户文件保留。channel.file-status 只查询进度，不能开始传输。
+
+文档频道的云端帖子和文件缓存保留七天并自动清理，普通频道仍保留48小时语义。本地已下载件遵循已有共享原件/成员工作区权限，不因云端过期、帖子删除或服务重启删除。
+
+## 全部会话目录
+
+`messenger.directory` 沿用用户/Secretary的应用管理权限，只读查询当前员工、群组、父频道及平台来源元数据，可按类型、分类、搜索、归档和分页过滤；不读取私聊正文、启动引擎或标记已读。普通员工仍通过原 `chat.list` 仅看到自己加入的群组，不因目录功能扩大权限。动态分类由显式include规则决定，不按名字自动改写用户手选名单。
+
+## Conversation notices are separate from Plan
+
+Current conversation offices (Group Owner/Admin/Member, channel Admin) are independent of Company managementRole. Only actual conversation Owner/Admin configures mute, quiet mode and fixed-text notifications; Company Secretary has no conversation-office bypass. Owner alone dissolves groups or transfers ownership, with the human user's external recovery override. `conversation.notice-*` posts saved text through an independent Core timer/storage without running an Agent or entering Plan. Plan `schedule.*` remains the exclusive API for scheduled employee work. See [CONVERSATION_CONTROLS.md](docs/CONVERSATION_CONTROLS.md) for the current, detailed boundary.
+
+## Asset center
+
+`assets.tree`, `assets.children`, `assets.search`, `assets.file` and `assets.naming`
+are human-only. File operations reuse current workspace/conversation boundaries;
+index metadata does not grant file authority. Published files are read-only.
+Employees cannot mutate conversation originals or peer folders, or use an asset
+reference to bypass those restrictions. Directory migration requires a current
+preview and rejects busy affected employees and active transfers.

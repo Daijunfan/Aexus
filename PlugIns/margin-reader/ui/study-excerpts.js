@@ -1,3 +1,4 @@
+import {ExcerptDrag} from './excerpt-drag.js';
 import { $, escape, run, toast, describeError, field, showDialog, closeDialog } from './dom.js';
 import { api } from './transport.js';
 import { pagePoint, sourceRectangle, projectRects, displayY } from './page-slices.mjs';
@@ -19,9 +20,10 @@ export class StudyExcerpts {
     this.study=study;this.draft=null;this.busy=false;this.region=false;
     const lasso=document.createElement('button');lasso.id='study-excerpt-lasso';lasso.textContent='套索摘录';lasso.onclick=()=>{this.study.ink.setMode('off');this.setRegion(this.region==='lasso'?false:'lasso');};$('study-region').after(lasso);
     const palette=document.createElement('div');palette.id='study-palette';palette.hidden=true;palette.setAttribute('role','dialog');palette.setAttribute('aria-label','选择标注颜色并保存摘录');
-    palette.innerHTML=`<div class="study-palette-heading"><span>保存为摘录卡片</span><button id="study-palette-close" aria-label="取消摘录">×</button></div><label class="capture-destination"><span>保存到</span><select id="capture-destination"><option value="new">新卡片</option><option value="append">追加到选中卡片</option><option value="revise">替换选中摘录 / 重新绑定</option></select></label><div class="study-swatches">${study.colors.map(([color,label])=>`<button data-color="${color}" aria-label="标注${label}并保存" title="${label}" style="background:${study.hex[color]}"></button>`).join('')}</div><p id="study-capture-status" role="status"></p>`;
+    palette.innerHTML=`<div class="study-palette-heading"><span>保存为摘录主题</span><button id="study-palette-close" aria-label="取消摘录">×</button></div><label class="capture-destination"><span>保存到</span><select id="capture-destination"><option value="new">新主题</option><option value="append">追加到选中主题</option><option value="revise">替换选中摘录 / 重新绑定</option></select></label><div class="study-swatches">${study.colors.map(([color,label])=>`<button data-color="${color}" aria-label="标注${label}并保存" title="${label}" style="background:${study.hex[color]}"></button>`).join('')}</div><p id="study-capture-status" role="status"></p>`;
     document.body.append(palette);this.palette=palette;
-    palette.addEventListener('pointerdown',e=>{if(!e.target.closest('select,option,input'))e.preventDefault();});$('study-palette-close').onclick=()=>this.hide();palette.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>this.save(b.dataset.color));
+    palette.addEventListener('pointerdown',e=>{if(!e.target.closest('select,option,input,[draggable=true]'))e.preventDefault();});$('study-palette-close').onclick=()=>this.hide();palette.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>this.save(b.dataset.color));
+    this.drag=new ExcerptDrag(this);
     const scroller=$('reader-scroll');
     scroller.addEventListener('pointerdown',e=>{this.pointer={x:e.clientX,y:e.clientY,button:e.button};},true);
     scroller.addEventListener('pointerup',e=>setTimeout(()=>{
@@ -102,10 +104,10 @@ export class StudyExcerpts {
       if(!draft.setId){const set=await this.study.ensureNotes();draft.setId=set.id;draft.expectedRevision=set.revision;}
       const password=this.study.getPassword?.();
       const mode=$('capture-destination').value,target=this.captureTarget;
-      if(mode!=='new'&&!target)throw Error('请先选择一张已有摘录卡片');
+      if(mode!=='new'&&!target)throw Error('请先选择一张已有摘录主题');
       const result=await api(mode==='new'?'study.card.create':mode==='append'?'study.excerpt.append':'study.excerpt.revise',{...draft,...(mode==='new'?{color}:{cardId:target.id,...(mode==='revise'?{partId:target.partId}:{})}),...(password?{password}:{})});
       this.busy=false;this.hide();window.getSelection()?.removeAllRanges();this.study.getRenderer().shadow?.getSelection?.()?.removeAllRanges();
-      await this.study.refresh(result.card.id);toast('摘录图片与卡片已保存');
+      await this.study.refresh(result.card.id);toast('摘录图片与主题已保存');
     }catch(error){this.busy=false;this.palette.querySelectorAll('button').forEach(b=>b.disabled=false);$('study-capture-status').textContent=error.code==='CONFLICT'?'学习集已变化，请重新选择原文后保存。':describeError(error);await this.study.refresh().catch(()=>{});}
   }
   regionStart(e){
@@ -173,9 +175,9 @@ export class StudyExcerpts {
     await this.study.activateCard(card,'document');
     const set=this.study.current, fresh=set.cards.find(c=>c.id===card.id);if(!fresh)return;
     const revision=set.revision,menu=this.popup(position);
-    menu.innerHTML=`<strong>${escape(fresh.title)}</strong><div class="annotation-colors">${this.study.colors.map(([color,label])=>`<button data-color="${color}" title="改为${label}" aria-label="标注改为${label}" style="background:${set.colors[color]}"></button>`).join('')}</div><button data-action="edit">编辑笔记 / 标签</button><button data-action="review">加入 / 编辑复习</button><button data-action="parts">连续摘录 / 修改片段</button><button data-action="hide">取消标注（保留卡片）</button><button data-action="remove">删除摘录卡片…</button><button data-action="close">关闭菜单</button>`;
+    menu.innerHTML=`<strong>${escape(fresh.title)}</strong><div class="annotation-colors">${this.study.colors.map(([color,label])=>`<button data-color="${color}" title="改为${label}" aria-label="标注改为${label}" style="background:${set.colors[color]}"></button>`).join('')}</div><button data-action="edit">编辑笔记 / 标签</button><button data-action="parts">连续摘录 / 修改片段</button><button data-action="hide">取消标注（保留主题）</button><button data-action="remove">删除摘录主题</button><button data-action="close">关闭菜单</button>`;
     menu.querySelectorAll('[data-color]').forEach(b=>b.onclick=run(async()=>{await this.study.change('study.card.update',{cardId:card.id,color:b.dataset.color},revision);this.closeMarkMenu();}));
-    menu.querySelectorAll('[data-action]').forEach(b=>b.onclick=run(async()=>{const action=b.dataset.action;this.closeMarkMenu();if(action==='hide'){await this.study.change('study.annotation.update',{cardId:card.id,visible:false},revision);toast('标注已取消，卡片与图片保留。可撤销。');}else if(action==='remove')this.study.map.remove(fresh);else if(action==='edit')this.study.map.edit(fresh);else if(action==='review')this.study.map.workbench.configureReview(fresh);else if(action==='parts')return this.fragments(fresh);}));
+    menu.querySelectorAll('[data-action]').forEach(b=>b.onclick=run(async()=>{const action=b.dataset.action;this.closeMarkMenu();if(action==='hide'){await this.study.change('study.annotation.update',{cardId:card.id,visible:false},revision);toast('标注已取消，主题与原图保留。可撤销。');}else if(action==='remove')return this.study.map.remove(fresh);else if(action==='edit')this.study.map.edit(fresh);else if(action==='parts')return this.fragments(fresh);}));
   }
   revealCard(id,source){
     this.paint();const elements=(this.layers||[]).flatMap(layer=>[...layer.children]).filter(el=>el.dataset.cardId===id&&(!source?.excerptId||el.dataset.partId===source.excerptId)&&(!source?.locator.page||Number(el.closest('.pdf-page')?.dataset.page)===source.locator.page));

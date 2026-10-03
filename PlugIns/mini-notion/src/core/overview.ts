@@ -2,10 +2,10 @@ import type { Page, Workspace } from '../types';
 import { ancestors, isInternalPage, plainText } from '../model';
 import { activeView } from '../database/model';
 import { addDays, dateKey, isHourlyPlan, planProjection, scheduledRange, parseDay } from '../database/dates';
-import { dateEpoch, dateParts, dateText, dateWall, localTimeZone } from '../database/dateValue';
+import { dateEpoch, dateParts, dateText, dateWall, localTimeZone, zonedDate } from '../database/dateValue';
 import { propertyDateValue } from '../database/propertySchema';
 import { flattenBlocks } from './blocks';
-import { reminderDue } from '../scheduling/engine';
+import { reminderDue, reminderTimeZone } from '../scheduling/engine';
 import { CommandError } from './errors';
 
 export type OverviewConfig = {
@@ -140,8 +140,11 @@ export function overviewProjection(workspace: Workspace, changes: Partial<Overvi
       if (!reminder.enabled || reminder.deletedAt) continue;
       const due = reminderDue(page, reminder, workspace);
       if (!due) continue;
-      const date = new Date(due),
-        start = dateKey(date);
+      const saved = workspace.scheduler?.reminders[reminder.id];
+      const delivery = saved?.key === due ? saved : undefined;
+      const zone = reminderTimeZone(page, reminder);
+      const date = zonedDate(delivery?.snoozedUntil || due, zone);
+      const start = date.toPlainDate().toString();
       items.push({
         ...base,
         id: reminder.id,
@@ -149,9 +152,10 @@ export function overviewProjection(workspace: Workspace, changes: Partial<Overvi
         kind: 'reminder',
         start,
         end: start,
-        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-        done: !!workspace.scheduler?.reminders[reminder.id]?.deliveredAt,
-        status: '提醒',
+        time: date.toPlainTime().toString({ smallestUnit: 'minute' }),
+        dateLabel: `${date.toPlainDateTime().toString({ smallestUnit: 'minute' }).replace('T', ' ')} · ${zone}`,
+        done: !!delivery?.deliveredAt,
+        status: delivery?.deliveredAt ? '已提醒' : delivery?.snoozedUntil ? '稍后提醒' : '待提醒',
       });
     }
   }

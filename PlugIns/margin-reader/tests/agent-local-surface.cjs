@@ -5,7 +5,7 @@ const {randomUUID} = require('node:crypto');
 // Every call is supplied by the authenticated employee harness. No private state
 // writes, direct runtime calls or mock responses can satisfy this acceptance.
 exports.exercise = async function ({api, deny}) {
-  let set = await api('study.create', {title:'Complete employee workflows'});
+  let set = await api('study.create', {mapMode:'cards',title:'Complete employee workflows'});
   const setId = set.id;
   const get = async () => set = await api('study.get', {setId});
   const change = async (method, params = {}) => {

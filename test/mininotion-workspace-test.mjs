@@ -1,3 +1,4 @@
+import {directoryName} from '../src/shared/directory-names.ts'
 // Real built-in plugin, Core CLI, employee credentials and mailbox; no model inference.
 import fs from 'node:fs'
 import path from 'node:path'
@@ -26,13 +27,13 @@ try{
   const view=await cli('plugin','view','mininotion')
   assert.equal(view.workspace,base)
   assert.ok((await call('page.list')).some(page=>page.sourceFile?.path==='default/old.md'))
-  assert.equal((await call('fs.info',{},['--workspace',path.join(base,'default')])).root,path.join(base,'default'))
+  await cli('group','add','default','--mode','work','--plugin','mininotion');assert.equal((await call('fs.info',{},['--team','default'])).root,path.join(base,'default'))
   await cli('plugin','close',view.id)
   pass('normal built-in discovery uses the locked version and collection view; old default scope remains explicit and unmoved')
 
   const personal=await call('page.create',{title:'用户直接创建',color:'white'})
   const creation=await cli('group','add',team,'--mode','work','--plugin','mininotion')
-  assert.equal(creation.teamRoots[team],path.join(base,team))
+  assert.equal(creation.teamRoots[team],path.join(base,directoryName(team,'team')))
   const main=await teamCall('page.create',{title:'项目文档',color:'white'})
   const other=await teamCall('page.create',{title:'研究资料',color:'white'})
   const location=await teamCall('fs.path',{pageId:main.id}),otherLocation=await teamCall('fs.path',{pageId:other.id})

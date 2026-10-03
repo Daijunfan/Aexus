@@ -26,13 +26,25 @@ function place(rail:Rail){
 }
 function schedule(rail:Rail){
  if(!rail.visible)return;pending.add(rail)
- if(!frame)frame=requestAnimationFrame(()=>{frame=0;const batch=[...pending];pending.clear();const placements=batch.map(place);for(const result of placements){if(!result)continue;const {rail,layout,compact,sticky}=result;if(rail.node.dataset.layout!==layout)rail.node.dataset.layout=layout;if(compact)rail.node.dataset.compact='true';else delete rail.node.dataset.compact;if(sticky)rail.node.dataset.sticky='true';else delete rail.node.dataset.sticky}})
+ if(!frame)frame=requestAnimationFrame(()=>{
+  frame=0;const batch=[...pending];pending.clear()
+  const placements=batch.map(place),anchors=new Map<HTMLElement,{element:HTMLElement;top:number}>()
+  for(const result of placements){
+   if(!result||result.rail.node.dataset.layout===result.layout||anchors.has(result.rail.viewport))continue
+   const area=result.rail.viewport;if(area.scrollTop<1||area.scrollHeight-area.clientHeight-area.scrollTop<5)continue
+   const top=area.getBoundingClientRect().top
+   for(const rail of viewports.get(area)??[]){if(!rail.visible)continue;const box=rail.owner.getBoundingClientRect();if(box.bottom>top){anchors.set(area,{element:rail.owner,top:box.top});break}}
+  }
+  for(const result of placements){if(!result)continue;const {rail,layout,compact,sticky}=result;if(rail.node.dataset.layout!==layout)rail.node.dataset.layout=layout;if(compact)rail.node.dataset.compact='true';else delete rail.node.dataset.compact;if(sticky)rail.node.dataset.sticky='true';else delete rail.node.dataset.sticky}
+  for(const [area,anchor] of anchors)if(anchor.element.isConnected)area.scrollTop+=anchor.element.getBoundingClientRect().top-anchor.top
+ })
 }
 function register(node:HTMLElement){
  const owner=node.parentElement!,bar=node.firstElementChild as HTMLElement,viewport=owner.closest<HTMLElement>('.transcript,.group-transcript,.channel-feed,.message-library-results')
  if(!viewport)return()=>{}
+ node.setAttribute('data-observed','')
  if(!resize)resize=new ResizeObserver(entries=>{for(const entry of entries){const rail=rails.get(entry.target);if(rail)schedule(rail);else for(const item of viewports.get(entry.target as HTMLElement)??[])schedule(item)}})
- if(!visibility)visibility=new IntersectionObserver(entries=>{for(const entry of entries){const rail=rails.get(entry.target);if(!rail)continue;rail.visible=entry.isIntersecting;if(rail.visible){resize!.observe(rail.owner);resize!.observe(rail.bar);schedule(rail)}else{resize!.unobserve(rail.owner);resize!.unobserve(rail.bar);pending.delete(rail)}}},{rootMargin:'80px'})
+ if(!visibility)visibility=new IntersectionObserver(entries=>{for(const entry of entries){const rail=rails.get(entry.target);if(!rail)continue;rail.visible=entry.isIntersecting;rail.node.toggleAttribute('data-visible',rail.visible);if(rail.visible){resize!.observe(rail.owner);resize!.observe(rail.bar);schedule(rail)}else{resize!.unobserve(rail.owner);resize!.unobserve(rail.bar);pending.delete(rail)}}},{rootMargin:'80px'})
  const rail:Rail={node,owner,bar,viewport,visible:false};rails.set(owner,rail);rails.set(bar,rail)
  let members=viewports.get(viewport);if(!members){members=new Set();viewports.set(viewport,members);resize.observe(viewport)}members.add(rail);visibility.observe(owner)
  return()=>{pending.delete(rail);visibility!.unobserve(owner);resize!.unobserve(owner);resize!.unobserve(bar);rails.delete(owner);rails.delete(bar);members!.delete(rail);if(!members!.size){viewports.delete(viewport);resize!.unobserve(viewport)}if(!rails.size){resize!.disconnect();visibility!.disconnect();resize=undefined;visibility=undefined;cancelAnimationFrame(frame);frame=0}}

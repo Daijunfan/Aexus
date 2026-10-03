@@ -9,7 +9,7 @@ export class CardInk {
     this.study=study;this.mode='off';this.pending=null;this.busy=false;this.gesture=false;this.transient=new TransientInk(()=>this.render());
     const tools=document.createElement('span');tools.className='card-ink-tools';
     tools.innerHTML='<button id="card-ink-pen" aria-pressed="false">脑图笔</button><button id="card-ink-eraser" aria-pressed="false">擦除</button><button id="card-ink-lasso" aria-pressed="false">选笔迹</button><button id="card-ink-settings">笔刷</button><button id="card-ink-binding">随动 / 聚焦</button><button id="card-ink-all">管理笔迹</button><button id="card-ink-retry" hidden>重试笔画</button><button id="card-ink-discard" hidden>放弃笔画</button>';
-    document.querySelector('.advanced-map-toolbar').append(tools);
+    study.map.board.querySelector('.study-workbench-tools').append(tools);
     $('card-ink-pen').onclick=()=>this.modeSet(this.mode==='pen'?'off':'pen');$('card-ink-eraser').onclick=()=>this.modeSet(this.mode==='eraser'?'off':'eraser');$('card-ink-lasso').onclick=()=>this.modeSet(this.mode==='lasso'?'off':'lasso');
     $('card-ink-binding').onclick=()=>study.inkTools.binding();$('card-ink-settings').onclick=()=>study.inkTools.configure();$('card-ink-all').onclick=()=>study.inkTools.all(study.current.cards.find(c=>c.id===study.map.selected));
     $('card-ink-retry').onclick=run(()=>this.save(this.study.current.revision));$('card-ink-discard').onclick=()=>{this.pending=null;this.render();document.dispatchEvent(new Event('reader-interaction-finished'));};

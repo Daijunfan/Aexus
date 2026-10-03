@@ -14,7 +14,8 @@ const bundle=path.join(ledger,'catalog.cjs');
 buildSync({entryPoints:[path.join(root,'src/plugin/catalog.ts')],outfile:bundle,bundle:true,platform:'node',format:'cjs',logLevel:'silent'});
 const {pluginCommands}=require(bundle);
 const calls=fs.readdirSync(ledger).filter(file=>file.endsWith('.jsonl')).flatMap(file=>fs.readFileSync(path.join(ledger,file),'utf8').trim().split('\n').filter(Boolean).map(line=>JSON.parse(line)));
-const methods=pluginCommands.map(command=>{
+// Host-mediated assistant commands are verified against Core in the editor-tools UI suite.
+const methods=pluginCommands.filter(command=>!command.method.startsWith('assistant.')).map(command=>{
  const entries=calls.filter(call=>call.method===command.method);
  return {method:command.method,mutates:!!command.mutates,serviceSuccess:entries.filter(call=>call.ok&&call.layer!=='core').length,coreSuccess:entries.filter(call=>call.ok&&call.layer==='core').length,rejected:entries.filter(call=>!call.ok).length,layers:[...new Set(entries.map(call=>call.layer))]};
 });

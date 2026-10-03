@@ -2,9 +2,9 @@ import {randomUUID} from 'node:crypto'
 import {join} from 'node:path'
 import {APP_HOME} from '../shared/protocol'
 import {atomicJson,readJson} from './atomic-file'
-import {authorize,requestContext,visibleEmployees} from './authorization'
+import {authorize,requestContext,visibleEmployees,canSchedule,isAppAdministrator} from './authorization'
 import {readStore} from './store'
-import {scheduleRequest} from './scheduler/service'
+import {scheduleRequest,scheduleCapabilities} from './scheduler/service'
 import {instant,forecastSchedule} from './scheduler/time'
 import {BUILTIN_PLAN_VIEWS,PLAN_STATES,PLAN_PRIORITIES,PLAN_LAYOUTS,PLAN_LAYOUT_CATALOG,PLAN_RUN_STATES,planState,type PlanView,type PlanViewSpec,type PlanViewOptions,type PlanFilter,type PlanRow,type PlanEmployee,type PlanTimeEvent,type PlanFeedEntry} from '../shared/plan'
 import type {ScheduledJob,ScheduleRun} from '../shared/scheduler'
@@ -13,14 +13,14 @@ const file=join(APP_HOME,'plan-views.json')
 let emit:()=>void=()=>{}
 export const setPlanEmitter=(handler:()=>void)=>{emit=handler}
 const catalog=()=>readJson<PlanView[]>(file,()=>[],value=>Array.isArray(value)&&value.every(view=>typeof view.id==='string'&&view.id.startsWith('pv_')&&typeof view.name==='string'&&PLAN_LAYOUTS.includes(view.layout)&&!!view.owner))
-const own=(view:PlanView)=>{const p=requestContext().principal;return p.kind==='operator'||view.owner?.kind==='agent'&&view.owner.employeeId===p.employeeId}
+const own=(view:PlanView)=>{const p=requestContext().principal;return isAppAdministrator(p)||p.kind==='agent'&&view.owner?.kind==='agent'&&view.owner.employeeId===p.employeeId}
 function fields(value:Record<string,any>,allowed:string[]){
   if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Expected an object')
   for(const key of Object.keys(value))if(!allowed.includes(key)&&value[key]!==undefined)throw Error('Unknown Plan field: '+key)
 }
 function filter(value:PlanFilter={}):PlanFilter{
-  fields(value,['search','employee','team','states','priorities','tags'])
-  for(const key of ['search','employee','team'] as const)if(value[key]!==undefined&&(typeof value[key]!=='string'||value[key]!.length>240))throw Error('Invalid '+key)
+  fields(value,['search','employee','team','channel','states','priorities','tags'])
+  for(const key of ['search','employee','team','channel'] as const)if(value[key]!==undefined&&(typeof value[key]!=='string'||value[key]!.length>240))throw Error('Invalid '+key)
   for(const [key,allowed] of [['states',PLAN_STATES],['priorities',PLAN_PRIORITIES]] as const)if(value[key]!==undefined&&(!Array.isArray(value[key])||value[key]!.some(v=>!(allowed as readonly string[]).includes(v))))throw Error('Invalid '+key)
   if(value.tags!==undefined&&(!Array.isArray(value.tags)||value.tags.length>20||value.tags.some(tag=>typeof tag!=='string'||!tag.trim()||tag.length>40)))throw Error('Invalid tags')
   if(value.employee==='self'){
@@ -52,15 +52,15 @@ function viewSpec(value:PlanViewSpec):PlanViewSpec{
   return {name:value.name.trim(),layout:value.layout,groupBy:value.groupBy??'status',filter:filter(value.filter),sort:value.sort??'nextAt',direction:value.direction??'asc',...(value.options===undefined?{}:{options:options(value.options)})}
 }
 function matches(row:PlanRow,query:PlanFilter){
-  return (!query.employee||row.action.employeeId===query.employee)&&(!query.team||row.employee?.team===query.team)&&(!query.states?.length||query.states.includes(row.status))&&(!query.priorities?.length||query.priorities.includes(row.plan?.priority??'normal'))&&(!query.tags?.length||query.tags.every(tag=>row.plan?.tags.includes(tag)))&&(!query.search||[row.name,row.action.prompt,row.employee?.title,row.employee?.team,row.plan?.notes,...(row.plan?.tags??[])].join(' ').toLowerCase().includes(query.search.toLowerCase()))
+  return (!query.channel||row.action.channelId===query.channel||row.source==='channel:'+query.channel)&&(!query.employee||row.action.employeeId===query.employee)&&(!query.team||row.employee?.team===query.team)&&(!query.states?.length||query.states.includes(row.status))&&(!query.priorities?.length||query.priorities.includes(row.plan?.priority??'normal'))&&(!query.tags?.length||query.tags.every(tag=>row.plan?.tags.includes(tag)))&&(!query.search||[row.id,row.name,row.action.employeeId,row.action.prompt,row.employee?.title,row.employee?.team,row.employee?.role,row.plan?.notes,...(row.plan?.tags??[])].join(' ').toLowerCase().includes(query.search.toLowerCase()))
 }
 /** Read models consume only scheduler-authorized records, never raw persistent files. */
 async function snapshot(){
   const jobs=await scheduleRequest('list',{}) as ScheduledJob[],runs=await scheduleRequest('history',{limit:1000}) as ScheduleRun[]
-  const people=new Map<string,PlanEmployee>(readStore().sessions.filter(card=>!card.deleting).map(card=>[card.id,{id:card.id,title:card.title,team:card.group,avatar:card.avatar??(card.engine==='codex'?'robot':'cat'),color:card.color,engine:card.engine}]))
+  const people=new Map<string,PlanEmployee>(readStore().sessions.filter(card=>!card.deleting).map(card=>[card.id,{id:card.id,title:card.title,team:card.group,avatar:card.avatar??(card.engine==='codex'?'robot':'cat'),color:card.color,engine:card.engine,role:card.managementRole??'employee'}]))
   const latest=new Map<string,ScheduleRun>()
   for(const run of runs)if(!latest.has(run.jobId)||run.status==='running')latest.set(run.jobId,run)
-  const rows:PlanRow[]=jobs.map(job=>({...job,status:planState(job,latest.get(job.id)),lastRun:latest.get(job.id),employee:people.get(job.action.employeeId)??null}))
+  const rows:PlanRow[]=jobs.map(job=>({...job,status:planState(job,latest.get(job.id)),lastRun:latest.get(job.id),employee:people.get(job.action.employeeId)??null,target:{id:job.action.employeeId,exists:people.has(job.action.employeeId),role:people.get(job.action.employeeId)?.role??null,title:people.get(job.action.employeeId)?.title??null,team:people.get(job.action.employeeId)?.team??null,engine:job.action.engine},timing:{timezone:'timezone' in job.rule?job.rule.timezone:null,kind:job.rule.kind,nextAt:job.nextAt,until:job.until??null,window:job.window??null},...scheduleCapabilities(job)}))
   return {jobs,rows,runs,people,byId:new Map(rows.map(row=>[row.id,row]))}
 }
 function dateRange(args:Record<string,any>,required=false){
@@ -81,7 +81,7 @@ function runEntries(data:Awaited<ReturnType<typeof snapshot>>,query:PlanFilter,a
     if(row)return matches({...row,name:run.jobName,action:run.action,employee:data.people.get(run.action.employeeId)??null},query)
     if(query.states?.length||query.priorities?.length||query.tags?.length)return false
     const employee=data.people.get(run.action.employeeId)
-    return (!query.employee||query.employee===run.action.employeeId)&&(!query.team||query.team===employee?.team)&&(!query.search||[run.jobName,run.action.prompt,employee?.title,employee?.team,run.message].join(' ').toLowerCase().includes(query.search.toLowerCase()))
+    return (!query.channel||run.action.channelId===query.channel)&&(!query.employee||query.employee===run.action.employeeId)&&(!query.team||query.team===employee?.team)&&(!query.search||[run.jobName,run.action.prompt,employee?.title,employee?.team,run.message].join(' ').toLowerCase().includes(query.search.toLowerCase()))
   }).map(run=>({...run,employee:data.people.get(run.action.employeeId)??null,jobAvailable:data.byId.has(run.jobId),plan:data.byId.get(run.jobId)?.plan}))
 }
 async function temporalView(args:Record<string,any>,timeline:boolean){
@@ -119,9 +119,9 @@ export async function planRequest(method:string,args:Record<string,any>){
   if(method==='schema')return {
     version:1,layouts:PLAN_LAYOUTS,layoutCatalog:PLAN_LAYOUT_CATALOG,states:PLAN_STATES,runStates:PLAN_RUN_STATES,priorities:PLAN_PRIORITIES,
     properties:[{id:'name',type:'title'},{id:'status',type:'computed-status',editable:false},{id:'employee',type:'employee-relation'},{id:'nextAt',type:'computed-date',editable:false},{id:'rule',type:'recurrence'},{id:'priority',type:'select'},{id:'tags',type:'multi-select'},{id:'notes',type:'text'},{id:'durationMinutes',type:'estimate-minutes',description:'Optional timeline estimate, independent of timeout and actual run duration'},{id:'prompt',type:'long-text'},{id:'lastRun',type:'run-relation',editable:false}],
-    scheduler:await scheduleRequest('schema',{}),targets:visibleEmployees().map(card=>({id:card.id,title:card.title,team:card.group,engine:card.engine,role:card.managementRole??'employee'})),
-    data:{records:'schedule.list/get',create:'schedule.create',edit:'schedule.update',pause:'schedule.pause',resume:'schedule.resume',remove:'schedule.delete',preview:'schedule.preview',run:'schedule.run',history:'schedule.history',cancel:'schedule.cancel',timeline:'plan.timeline',analytics:'plan.analytics',feed:'plan.feed'},
-    policies:{identity:'Same saved employee and native conversation in every view',permission:'Employees schedule only themselves; Manager/Governor target existing control scope; non-global actors edit only schedules they authored',availability:'Core must be running and host awake; closed UI is supported by agents serve',busy:'Skip rather than interrupt existing manual work',calendar:'Future enabled occurrences and actual recorded runs only; bounded results, never fabricated past executions',timeline:'Forecast spans use optional plan.durationMinutes; actual runs use startedAt/finishedAt. Timeout is not an estimate. One-off rescheduling uses schedule.update with expectedRevision; recurring occurrences require editing their rule.',analytics:'Aggregates all authorized matching schedules or retained runs, not a page. Runs are bounded to retained history; linked Team/priority refer to current records, not invented historic snapshots.',form:'Authenticated schedule creation only; no public links or new execution path'}
+    scheduler:await scheduleRequest('schema',{}),targets:visibleEmployees().filter(card=>canSchedule(requestContext().principal,card.id)).map(card=>({id:card.id,title:card.title,team:card.group,engine:card.engine,role:card.managementRole??'employee'})),
+    data:{records:'plan.query',details:'schedule.get',create:'schedule.create',edit:'schedule.update',pause:'schedule.pause',resume:'schedule.resume',remove:'schedule.delete',preview:'schedule.preview',run:'schedule.run',history:'schedule.history',cancel:'schedule.cancel',timeline:'plan.timeline',analytics:'plan.analytics',feed:'plan.feed'},
+    policies:{identity:'Same saved employee and native conversation in every view',permission:'All roles schedule themselves; other targets must be strictly lower roles within the existing Team/global scope. Non-global actors edit only authored schedules. Timed, recurring and event jobs all use schedule.*',availability:'Core must be running and host awake; closed UI is supported by agents serve',busy:'Skip rather than interrupt existing manual work',calendar:'Future enabled occurrences and actual recorded runs only; bounded results, never fabricated past executions',timeline:'Forecast spans use optional plan.durationMinutes; actual runs use startedAt/finishedAt. Timeout is not an estimate. One-off rescheduling uses schedule.update with expectedRevision; recurring occurrences require editing their rule.',analytics:'Aggregates all authorized matching schedules or retained runs, not a page. Runs are bounded to retained history; linked Team/priority refer to current records, not invented historic snapshots.',form:'Authenticated schedule creation only; no public links or new execution path'}
   }
   if(method==='views'){fields(args,[]);return [...BUILTIN_PLAN_VIEWS,...catalog().filter(own)]}
   if(method==='view-create'){
@@ -143,7 +143,7 @@ export async function planRequest(method:string,args:Record<string,any>){
     if(!['nextAt','name','updatedAt','priority'].includes(sort)||!['asc','desc'].includes(direction))throw Error('Invalid sort')
     const value=(row:PlanRow)=>sort==='priority'?PLAN_PRIORITIES.indexOf(row.plan?.priority??'normal'):sort==='name'?row.name.toLocaleLowerCase():sort==='updatedAt'?Date.parse(row.updatedAt):row.nextAt?Date.parse(row.nextAt):Number.MAX_SAFE_INTEGER
     all.sort((a,b)=>{const x=value(a),y=value(b);return (typeof x==='string'&&typeof y==='string'?x.localeCompare(y):Number(x)-Number(y))*(direction==='asc'?1:-1)||a.id.localeCompare(b.id)})
-    return {rows:all.slice(offset,offset+limit),total:all.length,offset,hasMore:offset+limit<all.length,counts:Object.fromEntries(PLAN_STATES.map(state=>[state,all.filter(row=>row.status===state).length])),facets:{tags:[...new Set(data.rows.flatMap(row=>row.plan?.tags??[]))].sort()}}
+    return {now:new Date().toISOString(),hostTimezone:Intl.DateTimeFormat().resolvedOptions().timeZone,rows:all.slice(offset,offset+limit),total:all.length,offset,hasMore:offset+limit<all.length,counts:Object.fromEntries(PLAN_STATES.map(state=>[state,all.filter(row=>row.status===state).length])),facets:{tags:[...new Set(data.rows.flatMap(row=>row.plan?.tags??[]))].sort()}}
   }
   if(method==='calendar'||method==='timeline')return temporalView(args,method==='timeline')
   if(method==='analytics'){

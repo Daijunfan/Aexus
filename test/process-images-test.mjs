@@ -11,6 +11,7 @@ try{
  for(const engine of ['cline','pi']){
   await rpc('engine.configure',{engine,patch:{apiKey:'fixture-key-not-real'}})
   const card=await f.cli('card','create','--title',engine,'--group','Images','--engine',engine)
+  await f.ready(card.id)
   await rpc('workspace.write',{employee:card.id,path:'image.png',contentBase64:png,create:true})
   const {sessionId}=await f.cli('session','open',card.id)
   if(engine==='pi'){
@@ -23,7 +24,8 @@ try{
   const rejected=await f.request(null,'session.send',{employee:card.id,text:'image',images:['image.png']});assert.equal(rejected.ok,false);assert.match(rejected.error,/不支持图片/)
   await f.cli('config','model',sessionId,'deepseek-flash')
   await rpc('session.send',{employee:card.id,text:'',images:['image.png']});await idle(card)
-  assert.ok(JSON.stringify(await f.cli('session','transcript','--employee',card.id)).includes('IMAGE_RECEIVED 1'))
+  const imageTranscript=await f.cli('session','transcript','--employee',card.id)
+  assert.ok(JSON.stringify(imageTranscript).includes('IMAGE_RECEIVED 1'),JSON.stringify({error:(await f.cli('session','snapshot',(await f.status(card.id)).sessionId)).error,text:imageTranscript.text}))
   const current=(await f.cli('session','list')).sessions.find(c=>c.id===card.id),wire=JSON.parse(fs.readFileSync(path.join(current.clineConfigRoot,'fixture-image-request.json')))
   assert.equal(wire.messages[0].content.find(p=>p.type==='image_url').image_url.url,'data:image/png;base64,'+png)
   assert.equal((await f.request(null,'session.send',{employee:card.id,text:'too many',images:Array(17).fill('image.png')})).ok,false)

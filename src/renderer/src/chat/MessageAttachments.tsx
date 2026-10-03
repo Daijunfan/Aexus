@@ -10,7 +10,7 @@ import {attachmentSize,fileMime,type MessageAttachment} from '../../../shared/me
 import {downloadBrowserFile} from '../web/files'
 
 type Upload={id:string;conversation:string;file:File;progress:number;state:'uploading'|'failed';error?:string;controller:AbortController}
-const scope=(conversation:string)=>conversation.startsWith('group:')?{group:conversation.slice(6)}:{employee:conversation.slice(9)}
+const scope=(conversation:string)=>conversation.startsWith('group:')?{group:conversation.slice(6)}:conversation.startsWith('channel:')?{channel:conversation.slice(8)}:{employee:conversation.slice(9)}
 const imageFile=(file:File)=>['image/png','image/jpeg','image/gif','image/webp'].includes(file.type)&&file.size<=10*1024*1024
 function base64(bytes:Uint8Array){let value='';for(let i=0;i<bytes.length;i+=8192)value+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(value)}
 export function useAttachmentUploads(conversation:string,onReady:(conversation:string,path:string,kind:'image'|'file')=>void,count:number){

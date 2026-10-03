@@ -50,6 +50,8 @@ export function useGalleryHistory(images:GalleryImage[],index:number,query?:Gall
  useEffect(()=>{if(query)void fetchPage({anchor:galleryCursor(images[index]),direction:'around'},undefined,true);return()=>{generation.current++;pending.current=false;queued.current=null}},[])
  function select(target:GalleryTarget,beforeChange:(direction:number)=>void){
   const page=current.current,next=target==='previous'?page.index-1:target==='next'?page.index+1:target==='first'?(page.offset===0?0:-1):target==='last'?(page.offset+page.images.length===page.total?page.images.length-1:page.images.length):target
+  // Global edge navigation waits for the first authoritative history page.
+  if(query&&!known.current&&(target==='first'||target==='last')){queued.current={target,before:beforeChange};if(!pending.current)void fetchPage({anchor:galleryCursor(page.images[page.index]),direction:'around'},undefined,true);return}
   if(pending.current&&(known.current||next<0||next>=page.images.length||target==='first'||target==='last')){queued.current={target,before:beforeChange};return}
   if(next>=0&&next<page.images.length){if(next!==page.index){beforeChange(Math.sign(next-page.index));publish({...page,index:next})};return}
   if(!query||!known.current)return

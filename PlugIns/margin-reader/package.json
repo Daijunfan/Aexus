@@ -1,6 +1,6 @@
 {
   "name": "agents-company-margin-reader",
-  "version": "0.7.0",
+  "version": "0.9.4",
   "private": true,
   "description": "CLI-first, local-first document reader plugin for Agents Company",
   "license": "MIT",
@@ -18,7 +18,7 @@
     "test:host": "node tests/host-smoke.cjs",
     "test:employee": "node tests/employee-host.cjs",
     "test:team-ui": "node tests/team-ui.cjs",
-    "test:agent-acceptance": "npm run build:plugin && npm test && npm run test:host && npm run test:employee && npm run test:ui && npm run test:team-ui && npm run test:av && npm run test:av:native && npm run test:presentation && npm run test:review-faces && npm run test:generated-review && npm run test:mapping-repair && npm run test:ruler && npm run test:ink-toolbar && npm run test:ink-preferences && npm run test:scribble && npm run test:stroke-geometry && npm run test:eraser-workflow && npm run test:image-ink && npm run test:image-marks && npm run test:review-faces:native && npm run test:dictionary && npm run test:backup-stream-ui && npm run test:appearance && npm run test:keyword-boards && npm run test:interaction && npm run test:backup-jobs-ui && npm run test:interaction:native && npm run test:card-source && npm run test:book-turn && npm run test:study-library && npm run test:book-library:native && npm run test:mindmap-ui && npm run test:mindmap-native && npm run test:sidebar",
+    "test:agent-acceptance": "npm run build:plugin && npm test && npm run test:host && npm run test:employee && npm run test:team-ui && node tests/read-map-surface-ui.cjs && node tests/read-map-camera-ui.cjs && node tests/read-map-source-ui.cjs && node tests/read-map-native-ui.cjs && node tests/split-read-map-ui.cjs && node tests/document-covers-ui.cjs && node tests/topic-ownership-ui.cjs && node tests/topic-overview-drag-ui.cjs && node tests/topic-drop-boundary-ui.cjs",
     "test:live": "node tests/live-smoke.cjs",
     "test:acceptance": "node scripts/verify-local-import.cjs",
     "test:blog-ui": "node scripts/verify-blog-ui.cjs",
@@ -47,7 +47,7 @@
     "test:ink-preferences": "node tests/ink-preferences-ui.cjs",
     "test:ink-toolbar": "node tests/ink-toolbar-ui.cjs",
     "test:ruler": "node tests/ruler-ui.cjs",
-    "test:deep-audit": "npm run build:plugin && node scripts/deep-audit.cjs",
+    "test:deep-audit": "npm run build:plugin && node scripts/read-map-audit.cjs",
     "test:large-map": "node tests/large-map-ui.cjs",
     "test:annotations": "node tests/annotation-window-ui.cjs",
     "test:performance": "node tests/performance-profile.cjs current",
@@ -69,10 +69,19 @@
     "test:study-library": "node tests/study-library-ui.cjs",
     "test:book-library:native": "node tests/book-library-native-ui.cjs",
     "test:mindmap": "node --test tests/mindmap.test.cjs tests/mindmap-tools.test.cjs tests/mindmap-stability.test.cjs",
-    "test:mindmap-ui": "node tests/mindmap-studio-ui.cjs && node tests/mindmap-tools-ui.cjs && node tests/mindmap-image-ui.cjs && node tests/mindmap-motion-ui.cjs",
-    "test:mindmap-native": "node tests/mindmap-native-ui.cjs",
+    "test:mindmap-ui": "node tests/xmind-structures-ui.cjs && node tests/xmind-drag-ui.cjs && node tests/mindmap-tools-ui.cjs && node tests/mindmap-image-ui.cjs && node tests/mindmap-branch-motion-ui.cjs",
+    "test:mindmap-native": "node tests/read-map-native-ui.cjs",
     "test:mindmap-performance": "node tests/mindmap-performance.cjs",
-    "test:sidebar": "node tests/sidebar-navigation-ui.cjs"
+    "test:sidebar": "node tests/sidebar-navigation-ui.cjs && node tests/sidebar-flow-ui.cjs",
+    "test:topics": "node --test tests/topic-defaults.test.cjs && node tests/topic-default-ui.cjs",
+    "test:xmind": "node tests/xmind-drag-ui.cjs && node tests/xmind-structures-ui.cjs && node tests/read-map-native-ui.cjs",
+    "test:mindmap-completion": "node tests/mindmap-designs-ui.cjs && node tests/mindmap-manipulation-ui.cjs && node tests/mindmap-equation-ui.cjs && node tests/read-map-large-drag-ui.cjs && node tests/mindmap-pitch-ui.cjs && node tests/mindmap-filter-links-ui.cjs && node tests/mindmap-keyboard-ui.cjs && node tests/mindmap-gradient-motion-ui.cjs && node tests/mindmap-branch-motion-ui.cjs",
+    "test:read-map": "node tests/read-map-surface-ui.cjs && node tests/read-map-camera-ui.cjs && node tests/read-map-source-ui.cjs && node tests/read-map-large-drag-ui.cjs",
+    "test:read-map:native": "node tests/read-map-native-ui.cjs",
+    "test:split-reading": "node --test tests/split-read-map.test.cjs && node tests/split-read-map-ui.cjs",
+    "test:topic-covers": "node --test tests/topic-drop-target.test.cjs tests/topic-drop-core.test.cjs && node tests/document-covers-ui.cjs && node tests/topic-ownership-ui.cjs && node tests/topic-overview-drag-ui.cjs && node tests/topic-drop-boundary-ui.cjs",
+    "test:mindmap-usability": "npm run build:plugin && node --test tests/mindmap-remove.test.cjs tests/excerpt-placement.test.cjs tests/mindmap-tasks.test.cjs tests/mindmap-zones.test.cjs && node tests/mindmap-usability-ui.cjs && node tests/excerpt-drag-ui.cjs && node tests/mindmap-explorer-ui.cjs && node tests/mindmap-zones-ui.cjs && node tests/mindmap-local-tools-ui.cjs",
+    "test:mindmap-usability:native": "node tests/mindmap-usability-native.cjs"
   },
   "dependencies": {
     "@lingo-reader/mobi-parser": "0.4.6",
@@ -86,11 +95,20 @@
     "katex": "0.18.9",
     "mammoth": "1.12.3",
     "marked": "15.0.12",
+    "mathjax-full": "3.2.2",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "5.4.624",
+    "pdfkit": "0.17.2",
+    "pptxgenjs": "4.0.1",
     "proper-lockfile": "4.1.2",
     "sanitize-html": "2.17.7",
+    "svg-to-pdfkit": "0.1.8",
     "ts-fsrs": "5.4.2",
     "word-extractor": "1.0.4"
+  },
+  "overrides": {
+    "speech-rule-engine": {
+      "@xmldom/xmldom": "0.9.12"
+    }
   }
 }

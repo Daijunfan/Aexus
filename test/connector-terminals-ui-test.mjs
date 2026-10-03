@@ -49,7 +49,7 @@ try{
    // Each active-arrow check starts a real communication, rather than requiring a long-lived cue.
    await Promise.all(workers.map(worker=>highlight(worker.id)))
    const edge=page.locator(`[data-connection="${connection.id}"]`),arrow=edge.locator('.management-arrow')
-   await checkArrow(edge,connection);await expect(arrow).toHaveAttribute('fill','none');await expect(arrow).toHaveCSS('stroke','rgb(50, 188, 120)')
+   await checkArrow(edge,connection);await expect(arrow).toHaveAttribute('fill','none');await expect(arrow).toHaveCSS('stroke','rgb(20, 122, 78)')
    assert.equal(await edge.locator('.management-line').getAttribute('d'),connection.path,'Styling must not change the canonical editable route')
    assert.equal(await edge.locator('.management-line').getAttribute('marker-end'),null,'Active flow must not carry an overlapping triangle')
    assert.equal(await edge.locator('.management-terminal-lead').evaluate(e=>getComputedStyle(e).animationName),'none','Endpoint lead must stay steady')

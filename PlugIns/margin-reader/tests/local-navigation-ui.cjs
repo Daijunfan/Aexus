@@ -16,7 +16,7 @@ async function main(){
   try{
     browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Users/djf/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell'});
     const page=await browser.newPage({viewport:{width:1520,height:1000}});page.on('pageerror',e=>report.browserErrors.push(e.message));
-    let set=await api('study.create',{title:'Linked reading'});
+    let set=await api('study.create',{mapMode:'cards',title:'Linked reading'});
     set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['first.pdf','second.pdf','long.html']});
     const first=await api('document.open',{path:'first.pdf',activate:false}),second=await api('document.open',{path:'second.pdf',activate:false}),flow=await api('document.open',{path:'long.html',activate:false});
     const capture=async(doc,title,pageNumber)=>{const r=await api('study.card.create',{setId:set.id,expectedRevision:set.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),title,text:'',color:'yellow',locator:{page:pageNumber},selection:{rects:[{page:pageNumber,x:.1,y:.06,width:.7,height:.12}]}});set=await api('study.get',{setId:set.id});return r.card;};

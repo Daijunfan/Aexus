@@ -13,7 +13,7 @@ try{
  assert.equal((await rpc(g,'avatar.list',{query:'吉尔伽美什 可爱版'})).length,1)
  assert.equal((await rpc(m,'avatar.list',{all:true})).length,76)
  for(const auth of [m,g]){
-  const docs=(await rpc(auth,'api.docs')).markdown;assert.match(docs,/character.*avatarStyle/);assert.match(docs,/profession/);assert.match(docs,/card avatar/)
+  const docs=(await rpc(auth,'api.docs',{document:'core/api'})).markdown;assert.match(docs,/character.*avatarStyle/);assert.match(docs,/profession/);assert.match(docs,/card avatar/)
   const schema=await rpc(auth,'api.describe',{command:'card.create'});assert.ok(schema.inputSchema.properties.character&&schema.inputSchema.properties.profession&&schema.inputSchema.properties.managementRole)
  }
  let created=0
@@ -28,6 +28,7 @@ try{
  for(const args of [{thinking:'off'},{character:'not-a-real-character',avatarStyle:'chibi'},{character:'吉尔伽美什'},{avatar:'wrong-id'},{avatar:'fate-saber-anime',character:'英雄王',avatarStyle:'chibi'},{character:'英雄王',avatarStyle:'chibi',profession:'Reviewer',role:'Conflicting description'}]){
   const title='Rejected '+JSON.stringify(args),before=(await cli('session','list')).sessions.length,r=await request(m,'card.create',{title,group:'A',engine:'codex',...args});assert.equal(r.ok,false);assert.equal((await cli('session','list')).sessions.length,before);assert.ok(!fs.existsSync(path.join(f.env.AGENTS_COMPANY_PROJECTS,'A',title)))
  }
+ await f.ready(hero.id)
  const before=(await cli('session','list')).sessions.find(c=>c.id===hero.id)
  await f.call(m,'card','avatar',hero.id,'--character','远坂凛','--avatar-style','anime')
  const after=(await cli('session','list')).sessions.find(c=>c.id===hero.id);assert.equal(after.avatar,'fate-rin-anime');for(const key of ['title','engine','cwd','group','position','managementRole','createdBy','role'])assert.deepEqual(after[key],before[key])

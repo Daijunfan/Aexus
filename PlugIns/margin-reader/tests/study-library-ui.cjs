@@ -6,7 +6,7 @@ const {create,expect}=require('./ui-session.cjs'),{pdfFixture}=require('./fixtur
   const {page,api}=f;const out=await fs.readFile(path.join(__dirname,'../artifacts/book-library-current.txt'),'utf8').then(s=>s.trim(),()=>f.output);
   await fs.writeFile(path.join(f.workspace,'book.pdf'),pdfFixture());await api('fs.write',{path:'article.html',content:'<h1>Readable article preview</h1><p>Rich offline article content. This summary should be shown in the learning materials.</p>'});
   const digest=b=>createHash('sha256').update(b).digest('hex'),original=digest(await fs.readFile(path.join(f.workspace,'book.pdf')));
-  let set=await api('study.create',{title:'Reading theme'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['book.pdf','article.html']});
+  let set=await api('study.create',{mapMode:'cards',title:'Reading theme'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['book.pdf','article.html']});
   await page.goto(f.server.url);await page.locator('body[data-ready=true]').waitFor();
   const upper=await page.locator('#studies-root').boundingBox(),lower=await page.locator('#library-root').boundingBox(),line=await page.locator('.sidebar-section-divider').boundingBox();assert(upper.y<line.y&&line.y<lower.y);
   await page.click('#studies-root');await expect(page.locator('#study-library-view')).toBeVisible();await expect(page.locator('#library-view')).toBeHidden();await expect(page.locator('.collection-tile.is-study')).toHaveCount(1);

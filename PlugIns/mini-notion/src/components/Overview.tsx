@@ -1,5 +1,8 @@
+import { EventSummary } from './EventSummary';
+import { eventPresenter, eventDescription, pageIndex, type EventInfo } from '../scheduling/presentation';
+import { Popover } from '../ui';
 import {AppSelect} from './AppSelect';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AppearanceTheme, recordAppearanceStyle } from '../appearance';
 import {
   CalendarDays,
@@ -7,7 +10,6 @@ import {
   Columns3,
   Table2,
   ChartGantt,
-  Bell,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
@@ -26,6 +28,19 @@ const views = [
 export function Overview() {
   const theme = useContext(AppearanceTheme);
   const { workspace, api, navigate, notify } = useWorkspace();
+  const [dayPanel, setDayPanel] = useState<{ date: string; x: number; y: number } | null>(null);
+  const describe = eventPresenter(workspace!);
+  const byId = pageIndex(workspace!.pages);
+  const describeItem = (item: OverviewItem): EventInfo => {
+    const base = describe(byId.get(item.pageId)!);
+    return { ...base, title: item.title, owner: item.spaceTitle,
+      ...(item.kind === 'record' ? {} : {
+        when: item.kind === 'reminder' ? `${item.time} · 提醒` : '未排期',
+        fullWhen: item.dateLabel || `${item.start} ${item.time || ''}`.trim() || '未排期',
+        status: item.status, tone: item.done ? 'done' as const : 'neutral' as const, reminders: 0,
+      }),
+    };
+  };
   const projection = overviewProjection(workspace!);
   const { config, counts, items, groups, days, spaces } = projection;
   const configure = (changes: Partial<OverviewConfig>) =>
@@ -41,7 +56,7 @@ export function Overview() {
     void api(method, params).catch((error) => notify(String(error)));
   };
   const card = (item: OverviewItem, compact = false) => (
-    <div key={item.id} style={recordAppearanceStyle(item, theme, workspace!.settings.appearance)} className={`overview-item ${item.done ? 'done' : ''} ${compact ? 'compact' : ''}`}>
+    <div key={item.id} data-overview-id={item.id} style={recordAppearanceStyle(item, theme, workspace!.settings.appearance)} className={`overview-item ${item.done ? 'done' : ''} ${compact ? 'compact' : ''}`}>
       {item.blockId || item.doneProperty ? (
         <input
           type="checkbox"
@@ -49,17 +64,9 @@ export function Overview() {
           checked={item.done}
           onChange={() => toggle(item)}
         />
-      ) : item.kind === 'reminder' ? (
-        <Bell size={13} />
-      ) : (
-        <span className="overview-bullet" />
-      )}
-      <button onClick={() => navigate(item.pageId)} title={`${item.spaceTitle} · ${item.title}`}>
-        <strong>{item.title}</strong>
-        <small>
-          {item.time && `${item.time} · `}
-          {item.spaceTitle}
-        </small>
+      ) : null}
+      <button onClick={() => navigate(item.pageId, item.blockId)} title={eventDescription(describeItem(item))}>
+        <EventSummary info={describeItem(item)} kind={item.kind} detailed={!compact} />
       </button>
       {!compact && <ArrowUpRight size={13} />}
     </div>
@@ -167,7 +174,7 @@ export function Overview() {
         <span>{items.length} 项</span>
       </div>
       {config.view === 'calendar' ? (
-        <div className="overview-calendar">
+        <div className="overview-calendar-scroll" tabIndex={0} aria-label="综合月历，可横向滚动"><div className="overview-calendar">
           {['一', '二', '三', '四', '五', '六', '日'].map((day) => (
             <div key={day} className="overview-weekday">
               {day}
@@ -179,10 +186,13 @@ export function Overview() {
               className={`overview-day ${day.date === dateKey(new Date()) ? 'today' : ''} ${day.date.slice(0, 7) !== config.date.slice(0, 7) ? 'outside' : ''}`}
             >
               <span>{Number(day.date.slice(-2))}</span>
-              {day.items.map((item) => card(item, true))}
+              {day.items.slice(0, 4).map(item => card(item, true))}
+              {day.items.length > 4 && <button className="overview-more" onClick={event => {
+                const rect = event.currentTarget.getBoundingClientRect(); setDayPanel({ date: day.date, x: rect.left, y: rect.bottom });
+              }}>还有 {day.items.length - 4} 项日程</button>}
             </div>
           ))}
-        </div>
+        </div></div>
       ) : config.view === 'table' ? (
         <div className="overview-table">
           <table>
@@ -230,12 +240,13 @@ export function Overview() {
                 <div className="overview-timeline-row" key={item.id}>
                   {card(item, true)}
                   <button
-                    className="overview-timeline-bar"
+                    className={`overview-timeline-bar ${end - first < 4 ? 'short-bar' : ''}`}
+                    data-label-side={end > 10 ? 'before' : 'after'}
                     style={{ ...recordAppearanceStyle(item, theme, workspace!.settings.appearance), gridColumn: `${first + 2} / ${end + 3}` }}
                     onClick={() => navigate(item.pageId)}
-                    title={`${item.start} → ${item.end}`}
+                    title={eventDescription(describeItem(item))}
                   >
-                    {item.title}
+                    <EventSummary info={describeItem(item)} kind={item.kind} />
                   </button>
                 </div>
               );
@@ -254,6 +265,13 @@ export function Overview() {
           ))}
         </div>
       )}
+      {dayPanel && <Popover {...dayPanel} width={380} role="dialog" label={`${dayPanel.date} 的综合日程`} onClose={() => setDayPanel(null)}>
+        <div className="event-detail-list"><header>{dayPanel.date} · 全部日程</header>
+          {days.find(day => day.date === dayPanel.date)?.items.map(item => <button key={item.id} onClick={() => { setDayPanel(null); navigate(item.pageId, item.blockId); }}>
+            <EventSummary info={describeItem(item)} kind={item.kind} detailed />
+          </button>)}
+        </div>
+      </Popover>}
       {!items.length && (
         <div className="overview-empty">
           <ListTodo size={26} />

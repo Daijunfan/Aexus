@@ -1,7 +1,10 @@
 import {translate as uiText,useI18n} from '../i18n'
+import {WallpaperSettings} from './WallpaperSettings'
+import {DEFAULT_MESSAGE_WALLPAPER} from '../../../shared/message-wallpaper'
 import {AppSelect} from './AppSelect'
 import {EngineSettings} from './EngineSettings'
 import {Icon} from './Icon'
+import {BackButton} from './BackButton'
 import licenseText from '../../../../LICENSE?raw'
 import {useEffect,useRef,useState,type CSSProperties} from 'react'
 import {ModelSelect} from './ModelSelect'
@@ -14,7 +17,7 @@ const neutralThemes:Preferences['theme'][]=['white','light','space','black','mid
 type EmployeeDefaults=Pick<Preferences,'defaultPermissionMode'|'defaultCodexModel'|'defaultClaudeModel'|'defaultClineModel'|'defaultPiModel'>
 const employeeDefaults:EmployeeDefaults={defaultPermissionMode:DEFAULT_PREFERENCES.defaultPermissionMode,defaultCodexModel:DEFAULT_PREFERENCES.defaultCodexModel,defaultClaudeModel:DEFAULT_PREFERENCES.defaultClaudeModel,defaultClineModel:DEFAULT_PREFERENCES.defaultClineModel,defaultPiModel:DEFAULT_PREFERENCES.defaultPiModel}
 
-export function SettingsPanel({value,onSave,onClose,initialView='company'}:{value:Preferences;onSave:(patch:PreferencesPatch)=>Promise<unknown>;onClose:()=>void;initialView?:PresentationView}){
+export function SettingsPanel({value,onSave,onClose,initialView='company',backLabel='Back to company'}:{value:Preferences;onSave:(patch:PreferencesPatch)=>Promise<unknown>;onClose:()=>void;initialView?:PresentationView;backLabel?:string}){
  useI18n()
  const auto=usePreferencesAutosave(onSave),[view,setView]=useState<PresentationView>(initialView),[employeeDraft,setEmployeeDraft]=useState<Partial<EmployeeDefaults>>({}),[employeeSaving,setEmployeeSaving]=useState(false),[employeeError,setEmployeeError]=useState(''),[employeeSaved,setEmployeeSaved]=useState(false),tabs=useRef<HTMLDivElement>(null),body=useRef<HTMLDivElement>(null)
  const draft=mergePreferences(mergePreferences(value,auto.changes),employeeDraft),appearance=draft.viewAppearance[view]
@@ -24,14 +27,14 @@ export function SettingsPanel({value,onSave,onClose,initialView='company'}:{valu
  const changeEmployee=(patch:Partial<EmployeeDefaults>)=>{setEmployeeDraft(previous=>({...previous,...patch}));setEmployeeSaved(false)}
  useEffect(()=>{setEmployeeDraft(previous=>{const entries=Object.entries(previous).filter(([key,next])=>next!==value[key as keyof EmployeeDefaults]);return entries.length===Object.keys(previous).length?previous:Object.fromEntries(entries)})},[value.defaultPermissionMode,value.defaultCodexModel,value.defaultClaudeModel,value.defaultClineModel,value.defaultPiModel])
  const saveEmployee=async()=>{if(employeeSaving||!employeePending)return;setEmployeeSaving(true);setEmployeeError('');try{if(await onSave(employeePatch))setEmployeeSaved(true);else setEmployeeError('Settings could not be saved. Your changes are still here.')}catch(cause){setEmployeeError((cause as Error).message)}finally{setEmployeeSaving(false)}}
- const resetView=()=>auto.update({viewAppearance:{[view]:DEFAULT_VIEW_APPEARANCE[view]},...(view==='company'?{zoomSensitivity:DEFAULT_PREFERENCES.zoomSensitivity,panSensitivity:DEFAULT_PREFERENCES.panSensitivity,snapEmployees:DEFAULT_PREFERENCES.snapEmployees,showTeamOverview:DEFAULT_PREFERENCES.showTeamOverview}:{})})
+ const resetView=()=>auto.update({viewAppearance:{[view]:DEFAULT_VIEW_APPEARANCE[view]},...(view==='messages'?{messageWallpaper:DEFAULT_MESSAGE_WALLPAPER}:{}),...(view==='company'?{zoomSensitivity:DEFAULT_PREFERENCES.zoomSensitivity,panSensitivity:DEFAULT_PREFERENCES.panSensitivity,snapEmployees:DEFAULT_PREFERENCES.snapEmployees,showTeamOverview:DEFAULT_PREFERENCES.showTeamOverview}:{})})
  const resetShared=()=>auto.update({language:DEFAULT_PREFERENCES.language,pageZoom:DEFAULT_PREFERENCES.pageZoom,sidebarWidth:DEFAULT_PREFERENCES.sidebarWidth,explorerWidth:DEFAULT_PREFERENCES.explorerWidth,terminalHeight:DEFAULT_PREFERENCES.terminalHeight})
  const close=async()=>{if(!employeeSaving&&await auto.flush())onClose()}
  const chooseView=(next:PresentationView)=>{setView(next);body.current?.scrollTo({top:0,behavior:'instant'})}
  const moveTab=(event:React.KeyboardEvent,index:number)=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?PRESENTATION_VIEWS.length-1:(index+(event.key==='ArrowRight'?1:-1)+PRESENTATION_VIEWS.length)%PRESENTATION_VIEWS.length;chooseView(PRESENTATION_VIEWS[next]);tabs.current?.querySelectorAll<HTMLButtonElement>('[role=tab]')[next]?.focus()}
  const themeButton=(theme:Preferences['theme'])=><button type="button" key={theme} data-theme-option={theme} aria-pressed={appearance.theme===theme} onClick={()=>changeAppearance({theme})}><span className={`settings-color-swatch theme-sample sample-${theme}`} style={theme==='custom'?customStyle:undefined} aria-hidden="true"/><span>{uiText(THEME_LABELS[theme])}</span>{appearance.theme===theme&&<Icon name="check"/>}</button>
  return <div className="office-panel-wrap" onKeyDown={event=>{if(event.key==='Escape')void close()}}><div className="panel-backdrop" onClick={()=>void close()}/><section className="office-panel preferences-panel view-preferences-panel" role="dialog" aria-modal="true" aria-label={uiText('Application settings')}>
-  <header className="panel-header"><h2>{uiText('Settings')}</h2><span className="settings-save-status" role="status" data-state={auto.status}>{uiText(auto.status==='saving'?'Saving…':auto.status==='saved'?'Auto-saved':auto.status==='error'?'Save failed':'Changes save automatically')}</span><button className="panel-close" disabled={employeeSaving} aria-label={uiText('Close settings')} onClick={()=>void close()}>×</button></header>
+  <header className="panel-header settings-back-header"><BackButton label={backLabel} ariaLabel="Close settings" disabled={employeeSaving} onClick={()=>void close()}/><h2>{uiText('Settings')}</h2><span className="settings-save-status" role="status" data-state={auto.status}>{uiText(auto.status==='saving'?'Saving…':auto.status==='saved'?'Auto-saved':auto.status==='error'?'Save failed':'Changes save automatically')}</span></header>
   <div ref={tabs} className="settings-view-tabs" role="tablist" aria-label={uiText('Settings for each view')}>{PRESENTATION_VIEWS.map((key,index)=><button key={key} id={'settings-tab-'+key} type="button" role="tab" aria-controls="settings-view-panel" aria-selected={view===key} tabIndex={view===key?0:-1} onClick={()=>chooseView(key)} onKeyDown={event=>moveTab(event,index)}><Icon name={viewIcons[key]}/>{uiText(viewLabels[key])}</button>)}</div>
   {auto.error&&<div className="settings-autosave-error" role="alert"><span>{uiText(auto.error)}</span><button type="button" onClick={auto.retry}>{uiText('Retry save')}</button></div>}
   <div ref={body} className="settings-scroll-body">
@@ -40,6 +43,7 @@ export function SettingsPanel({value,onSave,onClose,initialView='company'}:{valu
     <div className="theme-presets" aria-label={uiText('Color scheme')}>{(view==='messages'?COLOR_THEMES:neutralThemes).map(themeButton)}</div>
     {view!=='messages'&&<details key={view} className="settings-more-themes" open={!neutralThemes.includes(appearance.theme)}><summary>{uiText('More color schemes')}</summary><div className="theme-presets">{THEMES.filter(theme=>!neutralThemes.includes(theme)).map(themeButton)}</div></details>}
     <label className="custom-theme-color" htmlFor="custom-theme-color"><span>{uiText('Custom color')}</span><input id="custom-theme-color" name="themeColor" type="color" aria-label={uiText('Custom color')} value={appearance.themeColor} onChange={event=>changeAppearance({theme:'custom',themeColor:event.target.value},180)}/><output>{appearance.themeColor.toUpperCase()}</output></label>
+    {view==='messages'&&<WallpaperSettings value={draft.messageWallpaper} appearance={appearance} onChange={(messageWallpaper,delay)=>auto.update({messageWallpaper},delay)}/>}
     {view==='company'&&<section className="settings-canvas-controls" aria-label={uiText('Company canvas')}><h3>{uiText('Company canvas')}</h3>
      <label className="settings-toggle" title={uiText('Gently align near standard seats or other employees. Hold Option / Alt to disable temporarily.')}><span>{uiText('Snap employee positions')}</span><input type="checkbox" name="snapEmployees" checked={draft.snapEmployees} onChange={event=>auto.update({snapEmployees:event.target.checked})}/></label>
      <label className="settings-toggle"><span>{uiText('Show team overview')}</span><input type="checkbox" name="showTeamOverview" checked={draft.showTeamOverview} onChange={event=>auto.update({showTeamOverview:event.target.checked})}/></label>

@@ -42,3 +42,7 @@
 
 /* Vector icons preserve the existing em-sized Icon contract. */
 .codicon.vector-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.codicon.vector-icon::before{display:none}.vector-icon>svg{display:block;width:1em;height:1em;flex:none}
+
+.file-list[data-drop-active=true] { outline:2px solid var(--accent);outline-offset:-3px;background:color-mix(in srgb,var(--accent) 6%,var(--bg-alt)); }
+
+.employee-files>.workspace-error { margin-top:42px;flex-shrink:0; }

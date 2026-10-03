@@ -107,9 +107,10 @@ function reveal(set,p){
   const card=M.card(set,p.cardId);set.recall??={enabled:false,scope:'both',mode:'mask',revealedIds:[]};
   const ids=new Set(set.recall.revealedIds||[]);if(p.visible===false)ids.delete(card.id);else ids.add(card.id);set.recall.revealedIds=[...ids];
 }
-function presentation(state,set,p){
+async function presentation(state,set,p){
   const rows=cards(state,set,p);assert(rows.length>0&&rows.length<=10000,'INVALID_PARAMS','Choose 1–10000 presentation cards.');
-  set.presentation={enabled:true,mode:p.mode||'cards',id:randomUUID(),cardIds:rows.map(c=>c.id),index:0,showNotes:p.showNotes??true,showImages:p.showImages??true};
+  const frames=p.mode==='map'?(await import('../ui/mindmap-pitch.mjs')).pitchPlan(rows,set.map?.mindmap?.pitch):null;assert(!frames||frames.length,'INVALID_PARAMS','All topics are hidden from the presentation.');
+  set.presentation={enabled:true,mode:p.mode||'cards',id:randomUUID(),cardIds:frames?frames.map(f=>f.cardId):rows.map(c=>c.id),...(frames?{frames}:{}),index:0,showNotes:p.showNotes??true,showImages:p.showImages??true};
 }
 function stepPresentation(set,p){
   const s=set.presentation;assert(s?.enabled,'NOT_FOUND','No active presentation.');
@@ -127,7 +128,7 @@ async function request(store,method,p){
     else if(method==='study.review.session.action')stepSession(set,p);
     else if(method==='study.recall.set')recall(set,p);
     else if(method==='study.recall.reveal')reveal(set,p);
-    else if(method==='study.presentation.start')presentation(state,set,p);
+    else if(method==='study.presentation.start')await presentation(state,set,p);
     else if(method==='study.presentation.action')stepPresentation(set,p);
     else assert(false,'METHOD_NOT_FOUND','Unknown learning operation.');
     M.touch(set);

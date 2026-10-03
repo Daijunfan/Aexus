@@ -91,7 +91,7 @@ async function ensureDocumentStudy(store, p) {
     if (!set) {
       const now = new Date().toISOString();
       set = { id: randomUUID(), title: `文档笔记 · ${doc.title}`.slice(0, 200), description: '', revision: 1,
-        documentIds: [doc.id], documentNotesFor: doc.id, cards: [], cardTrash: [], view: 'cards', captureSettings:{inMap:false},
+        documentIds: [doc.id], documentNotesFor: doc.id, cards: [], cardTrash: [], view: 'documents', captureSettings:{inMap:true},
         createdAt: now, updatedAt: now };
       state.studySets[set.id] = set;
     }

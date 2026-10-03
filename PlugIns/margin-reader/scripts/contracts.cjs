@@ -54,7 +54,7 @@ command('reader.position.get', 'Get the durable reading position.', false, { id 
 command('bookmark.list','List local document bookmarks with source validity and optional recoverable deleted entries.',false,{id,includeTrashed:opt('boolean','Include removed bookmarks.')});
 command('bookmark.add','Bookmark a validated page/section without modifying the original file.',true,{id,expectedRevision:rev,title:str('Bookmark title, 1–200 characters.',true),locator});
 command('bookmark.update','Rename, recoverably remove or restore a bookmark.',true,{id,expectedRevision:rev,bookmarkId:str('Bookmark UUID.',true),title:str('New title, 1–200 characters.'),deleted:opt('boolean','True removes recoverably; false restores.')});
-command('reader.position.set', 'Validate and persist a jump/reading position. Positions use last-write-wins.', true, { id, locator });
+command('reader.position.set', 'Validate and persist a jump/reading position. Positions use last-write-wins.', true, { id, locator, activate: opt('boolean','Default true selects the document. False checkpoints an already-open reader without overriding later navigation.') });
 command('settings.get', 'Get durable reader appearance and navigation preferences.', false);
 command('settings.set', 'Persist preferences through the same API used by the renderer.', true, {
   theme: str('Reader theme.', false, { enum: ['light','dark','sepia'] }), view: str('Large folder tiles or compact list.', false, { enum: ['grid','list'] }),
@@ -93,6 +93,7 @@ command('settings.set', 'Persist preferences through the same API used by the re
   mediaRate:num('Audio/video playback speed.',false,{minimum:.25,maximum:3}),
   currentFolder: str('Current folder path.'), lastDocument: str('Last open document ID or null.', false, { nullable: true })
 });
+require('./design-contracts.cjs').register({command,str,num,opt,obj});
 require('./mindmap-contracts.cjs').register({command,str,num,opt,obj});
 require('./study-library-contracts.cjs').register({command,str,num,opt,obj});
 require('./backup-job-contracts.cjs').register({command,str,num,opt,obj});

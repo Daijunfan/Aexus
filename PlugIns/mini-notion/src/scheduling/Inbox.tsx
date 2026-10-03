@@ -1,6 +1,7 @@
+import { EventState } from '../components/EventSummary';
 import {AppSelect} from '../components/AppSelect';
 import { useState } from 'react';
-import { Archive, ArchiveRestore, Bell, CheckCheck, Clock, Circle } from 'lucide-react';
+import { Archive, ArchiveRestore, Bell, CheckCheck, Clock, Circle, Zap } from 'lucide-react';
 import { useWorkspace } from '../store';
 import { IconButton, Modal, relativeDate } from '../ui';
 
@@ -59,7 +60,7 @@ export function Inbox() {
                   data-notification-id={item.id}
                 >
                   <div className="inbox-bell">
-                    <Bell size={19} />
+                    {item.kind === 'automation' ? <Zap size={19} /> : <Bell size={19} />}
                   </div>
                   <div className="inbox-item-content">
                     <button
@@ -74,6 +75,7 @@ export function Inbox() {
                       {page?.title || item.title || '无标题'}
                       {!page && <small> · 页面已移除</small>}
                     </button>
+                    <EventState tone={item.readAt ? 'neutral' : 'scheduled'}>{`${item.kind === 'automation' ? '自动化通知' : '到期提醒'} · ${item.archivedAt ? '已归档' : item.readAt ? '已读' : '未读'}`}</EventState>
                     <p>{item.text}</p>
                     <small title={new Date(item.createdAt).toLocaleString('zh-CN')}>
                       到期于 {new Date(item.scheduledFor).toLocaleString('zh-CN')} ·{' '}

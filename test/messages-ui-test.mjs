@@ -1,3 +1,4 @@
+import {createReady,readyEmployee,acceptedMessage} from './fixtures/ui-contracts.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -18,7 +19,7 @@ try{
  await page.locator('.infinite-canvas').waitFor();await call('settings.set',{theme:'white'})
  await call('group.add',{name:'Product Studio'});await call('group.add',{name:'Engineering'})
  const people=[]
- for(const [title,group,avatar,profession] of [['Aster','Product Studio','fate-saber-chibi','Product designer'],['Rowan','Engineering','byte','Software engineer'],['Nova','Product Studio','fate-gilgamesh-chibi','Research analyst'],['Mira','Engineering','marmalade','Code reviewer']])people.push(await call('card.create',{title,group,avatar,profession,engine:'codex',model:'gpt-6-luna'}))
+ for(const [title,group,avatar,profession] of [['Aster','Product Studio','fate-saber-chibi','Product designer'],['Rowan','Engineering','byte','Software engineer'],['Nova','Product Studio','fate-gilgamesh-chibi','Research analyst'],['Mira','Engineering','marmalade','Code reviewer']])people.push(await createReady(call,{title,group,avatar,profession,engine:'codex',model:'gpt-6-luna'}))
  const [aster,rowan,nova]=people
  for(const [card,text,reply] of [[rowan,'How is the new workspace coming along?','The navigation is ready. I am checking the smaller screen layouts next.'],[nova,'Review the product notes.','I found three opportunities to simplify the onboarding. The notes are ready for you.'],[aster,'Let’s make the workspace feel a little more human.','Absolutely. I put together a calmer direction for the workspace.\n\n**A little more space. A lot more focus.**\n\nThe conversation stays at the center, with clear typography and a quieter background. Your employees keep their own character, and everything you already built stays connected.\n\nShall I refine the small-screen layout next?']]){
   fs.writeFileSync(path.join(control,card.id+'.reply.txt'),reply);await call('session.send',{employee:card.id,text});await expect.poll(async()=>(await call('session.status',{employee:card.id}))[0].busy).toBe(false)
@@ -42,13 +43,13 @@ try{
  await assistant.getByRole('button',{name:'Reply to message',exact:true}).click();await expect(page.getByRole('region',{name:'Conversation with Aster'}).getByLabel('Reply preview')).toContainText('Absolutely');await expect(composer).toHaveValue('');await expect(composer).toBeFocused();await page.getByRole('button',{name:'Cancel reply',exact:true}).click()
  await expect(page.locator('.message-date')).toContainText('Today')
  await composer.evaluate(el=>el.blur());await page.mouse.move(320,100)
- for(const theme of ['white','black']){await call('settings.set',{theme});await expect(page.locator('html')).toHaveAttribute('data-theme',theme);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.screenshot({animations:'disabled',path:path.join(output,'messages-'+theme+'.png')})}
+ for(const theme of ['white','black']){await call('settings.set',{theme,viewAppearance:{company:{theme},messages:{theme},plan:{theme}}});await expect(page.locator('html')).toHaveAttribute('data-theme',theme);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.screenshot({animations:'disabled',path:path.join(output,'messages-'+theme+'.png')})}
  await call('settings.set',{theme:'white'})
  await composer.fill('Aster draft stays here');await page.getByRole('button',{name:'Message Rowan',exact:true}).click();await expect(page.locator('.message-thread-header')).toContainText('Rowan');await expect(composer).toHaveValue('')
  await composer.fill('Rowan draft stays here');await page.getByRole('button',{name:'Message Aster',exact:true}).click();await expect(page.locator('.message-thread-header')).toContainText('Aster');await expect(composer).toHaveValue('Aster draft stays here')
  await page.getByRole('textbox',{name:'Search conversations'}).fill('Engineering');await expect(page.locator('.message-contact')).toHaveCount(2)
  await page.getByRole('button',{name:'Clear search'}).click();await expect(page.locator('.message-contact')).toHaveCount(4)
- await expect(page.locator('.message-contact[data-unread=true]')).toHaveCount(3);await page.getByRole('tab',{name:'All',exact:true}).click()
+ await expect(page.locator('.message-contact[data-unread=true]')).toHaveCount(3);await expect(page.getByRole('tab',{name:'All',exact:true})).toHaveCount(0)
  await page.getByRole('button',{name:'Conversation settings',exact:true}).click();await expect(page.locator('.session-settings')).toBeVisible();await expect(page.locator('.session-settings')).toContainText('Reasoning')
  await page.getByRole('button',{name:'Conversation settings',exact:true}).click();await expect(page.locator('.session-settings')).toBeHidden()
  await page.getByRole('button',{name:'Employee details',exact:true}).click();await expect(page.getByRole('dialog',{name:'Employee information'})).toContainText('Product designer');await page.keyboard.press('Escape');await expect(page.locator('.message-profile')).toHaveCount(0)
@@ -56,7 +57,7 @@ try{
  await expect(page.locator('.transcript')).toContainText('A new message from the messenger')
  assert.ok((await call('session.transcript',{id:aster.id})).text.includes('A new message from the messenger'))
  await call('engine.configure',{engine:'cline',patch:{apiKey:'fixture-only-not-real'}})
- const cline=await call('card.create',{title:'Cline QA',group:'Engineering',engine:'cline',avatar:'hoots',model:'deepseek-flash'})
+ const cline=await createReady(call,{title:'Cline QA',group:'Engineering',engine:'cline',avatar:'hoots',model:'deepseek-flash'})
  await expect(page.locator('.message-contact')).toHaveCount(5);await page.getByRole('button',{name:'Message Cline QA',exact:true}).click();await expect(page.locator('.message-thread-header')).toContainText('Cline QA');await expect(composer).toBeEnabled()
  await composer.evaluate((element,base64)=>{const transfer=new DataTransfer();transfer.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],'screen.png',{type:'image/png'}));element.dispatchEvent(new ClipboardEvent('paste',{clipboardData:transfer,bubbles:true,cancelable:true}))},png)
  await expect(page.locator('.attachment-chips button')).toHaveCount(1);await composer.fill('Inspect the screenshot');await composer.press('Enter')

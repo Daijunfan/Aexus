@@ -49,7 +49,7 @@ fs.copyFileSync('dist-cli/claude-protocol.json',path.join(out,'backend/claude-pr
 await buildUI({configFile:false,root,base:'./',plugins:[react()],build:{outDir:path.join(out,'ui'),emptyOutDir:true,chunkSizeWarningLimit:2200}});
 const require=createRequire(import.meta.url);
 const {pluginCommands,agentGuide}=require(path.join(out,'runtime.cjs'));
-const schema={schemaVersion:1,pluginId:'mininotion',version,transport:'JSON-RPC 2.0',commands:pluginCommands.map(command=>({...command,agentAccess:'workspace'})),profile:{workspaceRequired:true,agentRuntime:false,exports:['md','html','json','csv']}};
+const schema={schemaVersion:1,pluginId:'mininotion',version,transport:'JSON-RPC 2.0',commands:pluginCommands.map(command=>({...command,agentAccess:command.method.startsWith('assistant.')?'operator':'workspace'})),profile:{workspaceRequired:true,agentRuntime:false,exports:['md','html','json','csv']}};
 fs.writeFileSync(path.join(out,'schema.json'),JSON.stringify(schema,null,2)+'\n');
 const table=pluginCommands.map(c=>`| \`${c.method}\` | ${c.mutates?'write':'read'} | ${c.description.replaceAll('|','/')} |`).join('\n');
 const agentWorkflow=agentGuide().topics.map(topic=>`### Agent guide: ${topic}\n\n${agentGuide(topic).markdown}\n`).join('\n');

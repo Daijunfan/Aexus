@@ -14,10 +14,10 @@ export class StudyLibrary {
     const files=document.createElement('section');files.id='file-library-sidebar';files.className='library-section';files.setAttribute('aria-label','我的文库');
     const explorer=document.querySelector('.explorer');
     explorer.querySelector('.pane-heading>span').textContent='阅读空间';
-    explorer.querySelector('.pane-heading').after(sidebar,separator,files);
+    const navigation=document.createElement('nav');navigation.id='sidebar-navigation';navigation.setAttribute('aria-label','学习集与文库导航');
+    explorer.querySelector('.pane-heading').after(navigation);navigation.append(sidebar,separator,files);
     files.append($('library-root'),$('file-tree'));
     $('library-root').classList.add('section-root');$('study-set-list').setAttribute('role','tree');$('study-set-list').setAttribute('aria-label','学习集文件夹与学习集');
-    const cardBox=$('workspace-card-box');cardBox.className='icon-button';cardBox.innerHTML=icon('grid');cardBox.setAttribute('aria-label','全库卡片盒');document.querySelector('.top-actions').prepend(cardBox);
     this.bindDrop(root,null);
     const view=document.createElement('section');view.id='study-library-view';view.className='study-library-view';view.hidden=true;view.setAttribute('aria-label','学习集文库');
     view.innerHTML=`<header class="collection-heading"><div><nav id="study-library-breadcrumbs" class="breadcrumbs" aria-label="学习集文件夹路径"></nav><h1 id="study-library-title">学习集</h1><p id="study-library-count" class="muted"></p></div><div class="collection-actions"><button id="collection-new-folder">${icon('folder-plus')}<span>新建文件夹</span></button><button id="collection-create" class="primary">${icon('plus')}<span>新建学习集</span></button></div></header><div class="collection-controls"><label class="collection-search">${icon('search')}<input id="study-library-search" type="search" placeholder="搜索学习集与文件夹…" aria-label="搜索学习集与文件夹"></label><div class="view-switch" role="group" aria-label="学习集视图"><button id="study-library-grid" title="缩略图视图" aria-label="学习集缩略图视图">${icon('grid')}</button><button id="study-library-list" title="列表视图" aria-label="学习集列表视图">${icon('list')}</button></div><button id="study-folder-trash" title="已删除的空文件夹">${icon('trash')}文件夹回收站</button></div><div id="study-library-items" class="collection-items grid"></div><div id="study-library-empty" class="collection-empty" hidden>${icon('book')}<h2>整理你的学习主题</h2><p>新建学习集，或把已有学习集拖入文件夹。<br>文档原件仍保留在“我的文库”。</p></div><nav id="collection-pages" class="study-list-pagination" aria-label="学习集分页" hidden><button id="collection-previous">上一页</button><span id="collection-page-status"></span><button id="collection-next">下一页</button></nav>`;
@@ -47,7 +47,9 @@ export class StudyLibrary {
   expandParents(id){let f=this.folder(id),steps=0;while(f&&steps++<64){this.expanded.add(f.id);f=this.folder(f.parentId);}}
   path(id){const parts=[];let f=this.folder(id),steps=0;while(f&&steps++<64){parts.unshift(f);f=this.folder(f.parentId);}return parts;}
   renderTree(sets=this.data.sets){
-    const selected=this.study.current?.id,owner=sets.find(s=>s.id===selected);if(owner?.folderId)this.expandParents(owner.folderId);
+    const selected=this.study.current?.id,owner=sets.find(s=>s.id===selected),revealKey=JSON.stringify([selected,owner?.folderId]);
+    // Reveal a newly selected/moved study once; respect later manual collapses.
+    if(this.revealKey!==revealKey){this.revealKey=revealKey;if(owner?.folderId)this.expandParents(owner.folderId);}
     const key=JSON.stringify([this.data.revision,sets.map(s=>[s.id,s.title,s.cardCount,s.documentCount,s.folderId]),selected,[...this.expanded],this.folderId]);
     if(this.treeKey===key){this.highlight();return;}this.treeKey=key;
     const folders=this.data.folders.filter(f=>!f.deletedAt),children=new Map();for(const f of folders){if(!children.has(f.parentId))children.set(f.parentId,[]);children.get(f.parentId).push(f);}
@@ -81,7 +83,7 @@ export class StudyLibrary {
     if(this.itemsKey!==key){this.itemsKey=key;box.className='collection-items '+mode;
       box.innerHTML=(parent&&!this.query?`<button class="collection-up" data-collection-folder="${folder.parentId||''}">${icon('arrow-left')}返回上一级</button>`:'')+rows.slice(this.page*this.size,(this.page+1)*this.size).map(({kind,value:v})=>{
         const folder=kind==='folder',p=PALETTES[avatarTone(v.id)];
-        return `<article class="collection-tile ${folder?'is-folder':'is-study'}" data-collection-id="${v.id}" data-collection-kind="${kind}" draggable="true"><button class="collection-open" title="打开${escape(v.title)}"><span class="collection-art" style="--tile-color:${p.fill};--tile-end:${p.end}">${icon(folder?'folder':'book')}${folder?'':`<span class="collection-monogram">${escape(Array.from(v.title).slice(0,2).join(''))}</span>`}</span><span class="collection-copy"><strong>${escape(v.title)}</strong><span class="collection-summary">${folder?'整理学习主题':escape(v.description||'围绕一个主题阅读、摘录与复习')}</span><small>${folder?`${v.folderCount||0} 个文件夹 · ${v.studyCount||0} 个学习集`:`${v.documentCount} 份文档 · ${v.cardCount} 张卡片`}</small></span></button><button data-collection-more="${kind}" aria-label="更多操作：${escape(v.title)}" title="更多操作">${icon('more')}</button></article>`;
+        return `<article class="collection-tile ${folder?'is-folder':'is-study'}" data-collection-id="${v.id}" data-collection-kind="${kind}" draggable="true"><button class="collection-open" title="打开${escape(v.title)}"><span class="collection-art" style="--tile-color:${p.fill};--tile-end:${p.end}">${icon(folder?'folder':'book')}${folder?'':`<span class="collection-monogram">${escape(Array.from(v.title).slice(0,2).join(''))}</span>`}</span><span class="collection-copy"><strong>${escape(v.title)}</strong><span class="collection-summary">${folder?'整理学习主题':escape(v.description||'围绕一个主题阅读与思考')}</span><small>${folder?`${v.folderCount||0} 个文件夹 · ${v.studyCount||0} 个学习集`:`${v.documentCount} 份文档 · ${v.cardCount} 个主题`}</small></span></button><button data-collection-more="${kind}" aria-label="更多操作：${escape(v.title)}" title="更多操作">${icon('more')}</button></article>`;
       }).join('');
       box.querySelector('[data-collection-folder]')?.addEventListener('click',run(e=>this.open(e.currentTarget.dataset.collectionFolder||null)));
       for(const tile of box.querySelectorAll('[data-collection-id]')){const id=tile.dataset.collectionId,kind=tile.dataset.collectionKind;

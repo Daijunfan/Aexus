@@ -1,3 +1,5 @@
+import { EventSummary } from '../../components/EventSummary';
+import { eventPresenter, eventDescription, eventValue } from '../../scheduling/presentation';
 import {AppSelect} from '../../components/AppSelect';
 import { useContext, useEffect, useState } from 'react';
 import { AppearanceTheme, recordAppearanceStyle } from '../../appearance';
@@ -5,7 +7,7 @@ import { TimeGrid } from './TimeGrid';
 import { DateInput } from '../DateInput';
 import { CalendarCheck, ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react';
 import { useWorkspace } from '../../store';
-import { IconButton, PageIcon } from '../../ui';
+import { IconButton } from '../../ui';
 import { readProperty } from '../../model';
 import { visibleColumns } from '../model';
 import {
@@ -33,6 +35,7 @@ export function PlanView({ page, view, rows, updateView, openRow, addRow }: View
     return () => clearInterval(timer);
   }, []);
   const plan = planProjection(page, view, rows, now);
+  const describe = eventPresenter(workspace!, page, view, now);
   const dates = page.database!.columns.filter(isDateProperty);
   const mode = view.planMode || 'week';
   const hasBacklog = view.planShowBacklog ?? (plan.unscheduled.length > 0 || plan.overdue.length > 0);
@@ -98,9 +101,8 @@ export function PlanView({ page, view, rows, updateView, openRow, addRow }: View
             onChange={(event) => complete(row, event.target.checked)}
           />
         )}
-        <button onClick={() => openRow(row.id)}>
-          <PageIcon icon={row.icon} size={14} />
-          <span>{row.title || '无标题'}</span>
+<button onClick={() => openRow(row.id)} title={eventDescription(describe(row))}>
+          <EventSummary info={describe(row)} showWhen={false} />
         </button>
       </div>
       {displayed.length > 0 && (
@@ -109,7 +111,7 @@ export function PlanView({ page, view, rows, updateView, openRow, addRow }: View
             const value = readProperty(row, column, workspace!.pages);
             return value === '' || value === false || (Array.isArray(value) && !value.length) ? null : (
               <span key={column.id} title={column.name}>
-                {Array.isArray(value) ? value.join('、') : String(value)}
+                {eventValue(value, workspace!.pages)}
               </span>
             );
           })}

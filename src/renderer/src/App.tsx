@@ -1,3 +1,6 @@
+import {ConversationNoticeToast} from './components/ConversationNotice'
+import {draftContent as privateDraftContent,reuseDraft} from '../../shared/message-drafts'
+import {SOURCE_VIEW_LABELS} from '../../shared/message-source'
 import {UnreadDivider} from './chat/UnreadDivider'
 import {VoiceRecorder} from './chat/VoiceRecorder'
 import {AudioPlaybackProvider} from './chat/AudioPlayback'
@@ -53,10 +56,10 @@ import {DEFAULT_PREFERENCES,readableThemeAccent,resolveViewAppearance,presentati
 import type { ViewState } from '../../shared/view'
 import {SessionTitle} from './components/SessionTitle'
 import type {CSSProperties} from 'react'
-import { EmployeeForm } from './office/OfficeForms'
+import {EmployeeProfile} from './components/EmployeeProfile'
+import {BackButton} from './components/BackButton'
 import {EmployeeDeleteDialog} from './components/EmployeeDeleteDialog'
 
-const privateDraftContent=(draft:Partial<MessageDraft>)=>JSON.stringify([(draft.text??'').trim(),draft.images??[],draft.files??[],draft.replyTo??null,draft.replyQuote??null,draft.replyConversation??null,!!draft.replyTextOnly])
 export default function App() {
   useI18n()
 
@@ -93,7 +96,7 @@ export default function App() {
   },[presentation,appearance.theme,appearance.themeColor])
   const messageMode=view.kind==='messages'
   const messenger=useMessengerState(messageMode||view.kind==='conversation'),channelCatalog=useChannelCatalog(messageMode)
-  const privateDraftFor=useCallback((id:string,value:Omit<MessageDraft,'updatedAt'>)=>{const previous=messenger.getDraft(conversationKey('employee',id)),same=previous&&privateDraftContent(previous)===privateDraftContent(value);return {...value,clientMessageId:same&&previous.clientMessageId||crypto.randomUUID(),...(same&&previous.viewId?{viewId:previous.viewId}:{})}},[messenger.getDraft])
+  const privateDraftFor=useCallback((id:string,value:Omit<MessageDraft,'updatedAt'>)=>reuseDraft(value,messenger.getDraft(conversationKey('employee',id))),[messenger.getDraft])
   const localPrivateDraft=useCallback((id:string)=>({text:drafts.current[id]??'',images:imageDrafts.current[id]??[],files:fileDrafts.current[id]??[],replyTo:replyDrafts.current[id],replyQuote:quoteDrafts.current[id],replyConversation:originDrafts.current[id]?.conversation,replyTextOnly:originDrafts.current[id]?.textOnly}),[])
   const schedulePrivateDraft=useCallback((id:string,value:Omit<MessageDraft,'updatedAt'>)=>{
     const draft=privateDraftFor(id,value)
@@ -107,6 +110,7 @@ export default function App() {
   const imageInput=useRef<HTMLInputElement>(null),currentEmployee=useRef<string|null>(null),sending=useRef(false)
   const wording=(english:string,chinese:string)=>interfaceLanguage()==='en'?english:chinese
   useEffect(()=>{setMessageSettings(false);setMessageProfile(false);setMessageSearch(false);setAwayFromLatest(false);setReturnToMessage(undefined);messenger.setSelection(null)},[view.employee,view.chatId,view.channelId,view.kind])
+  useEffect(()=>setMessageProfile(false),[view.revision])
   const editingEmployee=!!view.details
   const setEditingEmployee=(enabled:boolean)=>void act('view.details',{enabled})
   const showView=(state:ViewState)=>setView(previous=>state.revision>=previous.revision?state:previous)
@@ -193,12 +197,12 @@ export default function App() {
     return Object.fromEntries(store.sessions.flatMap(card=>{const value=employeeActivity(card,live.get(card.id));return value?[[card.id,value]]:[]}))
   },[sessions,store.sessions])
   const viewedSession=useRef<string|null>(null)
-  const refresh=useMemo(()=>createRefreshQueue(async(configuration,detail)=>{
-    const [saved,live]=await Promise.all([configuration?api.call<Store>('session.list'):Promise.resolve(null),api.call<Session[]>('session.list',{live:true,summary:true})])
+  const refresh=useMemo(()=>createRefreshQueue(async(configuration,detail,status)=>{
+    const [saved,live]=await Promise.all([configuration?api.call<Store>('session.list'):Promise.resolve(null),status?api.call<Session[]>('session.list',{live:true,summary:true}):Promise.resolve(null)])
     const requested=viewedSession.current
-    const snapshot=detail&&requested&&live.some(item=>item.id===requested)?await api.call<Session>('session.snapshot',{id:requested}):undefined
+    const snapshot=detail&&requested&&live?.some(item=>item.id===requested)?await api.call<Session>('session.snapshot',{id:requested}):undefined
     if(saved)setStore(previous=>retainEqual(previous,saved))
-    setSessions(previous=>{
+    if(live)setSessions(previous=>{
       const byId=new Map(previous.map(item=>[item.id,item])),showing=viewedSession.current
       const next=live.map(item=>{
         if(item.id===showing){
@@ -212,14 +216,20 @@ export default function App() {
   }),[])
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
-    let configuration=false,conversation=false
-    const schedule = (full=false,detail=false) => {
-      configuration ||= full;conversation ||= detail
+    let configuration=false,conversation=false,status=false
+    const schedule = (full=false,detail=false,live=true) => {
+      configuration ||= full;conversation ||= detail;status ||= live||detail
       if (timer) return
-      timer = setTimeout(() => { timer = undefined; const full=configuration,detail=conversation;configuration=false;conversation=false;void refresh(full,detail).catch((e) => setError(String(e))) }, 35)
+      timer = setTimeout(() => { timer = undefined; const full=configuration,detail=conversation,live=status;configuration=false;conversation=false;status=false;void refresh(full,detail,live).catch((e) => setError(String(e))) }, 35)
     }
     const showActivity=(state:ManagementActivity)=>setManagementActivity(previous=>state.revision>=previous.revision?state:previous)
-    const off = api.onEvent(event=>{if(event.channel==='management:activity')showActivity(event.payload);else if(event.channel==='view:changed')showView(event.payload);else if(!event.channel.startsWith('terminal:')&&!['plugin:windows','host:health','desktop:visibility','messenger:changed','client:authentication'].includes(event.channel))schedule(event.channel==='store:changed'||event.channel==='hosts:changed',!!viewedSession.current&&event.payload?.sessionId===viewedSession.current)})
+    const off = api.onEvent(event=>{
+      if(event.channel==='management:activity')showActivity(event.payload)
+      else if(event.channel==='view:changed')showView(event.payload)
+      else if(event.channel==='store:changed')schedule(true,false,!event.payload?.changes||event.payload.changes.authority)
+      else if(event.channel==='hosts:changed'||event.channel==='access:changed')schedule(true)
+      else if(event.channel.startsWith('session:'))schedule(false,!!viewedSession.current&&event.payload?.sessionId===viewedSession.current)
+    })
     void api.call<ManagementActivity>('management.activity').then(showActivity).catch(e=>setError(String(e)))
     void api.call<ViewState>('view.get').then(showView).catch(e=>setError(String(e)))
     void refresh().catch((e) => setError(String(e)))
@@ -268,7 +278,8 @@ export default function App() {
     if(replyTo&&value.trim().startsWith('/')){setError(uiText('Cancel the reply before running a command.'));return}
     if(replyTo&&!selectedReply){setError(uiText(replySource&&replyQuote?'Selected text changed. Choose a new quote.':'Original message unavailable. Cancel this reply to send a new message.'));return}
     const text=value.trim(),id=employee?.id,conversation=id?conversationKey('employee',id):undefined,slash=text.startsWith('/'),attached=slash?[]:images,snapshot=id?privateDraftFor(id,{text:input,images,files,replyTo,replyQuote,replyConversation:replyOrigin.conversation,replyTextOnly:replyOrigin.textOnly}):undefined,persistent=!!conversation&&(!slash||messageMode||!!replyTo||!!messenger.getDraft(conversation))
-    if(newRequest){if(slash||!snapshot||!sendRecovery||sendRecovery.employeeId!==id||messenger.getDraft(conversation!)?.clientMessageId!==sendRecovery.clientMessageId||privateDraftContent(snapshot)!==sendRecovery.content)return;snapshot.clientMessageId=crypto.randomUUID();delete snapshot.viewId}
+    if(newRequest){if(slash||!snapshot||!sendRecovery||sendRecovery.employeeId!==id||messenger.getDraft(conversation!)?.clientMessageId!==sendRecovery.clientMessageId||privateDraftContent(snapshot)!==sendRecovery.content)return;snapshot.clientMessageId=crypto.randomUUID();delete snapshot.viewId;delete snapshot.sourceView}
+    if(snapshot&&!slash)snapshot.sourceView??=presentation
     if(snapshot&&!slash&&employee?.managementRole==='governor')snapshot.viewId??=store.activeTeamViewId??'all'
     if(id&&snapshot){drafts.current[id]=snapshot.text;imageDrafts.current[id]=snapshot.images??[];fileDrafts.current[id]=snapshot.files??[];replyDrafts.current[id]=snapshot.replyTo;quoteDrafts.current[id]=snapshot.replyQuote;originDrafts.current[id]={conversation:snapshot.replyConversation,textOnly:snapshot.replyTextOnly}}
     sending.current=true;setError('');setSendRecovery(null)
@@ -276,11 +287,10 @@ export default function App() {
     let cancelMotion:(()=>void)|undefined
     try{
       if(persistent&&snapshot){
-        if(!await messenger.draft(conversation!,snapshot))throw Error('Your draft could not be saved. Try again.')
-        if(messenger.getDraft(conversation!)?.clientMessageId!==snapshot.clientMessageId)throw Error('Draft changed before sending. Review it and try again.')
+        await messenger.prepareSend(conversation!,snapshot)
       }
       cancelMotion=messageMode&&!active.busy&&!slash?prepareMessageSend(text):undefined
-      const sent=await api.call(active.busy?'session.enqueue':'session.send',{id:active.id,text,images:attached,files:slash?[]:files,replyTo,replyQuote,replyConversation:replyOrigin.conversation,replyTextOnly:replyOrigin.textOnly,...(!slash&&snapshot?{clientMessageId:snapshot.clientMessageId}:{}),...(employee?.managementRole==='governor'?{viewId:slash?store.activeTeamViewId??'all':snapshot?.viewId}:{})})
+      const sent=await api.call(active.busy?'session.enqueue':'session.send',{id:active.id,text,sourceView:slash?presentation:snapshot?.sourceView,images:attached,files:slash?[]:files,replyTo,replyQuote,replyConversation:replyOrigin.conversation,replyTextOnly:replyOrigin.textOnly,...(!slash&&snapshot?{clientMessageId:snapshot.clientMessageId}:{}),...(employee?.managementRole==='governor'?{viewId:slash?store.activeTeamViewId??'all':snapshot?.viewId}:{})})
       if(!sent||sent.sent===false){cancelMotion?.();return}
       cancelMotion=undefined
       const retained=slash&&id&&(images.length||files.length)?privateDraftFor(id,{text:'',images,files}):undefined
@@ -311,11 +321,11 @@ export default function App() {
   const prepareMessageSend=useMessageMotion({conversation:messageMode?employee?.id:undefined,ready:messageMode&&!opening&&!!liveActive,items:motionItems,transcript,composer,following:()=>transcriptScroll.current.follow})
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (!e.defaultPrevented && e.key === 'Escape' && active && !(e.target as HTMLElement)?.closest('.xterm')) {if(replyTo)cancelReply();else closeConversation()}
+      if (!e.defaultPrevented && !e.isComposing && e.key === 'Escape' && active && (view.kind==='conversation'||messageMode&&view.employee) && !(e.target as HTMLElement)?.closest('.xterm,[role=dialog]:not(.conversation-dialog),[role=menu]') && ![...document.querySelectorAll<HTMLElement>('[aria-modal=true]:not(.conversation-dialog)')].some(dialog=>!dialog.closest('[inert],[aria-hidden=true]')&&dialog.getClientRects().length)) {e.preventDefault();if(messageMode&&replyTo)cancelReply();else closeConversation()}
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [active?.id, active?.busy, act, replyTo, cancelReply])
+  }, [active?.id, active?.busy, act, replyTo, cancelReply, view.kind, view.employee, messageMode])
   const commands = useMemo(() => {
     if (!active || replyTo || !input.startsWith('/') || /\s/.test(input)) return []
     const term = input.slice(1).toLowerCase()
@@ -339,52 +349,42 @@ export default function App() {
       {!messageMode&&<div className="conversation-backdrop" onClick={closeConversation} />}
       <section className="conversation-dialog" role={messageMode?'region':'dialog'} aria-modal={messageMode?undefined:!view.shared&&!view.pluginId} aria-label={messageMode?uiText("Conversation with {0}",[active.title]):uiText("Conversation with {0}",[active.title])}>
       <main className="main session-main">
-        {messageMode&&employee?<MessageHeader employee={employee} session={liveActive} opening={opening} settings={messageSettings} search={messageSearch} onSearch={()=>setMessageSearch(!messageSearch)} onSettings={()=>setMessageSettings(!messageSettings)} onBack={closeConversation} onWorkspace={()=>openWorkspace()} onProfile={()=>setMessageProfile(!messageProfile)}/>:<header className="toolbar">
-          {editingEmployee&&<button className="inspector-back" onClick={()=>setEditingEmployee(false)}><Icon name="arrow-left"/>  {uiText("Back to conversation")}</button>}
-          <button className="back" title={uiText("Close conversation and keep working")} aria-label={uiText("Close conversation")} onClick={closeConversation}><Icon name="close"/></button>
+        {editingEmployee||view.tools?null:messageMode&&employee?<MessageHeader employee={employee} session={liveActive} opening={opening} settings={messageSettings} search={messageSearch} onSearch={()=>setMessageSearch(!messageSearch)} onSettings={()=>setMessageSettings(!messageSettings)} onBack={closeConversation} onWorkspace={()=>openWorkspace()} onProfile={()=>setMessageProfile(!messageProfile)}/>:<header className="toolbar employee-details-toolbar">
+          <BackButton className="back" label={view.returnTo?.kind==='messages'?'Back to conversation':'Back to company'} ariaLabel="Close conversation" onClick={closeConversation}/>
           <span className="session-heading"><EngineMark engine={active.engine} size={20} /><SessionTitle title={employee?.title??active.title}/><small className="execution-badge" title={employee?.remote?.host}>{employee?.kind==='cloud-native-worker'?uiText("Cloud Native Worker"):uiText("Local Worker")}</small></span>
-          <button className="employee-details" hidden={editingEmployee} onClick={() => setEditingEmployee(true)}>{uiText("Employee details")}</button>
-          <button className="engine-tools-open" disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}>{uiText("Tools and usage")}</button>
-          <button className="employee-clone" disabled={!ENGINE_DEFINITIONS[active.engine].capabilities.clone||active.busy||!!active.approvals?.length||!!active.pendingMessages?.length} onClick={()=>void act('view.open',{kind:'clone',employee:employee?.id??active.cardId})}>{uiText("Clone employee")}</button>
+          <button className="employee-details" aria-label={uiText("Employee details")} title={uiText("Employee details")} onClick={() => setEditingEmployee(true)}><Icon name="account"/><span className="toolbar-action-label">{uiText("Employee details")}</span></button>
+          <button className="engine-tools-open" aria-label={uiText("Tools and usage")} title={uiText("Tools and usage")} disabled={!liveActive} onClick={()=>void act('view.tools',{section:'skills'})}><Icon name="tools"/><span className="toolbar-action-label">{uiText("Tools and usage")}</span></button>
           <span className="session-state"><i className={active.busy?'working':employee?.kind==='cloud-native-worker'&&active.error?'disconnected':''} />{active.busy?uiText("Working"):employee?.kind==='cloud-native-worker'&&active.error?uiText("Connection or execution failed"):uiText("Resting")}</span>
-          <button className="close-session" disabled={!employee} onClick={()=>setDeletingEmployee(employee!.id)} title={uiText("Delete employee and conversation")}>{uiText("Delete conversation")}</button>
+          <details className="employee-more"><summary aria-label={uiText('More employee actions')} title={uiText('More employee actions')}><Icon name="ellipsis"/></summary><div><button className="employee-clone" disabled={!ENGINE_DEFINITIONS[active.engine].capabilities.clone||active.busy||!!active.approvals?.length||!!active.pendingMessages?.length} onClick={()=>void act('view.open',{kind:'clone',employee:employee?.id??active.cardId})}>{uiText("Clone employee")}</button><button className="close-session" disabled={!employee} onClick={()=>setDeletingEmployee(employee!.id)} title={uiText("Delete employee and conversation")}>{uiText("Delete conversation")}</button></div></details>
         </header>}
         {messageMode&&employee&&<MessageSelectionBar conversation={conversationKey('employee',employee.id)} messages={searchItems}/>}
         {messageMode&&employee&&<PinnedMessages conversation={conversationKey('employee',employee.id)}/>}
         {employee&&deletingEmployee===employee.id&&<EmployeeDeleteDialog employee={employee} onCancel={()=>setDeletingEmployee(null)} onRemove={async deleteWorkspace=>{await api.call('card.remove',{id:employee.id,deleteWorkspace});setDeletingEmployee(null);setSelectedCardId(null);setActiveId(null);await act('view.close')}}/>}
         {!!active.approvals?.length&&<div className="agent-requests">{active.approvals?.map(p=><AgentApproval key={p.id} english={messageMode} approval={p} respond={async(decision,answers,form)=>{await api.call('approval.respond',{id:active.id,requestId:p.id,decision,answers,form});await refresh()}}/>)}</div>}
-        {view.tools&&liveActive?<EngineTools id={active.id} section={view.tools} onSection={section=>void act('view.tools',{section})} onClose={()=>void act('view.tools',{section:null})}/>:editingEmployee && employee ? <div className="employee-inspector"><EmployeeForm employee={employee} groups={store.groups} roots={store.teamRoots ?? {}} settings={store.teamSettings} onSave={async (fields) => {
-          const {teamRoot,...patch}=fields
-          if(teamRoot&&teamRoot!==store.teamRoots?.[fields.group])await api.call('group.root',{name:fields.group,root:teamRoot,create:true})
-          const updated=await api.call<Store>('card.update', { id: employee.id, patch })
-          await refresh()
-          const saved=updated.sessions.find(c=>c.id===employee.id)
-          if(!saved)throw new Error('员工已被移除，请重新选择员工')
-          setEditingEmployee(false);await openCard(saved);return true
-        }} onBound={async saved=>{await refresh();setEditingEmployee(false);await openCard(saved)}} /></div> : <ConversationBody messages={messageMode} explorerWidth={store.preferences?.explorerWidth} terminalHeight={store.preferences?.terminalHeight} onAttachImage={attachImage} key={'body-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
+        {view.tools&&liveActive?<EngineTools id={active.id} section={view.tools} onSection={section=>void act('view.tools',{section})} onClose={()=>void act('view.tools',{section:null})}/>:editingEmployee && employee ? <div className="employee-inspector"><EmployeeProfile key={employee.id} employee={employee} store={store} onBack={()=>setEditingEmployee(false)} onWorkspace={()=>setEditingEmployee(false)}/></div> : <ConversationBody messages={messageMode} explorerWidth={store.preferences?.explorerWidth} terminalHeight={store.preferences?.terminalHeight} onAttachImage={attachImage} key={'body-'+(employee?.id??active.id)} employee={employee?.id??active.cardId??active.id}>
         {openError&&<div className="conversation-repair" role="alert"><span>{openError}</span><button onClick={()=>setEditingEmployee(true)}>{wording('Workspace settings','配置工作目录')}</button>{!employee?.workspaceError&&<button onClick={()=>employee&&void openCard(employee)}>{wording('Reconnect','重试连接')}</button>}</div>}
-        {liveActive?<div className="session-settings controls">
-          <span className="engine-readonly" data-control="engine" title={wording('The engine is fixed for this employee','引擎创建后固定；如需更换，请删除员工后重新添加')}>{ENGINE_DEFINITIONS[active.engine].label}</span>
-          <Dropdown control="model" open={menu === 'model'} onToggle={() => setMenu(menu === 'model' ? null : 'model')} onClose={() => setMenu(null)} label={modelLabel} width={330}>
+        {liveActive?<div className="session-settings controls" data-permission={active.permissionMode}>
+          <span className="engine-readonly" data-control="engine" title={wording('The engine is fixed for this employee','引擎创建后固定；如需更换，请删除员工后重新添加')}><EngineMark engine={active.engine} size={15}/>{ENGINE_DEFINITIONS[active.engine].label}</span>
+          <Dropdown control="model" icon={<Icon name="symbol-misc"/>} open={menu === 'model'} onToggle={() => setMenu(menu === 'model' ? null : 'model')} onClose={() => setMenu(null)} label={modelLabel} width={330}>
             {active.models.map((m) => <button className={`menu-item col ${m.value === active.model ? 'sel' : ''}`} key={m.value} disabled={active.busy} onClick={() => { setMenu(null); void configure('config.model', { model: m.value }) }}><span className="menu-name">{m.value === active.model ? '✓ ' : ''}{m.displayName}</span><span className="menu-desc">{m.description||m.value}</span></button>)}
             {!active.models.length && <div className="menu-item">{uiText("Loading models…")}</div>}
           </Dropdown>
-          {work||employee?.remote&&employee.kind!=='cloud-native-worker'?<span className="work-permission" title={active.cwd}>{employee?.remote?uiText("SSH · {0}",[employee.remote.host]):wording('Work · Current workspace','Work · 当前目录及子目录')}</span>:<Dropdown control="perm" open={menu === 'perm'} onToggle={() => setMenu(menu === 'perm' ? null : 'perm')} onClose={() => setMenu(null)} label={permissions.find((p) => p.value === active.permissionMode)?.label ?? active.permissionMode} width={310}>
+          {work||employee?.remote&&employee.kind!=='cloud-native-worker'?<span className="work-permission" data-control="workspace" title={active.cwd}><Icon name={employee?.remote?"remote":"folder"}/>{employee?.remote?uiText("SSH · {0}",[employee.remote.host]):wording('Work · Current workspace','Work · 当前目录及子目录')}</span>:<Dropdown control="perm" icon={<Icon name="shield"/>} open={menu === 'perm'} onToggle={() => setMenu(menu === 'perm' ? null : 'perm')} onClose={() => setMenu(null)} label={permissions.find((p) => p.value === active.permissionMode)?.label ?? active.permissionMode} width={310}>
             {permissions.map((p) => <button key={p.value} className={`menu-item col ${p.value === active.permissionMode ? 'sel' : ''}`} onClick={() => { setMenu(null); void configure('config.permission', { mode: p.value }) }}><span className="menu-name">{uiText(p.label)}</span><span className="menu-desc">{uiText(p.hint)}</span></button>)}
           </Dropdown>}
-          {ENGINE_DEFINITIONS[active.engine].capabilities.effort&&<Dropdown control="effort" open={menu === 'effort'} onToggle={() => setMenu(menu === 'effort' ? null : 'effort')} onClose={() => setMenu(null)} label={`${wording('Reasoning','思考')} · ${uiText(active.effort ?? 'Default')}`} width={190}>
+          {ENGINE_DEFINITIONS[active.engine].capabilities.effort&&<Dropdown control="effort" icon={<Icon name="lightbulb"/>} open={menu === 'effort'} onToggle={() => setMenu(menu === 'effort' ? null : 'effort')} onClose={() => setMenu(null)} label={`${wording('Reasoning','思考')} · ${uiText(active.effort ?? 'Default')}`} width={190}>
             <button className="menu-item" onClick={() => { setMenu(null); void configure('config.effort', { effort: 'default' }) }}>{uiText("Default")}</button>
             {efforts.map(value=><button key={value} className={`menu-item ${value===active.effort?'sel':''}`} onClick={()=>{setMenu(null);void configure('config.effort',{effort:value})}}>{uiText(value)}</button>)}
           </Dropdown>}
           {(active.engine==='cline'||active.engine==='pi')&&<span className="work-permission">{uiText("Thinking off")}</span>}
           {active.thinkingManaged&&<span className="ctl-label">{uiText("Provider-controlled reasoning")}</span>}
-          {active.engine==='claude'&&<button className={`toggle ${active.thinking?'on':''}`} disabled={active.busy||!active.thinkingSupported} onClick={()=>void configure('config.thinking',{enabled:!active.thinking})}>{uiText("Thinking")} {active.thinking?uiText("on"):uiText("off")}</button>}
-          {ENGINE_DEFINITIONS[active.engine].capabilities.plan&&<button className={`toggle ${active.planMode?'on':''}`} data-control="plan" aria-pressed={!!active.planMode} disabled={active.busy} onClick={()=>void configure('config.plan',{enabled:!active.planMode})}>{active.planMode?wording('Plan mode','计划模式'):wording('Act mode','执行模式')}</button>}
-          {employee?.remote&&employee.kind!=='cloud-native-worker'&&active.engine==='codex'&&<button className={`toggle ${active.remoteAdmin?'on':''}`} data-control="remote-admin" aria-pressed={!!active.remoteAdmin} disabled={active.busy} title={wording('Allow administration only on the remote host','仅在远端使用 SSH 用户权限访问硬件和管理服务；不会授权本机执行')} onClick={()=>void configure('config.remote-admin',{enabled:!active.remoteAdmin})}>{active.remoteAdmin?wording('Remote administration: on','远端主机管理：已授权'):wording('Remote administration: off','远端主机管理：关闭')}</button>}
-          {(fastAvailable||active.fastMode)&&<button className={`toggle ${active.fastMode?'on':''}`} data-control="fast" aria-label={wording('Fast mode','Fast 模式')} aria-pressed={!!active.fastMode} disabled={active.busy} onClick={()=>void configure('config.fast',{enabled:!active.fastMode})} title={active.fastModeDisabledReason?uiText("Fast status: {0}",[active.fastModeDisabledReason]):fastTier(model)?.description??uiText("Official Fast mode uses more quota when enabled")}>⚡ {active.fastMode?'Fast'+(fastTier(model)?.description.match(/(\d+(?:\.\d+)?)x/)?.[1]?' · '+fastTier(model)!.description.match(/(\d+(?:\.\d+)?)x/)![1]+'×':''):uiText("Standard")}{active.fastModeState==='cooldown'?wording(' · Cooling down',' · 冷却中'):''}</button>}
-          <span className="cwd" title={active.cwd}>{active.cwd}</span>
+          {active.engine==='claude'&&<button className={`toggle ${active.thinking?'on':''}`} data-control="thinking" aria-pressed={!!active.thinking} disabled={active.busy||!active.thinkingSupported} onClick={()=>void configure('config.thinking',{enabled:!active.thinking})}><Icon name="sparkle"/>{uiText("Thinking")} {active.thinking?uiText("on"):uiText("off")}</button>}
+          {ENGINE_DEFINITIONS[active.engine].capabilities.plan&&<button className={`toggle ${active.planMode?'on':''}`} data-control="plan" aria-pressed={!!active.planMode} disabled={active.busy} onClick={()=>void configure('config.plan',{enabled:!active.planMode})}><Icon name={active.planMode?"checklist":"play"}/>{active.planMode?wording('Plan mode','计划模式'):wording('Act mode','执行模式')}</button>}
+          {employee?.remote&&employee.kind!=='cloud-native-worker'&&active.engine==='codex'&&<button className={`toggle ${active.remoteAdmin?'on':''}`} data-control="remote-admin" aria-pressed={!!active.remoteAdmin} disabled={active.busy} title={wording('Allow administration only on the remote host','仅在远端使用 SSH 用户权限访问硬件和管理服务；不会授权本机执行')} onClick={()=>void configure('config.remote-admin',{enabled:!active.remoteAdmin})}><Icon name="shield"/>{active.remoteAdmin?wording('Remote administration: on','远端主机管理：已授权'):wording('Remote administration: off','远端主机管理：关闭')}</button>}
+          {(fastAvailable||active.fastMode)&&<button className={`toggle ${active.fastMode?'on':''}`} data-control="fast" aria-label={wording('Fast mode','Fast 模式')} aria-pressed={!!active.fastMode} disabled={active.busy} onClick={()=>void configure('config.fast',{enabled:!active.fastMode})} title={active.fastModeDisabledReason?uiText("Fast status: {0}",[active.fastModeDisabledReason]):fastTier(model)?.description??uiText("Official Fast mode uses more quota when enabled")}><Icon name="zap"/>{active.fastMode?'Fast'+(fastTier(model)?.description.match(/(\d+(?:\.\d+)?)x/)?.[1]?' · '+fastTier(model)!.description.match(/(\d+(?:\.\d+)?)x/)![1]+'×':''):uiText("Standard")}{active.fastModeState==='cooldown'?wording(' · Cooling down',' · 冷却中'):''}</button>}
+          <span className="cwd" title={active.cwd}><Icon name="folder-opened"/><span>{active.cwd}</span></span>
         </div>:<div className="session-opening">{opening?wording('Connecting…','正在连接员工…'):wording('Conversation opened. Check the workspace to start messaging.','会话已打开，配置有效工作目录后即可开始。')}</div>}
-        {active.busy&&active.currentTask&&<div className="task-provenance" data-message-id={active.currentTask.messageId}>{wording('Task','任务')} {active.currentTask.messageId.slice(-6)} · {wording('From','来自')} {active.currentTask.delegation.requestedBy.kind==='operator'?wording('You','用户'):store.sessions.find(card=>active.currentTask!.delegation.requestedBy.kind==='agent'&&card.id===active.currentTask!.delegation.requestedBy.employeeId)?.title??uiText("Agent")}{active.currentTask.runId?wording(' · Scheduled task',' · 定时任务'):''}{active.currentTask.viewId?wording(' · Target view: ',' · 目标视图：')+(active.currentTask.viewId==='all'?'All Team':store.teamViews?.find(view=>view.id===active.currentTask!.viewId)?.name??wording('Removed','已删除')):''}</div>}
+        {active.busy&&active.currentTask&&<div className="task-provenance" data-message-id={active.currentTask.messageId} data-source-view={active.currentTask.sourceView}>{wording('Task','任务')} {active.currentTask.messageId.slice(-6)} · {wording('From','来自')} {active.currentTask.delegation.requestedBy.kind==='operator'?wording('You','用户'):store.sessions.find(card=>active.currentTask!.delegation.requestedBy.kind==='agent'&&card.id===active.currentTask!.delegation.requestedBy.employeeId)?.title??uiText("Agent")}{active.currentTask.sourceView?' · '+uiText('Sent from {0} view',[uiText(SOURCE_VIEW_LABELS[active.currentTask.sourceView])]):''}{active.currentTask.runId?wording(' · Scheduled task',' · 定时任务'):''}{active.currentTask.viewId?wording(' · Target view: ',' · 目标视图：')+(active.currentTask.viewId==='all'?'All Team':store.teamViews?.find(view=>view.id===active.currentTask!.viewId)?.name??wording('Removed','已删除')):''}</div>}
         {messageMode&&<ConversationSearch conversation={employee?conversationKey('employee',employee.id):undefined} key={employee?.id} open={messageSearch} onOpen={setMessageSearch} items={searchItems} transcript={transcript} onReveal={revealMessage} onNavigate={gap=>{transcriptScroll.current.follow=gap<4;if(gap<4)transcriptScroll.current.targetTop=transcript.current?.scrollTop;setAwayFromLatest(gap>80)}}/>}
         <MessageGalleryContext.Provider value={{images:galleryImages,history:employee?{conversation:conversationKey('employee',employee.id)}:undefined}}><div className="transcript" ref={transcript} onScroll={event=>{const el=event.currentTarget,gap=el.scrollHeight-el.clientHeight-el.scrollTop;if(Math.abs(el.scrollTop-(transcriptScroll.current.targetTop??-Infinity))>1&&(!messageMode||privatePositioned.current||gap>=4)){transcriptScroll.current.follow=gap<4;if(gap<4)transcriptScroll.current.targetTop=el.scrollTop};if(messageMode)setAwayFromLatest(gap>80)}} onPointerDown={interruptPrivateEntry} onTouchStart={interruptPrivateEntry} onKeyDown={event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key)&&!(event.target as Element).closest('input,textarea,[contenteditable=true]'))interruptPrivateEntry()}} onWheel={event=>{interruptPrivateEntry();if(event.deltaY<0&&event.currentTarget.scrollTop>0)transcriptScroll.current.follow=false}}>
           {!active.items.length && <div className="conversation-empty">{messageMode&&employee?<MessageAvatar employee={employee} large/>:<EngineMark engine={active.engine} size={48}/>}<div className="panel-eyebrow">{uiText("YOUR NEXT IDEA STARTS HERE")}</div><h1>{messageMode?uiText("Message {0}",[active.title]):uiText("What are we building?")}</h1><p>{liveActive?(messageMode?`${active.title} is ready. What would you like to work on?`:`${active.title} 已就绪，说说接下来要做什么。`):opening?wording('Connecting to the workspace…','正在连接工作环境…'):wording('Check the workspace to begin.','检查工作目录后，就可以开始对话。')}</p></div>}
@@ -408,20 +408,21 @@ export default function App() {
               else if (e.key === 'ArrowUp') setCmdIndex((i) => (i + commands.length - 1) % commands.length)
               else { const c = commands[cmdIndex];if(e.key==='Enter'&&(input==='/'+c.name||c.aliases?.includes(input.slice(1))||!c.argumentHint))void send(input==='/'+c.name?input:'/'+c.name);else setInput('/'+c.name+(c.argumentHint?' ':'')) }
             } else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() }
-          }} />{active.busy ? <><button className="send-btn steer" disabled={!ENGINE_DEFINITIONS[active.engine].capabilities.steer||!input.trim()||!!images.length||!!files.length||uploads.pending||!!replyTo} onClick={async()=>{const text=input;if(await act('session.steer',{id:active.id,text})){setInput('');if(employee)delete drafts.current[employee.id]}}}>{wording('Steer','追加')}</button><button className="send-btn enqueue" disabled={uploads.pending||crossReference.loading||!!(replyTo&&!selectedReply)||!input.trim()&&!images.length&&!files.length} onClick={()=>void send()}>{wording('Queue','排队')}</button><button className="send-btn stop" onClick={() => void stop()}>{uiText("■ Stop")}</button></> : <button className="send-btn" disabled={!liveActive||uploads.pending||crossReference.loading||!!(replyTo&&!selectedReply)||(!input.trim()&&!images.length&&!files.length)} onClick={() => void send()} aria-label={uiText("Send message")} title={uiText("Send message")}>{messageMode?<Icon name="arrow-up"/>:"↑"}</button>}</div>
+          }} />{active.busy ? <><button className="send-btn steer" disabled={!ENGINE_DEFINITIONS[active.engine].capabilities.steer||!input.trim()||!!images.length||!!files.length||uploads.pending||!!replyTo} onClick={async()=>{const text=input;if(await act('session.steer',{id:active.id,text,sourceView:presentation})){setInput('');if(employee)delete drafts.current[employee.id]}}}>{wording('Steer','追加')}</button><button className="send-btn enqueue" disabled={uploads.pending||crossReference.loading||!!(replyTo&&!selectedReply)||!input.trim()&&!images.length&&!files.length} onClick={()=>void send()}>{wording('Queue','排队')}</button><button className="send-btn stop" onClick={() => void stop()}>{uiText("■ Stop")}</button></> : <button className="send-btn" disabled={!liveActive||uploads.pending||crossReference.loading||!!(replyTo&&!selectedReply)||(!input.trim()&&!images.length&&!files.length)} onClick={() => void send()} aria-label={uiText("Send message")} title={uiText("Send message")}>{messageMode?<Icon name="arrow-up"/>:"↑"}</button>}</div>
           <div className="composer-foot">{messageMode&&<ComposerTools input={composer} value={input} onChange={changeInput} disabled={!liveActive}/>}<button className="slash-trigger" aria-label={wording('Open slash commands','打开斜杠命令')} title={replyTo?uiText('Cancel the reply before running a command.'):undefined} disabled={!liveActive||!!replyTo} onClick={()=>{setInput('/');composer.current?.focus()}}>{wording('/ Commands','/ 命令')}</button><span>{active.busy ? <span className="status-line"><span className="spinner" />{active.approvals?.length ? uiText("Waiting for permission") : active.activity || uiText("Working…")}</span> : uiText("Enter to send · Shift Enter for a new line")}</span><span>{ENGINE_DEFINITIONS[active.engine].label} · {active.group || uiText("Independent workspace")}</span></div>
         </div>
         </ConversationBody>}
       </main>
       </section>
-      {messageMode&&messageProfile&&employee&&<MessageProfile employee={employee} onClose={()=>setMessageProfile(false)} onWorkspace={()=>openWorkspace()} onEdit={()=>openWorkspace(true)}/>}
+      {messageMode&&messageProfile&&employee&&<MessageProfile employee={employee} store={store} onClose={()=>setMessageProfile(false)} onWorkspace={()=>openWorkspace()} onEdit={()=>openWorkspace(true)}/>}
     </div>
   const audioTitle=useCallback((ref:string)=>{const [kind,id]=ref.split(':');return kind==='group'?chatCatalog.groups.find(group=>group.id===id)?.name??uiText('Former group'):store.sessions.find(card=>card.id===id)?.title??uiText('Former teammate')},[store.sessions,chatCatalog.groups])
   return <MessengerContext.Provider value={messenger}><AudioPlaybackProvider titleFor={audioTitle} onReveal={track=>{messenger.setLibrary(null);void messenger.navigate({conversation:track.conversation,id:track.messageId})}}><div className={`app in-office ${view.pluginId?'in-plugin':''} ${messageMode?'in-messages':''}`} data-resizing={sidebarDraft!==undefined} style={{'--shared-width':view.shared?'320px':'0px','--directory-width':`clamp(56px, ${sidebarDraft??store.preferences?.sidebarWidth??DEFAULT_PREFERENCES.sidebarWidth}px, 96px)`} as CSSProperties}>
     <HomeView underHeader={<AudioDock/>} groupUnread={chatCatalog.groups.filter(group=>group.unread).length} store={store} view={view} interactions={managementActivity.interactions} activities={activities} busyIds={busyIds} disconnectedIds={disconnectedIds} onResize={setSidebarDraft} onOpen={showEmployee} act={act}>
-      {messageMode?<MessageView store={store} channels={channelCatalog.channels} channelId={view.channelId} onChannel={id=>void act('view.open',{kind:'messages',channelId:id})} groups={chatCatalog.groups} groupId={view.chatId} onGroup={id=>void act('view.open',{kind:'messages',chatId:id})} sessions={sessions} selectedId={view.employee} drafts={drafts.current} onNew={()=>void act('view.open',{kind:'employee'})} onOpen={card=>void act('view.open',{kind:employeeReady(card)?'messages':'initialization',employee:card.id})}>{view.channelId?(channelCatalog.channels.find(channel=>channel.id===view.channelId)?<ChannelConversation key={view.channelId} store={store} channel={channelCatalog.channels.find(channel=>channel.id===view.channelId)!} onBack={closeConversation}/>:<div className="message-welcome"><h2>{channelCatalog.ready?uiText('Channel unavailable'):uiText('Loading channel…')}</h2><p>{channelCatalog.error}</p><button onClick={closeConversation}>{uiText('Back to conversations')}</button></div>):view.chatId?(chatCatalog.groups.find(group=>group.id===view.chatId)?<GroupConversation key={view.chatId} group={chatCatalog.groups.find(group=>group.id===view.chatId)!} store={store} drafts={groupDrafts.current} onBack={closeConversation} onPrivate={id=>void act('view.open',{kind:'conversation',employee:id})}/>:<div className="message-welcome"><h2>{chatCatalog.ready?uiText("Group unavailable"):uiText("Loading group…")}</h2><p>{chatCatalog.error}</p><button onClick={closeConversation}>{uiText("Back to conversations")}</button></div>):conversation||undefined}</MessageView>:view.kind==='plan'?<PlanView store={store} view={view} act={act}/>:undefined}
+      {messageMode?<MessageView store={store} channels={channelCatalog.channels} channelId={view.channelId} sourceId={view.sourceId} onChannel={(id,sourceId)=>void act('view.open',{kind:'messages',channelId:id,...(sourceId?{sourceId}:{})})} groups={chatCatalog.groups} groupError={chatCatalog.error} onRefresh={()=>{void chatCatalog.refresh();void channelCatalog.refresh()}} groupId={view.chatId} onGroup={id=>void act('view.open',{kind:'messages',chatId:id})} sessions={sessions} selectedId={view.employee} drafts={drafts.current} onNew={()=>void act('view.open',{kind:'employee'})} onOpen={card=>void act('view.open',{kind:employeeReady(card)?'messages':'initialization',employee:card.id})}>{view.channelId?(channelCatalog.channels.find(channel=>channel.id===view.channelId)?<ChannelConversation key={view.channelId+'/'+(view.sourceId??'')} sourceId={view.sourceId} store={store} channel={channelCatalog.channels.find(channel=>channel.id===view.channelId)!} onBack={closeConversation}/>:<div className="message-welcome"><h2>{channelCatalog.ready?uiText('Channel unavailable'):uiText('Loading channel…')}</h2><p>{channelCatalog.error}</p><button onClick={closeConversation}>{uiText('Back to conversations')}</button></div>):view.chatId?(chatCatalog.groups.find(group=>group.id===view.chatId)?<GroupConversation key={view.chatId} group={chatCatalog.groups.find(group=>group.id===view.chatId)!} store={store} drafts={groupDrafts.current} onBack={closeConversation} onPrivate={id=>void act('view.open',{kind:'conversation',employee:id})}/>:<div className="message-welcome"><h2>{chatCatalog.ready?uiText("Group unavailable"):uiText("Loading group…")}</h2><p>{chatCatalog.error}</p><button onClick={closeConversation}>{uiText("Back to conversations")}</button></div>):conversation||undefined}</MessageView>:view.kind==='plan'?<PlanView store={store} view={view} act={act}/>:undefined}
     </HomeView>
     {!messageMode&&conversation}
     {error&&error!==sendRecovery?.error&&<div className="app-error" role="alert">{error}<button onClick={()=>setError('')} aria-label={uiText("Dismiss error")}>×</button></div>}
+    <ConversationNoticeToast/>
   </div></AudioPlaybackProvider></MessengerContext.Provider>
 }

@@ -1,3 +1,11 @@
+import {requireConversation,conversationPolicy,moderateConversation,controlChanged} from './conversation-policy'
+import {groupRole,type NoticeReceipt} from '../shared/conversation-controls'
+import {conversationFileEndpoint,workspaceForMember} from './conversation-workspaces'
+import {WORKSPACE_FILE_PREFIX,sharedUploadNotice} from '../shared/conversation-workspaces'
+import {removeIndexedConversation} from './message-index-client'
+import {SingleFlight} from './single-flight'
+import {nextDelivery,routeRecipients} from './delivery'
+import {fileVersion} from './read-cache'
 import fs from 'node:fs'
 import {workspaceFiles} from './files'
 import {attachmentPaths,attachmentInfo,type MessageAttachment} from '../shared/message-attachments'
@@ -10,7 +18,7 @@ import {authorize,callerEmployee,requestContext,delegationFor,validateDelegation
 import {employeeReady} from '../shared/types'
 import {taskViewId} from './task-view'
 import type {Delegation,PrincipalRef} from '../shared/management'
-import {GROUP_PUBLISH_POLICY,effectiveChatMute,type ChatGroup,type ChatGroupView,type ChatMessage,type ChatDelivery,type ChatTaskContext,type ChatAcknowledgment,type ChatAcknowledgmentPolicy} from '../shared/chat-groups'
+import {GROUP_PUBLISH_POLICY,effectiveChatMute,emptyAgentPost,type ChatGroup,type ChatGroupView,type ChatMessage,type ChatDelivery,type ChatTaskContext,type ChatAcknowledgment,type ChatAcknowledgmentPolicy} from '../shared/chat-groups'
 export {effectiveChatMute} from '../shared/chat-groups'
 import {directory,indexFile,catalog,groupId,historyFile,messages,type Catalog} from './chat-group-store'
 const idString=(value:unknown,label:string)=>{if(typeof value!=='string'||!value.trim()||value!==value.trim())throw Error('Provide a valid '+label);return value}
@@ -20,12 +28,12 @@ const operator=()=>{if(requestContext().principal.kind!=='operator')throw Error(
 const fields=(args:Record<string,any>,allowed:string[])=>{for(const key of Object.keys(args))if(args[key]!==undefined&&!allowed.includes(key))throw Error('Unknown chat field: '+key)}
 function requireGroup(id:unknown,administrative=false){
  const group=catalog().groups.find(group=>group.id===groupId(id));if(!group)throw Error('Unknown chat group')
- const caller=callerEmployee();if(caller&&!group.memberIds.includes(caller.id)&&!(administrative&&isAppAdministrator()))throw Error('Not a member of this chat group')
+ const caller=callerEmployee();if(caller&&!group.memberIds.includes(caller.id))throw Error('Not a member of this chat group')
  return group
 }
 function project(group:ChatGroup):ChatGroupView{
  const cards=readStore().sessions.filter(card=>!card.deleting&&group.memberIds.includes(card.id))
- return {...group,memberIds:cards.map(card=>card.id),members:cards.map(card=>({id:card.id,title:card.title,group:card.group,managementRole:card.managementRole??'employee',avatar:card.avatar,engine:card.engine,mutedUntil:effectiveChatMute(group,card.id)})),unread:group.lastIncomingSequence>group.readSequence}
+ return {...group,memberIds:cards.map(card=>card.id),members:cards.map(card=>({conversationRole:groupRole(group,card.id),id:card.id,title:card.title,group:card.group,managementRole:card.managementRole??'employee',avatar:card.avatar,engine:card.engine,mutedUntil:effectiveChatMute(group,card.id)})),unread:group.lastIncomingSequence>group.readSequence}
 }
 function mutateGroup(id:string,change:(group:ChatGroup)=>void){
  const store=catalog(),group=store.groups.find(group=>group.id===id);if(!group)throw Error('Unknown chat group')
@@ -39,33 +47,32 @@ function memberIds(input:unknown,teams:unknown=[]){
  for(const id of ids)if(!store.sessions.some(card=>card.id===id&&!card.deleting))throw Error('Unknown employee: '+id)
  return ids
 }
-export function listChatGroups(){authorize('chat.list');const caller=callerEmployee(),administrator=isAppAdministrator();return catalog().groups.filter(group=>administrator||!caller||group.memberIds.includes(caller.id)).map(project)}
+export function listChatGroups(){authorize('chat.list');const caller=callerEmployee();return catalog().groups.filter(group=>!caller||group.memberIds.includes(caller.id)).map(project)}
 export function getChatGroup(id:unknown){authorize('chat.get');return project(requireGroup(id,true))}
 export function createChatGroup(args:Record<string,any>){
- authorize('chat.create');requireAppAdministrator();fields(args,['name','members','team'])
+ authorize('chat.create');fields(args,['name','members','team','ownerId'])
  const name=idString(args.name,'group name');if(name.length>80)throw Error('Group name is too long')
  const ids=memberIds(args.members??[],args.team===undefined?[]:[args.team]);if(!ids.length)throw Error('Choose at least one employee')
- const now=Date.now(),group:ChatGroup={id:'cg_'+randomUUID(),name,memberIds:ids,sourceTeam:args.team,createdAt:now,updatedAt:now,revision:1,readSequence:0,lastIncomingSequence:0}
+ const principal=requestContext().principal,ownerId=args.ownerId??(principal.kind==='agent'?principal.employeeId:ids[0]);if(!ids.includes(ownerId))throw Error('Choose an Owner from the selected Agent members');if(principal.kind==='agent'&&ownerId!==principal.employeeId)throw Error('Agent creators must be their new group Owner')
+ const now=Date.now(),group:ChatGroup={id:'cg_'+randomUUID(),ownerId,adminIds:[],name,memberIds:ids,sourceTeam:args.team,createdAt:now,updatedAt:now,revision:1,readSequence:0,lastIncomingSequence:0}
  const store=catalog();store.groups.push(group);atomicJson(indexFile,store,true);emit(group.id);return project(group)
 }
 export function updateChatGroup(args:Record<string,any>){
- authorize('chat.update');requireAppAdministrator();fields(args,['id','name','members','addTeams','expectedRevision']);const current=requireGroup(args.id,true)
+ authorize('chat.update',{id:args.id});requireConversation('group:'+args.id,'admin');fields(args,['id','name','members','addTeams','expectedRevision']);const current=requireGroup(args.id,true)
  if(args.expectedRevision!==undefined&&args.expectedRevision!==current.revision)throw Error('Group changed; reload before saving')
  const name=args.name===undefined?current.name:idString(args.name,'group name');if(name.length>80)throw Error('Group name is too long')
  const ids=memberIds(args.members??project(current).memberIds,args.addTeams??[])
- return project(mutateGroup(current.id,group=>{group.name=name;group.memberIds=ids}))
+ if(current.ownerId&&current.memberIds.includes(current.ownerId)&&readStore().sessions.some(card=>card.id===current.ownerId&&!card.deleting)&&!ids.includes(current.ownerId))throw Error('Transfer ownership before removing the Owner')
+ const result=project(mutateGroup(current.id,group=>{group.name=name;group.memberIds=ids;group.adminIds=group.adminIds?.filter(id=>ids.includes(id));group.mutes=Object.fromEntries(Object.entries(group.mutes??{}).filter(([id])=>id==='all'||ids.includes(id)))}));controlChanged('group:'+current.id);return result
 }
 export function muteChatMember(args:Record<string,any>){
- authorize('chat.mute');requireAppAdministrator();fields(args,['id','member','muted','durationSeconds']);const group=requireGroup(args.id,true),member=idString(args.member,'member ID or all')
- if(member!=='all'&&!group.memberIds.includes(member))throw Error('Employee is not a group member')
- if(typeof args.muted!=='boolean')throw Error('Specify whether the member is muted')
- if(args.durationSeconds!==undefined&&(!args.muted||!Number.isSafeInteger(args.durationSeconds)||args.durationSeconds<=0||!Number.isSafeInteger(Date.now()+args.durationSeconds*1000)))throw Error('Mute duration must be a positive number of seconds')
- return project(mutateGroup(group.id,value=>{value.mutes??={};if(args.muted)value.mutes[member]=args.durationSeconds===undefined?null:Date.now()+args.durationSeconds*1000;else delete value.mutes[member];if(!Object.keys(value.mutes).length)delete value.mutes}))
+ authorize('chat.mute',{id:args.id});fields(args,['id','member','muted','durationSeconds','expectedRevision'])
+ const current=requireConversation('group:'+args.id,'admin');moderateConversation({conversation:current.conversation,member:args.member,muted:args.muted,durationSeconds:args.durationSeconds,expectedRevision:args.expectedRevision??current.revision});return project(requireGroup(args.id))
 }
 export function deleteChatGroup(id:unknown){
- authorize('chat.delete');requireAppAdministrator();const group=requireGroup(id,true),store=catalog();store.groups=store.groups.filter(item=>item.id!==group.id)
+ authorize('chat.delete',{id});requireConversation('group:'+id,'owner');const group=requireGroup(id,true),store=catalog();store.groups=store.groups.filter(item=>item.id!==group.id)
  // Keep the conversation file recoverable; employees and private histories are untouched.
- atomicJson(indexFile,store,true);emit(group.id);return {removed:true,id:group.id}
+ atomicJson(indexFile,store,true);removeIndexedConversation('group:'+group.id);emit(group.id);controlChanged('group:'+group.id);return {removed:true,id:group.id}
 }
 /** Uploaded group media stays separate from every employee workspace. */
 export function groupMediaRoot(id:unknown){
@@ -74,20 +81,22 @@ export function groupMediaRoot(id:unknown){
  return fs.realpathSync(root)
 }
 export function groupAttachment(args:Record<string,any>){
- authorize('chat.file',args);const root=groupMediaRoot(args.id)
+ authorize('chat.file',args);const shared=typeof args.path==='string'&&args.path.startsWith(WORKSPACE_FILE_PREFIX)?conversationFileEndpoint('group:'+args.id,args.path):undefined;const root=shared?.root??groupMediaRoot(args.id)
  if(typeof args.path!=='string'||!args.path)throw Error('Choose a group attachment')
  if(requestContext().principal.kind!=='operator'&&!messages(String(args.id)).some(message=>message.attachments?.some(file=>file.path===args.path)))throw Error('Only published group attachments are readable')
  const operation=args.operation??'info'
  if(!['info','image','read','chunk'].includes(operation))throw Error('Unknown attachment operation')
- return workspaceFiles(root,({info:'copy-info',image:'read-image',read:'read',chunk:'copy-read'} as Record<string,string>)[operation],{path:args.path,offset:Number(args.offset??0),length:262144})
+ return workspaceFiles(root,({info:'copy-info',image:'read-image',read:'read',chunk:'copy-read'} as Record<string,string>)[operation],{path:shared?.path??args.path,offset:Number(args.offset??0),length:262144})
 }
 function groupAttachments(id:string,images:unknown,files:unknown):MessageAttachment[]{
  const photos=attachmentPaths(images),documents=attachmentPaths(files)
  if(photos.length+documents.length>16)throw Error('Choose at most 16 attachments')
  if(!photos.length&&!documents.length)return []
  operator();const root=groupMediaRoot(id)
- return [...photos.map(path=>attachmentInfo(path,workspaceFiles(root,'copy-info',{path}),'image',workspaceFiles(root,'read-image',{path}).mimeType)),...documents.map(path=>attachmentInfo(path,workspaceFiles(root,'copy-info',{path})))]
+ const file=(value:string,kind:'image'|'file')=>{const end=value.startsWith(WORKSPACE_FILE_PREFIX)?conversationFileEndpoint('group:'+id,value):{root,path:value};return attachmentInfo(value,workspaceFiles(end.root,'copy-info',{path:end.path}),kind,kind==='image'?workspaceFiles(end.root,'read-image',{path:end.path}).mimeType:undefined)}
+ return [...photos.map(value=>file(value,'image')),...documents.map(value=>file(value,'file'))]
 }
+export function chatMessagesVersion(id:unknown){authorize('chat.history');return fileVersion(historyFile(requireGroup(id,true).id))}
 export function readChatMessages(id:unknown){authorize('chat.history');return messages(requireGroup(id,true).id)}
 export function chatHistory(args:Record<string,any>){
  authorize('chat.history');fields(args,['id','before','limit','around']);const group=requireGroup(args.id,true),limit=args.limit??50,before=args.before??Infinity
@@ -114,7 +123,8 @@ function append(group:ChatGroup,args:Record<string,any>,targets:string[],kind:Ch
  const all=messages(group.id),quote=args.replyQuote===undefined?undefined:quoteShape(args.replyQuote),fingerprint=createHash('sha256').update(JSON.stringify([text,broadcast?[]:[...targets].sort(),kind,args.replyTo??null,args.viewId??null,...(quote?[quote]:[]),...(args.replyConversation?[args.replyConversation,!!args.replyTextOnly]:[]),...(attachments.length?[attachments.map(file=>[file.path,file.bytes,file.kind])]:[])])).digest('hex')
  const previous=all.find(message=>message.clientMessageId===clientMessageId&&authorEquals(message.author,principal))
  if(previous){if(previous.fingerprint!==fingerprint)throw Error('Client message ID already used with different content');return {message:previous,created:false}}
- if(principal.kind==='agent'&&effectiveChatMute(group,principal.employeeId)!==undefined)throw Error('You are muted in this group; use chat.post --silent to acknowledge a request')
+ if(principal.kind==='agent'&&emptyAgentPost(args.text))throw Error('Public replies require nonempty text, not null/undefined. To remain silent, do not call the publication API')
+  if(principal.kind==='agent'&&effectiveChatMute(group,principal.employeeId)!==undefined)throw Error('You are muted in this group; reading and private work remain available')
  if(args.crossReply&&principal.kind!=='operator')throw Error('Only the user may quote another conversation')
  const original=args.replyTo===undefined||args.crossReply?undefined:all.find(message=>message.id===args.replyTo)
  if(args.replyTo!==undefined&&!args.crossReply&&!original)throw Error('Unknown group reply target')
@@ -145,7 +155,7 @@ export function editChatMessage(args:Record<string,any>):ChatMessage{
 }
 function acknowledgmentPolicy(group:ChatGroup,message:ChatMessage,delivery:ChatDelivery):ChatAcknowledgmentPolicy{
  const muted=effectiveChatMute(group,delivery.employeeId)!==undefined
- return {mode:delivery.mode??'work',required:message.acknowledgmentOf?'silent-only':'silent-or-visible',acknowledged:delivery.readAt!==undefined,muted,deliveredAt:delivery.deliveredAt,readAt:delivery.readAt,ackMessageId:delivery.ackMessageId}
+ return {mode:delivery.mode??'work',required:'silent-only',acknowledged:delivery.readAt!==undefined,muted,deliveredAt:delivery.deliveredAt,readAt:delivery.readAt,ackMessageId:delivery.ackMessageId}
 }
 /** Read-only policy for the execution gate; reading context is not itself an acknowledgment. */
 export function chatAcknowledgmentPolicy(context:ChatTaskContext,employeeId:string):ChatAcknowledgmentPolicy{
@@ -165,10 +175,7 @@ export function postChatMessage(args:Record<string,any>,acknowledgment=false,pre
  authorize('chat.post');fields(args,['id','text','kind','replyTo','replyQuote','replyConversation','replyTextOnly','crossReply','images','files','clientMessageId']);const group=requireGroup(args.id),kind=args.kind??'summary'
  if(kind==='message')operator();else if(!GROUP_PUBLISH_POLICY.kinds.includes(kind))throw Error('Use summary, decision, blocker, question or result')
  const principal=requestContext().principal
- if(args.text===null){
-  fields(args,['id','text','replyTo','kind','clientMessageId']);messageKey(args.clientMessageId);if(principal.kind!=='agent')throw Error('Only a routed employee can acknowledge a group request')
-  return acknowledgeDelivery(group,args.replyTo,principal.employeeId)
- }
+ if(args.text===null)throw Error('Null publication is not supported. Core records receipts; to remain silent, do not call chat.post')
  const appended=append(group,args,[],kind,false,[],acknowledgment),message=appended.message
  if(principal.kind==='agent'&&args.replyTo&&!args.crossReply&&messages(group.id).some(item=>item.id===args.replyTo&&item.deliveries.some(delivery=>delivery.employeeId===principal.employeeId)))acknowledgeDelivery(group,args.replyTo,principal.employeeId,message.id)
  if(appended.created)void routeChatMessage(group,message,new Map(),new Map(),prepare).catch(error=>console.error('[Group publication delivery failed]',(error as Error).message))
@@ -184,20 +191,14 @@ export function chatContext(args:Record<string,any>){
  authorize('chat.context');fields(args,['id','messageId']);const group=project(requireGroup(args.id,true)),all=messages(group.id)
  const message=args.messageId===undefined?undefined:all.find(message=>message.id===args.messageId);if(args.messageId!==undefined&&!message)throw Error('Unknown group message')
  const caller=callerEmployee(),delivery=caller&&message?.deliveries.find(delivery=>delivery.employeeId===caller.id)
- return {group,message,policy:GROUP_PUBLISH_POLICY,...(message&&delivery?{acknowledgment:acknowledgmentPolicy(group,message,delivery)}:{}),recentMessages:all.slice(-20),privateDetails:'Use the original employee conversation for full work details. Group membership never grants access to other private conversations.'}
+ return {group,message,...(!caller||group.memberIds.includes(caller.id)?{workspace:workspaceForMember('group:'+group.id,caller?.id)}:{}),policy:GROUP_PUBLISH_POLICY,...(message&&delivery?{acknowledgment:acknowledgmentPolicy(group,message,delivery)}:{}),recentMessages:all.slice(-20),privateDetails:'Use the original employee conversation for full work details. Group membership never grants access to other private conversations.'}
 }
 export function updateChatDelivery(employeeId:string,context:ChatTaskContext|undefined,patch:Partial<ChatDelivery>,onlyPending=false){
  if(!context||!catalog().groups.some(group=>group.id===context.groupId))return
  const all=messages(context.groupId),message=all.find(item=>item.id===context.messageId),delivery=message?.deliveries.find(item=>item.employeeId===employeeId)
  if(!delivery)return
- if(delivery.deliveredAt!==undefined&&patch.deliveredAt!==undefined&&Object.keys(patch).length===1)return
- if(['completed','failed','interrupted'].includes(delivery.status)){
-  if(delivery.deliveredAt!==undefined||patch.deliveredAt===undefined)return
-  delivery.deliveredAt=patch.deliveredAt
- }else{
-  if(onlyPending&&!['pending','routing'].includes(delivery.status))return
-  Object.assign(delivery,patch,{employeeId,deliveredAt:delivery.deliveredAt??patch.deliveredAt,readAt:delivery.readAt??patch.readAt,ackMessageId:delivery.ackMessageId??patch.ackMessageId})
- }
+ const next=nextDelivery(delivery,patch,onlyPending);if(!next)return
+ Object.assign(delivery,next)
  atomicJson(historyFile(context.groupId),all,true);emit(context.groupId,undefined,context.messageId)
 }
 /** Group context reaches only a frozen recipient's existing session, with the original sender. */
@@ -213,38 +214,25 @@ export function chatTaskPrompt(context:ChatTaskContext|undefined,employeeId:stri
  const reply=message.reply??(original?{id:original.id,author:original.author,authorName:original.authorName,text:message.replyQuote?.text??original.text,...(message.replyQuote?{quote:message.replyQuote}:{})}:undefined)
  const base='[Group request]\n'+JSON.stringify({conversationType:'group',conversationId:group.id,groupId:group.id,groupName:group.name,messageId:message.id,sequence:message.sequence,sender:message.authorName,author:message.author,createdAt:message.createdAt,broadcast:!!message.broadcast,addressedTo,directlyAddressed:addressedTo.includes(employeeId),acknowledgment:chatAcknowledgmentPolicy(context,employeeId),...(reply?{replyTo:message.replyTo,reply}:{})})+'\n'+text
  if(reading)return base
- return base+'\n\n[Group reporting]\n'+GROUP_PUBLISH_POLICY.guidance+'\nUse agents chat context '+group.id+' --message '+message.id+' --json for shared context. For earlier public messages use agents chat history '+group.id+' --before '+message.sequence+' --limit 50 --json; choose 1–100 per page and use nextBefore as --before for older pages. recentMessages is only the latest 20 discussions. If acknowledgment.acknowledged is true, continue with the user request without another receipt. After the reading stage, publish your actual reply with agents chat post '+group.id+' --reply-to '+message.id+' --text "Your reply to the conversation" --json. Keep private reasoning and tool details in this employee conversation. Do not treat group membership as permission to control other employees.'
+ return base+'\n\n[Group reporting]\n'+GROUP_PUBLISH_POLICY.guidance+'\n[Shared workspace]\n'+JSON.stringify(workspaceForMember('group:'+group.id,employeeId))+'\nUse agents conversation file '+JSON.stringify('group:'+group.id)+' --operation list --json to inspect shared files. Use your memberDirectory for modifications; your personal Workspace remains available.\nUse agents chat context '+group.id+' --message '+message.id+' --json for shared context. For earlier public messages use agents chat history '+group.id+' --before '+message.sequence+' --limit 50 --json; choose 1–100 per page and use nextBefore as --before for older pages. recentMessages is only the latest 20 discussions. No acknowledgment API is needed. Only when a public reply is useful, explicitly publish it with agents chat post '+group.id+' --reply-to '+message.id+' --text "Your reply to the conversation" --json. Keep private reasoning and tool details in this employee conversation. Do not treat group membership as permission to control other employees.'
 }
 type PrepareGroupAttachments=(employee:string,groupId:string,message:ChatMessage)=>Promise<{images:string[];files:string[]}>
-const sending=new Map<string,Promise<ChatMessage>>()
-/** Work preserves sender authority; public context has a separate exact-message capability. */
+const sending=new SingleFlight<ChatMessage>()
+/** The shared lifecycle retains this source's membership, attachments and work policy. */
 function routeChatMessage(group:ChatGroup,message:ChatMessage,delegations:Map<string,Delegation>,targetViews:Map<string,string|undefined>,prepare?:PrepareGroupAttachments):Promise<ChatMessage>{
- const existing=sending.get(message.id);if(existing)return existing
  const caller=requestContext(),context={groupId:group.id,messageId:message.id}
- const work=(async()=>{
-  const {startSession,enqueueMessage}=await import('./sessions');let cursor=0
-  const route=async()=>{while(cursor<message.deliveries.length){const delivery=message.deliveries[cursor++],id=delivery.employeeId
-   const delegation=delegations.get(id)??{requestedBy:message.author,requestId:caller.requestId,credentialHash:caller.credentialHash,groupNotice:{...context,employeeId:id}}
-   try{
-    updateChatDelivery(id,context,{status:'routing'})
-    validateDelegation(delegation,id);chatTaskPrompt(context,id,delegation,message.text)
-    const opened=await startSession({cardId:id,delegation})
-    validateDelegation(delegation,id);chatTaskPrompt(context,id,delegation,message.text)
-    if(message.attachments?.length&&!prepare)throw Error('Group attachment delivery is unavailable')
-    const assets=message.attachments?.length?await prepare!(id,group.id,message):{images:[],files:[]}
-    validateDelegation(delegation,id);chatTaskPrompt(context,id,delegation,message.text)
-    const entry=enqueueMessage(opened.sessionId,message.text,assets.images,delegation,targetViews.get(id),context,undefined,undefined,undefined,assets.files)
-    updateChatDelivery(id,context,{status:'queued',sessionId:opened.sessionId,queueId:entry.id},true)
-   }catch(error){updateChatDelivery(id,context,{status:'failed',error:(error as Error).message})}
-  }}
-  await Promise.all(Array.from({length:Math.min(3,message.deliveries.length)},route))
+ return sending.run(message.id,async()=>{
+  await routeRecipients({context,recipients:message.deliveries,concurrency:3,
+   scope:target=>({delegation:delegations.get(target.employeeId)??{requestedBy:message.author,requestId:caller.requestId,credentialHash:caller.credentialHash,groupNotice:{...context,employeeId:target.employeeId}},viewId:targetViews.get(target.employeeId)}),
+   validate:(id,delegation)=>{validateDelegation(delegation,id);chatTaskPrompt(context,id,delegation,message.text)},
+   input:()=>({text:sharedUploadNotice(message.text,message.attachments)}),
+
+   update:(id,patch,onlyPending)=>updateChatDelivery(id,context,patch,onlyPending)
+  })
   return messages(group.id).find(item=>item.id===message.id)!
- })()
- sending.set(message.id,work)
- void work.finally(()=>sending.delete(message.id)).catch(()=>{})
- return work
+ })
 }
-export async function sendChatMessage(args:Record<string,any>,prepare:PrepareGroupAttachments):Promise<ChatMessage>{
+export async function sendChatMessage(args:Record<string,any>,prepare?:PrepareGroupAttachments):Promise<ChatMessage>{
  authorize('chat.send');fields(args,['id','text','mentions','clientMessageId','viewId','replyTo','replyQuote','replyConversation','replyTextOnly','crossReply','images','files'])
  const group=project(requireGroup(args.id)),mention=args.mentions??[]
  if(mention!=='all'&&(!Array.isArray(mention)||mention.some(id=>typeof id!=='string')))throw Error('Mentions must be employee IDs or all')
@@ -290,4 +278,14 @@ export function recoverChatDeliveries(){
   }
  }catch(error){console.error('[Group history unavailable]',group.id,(error as Error).message)}}
  if(indexChanged)atomicJson(indexFile,store,true)
+}
+
+/** Static notice publication never routes employee deliveries or invokes an engine. */
+export function publishGroupNotice(id:string,text:string,publisherId:string,notice:NoticeReceipt){
+ const group=requireConversation('group:'+id,'admin',{kind:'agent',employeeId:publisherId}).group!,all=messages(id),messageId='gm_'+notice.occurrenceId
+ let message=all.find(message=>message.id===messageId)
+ if(!message){const card=readStore().sessions.find(card=>card.id===publisherId&&!card.deleting)!;message={id:messageId,sequence:(all.at(-1)?.sequence??0)+1,createdAt:Date.now(),author:{kind:'agent',employeeId:publisherId},authorName:card.title,text,kind:'message',mentions:[],deliveries:[],notice,clientMessageId:notice.occurrenceId,fingerprint:createHash('sha256').update(text).digest('hex')};atomicJson(historyFile(id),[...all,message],true)}
+ const published=message
+ if(!group.lastMessage||group.lastMessage.sequence<published.sequence)mutateGroup(id,value=>{value.lastMessage={id:published.id,sequence:published.sequence,text:published.text.slice(0,240),createdAt:published.createdAt,authorName:published.authorName,author:published.author};value.lastIncomingSequence=Math.max(value.lastIncomingSequence,published.sequence)})
+ emit(id,undefined,messageId);return published
 }

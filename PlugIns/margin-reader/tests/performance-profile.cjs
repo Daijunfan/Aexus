@@ -16,7 +16,7 @@ async function main(){
   const report={label,size,environment:{node:process.version,platform:process.platform,arch:process.arch,cpus:os.cpus()[0]?.model},metrics:{},browserErrors:[]};
   const timed=async(name,fn,n=5)=>{const times=[];for(let i=0;i<n;i++){const t=performance.now();await fn();times.push(+(performance.now()-t).toFixed(2));}const sort=[...times].sort((a,b)=>a-b);report.metrics[name]={samplesMs:times,medianMs:sort[Math.floor(n/2)],maxMs:sort.at(-1)};};
   try{
-    const set=await rpc('study.create',{title:'Synthetic performance library'}),file=path.join(workspace,'.margin-reader/state.json'),state=JSON.parse(await fs.readFile(file,'utf8')),s=state.studySets[set.id],ids=Array.from({length:size},()=>randomUUID()),now=new Date().toISOString();
+    const set=await rpc('study.create',{mapMode:'cards',title:'Synthetic performance library'}),file=path.join(workspace,'.margin-reader/state.json'),state=JSON.parse(await fs.readFile(file,'utf8')),s=state.studySets[set.id],ids=Array.from({length:size},()=>randomUUID()),now=new Date().toISOString();
     s.cards=ids.map((id,i)=>({id,title:`Knowledge ${String(i).padStart(5,'0')}`,text:'A bounded paragraph for synthetic rendering. 中文内容用于验证大文库的实际操作。',note:'',tags:['topic-'+i%30],color:'yellow',source:null,image:null,parentId:i%50?ids[i-i%50]:null,collapsed:false,createdAt:now,updatedAt:now}));
     state.settings.activeStudySet=s.id;await fs.writeFile(file,JSON.stringify(state,null,2));
     await timed('settingsGet',()=>rpc('settings.get'));

@@ -241,7 +241,7 @@ export async function startWebServer(options:Options={}){
         const off=onCoreEvent(event=>{
           if(event.clientId&&event.clientId!==id)return
           if(!auth.valid(session)){ws.close(4001,'Session expired');return}
-          const payload=event.channel==='store:changed'?{revision:event.payload?.revision}:event.channel==='plugin:windows'?projectPluginView(event.payload?.filter((v:any)=>(v.clientId??'desktop')===id)??[],session):['session:message','session:codex','session:agent'].includes(event.channel)?{sessionId:event.payload?.sessionId,cardId:event.payload?.cardId}:event.payload
+          const payload=event.channel==='store:changed'?{revision:event.payload?.revision,changes:event.payload?.changes}:event.channel==='plugin:windows'?projectPluginView(event.payload?.filter((v:any)=>(v.clientId??'desktop')===id)??[],session):['session:message','session:codex','session:agent'].includes(event.channel)?{sessionId:event.payload?.sessionId,cardId:event.payload?.cardId}:event.payload
           send({type:'event',channel:event.channel,payload})
         })
         withCaller(context,()=>{send({type:'event',channel:'view:changed',payload:getView()});send({type:'event',channel:'management:activity',payload:managementActivity()})})

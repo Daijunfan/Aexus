@@ -1,0 +1,16 @@
+import {objectSchema,nonemptySchema,booleanSchema,textSchema} from './api-schema.ts'
+import type {MessageAttachment} from './message-attachments'
+export const WORKSPACE_FILE_PREFIX='@workspace/'
+export type ConversationWorkspace={conversation:string;name:string;root:string;folderName:string;members:{employeeId:string;name:string;directory:string}[];memberDirectory?:string;memberPath?:string;personalWorkspace?:string;nativeAccess:boolean;policy:string}
+export function sharedUploadNotice(text:string,attachments:MessageAttachment[]=[]){
+ if(!attachments.length)return text
+ return [text,'[User uploaded shared files]\n'+JSON.stringify(attachments.map(file=>({name:file.name,path:file.path,bytes:file.bytes,kind:file.kind})))+'\nThese files remain in this conversation folder. Inspect them through conversation.file when relevant; no file or image bytes were sent to your private chat. Keep originals unchanged. Prefer your named subfolder for work, or explicitly copy to your existing personal workspace.'].filter(Boolean).join('\n\n')
+}
+const conversation={type:'string',pattern:'^(group|channel):[a-zA-Z0-9_-]+$'},location=objectSchema({conversation,employee:nonemptySchema,path:nonemptySchema},['path'])
+export const CONVERSATION_WORKSPACE_COMMANDS=[
+ {cli:{positionals:['conversation']},name:'conversation.workspace',args:'CONVERSATION [--employee ID]',summary:'Read the shared folder and named member workspaces; members may read all shared files but write only their own subfolder',gui:'Group / channel workspace',inputSchema:objectSchema({conversation,employee:nonemptySchema},['conversation'])},
+ {cli:{},name:'conversation.workspaces',args:'[--employee ID]',summary:'List an employee’s group/channel workspaces without changing their personal workspace or execution host',gui:'Employee workspace selector',inputSchema:objectSchema({employee:nonemptySchema})},
+ {cli:{positionals:['conversation']},name:'conversation.file',args:'CONVERSATION --operation list|read|image|info|chunk|write|mkdir|move|trash|restore [--path PATH] [--to PATH] [--content TEXT] [--hash HASH] [--create] [--hidden] [--offset N] [--id TRASH_ID]',summary:'Operate shared files with current membership checks; user uploads and other member folders are read-only for Agents',gui:'Shared file browser',inputSchema:objectSchema({conversation,operation:{enum:['list','read','image','info','chunk','write','mkdir','move','trash','restore']},path:textSchema,to:nonemptySchema,content:{type:'string',maxLength:4194304},hash:nonemptySchema,create:booleanSchema,hidden:booleanSchema,offset:{type:'integer',minimum:0},id:nonemptySchema},['conversation','operation'])},
+ {cli:{required:['from','to']},name:'conversation.copy',args:'--from JSON --to JSON',summary:'Copy a shared file/folder to your named member folder or personal workspace; source is retained and existing destinations are never overwritten',gui:'Shared workspace copy',inputSchema:objectSchema({from:location,to:location},['from','to'])},
+ {cli:{positionals:['id']},name:'conversation.transfer',args:'ID [--cancel]',summary:'Read or cancel your shared-workspace copy; queued is not completed, and a restart does not replay copies',gui:'Shared workspace copy progress',inputSchema:objectSchema({id:nonemptySchema,cancel:booleanSchema},['id'])},
+]

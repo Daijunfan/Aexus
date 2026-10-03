@@ -1,3 +1,5 @@
+import {SingleFlight} from './single-flight'
+import {messageSourceView,type MessageSourceView} from '../shared/message-source'
 import {createHash,randomUUID} from 'node:crypto'
 import {join} from 'node:path'
 import {APP_HOME} from '../shared/protocol'
@@ -10,10 +12,10 @@ import {assertEmployeeReady} from './initialization-state'
 import {readStore} from './store'
 
 export type PrivateSendReceipt={sent:true;status:'accepted'|'queued';employeeId:string;clientMessageId:string;messageId?:string;queueId?:string;id?:string}
-type Receipt={principal:PrincipalRef;clientMessageId:string;fingerprint:string;phase:'preparing'|'rejected'|'queued'|'dispatching'|'accepted'|'interrupted';boot:string;createdAt:number;messageId?:string;queueId?:string;error?:string}
+type Receipt={principal:PrincipalRef;clientMessageId:string;fingerprint:string;sourceView?:MessageSourceView|null;phase:'preparing'|'rejected'|'queued'|'dispatching'|'accepted'|'interrupted';boot:string;createdAt:number;messageId?:string;queueId?:string;error?:string}
 export type PrivateSendAttempt={readonly queueId?:string;queued:(id:string)=>void;dispatching:(id:string)=>void;accepted:(id:string)=>void;failed:(error:unknown)=>void;interrupted:(reason:string)=>void}
 type QueueCheck=(employeeId:string,queueId:string)=>boolean
-const boot=randomUUID(),active=new Map<string,Promise<PrivateSendReceipt>>()
+const boot=randomUUID(),active=new SingleFlight<PrivateSendReceipt>()
 const failure=(message:string,code:'PRIVATE_SEND_UNCERTAIN'|'PRIVATE_SEND_INTERRUPTED')=>Object.assign(Error(message),{code})
 const path=(employeeId:string)=>join(APP_HOME,'message-receipts',employeeId+'.json')
 const read=(employeeId:string)=>readJson<Record<string,Receipt>>(path(employeeId),()=>({}),value=>!!value&&typeof value==='object'&&!Array.isArray(value))
@@ -46,12 +48,13 @@ function fingerprint(employeeId:string,args:Record<string,any>){
 }
 /** Persist before any dispatch; an unfinished dispatch is never automatically repeated. */
 export async function withPrivateSendReceipt(employeeId:string,args:Record<string,any>,work:(attempt:PrivateSendAttempt)=>Promise<unknown>,queued:QueueCheck):Promise<PrivateSendReceipt>{
- readable(employeeId);const identity=identify(employeeId,args.clientMessageId),hash=fingerprint(employeeId,args),previous=read(employeeId)[identity.key]
- if(previous&&previous.fingerprint!==hash)throw Error('Client message ID already used with different private message content or scope')
+ readable(employeeId);const identity=identify(employeeId,args.clientMessageId),hash=fingerprint(employeeId,args),sourceView=messageSourceView(args.sourceView)??null,previous=read(employeeId)[identity.key]
+ // Legacy records have no source field; confirming them never fabricates historical origin.
+ if(previous&&(previous.fingerprint!==hash||Object.hasOwn(previous,'sourceView')&&previous.sourceView!==sourceView))throw Error('Client message ID already used with different private message content or scope')
  const pending=active.get(identity.activeKey)
  if(pending){await pending;readable(employeeId);return confirmation(employeeId,read(employeeId)[identity.key],queued)}
  if(previous&&!['preparing','rejected'].includes(previous.phase))return confirmation(employeeId,previous,queued)
- let record:Receipt={principal:identity.principal,clientMessageId:identity.clientMessageId,fingerprint:hash,phase:'preparing',boot,createdAt:previous?.createdAt??Date.now()}
+ let record:Receipt={principal:identity.principal,clientMessageId:identity.clientMessageId,fingerprint:hash,sourceView,phase:'preparing',boot,createdAt:previous?.createdAt??Date.now()}
  const save=(patch:Partial<Receipt>)=>{record={...record,...patch};const records=read(employeeId);records[identity.key]=record;atomicJson(path(employeeId),records,true)}
  save({})
  const attempt:PrivateSendAttempt={
@@ -62,7 +65,6 @@ export async function withPrivateSendReceipt(employeeId:string,args:Record<strin
   failed:error=>{if(record.phase==='accepted'||record.phase==='interrupted')return;save({phase:record.phase==='preparing'?'rejected':record.phase==='queued'?'interrupted':'dispatching',error:String((error as Error)?.message??error).slice(0,1000)})},
   interrupted:reason=>{if(record.phase==='preparing'||record.phase==='queued')save({phase:'interrupted',error:reason})}
  }
- const promise=Promise.resolve().then(async()=>{try{await work(attempt);return confirmation(employeeId,record,queued)}catch(error){attempt.failed(error);throw error}})
- active.set(identity.activeKey,promise)
- try{await promise;readable(employeeId);return confirmation(employeeId,read(employeeId)[identity.key],queued)}finally{active.delete(identity.activeKey)}
+ const promise=active.run(identity.activeKey,async()=>{try{await work(attempt);return confirmation(employeeId,record,queued)}catch(error){attempt.failed(error);throw error}})
+ await promise;readable(employeeId);return confirmation(employeeId,read(employeeId)[identity.key],queued)
 }

@@ -1,3 +1,4 @@
+import {directoryName} from '../shared/directory-names'
 import {remoteTarget} from '../shared/remote'
 import { existsSync, mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import { posix,win32,dirname, isAbsolute, relative, resolve, sep,join } from 'node:path'
@@ -45,10 +46,10 @@ export function defaultTeamRoot(name:string,settings:TeamSettings={mode:'build'}
   const clean=name.trim()
   if(clean&& (clean==='.'||clean==='..'||/[\\/\0]/.test(clean)))throw new Error('Team 名称不能包含路径分隔符或使用 . / ..')
   if(settings.mode==='work') {
-    return join(pluginWorkspaceBase(settings.pluginId||''),clean||'default')
+    return join(pluginWorkspaceBase(settings.pluginId||''),directoryName(clean||'default','team'))
   }
   if(!clean||clean==='.'||clean==='..'||/[\\/\0]/.test(clean))throw new Error('Team 名称不能包含路径分隔符或使用 . / ..')
-  return join(process.env.AGENTS_COMPANY_PROJECTS||join(homedir(),'develop','Agents-company-projects'),clean)
+  return join(process.env.AGENTS_COMPANY_PROJECTS||join(homedir(),'develop','Agents-company-projects'),directoryName(clean,'team'))
 }
 
 export function managedTeamRoot(name:string,settings:TeamSettings,path?:string):string {
@@ -145,7 +146,7 @@ export function workspaceStatus(store: Store, card: StoredSession): StoredSessio
 export function chooseEmployeeWorkspace(store:Store,group:string,title:string,input?:string,mode?:string,id?:string,preview=false,workEnvironment?:import('../shared/types').WorkEnvironment):string {
   if(mode!==undefined&&!['default','bind','create','existing'].includes(mode))throw new Error('请选择默认生成或绑定已有文件夹')
   if(mode==='default'||(!mode&&!input)) {
-    const name=String(title??'').trim()
+    const name=directoryName(String(title??''),'employee')
     if(!name||name==='.'||name==='..'||/[\\/\0]/.test(name))throw new Error('默认文件夹必须与员工同名；名字不能含路径分隔符，请修改名字或绑定已有文件夹')
     const existing=store.sessions.find(card=>card.id===id)
     const root=employeeRoot(store,{group,workEnvironment:workEnvironment??existing?.workEnvironment,localWorkspaceRoot:existing?.group===group?existing.localWorkspaceRoot:undefined})

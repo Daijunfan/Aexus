@@ -1,4 +1,5 @@
 import {DOCUMENTATION_TOOL} from './documentation-tool'
+import {API_TOOL} from './api-tool'
 import {DISCUSSION_TOOL} from './discussion-tool'
 import {acquireCodexStartup} from './engines/startup'
 import {engineExecutable} from './engines/executable'
@@ -183,7 +184,7 @@ async function connect(binary:string,initial:Args){
         if(!loaded){
           const options:{config?:Record<string,unknown>;[key:string]:unknown}={cwd:controlCwd,...(bootstrap?{developerInstructions:bootstrap}:{}),model:args.model||configuredModel,approvalPolicy:args.approvalPolicy??'never',serviceTier:args.serviceTier??null,...(permissionProfile?{permissions:permissionProfile}:{sandbox}),...(args.remote&&!args.nativeRemote?{config:{'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,'features.chronicle':false,'features.plugins':false,'features.apps':false,'features.hooks':false,'features.multi_agent':false}}:{})}
           if(reading){
-            if(!args.discussionUrl)throw Error('The native reading tool is unavailable')
+            if(args.initializing&&!args.discussionUrl)throw Error('The initialization documentation tool is unavailable')
             options.config={...options.config,
               'skills.include_instructions':false,'skills.bundled.enabled':false,'include_apps_instructions':false,
               'memories.use_memories':false,'memories.generate_memories':false,'features.memories':false,
@@ -192,7 +193,7 @@ async function connect(binary:string,initial:Args){
               ...Object.fromEntries(Object.keys(nativeConfig.mcp_servers??{}).map(name=>[`mcp_servers.${name}.enabled`,false]))
             }
           }
-          if(args.discussionUrl){const name=phase==='acknowledgment'?DISCUSSION_TOOL.name:DOCUMENTATION_TOOL.name;options.config={...options.config,'mcp_servers.agents_company':{enabled:true,url:args.discussionUrl,enabled_tools:[name],tools:{[name]:{approval_mode:'approve'}}}}}
+          if(args.discussionUrl){const names=phase==='acknowledgment'?[]:phase==='initialization'?[DOCUMENTATION_TOOL.name]:[DOCUMENTATION_TOOL.name,API_TOOL.name,DISCUSSION_TOOL.name];options.config={...options.config,'mcp_servers.agents_company':{enabled:names.length>0,url:args.discussionUrl,enabled_tools:names,tools:Object.fromEntries(names.map(name=>[name,{approval_mode:'approve'}]))}}}
           // Employee clones must own their history so removing one employee cannot invalidate another.
           const resumeId=threadId||args.resumeId
           const started=resumeId?await call('thread/resume',{threadId:resumeId,...options}):await call('thread/start',{...options,environments,historyMode:'legacy'})

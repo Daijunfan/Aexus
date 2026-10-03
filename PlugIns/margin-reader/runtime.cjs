@@ -40,6 +40,7 @@ exports.createPlugin = async ({ workspace }) => {
   let closed = false, watcher, debounce;
   const emit = () => { if (!closed) events.emit('change', { type: 'library.changed', at: new Date().toISOString() }); };
   async function execute(method, p) {
+    if(require('./lib/mindmap-designs.cjs').methods.has(method))return require('./lib/mindmap-designs.cjs').request(store,method,p);
     if(require('./lib/xmind-interchange.cjs').methods.has(method))return require('./lib/xmind-interchange.cjs').request(store,method,p);
     if(require('./lib/mindmap-tools.cjs').methods.has(method))return require('./lib/mindmap-tools.cjs').request(store,method,p);
     if(require('./lib/mindmap.cjs').methods.has(method))return require('./lib/mindmap.cjs').request(store,method,p);

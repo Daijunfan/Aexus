@@ -4,7 +4,7 @@ export { branchPath };
 export function descendants(cards,id){const ids=new Set([id]);for(let changed=true;changed;){changed=false;for(const c of cards)if(ids.has(c.parentId)&&!ids.has(c.id)){ids.add(c.id);changed=true;}}return ids;}
 // Deterministic hierarchy layout. The Core owns all cards, styles and free positions.
 export function layoutStudy(input,options={},appearance={}) {
-  if(options.mindmap?.enabled)return layoutMindmap(input,options);
+  if(options.mindmap?.enabled!==false)return layoutMindmap(input,options);
   const scope=options.focusId||options.submapId,scopeIds=scope?descendants(input,scope):null;
   const cards=input.filter(c=>(c.inMap!==false||c.id===scope)&&(!scopeIds||scopeIds.has(c.id))).map(c=>c.id===scope?{...c,parentId:null}:c);
   const ids=new Set(cards.map(c=>c.id)),children=new Map(),positions=new Map(),links=[];

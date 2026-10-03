@@ -7,6 +7,68 @@ import base64
 import os
 import re
 import shutil
+import sqlite3
+import tempfile
+import threading
+import time
+
+_asset_jobs = {}
+_asset_caches = {}
+_asset_lock = threading.Lock()
+
+def asset_inventory(root, args):
+    key = hashlib.sha256(str(root).encode()).hexdigest()
+    with _asset_lock:
+        if key not in _asset_caches: _asset_caches[key] = Path(tempfile.mkdtemp(prefix="agents-assets-")) / "inventory.sqlite"
+        cache = _asset_caches[key]
+    def build():
+        errors = []
+        db = None
+        try:
+            db = sqlite3.connect(cache)
+            db.execute("PRAGMA journal_mode=WAL")
+            db.execute("CREATE TABLE IF NOT EXISTS entries(path TEXT PRIMARY KEY, data TEXT)")
+            db.execute("DELETE FROM entries")
+            def walk(folder, private=False):
+                total = visible = folders = shown = 0
+                try:
+                    entries = list(os.scandir(folder))
+                except OSError as error:
+                    errors.append(str(error)); entries = []
+                for entry in entries:
+                    if entry.is_symlink() or entry.name == ".agents-company" or entry.name.startswith(".agents-transfer-"): continue
+                    hidden = private or entry.name.startswith(".")
+                    if entry.is_dir(follow_symlinks=False):
+                        count, count_visible = walk(Path(entry.path), hidden)
+                        total += count; visible += count_visible; folders += bool(count); shown += bool(count_visible)
+                    elif entry.is_file(follow_symlinks=False):
+                        stat = entry.stat(follow_symlinks=False)
+                        value = dict(path=Path(entry.path).relative_to(root).as_posix(), name=entry.name, bytes=stat.st_size, modifiedAt=stat.st_mtime * 1000, directory=False, symlink=False)
+                        db.execute("INSERT OR REPLACE INTO entries VALUES(?,?)", (value["path"], json.dumps(value)))
+                        total += 1; visible += not hidden
+                relative = folder.relative_to(root).as_posix()
+                value = dict(path="" if relative == "." else relative, directory=True, files=total, visibleFiles=visible, folders=folders, visibleFolders=shown)
+                db.execute("INSERT OR REPLACE INTO entries VALUES(?,?)", (value["path"], json.dumps(value)))
+                return total, visible
+            walk(root); db.commit(); db.close()
+            os.chmod(cache, 0o600)
+        except Exception as error:
+            errors.append(str(error))
+        finally:
+            if db is not None: db.close()
+            with _asset_lock: _asset_jobs[key] = dict(indexing=False, at=time.time(), errors=errors)
+    with _asset_lock:
+        job = _asset_jobs.get(key)
+        if job is None or not job["indexing"] and ((time.time() - job["at"] > 30 and not args.get("cursor", 0)) or args.get("refresh")):
+            _asset_jobs[key] = dict(indexing=True, at=time.time(), errors=[])
+            threading.Thread(target=build, daemon=True).start()
+        job = _asset_jobs[key]
+    if job["indexing"]: return dict(indexing=True, entries=[], directories=[])
+    cursor = int(args.get("cursor", 0))
+    with sqlite3.connect(cache) as db: rows = db.execute("SELECT data FROM entries ORDER BY path LIMIT 1001 OFFSET ?", (cursor,)).fetchall()
+    values = [json.loads(row[0]) for row in rows[:1000]]
+    return dict(indexing=False, entries=[v for v in values if not v["directory"]], directories=[v for v in values if v["directory"]], nextCursor=cursor + 1000 if len(rows) > 1000 else None, errors=job["errors"])
+
 
 
 def workspace_files(root, operation, args):
@@ -24,6 +86,65 @@ def workspace_files(root, operation, args):
         return hashlib.sha256(file.read_bytes()).hexdigest()
     value = args.get('path') or '.'
     file = locate(value, operation in ['write', 'mkdir', 'move', 'trash'])
+    if operation == 'directory-plan':
+        rows = []
+        def walk(folder):
+            stat = folder.stat()
+            rows.append(dict(fromPath=str(folder), name=folder.name, parent=str(folder.parent), siblings=os.listdir(folder.parent), inode=stat.st_ino, device=stat.st_dev))
+            for entry in os.scandir(folder):
+                if entry.is_dir(follow_symlinks=False) and entry.name != '.agents-company' and not entry.name.startswith('.agents-transfer-'): walk(Path(entry.path))
+        walk(root)
+        metadata = root / '.agents-company' / 'directory-renames.json'
+        return dict(root=str(root), directories=rows, aliasesBefore=metadata.read_text(encoding='utf-8') if metadata.exists() else None)
+    if operation == 'directory-rollback':
+        plan = args['plan']
+        if Path(plan['root']).resolve() != root: raise ValueError('Unexpected directory rollback root')
+        for item in reversed(plan['renames']):
+            old, new = Path(item['from']), Path(item['to'])
+            if not old.is_symlink() or old.resolve() != new.resolve(): raise ValueError('Migration link changed before rollback')
+            old.unlink(); new.rename(old)
+        metadata = Path(plan['root']) / '.agents-company' / 'directory-renames.json'
+        if plan.get('aliasesBefore') is None:
+            metadata.unlink(missing_ok=True)
+        else:
+            metadata.write_text(plan['aliasesBefore'], encoding='utf-8')
+        return dict(rolledBack=True)
+    if operation == 'directory-apply':
+        plan = args['plan']
+        if plan['root'] != str(root): raise ValueError('Remote workspace changed since preview')
+        completed = []
+        try:
+            for item in plan['renames']:
+                old, new = Path(item['from']), Path(item['to'])
+                if old != root: old.relative_to(root)
+                if old.parent != new.parent or not re.fullmatch(r'[a-z0-9_-]+', new.name): raise ValueError('Invalid directory migration target')
+                stat = old.lstat()
+                if not old.is_dir() or old.is_symlink() or stat.st_ino != item['inode'] or stat.st_dev != item['device']: raise ValueError('Remote directory changed since preview')
+                if new.exists() or new.is_symlink(): raise ValueError('Directory migration target exists')
+                old.rename(new)
+                try: os.symlink(new.name, old, target_is_directory=True)
+                except Exception:
+                    new.rename(old); raise
+                completed.append(item)
+            def rebased(value):
+                for item in plan['renames']:
+                    old = item['from']
+                    if value == old or value.startswith(old + os.sep): value = item['to'] + value[len(old):]
+                return value
+            next_root = Path(rebased(str(root)))
+            aliases = [dict(fromPath=Path(item['from']).relative_to(root).as_posix(), toPath=Path(rebased(item['from'])).relative_to(next_root).as_posix()) for item in plan['renames'] if Path(item['from']) != root]
+            if aliases:
+                metadata = next_root / '.agents-company' / 'directory-renames.json'
+                metadata.parent.mkdir(exist_ok=True)
+                metadata.write_text(json.dumps(dict(version=1, aliases=[{'from':i['fromPath'], 'to':i['toPath']} for i in aliases])), encoding='utf-8')
+            return dict(root=str(next_root), renamed=len(completed), paths=[dict(fromPath=i['from'], toPath=rebased(i['from'])) for i in plan['renames']])
+        except Exception:
+            for item in reversed(completed):
+                old, new = Path(item['from']), Path(item['to'])
+                old.unlink(); new.rename(old)
+            raise
+    if operation == 'inventory':
+        return asset_inventory(root, args)
     if operation == 'copy-info':
         original = root / value
         if not original.exists() and not original.is_symlink():

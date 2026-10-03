@@ -2,7 +2,7 @@ import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../
 import {Fragment} from 'react'
 
 const labels:Record<string,string>={account:'账户信息',type:'类型',email:'邮箱',planType:'订阅计划',requiresOpenaiAuth:'需要 OpenAI 身份验证',rateLimits:'额度',primary:'主要额度',secondary:'次要额度',usedPercent:'已使用',windowDurationMins:'统计窗口（分钟）',resetsAt:'重置时间',credits:'点数',hasCredits:'可用点数',unlimited:'无限额度',balance:'余额',usage:'本次会话用量',inputTokens:'输入 Token',outputTokens:'输出 Token',cachedInputTokens:'缓存输入 Token',totalTokens:'总 Token',model:'模型',effort:'思考程度',engine:'引擎',cwd:'工作目录',permissionMode:'权限模式',fastMode:'Fast 模式',planMode:'计划模式',thinking:'深度思考',title:'会话名称',name:'名称',status:'状态',version:'版本',tools:'工具',resources:'资源',resourceTemplates:'资源模板',authStatus:'授权状态',note:'说明',command:'命令',rateLimitsUnavailable:'额度读取状态',sessionId:'会话 ID',threadId:'原生会话 ID',cost:'费用',totalCostUsd:'费用（USD）',apiKeySource:'API Key 来源',tokenSource:'Token 来源',subscriptionType:'订阅',organization:'组织'}
-const label=(key:string)=>labels[key]?uiText(labels[key]):key.replace(/([a-z])([A-Z])/g,'$1 $2')
+const label=(key:string)=>labels[key]?uiText(labels[key]):key.replace(/([a-z])([A-Z])/g,'$1 $2').replaceAll('_',' ').replace(/^./,character=>character.toUpperCase())
 const display=(key:string,value:unknown)=>{
  if(value===null||value===undefined)return uiText('Not provided')
  if(typeof value==='boolean')return uiText(value?'Yes':'No')

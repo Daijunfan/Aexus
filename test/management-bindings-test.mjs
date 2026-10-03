@@ -22,7 +22,7 @@ try{
   for(const name of ['management.bind','management.unbind']){
    assert.ok(apis.some(api=>api.name===name));assert.ok((await f.call(token,'api','describe',name)).inputSchema)
   }
-  const docs=(await f.call(token,'api','docs')).markdown;assert.match(docs,/management bind/);assert.match(docs,/management unbind/)
+  const docs=(await f.call(token,'api','docs','core/api')).markdown;assert.match(docs,/management bind/);assert.match(docs,/management unbind/)
  }
  assert.ok(!(await f.call(wt,'api','list')).some(api=>['management.bind','management.unbind'].includes(api.name)))
  assert.equal((await change(mt,'unbind',manager,worker)).changed,false)

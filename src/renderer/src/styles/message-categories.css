@@ -1,0 +1,47 @@
+/* Category controls leave the conversation list close to the page heading. */
+.message-sidebar{padding-top:0}
+.message-sidebar .message-list-heading{padding:12px 18px 8px;min-height:50px;box-sizing:border-box}
+.message-sidebar .message-list-heading h1{font-size:22px;letter-spacing:-.5px}
+.message-sidebar .message-search{height:38px;margin:0 16px 8px;border-radius:12px}
+.message-sidebar .message-category-bar{margin:0 16px 6px;gap:6px;min-height:34px}
+.message-category-placeholder{font-size:11px;color:var(--fg-dim);padding:7px 2px}
+.message-sidebar .message-list-caption{padding:5px 18px 7px;min-height:28px;box-sizing:border-box}
+.message-sidebar .message-archive-entry,.message-sidebar .message-archive-heading{margin:2px 16px 6px;padding:8px 10px;gap:9px;min-height:46px;box-sizing:border-box}
+.message-sidebar .message-archive-entry small{display:none}
+.message-sidebar .message-archive-icon{width:28px;height:28px;border-radius:9px}
+.message-sidebar .message-search-history{margin:0 16px 6px;padding:8px 10px}
+.category-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 16px}
+.category-presets>button{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:79px;padding:12px;border:1px solid var(--border-soft);border-radius:13px;background:var(--bg-alt);color:var(--fg-dim);font:inherit;font-size:11px;text-align:left;cursor:pointer}
+.category-presets>button>.codicon{font-size:19px;color:var(--accent)}
+.category-presets>button[aria-pressed=true]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--bg-elev));color:var(--accent)}
+.category-presets>button:hover{border-color:var(--accent)}
+.conversation-folder-editor{width:min(650px,calc(100vw - 30px))}
+.conversation-folder-editor>header{justify-content:flex-start;gap:16px;margin-bottom:14px}
+.conversation-folder-editor>header>.employee-back{border:0;background:transparent;flex:none;min-width:60px;width:auto;height:40px}
+.conversation-folder-editor>header>div{flex:1;min-width:0}
+.conversation-folder-editor .category-platform{display:grid;gap:7px;margin-bottom:12px}
+.category-platform select{min-height:40px;border:1px solid var(--border);border-radius:11px;padding:8px 12px;background:var(--bg-elev);color:var(--fg);font:inherit}
+.category-platform small{font-size:11px;color:var(--fg-dim);line-height:1.5}
+.conversation-folder-editor .folder-conversation-options{min-height:90px;max-height:260px}
+.conversation-folder-editor :is(input,select,button):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.channel-source-context{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--bg-elev);border-top:1px solid var(--border-soft);font-size:11px;color:var(--fg-dim)}
+.channel-source-context button{display:flex;align-items:center;gap:7px;flex:none;min-height:36px;padding:8px 12px;border:1px solid var(--border-soft);border-radius:11px;background:var(--bg-alt);color:var(--accent);font:inherit;cursor:pointer}
+@media(max-width:600px){.category-presets{grid-template-columns:repeat(2,minmax(0,1fr))}.category-presets>button{flex-direction:row;align-items:center;min-height:50px;gap:8px}.conversation-folder-editor{padding:16px}.conversation-folder-editor .folder-conversation-options{max-height:210px}.channel-source-context{flex-direction:column;align-items:stretch;gap:8px}.channel-source-context button{justify-content:center}}
+
+.conversation-folder-editor .folder-conversation-options>label{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:62px;box-sizing:border-box}
+.conversation-folder-editor .folder-conversation-avatar{display:flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:38px;flex:0 0 38px}
+.conversation-folder-editor .folder-conversation-avatar>:is(.channel-avatar,.message-avatar,.group-avatar){width:38px;height:38px;min-width:38px;min-height:38px;border-radius:11px;flex:none}
+.conversation-folder-editor .folder-conversation-options>label>span:last-child{min-width:0;flex:1}
+.conversation-folder-editor .folder-conversation-options :is(strong,small){overflow-wrap:anywhere}
+.conversation-folder-editor>header>.employee-back span{font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:inherit}
+
+/* The directory action remains available independently of user categories. */
+.message-directory-controls{display:flex;align-items:center;gap:8px;margin:0 16px 6px;min-width:0}
+.message-directory-controls .message-all-conversations{display:flex;align-items:center;gap:7px;flex:1;min-width:0;min-height:32px;padding:6px 9px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg-elev);color:var(--fg-dim);font:inherit;font-size:11px;text-align:left;cursor:pointer}
+.message-all-conversations>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.message-directory-controls .message-all-conversations[aria-pressed=true]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 25%,var(--border));background:color-mix(in srgb,var(--accent) 7%,var(--bg-elev))}
+.message-directory-controls select{flex:0 1 125px;min-width:0;max-width:45%;min-height:32px;padding:5px 6px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg-elev);color:var(--fg);font:inherit;font-size:11px}
+.message-directory-controls :is(button,select):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.message-sidebar .message-list-heading{padding-top:8px;min-height:44px}
+.message-sidebar .message-list-caption{padding-top:3px;padding-bottom:4px;min-height:24px}
+.message-sidebar .message-category-bar{margin-bottom:3px}

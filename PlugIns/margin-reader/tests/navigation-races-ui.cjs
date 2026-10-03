@@ -6,7 +6,7 @@ const {create,expect}=require('./ui-session.cjs');
  try{
   const {page,api}=f;
   await api('fs.write',{path:'reading.html',content:'<h1>Navigation safety</h1>'+Array.from({length:30},(_,i)=>'<p>Paragraph '+i+' with enough text for stable reading geometry.</p>').join('')});
-  let set=await api('study.create',{title:'Navigation races'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['reading.html']});const docId=set.documentIds[0];
+  let set=await api('study.create',{mapMode:'cards',title:'Navigation races'});set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['reading.html']});const docId=set.documentIds[0];
   await api('study.open',{setId:set.id,documentId:docId});await page.goto(f.server.url);await page.locator('body[data-ready=true]').waitFor();
   let mode=null,held=false,finished=false;
   await page.route('**/rpc',async route=>{

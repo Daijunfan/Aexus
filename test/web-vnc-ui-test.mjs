@@ -14,7 +14,7 @@ try{
   const page=await browser.newPage({viewport:{width:1400,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto('http://127.0.0.1:'+port)
   await page.locator('.web-login input').fill(fs.readFileSync(path.join(f.env.AGENTS_COMPANY_HOME,'control.token'),'utf8').trim())
-  await page.getByRole('button',{name:'进入工作空间'}).click();await expect(page.locator('.infinite-canvas')).toBeVisible()
+  await page.getByRole('button',{name:'Enter workspace'}).click();await expect(page.locator('.infinite-canvas')).toBeVisible()
   await page.locator('.plugin-directory [data-plugin="cloud-hosts"]').click()
   const frame=page.frameLocator('.web-plugin-window iframe')
   await expect(frame.locator('.detail-heading h2')).toHaveText('Browser VNC')

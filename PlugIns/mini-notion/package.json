@@ -1,6 +1,6 @@
 {
   "name": "mini-notion",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "description": "A thoughtful, local-first workspace for macOS",
   "private": true,
   "type": "module",

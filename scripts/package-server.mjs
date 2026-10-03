@@ -34,7 +34,7 @@ if(!skipBuild){
   run('npx',['--no-install','vite','build','--config','vite.web.config.ts'])
 }
 const plugins=JSON.parse(fs.readFileSync(path.join(root,'plugins.lock.json'),'utf8')).plugins
-const approvedResources=['out/main/daemon.js','out/renderer/index.html'];for(const file of approvedResources)if(!fs.existsSync(path.join(root,file)))throw Error('Missing standalone server build: '+file)
+const approvedResources=['out/main/daemon.js','out/main/message-index-worker.js','out/renderer/index.html'];for(const file of approvedResources)if(!fs.existsSync(path.join(root,file)))throw Error('Missing standalone server build: '+file)
 for(const plugin of plugins){
   const directory=path.join(root,'build/plugins',plugin.directory)
   if(fs.existsSync(path.join(directory,'source-location.json')))throw Error('Server distribution requires portable plugins; run build:plugins:release first')
@@ -42,7 +42,7 @@ for(const plugin of plugins){
 }
 fs.mkdirSync(output,{recursive:true})
 fs.rmSync(stage,{recursive:true,force:true});fs.mkdirSync(stage,{recursive:true})
-for(const relative of ['out/main/daemon.js','out/renderer','bin','build/plugins','Modules/Tunnel','docs','licenses',
+for(const relative of ['out/main/daemon.js','out/main/message-index-worker.js','out/renderer','bin','build/plugins','Modules/Tunnel','docs','licenses',
   'README.md','API.md','PERMISSIONS.md','ARCHITECTURE.md','ENGINE_CAPABILITIES.md','PLAN.md','SCHEDULER.md','PLUGIN_SPEC.md','CHANGELOG.md',
   'SECURITY.md','LICENSING.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md','engine-downloads.json','plugins.lock.json','package-lock.json'])copy(relative)
 // Keep the exact dependency manifest/lock; only scripts and the runtime entry differ.

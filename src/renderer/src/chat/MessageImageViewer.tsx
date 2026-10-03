@@ -9,8 +9,8 @@ import {api} from '../api'
 import {useDialogFocus} from '../office/useDialogFocus'
 import {motionAllowed,playMessageMotion} from './surfaceMotion'
 
-export const galleryKey=(item:GalleryImage)=>JSON.stringify([item.employee??null,item.group??null,item.messageId??null,item.path])
-export async function readGalleryImage(item:GalleryImage){const value=await api.call<{mimeType:string;data:string}>(item.group?'chat.file':'workspace.image',item.group?{id:item.group,path:item.path,operation:'image'}:{employee:item.employee,path:item.path});return `data:${value.mimeType};base64,${value.data}`}
+export const galleryKey=(item:GalleryImage)=>JSON.stringify([item.employee??null,item.group??null,item.messageId??null,item.path,...(item.channel?[item.channel]:[])])
+export async function readGalleryImage(item:GalleryImage){const value=await api.call<{mimeType:string;data:string}>(item.channel?'conversation.file':item.group?'chat.file':'workspace.image',item.channel?{conversation:'channel:'+item.channel,operation:'image',path:item.path}:item.group?{id:item.group,path:item.path,operation:'image'}:{employee:item.employee,path:item.path});return `data:${value.mimeType};base64,${value.data}`}
 type Point={x:number;y:number}
 type Gesture={kind:'pan'|'swipe';start:Point;offset:Point;time:number}|{kind:'pinch';distance:number;center:Point;zoom:number;offset:Point}
 

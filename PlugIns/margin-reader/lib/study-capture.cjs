@@ -76,7 +76,8 @@ function createCapture(store) {
     assert(M.UUID.test(p.captureId), 'INVALID_PARAMS', 'captureId must be a UUID for safe retries.');
     assert(typeof p.text === 'string' && p.text.length <= 12000, 'INVALID_PARAMS', 'Excerpt text must be at most 12000 characters.');
     M.color(p.color);
-    const fingerprint = digest(JSON.stringify([p.documentId,p.expectedSourceVersion,p.text,p.locator,p.selection || {},p.color,p.title || '',p.parentId || null]));
+    assert(p.x===undefined&&p.y===undefined||p.parentId===null&&[p.x,p.y].every(v=>Number.isFinite(v)&&Math.abs(v)<=1000000000),'INVALID_PARAMS','Floating excerpts require x, y and explicit parentId:null.');
+    const fingerprint = digest(JSON.stringify([p.documentId,p.expectedSourceVersion,p.text,p.locator,p.selection || {},p.color,p.title || '',p.parentId || null,...(p.x!==undefined?[p.x,p.y]:[]),...(p.parentId===null?['root']:[]),...(p.zoneId?[p.zoneId]:[])]));
     const initial = await store.load(), set = M.findSet(initial,p.setId), prior = duplicate(set,p,fingerprint); if(prior)return prior;
     M.revision(set,p.expectedRevision);
     assert(set.documentIds.includes(p.documentId), 'NOT_MEMBER', 'Add this document to the study set before making an excerpt.');
@@ -103,12 +104,14 @@ function createCapture(store) {
       await writeNew(file,Buffer.from(rendered.bytes));rollback(()=>fs.rm(file,{force:true}));
       require('./study-history.cjs').checkpoint(fresh);
       const preset=fresh.captureSettings||{};
-      card.tags=M.tags(preset.tags||[]);card.inMap=preset.inMap!==false;
+      card.tags=M.tags(preset.tags||[]);card.inMap=p.parentId!==undefined||preset.inMap!==false;
       card.annotation={visible:true,style:preset.annotationStyle||'highlight'};
       fresh.cards.push(card);
-      const parentId=p.parentId||preset.parentId;
-      if(parentId){M.move(fresh,card,parentId);card.inMap=true;}
-      else if(card.inMap&&['document','toc'].includes(preset.organize))require('./study-organize.cjs').organizeByDocument(state,fresh,[card.id],preset.organize==='toc');
+      const parentId=p.parentId!==undefined?p.parentId:preset.parentId;
+      if(parentId){M.move(fresh,card,parentId);card.inMap=true;if(p.parentId)M.card(fresh,parentId).collapsed=false;}
+      else if(p.parentId===undefined&&card.inMap&&['document','toc'].includes(preset.organize))require('./study-organize.cjs').organizeByDocument(state,fresh,[card.id],preset.organize==='toc');
+      if(p.x!==undefined)card.position={x:p.x,y:p.y};
+      require('./mindmap-zones.cjs').attach(fresh,p.zoneId,card);
       if(preset.review)require('./study-review.cjs').configure(card,{enabled:true,deckId:preset.deckId||null},fresh,state.settings);
       M.touch(fresh);
       return {setId:fresh.id,revision:fresh.revision,card,duplicate:false};

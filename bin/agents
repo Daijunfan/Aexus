@@ -56,6 +56,29 @@ function jsonArgument(value) {
   if (!value || typeof value !== 'string') throw new Error('Expected JSON or @file')
   return JSON.parse(value.startsWith('@') ? readInputFile(value.slice(1)) : value)
 }
+/** Presentation is per message, never inferred from the Core's active window. */
+function messageSourceOption(parts) {
+  const index=parts.indexOf('--source-view');if(index<0)return {}
+  const sourceView=parts[index+1]
+  if(!['company','messages','plan'].includes(sourceView))throw Error('--source-view requires company, messages or plan')
+  parts.splice(index,2);return {sourceView}
+}
+/** Preserve literal message words while consuming only the established send options. */
+function positionalMessage(argv) {
+  const parts=argv.slice(1),input={id:argv[0],...messageSourceOption(parts)}
+  for(const [flag,key,type] of [['images','images','json'],['files','files','file-json'],['view','viewId','view ID'],['reply-to','replyTo','message ID'],['reply-quote','replyQuote','file-json'],['reply-conversation','replyConversation','conversation reference'],['client-message-id','clientMessageId','request ID']]) {
+    const index=parts.indexOf('--'+flag);if(index<0)continue
+    const value=parts[index+1]
+    if(type==='json')input[key]=JSON.parse(value)
+    else if(type==='file-json')input[key]=jsonArgument(value)
+    else {if(!value||flag==='client-message-id'&&value.startsWith('--'))throw Error('--'+flag+' requires a '+type);input[key]=value}
+    parts.splice(index,2)
+  }
+  const textOnly=parts.indexOf('--reply-text-only')
+  if(textOnly>=0){input.replyTextOnly=true;parts.splice(textOnly,1)}
+  return {...input,text:parts.join(' ')}
+}
+
 function scheduleSpec(p) {
   if (p.enabled !== undefined && !['true','false','on','off'].includes(p.enabled)) throw new Error('--enabled must be true|false|on|off')
   if (p.paused !== undefined && p.paused !== true) throw new Error('--paused is a flag; use --enabled true|false')
@@ -63,10 +86,11 @@ function scheduleSpec(p) {
   if (p.spec && (p.enabled !== undefined || p.paused !== undefined)) throw new Error('Set enabled inside --spec instead of combining it with --enabled or --paused')
   if (p.spec) return jsonArgument(p.spec)
   const timezone = p.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-  if ([p.at, p['after-seconds'], p['every-seconds'], p.time].filter(v => v !== undefined).length !== 1) throw new Error('Choose one: --at, --after-seconds, --every-seconds, --time')
+  if ([p.at, p['after-seconds'], p['every-seconds'], p.time, p['on-event']].filter(v => v !== undefined).length !== 1) throw new Error('Choose one: --at, --after-seconds, --every-seconds, --time, --on-event')
   if (p.thinking !== undefined && !['on','off'].includes(p.thinking)) throw new Error('--thinking must be on|off')
   if(p['month-day']!==undefined&&(!p.time||p.days))throw Error('--month-day requires --time and cannot be combined with --days')
-  const rule = p['after-seconds']!==undefined?undefined:p.at ? { kind: 'once', at: p.at }
+  if((p['event-channel']!==undefined||p['cooldown-seconds']!==undefined)&&!p['on-event'])throw Error('Event options require --on-event')
+  const rule = p['on-event']?{kind:'event',event:p['on-event'],channelId:p['event-channel'],cooldownSeconds:p['cooldown-seconds']===undefined?60:Number(p['cooldown-seconds'])}:p['after-seconds']!==undefined?undefined:p.at ? { kind: 'once', at: p.at }
     : p.time&&p['month-day']!==undefined?{kind:'monthly',time:p.time,timezone,day:p['month-day']==='last'?'last':Number(p['month-day'])}:p.time ? { kind: 'weekly', time: p.time, timezone, days: (p.days || '1,2,3,4,5,6,7').split(',').map(Number) }
     : { kind: 'interval', everySeconds: Number(p['every-seconds']), anchor: p.start }
   let window
@@ -75,7 +99,7 @@ function scheduleSpec(p) {
     const [start,end] = p.window.split('-')
     window = { start,end,timezone,days:p['window-days']?.split(',').map(Number) }
   }
-  return { name:p.name,action:{type:'agent',employeeId:p.employee,prompt:p['prompt-file']?readInputFile(p['prompt-file']):p.prompt,viewId:p.view,model:p.model,effort:p.effort,thinking:p.thinking===undefined?undefined:p.thinking==='on'},rule,window,until:p.until,
+  return { name:p.name,action:{type:'agent',employeeId:p.employee,channelId:p.channel,prompt:p['prompt-file']?readInputFile(p['prompt-file']):p.prompt,viewId:p.view,model:p.model,effort:p.effort,thinking:p.thinking===undefined?undefined:p.thinking==='on'},rule,window,until:p.until,
     timeoutSeconds:p.timeout===undefined?undefined:Number(p.timeout),graceSeconds:p.grace===undefined?undefined:Number(p.grace),enabled:p.enabled===undefined?!p.paused:['true','on'].includes(p.enabled),source:p.source,afterSeconds:p['after-seconds']===undefined?undefined:Number(p['after-seconds']),maxOccurrences:p['max-occurrences']===undefined?undefined:Number(p['max-occurrences']),...(p.priority||p.tags||p.notes||p['notes-file']||p['duration-minutes']!==undefined?{plan:{priority:p.priority??'normal',tags:p.tags?jsonArgument(p.tags):[],notes:p['notes-file']?readInputFile(p['notes-file']):p.notes??'',...(p['duration-minutes']===undefined?{}:{durationMinutes:Number(p['duration-minutes'])})}}:{}) }
 }
 
@@ -153,7 +177,7 @@ function out(data, human) {
 
 // ---------- commands ----------
 
-const HELP = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['agents — Agents Company authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','',...commands.map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})()
+const help = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['agents — Agents Company authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','Raw API payload: agents api call COMMAND --args JSON|@file --json (same authenticated endpoint).' ,'',...commands.filter(c=>!c.replacement).map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})
 
 let onEvent = (m) => {
   if (useJson) console.log(JSON.stringify(m.payload))
@@ -183,53 +207,41 @@ async function main() {
     if(parseOnly||process.env.AGENTS_COMPANY_EMPLOYEE||process.env.AGENTS_COMPANY_TOKEN||process.env.AGENTS_COMPANY_TOKEN_FILE||process.env.AGENTS_COMPANY_PORT){
       const commands=await send({cmd:'api.list'})
       out(commands,items=>['Agents Company — 当前身份可调用的 CLI',...items.map(c=>'agents '+c.name.replaceAll('.',' ')+' '+c.args+'\n  '+c.summary),'共享文档索引：agents api docs；完整命令目录：agents api list --all'].join('\n'))
-    }else console.log(HELP)
+    }else console.log(help())
     return
   }
 
   const call = (cmd, args) => send({ cmd, args })
 
+  if(group==='session'&&rest.includes('--source-view')){if(!['send','enqueue','steer'].includes(sub))throw Error('--source-view is supported by session send, enqueue and steer');messageSourceOption([...rest])}
   if(group==='session'&&rest.includes('--client-message-id')&&!['send','enqueue'].includes(sub))throw Error('--client-message-id is supported by session send and enqueue')
   if(group==='session'&&(rest.includes('--reply-to')||rest.includes('--reply-quote')||rest.includes('--reply-conversation')||rest.includes('--reply-text-only'))&&!['send','enqueue'].includes(sub))throw Error('--reply-to / --reply-quote are supported by session send and enqueue')
   if(group==='session'&&['info','snapshot','transcript','send','steer','follow','interrupt','enqueue','queue','dequeue','open'].includes(sub)&&rest.includes('--employee')){
-    const p=parse(rest);if((p.images!==undefined||p.files!==undefined)&&!['send','enqueue'].includes(sub))throw Error('--images is supported by session send and enqueue');const result=await send({cmd:'session.'+sub,args:{employee:p.employee,clientMessageId:p['client-message-id'],viewId:p.view,replyTo:p['reply-to'],replyConversation:p['reply-conversation'],replyTextOnly:p['reply-text-only']?true:undefined,replyQuote:p['reply-quote']===undefined?undefined:jsonArgument(p['reply-quote']),images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),text:p.text??p._.join(' '),limit:p.limit?Number(p.limit):undefined,thinking:!!p.thinking,raw:!!p.raw,messageId:p['message-id'],expectedMessageId:p['expected-message-id']}},{stream:sub==='follow'});if(sub==='follow'){if(useJson)console.log(JSON.stringify({type:'snapshot',...result.initial}));else if(result.initial.text)console.log(result.initial.text);process.on('SIGINT',()=>{result.stream.end();process.exit(0)});return}return out(result)
+    const p=parse(rest);if((p.images!==undefined||p.files!==undefined)&&!['send','enqueue'].includes(sub))throw Error('--images is supported by session send and enqueue');const result=await send({cmd:'session.'+sub,args:{employee:p.employee,clientMessageId:p['client-message-id'],viewId:p.view,sourceView:p['source-view'],replyTo:p['reply-to'],replyConversation:p['reply-conversation'],replyTextOnly:p['reply-text-only']?true:undefined,replyQuote:p['reply-quote']===undefined?undefined:jsonArgument(p['reply-quote']),images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),text:p.text??p._.join(' '),limit:p.limit?Number(p.limit):undefined,thinking:!!p.thinking,raw:!!p.raw,messageId:p['message-id'],expectedMessageId:p['expected-message-id']}},{stream:sub==='follow'});if(sub==='follow'){if(useJson)console.log(JSON.stringify({type:'snapshot',...result.initial}));else if(result.initial.text)console.log(result.initial.text);process.on('SIGINT',()=>{result.stream.end();process.exit(0)});return}return out(result)
   }
-  switch (`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`) {
-    case 'system.info': return out(await call('system.info'))
+  const command=`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`
+  const input=require('./command-inputs.cjs').commandInput(command,rest,parse,jsonArgument)
+  if(input!==undefined)return out(await call(command,input))
+  switch (command) {
     case 'system.directories': {const p=parse(rest);return out(await call('system.directories',{path:p.path}))}
     case 'engine.capabilities': {const p=parse(rest);return out(await call('engine.capabilities',{engine:p.engine}))}
-    case 'engine.list': return out(await call('engine.list'))
     case 'engine.check': {const p=parse(rest);return out(await call('engine.check',{engine:p.engine,team:p.team,force:!!p.force}))}
     case 'engine.probe': {const p=parse(rest);return out(await call('engine.probe',{engine:p.engine,model:p.model,confirm:p.confirm===true}))}
     case 'engine.configure': {const p=parse(rest);return out(await call('engine.configure',{engine:p.engine,patch:jsonArgument(p.data)}))}
     case 'engine.install-plan': case 'engine.install': case 'engine.login': {const p=parse(rest);return out(await call('engine.'+sub,{engine:p.engine,confirm:!!p.confirm}))}
-    case 'engine.install-status': case 'engine.cancel-install': case 'engine.login-status': case 'engine.cancel-login': return out(await call('engine.'+sub,{id:rest[0]}))
     case 'transfer.upload-begin': {const p=parse(rest);return out(await call('transfer.upload-begin',{to:jsonArgument(p.to),name:p.name,bytes:Number(p.bytes)}))}
     case 'transfer.upload-chunk': {const p=parse(rest);return out(await call('transfer.upload-chunk',{id:p._[0],offset:Number(p.offset),data:p['data-file']?readInputFile(p['data-file']).trim():p.data}))}
-    case 'transfer.upload-commit': case 'transfer.upload-abort': return out(await call('transfer.'+sub,{id:rest[0]}))
     case 'transfer.download-info': case 'transfer.download-chunk': {const p=parse(rest);return out(await call('transfer.'+sub,{from:jsonArgument(p.from),offset:Number(p.offset??0),modifiedAt:p['modified-at']===undefined?undefined:Number(p['modified-at'])}))}
-    case 'plan.schema':case 'plan.views':return out(await call('plan.'+sub))
-    case 'plan.query':case 'plan.calendar':case 'plan.timeline': {const p=parse(rest),args={filter:p.filter?jsonArgument(p.filter):undefined,limit:p.limit===undefined?undefined:Number(p.limit)};if(sub==='query')Object.assign(args,{sort:p.sort,direction:p.direction,offset:p.offset===undefined?undefined:Number(p.offset)});else Object.assign(args,{from:p.from,to:p.to,timezone:p.timezone});return out(await call('plan.'+sub,args))}
-    case 'plan.analytics':case 'plan.feed':{const p=parse(rest);return out(await call('plan.'+sub,{filter:p.filter?jsonArgument(p.filter):undefined,outcomes:p.outcomes?jsonArgument(p.outcomes):undefined,from:p.from,to:p.to,...(sub==='analytics'?{metric:p.metric,groupBy:p['group-by']}:{before:p.before,limit:p.limit===undefined?undefined:Number(p.limit)})}))}
-    case 'plan.view-create':{const p=parse(rest);return out(await call('plan.view-create',{spec:jsonArgument(p.spec)}))}
-    case 'plan.view-update':case 'plan.view-delete':{const p=parse(rest);return out(await call('plan.'+sub,{id:p._[0],...(sub==='view-update'?{patch:jsonArgument(p.patch)}:{}),expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])}))}
-    case 'schedule.schema': case 'schedule.status': return out(await call(`schedule.${sub}`))
     case 'schedule.list': { const p=parse(rest); return out(await call('schedule.list',{employee:p.employee,source:p.source})) }
-    case 'schedule.get': case 'schedule.pause': case 'schedule.resume': case 'schedule.delete': case 'schedule.run': case 'schedule.cancel': return out(await call(`schedule.${sub}`,{id:rest[0]}))
     case 'schedule.create': { const p=parse(rest);return out(await call('schedule.create',{spec:scheduleSpec(p),clientRequestId:p['client-request-id']})) }
     case 'schedule.update': { const p=parse(rest);return out(await call('schedule.update',{id:p._[0],patch:jsonArgument(p.patch),expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])})) }
     case 'schedule.preview': { const p=parse(rest);return out(await call('schedule.preview',{id:p._[0],spec:p.spec||p.name?scheduleSpec(p):undefined,patch:p.patch?jsonArgument(p.patch):undefined,after:p.after,count:p.count===undefined?undefined:Number(p.count)})) }
     case 'schedule.history': { const p=parse(rest);return out(await call('schedule.history',{id:p._[0],employee:p.employee,limit:p.limit===undefined?undefined:Number(p.limit)})) }
-    case 'session.rename': return out(await call('session.rename',{id:rest[0],title:rest[1]}))
-    case 'shared.info': return out(await call('shared.info'))
     case 'view.shared': {if(!['on','off'].includes(rest[0]))throw Error('view shared accepts on|off');return out(await call('view.shared',{enabled:rest[0]==='on'}))}
     case 'transfer.start': {const p=parse(rest);return out(await call('transfer.start',{from:jsonArgument(p.from),to:jsonArgument(p.to)}))}
-    case 'transfer.list': return out(await call('transfer.list'))
-    case 'transfer.get': return out(await call('transfer.get',{id:rest[0]}))
-    case 'transfer.cancel': return out(await call('transfer.cancel',{id:rest[0]}))
-    case 'settings.get': return out(await call('settings.get'))
     case 'settings.set': {
       const p=parse(rest),a={};if(p.language!==undefined)a.language=p.language;if(p.theme!==undefined)a.theme=p.theme;if(p['theme-color']!==undefined)a.themeColor=p['theme-color'];if(p['default-permission']!==undefined)a.defaultPermissionMode=p['default-permission'];for(const [key,flag] of [['defaultCodexModel','default-codex-model'],['defaultClaudeModel','default-claude-model'],['defaultClineModel','default-cline-model'],['defaultPiModel','default-pi-model']])if(p[flag]!==undefined)a[key]=p[flag];for(const [key,flag] of [['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);for(const [key,flag] of [['snapEmployees','snap-employees'],['showTeamOverview','team-overview']])if(p[flag]!==undefined){if(!['on','off'].includes(p[flag]))throw new Error(`--${flag} accepts on|off`);a[key]=p[flag]==='on'}
+      if(p['message-wallpaper']!==undefined)a.messageWallpaper=jsonArgument(p['message-wallpaper'])
       if(p['view-appearance']!==undefined)a.viewAppearance=jsonArgument(p['view-appearance'])
       if(p.view!==undefined){
         if(!['company','messages','plan'].includes(p.view))throw Error('--view accepts company, messages or plan')
@@ -239,20 +251,17 @@ async function main() {
       }
       return out(await call('settings.set',a))
     }
-    case 'auth.whoami':return out(await call('auth.whoami'))
-    case 'api.list':{const p=parse(rest);return out(await call('api.list',{...(p.all===true?{all:true}:{})}))}
+    case 'api.list':{const p=parse(rest);return out(await call('api.list',{...(p.all===true?{all:true}:{}),...(p.prefix!==undefined?{prefix:p.prefix}:{}),...(p.search!==undefined?{search:p.search}:{})}))}
+    case 'api.call':{const p=parse(rest),args=p.args===undefined?{}:jsonArgument(p.args);if(p._.length!==1||!/^[a-z][a-z0-9.-]*$/.test(p._[0])||!args||typeof args!=='object'||Array.isArray(args)||Object.keys(p).some(key=>!['_','args'].includes(key)))throw Error('Usage: agents api call COMMAND --args JSON|@file');return out(await call(p._[0],args))}
     case 'api.docs':{const p=parse(rest);return out(await call('api.docs',{document:p.document??p._[0]}),data=>data.markdown)}
     case 'api.describe':{const p=parse(rest);return out(await call('api.describe',{command:p._[0],...(p.all===true?{all:true}:{})}))}
-    case 'auth.agent-token':case 'auth.revoke':return out(await call('auth.'+sub,{id:rest[0]}))
     case 'connector.get':case 'connector.set':case 'connector.reset':case 'connector.segment': {const p=parse(rest),a={manager:p.manager,employee:p.employee};for(const end of ['source','target']){if(p[end+'-offset']!==undefined&&p[end]===undefined)throw Error('--'+end+'-offset requires --'+end);if(p[end]!==undefined)a[end]={side:p[end],...(p[end+'-offset']===undefined?{}:{offset:Number(p[end+'-offset'])})}}if(p.points!==undefined&&p['auto-route'])throw Error('Choose --points or --auto-route');if(p.points!==undefined)a.route=jsonArgument(p.points);if(p['auto-route'])a.route=null;if(sub==='segment'){a.index=Number(p.index);a.x=Number(p.x);a.y=Number(p.y)}return out(await call('connector.'+sub,a))}
     case 'office.layout': {const p=parse(rest);return out(await call('office.layout',{team:p.team,viewId:p.view}))}
     case 'session.acknowledge': {const p=parse(rest);return out(await call('session.acknowledge',{employee:p.employee??p._[0],replyId:p['reply-id']}))}
     case 'management.relayout': {const p=parse(rest);return out(await call('management.relayout',{team:p.team}))}
     case 'management.topology':{const p=parse(rest);return out(await call('management.topology',{team:p.team,creator:p.creator,teamsOnly:p['teams-only']===true}))}
     case 'management.activity':{const p=parse(rest);return out(await call('management.activity',{team:p.team}))}
-    case 'management.roles':return out(await call('management.roles'))
     case 'management.request':{const p=parse(rest);return out(await call('management.request',{employee:p.employee,manager:p.manager}))}
-    case 'management.decide':return out(await call('management.decide',{id:rest[0],decision:rest[1]}))
     case 'management.bind':case 'management.unbind': {
       const p=parse(rest)
       if(p._.length>(sub==='unbind'?1:0)||Object.keys(p).some(key=>!['_','employee','manager','json'].includes(key)))throw Error('Use --employee ID [--manager ID], or a relation ID for unbind')
@@ -260,62 +269,24 @@ async function main() {
     }
     case 'management.team': {const p=parse(rest);if(p.clear&&p.team)throw Error('Use --team or --clear');return out(await call('management.team',{team:p.team,clear:!!p.clear}))}
     case 'management.global':if(!['on','off'].includes(rest[1]))throw Error('Use on or off');return out(await call('management.global',{id:rest[0],enabled:rest[1]==='on'}))
-    case 'card.management-role':return out(await call('card.management-role',{id:rest[0],role:rest[1]}))
-    case 'card.access-mode':return out(await call('card.access-mode',{id:rest[0],mode:rest[1]}))
     case 'session.status':{const p=parse(rest);return out(await call('session.status',{employee:p.employee}))}
-    case 'view.list':case 'view.get':case 'view.close': return out(await call(`view.${sub}`))
     case 'view.select': {const p=parse(rest);return out(await call('view.select',{id:p._[0],teamViewId:p['team-view']}))}
-    case 'messenger.upload-begin':{const p=parse(rest);return out(await call('messenger.upload-begin',{conversation:p._[0],name:p.name,bytes:Number(p.bytes)}))}
     case 'transfer.download-save':{const p=parse(rest);if(!p.path)throw Error('Provide --path on the Core host');return out(await call('transfer.download-save',{from:jsonArgument(p.from),path:p.path,overwrite:!!p.overwrite}))}
     case 'chat.file':{const p=parse(rest);return out(await call('chat.file',{id:p._[0],path:p.path,operation:p.operation,offset:Number(p.offset??0)}))}
-    case 'messenger.reference':{const p=parse(rest);return out(await call('messenger.reference',{conversation:p._[0],id:p._[1],quote:p.quote===undefined?undefined:jsonArgument(p.quote),textOnly:p['text-only']?true:undefined}))}
-    case 'messenger.forward-draft':{const p=parse(rest);return out(await call('messenger.forward-draft',{value:jsonArgument(p.data),expectedClientMessageId:p['expected-client-message-id']}))}
-    case 'messenger.forward-status':{const p=parse(rest);return out(await call('messenger.forward-status',{clientMessageId:p['client-message-id']}))}
-    case 'messenger.forward':{const p=parse(rest);return out(await call('messenger.forward',{messages:jsonArgument(p.messages),to:p.to,comment:p.comment,textOnly:!!p['text-only'],retry:!!p.retry,clientMessageId:p['client-message-id']}))}
-    case 'messenger.state':return out(await call('messenger.state'))
-    case 'messenger.folder-save':{const p=parse(rest);return out(await call('messenger.folder-save',{id:p.id,name:p.name,conversations:jsonArgument(p.conversations),expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])}))}
-    case 'messenger.folder-delete':{const p=parse(rest);return out(await call('messenger.folder-delete',{id:p._[0],expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])}))}
-    case 'messenger.conversation':{const p=parse(rest);return out(await call('messenger.conversation',{conversations:jsonArgument(p.conversations),patch:jsonArgument(p.patch)}))}
-    case 'messenger.message':{const p=parse(rest);return out(await call('messenger.message',{conversation:p._[0],id:p._[1],ids:p.ids===undefined?undefined:jsonArgument(p.ids),patch:jsonArgument(p.patch)}))}
     case 'messenger.draft':{const p=parse(rest),data=jsonArgument(p.data);if(!data||typeof data!=='object'||Array.isArray(data)||'conversation' in data)throw Error('Use a draft object without conversation');return out(await call('messenger.draft',{...data,conversation:p._[0]}))}
-    case 'messenger.media-open':{const p=parse(rest);return out(await call('messenger.media-open',{conversation:p._[0],path:p.path}))}
-    case 'messenger.media-info':case 'messenger.media-close':return out(await call('messenger.'+sub,{id:rest[0]}))
-    case 'messenger.media-read':{const p=parse(rest);return out(await call('messenger.media-read',{id:p._[0],offset:Number(p.offset??0)}))}
-    case 'messenger.gallery':{const p=parse(rest);return out(await call('messenger.gallery',{conversation:p.conversation,anchor:p.anchor===undefined?undefined:jsonArgument(p.anchor),through:p.through===undefined?undefined:jsonArgument(p.through),direction:p.direction,query:p.query,author:p.author,order:p.order,limit:p.limit===undefined?undefined:Number(p.limit)}))}
-    case 'messenger.search':{const p=parse(rest);return out(await call('messenger.search',{conversation:p.conversation,query:p.query,filter:p.filter,author:p.author,offset:p.offset===undefined?undefined:Number(p.offset),limit:p.limit===undefined?undefined:Number(p.limit)}))}
-    case 'channel.list':case 'channel.collectors': return out(await call('channel.'+sub))
-    case 'channel.get':case 'channel.post':case 'channel.delete':case 'channel.export':case 'channel.source-remove':case 'channel.collector-revoke': return out(await call('channel.'+sub,{id:rest[0]}))
-    case 'channel.source-image':return out(await call('channel.source-image',{sourceId:rest[0]}))
-    case 'channel.timeline':{const p=parse(rest);return out(await call('channel.timeline',{id:p._[0],kind:p.kind,beforeEntry:p['before-entry'],cursor:p.cursor,limit:p.limit===undefined?undefined:Number(p.limit)}))}
-    case 'channel.read-state':case 'channel.acknowledge':{const p=parse(rest);return out(await call('channel.'+sub,{id:p._[0],entryIds:p.entries===undefined?undefined:jsonArgument(p.entries),...(p.all?{all:true}:{})}))}
-    case 'channel.history':{const p=parse(rest);return out(await call('channel.history',{id:p._[0],before:p.before===undefined?undefined:Number(p.before),around:p.around,limit:p.limit===undefined?undefined:Number(p.limit)}))}
-    case 'channel.context':{const p=parse(rest);return out(await call('channel.context',{id:p._[0],entryId:p.entry}))}
-    case 'channel.message-send':case 'channel.message-post':{const p=parse(rest);if(p.silent&&(p.text!==undefined||p.file))throw Error('Choose --silent or message text');return out(await call('channel.'+sub,{id:p._[0],text:p.silent?null:p.file?readInputFile(p.file):p.text,replyTo:p['reply-to'],clientMessageId:p['client-message-id'],...(sub==='message-send'?{mentions:p.mentions===undefined?undefined:p.mentions==='all'?'all':jsonArgument(p.mentions)}:{kind:p.kind})}))}
-    case 'channel.settings': {const p=parse(rest);return out(await call('channel.settings',{patch:p.patch===undefined?undefined:jsonArgument(p.patch)}))}
-    case 'channel.sources': {const p=parse(rest);return out(await call('channel.sources',{channelId:p.channel,plugin:p.plugin,includeDisabled:p['include-disabled']?true:undefined}))}
-    case 'channel.create':case 'channel.update': {const p=parse(rest);return out(await call('channel.'+sub,{...(sub==='update'?{id:p._[0],adminIds:p.admins===undefined?undefined:jsonArgument(p.admins),expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])}:{}),name:p.name}))}
+    case 'channel.read-state':case 'channel.acknowledge':{const p=parse(rest);return out(await call('channel.'+sub,{id:p._[0],entryIds:p.entries===undefined?undefined:jsonArgument(p.entries),...(p.all?{all:true}:{}),...(p.source?{sourceId:p.source}:{})}))}
+    case 'channel.message-send':case 'channel.message-post':{const p=parse(rest);if(p.silent!==undefined)throw Error('Silent publication is removed. To remain silent, do not call the publication API');return out(await call('channel.'+sub,{id:p._[0],text:p.file?readInputFile(p.file):p.text,images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),replyTo:p['reply-to'],clientMessageId:p['client-message-id'],...(sub==='message-send'?{mentions:p.mentions===undefined?undefined:p.mentions==='all'?'all':jsonArgument(p.mentions)}:{kind:p.kind})}))}
     case 'channel.source-add':case 'channel.publish':case 'channel.media-put':case 'channel.source-avatar-put': {const p=parse(rest);return out(await call('channel.'+sub,jsonArgument(p.data)))}
-    case 'channel.source-update': {const p=parse(rest);return out(await call('channel.source-update',{id:p._[0],patch:jsonArgument(p.patch)}))}
-    case 'channel.posts': {const p=parse(rest);return out(await call('channel.posts',{channelId:p.channel,sourceId:p.source,saved:p.saved?true:undefined,query:p.query,cursor:p.cursor,limit:p.limit===undefined?undefined:Number(p.limit)}))}
     case 'channel.save': {if(!['on','off'].includes(rest[1]))throw Error('Use channel save POST_ID on|off');return out(await call('channel.save',{id:rest[0],saved:rest[1]==='on'}))}
-    case 'channel.image': {const p=parse(rest);return out(await call('channel.image',{channelId:p._[0],postId:p.post,mediaId:p.media}))}
-    case 'channel.collector-add': {const p=parse(rest);return out(await call('channel.collector-add',{name:p.name,sourceIds:p.sources===undefined||p.sources==='all'?'all':jsonArgument(p.sources)}))}
-    case 'channel.collector-config': {const p=parse(rest);return out(await call('channel.collector-config',{sinceRevision:p['since-revision']===undefined?undefined:Number(p['since-revision'])}))}
-    case 'chat.list': return out(await call('chat.list'))
-    case 'chat.create': {const p=parse(rest);return out(await call('chat.create',{name:p.name,team:p.team,members:p.members===undefined?undefined:jsonArgument(p.members)}))}
+    case 'channel.collector-add': {const p=parse(rest);return out(await call('channel.collector-add',{name:p.name,...(p.channel?{channelId:p.channel,...(p.sources!==undefined?{sourceIds:p.sources==='all'?'all':jsonArgument(p.sources)}:{})}:{sourceIds:p.sources===undefined||p.sources==='all'?'all':jsonArgument(p.sources)})}))}
     case 'chat.update': {const p=parse(rest),patch=jsonArgument(p.patch);if(!patch||typeof patch!=='object'||Array.isArray(patch)||'id' in patch)throw Error('Use a group patch without id');return out(await call('chat.update',{...patch,id:p._[0]}))}
-    case 'chat.get':case 'chat.delete': return out(await call('chat.'+sub,{id:rest[0]}))
-    case 'chat.history': {const p=parse(rest);return out(await call('chat.history',{id:p._[0],around:p.around,before:p.before===undefined?undefined:Number(p.before),limit:p.limit===undefined?undefined:Number(p.limit)}))}
-    case 'chat.context':case 'chat.acknowledge': {const p=parse(rest);return out(await call('chat.'+sub,{id:p._[0],messageId:p.message}))}
     case 'chat.edit': {const p=parse(rest);return out(await call('chat.edit',{id:p._[0],messageId:p.message,text:p.file?readInputFile(p.file):p.text,expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])}))}
     case 'chat.mute': {const p=parse(rest);return out(await call('chat.mute',{id:p._[0],member:p.member,muted:!p.off,durationSeconds:p.for===undefined?undefined:Number(p.for)}))}
-    case 'chat.send':case 'chat.post': {const p=parse(rest);if(p.silent&&(sub!=='post'||p.text!==undefined||p.file!==undefined))throw Error('Use --silent only with chat post, without --text or --file');const a={id:p._[0],text:p.silent?null:p.file?readInputFile(p.file):p.text,images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),clientMessageId:p['client-message-id'],replyTo:p['reply-to'],replyConversation:p['reply-conversation'],replyTextOnly:p['reply-text-only']?true:undefined,replyQuote:p['reply-quote']===undefined?undefined:jsonArgument(p['reply-quote'])};if(sub==='send'){a.mentions=p.mentions===undefined?[]:p.mentions==='all'?'all':jsonArgument(p.mentions);a.viewId=p.view}else a.kind=p.kind;return out(await call('chat.'+sub,a))}
-    case 'team-view.list': return out(await call('team-view.list'))
+    case 'chat.send':case 'chat.post': {const p=parse(rest);if(p.silent!==undefined)throw Error('Silent publication is removed. To remain silent, do not call chat post');const a={id:p._[0],text:p.file?readInputFile(p.file):p.text,images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),clientMessageId:p['client-message-id'],replyTo:p['reply-to'],replyConversation:p['reply-conversation'],replyTextOnly:p['reply-text-only']?true:undefined,replyQuote:p['reply-quote']===undefined?undefined:jsonArgument(p['reply-quote'])};if(sub==='send'){a.mentions=p.mentions===undefined?[]:p.mentions==='all'?'all':jsonArgument(p.mentions);a.viewId=p.view}else a.kind=p.kind;return out(await call('chat.'+sub,a))}
     case 'team-view.create': {const p=parse(rest);return out(await call('team-view.create',{name:p.name,teams:p.teams?jsonArgument(p.teams):[]}))}
     case 'team-view.update': {const p=parse(rest);return out(await call('team-view.update',{id:p._[0],patch:jsonArgument(p.patch)}))}
-    case 'team-view.remove':case 'team-view.select': return out(await call(`team-view.${sub}`,{id:rest[0]}))
     case 'view.open': {
-      const p=parse(rest);return out(await call('view.open',{kind:p._[0],name:p.name,employee:p.employee,chatId:p.chat,channelId:p.channel,planViewId:p['plan-view'],pluginId:p.plugin,settings:p.mode?{mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}:undefined,details:!!p.details}))
+      const p=parse(rest);return out(await call('view.open',{kind:p._[0],name:p.name,employee:p.employee,chatId:p.chat,channelId:p.channel,sourceId:p.source,planViewId:p['plan-view'],pluginId:p.plugin,settings:p.mode?{mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}:undefined,details:!!p.details}))
     }
     case 'view.details': return out(await call('view.details',{enabled:rest[0]==='on'}))
     case 'remote.check': {const p=parse(rest);return out(await call('remote.check',{employee:p.employee,team:p.team,remote:remoteFlags(p)}))}
@@ -324,7 +295,6 @@ async function main() {
     case 'terminal.read': {const p=parse(rest);return out(await call('terminal.read',{id:p._[0],cursor:Number(p.cursor??0)}),r=>r.output)}
     case 'terminal.input': {const p=parse(rest),data=p.file?readInputFile(p.file):p.data??p._[1]??'';return out(await call('terminal.input',{id:p._[0],data:data+(p.enter?'\r':'')}))}
     case 'terminal.resize': {const p=parse(rest);return out(await call('terminal.resize',{id:p._[0],cols:Number(p.cols),rows:Number(p.rows)}))}
-    case 'terminal.close': return out(await call('terminal.close',{id:rest[0]}))
     case 'workspace.suggest':case 'workspace.choose': {
       const p=parse(rest);return out(await call(`workspace.${sub}`,{team:p.team,path:p.path,workEnvironment:p['work-environment'],mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}))
     }
@@ -337,28 +307,17 @@ async function main() {
       require(join(__dirname, '..', 'out', 'main', 'daemon.js'))
     }
       return
-    case 'plugin.list':
-      return out(await call('plugin.list'))
-    case 'plugin.describe':
-      return out(await call('plugin.describe',{id:rest[0]}))
-    case 'plugin.install':
-      return out(await call('plugin.install',{path:rest[0]}))
     case 'plugin.call': {
       const p=parse(rest)
       const params=p.params ? JSON.parse(String(p.params).startsWith('@')?readInputFile(String(p.params).slice(1)):String(p.params)) : {}
       return out(await call('plugin.call',{id:p._[0],method:p._[1],team:p.team,workspace:p.workspace,employee:p.employee,params,raw:p.raw===true}))
     }
-    case 'plugin.windows': return out(await call('plugin.windows'))
-    case 'plugin.dismiss': return out(await call('plugin.dismiss',{id:rest[0]}))
-    case 'plugin.mode': return out(await call('plugin.mode',{id:rest[0],mode:rest[1]}))
     case 'plugin.place': {const p=parse(rest),bounds={};for(const key of ['x','y','width','height'])if(p[key]!==undefined)bounds[key]=Number(p[key]);return out(await call('plugin.place',{id:p._[0],bounds}))}
     case 'plugin.open': {const p=parse(rest);return out(await call('plugin.open',{id:p._[0],team:p.team,employee:p.employee,workspace:p.workspace}))}
     case 'plugin.view': {
       const p=parse(rest)
       return out(await call('plugin.view',{id:p._[0],team:p.team,workspace:p.workspace,employee:p.employee}))
     }
-    case 'plugin.close':
-      return out(await call('plugin.close',{viewId:rest[0]}))
     case 'workspace.docs': {
       const p=parse(rest)
       return out(await call('workspace.docs',{team:p.team,workspace:p.workspace,employee:p.employee}))
@@ -367,8 +326,6 @@ async function main() {
       return out(await call('status'), (d) =>
         `running   ${d.running}\nhome      ${d.home}\nteamRoots ${Object.keys(d.teamRoots ?? {}).length}\nlive      ${d.live}\nstored    ${d.stored}`
       )
-
-    case 'session.inbox': return out(await call('session.inbox'))
     case 'session.list': {
       const p = parse(argv.slice(1))
       const d = await call('session.list', { live: !!p.live })
@@ -409,17 +366,11 @@ async function main() {
 
     case 'session.open':
       return out(await call('session.open', { cardId: rest[0] }), (x) => `${x.sessionId}  open`)
-
-    case 'session.activity': return out(await call('session.activity',{id:rest[0]}))
-    case 'session.snapshot':
-      return out(await call('session.snapshot', { id: rest[0] }))
     case 'session.search':
       return out(await call('session.search', { query: rest.join(' ') }))
-    case 'approval.list':
-      return out(await call('approval.list', { id: rest[0] }))
     case 'approval.respond': {const p=parse(rest);return out(await call('approval.respond',{id:p._[0],requestId:p._[1],decision:p._[2],answers:p.answers?JSON.parse(p.answers):undefined,form:p.form?JSON.parse(p.form):undefined}))}
 
-    case 'session.send': case 'session.enqueue': {const parts=rest.slice(1),at=parts.indexOf('--images');let images;if(at>=0){images=JSON.parse(parts[at+1]);parts.splice(at,2)}const filesAt=parts.indexOf('--files');let files;if(filesAt>=0){files=jsonArgument(parts[filesAt+1]);parts.splice(filesAt,2)}const viewAt=parts.indexOf('--view');let viewId;if(viewAt>=0){viewId=parts[viewAt+1];if(!viewId)throw Error('--view requires a view ID');parts.splice(viewAt,2)}const replyAt=parts.indexOf('--reply-to');let replyTo;if(replyAt>=0){replyTo=parts[replyAt+1];if(!replyTo)throw Error('--reply-to requires a message ID');parts.splice(replyAt,2)}const quoteAt=parts.indexOf('--reply-quote');let replyQuote;if(quoteAt>=0){replyQuote=jsonArgument(parts[quoteAt+1]);parts.splice(quoteAt,2)}const sourceAt=parts.indexOf('--reply-conversation');let replyConversation;if(sourceAt>=0){replyConversation=parts[sourceAt+1];if(!replyConversation)throw Error('--reply-conversation requires a conversation reference');parts.splice(sourceAt,2)}const clientAt=parts.indexOf('--client-message-id');let clientMessageId;if(clientAt>=0){clientMessageId=parts[clientAt+1];if(!clientMessageId||clientMessageId.startsWith('--'))throw Error('--client-message-id requires a request ID');parts.splice(clientAt,2)}const textOnlyAt=parts.indexOf('--reply-text-only'),replyTextOnly=textOnlyAt>=0?true:undefined;if(textOnlyAt>=0)parts.splice(textOnlyAt,1);return out(await call('session.'+sub,{id:rest[0],text:parts.join(' '),images,files,viewId,replyTo,replyQuote,replyConversation,replyTextOnly,clientMessageId}))}
+    case 'session.send': case 'session.enqueue': return out(await call('session.'+sub,positionalMessage(rest)))
     case 'session.transcript': {
       const p = parse(argv.slice(1))
       return out(await call('session.transcript', { id: p._[1] ?? rest[0], limit:p.limit===undefined?undefined:Number(p.limit), thinking: !!p.thinking }), (d) => d.text)
@@ -440,11 +391,6 @@ async function main() {
         ].join('\n')
       )
 
-    case 'session.interrupt':
-      return out(await call('session.interrupt', { id: rest[0] }))
-    case 'session.close':
-      return out(await call('session.close', { id: rest[0] }))
-
     case 'session.follow': {
       const p = parse(argv.slice(1))
       const id = p._[1] ?? rest[0]
@@ -458,31 +404,17 @@ async function main() {
       })
       return
     }
-
-    // Compatibility error only: an existing employee cannot change engines.
-    case 'config.engine': return out(await call('config.engine',{id:rest[0],engine:rest[1]}))
-    case 'config.model':
-      return out(await call('config.model', { id: rest[0], model: rest[1] }))
     case 'config.remote-admin': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.remote-admin',{id:rest[0],enabled:rest[1]==='on'}))}
-    case 'config.permission':
-      return out(await call('config.permission', { id: rest[0], mode: rest[1] }))
-    case 'config.thinking':
-      return out(await call('config.thinking', { id: rest[0], enabled: rest[1] }))
     case 'config.effort':
       // 'default' clears the override, like the Default entry in the GUI menu.
       return out(await call('config.effort', { id: rest[0], effort: rest[1] ?? 'default' }))
 
     case 'config.plan': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.plan',{id:rest[0],enabled:rest[1]==='on'}))}
-    case 'external.open': return out(await call('external.open',{url:rest[0]}))
-    case 'engine.inspect': return out(await call('engine.inspect',{id:rest[0],section:rest[1]}))
     case 'engine.models': {const p=parse(rest);return out(await call('engine.models',{engine:p.engine,kind:p.kind,team:p.team}))}
     case 'engine.skill': return out(await call('engine.skill',{id:rest[0],name:rest[1],prompt:rest.slice(2).join(' ')}))
-    case 'session.steer': return out(await call('session.steer',{id:rest[0],text:rest.slice(1).join(' ')}))
-    case 'session.background': return out(await call('session.background',{id:rest[0]}))
+    case 'session.steer': {const parts=rest.slice(1),source=messageSourceOption(parts);return out(await call('session.steer',{id:rest[0],text:parts.join(' '),...source}))}
     case 'session.background-stop': {const p=parse(rest);return out(await call('session.background-stop',{id:p._[0],processId:p.process}))}
     case 'session.review': {const p=parse(rest);return out(await call('session.review',{id:p._[0],base:p.base,commit:p.commit,instructions:p.instructions}))}
-    case 'session.queue': return out(await call('session.queue',{id:rest[0]}))
-    case 'session.dequeue': return out(await call('session.dequeue',{id:rest[0],messageId:rest[1]}))
     case 'session.export': {const p=parse(rest);return out(await call('session.export',{id:p._[0],format:p.format,path:p.path}),d=>d.content??JSON.stringify(d))}
     case 'view.tools': return out(await call('view.tools',{section:rest[0]==='off'?null:rest[0]}))
     case 'config.fast': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.fast',{id:rest[0],enabled:rest[1]==='on'}))}
@@ -597,7 +529,6 @@ async function main() {
     }
     case 'host.exec': {const p=parse(rest);return out(await call('host.exec',{id:p._[0],directory:p.directory,command:p['command-file']?readInputFile(p['command-file']):p.command,timeout:p.timeout?Number(p.timeout):undefined}))}
     case 'host.list': {const p=parse(rest);return out(await call('host.list',{os:p.os,distribution:p.distribution,summary:!!p.summary,credentials:!!p.credentials}))}
-    case 'host.fingerprints': case 'host.get': case 'host.remove': case 'host.check': case 'host.credentials': return out(await call(`host.${sub}`,{id:rest[0]}))
     case 'host.trust': {const p=parse(rest);return out(await call('host.trust',{id:p._[0],fingerprint:p.fingerprint}))}
     case 'host.create': {const p=parse(rest);return out(await call('host.create',jsonArgument(p.data||'{}')))}
     case 'host.update': {const p=parse(rest);return out(await call('host.update',{id:p._[0],patch:jsonArgument(p.data||'{}')}))}
@@ -608,7 +539,6 @@ async function main() {
       {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p),os:p.os,distribution:p.distribution }), (s) => s.groups.join('\n'))}
     case 'group.configure':
       {const p=parse(rest);return out(await call('group.configure',{name:p._[0],mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],root:p.root,hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p)}))}
-    case 'group.migrate': return out(await call('group.migrate',{name:rest[0]}))
     case 'group.root':
       return out(await call('group.root',{name:rest[0],root:rest[1],create:!!parse(rest).create,directoryMode:parse(rest)['directory-mode']}))
     case 'room.bounds': {
@@ -618,8 +548,6 @@ async function main() {
       if(p.points) bounds.points=JSON.parse(p.points).map(v=>Array.isArray(v)?{x:v[0],y:v[1]}:v)
       return out(await call('room.bounds',{name:p._[0],bounds}))
     }
-    case 'room.layout':
-      return out(await call('room.layout',{name:rest[0]}))
     case 'card.place': {
       const p=parse(rest)
       if(p.snap!==undefined&&!['on','off'].includes(p.snap))throw new Error('--snap accepts on|off');return out(await call('card.place',{id:p._[0],x:p.x,y:p.y,snap:p.snap===undefined?undefined:p.snap==='on',zoom:p.zoom===undefined?undefined:Number(p.zoom)}))
@@ -630,8 +558,6 @@ async function main() {
       const p=parse(rest)
       return out(await call('canvas.set',{x:p.x,y:p.y,zoom:p.zoom,viewId:p.view}))
     }
-    case 'group.rename':
-      return out(await call('group.rename', { name: rest[0], nextName: rest[1] }))
     case 'group.remove':
       {const p=parse(rest);if(p['delete-workspace']!==undefined&&p['delete-workspace']!==true)throw Error('--delete-workspace is a flag');return out(await call('group.remove', { ...(p._.length===1?{name:p._[0]}:{names:p._}),deleteWorkspace:p['delete-workspace']===true }), (s) => s.groups.join('\n'))}
 
@@ -639,7 +565,6 @@ async function main() {
       return out(await call('card.rename', { cardId: rest[0], title: rest.slice(1).join(' ') }))
     case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
     case 'card.initialize': {const p=parse(rest);return out(await call('card.initialize',{id:p._[0],model:p.model,effort:p.effort}))}
-    case 'card.native-bind':return out(await call('card.native-bind',{id:rest[0],sessionId:rest[1]}))
     case 'avatar.list': {const p=parse(rest);return out(await call('avatar.list',{query:p.query,style:p.style,all:!!p.all}))}
     case 'card.avatar': {const p=parse(rest);return out(await call('card.avatar',{id:p._[0],avatar:p.avatar??p._[1],character:p.character,avatarStyle:p['avatar-style']}))}
     case 'card.create': {
@@ -669,7 +594,7 @@ async function main() {
       {const p=parse(rest);if(p['delete-workspace']!==undefined&&p['delete-workspace']!==true)throw Error('--delete-workspace is a flag');return out(await call('card.remove', { ...(p._.length===1?{id:p._[0]}:{ids:p._}),deleteWorkspace:p['delete-workspace']===true }))}
 
     default:
-      die(`unknown command: ${argv.join(' ')}\n\n${HELP}`)
+      die(`unknown command: ${argv.join(' ')}\n\n${help()}`)
   }
 }
 

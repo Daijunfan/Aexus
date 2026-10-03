@@ -21,7 +21,7 @@ try{
  f=await fixtureCore({},entry)
  const rpc=async(cmd,args={})=>{const result=await f.request(null,cmd,args);assert.ok(result.ok,cmd+': '+result.error);return result.data},catalog=()=>rpc('channel.list'),summary=async id=>(await catalog()).find(channel=>channel.id===id)
  await rpc('settings.set',{language:'en',theme:'violet'})
- const a=await rpc('channel.create',{name:'Reading room'}),b=await rpc('channel.create',{name:'Other reading room'}),source=await rpc('channel.source-add',{plugin:'x',locator:'reading_fixture',channelId:a.id}),otherSource=await rpc('channel.source-add',{plugin:'youtube',locator:'@reading_other',channelId:b.id}),base=Date.now()-120000,posts=[]
+ const a=await rpc('channel.create',{name:'Reading room',engine:{kind:'external',location:'local',name:'Fixture publisher'}}),b=await rpc('channel.create',{name:'Other reading room',engine:{kind:'external',location:'local',name:'Fixture publisher'}}),source=await rpc('channel.source-add',{plugin:'x',locator:'reading_fixture',channelId:a.id}),otherSource=await rpc('channel.source-add',{plugin:'youtube',locator:'@reading_other',channelId:b.id}),base=Date.now()-120000,posts=[]
  for(let i=0;i<70;i++)posts.push(await rpc('channel.publish',{sourceId:source.id,externalId:'story-'+i,publishedAt:base+i*1000,title:'Story '+(i+1),body:'Original retained content for article '+(i+1)+'. The rendered end of this card must be visible before it is acknowledged.'}))
  const other=await rpc('channel.publish',{sourceId:otherSource.id,externalId:'other',publishedAt:base,title:'Another channel stays unread',body:'Independent reading state.'})
  await rpc('channel.save',{id:posts.at(-1).id,saved:true})

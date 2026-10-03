@@ -13,9 +13,9 @@ const {_electron:electron,expect}=require(path.join(host,'node_modules/@playwrig
   app=await electron.launch({executablePath:nativeApp||require(path.join(host,'node_modules/electron')),args:nativeApp?[]:[host],env});await app.firstWindow();
   const cli=async(...args)=>{const r=JSON.parse((await exec(process.execPath,[path.join(host,'bin/agents'),...args,'--json'],{env,timeout:60000,maxBuffer:24*1024*1024})).stdout);assert(r.ok,r.error);return r.data;};
   const api=(method,p={})=>cli('plugin','call','margin-reader',method,'--params',JSON.stringify(p));const info=await api('system.info');assert(info.workspace.startsWith(temp+path.sep));
-  await fs.writeFile(path.join(info.workspace,'source.pdf'),require('./fixtures.cjs').pdfFixture());let set=await api('study.create',{title:'原生导图验收'});
+  await fs.writeFile(path.join(info.workspace,'source.pdf'),require('./fixtures.cjs').pdfFixture());let set=await api('study.create',{mapMode:'cards',title:'原生导图验收'});
   const refresh=async()=>set=await api('study.get',{setId:set.id}),change=async(m,p)=>{await refresh();return set=await api(m,{setId:set.id,expectedRevision:set.revision,...p});};
-  await change('study.mindmap.template.apply',{template:'project',title:'原生视觉工作台'});await change('study.documents.add',{paths:['source.pdf']});const doc=await api('document.get',{id:set.documentIds[0]});
+  await change('study.mindmap.template.apply',{template:'project',title:'原生视觉工作台'});await change('study.mindmap.configure',{patch:{showImages:true}});await change('study.documents.add',{paths:['source.pdf']});const doc=await api('document.get',{id:set.documentIds[0]});
   const capture=await api('study.card.create',{setId:set.id,expectedRevision:set.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),text:'',color:'blue',title:'精确原文摘录',locator:{page:2},selection:{rects:[{page:2,x:.1,y:.06,width:.7,height:.12}]}});
   await change('study.card.move',{cardId:capture.card.id,parentId:set.cards[0].id});await api('study.open',{setId:set.id});
   const opened=app.waitForEvent('window');await cli('plugin','open','margin-reader');page=await opened;page.setDefaultTimeout(20000);page.on('pageerror',e=>report.errors.push(e.message));

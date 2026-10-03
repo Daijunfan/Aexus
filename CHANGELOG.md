@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.55.0 — Unified assets and completed Margin Reader
+
+- Add the fixed Company/Messages/Plan file tree, flat asset search, lazy paging and background indexing, including published attachments and cloud documents.
+- Add English/Pinyin directory creation and explicit migration for managed and externally bound roots, preserving identities, original files and legacy references.
+- Fix bidirectional shared-file transfers; keep conversation originals and peer folders protected. Preserve Company ESC/Back draft behavior and the redesigned team locator.
+- Integrate Telegram document metadata, original thumbnails and filenames, album order, verified cloud-to-channel downloads and persistent local copies.
+- Include independent conversation roles, mute/silence controls and fixed-text notices, configurable conversation directories, Secretary API tooling and complete Plan discovery.
+- Bundle Margin Reader 0.9.4 with source-linked reading/maps, split reading, precise subtree drops and cancellation, complete document covers, save/close fixes, designs and exports; bundle MiniNotion 1.23.0 with event summaries, slash categories and authorized selection assistance.
+- Detailed Chinese release notes: [0.55.0](docs/releases/0.55.0.zh-CN.md). Platform validation and redistribution review boundaries remain explicit.
+
+## 0.53.1 — Secretary APIs and complete Plan discovery
+
+- Give every native engine one authenticated Core API execution tool and focused command discovery, reusing existing role, workspace, membership and execution-permission boundaries.
+- Return exact task IDs, revisions, roles, teams, rules, times and available actions from Plan; let Secretary inspect and maintain records whose employee was deleted without granting execution to missing or peer targets.
+- Add revision-checked batch schedule deletion, full raw CLI argument forwarding and Secretary management of saved Plan views; keep legacy routes out of default discovery while retaining protocol compatibility.
+- Preserve per-message source-view context, user-defined messaging categories and social-source navigation, employee profile tabs and shared-file navigation refinements.
+- Document the GUI/API comparison and verify native tool execution with isolated protocol and loopback model fixtures.
+
+## 0.53.0 — Shared workspaces and integrated messaging
+
+- Show labelled Add Team / Add Employee actions only in Company; restore private chats, groups and channels from one Archived chats list.
+- Persist group/channel uploads under their named shared folder; send one text-only file notice with the original user message. Keep each employee’s named work folder and personal Workspace available through authenticated CLI/API operations.
+- Keep user originals and peer outputs read-only through the shared file API; support explicit copies without silently moving workspaces or native sessions.
+- Include deliberate group publishing, finite awareness delivery and independent private/shared unread state.
+- Integrate employee/external-process channel engines, connection settings and avatars, plus channel/post layouts.
+- Retain the Core modularization and message query worker; bundle Margin Reader 0.9.1, MiniNotion 1.22.1 and Cloud Hosts 1.2.2 from the current source.
+
 ## 0.50.13 — Shared views and group conversations
 
 - Make Company Views return directly to All Team before opening its menu; use the same button sizing and styling as Messages.

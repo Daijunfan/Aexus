@@ -7,7 +7,7 @@ const plugin=path.join(root,'PlugIns/mini-notion')
 const artifacts=process.env.AGENTS_COMPANY_TEST_ARTIFACTS||path.join(root,'artifacts/mininotion-ui')
 fs.mkdirSync(artifacts,{recursive:true})
 const results=[]
-for(const [name,script] of [['workspace','test-workspace-ui.mjs'],['local','test-local-ui.mjs'],['editing','test-editing-ui.mjs'],['authoring',path.join(root,'test/mininotion-authoring-ui-test.mjs')],['recycle',path.join(root,'test/mininotion-recycle-ui-test.mjs')],['visual',path.join(root,'test/mininotion-visual-ui-test.mjs')]]){
+for(const [name,script] of [['workspace','test-workspace-ui.mjs'],['local','test-local-ui.mjs'],['editing','test-editing-ui.mjs'],['authoring',path.join(root,'test/mininotion-authoring-ui-test.mjs')],['recycle',path.join(root,'test/mininotion-recycle-ui-test.mjs')],['visual',path.join(root,'test/mininotion-visual-ui-test.mjs')],['events',path.join(root,'test/mininotion-event-ui-test.mjs')],['editor-tools',path.join(root,'test/mininotion-editor-tools-ui-test.mjs')]]){
   const log=path.join(artifacts,name+'.log'),output=fs.openSync(log,'w')
   const env={...process.env,AGENTS_COMPANY_PLUGIN_DIRS:'',MINI_NOTION_TEST_PLUGIN:'',AGENTS_COMPANY_BUILTIN_PLUGINS:path.join(root,'build/plugins'),AGENTS_COMPANY_TEST_ARTIFACTS:path.join(artifacts,name)}
   const started=Date.now()

@@ -25,6 +25,6 @@ export function assertEmployeeReady(id?:string){
 export function assertInitializationRequest(command:string,id?:string){
   if(!id)return
   if(['card.update','config.engine'].includes(command)&&readStore().sessions.find(card=>card.id===id)?.initialization?.status==='failed')return
-  if(['session.list','session.status','session.info','session.search','card.initialize','card.remove'].includes(command))return
+  if(['card.profile','session.list','session.status','session.info','session.search','card.initialize','card.remove'].includes(command))return
   if(command.startsWith('session.')||command.startsWith('config.')||command.startsWith('commands.')||command.startsWith('approval.')||command.startsWith('card.')||command==='engine.inspect'||command==='engine.skill'||command==='management.global'||command.startsWith('terminal.')||['schedule.create','schedule.run'].includes(command))assertEmployeeReady(id)
 }

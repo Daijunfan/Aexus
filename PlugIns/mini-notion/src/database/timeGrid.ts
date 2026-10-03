@@ -18,7 +18,8 @@ export type TimeGridEvent = {
   column: number;
   columns: number;
 };
-export function arrangeTimeEvents(events: TimeGridEvent[]) {
+export function arrangeTimeEvents(events: TimeGridEvent[], minimumMinutes = 0) {
+  const endOf = (event: TimeGridEvent) => Math.max(event.minuteEnd, event.minuteStart + minimumMinutes);
   events.sort(
     (a, b) => a.minuteStart - b.minuteStart || b.minuteEnd - a.minuteEnd || a.id.localeCompare(b.id),
   );
@@ -34,10 +35,10 @@ export function arrangeTimeEvents(events: TimeGridEvent[]) {
     if (event.minuteStart >= until) finish();
     let column = ends.findIndex((end) => end <= event.minuteStart);
     if (column < 0) column = ends.length;
-    ends[column] = event.minuteEnd;
+    ends[column] = endOf(event);
     event.column = column;
     group.push(event);
-    until = Math.max(until, event.minuteEnd);
+    until = Math.max(until, endOf(event));
   }
   finish();
   return events;

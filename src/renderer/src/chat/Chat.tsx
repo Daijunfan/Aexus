@@ -1,4 +1,5 @@
 import {MessageFile} from './MessageAttachments'
+import {SOURCE_VIEW_LABELS} from '../../../shared/message-source'
 import {ReplyPreview} from './ReplyPreview'
 import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../i18n'
 // Rendering one conversation: turns, and the blocks inside them.
@@ -31,7 +32,7 @@ export const Turn=memo(function Turn({ item,replyId,messageEmployee,timestamp,on
   const time=clock?<time className="message-time" dateTime={clock.dateTime}>{clock.label}</time>:null
   if (item.role === 'user') {
     return (
-      <div className="turn user" data-emoji-count={messageEmployee&&!item.reply&&!item.images?.length&&!item.files?.length?emojiCount(item.text):undefined} data-bubble-group={bubbleGroup} data-selecting={selecting||undefined} data-selected={selected||undefined} onClickCapture={select} data-chat-item={item.id}>
+      <div className="turn user" data-source-view={item.sourceView} title={item.sourceView?uiText('Sent from {0} view',[uiText(SOURCE_VIEW_LABELS[item.sourceView])]):undefined} data-emoji-count={messageEmployee&&!item.reply&&!item.images?.length&&!item.files?.length?emojiCount(item.text):undefined} data-bubble-group={bubbleGroup} data-selecting={selecting||undefined} data-selected={selected||undefined} onClickCapture={select} data-chat-item={item.id}>
         <div className="bubble"><MessageCheckbox conversation={conversation} id={item.id}/>{requestAuthor&&<span className="message-request-author">{uiText('From {0}',[requestAuthor])}</span>}{item.reply&&<ReplyPreview reply={item.reply} author={replyAuthor??uiText('Original message')} onNavigate={()=>conversationEmployee&&messenger?.navigate({conversation:item.reply!.conversation??conversationKey('employee',conversationEmployee),id:item.reply!.id,quote:item.reply!.quote},{conversation:conversationKey('employee',conversationEmployee),id:item.id})}/>}{messageEmployee?<BlockView block={{kind:'text',text:item.text}} english/>:<span data-quote-text>{item.text}</span>}{messageEmployee?<MessageImages employee={messageEmployee} paths={item.images??[]} messageId={item.id} caption={item.text}/>:item.images?.map(path=><div className="message-image-label" key={path}>🖼 {path}</div>)}{conversationEmployee&&item.files?.map(file=><MessageFile messageId={item.id} key={file.path} conversation={conversationKey('employee',conversationEmployee)} file={file}/>)}{messageEmployee&&item.outbound?<span className="message-time message-time-with-receipt">{clock&&<time dateTime={clock.dateTime}>{clock.label}</time>}<MessageReceipt outbound={item.outbound}/></span>:time}{messageEmployee&&<MessageActions conversation={conversation} id={item.id} images={(item.images?.length??0)+(item.files?.length??0)} text={item.text} onReply={onReply?()=>onReply(item):undefined}/>}</div>
       </div>
     )

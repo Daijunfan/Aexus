@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 exports.exercise=async({api,deny,pdf})=>{
- const doc=await api('document.get',{id:pdf.id});let set=await api('study.create',{title:'Employee annotation notebooks'});
+ const doc=await api('document.get',{id:pdf.id});let set=await api('study.create',{mapMode:'cards',title:'Employee annotation notebooks'});
  const change=async(method,p={})=>set=await api(method,{setId:set.id,expectedRevision:set.revision,...p});
  await change('study.documents.add',{paths:[doc.path]});
  const initial=await api('study.notebook.list',{setId:set.id,documentId:doc.id});assert.equal(initial.activeId,'default');

@@ -1,9 +1,10 @@
+import { EventState } from '../components/EventSummary';
 import { useEffect, useState } from 'react';
 import { Clock, RefreshCw, Pause, Play, Pencil, ArrowUpRight, Bell } from 'lucide-react';
 import { useWorkspace } from '../store';
 import { IconButton, Modal } from '../ui';
 import { schedulingStatus } from './engine';
-import { repeatLabel } from './recurrence';
+import { repeatSummary } from './presentation';
 import { zonedDate } from '../database/dateValue';
 
 export function SchedulerDialog() {
@@ -80,24 +81,28 @@ export function SchedulerDialog() {
           {tab === 'repeats' &&
             (status.repeats.length ? (
               status.repeats.map((item: any) => (
-                <article className="schedule-row" key={item.templateId}>
+                <article className="schedule-row" key={item.templateId} data-repeat-id={item.templateId}>
                   <RefreshCw size={16} />
                   <div>
                     <strong>{item.title || '无标题模板'}</strong>
+                    <small>{workspace!.pages.find(page => page.id === item.databaseId)?.title || '数据库'}</small>
+                    <EventState tone={!item.rule.enabled ? 'neutral' : !item.available || item.runtime?.error ? 'warning' : 'scheduled'}>
+                      {!item.rule.enabled ? '已暂停' : !item.available ? '不可用' : item.runtime?.error ? '生成失败' : item.nextAt ? '循环已启用' : '已结束'}
+                    </EventState>
                     <small>
-                      {repeatLabel(item.rule)} · {item.rule.timeZone}
+                      {repeatSummary({ ...item.rule, enabled: true })} · {item.rule.timeZone}
                     </small>
-                    <small>
+                    {(item.runtime?.error || !item.available || item.nextAt) && <small>
                       {item.runtime?.error ? (
                         <span className="schedule-error">{item.runtime.error}</span>
                       ) : !item.available ? (
                         '模板或数据库不可用'
                       ) : item.nextAt ? (
-                        `下次：${new Date(item.nextAt).toLocaleString('zh-CN', { timeZone: item.rule.timeZone })}`
+                        `下次生成：${new Date(item.nextAt).toLocaleString('zh-CN', { timeZone: item.rule.timeZone })}`
                       ) : (
-                        '未启用或已结束'
+                        ''
                       )}
-                    </small>
+                    </small>}
                   </div>
                   <IconButton
                     label="编辑循环"
@@ -133,24 +138,16 @@ export function SchedulerDialog() {
           {tab === 'reminders' &&
             (status.reminders.length ? (
               status.reminders.map((item: any) => (
-                <article className="schedule-row" key={item.id}>
+                <article className="schedule-row" key={item.id} data-reminder-id={item.id}>
                   <Bell size={16} />
                   <div>
                     <strong>{item.text || item.pageTitle || '页面提醒'}</strong>
+                    <EventState tone={item.deliveredAt ? 'done' : !item.enabled ? 'neutral' : 'scheduled'}>
+                      {!item.enabled ? '已停用' : item.deliveredAt ? '已提醒' : workspace!.scheduler?.reminders[item.id]?.snoozedUntil === item.dueAt ? '稍后提醒' : item.dueAt ? '待提醒' : '等待日期'}
+                    </EventState>
                     <small>
                       {item.pageTitle || '无标题'} ·{' '}
-                      {!item.enabled
-                        ? '已停用'
-                        : item.deliveredAt
-                          ? '已提醒'
-                          : item.dueAt
-                            ? zonedDate(item.dueAt, item.displayTimeZone)
-                                .toPlainDateTime()
-                                .toString({ smallestUnit: 'minute' })
-                                .replace('T', ' ') +
-                              ' ' +
-                              item.displayTimeZone
-                            : '等待日期'}
+                      {item.dueAt ? zonedDate(item.dueAt, item.displayTimeZone).toPlainDateTime().toString({ smallestUnit: 'minute' }).replace('T', ' ') + ' · ' + item.displayTimeZone : '未安排时间'}
                     </small>
                   </div>
                   <IconButton
@@ -174,10 +171,11 @@ export function SchedulerDialog() {
                 .scheduler!.runs.slice()
                 .reverse()
                 .map((run) => (
-                  <article className="schedule-row" key={run.id}>
+                  <article className="schedule-row" key={run.id} data-run-id={run.id}>
                     <RefreshCw size={15} />
                     <div>
                       <strong>{run.title || '无标题'}</strong>
+                      <EventState tone="done">已生成</EventState>
                       <small>
                         {run.manual ? '手动生成' : '循环生成'} · 计划时间{' '}
                         {new Date(run.scheduledFor).toLocaleString('zh-CN')}

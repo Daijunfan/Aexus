@@ -1,0 +1,1257 @@
+[
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--images",
+      "[\"photo.png\"]"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "images": [
+          "photo.png"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--files",
+      "@files.json"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "files": [
+          "report.txt"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--view",
+      "all"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "viewId": "all"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-to",
+      "m1"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyTo": "m1"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyQuote": {
+          "text": "中文😀",
+          "offset": 0
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-conversation",
+      "group:cg_x"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyConversation": "group:cg_x"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--client-message-id",
+      "send-key"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "clientMessageId": "send-key"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-text-only"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyTextOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "消息 with --ordinary words",
+      "--images",
+      "[\"photo.png\"]",
+      "--files",
+      "@files.json",
+      "--view",
+      "all",
+      "--reply-to",
+      "m1",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}",
+      "--reply-conversation",
+      "group:cg_x",
+      "--client-message-id",
+      "send-key",
+      "--reply-text-only"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "images": [
+          "photo.png"
+        ],
+        "files": [
+          "report.txt"
+        ],
+        "viewId": "all",
+        "replyTo": "m1",
+        "replyQuote": {
+          "text": "中文😀",
+          "offset": 0
+        },
+        "replyConversation": "group:cg_x",
+        "replyTextOnly": true,
+        "clientMessageId": "send-key"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--images"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "\"undefined\" is not valid JSON"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--images",
+      "[\"photo.png\"]",
+      "--images",
+      "[\"photo.png\"]",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--images [\"photo.png\"] Task",
+        "images": [
+          "photo.png"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--files"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--files",
+      "@files.json",
+      "--files",
+      "@files.json",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--files @files.json Task",
+        "files": [
+          "report.txt"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--view"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--view requires a view ID"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--view",
+      "all",
+      "--view",
+      "all",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--view all Task",
+        "viewId": "all"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--reply-to"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--reply-to requires a message ID"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--reply-to",
+      "m1",
+      "--reply-to",
+      "m1",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--reply-to m1 Task",
+        "replyTo": "m1"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--reply-quote"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--reply-quote {\"text\":\"中文😀\",\"offset\":0} Task",
+        "replyQuote": {
+          "text": "中文😀",
+          "offset": 0
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--reply-conversation"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--reply-conversation requires a conversation reference"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--reply-conversation",
+      "group:cg_x",
+      "--reply-conversation",
+      "group:cg_x",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--reply-conversation group:cg_x Task",
+        "replyConversation": "group:cg_x"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--client-message-id"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--client-message-id requires a request ID"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--client-message-id",
+      "send-key",
+      "--client-message-id",
+      "send-key",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--client-message-id send-key Task",
+        "clientMessageId": "send-key"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "Task",
+      "--reply-text-only"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "Task",
+        "replyTextOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session1",
+      "--reply-text-only",
+      "--reply-text-only",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session1",
+        "text": "--reply-text-only Task",
+        "replyTextOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--images",
+      "[\"photo.png\"]"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "images": [
+          "photo.png"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--files",
+      "@files.json"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "files": [
+          "report.txt"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--view",
+      "all"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "viewId": "all"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-to",
+      "m1"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyTo": "m1"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyQuote": {
+          "text": "中文😀",
+          "offset": 0
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-conversation",
+      "group:cg_x"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyConversation": "group:cg_x"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--client-message-id",
+      "send-key"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "clientMessageId": "send-key"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--reply-text-only"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "replyTextOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "消息 with --ordinary words",
+      "--images",
+      "[\"photo.png\"]",
+      "--files",
+      "@files.json",
+      "--view",
+      "all",
+      "--reply-to",
+      "m1",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}",
+      "--reply-conversation",
+      "group:cg_x",
+      "--client-message-id",
+      "send-key",
+      "--reply-text-only"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "消息 with --ordinary words",
+        "images": [
+          "photo.png"
+        ],
+        "files": [
+          "report.txt"
+        ],
+        "viewId": "all",
+        "replyTo": "m1",
+        "replyQuote": {
+          "text": "中文😀",
+          "offset": 0
+        },
+        "replyConversation": "group:cg_x",
+        "replyTextOnly": true,
+        "clientMessageId": "send-key"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--images"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "\"undefined\" is not valid JSON"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--images",
+      "[\"photo.png\"]",
+      "--images",
+      "[\"photo.png\"]",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--images [\"photo.png\"] Task",
+        "images": [
+          "photo.png"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--files"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--files",
+      "@files.json",
+      "--files",
+      "@files.json",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--files @files.json Task",
+        "files": [
+          "report.txt"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--view"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--view requires a view ID"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--view",
+      "all",
+      "--view",
+      "all",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--view all Task",
+        "viewId": "all"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--reply-to"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--reply-to requires a message ID"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--reply-to",
+      "m1",
+      "--reply-to",
+      "m1",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--reply-to m1 Task",
+        "replyTo": "m1"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--reply-quote"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}",
+      "--reply-quote",
+      "{\"text\":\"中文😀\",\"offset\":0}",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--reply-quote {\"text\":\"中文😀\",\"offset\":0} Task",
+        "replyQuote": {
+          "text": "中文😀",
+          "offset": 0
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--reply-conversation"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--reply-conversation requires a conversation reference"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--reply-conversation",
+      "group:cg_x",
+      "--reply-conversation",
+      "group:cg_x",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--reply-conversation group:cg_x Task",
+        "replyConversation": "group:cg_x"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--client-message-id"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "--client-message-id requires a request ID"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--client-message-id",
+      "send-key",
+      "--client-message-id",
+      "send-key",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--client-message-id send-key Task",
+        "clientMessageId": "send-key"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "Task",
+      "--reply-text-only"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "Task",
+        "replyTextOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session1",
+      "--reply-text-only",
+      "--reply-text-only",
+      "Task"
+    ],
+    "input": {
+      "files.json": "[\"report.txt\"]"
+    },
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session1",
+        "text": "--reply-text-only Task",
+        "replyTextOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session-fixture",
+      "literal",
+      "words",
+      "--source-view",
+      "messages"
+    ],
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "id": "session-fixture",
+        "text": "literal words",
+        "sourceView": "messages"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "--employee",
+      "employee-fixture",
+      "--text",
+      "Assigned context",
+      "--source-view",
+      "company"
+    ],
+    "expected": {
+      "cmd": "session.send",
+      "args": {
+        "employee": "employee-fixture",
+        "text": "Assigned context",
+        "sourceView": "company",
+        "thinking": false,
+        "raw": false
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "send",
+      "session-fixture",
+      "text",
+      "--source-view",
+      "invalid"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "--source-view requires company, messages or plan"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session-fixture",
+      "literal",
+      "words",
+      "--source-view",
+      "messages"
+    ],
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "id": "session-fixture",
+        "text": "literal words",
+        "sourceView": "messages"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "--employee",
+      "employee-fixture",
+      "--text",
+      "Assigned context",
+      "--source-view",
+      "company"
+    ],
+    "expected": {
+      "cmd": "session.enqueue",
+      "args": {
+        "employee": "employee-fixture",
+        "text": "Assigned context",
+        "sourceView": "company",
+        "thinking": false,
+        "raw": false
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "enqueue",
+      "session-fixture",
+      "text",
+      "--source-view",
+      "invalid"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "--source-view requires company, messages or plan"
+    }
+  },
+  {
+    "args": [
+      "session",
+      "steer",
+      "session-fixture",
+      "literal",
+      "words",
+      "--source-view",
+      "messages"
+    ],
+    "expected": {
+      "cmd": "session.steer",
+      "args": {
+        "id": "session-fixture",
+        "text": "literal words",
+        "sourceView": "messages"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "steer",
+      "--employee",
+      "employee-fixture",
+      "--text",
+      "Assigned context",
+      "--source-view",
+      "company"
+    ],
+    "expected": {
+      "cmd": "session.steer",
+      "args": {
+        "employee": "employee-fixture",
+        "text": "Assigned context",
+        "sourceView": "company",
+        "thinking": false,
+        "raw": false
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "steer",
+      "session-fixture",
+      "text",
+      "--source-view",
+      "invalid"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "--source-view requires company, messages or plan"
+    }
+  }
+]

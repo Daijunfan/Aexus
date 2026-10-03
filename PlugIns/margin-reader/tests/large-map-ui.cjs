@@ -4,7 +4,7 @@ const {create,expect}=require('./ui-session.cjs');
 async function main(){
   const f=await create('large-map');let failure;
   try{
-    const set=await f.api('study.create',{title:'Large map regression'}),file=path.join(f.workspace,'.margin-reader/state.json'),state=JSON.parse(await fs.readFile(file,'utf8')),raw=state.studySets[set.id];
+    const set=await f.api('study.create',{mapMode:'cards',title:'Large map regression'}),file=path.join(f.workspace,'.margin-reader/state.json'),state=JSON.parse(await fs.readFile(file,'utf8')),raw=state.studySets[set.id];
     const ids=Array.from({length:10000},()=>randomUUID()),now=new Date().toISOString();
     raw.cards=ids.map((id,i)=>({id,title:`Card ${String(i).padStart(5,'0')}`,text:'保存完整原文与卡片，不以截断代替性能优化。',note:'',tags:['sample'],color:'blue',parentId:i%50?ids[i-i%50]:null,source:null,image:null,collapsed:false,createdAt:now,updatedAt:now}));
     state.settings.activeStudySet=set.id;await fs.writeFile(file,JSON.stringify(state));

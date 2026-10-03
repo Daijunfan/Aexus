@@ -1,16 +1,24 @@
-import {isEngine} from '../shared/engines'
-import {clientStore,setClientView} from './client-state'
-import {resolveTeamView} from '../shared/team-views'
-import {rerouteTeamConnections} from '../shared/connector'
-import {reconcileOfficeLayout} from '../shared/office-layout'
-import {hasGlobalRole,managementRelations,assertManagementKind,emptyAccess} from '../shared/management'
-import {cloudHostTarget,importCloudHost} from './cloud-hosts'
-import {remoteTarget} from '../shared/remote'
-import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, symlinkSync } from 'node:fs'
+import {storeChanges,type StoreChanges} from '../shared/store-changes'
+import { isEngine } from '../shared/engines'
+import { clientStore,setClientView } from './client-state'
+import { resolveTeamView } from '../shared/team-views'
+import { rerouteTeamConnections } from '../shared/connector'
+import { reconcileOfficeLayout } from '../shared/office-layout'
+import { hasGlobalRole,managementRelations,assertManagementKind } from '../shared/management'
+import { cloudHostTarget,importCloudHost } from './cloud-hosts'
+import { remoteTarget } from '../shared/remote'
+import { existsSync,mkdirSync,readFileSync,writeFileSync,renameSync,symlinkSync } from 'node:fs'
 import { join,relative,dirname } from 'node:path'
-import {DEFAULT_PREFERENCES,THEMES,LANGUAGES,SIDEBAR_MIN,SIDEBAR_MAX,normalizedSidebarWidth,mergePreferences,PRESENTATION_VIEWS,type Preferences,type PreferencesPatch} from '../shared/preferences'
+import {validateMessageWallpaper} from '../shared/message-wallpaper'
+import { DEFAULT_PREFERENCES,THEMES,LANGUAGES,SIDEBAR_MIN,SIDEBAR_MAX,normalizedSidebarWidth,mergePreferences,PRESENTATION_VIEWS,type Preferences,type PreferencesPatch } from '../shared/preferences'
 import { homedir } from 'node:os'
-import {randomUUID} from 'node:crypto'
+import { randomUUID } from 'node:crypto'
+import { ALL_TEAM_VIEW,teamSettings,employeeSettings,nativeSessionRefs,type TeamSettings,type RoomLayout,type Store,type StoredSession,type TeamView } from '../shared/types'
+import { requirePlugin } from './plugins/registry'
+import { AVATARS,ACCESSORIES,DESKS,ROOM_THEMES,WALLS,ROOM_PATTERNS,roomDesign,type RoomDesign } from '../shared/office'
+import { employeeRoot,employeeWorkspace,teamRoot,inside,workspaceName,managedTeamRoot,chooseTeamRoot,cloudDirectory,cloudRelative } from './workspaces'
+import { provisionWorkspace } from './plugins/workspace-provision'
+import { ARRANGEMENTS,ROOM_SHAPES,MIN_ROOM_HEIGHT,DEFAULT_VIEW,initialBounds,planOffice,snapEmployee,constrainEmployee,resizeOccupiedRoom,type RoomBounds,type Point,type Viewport } from '../shared/canvas'
 
 // The app's own record of which sessions it created, what they are called and
 // which group they sit in. Kept separate from anything the engines persist, so
@@ -20,12 +28,6 @@ const ROOT = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'AgentsCompany')
 const FILE = join(ROOT, 'sessions.json')
 
 export type { Engine, StoredSession, Store, RoomLayout } from '../shared/types'
-import {ALL_TEAM_VIEW,teamSettings,employeeSettings,nativeSessionRefs,type TeamSettings,type RoomLayout,type Store,type StoredSession,type TeamView} from '../shared/types'
-import { requirePlugin } from './plugins/registry'
-import { AVATARS, ACCESSORIES, DESKS, ROOM_THEMES, WALLS, ROOM_PATTERNS, roomDesign, type RoomDesign } from '../shared/office'
-import { employeeRoot,employeeWorkspace, teamRoot,inside,workspaceName,managedTeamRoot,chooseTeamRoot,cloudDirectory,cloudRelative } from './workspaces'
-import { provisionWorkspace } from './plugins/documents'
-import { ARRANGEMENTS, ROOM_SHAPES, MIN_ROOM_HEIGHT, DEFAULT_VIEW, initialBounds, planOffice, snapEmployee, constrainEmployee, resizeOccupiedRoom, type RoomBounds, type Point, type Viewport } from '../shared/canvas'
 
 const EMPTY: Store = { sessions: [], groups: [], rooms: {} }
 
@@ -50,7 +52,7 @@ export function readStore(): Store {
  * Observers are told whenever the store changes. The GUI relies on this: a
  * session created by the CLI must appear on the floor without a reload.
  */
-type StoreListener = (store: Store) => void
+type StoreListener = (store: Store,changes:StoreChanges) => void
 const listeners = new Set<StoreListener>()
 
 export function onStoreChange(fn: StoreListener): () => void {
@@ -83,10 +85,11 @@ export function writeStore(store: Store,options:{reconcileOffice?:boolean}={}): 
   if(store.connectorAnchors){const ids=new Set(store.sessions.filter(c=>!c.deleting).map(c=>c.id));store.connectorAnchors=Object.fromEntries(Object.entries(store.connectorAnchors).filter(([,c])=>ids.has(c.managerId)&&ids.has(c.employeeId)))}
   if(options.reconcileOffice!==false)reconcileOfficeLayout(store,current)
   store.revision=(current?.revision??0)+1
-  const saved={...store,teamSettings:Object.fromEntries(Object.entries(store.teamSettings??{}).map(([name,config])=>[name,config.mode==='cloud'&&config.hostId?{mode:'cloud',hostId:config.hostId,directory:config.remote?.directory??config.directory}:config]))}
+  const saved:Store={...store,teamSettings:Object.fromEntries(Object.entries(store.teamSettings??{}).map(([name,config])=>[name,config.mode==='cloud'&&config.hostId?{mode:'cloud',hostId:config.hostId,directory:config.remote?.directory??config.directory}:config]))}
   const temporary=FILE+'.'+randomUUID()+'.tmp'
   writeFileSync(temporary, JSON.stringify(saved,null,2),{encoding:'utf8',mode:0o600});renameSync(temporary,FILE)
-  for(const listener of listeners)try{listener(store)}catch(error){console.error('Store listener:',error)}
+  const changes=storeChanges(current,saved)
+  for(const listener of listeners)try{listener(store,changes)}catch(error){console.error('Store listener:',error)}
 }
 export function updateStore(change:(store:Store)=>void):Store {const store=readStore();change(store);writeStore(store);return store}
 
@@ -449,6 +452,7 @@ export function setViewport(view: Viewport,viewId?:string): Store {
 export function getPreferences():Preferences { return readStore().preferences??mergePreferences() }
 export function setPreferences(patch:PreferencesPatch):Preferences {
   for(const key of Object.keys(patch))if(!Object.hasOwn(DEFAULT_PREFERENCES,key))throw Error('Unknown preference: '+key)
+  if(patch.messageWallpaper!==undefined)validateMessageWallpaper(patch.messageWallpaper)
   const appearance=patch.viewAppearance
   if(appearance!==undefined){
     if(!appearance||typeof appearance!=='object'||Array.isArray(appearance)||Object.keys(appearance).some(view=>!PRESENTATION_VIEWS.includes(view as any)))throw Error('Choose Company, Messages or Plan appearance')

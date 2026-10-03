@@ -20,13 +20,14 @@ for (const method of methods) assert(docs.includes(`### ${method}\n`), `Missing 
 function walk(directory) { return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => { if (['node_modules','.git','vendor','workspaces','dist-plugin','artifacts'].includes(entry.name)) return []; const file = path.join(directory, entry.name); return entry.isDirectory() ? walk(file) : [file]; }); }
 let count = 0;
 for (const file of walk(root).filter(file => /\.(cjs|mjs|js)$/.test(file))) {
-  const syntax = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
-  if (syntax.status !== 0) throw new Error(syntax.stderr || `Syntax check failed: ${file}`);
+  const renderer=file.startsWith(path.join(root,'ui')+path.sep)&&!file.endsWith('.cjs');
+  const syntax = spawnSync(process.execPath, renderer?['--check','--input-type=module']:['--check',file], { encoding:'utf8',...(renderer?{input:fs.readFileSync(file,'utf8')}:{}) });
+  if (syntax.status !== 0) throw new Error(`Syntax check failed: ${file}\n${syntax.stderr||syntax.error?.message||''}`);
   count++;
   if (file.startsWith(path.join(root, 'ui') + path.sep)) {
     const source = fs.readFileSync(file, 'utf8');
     assert(!/localStorage|sessionStorage|window\.require|ipcRenderer|electronAPI/.test(source), 'Renderer must not store business data or call private host APIs.');
-    for (const match of source.matchAll(/api\(\s*['"]([a-z]+\.[a-z.]+)['"]/g)) assert(methods.has(match[1]), `UI called undeclared method: ${match[1]}`);
+    for (const match of source.matchAll(/(?:api|\.change)\(\s*['"]([a-z]+\.[a-z.]+)['"]/g)) assert(methods.has(match[1]), `UI called undeclared method: ${match[1]}`);
   }
 }
 console.log(`PASS ${count} JavaScript syntax checks; ${methods.size} schema methods; manifest, docs and UI API boundary.`);

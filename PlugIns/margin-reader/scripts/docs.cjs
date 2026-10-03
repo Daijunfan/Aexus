@@ -15,7 +15,11 @@ workspace: required
 
 ## Purpose
 
-CLI-first、本地优先的文档阅读器。PDF 原页阅读，DOC/DOCX、EPUB、MOBI/KF8 和常见文本/图片读取；公开网页正文与图片离线保存；真实文件树、大文件夹视图；原文目录提取、自定义章节、缩进、退级、排序、全文搜索和阅读位置保存。
+0.9.4统一移动、选择与父子关系工具的主题拖放预览；拖到目标主体修改父主题，拖出脑图松开取消，重叠旧位置不再挡住目标。保留完整资料封面、并排阅读与原文定位。公开接口和员工权限不变，见 docs/DRAG_COVER_FINISH.md。
+
+0.9.3修复 Ctrl/Cmd+S 与退出，增加原文拖入、可撤销的所选节点删除、区域、大纲和主题任务时间图。新命令为 study.cards.remove、study.mindmap.tasks.plan/export、study.mindmap.zone.move；全部复用当前授权工作区的 Core，独立主题不要求原文来源。见 docs/MINDMAP_USABILITY.md。
+
+0.9.2增加完整资料封面与统一主题拖放：主题A拖到B后B成为父主题，后代跟随；总览缩略节点也可直接操作。study.cards.move的expandParent可在同一次撤销操作中展开目标。界面提供文档阅读与无限脑图，可单独查看或并排阅读，并自由交换左右和调整分栏宽度；卡片盒、学习大纲和复习面板已退休，旧数据与API保留兼容。CLI-first、本地优先的文档阅读器。PDF 原页阅读，DOC/DOCX、EPUB、MOBI/KF8 和常见文本/图片读取；公开网页正文与图片离线保存；真实文件树、大文件夹视图；原文目录提取、自定义章节、缩进、退级、排序、全文搜索和阅读位置保存。
 v0.7.0 提供图层/压感/套索、脑图手写、文档对照、笔记本/页面组合、留白、复合卡片、牌组/遮挡/挖空/参数训练，并保留学习集、摘录与独立笔记卡、标签检索、关联、大纲/卡片/脑图视图、撤销重做、离线 FSRS 复习、PDF 手写与文档书签；不含 OCR 或 DRM 解密。
 
 ## Workspace
@@ -130,7 +134,7 @@ node cli.cjs --workspace /absolute/library api reader.position.set --data '{"id"
 
 study.note.create 新建独立文本卡，source/image/imageAsset 为 null；UI 与 CLI 均无需先创建文档。study.cards.query 以 query/tag/color/documentId 交集筛选卡片。study.link.add/remove 维护同集跨分支的单向/双向关联，删除卡片时关联随卡片进入回收站，恢复时仅恢复两端仍有效的关联。
 
-study.view.set 保存 map/outline/cards/review 视图。study.undo/redo 在事务锁内恢复本学习集最近编辑（最多 30 步、8 MiB 元数据），revision 只递增；新编辑清空 redo。图片不复制、不删除。视图切换、打开/删除/恢复整个学习集及导出不进入编辑历史。该历史用于撤销，不是备份。大于历史容量的编辑仍可保存，但旧的撤销项会被移除。
+当前界面仅提供 documents/map。study.view.set 保存 documents/map；outline/cards/review 仅作为旧调用和数据的兼容值，不再提供对应界面。study.undo/redo 在事务锁内恢复本学习集最近编辑（最多 30 步、8 MiB 元数据），revision 只递增；新编辑清空 redo。图片不复制、不删除。视图切换、打开/删除/恢复整个学习集及导出不进入编辑历史。该历史用于撤销，不是备份。大于历史容量的编辑仍可保存，但旧的撤销项会被移除。
 
 study.review.configure 设置正反面并加入或暂停复习。study.review.queue 使用服务端当前时间给出到期 cardIds；preview 返回 again/hard/good/easy 四个下次到期时间；grade 保存 ts-fsrs 5.4.2 计算的调度和日志。默认不启用随机扰动；可设置 retention/maximumInterval，并通过本机历史训练 w。全程离线、不调用模型；不复刻 MarginNote 的私有默认参数。每次评分必须携带当前 revision，重复提交不会重复计分。可通过 study.undo 撤销最近评分。
 

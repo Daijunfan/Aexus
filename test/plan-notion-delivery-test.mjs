@@ -11,7 +11,7 @@ const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.m
 fs.mkdirSync(out,{recursive:true})
 const native=process.env.AGENTS_TEST_CODEX_BIN||path.join(os.homedir(),'.npm-global/bin/codex')
 assert.ok(fs.existsSync(native),'A real Codex executable is required for this integration test')
-let instructions=[],phase=0,requests=0,fixtureError,worker,app
+let instructions=[],phase=0,requests=0,initializationRequests=0,initializing=true,fixtureError,worker,app
 const shellQuote=value=>"'"+value.replaceAll("'","'\\''")+"'"
 const successfulTool=value=>{if(Array.isArray(value))return value.some(successfulTool);if(typeof value==='string'){try{return successfulTool(JSON.parse(value))}catch{return /"ok"\s*:\s*true/.test(value)}}return !!value&&typeof value==='object'&&(value.ok===true||successfulTool(value.output)||successfulTool(value.text))}
 const provider=http.createServer(async(req,res)=>{
@@ -19,11 +19,18 @@ const provider=http.createServer(async(req,res)=>{
   let raw='';for await(const chunk of req)raw+=chunk
   if(!req.url?.endsWith('/responses')){res.writeHead(404).end();return}
   const body=JSON.parse(raw);requests++;assert.equal(body.model,'gpt-6-luna')
+  let item
+  if(initializing){
+   const operation=['identity','index'][initializationRequests++]
+   if(initializationRequests===3){assert.match(JSON.stringify(body),/API 文档索引/);assert.ok(worker&&JSON.stringify(body).includes(worker.id))}
+   item=operation?{type:'custom_tool_call',id:'doc_'+requests,call_id:'doc_'+requests,name:'exec',input:'const doc=ALL_TOOLS.find(x=>x.name.includes("agents_company_documentation"));if(!doc)throw Error("Documentation tool missing");text(await tools[doc.name]('+JSON.stringify({operation})+'));'}:{type:'message',id:'init_'+requests,role:'assistant',content:[{type:'output_text',text:'OK'}]}
+  }else{
   const command=instructions[Math.floor(phase/2)];assert.ok(command,'Unexpected model turn; fixture refuses additional work')
   const tools=[...(body.tools??[]),...(body.input??[]).filter(item=>item.type==='additional_tools').flatMap(item=>item.tools??[])],names=tools.flatMap(tool=>tool.type==='namespace'?tool.tools.map(item=>item.name):[tool.name])
   const params={cmd:command,workdir:worker.cwd,max_output_tokens:1200},tool=phase++%2===0
-  const item=tool?(names.includes('exec_command')?{type:'function_call',id:'fc_'+requests,call_id:'call_'+requests,name:'exec_command',arguments:JSON.stringify(params)}:{type:'custom_tool_call',id:'fc_'+requests,call_id:'call_'+requests,name:'exec',input:`const result=await tools.exec_command(${JSON.stringify(params)});text(result)`}):{type:'message',id:'msg_'+requests,role:'assistant',content:[{type:'output_text',text:'The requested MiniNotion content has been updated through my scoped CLI. Review its saved record and page.'}]}
+  item=tool?(names.includes('exec_command')?{type:'function_call',id:'fc_'+requests,call_id:'call_'+requests,name:'exec_command',arguments:JSON.stringify(params)}:{type:'custom_tool_call',id:'fc_'+requests,call_id:'call_'+requests,name:'exec',input:`const result=await tools.exec_command(${JSON.stringify(params)});text(result)`}):{type:'message',id:'msg_'+requests,role:'assistant',content:[{type:'output_text',text:'The requested MiniNotion content has been updated through my scoped CLI. Review its saved record and page.'}]}
   if(!tool){const output=(body.input??[]).filter(item=>['function_call_output','custom_tool_call_output'].includes(item.type)).at(-1)?.output;assert.ok(successfulTool(output),'The latest real tool must return a successful Core result before completion: '+JSON.stringify(output).slice(-3500))}
+  }
   res.writeHead(200,{'content-type':'text/event-stream'})
   for(const event of [{type:'response.created',response:{id:'r'+requests,status:'in_progress'}},{type:'response.output_item.done',output_index:0,item},{type:'response.completed',response:{id:'r'+requests,status:'completed',output:[item],usage:{input_tokens:1,output_tokens:1,total_tokens:2}}}])res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)
   res.end()
@@ -49,6 +56,9 @@ try{
  const markdown='## Decision summary\n\n**Release candidate is ready for review.**\n\n| Area | Owner | Outcome |\n|---|---|---|\n| API compatibility | Product | Verified |\n| Repeat scheduling | Operations | Verified |\n| Native history | Quality | Preserved |\n\n## Next actions\n\n- [x] Check the release checklist\n- [x] Save the verification outcome\n- [ ] Obtain operator approval before deployment\n\n```json\n{"release":"candidate","decision":"awaiting approval"}\n```\n'
  const today=new Date().toLocaleDateString('en-CA')
  instructions=[invoke('page.write-markdown',{pageId:report.id,markdown}),...['First verification','Second verification'].map((title,index)=>invoke('record.create',{databaseId:db.id,title,color:'white',values:{status:index?'已完成':'进行中',date:today},blocks:[{type:'paragraph',content:'Written by a scheduled employee tool call; full execution details remain in the original conversation.'}]}))]
+ await expect.poll(async()=>{if(fixtureError)throw fixtureError;const status=(await call('session.status',{employee:worker.id}))[0];if(status.initialization.status==='failed')throw Error(status.initialization.error);return status.initialization.status},{timeout:45000}).toBe('ready')
+ assert.equal(initializationRequests,3);initializing=false
+ assert.deepEqual((await call('session.transcript',{employee:worker.id})).items,[])
  const weekly=await call('schedule.create',{spec:{name:'Publish the Sunday review',action:{type:'agent',employeeId:worker.id,prompt:'Update the weekly delivery review in MiniNotion with a decision summary, evidence table and next actions.'},rule:{kind:'weekly',time:'17:00',days:[7],timezone:'Asia/Shanghai'},plan:{priority:'high',tags:['knowledge','weekly'],notes:'Use the actual scoped plugin API.'}}})
  const dates=(await call('schedule.preview',{id:weekly.id,count:3})).times
  for(const at of dates){const text=new Date(at).toLocaleString('en-US',{timeZone:'Asia/Shanghai',weekday:'long',hour:'2-digit',minute:'2-digit',hour12:false});assert.match(text,/Sunday/);assert.match(text,/17:00/)}
@@ -71,7 +81,7 @@ try{
  pass('The actual Notion renderer displays headings, evidence tables, checklists, code and the same records in Table/Board/Gallery/List/Calendar')
  assert.equal((await notion('fs.audit')).valid,true);await call('plugin.dismiss',{id:win.id})
  const reopen=app.waitForEvent('window');const again=await call('plugin.open',{id:'mininotion',team:'Release Knowledge'}),reopened=await reopen;await reopened.locator('.sidebar').waitFor();await notion('page.open',{pageId:report.id});await expect(reopened.locator('.bn-editor table')).toContainText('Preserved');await call('plugin.dismiss',{id:again.id})
- assert.equal((await notion('record.list',{databaseId:db.id})).length,2);assert.equal((await call('plan.query')).rows.find(row=>row.id===repeat.id).status,'completed');assert.equal(requests,6);assert.deepEqual(errors,[])
+ assert.equal((await notion('record.list',{databaseId:db.id})).length,2);assert.equal((await call('plan.query')).rows.find(row=>row.id===repeat.id).status,'completed');assert.equal(requests,9);assert.equal(phase,6);assert.deepEqual(errors,[])
  assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible())))
  pass('Closing/reopening Notion preserves physical documents and records; Plan status matches real execution history')
-}finally{fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({checks,requests,rendererErrors:errors,fixtureError:fixtureError?.message,provider:'local deterministic HTTP fixture',productionData:false},null,2));await app?.close();await new Promise(resolve=>provider.close(resolve));fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}
+}finally{fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({checks,requests,initializationRequests,rendererErrors:errors,fixtureError:fixtureError?.message,provider:'local deterministic HTTP fixture',productionData:false},null,2));await app?.close();await new Promise(resolve=>provider.close(resolve));fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}

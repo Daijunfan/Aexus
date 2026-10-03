@@ -1,3 +1,4 @@
+import {directoryName,needsDirectoryName} from '../shared/directory-names'
 import path from 'node:path'
 import {randomUUID} from 'node:crypto'
 import type {RemoteTarget} from '../shared/remote'
@@ -5,12 +6,13 @@ import type {FileLocation,TransferJob} from '../shared/transfers'
 import {workspaceFiles} from './files'
 import {remoteFiles,closeRemote} from './tunnel'
 
-export type FileEndpoint={root:string;path:string;remote?:RemoteTarget;name?:string}
+export type FileEndpoint={root:string;path:string;remote?:RemoteTarget;name?:string;referencePrefix?:string;validate?:(operation:string,args:Record<string,unknown>)=>void|Promise<void>}
 type Task={job:TransferJob;source:FileEndpoint;target:FileEndpoint;cancelled:boolean;done?:Promise<void>}
 const tasks=new Map<string,Task>(),CHUNK=256*1024
 let stopping=false
 const join=(a:string,b:string)=>[a==='.'?'':a,b].filter(Boolean).join('/')
-function request(task:Task,end:FileEndpoint,side:string,op:string,args:Record<string,unknown>){
+async function request(task:Task,end:FileEndpoint,side:string,op:string,args:Record<string,unknown>){
+  await end.validate?.(op,args)
   return end.remote?remoteFiles(`transfer-${task.job.id}-${side}`,end.remote,op,args):Promise.resolve(workspaceFiles(end.root,op,args))
 }
 export const listTransfers=()=>[...tasks.values()].map(t=>({...t.job})).reverse()
@@ -33,7 +35,7 @@ function pump(){
   }
 }
 async function copy(task:Task){
-  const {job,source,target}=task,stage=join(target.path,`.agents-transfer-${job.id}`),payload=join(stage,'payload'),destination=join(target.path,job.name)
+  const {job,source,target}=task,stage=join(target.path,`.agents-transfer-${job.id}`),payload=join(stage,'payload');let destination=join(target.path,job.name)
   const check=()=>{if(task.cancelled)throw Error('传输已取消')}
   const call=(end:FileEndpoint,side:string,op:string,args:Record<string,unknown>)=>request(task,end,side,op,args)
   let staged=false
@@ -41,9 +43,11 @@ async function copy(task:Task){
     check()
     const targetInfo=await call(target,'to','copy-info',{path:target.path})
     if(!targetInfo.directory||targetInfo.symlink)throw Error('目标必须是已有文件夹')
-    if((await call(target,'to','copy-info',{path:destination})).exists)throw Error('目标已有同名文件，请先重命名；源文件未移动')
     const sourceInfo=await call(source,'from','copy-info',{path:source.path})
     if(!sourceInfo.exists)throw Error('源文件不存在')
+    if(sourceInfo.directory&&needsDirectoryName(job.name,source.path)){job.name=directoryName(job.name);destination=join(target.path,job.name)}
+    if((await call(target,'to','copy-info',{path:destination})).exists)throw Error('目标已有同名文件，请先重命名；源文件未移动')
+
     const pathApi=source.remote?(source.remote.os==='windows'?path.win32:path.posix):path
     if(JSON.stringify(source.remote?{...source.remote,directory:undefined}:null)===JSON.stringify(target.remote?{...target.remote,directory:undefined}:null)){
       const a=pathApi.resolve(source.root,source.path),b=pathApi.resolve(target.root,destination),relative=pathApi.relative(a,b)
@@ -53,7 +57,7 @@ async function copy(task:Task){
     const walk=async(value:string,relative:string,info:any)=>{
       await new Promise<void>(resolve=>setImmediate(resolve))
       check();if(info.symlink)throw Error('暂不复制软链接，请选择实际文件')
-      if(info.directory){directories.push(relative);const list=await call(source,'from','list',{path:value,hidden:true});for(const e of list.entries){if(e.name==='.agents-company'||e.name.startsWith('.agents-transfer-'))continue;await walk(e.path,join(relative,e.name),{...e,regular:!e.directory&&!e.symlink,mode:e.mode})}}
+      if(info.directory){directories.push(relative);const list=await call(source,'from','list',{path:value,hidden:true});for(const e of list.entries){if(e.name==='.agents-company'||e.name.startsWith('.agents-transfer-'))continue;await walk(e.path,join(relative,e.directory&&needsDirectoryName(e.name,e.path)?directoryName(e.name):e.name),{...e,regular:!e.directory&&!e.symlink,mode:e.mode})}}
       else {if(info.regular===false)throw Error('只能传输普通文件和文件夹');const stat=await call(source,'from','copy-info',{path:value});if(!stat.regular||stat.symlink)throw Error('只能传输普通文件');const mode=source.remote?.os==='windows'?(stat.mode&0o222?0o644:0o444):stat.mode;files.push({path:value,relative,bytes:stat.bytes,modifiedAt:stat.modifiedAt,mode});job.totalBytes+=stat.bytes;job.totalFiles++}
     }
     await walk(source.path,'',sourceInfo);check()

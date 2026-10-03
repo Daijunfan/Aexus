@@ -1,0 +1,91 @@
+/* Both layouts render the same retained publications. All colors follow the app theme. */
+.channel-conversation{container:channel-reader / inline-size}
+.channel-conversation>.message-thread-header{flex-wrap:wrap;column-gap:12px;row-gap:10px}
+.channel-conversation .channel-person{min-width:0}
+.channel-conversation .message-thread-actions{flex:none}
+.channel-view-switch{display:flex;align-items:center;flex:none;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:12px;background:var(--bg-alt)}
+.channel-view-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:6px 11px;border:0;border-radius:9px;background:none;color:var(--fg-dim);font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .16s,color .16s,box-shadow .16s}
+.channel-view-switch button[aria-pressed=true]{color:var(--accent);background:var(--bg-elev);box-shadow:0 1px 5px color-mix(in srgb,var(--fg) 9%,transparent)}
+.channel-view-switch button:hover{color:var(--fg)}
+.channel-view-switch button:focus-visible,.channel-post-sources button:focus-visible,.channel-post-open:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.channel-post-feed{padding:22px 24px 30px;scroll-behavior:auto}
+.channel-post-browser{min-width:0}
+.channel-post-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:20px;min-width:0}
+.channel-post-sources{display:flex;align-items:center;gap:7px;min-width:0;max-width:100%;overflow-x:auto;padding:3px 2px 7px;scrollbar-width:thin}
+.channel-post-sources button{display:flex;align-items:center;gap:7px;flex:none;max-width:230px;min-height:35px;padding:5px 11px;border:1px solid var(--border-soft);border-radius:20px;background:var(--bg-elev);color:var(--fg-dim);font:inherit;font-size:12px;white-space:nowrap;cursor:pointer}
+.channel-post-sources button[aria-pressed=true]{border-color:color-mix(in srgb,var(--accent) 38%,var(--border));background:color-mix(in srgb,var(--accent) 10%,var(--bg-elev));color:var(--fg)}
+.channel-post-sources button>span:not(.channel-avatar){overflow:hidden;text-overflow:ellipsis;min-width:0}
+.channel-post-sources button>.channel-avatar{width:22px;height:22px;border-radius:7px}
+.channel-post-sources .channel-avatar-initials{font-size:9px}
+.channel-post-sources button>small{font-size:10px;opacity:.65;font-variant-numeric:tabular-nums}
+.channel-post-count{font-size:11px;color:var(--fg-dim);white-space:nowrap;margin-left:auto}
+.channel-post-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,208px),1fr));grid-auto-rows:1px;column-gap:18px;align-items:start}
+.channel-post-card{min-width:0;padding-bottom:16px;box-sizing:border-box}
+.channel-post-open{display:block;width:100%;padding:0;border:1px solid var(--border-soft);border-radius:17px;background:var(--bg-elev);color:var(--fg);text-align:left;font:inherit;cursor:pointer;box-shadow:0 3px 12px color-mix(in srgb,var(--fg) 4%,transparent);transition:transform .18s,box-shadow .18s,border-color .18s}
+.channel-post-open:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 35%,var(--border));box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 12%,transparent)}
+.channel-post-cover{position:relative;aspect-ratio:4/5;overflow:hidden;isolation:isolate;border-radius:16px 16px 0 0;background:var(--bg-alt)}
+.channel-post-card[data-platform=x] .channel-post-cover{aspect-ratio:1}
+.channel-post-card[data-platform=youtube] .channel-post-cover{aspect-ratio:16/9}
+.channel-post-card .channel-post-cover.is-text{aspect-ratio:4/3;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 15%,var(--bg-elev)),color-mix(in srgb,var(--accent) 4%,var(--bg-elev)))}
+.channel-post-cover>.channel-local-image{position:absolute;inset:0}
+.channel-post-cover .channel-local-image img{transition:transform .25s}
+.channel-post-open:hover .channel-post-cover img{transform:scale(1.025)}
+.channel-post-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;padding:20px;overflow:hidden}
+.channel-post-text>.codicon{font-size:23px;color:var(--accent);opacity:.65;flex:none}
+.channel-post-text>p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden;margin:0;font-size:17px;line-height:1.5;font-weight:550;letter-spacing:-.25px;overflow-wrap:anywhere}
+.channel-post-text>span{color:var(--fg-dim);font-size:10px;letter-spacing:.5px}
+.channel-post-album,.channel-post-saved{position:absolute;top:10px;display:flex;align-items:center;gap:4px;min-height:24px;padding:3px 7px;box-sizing:border-box;border-radius:8px;background:#0008;color:#fff;font-size:11px;backdrop-filter:blur(8px)}
+.channel-post-album{right:10px}.channel-post-saved{left:10px}
+.channel-post-album .codicon,.channel-post-saved .codicon{font-size:13px}
+.channel-post-play{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.channel-post-play>.codicon{display:grid;place-items:center;width:44px;height:34px;border-radius:10px;background:#0008;color:#fff;font-size:25px;backdrop-filter:blur(6px)}
+.channel-post-details{padding:12px 13px 13px}
+.channel-post-details>h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;font-size:14px;line-height:1.5;font-weight:650;margin:0 0 11px;letter-spacing:-.1px}
+.channel-post-author{display:flex;align-items:center;gap:7px;min-width:0;color:var(--fg-dim);font-size:11px}
+.channel-post-author>.channel-author-avatar{width:24px;height:24px;border-radius:8px}
+.channel-post-author .channel-avatar-initials{font-size:10px}
+.channel-post-author>span:last-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+.channel-post-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;font-size:10px;color:var(--fg-dim);opacity:.8}
+.channel-post-feed>.channel-load-more{margin:14px auto 0}
+@container channel-reader (max-width:760px){
+ .channel-view-switch{order:4;flex-basis:100%}
+ .channel-view-switch button{flex:1}
+ .channel-post-feed{padding:18px}
+ .channel-post-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,185px),1fr));column-gap:14px}
+}
+@container channel-reader (max-width:480px){
+ .channel-post-feed{padding:16px 12px 22px}
+ .channel-post-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+ .channel-post-details{padding:10px}
+ .channel-post-details>h3{font-size:12px;-webkit-line-clamp:3}
+ .channel-post-text{padding:14px;gap:8px}
+ .channel-post-text>p{font-size:14px;-webkit-line-clamp:5}
+ .channel-post-text>.codicon{font-size:18px}
+ .channel-post-author{font-size:10px;gap:5px}
+ .channel-post-author>.channel-author-avatar{width:20px;height:20px;border-radius:6px}
+ .channel-post-toolbar{gap:5px;margin-bottom:14px}
+}
+@container channel-reader (max-width:300px){.channel-post-grid{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.channel-view-switch button,.channel-post-open,.channel-post-cover .channel-local-image img{transition:none}.channel-post-open:hover,.channel-post-open:hover .channel-post-cover img{transform:none}}
+
+/* Details stay over the current Posts pane; surrounding cards remain mounted behind glass. */
+.channel-post-detail-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;box-sizing:border-box;padding:clamp(20px,4cqi,46px);background:color-mix(in srgb,var(--bg) 34%,transparent);backdrop-filter:blur(18px) saturate(.8);-webkit-backdrop-filter:blur(18px) saturate(.8);overflow:hidden;overscroll-behavior:contain;border-radius:inherit}
+.channel-post-detail{display:flex;flex-direction:column;width:min(760px,100%);max-height:100%;min-height:0;box-sizing:border-box;overflow:hidden;border:1px solid color-mix(in srgb,var(--border) 68%,var(--bg-elev));border-radius:24px;background:var(--bg-elev);color:var(--fg);box-shadow:0 22px 80px #16243726,0 2px 10px #1624370b}
+.channel-post-detail-heading{display:flex;flex:none;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:9px 18px 9px 28px;box-sizing:border-box;border-bottom:1px solid var(--border-soft)}
+.channel-post-detail-heading>span{font-size:12px;font-weight:600;letter-spacing:.3px;color:var(--fg-dim)}
+.channel-post-detail-heading>button{display:grid;place-items:center;width:34px;height:34px;flex:none;border:1px solid var(--border-soft);border-radius:50%;background:var(--bg-alt);color:var(--fg-dim);cursor:pointer;transition:background .15s,color .15s}
+.channel-post-detail-heading>button:hover{background:var(--bg-hover);color:var(--fg)}
+.channel-post-detail :is(button,a):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.channel-post-detail-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.channel-post-detail-scroll>.channel-news-card{margin:0;padding:25px 64px 0 28px;max-width:none;border:0;border-radius:0;box-shadow:none;min-height:0}
+.channel-post-detail-scroll>.channel-news-card>header,.channel-post-detail-scroll>.channel-news-card>footer{display:flex}
+.channel-post-detail-scroll .channel-news-body{font-size:15px;line-height:1.8}
+.channel-post-detail-scroll .channel-news-card>h2{font-size:26px;line-height:1.35;margin-bottom:18px}
+.channel-post-detail-scroll .channel-news-images[data-count="1"]>button{aspect-ratio:4/3;max-height:55vh}
+.channel-post-detail-scroll .channel-news-images .channel-local-image img{object-fit:contain}
+.channel-post-detail-status{display:flex;flex-direction:column;align-items:center;gap:14px;padding:55px 30px;text-align:center;font-size:13px;color:var(--fg-dim)}
+.channel-post-detail-status>.codicon{font-size:26px;color:var(--accent)}
+.channel-post-detail-status>button{padding:9px 18px;border:1px solid var(--border);border-radius:10px;background:var(--bg-alt);color:var(--fg);font:inherit;cursor:pointer}
+.channel-post-detail-end{display:block;width:1px;height:1px;margin:0 28px 18px}
+@container channel-reader (max-width:480px){.channel-post-detail-overlay{padding:16px}.channel-post-detail{border-radius:18px}.channel-post-detail-heading{min-height:48px;padding:7px 12px 7px 18px}.channel-post-detail-scroll>.channel-news-card{padding:18px 18px 0}.channel-post-detail-scroll .channel-news-card>h2{font-size:21px}.channel-post-detail-scroll .channel-news-body{font-size:14px}.channel-post-detail-scroll .channel-news-card>footer{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.channel-post-detail-heading>button{transition:none}}

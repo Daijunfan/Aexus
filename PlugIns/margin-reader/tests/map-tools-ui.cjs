@@ -4,7 +4,7 @@ const {create,expect}=require('./ui-session.cjs');
 (async()=>{
  const f=await create('map-tools-ui'),{page,api,pass}=f;let error;
  try{
-  let set=await api('study.create',{title:'Map interaction'}),other=await api('study.create',{title:'Paste destination'});
+  let set=await api('study.create',{mapMode:'cards',title:'Map interaction'}),other=await api('study.create',{mapMode:'cards',title:'Paste destination'});
   const change=async(method,p={})=>{set=await api('study.get',{setId:set.id});set=await api(method,{setId:set.id,expectedRevision:set.revision,...p});return set;};
   for(const title of ['Alpha','Beta','Gamma'])await change('study.note.create',{title,text:title+' body'});
   const [a,b,c]=set.cards.map(c=>c.id);await change('study.cards.move',{cardIds:[a,b,c],positions:[{cardId:a,x:35,y:35},{cardId:b,x:365,y:35},{cardId:c,x:695,y:35}]});

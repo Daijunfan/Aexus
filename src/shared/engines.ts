@@ -13,11 +13,10 @@ export type EngineHealth={engine:EngineId;label:string;target:string;installed:b
 /** Creation-time discovery contains no paths, credentials or inference. */
 export function engineCapabilities(engine:EngineId){
   const definition=engineDefinition(engine),processAdapter=engine==='cline'||engine==='pi'
-  return {engine,...definition,workspaceModes:processAdapter?['build','cloud']:['build','cloud','work'],employeeKinds:processAdapter?['worker']:['worker','cloud-native-worker'],cloudWorkerTransport:engine==='codex'?'remote-exec':'mcp-tunnel'}
+  return {engine,...definition,workspaceModes:['build','cloud','work'],employeeKinds:processAdapter?['worker']:['worker','cloud-native-worker'],cloudWorkerTransport:engine==='codex'?'remote-exec':'mcp-tunnel'}
 }
 export function assertEngineWorkspace(engine:EngineId,mode:'build'|'cloud'|'work',kind='worker'){
   if(engine==='cline'||engine==='pi'){
     if(kind!=='worker')throw Error(`${ENGINE_DEFINITIONS[engine].label} supports kind:worker only; use the Core-local engine with Tunnel for cloud workspaces`)
-    if(mode==='work')throw Error(`${ENGINE_DEFINITIONS[engine].label} 暂不支持插件工作目录；支持本地 Build 和 Cloud Team 的 Tunnel 工作区`)
   }
 }

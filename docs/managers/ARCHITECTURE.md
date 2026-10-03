@@ -214,3 +214,52 @@ by CLI and GUI. App derives the active presentation from navigation (including d
 return destinations) and applies its tokens before paint. Company and Plan own their
 readable canvas/database styling; neither imports the conversation wallpaper. Plugin
 themes, company geometry and scheduler records remain independently owned.
+
+## Slimming boundaries and read-path reuse
+
+The command registry now carries optional internal CLI input declarations. Schema-owned
+flags and compact legacy positional mappings compile into `bin/command-inputs.json`;
+`bin/command-inputs.cjs` uses the existing CLI tokenizer and remote-file reader. The
+public `COMMANDS` projection excludes this internal metadata, retaining the exact
+command schemas and permissions. Specialized commands keep explicit handlers. Regenerate
+with `npm run docs:managers`; check-mode also verifies the compiled CLI map. CLI help is
+loaded only for help/error output, not on each business request.
+
+Engine adapters obtain explicit registration, lookup and private-turn checks from
+`EngineHost` instead of mutable session-registry Maps. Shared queue/permission helpers
+live in the dependency-free `engines/session-support.ts`; compatibility re-exports remain
+in `sessions.ts`. Workspace-level bootstrap lives in `plugins/workspace-provision.ts`,
+which does not depend on the employee Store. Static runtime dependency cycles are checked
+by `test/architecture-boundaries-test.mjs`; type-only and dynamic edges are excluded
+from this static graph, not asserted to be absent.
+
+`ReadCache` owns one bounded eviction/version policy for source text and inbox summaries. File versions include inode, byte count and nanosecond
+mtime/ctime; live transcripts use weak numeric revision tokens, never strong references
+to older reducer arrays. Plugin discovery revalidates canonical entry paths and versions
+before using a descriptor. Shared documentation rechecks both source and materialized
+projection versions; changed, missing or corrupt resources are not hidden by cached data.
+
+Message search and gallery pagination use a lazy, owned worker with a rebuildable
+SQLite/FTS index at `APP_HOME/cache/message-index.sqlite`. Canonical transcripts and
+chat records keep their existing formats. Only public text/media metadata is indexed;
+raw thinking/tool blocks, image bytes and external news bodies are excluded. The worker
+owns no credentials or execution authority. Core resolves current access and labels,
+and rechecks personal visibility after asynchronous IO. Cold indexing takes additional
+time and disk, while the main loop stays available. Shutdown drains accepted queries.
+Both desktop and standalone server builds ship `message-index-worker.js`.
+
+Group/channel delivery now shares one recipient-dispatch lifecycle and monotonic receipt
+transition helper in `main/delivery.ts`; source-specific membership, acknowledgments,
+attachments and work/awareness policies remain with their domain. `SingleFlight` shares
+concurrent attempts only; persisted retry/uncertainty policy stays with its owner.
+Engine/group request handlers live in `main/commands`, behind the same Core preflight.
+
+Store events include additive changed-field, employee, authority, member and inbox hints.
+Only authority changes revalidate scheduling/delegation. Visual and reading updates do
+not trigger unrelated execution queries. Old events without hints remain conservative.
+Frontend inbox/group/channel lists share `useCatalog`, and all composers share durable
+pre-send identity checks. These mechanisms do not merge separate histories or read receipts.
+See `docs/SLIMMING.md` for module ownership, invalidation, lifecycle and verification.
+
+Action failures and background loading failures have separate owners in group conversations.
+A successful history refresh cannot clear an uncertain-send warning or silently retry work.
