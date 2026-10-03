@@ -65,7 +65,8 @@ export function piClient(options:{discussion?:CoreTool;documentation?:CoreTool;a
   return {
     ...provider,
     call(type:string,params:Record<string,unknown>={},timeout=30000):Promise<any>{return new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(Error('Pi '+type+' timed out'))},timeout);pending.set(id,{resolve,reject,timer});try{send({id,type,...params})}catch(error){pending.delete(id);clearTimeout(timer);reject(error)}})},
-    async close(){if(closed)return;child.stdin?.end();const timer=setTimeout(()=>terminateTree(child,true),2000);try{await exited}finally{clearTimeout(timer)}},
+    // Late tool replies must stop before stdin ends, not after the process exits.
+    async close(){if(closed)return;closed=true;child.stdin?.end();const timer=setTimeout(()=>terminateTree(child,true),2000);try{await exited}finally{clearTimeout(timer)}},
     redact
   }
 }
