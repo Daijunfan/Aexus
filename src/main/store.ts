@@ -470,6 +470,7 @@ export function setPreferences(patch:PreferencesPatch):Preferences {
   if(!Number.isFinite(value.sidebarWidth)||value.sidebarWidth<SIDEBAR_MIN||value.sidebarWidth>SIDEBAR_MAX)throw new Error('Icon sidebar width must be between 56 and 96')
   if(!Number.isFinite(value.pageZoom)||value.pageZoom<.75||value.pageZoom>1.5)throw new Error('Page zoom must be between 0.75 and 1.5')
   if(!Number.isFinite(value.explorerWidth)||value.explorerWidth<140||value.explorerWidth>520)throw new Error('Explorer width must be between 140 and 520')
+  if(!Number.isFinite(value.assetDrawerWidth)||value.assetDrawerWidth<260||value.assetDrawerWidth>600)throw new Error('Files drawer width must be between 260 and 600')
   if(!Number.isFinite(value.terminalHeight)||value.terminalHeight<120||value.terminalHeight>600)throw new Error('Terminal height must be between 120 and 600')
   if(typeof value.snapEmployees!=='boolean')throw new Error('snapEmployees must be boolean')
   if(typeof value.showTeamOverview!=='boolean')throw new Error('showTeamOverview must be boolean')

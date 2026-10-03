@@ -1,88 +1,73 @@
-# Agents Company
+# Anexus
 
 [简体中文](README.md) · [English](README.en.md)
 
-**把散落在终端、聊天窗口和远程主机上的 AI，组织成一个能协作的团队。**
+**为 Coding Agent 增加交互、组织与工作空间的开放基础设施，CLI 优先。**
 
-给 Governor 一句话，由 Manager 分工，让员工在各自的项目目录里执行。谁在工作、谁在沟通、结果放在哪里，都在同一个界面里。
+Anexus 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
 
-![Agents Company：Codex、Claude Code、Cline 与 Pi 的真实团队协作](docs/images/cover.png)
+![Anexus：同一工作空间中的 Coding Agent 团队](docs/images/cover.png)
+
+真实运行截图：Claude Code、Cline 和 Pi 协作处理本机、Linux 与 Windows 工作目录；图中 Codex 连接失败，未计入本次成功执行。
 
 [下载安装包](https://github.com/Daijunfan/Agents-Company/releases) · [安装与部署](docs/DEPLOYMENT.md) · [全部 CLI / API](API.md) · [权限说明](PERMISSIONS.md) · [参与开发](CONTRIBUTING.md)
 
-## 解决什么问题
+## 一个 Core，多种用法
 
-- **多个 Agent 窗口来回切。** 把 Codex、Claude Code、Cline 和 Pi 放在同一张画布中，直接打开任一员工的对话、文件和终端。
-- **本机、服务器、项目目录容易混。** 团队绑定实际执行环境，员工继承对应工作区；远端连接失败会报错，不会偷偷改在浏览器或本机执行。
-- **分工后不知道进度。** 工作状态、未读回复和真实管理交互直接显示。绿色流动线表示正在发生的管理通信或仍在执行的委派任务；任务结束后熄灭。
-- **反复向每个 Agent 解释怎么配合。** Governor 管理各团队，Manager 管理本队员工；管理者通过同一套公司 API 分派、查看和安排任务。
+Anexus 在传统 Coding Agent 外提供身份、Team、消息、文件、调度和插件能力。引擎负责执行；Core 管理应用内权限、工作空间和协作记录。Electron、浏览器、CLI 和 Agent 原生工具调用同一套认证操作。
 
-## 核心功能
-
-| 能力 | 你可以做什么 |
+| 你想做的事 | 可组合的现有能力 |
 | --- | --- |
-| 可视化办公室 | 拖动团队和员工、手动调整连线、切换主题、用自定义视图组织已有团队 |
-| 分级协作 | Governor 跨团队调度；Manager 管理本队全部 Employee，包括其他创建者招募的员工 |
-| 四种 Coding Agent | Codex App Server、Claude Agent SDK、Cline ACP、Pi RPC；模型服务商与引擎分别配置 |
-| 本地与 SSH | 引擎在 Core 本机工作、从 Core 操作远端工作区，或在远端原生运行 |
-| 项目工作台 | 查看和编辑文件、交互终端、图片输入、跨工作区文件传输 |
-| 任务与记录 | 排队、定时任务、审批、历史会话和未读回复 |
-| 桌面与浏览器 | Electron 桌面和浏览器使用同一个 React 界面、同一个 Node Core |
-| CLI 优先 | 团队、员工、引擎、主机、文件和插件操作均有公开 CLI / Core API |
-| 动画角色 | Fate 圣杯战争英灵与主要御主，两种风格自由选择；通过 API 指定人物、画风和职业 |
+| 重度开发 | 按项目组织 Team，分配员工，使用文件编辑器、终端、审批、任务队列和远程工作区 |
+| 日常任务 | 汇总资料、整理文档、定时处理工作，并在会话中查看结果 |
+| 工作实验 | 给不同角色设定任务与协作方式，观察过程、比较输出，保留文件和记录 |
+| 社会互动实验 | 组织群组与频道，设置成员和会话规则，观察受控条件下的 Agent 互动 |
+| 游戏与模拟 | 自行设计角色、规则和回合，用消息、状态、文件与 CLI 驱动流程 |
+| 自定义工作流 | 组合公开 Core API、原生引擎、自己的程序与插件 |
 
-连线表示创建来源和实际交互，**权限由职级决定**。没有创建来源线，也能操作权限范围内的员工。Governor 的创建、删除和职位变更由用户控制。
+实验与游戏需要你定义具体规则、输入和评价方法。一次 Agent 输出并不保证任务正确完成；你可以检查执行记录、文件与实际结果。
 
-私聊、群聊与频道正文支持 Markdown 表格、代码、列表和引用，以及 `$…$` / `$$…$$`、`\(...\)` / `\[...\]` LaTeX 公式；复制、保存和转发保留原文。精确引用可选择公式前后的文字，触及公式的选区不生成精确引用，可改用整条原文复制。
+## 核心能力
 
-## 新增：圣杯战争角色
+- **Company、Messages、Plan**：在画布中组织团队，在会话中交流，在 Plan 中管理定时、重复与事件触发的员工工作。
+- **同一身份与工作空间**：员工跨视图保留原身份、引擎和目录；群组、频道拥有各自的成员关系与共享文件边界。
+- **文件与资产**：查找工作资料、查看和编辑文件、使用交互终端，并在授权范围内传输文件。
+- **本地与远端**：Team 绑定实际主机和目录。“本机”始终指运行 Core 的机器，浏览器中的文件需要上传。
+- **可见协作**：工作状态、未读回复与管理关系直接呈现；绿色活动提示对应正在发生的管理通信或仍在执行的委派任务。
+- **开放接口**：团队、员工、引擎、主机、文件和插件通过公开 CLI / Core API 操作；原生工具沿用员工本人的授权。
+- **可选外观**：主题、角色和动画提供另一种呈现方式，角色外观不决定权限。第三方素材保留各自声明与审核记录。
 
-来自 **Fate/stay night** 和 **Fate/Zero** 的 14 位英灵，以及卫宫士郎、远坂凛、间桐樱、伊莉雅、卫宫切嗣、言峰绮礼和韦伯 7 位主要御主，加入同一个角色列表。每位角色都有 **原作风格** 与 **可爱版** 两种形象，共 **42 款 Fate 形象**，包括 Saber、Archer 和吉尔伽美什。
+Secretary 协助用户管理应用与插件，Governor 跨 Team 组织工作，Manager 管理本 Team 的员工。**权限来自职位与当前授权**，群组和频道还会检查真实成员身份；连线、名称和视图不会授予权限。只有用户可以任免 Secretary。详见[权限说明](PERMISSIONS.md)。
 
-角色会随员工的真实工作、通信和休息状态播放动画。它们是新绘制的同人角色素材；[素材来源与说明](src/renderer/src/assets/pets/fate/README.md)记录了画风、帧布局和来源。
+## 引擎与插件
 
-Manager 和 Governor 都能查询完整目录并准确指定形象，避免出现“名字是英雄王、外形却是老虎”的情况：
-
-```sh
-agents avatar list --query "英雄王" --style chibi --json
-agents card create --title "英雄王可爱版" --group "Your Team" --character "吉尔伽美什" --avatar-style chibi --profession "代码审查" --management-role employee --engine claude --model deepseek-flash --thinking off --json
-```
-
-`character` 选择人物，`avatarStyle` 选择画风，`profession` 描述职业，`managementRole` 决定管理职级。Manager 创建本团队 Employee；Governor 可跨团队创建 Employee 和 Manager。创建表单只显示当前视图内的团队，切到 All Team 可选择全部团队。
-
-## Coding Agent 引擎
-
-| 引擎 | 接入方式 | 当前执行范围 |
+| 引擎 | 接入协议 | 执行范围 |
 | --- | --- | --- |
-| Codex | 官方 App Server 协议 | Core 本地与已支持的 SSH / 云端原生工作区 |
-| Claude Code | Claude Agent SDK | Core 本地与已支持的 SSH / 云端原生工作区 |
-| Cline | 官方 CLI 的 ACP 协议 | Core 本地 Build，以及通过 Tunnel 操作 Cloud Team 工作区 |
-| Pi | 官方 Coding Agent 的 RPC 协议 | Core 本地 Build，以及通过 Tunnel 操作 Cloud Team 工作区 |
+| Codex | App Server | Core 本地及已支持的 SSH / 云端原生工作区 |
+| Claude Code | Claude Agent SDK | Core 本地及已支持的 SSH / 云端原生工作区 |
+| Cline | ACP | Core 本地 Build / 插件目录，或通过 Tunnel 操作远端工作区 |
+| Pi | RPC | Core 本地 Build / 插件目录，或通过 Tunnel 操作远端工作区 |
 
-Cline、Pi 以及配置 DeepSeek 的 Claude Code 默认使用 **DeepSeek Flash，关闭思考**。Cline/Pi 已接入真实消息流、工具审批、任务队列、取消和原生会话恢复；Cline Flash 支持图片输入，Pi 当前只接收文本。模型与能力详情见 [引擎适配文档](docs/ENGINE_ADAPTERS.md)。
+模型服务商和编码引擎分别配置。Cline / Pi 暂不支持云端原生执行；具体图片、恢复、审批和运行设置以[引擎适配文档](docs/ENGINE_ADAPTERS.md)与实际能力查询为准。
 
-Cloud Team 中的 Cline/Pi 员工可以由 Core 本地引擎通过 Tunnel 操作远端工作区；使用本地工作区的 Manager 也能通过公司 API 指挥云端员工。Cline/Pi 暂不支持云端原生执行或插件工作区。封面为本地 Mac 上四种引擎共同参与的实机画面。
+**员工引擎在创建时确定。** 使用另一引擎需要重新创建员工；同一引擎内可调整其支持的模型和运行设置。引擎程序及 Claude SDK 控制库单独安装，兼容的已有安装可以复用。模型账号、额度和费用由所选服务商提供。
 
-**员工引擎在创建时确定，创建后不可切换。** 需要另一种引擎时，删除该员工后重新添加；同一引擎内仍可调整模型及其支持的运行设置。
+三个插件的完整源码在 `PlugIns/`，包含各自 CLI、命令 schema 与运行时：
 
-## 自带三个插件
-
-- **Cloud Hosts**：集中管理 SSH 主机、连接状态和远程桌面入口。
+- **Cloud Hosts**：SSH 主机、连接状态和远程桌面入口。
 - **MiniNotion**：本地笔记、数据库、计划、日历和知识组织。
-- **Margin Reader**：文档阅读、摘录与资料整理。
+- **Margin Reader**：文档阅读、摘录和资料整理。
 
-三个插件的完整源码都在 `PlugIns/`，包含独立 CLI、命令 schema 和运行时。工作资料、账号和密钥不会随源码发布。
+插件工作资料与凭据位于应用安装包之外。已有工作目录不会因升级自动移动。
 
-## 第一次使用
+## 开始使用
 
-1. **启动桌面版，或连接自己的后端。** 浏览器只是操作界面；“本机”始终指 Core 所在的机器。
-2. **在设置中配置引擎。** 查看实际执行路径、版本、协议与认证状态；需要时下载经过校验的官方程序，配置自己的账号或 API Key。
-3. **创建团队并绑定工作环境。** 可以是项目目录、插件工作区，或者已经登记的 SSH 主机。
-4. **添加员工并发送任务。** 可以先创建 Governor，让它按你的要求创建 Manager 和员工。
+1. 启动桌面版，或连接自己的 Core 浏览器后端。
+2. 在设置中配置所需引擎，查看程序路径、版本、协议和认证状态。
+3. 创建 Team 并绑定项目目录、插件工作区或已登记的 SSH 主机。
+4. 添加员工，确定角色与权限，再发送任务。也可以让管理者通过相同的 API 组织流程。
 
-正常的“重新检测”不调用模型。“测试调用”会先提示费用，确认后才发送一次真实请求。Claude Agent 使用允许的 API-key / 服务商配置；本应用不提供 claude.ai 订阅登录。模型额度由你所使用的服务商提供。
-
-引擎程序及 Claude SDK 控制库由用户确认后单独安装，不夹带在公开安装包内；已有兼容安装可以复用。模型调用、SSH 操作和文件改动都发生在实际执行主机上。
+普通引擎检测不调用模型；测试调用会在确认后发送一次可能计费的请求。Claude Agent 使用 API Key / 服务商配置，本应用不提供 claude.ai 订阅登录。
 
 ### 从源码启动
 
@@ -96,31 +81,25 @@ npm run build
 npm run dev
 ```
 
-### 启动浏览器后端
+### CLI 与浏览器
 
 ```sh
 npm run build:server
 npm run build:web
-node bin/agents serve --web --port 5151
+node bin/anexus serve --web --port 5151
 ```
 
-另开一个终端运行 `node bin/agents web token`，在 `http://127.0.0.1:5151` 输入该令牌登录。令牌只用于建立认证会话，不放入 URL。
+另开终端运行 `node bin/anexus web token`，在 `http://127.0.0.1:5151` 输入令牌登录。令牌用于建立认证会话，不放入 URL。异机访问使用 HTTPS 或 SSH 转发。
 
-异机访问使用 HTTPS 或 SSH 转发。不要让桌面和独立后端同时打开同一个数据目录。完整配置、存储位置和部署示例见 [部署文档](docs/DEPLOYMENT.md)。
+`anexus` 与原有 `agents` 命令使用同一个解析器与 Core。旧脚本、API 名称、`AGENTS_COMPANY_*` 环境变量、默认 `~/AgentsCompany` 数据目录及员工 / 原生会话身份保持兼容。项目的 GitHub 地址仍为 [Daijunfan/Agents-Company](https://github.com/Daijunfan/Agents-Company)。
 
-## 执行环境与支持范围
+不要让桌面和独立后端同时打开同一个数据目录。安装、存储与部署细节见[部署文档](docs/DEPLOYMENT.md)。
 
-| 使用方式 | 说明 |
-| --- | --- |
-| Mac 本地桌面 | 主要开发与日常测试环境；当前安装包为 Apple Silicon |
-| Windows 本地桌面 | 在 Windows x64 上运行桌面、Core、引擎、文件、终端与插件 |
-| Linux 后端 + 另一台电脑的浏览器 | Core、任务和文件运行在 Linux x64；另一台电脑通过浏览器操作，断开浏览器不停止后端任务 |
+## 支持范围与验证
 
-本次发布只覆盖以上三种使用方式。SSH 工作区仍由 Cloud Hosts 统一管理，团队绑定实际主机和目录。严格进程隔离目前只支持 macOS，其他平台明确拒绝该模式，不会自动降级。
+主要使用方式为 Mac 桌面、Windows 桌面，以及 Linux Core / Web 后端搭配另一台设备的浏览器。各平台应在目标系统上分别验证；一次本机构建不代表其他平台通过。严格进程隔离当前仅支持 macOS。
 
-这是**单用户、自托管、多设备访问**的软件，不是用于隔离互不信任租户的平台。新员工权限可选择 Ask、Workspace write 或 Full access；升级不会自动提高已有员工的权限。
-
-## 开发与验证
+这是单用户、自托管、可从多设备访问的软件。执行主机、操作系统权限、引擎原生权限与 Core 应用权限各有边界，见[安全说明](SECURITY.md)。升级不会自动提高已有员工的权限。
 
 ```sh
 npm run typecheck
@@ -129,17 +108,14 @@ npm run test:release-ui
 npm run test:release-engines
 ```
 
-普通 Core / UI 测试使用临时数据和确定性协议 fixture；真实模型与真实云主机测试单独显式运行。请不要用你的真实工作区测试删除操作。
+普通验证使用临时数据与确定性协议 fixture。真实模型、真实云主机和生产数据操作需要单独明确授权。构建不等于安装；macOS 安装使用项目安装器，先停止旧应用并备份，再验证隔离的隐藏窗口。
 
 - [架构与模块边界](ARCHITECTURE.md)
-- [引擎适配与安装](docs/ENGINE_ADAPTERS.md)
-- [插件开发](PLUGIN_SPEC.md)
-- [贡献与 CI](CONTRIBUTING.md)
-- [安全与私密报告](SECURITY.md)
-- [变更记录](CHANGELOG.md)
+- [CLI / API](API.md) · [插件开发](PLUGIN_SPEC.md)
+- [贡献与 CI](CONTRIBUTING.md) · [变更记录](CHANGELOG.md)
 
-## 开源许可
+## 许可
 
-项目代码采用 **GNU GPL v3**；第三方代码与素材保留各自的许可证、声明及审核记录，项目 GPL 不为品牌素材授予额外许可。匹配源码包括全部插件和上游编辑器所需源码。单独安装的 Coding Agent 程序与模型服务遵守各自条款。
+项目代码采用 **GNU GPL v3**。第三方代码与素材保留各自许可、声明及审核记录；项目 GPL 不额外授予第三方品牌素材的权利。单独安装的 Coding Agent 程序与模型服务遵守各自条款。
 
-见 [LICENSE](LICENSE)、[LICENSING.md](LICENSING.md) 和 [第三方声明](THIRD_PARTY_NOTICES.md)。
+见 [LICENSE](LICENSE)、[LICENSING.md](LICENSING.md) 和[第三方声明](THIRD_PARTY_NOTICES.md)。

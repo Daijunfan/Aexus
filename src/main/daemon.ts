@@ -10,11 +10,11 @@ async function shutdown(){
 }
 async function main(){
   stopRuntime=startRuntime()
-  console.log(`Agents Company CLI service: ${SOCKET_PATH}`)
+  console.log(`Anexus CLI service: ${SOCKET_PATH}`)
   if(process.env.AGENTS_COMPANY_WEB==='1'){
     const {startWebServer}=await import('./web/server')
     web=await startWebServer({host:process.env.AGENTS_COMPANY_WEB_HOST,port:process.env.AGENTS_COMPANY_WEB_PORT===undefined?undefined:Number(process.env.AGENTS_COMPANY_WEB_PORT),publicUrl:process.env.AGENTS_COMPANY_WEB_PUBLIC_URL,allowInsecure:process.env.AGENTS_COMPANY_WEB_ALLOW_INSECURE==='1'})
-    console.log(`Agents Company Web: ${web.url}\nAccess token: run \`agents web token\` locally on the Core host.`)
+    console.log(`Anexus Web: ${web.url}\nAccess token: run \`agents web token\` locally on the Core host.`)
   }
 }
 const requestShutdown=()=>{void shutdown().then(()=>process.exit(0),error=>{console.error('Core shutdown:',error);process.exit(1)})}

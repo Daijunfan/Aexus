@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // Real temporary Core and authenticated channel history. No historical delivery replay or provider calls.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -15,7 +16,7 @@ let f,db;const checks=[],report={passed:false,mode,checks,providerCalls:0,scope:
 try{
  const entry=path.join(temp,'daemon.cjs'),overrides={}
  if(application){
-  const bundleRoot=application.endsWith('.app')?application:application.slice(0,application.indexOf('.app/')+4),executable=application.endsWith('.app')?path.join(application,'Contents/MacOS/Agents Company'):application
+  const bundleRoot=application.endsWith('.app')?application:application.slice(0,application.indexOf('.app/')+4),executable=desktopExecutable(application)
   assert.ok(bundleRoot.endsWith('.app'));report.application=application;report.asarSha256=createHash('sha256').update(fs.readFileSync(path.join(bundleRoot,'Contents/Resources/app.asar'))).digest('hex');overrides.AGENTS_COMPANY_HIDDEN='1';overrides.AGENTS_COMPANY_BUILTIN_PLUGINS=path.join(bundleRoot,'Contents/Resources/plugins')
   fs.writeFileSync(entry,`const fs=require('node:fs'),{_electron:electron}=require('@playwright/test');const env={...process.env};for(const key of ['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_WEB_URL','AGENTS_COMPANY_WEB','AGENTS_COMPANY_HEADLESS'])delete env[key];let closing=false;const record=value=>fs.appendFileSync(${JSON.stringify(lifecycle)},JSON.stringify(value)+'\\n');
 const started=electron.launch({executablePath:${JSON.stringify(executable)},args:[],env}).then(async app=>{const hidden=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible()));record({event:'open',pid:app.process().pid,hidden});if(!hidden){await app.close();throw Error('Test bundle showed a window')}app.process().once('exit',()=>{if(!closing)process.exit(1)});return app});const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{const pid=app.process().pid;await app.close();record({event:'closed',pid});process.exit(0)},error=>{console.error(error.message);process.exit(1)})};process.on('message',message=>{if(message?.type==='agents-company:shutdown')stop()});process.once('SIGTERM',stop);process.once('SIGINT',stop);process.once('disconnect',stop);void started.catch(error=>{console.error(error.message);process.exit(1)});`)

@@ -45,7 +45,7 @@
 .message-conversation .turn .reply-seen-marker{margin:0;position:absolute;bottom:4px;left:12px;width:1px;height:1px}
 .group-message-heading{margin:0 0 5px;font-size:11px}
 .group-message-heading>strong{font-size:13px;line-height:1.5;font-weight:650}
-.group-message.from-user .group-message-heading:not(:has(.group-kind)),.group-message:is([data-bubble-group=middle],[data-bubble-group=last]) .group-message-heading{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.group-message:is([data-bubble-group=middle],[data-bubble-group=last]) .group-message-heading{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .group-open-private{display:block;margin:9px 0 0;color:var(--message-accent);font-size:11px}
 .group-reply-link{width:100%;text-align:left;margin:2px 0 9px;padding:8px 11px;border-radius:3px 8px 8px 3px;background:color-mix(in srgb,var(--message-accent) 7%,transparent);border-left-width:3px}
 .message-stage .message-date{align-self:stretch;flex:none;margin:3px 0 18px;gap:0}

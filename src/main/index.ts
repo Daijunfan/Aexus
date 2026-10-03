@@ -1,4 +1,5 @@
 import {mediaResponse} from './media-response'
+import {setFileRevealer} from './file-reveal'
 import {closeMediaClient,mediaAvailable} from './media'
 import {operatorContext} from './authorization'
 import {openExternalUrl,setExternalOpener} from './external'
@@ -22,7 +23,8 @@ const HEADLESS = process.env.AGENTS_COMPANY_HEADLESS === '1'
 const OFFSCREEN = process.env.AGENTS_COMPANY_OFFSCREEN === '1'
 const HIDDEN = OFFSCREEN || process.env.AGENTS_COMPANY_HIDDEN === '1'
 if ((HEADLESS || HIDDEN) && process.platform === 'darwin') app.setActivationPolicy('prohibited')
-if (process.env.AGENTS_COMPANY_HOME) app.setPath('userData', join(process.env.AGENTS_COMPANY_HOME, 'electron'))
+// Keep the existing Electron profile when the product display name changes.
+app.setPath('userData', process.env.AGENTS_COMPANY_HOME ? join(process.env.AGENTS_COMPANY_HOME, 'electron') : join(app.getPath('appData'), 'Agents Company'))
 
 let mainWindow:BrowserWindow|undefined
 let pluginDesktop:ReturnType<typeof attachPluginDesktop>|undefined
@@ -54,6 +56,8 @@ ipcMain.handle('shell:openExternal', async (event, url: string) => {
   if (!/^https?:\/\//.test(url)) throw new Error('Only web links are supported')
   await openExternalUrl(url)
 })
+
+setFileRevealer(file=>shell.showItemInFolder(file))
 
 setViewGuard(async () => {
   if (mainWindow&&rendererReady(mainWindow.webContents)) await askRenderer('flush', {}, 12000)

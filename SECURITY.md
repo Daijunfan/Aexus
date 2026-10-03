@@ -1,6 +1,6 @@
 # Security policy
 
-Agents Company can execute code, change files and operate registered remote hosts. Deploy it as an authenticated, single-owner development system. It is not a hardened multi-tenant service and does not isolate mutually untrusted people sharing one Core instance.
+Anexus can execute code, change files and operate registered remote hosts. Deploy it as an authenticated, single-owner development system. It is not a hardened multi-tenant service and does not isolate mutually untrusted people sharing one Core instance.
 
 ## Reporting
 

@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // Full source App/Web + isolated authenticated Core; deterministic native protocol only.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -28,7 +29,7 @@ try{
  const launch=async()=>{
   if(native){
    const env={...f.env,AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1280',AGENTS_COMPANY_HEIGHT:'900'};for(const key of ['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_WEB','AGENTS_COMPANY_WEB_URL','AGENTS_COMPANY_HEADLESS'])delete env[key]
-   const executable=application?.endsWith('.app')?path.join(application,'Contents/MacOS/Agents Company'):application;app=await electron.launch({executablePath:executable||require('electron'),args:application?[]:[root],env});evidence.testPids.push(app.process().pid);page=await app.firstWindow()
+   const executable=desktopExecutable(application);app=await electron.launch({executablePath:executable||require('electron'),args:application?[]:[root],env});evidence.testPids.push(app.process().pid);page=await app.firstWindow()
    assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(win=>!win.isVisible())),'all test-owned windows remain hidden')
    await app.evaluate(({ipcMain},{employeeId})=>{
     const handlers=ipcMain._invokeHandlers;if(!(handlers instanceof Map))throw Error('Expected real Electron IPC handler map');const original=handlers.get('api:request');if(typeof original!=='function')throw Error('Expected actual api:request handler')

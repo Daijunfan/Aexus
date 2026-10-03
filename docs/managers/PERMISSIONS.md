@@ -1,10 +1,10 @@
-# Agents Company 权限说明
+# Anexus 权限说明
 
 管理权限属于员工的 `managementRole`，与 Team 名称、工作目录、目录标记和视图无关。CLI 与 UI 进入相同的 Core 授权入口。完整命令见 [API.md](API.md)。`management.topology.teams` 从同一授权入口返回逐 Team 的 allowedActions、deleteBlockedReason、governorIds 和 isOwnTeam，避免把少数受保护 Team 误判为全部不可删除。
 
 ## 四种职位
 
-Secretary 是最高的 **Agent 应用管理职位**，负责帮助用户操作 Agents Company 及插件。它不冒充用户，不改变原生引擎执行权限或操作系统身份；具体业务工作应委派给合适员工。
+Secretary 是最高的 **Agent 应用管理职位**，负责帮助用户操作 Anexus 及插件。它不冒充用户，不改变原生引擎执行权限或操作系统身份；具体业务工作应委派给合适员工。
 
 | 能力 | Employee | Manager | Governor | Secretary | 用户 |
 | --- | --- | --- | --- | --- | --- |
@@ -26,6 +26,8 @@ Governor 仍不能创建、删除、升降级自己或其他 Governor，不能�
 Secretary 可出现在 Company、Messages、Plan 或普通插件 Team 中；视图只过滤展示。它使用 Core 主机的本地引擎和本地工作区，Cloud Team 可选择 `workEnvironment:local`。它没有 Governor 的任务视图绑定。原有 Manager/Governor 能力保留，包括既有全局插件/设置权限。
 
 秘书使用普通认证 Core/CLI 操作管理软件，例如 `channel.source-add/update/remove`、`messenger.folder-save`、`engine.configure` 和 `plugin.call`。会话内治理另行检查实际职位：chat.update/mute、conversation.role/mute/silence/notice-* 要求本会话 Owner/Admin，chat.delete 要求 Owner；Company Secretary 不获得豁免。应用目录与采集配置元数据仍可按原范围读取，群组正文和频道讨论需真实成员身份。秘书作为频道管理员可用 `channel.message-send` 发起管理请求，作者仍是该秘书；只有 Core 在此入口设置的 `requestId=id` 管理根能作为后续讨论根，普通投稿不能伪造。
+
+个人消息头像通过 `messenger.profile` 上传、更换或重置；`messenger.profile-image` 读取当前图片。两者均仅用户可调用，Secretary 也不能更改或读取用户头像图片；头像不改变消息中的真实作者与权限。
 
 用户身份相关入口保持独立：`auth.agent-token/revoke`、`session/chat/channel.acknowledge`、`chat.edit`、`messenger.forward/forward-draft/forward-status/reference`、播放器及上传下载客户端许可、`ui.click/type/drag/wheel` 仍仅用户。秘书通过 Core API 操作软件，不以 UI 模拟或令牌冒充用户；原生引擎的 Ask/Full access 设置仍单独生效。已有 API 的 revision、显式确认和作用域检查继续执行。
 
@@ -270,3 +272,11 @@ index metadata does not grant file authority. Published files are read-only.
 Employees cannot mutate conversation originals or peer folders, or use an asset
 reference to bypass those restrictions. Directory migration requires a current
 preview and rejects busy affected employees and active transfers.
+
+`workspace.reveal` is human-only and resolves the same file scopes as transfers.
+It reveals local Core-host paths only after scope and symlink validation. Remote
+and Web requests cannot open a Core path in the client's file manager. Revealing
+fixed roots or published attachments grants no write or rename permission;
+existing read-only and member workspace boundaries remain unchanged. Downloads
+continue through the existing authenticated transfer/channel operations.
+`assetDrawerWidth` uses existing `settings.set` authority and only affects display.

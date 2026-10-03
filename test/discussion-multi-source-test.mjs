@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // One employee, several independent group/channel memberships, one native FIFO. No provider calls.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -17,7 +18,7 @@ try{
  assert.notEqual(fixture,original);fs.writeFileSync(codex,fixture,{mode:0o755})
  const entry=path.join(temp,'daemon.cjs'),overrides={CODEX_BIN:codex}
  if(application){
-  const bundleRoot=application.endsWith('.app')?application:application.slice(0,application.indexOf('.app/')+4),executable=application.endsWith('.app')?path.join(application,'Contents/MacOS/Agents Company'):application
+  const bundleRoot=application.endsWith('.app')?application:application.slice(0,application.indexOf('.app/')+4),executable=desktopExecutable(application)
   assert.ok(bundleRoot.endsWith('.app'),'AGENTS_COMPANY_TEST_APP must name a macOS app bundle or its executable')
   evidence.application=application;evidence.asarSha256=createHash('sha256').update(fs.readFileSync(path.join(bundleRoot,'Contents/Resources/app.asar'))).digest('hex')
   overrides.AGENTS_COMPANY_HIDDEN='1';overrides.AGENTS_COMPANY_BUILTIN_PLUGINS=path.join(bundleRoot,'Contents/Resources/plugins')

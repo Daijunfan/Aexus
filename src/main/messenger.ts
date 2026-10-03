@@ -1,5 +1,7 @@
 import {socialElements,socialIdentity,categoryRule} from './message-categories'
-import {inCategory,matchesConversationType,matchesConversationQuery,CONVERSATION_TYPES,type CategoryEntry,type ConversationType} from '../shared/message-categories'
+import {inCategory,matchesConversationType,matchesConversationQuery,uniqueConversations,CONVERSATION_TYPES,type CategoryEntry,type ConversationType} from '../shared/message-categories'
+import {resolveAvatar} from '../shared/avatars'
+import {validatedImage} from './image-input'
 import type {PublicMessage,MessageSource} from './message-index'
 import {queryMessageIndex,type IndexKind,type IndexOptions,type IndexResult} from './message-index-client'
 import {attachmentPaths} from '../shared/message-attachments'
@@ -23,6 +25,7 @@ let emit:(payload:{revision:number;conversation?:string})=>void=()=>{}
 export function setMessengerEmitter(handler:typeof emit){emit=handler}
 
 const file=join(APP_HOME,'messenger.json')
+const profileImageFile=join(APP_HOME,'messenger-profile-image.json')
 function read(){return readJson<MessengerState>(file,()=>({...EMPTY_MESSENGER,conversations:{},messages:{},drafts:{}}),value=>!!value&&typeof value==='object'&&(value as MessengerState).version===1&&Number.isSafeInteger((value as MessengerState).revision)&&['conversations','messages','drafts'].every(key=>!!(value as any)[key]&&typeof (value as any)[key]==='object'&&!Array.isArray((value as any)[key]))&&((value as MessengerState).orders===undefined||!!(value as MessengerState).orders&&typeof (value as MessengerState).orders==='object'&&!Array.isArray((value as MessengerState).orders)&&Object.entries((value as MessengerState).orders!).every(([scope,order])=>orderScope(scope)&&validOrder(order))))}
 function write(state:MessengerState,conversation?:string){state.revision++;atomicJson(file,state,true);emit({revision:state.revision,conversation});return state}
 function resolve(value:unknown){
@@ -76,6 +79,27 @@ export function messengerRequest(command:string,args:Record<string,any>={}){
  authorize(command,args);requireAppAdministrator()
  const state=read()
  switch(command){
+  case 'messenger.profile':{
+   if(requestContext().principal.kind!=='operator')throw Error('Only the user may change their message avatar')
+   if(Object.keys(args).some(key=>!['avatar','image'].includes(key))||(args.avatar===undefined)===(args.image===undefined))throw Error('Choose a message avatar')
+   if(args.image!==undefined){
+    if(!args.image||typeof args.image!=='object'||Array.isArray(args.image)||Object.keys(args.image).some(key=>!['name','mimeType','data'].includes(key)))throw Error('Unknown avatar image field')
+    const image=validatedImage(args.image)
+    if(state.profile?.image?.sha256===image.sha256)return state
+    atomicJson(profileImageFile,{sha256:image.sha256,name:args.image.name.trim(),mimeType:args.image.mimeType,data:image.data.toString('base64')})
+    state.profile={image:{sha256:image.sha256}};return write(state)
+   }
+   const avatar=args.avatar===null||args.avatar==='null'?undefined:resolveAvatar({avatar:args.avatar})
+   if(!state.profile?.image&&state.profile?.avatar===avatar)return state
+   state.profile=avatar?{avatar}:{};const result=write(state);atomicJson(profileImageFile,null);return result
+  }
+  case 'messenger.profile-image':{
+   if(requestContext().principal.kind!=='operator')throw Error('Only the user may read their message avatar')
+   if(Object.keys(args).some(key=>key!=='sha256')||typeof args.sha256!=='string'||args.sha256!==state.profile?.image?.sha256)throw Error('Message avatar changed. Reload the profile.')
+   const image=readJson<{sha256:string;name:string;mimeType:string;data:string}|null>(profileImageFile,()=>null)
+   if(!image||image.sha256!==args.sha256)throw Error('Message avatar is unavailable')
+   return image
+  }
   case 'messenger.gallery':return galleryPage(args,state)
   case 'messenger.reference':return resolveConversationReply(args.conversation,args.id,args.quote,args.textOnly)
   case 'messenger.social':return socialElements(args)
@@ -193,12 +217,12 @@ function conversationDirectory(args:Record<string,any>,state:MessengerState){
  const entries:Entry[]=[
   ...visibleEmployees().filter(card=>!card.deleting).map(card=>({key:'employee:'+card.id,id:card.id,kind:'employee' as const,title:card.title,description:[card.group,card.managementRole??'employee',card.engine].join(' · '),team:card.group,role:card.managementRole??'employee',engine:card.engine,archived:false})),
   ...listChatGroups().map(group=>({key:'group:'+group.id,id:group.id,kind:'group' as const,title:group.name,description:group.members.map(member=>member.title).join(', '),archived:false})),
-  ...(channelRequest('channel.list',{}) as {id:string;name:string;kind:string}[]).map(channel=>({key:'channel:'+channel.id,id:channel.id,kind:'channel' as const,title:channel.name,description:channel.kind,archived:false})),
+  ...(channelRequest('channel.list',{}) as {id:string;name:string;kind:string;sourceCount?:number}[]).map(channel=>({key:'channel:'+channel.id,id:channel.id,kind:'channel' as const,title:channel.name,description:channel.kind,platform:channel.kind,sourceCount:channel.sourceCount,archived:false})),
   ...socialElements({includeDisabled:true}).map(source=>({key:source.key,id:source.id,kind:'source' as const,title:source.name,description:source.platform+' · '+source.locator,platform:source.platform,locator:source.locator,channelId:source.channelId,enabled:source.enabled,archived:false}))
  ].map(entry=>({...entry,archived:!!state.conversations[entry.key]?.archived}))
  const found=entries.filter(entry=>(archived==='include'||entry.archived===(archived==='only'))&&(!category||inCategory(category,entry))&&matchesConversationQuery(query,entry.title,entry.description))
- const counts=Object.fromEntries(CONVERSATION_TYPES.map(type=>[type,found.filter(entry=>matchesConversationType(type,entry)).length]))
- const matched=found.filter(entry=>matchesConversationType(type as ConversationType,entry)).sort((a,b)=>a.title.localeCompare(b.title)||a.key.localeCompare(b.key))
+ const counts=Object.fromEntries(CONVERSATION_TYPES.map(type=>[type,uniqueConversations(found.filter(entry=>matchesConversationType(type,entry))).length]))
+ const matched=uniqueConversations(found.filter(entry=>matchesConversationType(type as ConversationType,entry))).sort((a,b)=>a.title.localeCompare(b.title)||a.key.localeCompare(b.key))
  return {entries:matched.slice(offset,offset+limit),total:matched.length,hasMore:offset+limit<matched.length,offset,counts}
 }
 

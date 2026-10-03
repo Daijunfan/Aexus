@@ -1,4 +1,4 @@
-# Agents Company Manager CLI 完整手册
+# Anexus Manager CLI 完整手册
 
 ## 开始工作
 
@@ -22,6 +22,8 @@ Start `npm run serve` (no window), or open the desktop. Both expose the same
 Core over a private Unix socket on macOS/Linux or a data-directory-scoped named
 pipe on Windows. The default data directory is `~/AgentsCompany`.
 Run `node bin/agents help` for help. Every data command accepts `--json`.
+Anexus also provides `node bin/anexus` (or installed `anexus`); it is an alias of
+`agents` with the same commands, authentication, data directory and API protocol.
 
 ## Native API execution and focused discovery
 
@@ -68,6 +70,9 @@ The full GUI/API comparison and Plan workflow are available as `core/secretary-a
 `messenger.directory` lists current workers, groups, parent channels and social elements
 without loading messages, starting engines or acknowledging reads. It is available to
 the user and Secretary. The UI uses the same category/type predicates over live catalogs.
+A one-source Telegram channel and its source appear once when both match: the channel
+row keeps the shared discussion reachable. Source-only Telegram filters and categories
+retain the source identity; X/YouTube aggregate channels remain separate.
 
 ```sh
 agents messenger directory --type groups --json
@@ -95,6 +100,27 @@ The All Conversations button is independent of category tabs. Selecting it clear
 current category, type and search. Switching categories clears old search/type filters,
 so a previous platform query cannot hide a group or worker category. Archived objects
 remain in the existing unified archive and are queryable with `--archived include`.
+
+## Personal message avatar
+
+The user can upload a personal PNG, JPEG, GIF or WebP image up to 8 MiB, choose an
+existing `avatar.list` ID, or reset to the default person icon. Group and channel
+messages resolve Agent portraits by their real author employee ID; changing an avatar
+never changes the stored author, role, permissions or message text.
+
+```sh
+agents messenger profile --image '@my-avatar.json' --json
+agents messenger profile --avatar byte --json
+agents messenger profile --avatar null --json
+agents messenger state --json
+```
+
+The image JSON is `{name,mimeType,data}` with base64 image bytes. Core validates the
+signature and size using the same validator as channel images. `messenger.state.profile`
+contains only an avatar ID or `{image:{sha256}}`; image bytes live separately from drafts
+and preferences. `messenger.profile-image --sha256 HASH` reads the currently saved image.
+Both profile commands are user-only, including when called by a Secretary. Changes are
+persisted and broadcast to connected clients. The Messages heading opens the editor.
 
 ## Employee profile across views
 
@@ -398,7 +424,7 @@ Team nameplates open the scoped file browser for every Team type. `plugin.call` 
 the plugin's own CLI also supports full JSON-RPC envelopes.
 
 `plugin.open` opens or focuses one independent native window per plugin/workspace,
-sharing Agents Company's Dock icon. The plugin loads directly at the top level;
+sharing Anexus's Dock icon. The plugin loads directly at the top level;
 the company canvas stays in the main window. `view.open {kind:"plugin",pluginId}`
 is a compatibility alias. With `agents serve`, the same API creates a live HTTP
 view and presentation state with `attached:false`, without loading Electron.
@@ -963,7 +989,7 @@ Manager 自己创建的同 Team Employee，以及 Governor 在任意 Team 创建
 
 ## 员工职位：Secretary / Governor / Manager / Employee
 
-权限属于 `managementRole`，不属于名字、Team、工作目录或视图。Secretary 是最高应用管理职位，帮助用户操作 Agents Company 及全部已授权插件，组织与委派具体业务工作；完整矩阵见 [PERMISSIONS.md](PERMISSIONS.md)。
+权限属于 `managementRole`，不属于名字、Team、工作目录或视图。Secretary 是最高应用管理职位，帮助用户操作 Anexus 及全部已授权插件，组织与委派具体业务工作；完整矩阵见 [PERMISSIONS.md](PERMISSIONS.md)。
 
 ```sh
 agents management roles --json
@@ -2651,7 +2677,7 @@ agents card native-bind EMPLOYEE_ID REMOTE_NATIVE_SESSION_UUID
 
 `engine.remote-check` checks SSH connectivity, the real remote folder, CLI version, Codex app-server or Claude stream-json support, and login status without sending a model prompt. `authentication` is `configured` or `unknown`; a definite sign-out is an error. It cannot prove remaining quota. The employee form runs this check after choosing the Cloud Team or engine and disables creation until it succeeds. `card.create` repeats the check **before** creating a default folder or employee record. Missing CLI, host failures or an out-of-scope path fail closed. The session page reuses the existing streaming/approval/file/terminal UI; a small cloud beneath the pet marks the process location, independently of its busy lamp.
 
-`engine.remote-sessions` lists native histories on that host under the Team root. `card.native-bind` accepts an existing native UUID only when its remote cwd exactly matches the employee cwd and the employee has no prior conversation. It imports readable messages into the host transcript, then resumes through the remote CLI. A manually bound history is marked `external`: removing the employee removes its host view, **not** the remote original. Native histories created by Agents Company retain remote deletion ownership. Both types carry `hostId`, SSH endpoint/OS and original directory with every reference, so deletion or cloning cannot target a Mac record or another host. Codex remote cloning uses `thread/fork`; Claude remote cloning is explicitly rejected until a reliable native fork interface is available, leaving the source untouched. An existing running terminal process is not taken over; only its persisted history can be resumed. SSH disconnects never retry a model turn or fall back to the Mac.
+`engine.remote-sessions` lists native histories on that host under the Team root. `card.native-bind` accepts an existing native UUID only when its remote cwd exactly matches the employee cwd and the employee has no prior conversation. It imports readable messages into the host transcript, then resumes through the remote CLI. A manually bound history is marked `external`: removing the employee removes its host view, **not** the remote original. Native histories created by Anexus retain remote deletion ownership. Both types carry `hostId`, SSH endpoint/OS and original directory with every reference, so deletion or cloning cannot target a Mac record or another host. Codex remote cloning uses `thread/fork`; Claude remote cloning is explicitly rejected until a reliable native fork interface is available, leaving the source untouched. An existing running terminal process is not taken over; only its persisted history can be resumed. SSH disconnects never retry a model turn or fall back to the Mac.
 
 New Cloud Native employees can still bind an existing session after their first hidden initialization. Core allows this only when its exact native-ID evidence still identifies a fresh, successfully initialized context with no public conversation. Any accepted ordinary or shared-message task clears that evidence, including silent awareness; cloned, external and legacy contexts do not gain eligibility merely because their public transcript is empty. Binding archives the owned initialization reference, preserves the selected history as `external`, and queues the same read-only initialization in that bound context before work. It never deletes or transfers ownership of the external original.
 
@@ -3145,7 +3171,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 305 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 308 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3193,6 +3219,8 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 | <code>agents channel collector-config</code> | <code>[--since-revision N]</code> | Read authoritative collector targets; external access requires the dedicated channel capability | Collector protocol | operator |
 | <code>agents channel media-put</code> | <code>--data JSON&#124;@file</code> | Upload an item-scoped image: employee publishers use channelId, external collectors use sourceId; the authenticated employee identity is enforced | Channel publishing | chat |
 | <code>agents channel publish</code> | <code>--data JSON&#124;@file</code> | Publish an article using a current employee channelId or an external sourceId. Scheduled employees may publish without a discussion parent; identity, deduplication and retention remain enforced | Channel publishing | chat |
+| <code>agents messenger profile</code> | <code>[--avatar ID&#124;null &#124; --image JSON&#124;@file]</code> | User-only: upload a personal image, choose an avatar.list ID or reset with null; author identity stays unchanged | Your message avatar | operator |
+| <code>agents messenger profile-image</code> | <code>--sha256 HASH</code> | User-only: read the current personal avatar image at its exact saved revision | Your message avatar | operator |
 | <code>agents messenger directory</code> | <code>[--type all&#124;private&#124;groups&#124;channels&#124;telegram&#124;x&#124;youtube] [--query TEXT] [--folder ID] [--archived exclude&#124;only&#124;include] [--offset N] [--limit N]</code> | User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution | All Conversations and type filtering | operator |
 | <code>agents messenger social</code> | <code>[--platform telegram&#124;x&#124;youtube] [--include-disabled]</code> | User or Secretary: list each social element with stable source ID, parent channel, latest publication and per-source unread count; no reads acknowledged | Social category picker | operator |
 | <code>agents messenger reorder</code> | <code>SCOPE --order JSON&#124;null [--expected-order JSON]</code> | User or Secretary: persist category or mixed conversation positions in categories/all/favorites/archive/a folder ID; null restores automatic order, unrelated drafts and hidden positions remain unchanged | Message drag ordering | operator |
@@ -3319,7 +3347,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 | <code>agents schedule cancel</code> | <code>ID</code> | Cancel an active run, preserving its history | Plan task editor | schedule |
 | <code>agents settings get</code> | <code>—</code> | Read independent Company, Messages and Plan appearances, shared controls and default employee models | 应用设置 | operator |
 | <code>agents engine models</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
-| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan &#124; --view-appearance JSON&#124;@file] [--message-wallpaper JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
+| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan &#124; --view-appearance JSON&#124;@file] [--message-wallpaper JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--asset-drawer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
 | <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
 | <code>agents view open</code> | <code>home&#124;messages&#124;plan&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID &#124; --chat GROUP_ID &#124; --channel CHANNEL_ID] [--source SOURCE_ID] [--plugin ID] [--plan-view ID]</code> | Open a form, workspace, news channel or employee conversation | 打开资料或会话 | operator |
 | <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
@@ -3436,6 +3464,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 | <code>agents terminal input</code> | <code>ID --data TEXT [--enter]</code> | Send terminal input, including control keys | 终端输入 | operator |
 | <code>agents terminal resize</code> | <code>ID --cols N --rows N</code> | Resize the PTY | 终端尺寸 | operator |
 | <code>agents terminal close</code> | <code>ID</code> | Close a terminal and its shell | 关闭终端 | operator |
+| <code>agents workspace reveal</code> | <code>--from JSON&#124;@file</code> | User-only: reveal an existing scoped Core-host file or folder in the local desktop file manager; remote and browser paths cannot be revealed on the client | Open in Finder | workspace |
 | <code>agents workspace list</code> | <code>[path] [--shared&#124;--team NAME&#124;--employee ID]</code> | List real workspace files | 文件目录 | workspace |
 | <code>agents workspace image</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a scoped image for preview or model input | 图片预览和附件 | workspace |
 | <code>agents workspace read</code> | <code>&lt;path&gt; [--shared&#124;--team NAME&#124;--employee ID]</code> | Read a workspace file | 文件预览 | workspace |
@@ -3467,7 +3496,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 ## Purpose
 
 持久化地安排某个员工在指定时间使用指定模型、思考程度执行任务。调度器属于
-Agents Company Core，不依赖窗口或任何插件。CLI、Plan 视图与插件使用同一个
+Anexus Core，不依赖窗口或任何插件。CLI、Plan 视图与插件使用同一个
 `schedule.*` 协议。**本版本未向 MiniNotion 接入此调度器**；MiniNotion 原有的页面
 提醒/重复事项是另一项领域功能。
 

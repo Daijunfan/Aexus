@@ -5,7 +5,7 @@ export function PanelDivider({axis,value,min,max,label,onDraft,onCommit}:{axis:'
  const bound=(v:number)=>Math.round(Math.max(min,Math.min(max,v)))
  const save=async(v:number)=>{try{setError('');await onCommit(v)}catch(e){setError((e as Error).message);onDraft(undefined)}}
  return <><div className={`panel-divider divider-${axis}`} role="separator" aria-label={label} aria-orientation={axis==='x'?'vertical':'horizontal'} aria-valuemin={min} aria-valuemax={max} aria-valuenow={Math.round(value)} tabIndex={0}
-  onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();e.currentTarget.setPointerCapture(e.pointerId);const parent=e.currentTarget.parentElement!,size=axis==='x'?parent.querySelector('.file-list')!.getBoundingClientRect().width:parent.getBoundingClientRect().height;drag.current={start:axis==='x'?e.clientX:e.clientY,size,value:size}}}
+  onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();e.currentTarget.setPointerCapture(e.pointerId);const parent=e.currentTarget.parentElement!,size=axis==='x'?(parent.querySelector('.file-list')??parent).getBoundingClientRect().width:parent.getBoundingClientRect().height;drag.current={start:axis==='x'?e.clientX:e.clientY,size,value:size}}}
   onPointerMove={e=>{const d=drag.current;if(!d)return;d.value=bound(d.size+((axis==='x'?e.clientX:e.clientY)-d.start)*(axis==='x'?1:-1));onDraft(d.value)}}
   onPointerUp={e=>{const d=drag.current;if(!d)return;drag.current=null;e.currentTarget.releasePointerCapture(e.pointerId);void save(d.value)}}
   onPointerCancel={()=>{drag.current=null;onDraft(undefined)}}

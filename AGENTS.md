@@ -1,4 +1,4 @@
-# Agents Company contributor instructions
+# Anexus contributor instructions
 
 Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIBUTING.md`, `SECURITY.md`, `API.md` and `PERMISSIONS.md` before changing execution or authority. Do not launch child Agents unless the task explicitly requests them.
 
@@ -24,7 +24,7 @@ Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIB
 - Test desktop rendering in hidden windows and Web rendering in headless browsers. Do not claim another operating system passed based on a local build.
 - Preserve existing edits. Never reset the repository, clear credentials, overwrite user documents, or publish a repository/tag/package without explicit permission.
 - Builds do not imply installation. Do not stop or replace another developer's running app automatically. When a user explicitly requests installation, inspect active tasks, back up state and stop the old process before replacing its ASAR.
-- For an authorized macOS installation, use `npm run install:mac -- --source '/path/Agents Company.app'`, then verify the installed app in an isolated hidden-window test. Do not hand-roll hot replacement.
+- For an authorized macOS installation, use `npm run install:mac -- --source '/path/Anexus.app'`, then verify the installed app in an isolated hidden-window test. Do not hand-roll hot replacement.
 
 ## Release
 

@@ -21,7 +21,7 @@ export function WebGate({children}:{children:ReactNode}){
       <div className="web-connection" role="status">{state.connected?uiText("Connected to Core"):uiText("Reconnecting · Work continues on the Core host")}<button onClick={()=>void logoutWeb()}>{uiText("Sign out")}</button></div>:
       <div className="web-login-overlay"><form className="web-login" onSubmit={submit}>
         <img className="brand-symbol" src={companyIcon} alt="" aria-hidden="true"/>
-        <h1>Agents Company</h1><p>{uiText("Connect to your Agent workspace.")}</p>
+        <h1>Anexus</h1><p>{uiText("Connect to your Agent workspace.")}</p>
         {state.checking?<p>{uiText("Connecting…")}</p>:<>
           <label>{uiText("Access token")}<input type="password" autoComplete="off" value={token} onChange={event=>setToken(event.target.value)} autoFocus required/></label>
           <small>{uiText("Run on the Core host")} <code>agents web token</code>  {uiText("for a token. It is used only to establish a session and is not stored in the browser.")}</small>

@@ -14,7 +14,7 @@ const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_PROJECTS:path.
 const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env})
 let closed=false
 try{
- const page=await app.firstWindow();await page.locator('.infinite-canvas').waitFor();await expect(page.locator('.company-brand')).toContainText('Agents Company')
+ const page=await app.firstWindow();await page.locator('.infinite-canvas').waitFor();await expect(page.locator('.company-brand')).toContainText('Anexus')
  assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())))
  console.log('PASS the actual renderer starts with an invisible window')
  const cli=async(...args)=>JSON.parse((await run(process.execPath,[path.join(root,'bin/agents'),...args,'--json'],{env,timeout:10000})).stdout)

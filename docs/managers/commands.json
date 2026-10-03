@@ -2522,6 +2522,75 @@
     "target": "request"
   },
   {
+    "name": "messenger.profile",
+    "args": "[--avatar ID|null | --image JSON|@file]",
+    "summary": "User-only: upload a personal image, choose an avatar.list ID or reset with null; author identity stays unchanged",
+    "gui": "Your message avatar",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "avatar": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "mimeType": {
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/gif",
+                "image/webp"
+              ]
+            },
+            "data": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "mimeType",
+            "data"
+          ]
+        }
+      },
+      "required": []
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "messenger.profile-image",
+    "args": "--sha256 HASH",
+    "summary": "User-only: read the current personal avatar image at its exact saved revision",
+    "gui": "Your message avatar",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "sha256"
+      ]
+    },
+    "readOnly": true,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
     "name": "messenger.directory",
     "args": "[--type all|private|groups|channels|telegram|x|youtube] [--query TEXT] [--folder ID] [--archived exclude|only|include] [--offset N] [--limit N]",
     "summary": "User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution",
@@ -7448,7 +7517,7 @@
   },
   {
     "name": "settings.set",
-    "args": "[--view company|messages|plan | --view-appearance JSON|@file] [--message-wallpaper JSON|@file] [--language en|zh-CN] [--theme violet|blue|mint|teal|cyan|rose|coral|amber|indigo|graphite|custom|white|light|space|black|midnight|sage] [--theme-color #RRGGBB] [--default-permission default|acceptEdits|bypassPermissions] [--explorer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off] [--team-overview on|off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]",
+    "args": "[--view company|messages|plan | --view-appearance JSON|@file] [--message-wallpaper JSON|@file] [--language en|zh-CN] [--theme violet|blue|mint|teal|cyan|rose|coral|amber|indigo|graphite|custom|white|light|space|black|midnight|sage] [--theme-color #RRGGBB] [--default-permission default|acceptEdits|bypassPermissions] [--explorer-width N] [--asset-drawer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on|off] [--team-overview on|off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]",
     "summary": "Patch independent view appearances and shared settings; legacy theme flags target Messages only",
     "gui": "背景、灵敏度和团队索引",
     "inputSchema": {
@@ -7657,6 +7726,11 @@
           "type": "number",
           "minimum": 140,
           "maximum": 520
+        },
+        "assetDrawerWidth": {
+          "type": "number",
+          "minimum": 260,
+          "maximum": 600
         },
         "terminalHeight": {
           "type": "number",
@@ -9086,6 +9160,67 @@
     "gui": "关闭终端",
     "readOnly": false,
     "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "workspace.reveal",
+    "args": "--from JSON|@file",
+    "summary": "User-only: reveal an existing scoped Core-host file or folder in the local desktop file manager; remote and browser paths cannot be revealed on the client",
+    "gui": "Open in Finder",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "asset": {
+              "type": "string",
+              "minLength": 1
+            },
+            "conversation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "shared": {
+              "type": "boolean"
+            },
+            "team": {
+              "type": "string",
+              "minLength": 1
+            },
+            "employee": {
+              "type": "string",
+              "minLength": 1
+            },
+            "group": {
+              "type": "string",
+              "minLength": 1
+            },
+            "channel": {
+              "type": "string",
+              "minLength": 1
+            },
+            "local": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      },
+      "required": [
+        "from"
+      ]
+    },
+    "readOnly": false,
+    "permission": "workspace",
     "target": "request"
   },
   {

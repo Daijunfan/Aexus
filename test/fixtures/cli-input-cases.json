@@ -5033,5 +5033,68 @@
         "apply": true
       }
     }
+  },
+  {
+    "args": [
+      "workspace",
+      "reveal",
+      "--from",
+      "{\"asset\":\"shared\",\"path\":\"report.md\"}"
+    ],
+    "expected": {
+      "cmd": "workspace.reveal",
+      "args": {
+        "from": {
+          "asset": "shared",
+          "path": "report.md"
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "profile",
+      "--avatar",
+      "byte"
+    ],
+    "expected": {
+      "cmd": "messenger.profile",
+      "args": {
+        "avatar": "byte"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "profile",
+      "--image",
+      "{\"name\":\"me.png\",\"mimeType\":\"image/png\",\"data\":\"aGVsbG8=\"}"
+    ],
+    "expected": {
+      "cmd": "messenger.profile",
+      "args": {
+        "image": {
+          "name": "me.png",
+          "mimeType": "image/png",
+          "data": "aGVsbG8="
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "profile-image",
+      "--sha256",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "expected": {
+      "cmd": "messenger.profile-image",
+      "args": {
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
   }
 ]

@@ -8,7 +8,7 @@ import {root} from './source-files.mjs'
 const development=process.argv.includes('--development'),skipBuild=process.argv.includes('--skip-build')
 for(const arg of process.argv.slice(2))if(!['--development','--skip-build'].includes(arg))throw Error('Unknown option: '+arg)
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'))
-const name=`Agents-Company-${pkg.version}-server-${process.platform}-${process.arch}${development?'-candidate':''}`
+const name=`Anexus-${pkg.version}-server-${process.platform}-${process.arch}${development?'-candidate':''}`
 const output=path.join(root,'release'),stage=path.join(root,'.dist',name)
 function run(command,args,cwd=root){
   const result=spawn.sync(command,args,{cwd,stdio:'inherit',env:process.env})
@@ -55,7 +55,7 @@ if(process.platform==='win32'){
   if(check.status!==0)throw Error('Windows server package requires a working node-pty / ConPTY binary')
 }
 fs.writeFileSync(path.join(stage,'RUN_SERVER.txt'),[
-  `Agents Company ${pkg.version} — ${process.platform}/${process.arch}`,
+  `Anexus ${pkg.version} — ${process.platform}/${process.arch}`,
   'Requires a supported Node runtime (see package.json). This archive does not bundle Node.',
   'Start: node bin/agents serve --web --port 5151',
   'In another terminal: node bin/agents web token',

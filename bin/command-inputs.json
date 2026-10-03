@@ -714,6 +714,35 @@
       ]
     ]
   },
+  "messenger.profile": {
+    "fields": [
+      [
+        "avatar",
+        "avatar",
+        "text",
+        false,
+        false
+      ],
+      [
+        "image",
+        "image",
+        "json",
+        false,
+        false
+      ]
+    ]
+  },
+  "messenger.profile-image": {
+    "fields": [
+      [
+        "sha256",
+        "sha256",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
   "messenger.directory": {
     "fields": [
       [
@@ -2804,5 +2833,16 @@
       ]
     ],
     "rawPositionals": true
+  },
+  "workspace.reveal": {
+    "fields": [
+      [
+        "from",
+        "from",
+        "json",
+        true,
+        false
+      ]
+    ]
   }
 }

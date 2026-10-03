@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // Actual trusted Electron IPC and contextBridge, isolated state and no employees.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -16,7 +17,7 @@ const env={...process.env,AGENTS_COMPANY_HOME:state,AGENTS_COMPANY_PROJECTS:path
 for(const key of Object.keys(env))if(key.startsWith('AGENTS_COMPANY_TOKEN')||['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_PORT','AGENTS_COMPANY_URL','AGENTS_COMPANY_CLIENT','AGENTS_COMPANY_WEB_URL','AGENTS_COMPANY_WEB','AGENTS_COMPANY_HEADLESS'].includes(key))delete env[key]
 let app,pid,report
 try{
- app=await electron.launch({executablePath:bundle?path.join(bundle,'Contents/MacOS/Agents Company'):require('electron'),args:bundle?[]:[root],env});pid=app.process().pid
+ app=await electron.launch({executablePath:bundle?desktopExecutable(bundle):require('electron'),args:bundle?[]:[root],env});pid=app.process().pid
  const page=await app.firstWindow();await page.locator('.infinite-canvas').waitFor()
  assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible())))
  const call=(cmd,args={})=>page.evaluate(({cmd,args})=>window.agents.call(cmd,args),{cmd,args})

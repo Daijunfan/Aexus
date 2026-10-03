@@ -108,6 +108,7 @@ writeStore
 import { renameGroup,designRoom,updateEmployee,employeeFields,setTeamRoot,bindTeamRoot,setBounds,placeEmployee,setViewport,configureTeam,validateTeamSettings,teamViewList,createTeamView,updateTeamView,removeTeamView,selectTeamView,canvasViewport } from './store'
 import { teamSettings,employeeSettings,nativeSessionRefs,canBindNativeSession,type StoredSession } from '../shared/types'
 import { workspaceFiles } from './files'
+import {revealWorkspaceFile} from './file-reveal'
 import { employeeRoot,employeeWorkspace,executionEmployee,cloudDirectory,cloudRelative,workspaceStatus,teamRoot,managedTeamRoot,chooseTeamRoot,defaultPluginWorkspace,legacyPluginWorkspace,inside } from './workspaces'
 import { planOffice } from '../shared/canvas'
 import { listPlugins,requirePlugin,installPlugin,pluginFile } from './plugins/registry'
@@ -271,7 +272,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'messenger.media-close':return closeMedia(s(a.id))
     case 'messenger.forward':return forwardMessages(a,(cmd,args)=>handleRequest({cmd,args}))
     case 'messenger.forward-status':return forwardStatus(a)
-    case 'messenger.directory':case 'messenger.social':case 'messenger.forward-draft':case 'messenger.gallery':case 'messenger.reference':case 'messenger.state':case 'messenger.reorder':case 'messenger.folder-save':case 'messenger.folder-delete':case 'messenger.conversation':case 'messenger.message':case 'messenger.draft':case 'messenger.search':return messengerRequest(req.cmd,a)
+    case 'messenger.profile':case 'messenger.profile-image':case 'messenger.directory':case 'messenger.social':case 'messenger.forward-draft':case 'messenger.gallery':case 'messenger.reference':case 'messenger.state':case 'messenger.reorder':case 'messenger.folder-save':case 'messenger.folder-delete':case 'messenger.conversation':case 'messenger.message':case 'messenger.draft':case 'messenger.search':return messengerRequest(req.cmd,a)
     case 'system.info': return {...runtimeInfo(),clientId:requestContext().clientId}
     case 'system.directories': {
       const directory=realpathSync(a.path?resolve(s(a.path)):homedir())
@@ -442,6 +443,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       if(req.cmd==='assets.file'&&String(a.id).startsWith('published:')){if(!['list','read','image','info','chunk'].includes(a.operation))throw Error('Published attachments are read-only; copy them to a workspace to edit');const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=({image:'read-image',info:'copy-info',chunk:'copy-read'} as Record<string,string>)[a.operation]??a.operation;return workspaceFiles(end.root,op,{path:end.path,offset:a.offset??0,length:262144,hidden:a.hidden})}
       if(req.cmd==='assets.file'&&['info','chunk'].includes(a.operation)){const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=a.operation==='info'?'copy-info':'copy-read',args={path:end.path,offset:a.offset??0,length:262144};await end.validate?.(op,args);return end.remote?remoteFiles('assets-file-'+a.id,end.remote,op,args):workspaceFiles(end.root,op,args)}
       return assetRequest(req.cmd,a,(cmd,args)=>handleRequest({cmd,args}),async(ref,args)=>{const end=fileEndpoint(ref,false);if(!end.remote)throw Error('Remote inventory requires a remote workspace');return remoteFiles('asset-index-'+String(ref.team??ref.employee),end.remote,'inventory',args)})
+    case 'workspace.reveal': return revealWorkspaceFile(fileEndpoint(a.from,false))
     case 'workspace.suggest': {
       const store=readStore(),config=teamSettings(store,s(a.team))
       if(a.workEnvironment==='local'&&config.mode==='cloud')return {path:employeeRoot(store,{group:s(a.team),workEnvironment:'local'})}
@@ -1131,7 +1133,7 @@ export function startServer(onListening: () => void = () => {}): void {
   const probe = connect(SOCKET_PATH)
   probe.once('connect', () => {
     probe.destroy()
-    console.error(`Agents Company is already running at ${SOCKET_PATH}`)
+    console.error(`Anexus is already running at ${SOCKET_PATH}`)
     process.exit(1)
   })
   probe.once('error', (err: NodeJS.ErrnoException) => {

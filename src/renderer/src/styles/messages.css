@@ -316,7 +316,7 @@
 }
 /* Personal categories share identities; tabs only change the visible list. */
 .message-category-bar{display:flex;align-items:center;gap:7px;margin:0 16px 14px;min-width:0;flex:none}
-.message-category-tabs{display:flex;align-items:center;gap:5px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin;padding:2px}
+.message-category-tabs{display:flex;align-items:center;gap:5px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px}
 .message-category-tabs>button{display:flex;align-items:center;gap:6px;flex:none;min-height:35px;max-width:175px;padding:8px 12px;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--fg-dim);font:inherit;font-size:12px;white-space:nowrap;transition:background .15s,color .15s}
 .message-category-tabs>button>span:not(.codicon){min-width:0;overflow:hidden;text-overflow:ellipsis}
 .message-category-tabs>button>.codicon{font-size:11px;opacity:.5}
@@ -334,3 +334,5 @@
 .message-folder-error{color:var(--red);font-size:12px;line-height:1.6;overflow-wrap:anywhere;margin:12px 1px 0}
 .message-folder-error>button{margin-left:8px;padding:3px 6px;border:0;border-radius:5px;background:var(--bg-alt);color:var(--accent);font:inherit}
 @media(max-width:600px){.message-category-bar{margin-inline:16px}.message-category-tabs>button{max-width:150px}.conversation-folder-editor{padding:20px}.conversation-folder-editor .group-member-heading{gap:7px}}
+
+.message-category-tabs::-webkit-scrollbar{display:none}

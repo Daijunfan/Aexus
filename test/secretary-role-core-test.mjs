@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // Real temporary Core, deterministic native initialization and actual plugin APIs; no real user/model state.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -20,7 +21,7 @@ let f;const checks=[],report={passed:false,mode,checks,providerCalls:0,scope:app
 try{
  const entry=path.join(temp,'daemon.cjs'),overrides={AGENTS_COMPANY_PLUGIN_DIRS:plugin}
  if(application){
-  const bundleRoot=application.endsWith('.app')?application:application.slice(0,application.indexOf('.app/')+4),executable=application.endsWith('.app')?path.join(application,'Contents/MacOS/Agents Company'):application
+  const bundleRoot=application.endsWith('.app')?application:application.slice(0,application.indexOf('.app/')+4),executable=desktopExecutable(application)
   assert.ok(bundleRoot.endsWith('.app'),'AGENTS_COMPANY_TEST_APP must name a macOS app bundle or its executable');report.application=application;report.asarSha256=createHash('sha256').update(fs.readFileSync(path.join(bundleRoot,'Contents/Resources/app.asar'))).digest('hex');overrides.AGENTS_COMPANY_HIDDEN='1';overrides.AGENTS_COMPANY_BUILTIN_PLUGINS=path.join(bundleRoot,'Contents/Resources/plugins')
   fs.writeFileSync(entry,`const fs=require('node:fs'),{_electron:electron}=require('@playwright/test');
 const env={...process.env};for(const key of ['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_WEB_URL','AGENTS_COMPANY_WEB','AGENTS_COMPANY_HEADLESS'])delete env[key];let closing=false;const record=value=>fs.appendFileSync(${JSON.stringify(lifecycle)},JSON.stringify(value)+'\\n');

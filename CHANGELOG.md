@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.56.0 — Anexus identity and everyday collaboration
+
+- Rebrand the product as Anexus while retaining its icon, durable identities, workspace/data locations and CLI compatibility; add the anexus alias and safe legacy app upgrade.
+- Show editable personal photos and actual Agent portraits in group/channel messages; remove redundant one-to-one Telegram conversation rows.
+- Use the themed conversation-type menu, hide category scrollbars and retain normal horizontal scrolling.
+- Add scoped file-manager reveal actions and a persistent resizable assets drawer across views.
+- Replace the local promotional library with varied multi-image posts, mostly everyday user scenarios with a smaller developer-focused set.
+- Detailed Chinese release notes: [0.56.0](docs/releases/0.56.0.zh-CN.md).
+
 ## 0.55.0 — Unified assets and completed Margin Reader
 
 - Add the fixed Company/Messages/Plan file tree, flat asset search, lazy paging and background indexing, including published attachments and cloud documents.

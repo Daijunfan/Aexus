@@ -40,7 +40,7 @@ function materialize(){
   ].join('\n')})
  }
  documents.set('index',{file:'README.md',text:[
-  '# Agents Company API 文档索引','',
+  '# Anexus API 文档索引','',
   '按当前任务读取所需文档；初始化只读身份与本索引，不加载整册 API 或所有 schema。所有职位可阅读完整公开文档，实际操作仍由 Core 校验身份、角色、成员与工作区权限。','',
   '## 三个 Core 视图','',
   '| 视图 | 负责内容 | API 入口 |',

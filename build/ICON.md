@@ -1,4 +1,4 @@
-# Agents Company app icon
+# Anexus app icon
 
 The app icon uses the user-provided `app_icon.png` at the project root.
 macOS `sips` and `iconutil` resize and encode the supplied image.

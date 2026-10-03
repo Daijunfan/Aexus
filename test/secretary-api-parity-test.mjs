@@ -19,7 +19,7 @@ try{
   const visit=node=>{if(ts.isStringLiteralLike(node)&&known.has(node.text)){const sites=references.get(node.text)??new Set();sites.add(path.relative(root,file)+':'+(source.getLineAndCharacterOfPosition(node.pos).line+1));references.set(node.text,sites)}ts.forEachChild(node,visit)};visit(source)
  }}};walk(path.join(root,'src/renderer/src'))
  const exclusions={
-  'assets.tree':'Human global filesystem catalog', 'assets.children':'Human global filesystem catalog', 'assets.search':'Human global filesystem catalog', 'assets.file':'Human scoped asset operations', 'assets.naming':'Human filesystem and binding migration',
+  'workspace.reveal':'Human desktop file manager navigation', 'messenger.profile':'Human personal avatar', 'messenger.profile-image':'Human personal avatar image', 'assets.tree':'Human global filesystem catalog', 'assets.children':'Human global filesystem catalog', 'assets.search':'Human global filesystem catalog', 'assets.file':'Human scoped asset operations', 'assets.naming':'Human filesystem and binding migration',
   'auth.agent-token':'User credential issuance','auth.revoke':'User credential revocation',
   'session.acknowledge':'Human private reading receipt','chat.acknowledge':'Human group reading receipt','channel.acknowledge':'Human news reading receipt',
   'chat.edit':'Cannot change the human author’s message',

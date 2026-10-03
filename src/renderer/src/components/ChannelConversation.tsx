@@ -26,7 +26,7 @@ import {ConversationNoticeBadge} from './ConversationNotice'
 import {ChannelSourcesDialog} from './ChannelSourcesDialog'
 import {ChannelAdminDialog} from './ChannelAdminDialog'
 import {ChannelComposer,type ChannelReply} from './ChannelComposer'
-import {MessageAvatar} from './MessageView'
+import {MessageAuthorAvatar} from './MessageIdentity'
 import {MessageCheckbox,MessageSelectionBar} from './MessageSelectionBar'
 import {PinnedMessages} from './PinnedMessages'
 import {Icon} from './Icon'
@@ -122,10 +122,10 @@ export function ChannelConversation({channel,store,onBack,sourceId}:{channel:Cha
 }
 
 function ChannelDiscussionMessage({message,store,names,conversation,reply,onReply,onReveal}:{message:ChannelMessage;store:Store;names:Record<string,string>;conversation:string;reply:ChannelReply|null;onReply:()=>void;onReveal:(id:string)=>void}){
- const messenger=useMessenger()!,author=message.author.kind==='agent'?store.sessions.find(card=>message.author.kind==='agent'&&card.id===message.author.employeeId):undefined,selection=messenger.selection?.conversation===conversation,[navigationError,setNavigationError]=useState('')
+ const messenger=useMessenger()!,selection=messenger.selection?.conversation===conversation,[navigationError,setNavigationError]=useState('')
  if(messenger.state.messages[messageKey(conversation,message.id)]?.hidden)return <div className="message-hidden" data-chat-item={message.id}>{uiText('Message hidden for you')}<button onClick={()=>void messenger.message(conversation,message.id,{hidden:false})}>{uiText('Show message')}</button></div>
  return <article className={'group-message channel-discussion-message '+(message.author.kind==='operator'?'from-user':'from-employee')} data-chat-item={message.id} data-message-key={message.id} data-selecting={selection||undefined} data-selected={selection&&messenger.selection!.ids.includes(message.id)||undefined} onClickCapture={event=>{if(selection&&!(event.target as Element).closest('.message-select-toggle')){event.preventDefault();event.stopPropagation();messenger.toggleSelection(conversation,message.id)}}}>
-  <MessageCheckbox conversation={conversation} id={message.id}/><div className="group-message-heading">{author&&<MessageAvatar employee={author}/>}<strong>{message.author.kind==='operator'?uiText('You'):message.authorName}</strong>{message.author.kind==='agent'&&<span className="channel-admin-badge">Admin</span>}</div>
+  <MessageCheckbox conversation={conversation} id={message.id}/><div className="group-message-heading"><MessageAuthorAvatar author={message.author} authorName={message.authorName} store={store}/><strong>{message.author.kind==='operator'?uiText('You'):message.authorName}</strong>{message.author.kind==='agent'&&<span className="channel-admin-badge">Admin</span>}</div>
   {message.replyTo&&<button className="group-reply-link" onClick={()=>onReveal(message.replyTo!)}><strong>{reply?.author??uiText('Original message')}</strong><small>{reply?.text??uiText('Go to original message')}</small></button>}
   {!!message.mentions.length&&<div className="group-message-mentions">{message.mentions.map(id=><span key={id}>@{names[id]??uiText('Former member')}</span>)}</div>}
   <ConversationNoticeBadge notice={message.notice}/><RichMessageText text={message.text} images={false}/><MessageImages channel={message.channelId} paths={message.attachments?.filter(file=>file.kind==='image').map(file=>file.path)??[]} messageId={message.id} caption={message.text}/>{message.attachments?.filter(file=>file.kind==='file').map(file=><MessageFile key={file.path} conversation={conversation} file={file} messageId={message.id}/>)}

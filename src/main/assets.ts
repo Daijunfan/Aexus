@@ -38,7 +38,7 @@ export function assetCatalog(){
  }
  const groups=catalog().groups.map(item=>{const node=conversation('group',item);const published=add({id:'published:group:'+item.id,name:'Published',label:item.name+' / Published',root:groupMediaRoot(item.id),scope:{group:item.id},owner:{view:'Messages',label:item.name,conversation:'group:'+item.id},readOnly:true});published.external=true;node.children=[published];return node}),channels=all('SELECT id,name FROM channels').map(item=>conversation('channel',{id:String(item.id),name:String(item.name)}))
  const plan=add({id:'plan:exports',name:'Exports',label:'Plan exports',root:path.join(APP_HOME,'plan-assets'),scope:{},owner:{view:'Plan',label:'Exports'}})
- return {tree:folder('root','AgentsCompany',[folder('company','Company',company),folder('messages','Messages',[folder('groups','Groups',groups),folder('channels','Channels',channels)]),folder('plan','Plan',[plan])]),mounts}
+ return {tree:folder('root','Anexus',[folder('company','Company',company),folder('messages','Messages',[folder('groups','Groups',groups),folder('channels','Channels',channels)]),folder('plan','Plan',[plan])]),mounts}
 }
 export function assetLocation(id:string,value='.'){
  operator();const store=readStore()

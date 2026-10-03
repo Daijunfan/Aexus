@@ -1,4 +1,4 @@
-# Agents Company Core and multi-agent boundaries
+# Anexus Core and multi-agent boundaries
 
 The desktop, operator CLI and employee CLI call the same Core operations. The
 company does not use Codex/Claude's built-in subagents as employees.

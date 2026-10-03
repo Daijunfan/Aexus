@@ -10,7 +10,7 @@ plan.schema plan.query plan.views plan.calendar plan.timeline plan.analytics pla
 schedule.schema schedule.status schedule.list schedule.get schedule.preview schedule.history
 chat.list chat.get chat.history chat.context chat.file
 channel.list channel.get channel.sources channel.history channel.context channel.timeline channel.read-state channel.posts channel.post channel.image channel.avatar-image channel.source-image channel.connection channel.collectors channel.collector-config channel.file-status
-messenger.directory messenger.state messenger.search messenger.gallery messenger.reference messenger.forward-status messenger.social
+messenger.directory messenger.state messenger.search messenger.gallery messenger.reference messenger.forward-status messenger.social messenger.profile-image
 workspace.list workspace.read workspace.image workspace.suggest conversation.workspace conversation.workspaces
 plugin.list plugin.describe plugin.windows host.list host.get host.fingerprints host.terminal-list host.terminal-read host.desktop-list host.directories terminal.list terminal.read transfer.list transfer.get shared.info view.get view.list
 `.trim().split(/\s+/))

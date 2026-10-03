@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // Hidden native UI with a real Core send; delay only its accepted IPC response in this disposable process.
 import fs from 'node:fs'
 import path from 'node:path'
@@ -14,7 +15,7 @@ try{
  f=await fixtureCore(bundleRoot?{AGENTS_COMPANY_BUILTIN_PLUGINS:path.join(bundleRoot,'Contents/Resources/plugins')}:{})
  await f.stop()
  const env={...f.env,AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1280',AGENTS_COMPANY_HEIGHT:'940'};for(const key of ['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_WEB','AGENTS_COMPANY_WEB_URL','AGENTS_COMPANY_HEADLESS'])delete env[key]
- app=await electron.launch({executablePath:application?(application.endsWith('.app')?path.join(application,'Contents/MacOS/Agents Company'):application):require('electron'),args:application?[]:[root],env});appProcess=app.process();report.pid=appProcess.pid;page=await app.firstWindow();page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push(error.message));await page.locator('.infinite-canvas').waitFor()
+ app=await electron.launch({executablePath:application?(desktopExecutable(application)):require('electron'),args:application?[]:[root],env});appProcess=app.process();report.pid=appProcess.pid;page=await app.firstWindow();page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push(error.message));await page.locator('.infinite-canvas').waitFor()
  report.hidden=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible()));assert.ok(report.hidden)
  await app.evaluate(({ipcMain})=>{
   const handlers=ipcMain._invokeHandlers;if(!(handlers instanceof Map))throw Error('This Electron does not expose the verified IPC handler map');const original=handlers.get('api:request');if(typeof original!=='function')throw Error('The real API IPC handler is missing')

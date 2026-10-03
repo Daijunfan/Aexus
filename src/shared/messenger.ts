@@ -5,6 +5,7 @@ import {SOURCE_VIEW_SCHEMA,type MessageSourceView} from './message-source.ts'
 import type {MessageAttachment} from './message-attachments'
 import type {PrincipalRef} from './management'
 import type {ChannelPost} from './channels'
+import type {AvatarKind} from './office'
 /** Operator-owned organization of existing conversations, never a second history. */
 export type ConversationPreferences={pinned?:boolean;favorite?:boolean;archived?:boolean;unread?:boolean}
 export type MessagePreferences={saved?:boolean;pinned?:boolean;hidden?:boolean;reaction?:string}
@@ -14,7 +15,9 @@ export type ConversationFolder={id:string;name:string;conversations:string[];rev
 export type ForwardDraftInput={clientMessageId:string;messages:{conversation:string;id:string}[];to?:string;comment:string;textOnly:boolean;preview:{text:string;images:number};attempted:boolean}
 export type ForwardResult={to:string;count:number;status:'posted'|'queued';messageId:string|null}
 export type ForwardStatus={clientMessageId:string;status:'not-found'|'preparing'|'sent'|'failed'|'uncertain'|'interrupted';active:boolean;retryable:boolean;result?:ForwardResult;error?:string}
-export type MessengerState={version:1;revision:number;conversations:Record<string,ConversationPreferences>;messages:Record<string,MessagePreferences>;drafts:Record<string,MessageDraft>;folders?:ConversationFolder[];orders?:Record<string,string[]>;pendingForward?:ForwardDraftInput&{updatedAt:number}}
+export type MessengerProfile={avatar?:AvatarKind;image?:{sha256:string}}
+export type ProfileImageInput={name:string;mimeType:string;data:string}
+export type MessengerState={version:1;revision:number;profile?:MessengerProfile;conversations:Record<string,ConversationPreferences>;messages:Record<string,MessagePreferences>;drafts:Record<string,MessageDraft>;folders?:ConversationFolder[];orders?:Record<string,string[]>;pendingForward?:ForwardDraftInput&{updatedAt:number}}
 export type MessengerMessage={conversation:string;conversationTitle:string;id:string;author:string;authorIdentity?:PrincipalRef;role:'user'|'assistant';text:string;images:string[];files?:MessageAttachment[];createdAt:number|null;editedAt?:number;editRevision?:number;preferences:MessagePreferences;news?:ChannelPost}
 export type GalleryImage={employee?:string;group?:string;channel?:string;path:string;messageId?:string;caption?:string;conversationTitle?:string;editRevision?:number}
 export type GalleryCursor={conversation?:string;messageId:string;path:string}
@@ -34,6 +37,8 @@ const galleryCursor=schema({conversation:ref,messageId:{type:'string',minLength:
 const forwardDraft=schema({clientMessageId:{type:'string',minLength:1,maxLength:160},messages:{type:'array',minItems:1,maxItems:50,items:schema({conversation:ref,id:{type:'string',minLength:1}},['conversation','id'])},to:directRef,comment:{type:'string',maxLength:16000},textOnly:bool,preview:schema({text:{type:'string',maxLength:1200},images:{type:'integer',minimum:0}},['text','images']),attempted:bool},['clientMessageId','messages','comment','textOnly','preview','attempted'])
 const order={type:'array',maxItems:10000,uniqueItems:true,items:{type:'string',minLength:1,maxLength:200}}
 export const MESSENGER_COMMANDS=[
+ {cli:{},name:'messenger.profile',args:'[--avatar ID|null | --image JSON|@file]',summary:'User-only: upload a personal image, choose an avatar.list ID or reset with null; author identity stays unchanged',gui:'Your message avatar',inputSchema:schema({avatar:{type:['string','null']},image:schema({name:{type:'string'},mimeType:{enum:['image/png','image/jpeg','image/gif','image/webp']},data:{type:'string'}},['name','mimeType','data'])})},
+ {cli:{},name:'messenger.profile-image',args:'--sha256 HASH',summary:'User-only: read the current personal avatar image at its exact saved revision',gui:'Your message avatar',inputSchema:schema({sha256:{type:'string',pattern:'^[a-f0-9]{64}$'}},['sha256'])},
  {cli:{},name:'messenger.directory',args:'[--type all|private|groups|channels|telegram|x|youtube] [--query TEXT] [--folder ID] [--archived exclude|only|include] [--offset N] [--limit N]',summary:'User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution',gui:'All Conversations and type filtering',inputSchema:schema({type:{enum:[...CONVERSATION_TYPES]},query:{type:'string',maxLength:500},folder:{type:'string'},archived:{enum:['exclude','only','include']},offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:200}})},
  {cli:{},name:'messenger.social',args:'[--platform telegram|x|youtube] [--include-disabled]',summary:'User or Secretary: list each social element with stable source ID, parent channel, latest publication and per-source unread count; no reads acknowledged',gui:'Social category picker',inputSchema:schema({platform:{enum:['telegram','x','youtube']},includeDisabled:bool})},
  {cli:{positionals:['scope'],required:['order']},name:'messenger.reorder',args:'SCOPE --order JSON|null [--expected-order JSON]',summary:'User or Secretary: persist category or mixed conversation positions in categories/all/favorites/archive/a folder ID; null restores automatic order, unrelated drafts and hidden positions remain unchanged',gui:'Message drag ordering',inputSchema:schema({scope:{type:'string',pattern:'^(categories|all|favorites|archive|mf_[a-f0-9-]{36})$'},order:{anyOf:[order,{type:'null'}]},expectedOrder:order},['scope','order'])},

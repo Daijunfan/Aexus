@@ -10,7 +10,7 @@ workspace: employee
 ## Purpose
 
 持久化地安排某个员工在指定时间使用指定模型、思考程度执行任务。调度器属于
-Agents Company Core，不依赖窗口或任何插件。CLI、Plan 视图与插件使用同一个
+Anexus Core，不依赖窗口或任何插件。CLI、Plan 视图与插件使用同一个
 `schedule.*` 协议。**本版本未向 MiniNotion 接入此调度器**；MiniNotion 原有的页面
 提醒/重复事项是另一项领域功能。
 

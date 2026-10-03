@@ -6,7 +6,7 @@ import {createRequire} from 'node:module'
 import assert from 'node:assert/strict'
 import {installApp,runningApp} from '../scripts/install-app.mjs'
 const require=createRequire(import.meta.url),asar=require('@electron/asar'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-inst-'))
-const target=path.join(temp,'Agents Company.app'),source=path.join(temp,'candidate.app'),home=path.join(temp,'data')
+const target=path.join(temp,'Anexus.app'),legacy=path.join(temp,'Agents Company.app'),source=path.join(temp,'candidate.app'),home=path.join(temp,'data')
 async function bundle(app,version){
  const content=path.join(temp,'content-'+version);fs.mkdirSync(path.join(content,'out/renderer/assets'),{recursive:true})
  fs.writeFileSync(path.join(content,'out/renderer/index.html'),'<!doctype html><div id="root"></div><script src="./assets/app.js"></script>')
@@ -19,7 +19,7 @@ let process_
 try{
  await bundle(target,'1');await bundle(source,'2');fs.mkdirSync(home);fs.writeFileSync(path.join(home,'sessions.json'),'original data')
  const before=fs.readFileSync(path.join(target,'Contents/Resources/app.asar'))
- process_=spawn('/bin/sleep',['30'],{argv0:path.join(target,'Contents/MacOS/Agents Company')})
+ process_=spawn('/bin/sleep',['30'],{argv0:path.join(target,'Contents/MacOS/Anexus')})
  await new Promise(r=>process_.once('spawn',r))
  assert.ok(runningApp(target).length)
  assert.throws(()=>installApp({source,target,home}),/Running applications cannot be replaced/)
@@ -33,4 +33,15 @@ try{
  // asar caches by pathname too: inspect via a fresh process/path-independent file read.
  assert.ok(fs.readFileSync(path.join(target,'Contents/Resources/app.asar')).equals(fs.readFileSync(path.join(source,'Contents/Resources/app.asar'))))
  console.log('PASS stopped-app installation stages, verifies and backs up the app while preserving user data')
+ fs.renameSync(target,legacy)
+ process_=spawn('/bin/sleep',['30'],{argv0:path.join(legacy,'Contents/MacOS/Agents Company')})
+ await new Promise(r=>process_.once('spawn',r))
+ assert.throws(()=>installApp({source,target,home}),/Running applications cannot be replaced/)
+ assert.equal(fs.existsSync(target),false);assert.ok(fs.existsSync(legacy))
+ const legacyEnded=new Promise(r=>process_.once('exit',r));process_.kill();await legacyEnded;process_=undefined
+ const migrated=installApp({source,target,home})
+ assert.ok(fs.existsSync(target));assert.equal(fs.existsSync(legacy),false);assert.ok(fs.existsSync(migrated.legacyBackup))
+ assert.equal(migrated.backup,migrated.legacyBackup)
+ assert.equal(fs.readFileSync(path.join(home,'sessions.json'),'utf8'),'original data')
+ console.log('PASS Anexus upgrade refuses a running legacy app and preserves its bundle in a backup')
 }finally{process_?.kill();fs.rmSync(temp,{recursive:true,force:true})}

@@ -1,11 +1,11 @@
 {
   "name": "agents-company",
-  "productName": "Agents Company",
-  "version": "0.55.0",
-  "description": "CLI-first visual Agent workspace with a shared desktop/web Core and bundled work plugins",
+  "productName": "Anexus",
+  "version": "0.56.0",
+  "description": "Open CLI-first infrastructure for coding-agent interaction, experiments, games and user-defined work",
   "main": "./out/main/index.js",
   "author": {
-    "name": "Agents Company",
+    "name": "Anexus",
     "email": "Daijunfan@users.noreply.github.com"
   },
   "scripts": {
@@ -130,7 +130,7 @@
   },
   "build": {
     "appId": "com.agentscompany.app",
-    "productName": "Agents Company",
+    "productName": "Anexus",
     "directories": {
       "output": "release"
     },
@@ -290,7 +290,8 @@
     "zod": "4.6.5"
   },
   "bin": {
-    "agents": "./bin/agents"
+    "agents": "./bin/agents",
+    "anexus": "./bin/anexus"
   },
   "optionalDependencies": {
     "node-pty": "1.1.0"

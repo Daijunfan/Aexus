@@ -16,7 +16,7 @@ export function createWebAuth(secure:boolean){
   function session(req:IncomingMessage){
     const raw=req.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith(cookieName+'='))?.slice(cookieName.length+1)
     const value=raw?sessions.get(raw):undefined
-    if(!value||!valid(value))throw Object.assign(Error('请登录 Agents Company'),{code:'UNAUTHENTICATED',status:401})
+    if(!value||!valid(value))throw Object.assign(Error('请登录 Anexus'),{code:'UNAUTHENTICATED',status:401})
     return value
   }
   function cookie(res:ServerResponse,value:string,maxAge:number){res.setHeader('set-cookie',`${cookieName}=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}${secure?'; Secure':''}`)}

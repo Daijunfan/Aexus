@@ -8,7 +8,7 @@ import {execFileSync} from 'node:child_process'
 import {createRequire} from 'node:module'
 if(process.platform!=='darwin')throw Error('This launch test requires macOS')
 const executable=process.env.AGENTS_COMPANY_TEST_APP
-if(!executable?.endsWith('.app/Contents/MacOS/Agents Company'))throw Error('Set AGENTS_COMPANY_TEST_APP to the packaged executable')
+if(!executable||!/^.+\.app\/Contents\/MacOS\/[^/]+$/.test(executable))throw Error('Set AGENTS_COMPANY_TEST_APP to the packaged executable')
 const app=executable.slice(0,executable.indexOf('.app/')+4),temporary=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-ls-'))),home=temporary+'/state',output=path.resolve('artifacts/fixed-employee-engine'),{controlEndpoint}=createRequire(import.meta.url)('../bin/platform.cjs')
 fs.mkdirSync(home);fs.mkdirSync(output,{recursive:true})
 const call=(cmd,args={})=>new Promise((resolve,reject)=>{const socket=net.connect(controlEndpoint(home));let text='';socket.setTimeout(10000,()=>socket.destroy(Error('Core timeout')));socket.on('error',reject);socket.on('connect',()=>socket.write(JSON.stringify({cmd,args,auth:fs.readFileSync(home+'/control.token','utf8').trim()})+'\n'));socket.on('data',chunk=>{text+=chunk;if(text.includes('\n')){socket.end();const r=JSON.parse(text.split('\n')[0]);r.ok?resolve(r.data):reject(Error(r.error))}})})

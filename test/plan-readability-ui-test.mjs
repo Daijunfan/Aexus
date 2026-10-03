@@ -1,3 +1,4 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
 // Ten source Plan views over a real disposable Core. Native work uses a deterministic fixture only.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -25,7 +26,7 @@ try{
   const control=path.join(temp,'fixture');fs.mkdirSync(control);fs.writeFileSync(path.join(control,'release-all'),'')
   const env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1440',AGENTS_COMPANY_HEIGHT:'1000',CODEX_BIN:path.join(root,'test/fixtures/initialization-codex.cjs'),CODEX_HOME:path.join(temp,'codex'),AC_INIT_FIXTURE:control}
   for(const key of Object.keys(env))if(key.startsWith('AGENTS_COMPANY_TOKEN')||['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_PORT','AGENTS_COMPANY_URL','AGENTS_COMPANY_CLIENT','AGENTS_COMPANY_WEB_URL'].includes(key))delete env[key]
-  app=await electron.launch({executablePath:application.endsWith('.app')?path.join(application,'Contents/MacOS/Agents Company'):application,args:[],env});page=await app.firstWindow();page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push(error.message));await page.locator('.infinite-canvas').waitFor()
+  app=await electron.launch({executablePath:desktopExecutable(application),args:[],env});page=await app.firstWindow();page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push(error.message));await page.locator('.infinite-canvas').waitFor()
   rpc=(cmd,args={})=>page.evaluate(({cmd,args})=>window.agents.call(cmd,args),{cmd,args})
   const until=async(check,label)=>{for(let i=0;i<250;i++){const result=await check();if(result)return result;await new Promise(resolve=>setTimeout(resolve,40))}throw Error('Timeout '+label)}
   f={control,env,until,close:async()=>{},create:async(title,group)=>{const card=await rpc('card.create',{title,group,engine:'codex',model:'gpt-6-luna',effort:'low'});await until(async()=>{const status=(await rpc('session.status',{employee:card.id}))[0];if(status.initialization?.status==='failed')throw Error(status.initialization.error);return status.initialization?.status==='ready'},'initialization');return card}}
