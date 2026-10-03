@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Anexus",
-  "version": "0.56.3",
+  "version": "0.56.4",
   "description": "Open CLI-first infrastructure for coding-agent interaction, experiments, games and user-defined work",
   "main": "./out/main/index.js",
   "author": {

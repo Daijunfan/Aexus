@@ -2594,7 +2594,7 @@
     "name": "messenger.directory",
     "args": "[--type all|private|groups|channels|telegram|x|youtube] [--query TEXT] [--folder ID] [--archived exclude|only|include] [--offset N] [--limit N]",
     "summary": "User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution",
-    "gui": "All Conversations and type filtering",
+    "gui": "Message type filtering",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -4604,7 +4604,7 @@
   {
     "name": "view.select",
     "args": "company|messages|plan [--team-view ID]",
-    "summary": "Select a presentation mode; Company defaults to All Team",
+    "summary": "Select a presentation mode; Messages resumes the last conversation for this client",
     "gui": "Shared views / group conversations",
     "inputSchema": {
       "type": "object",

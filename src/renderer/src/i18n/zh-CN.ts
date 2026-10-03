@@ -2246,6 +2246,7 @@ export const zhCN:Record<string,string> = {
   "Loading article…": "正在加载帖子…",
   "This post is no longer available in this channel.": "此帖子已不在当前频道中。",
   "All Conversations": "全部会话",
+  "Filter": "筛选",
   "All types": "所有类型",
   "Workers": "员工",
   "Conversation type": "会话类型",

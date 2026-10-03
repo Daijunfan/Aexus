@@ -47,11 +47,11 @@ existing request keys/revision checks instead of guessing whether a mutation occ
 The full GUI/API comparison and Plan workflow are available as `core/secretary-api`
 (`docs/SECRETARY_API_PARITY.md`).
 
-## All Conversations and dynamic categories
+## Message filtering and dynamic categories
 
 `messenger.directory` lists current workers, groups, parent channels and social elements
 without loading messages, starting engines or acknowledging reads. It is available to
-the user and Secretary. The UI uses the same category/type predicates over live catalogs.
+the user and Secretary. The UI uses the same category/type predicates over live catalogs. Filter enables the type picker; its switch, selected type and category are remembered on this client.
 A one-source Telegram channel and its source appear once when both match: the channel
 row keeps the shared discussion reachable. Source-only Telegram filters and categories
 retain the source identity; X/YouTube aggregate channels remain separate.
@@ -1424,8 +1424,8 @@ agents view open messages --channel CHANNEL_ID --json
 ```
 
 `view.select {id:"company"|"messages"|"plan",teamViewId?}` checks the destination and flushes
-editors before changing it. Company defaults to All Team; Messages does not change a
-company camera. `view.open {kind:"messages",channelId}` validates one existing channel;
+editors before changing it. Company defaults to All Team; Messages resumes this client’s
+last employee/group/channel/source, or its list if that destination is unavailable. `view.open {kind:"messages",channelId}` validates one existing channel;
 employee, chatId and channelId are mutually exclusive. Closing a covering settings
 or workbench view returns to the originating channel just as for an existing chat.
 Opening a news channel creates no native session or message-read receipt.
@@ -3086,7 +3086,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 | <code>agents channel publish</code> | <code>--data JSON&#124;@file</code> | Publish an article using a current employee channelId or an external sourceId. Scheduled employees may publish without a discussion parent; identity, deduplication and retention remain enforced | Channel publishing | chat |
 | <code>agents messenger profile</code> | <code>[--avatar ID&#124;null &#124; --image JSON&#124;@file]</code> | User-only: upload a personal image, choose an avatar.list ID or reset with null; author identity stays unchanged | Your message avatar | operator |
 | <code>agents messenger profile-image</code> | <code>--sha256 HASH</code> | User-only: read the current personal avatar image at its exact saved revision | Your message avatar | operator |
-| <code>agents messenger directory</code> | <code>[--type all&#124;private&#124;groups&#124;channels&#124;telegram&#124;x&#124;youtube] [--query TEXT] [--folder ID] [--archived exclude&#124;only&#124;include] [--offset N] [--limit N]</code> | User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution | All Conversations and type filtering | operator |
+| <code>agents messenger directory</code> | <code>[--type all&#124;private&#124;groups&#124;channels&#124;telegram&#124;x&#124;youtube] [--query TEXT] [--folder ID] [--archived exclude&#124;only&#124;include] [--offset N] [--limit N]</code> | User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution | Message type filtering | operator |
 | <code>agents messenger social</code> | <code>[--platform telegram&#124;x&#124;youtube] [--include-disabled]</code> | User or Secretary: list each social element with stable source ID, parent channel, latest publication and per-source unread count; no reads acknowledged | Social category picker | operator |
 | <code>agents messenger reorder</code> | <code>SCOPE --order JSON&#124;null [--expected-order JSON]</code> | User or Secretary: persist category or mixed conversation positions in categories/all/favorites/archive/a folder ID; null restores automatic order, unrelated drafts and hidden positions remain unchanged | Message drag ordering | operator |
 | <code>agents messenger media-open</code> | <code>CONVERSATION --path PATH</code> | User-only: open a client-scoped audio/video preview with a bounded lifetime; no inference | Media playback | operator |
@@ -3129,7 +3129,7 @@ Read [Conversation controls](docs/CONVERSATION_CONTROLS.md) or `agents api docs 
 | <code>agents conversation notice-history</code> | <code>CONVERSATION [--id ID --limit N --offset N]</code> | Read bounded static notice publication/skipped/cancelled history, including removed notices; no model logs or Plan history | Notification history | chat |
 | <code>agents card profile</code> | <code>ID [--offset N] [--limit N]</code> | Read employee identity, authorized memberships, named workspaces and paged Plan tasks without opening an engine or changing read receipts | Employee profile | employee.read |
 | <code>agents view list</code> | <code>—</code> | List application views and their shared data contracts | Shared views / group conversations | operator |
-| <code>agents view select</code> | <code>company&#124;messages&#124;plan [--team-view ID]</code> | Select a presentation mode; Company defaults to All Team | Shared views / group conversations | operator |
+| <code>agents view select</code> | <code>company&#124;messages&#124;plan [--team-view ID]</code> | Select a presentation mode; Messages resumes the last conversation for this client | Shared views / group conversations | operator |
 | <code>agents chat list</code> | <code>—</code> | List groups for the current authenticated member | Shared views / group conversations | chat |
 | <code>agents chat create</code> | <code>--name NAME [--team TEAM] [--members JSON] [--owner-id ID]</code> | Create a group with an Agent Owner; Agent creators own their group, user selects ownerId (defaults to first selected member) | Shared views / group conversations | chat |
 | <code>agents chat update</code> | <code>ID --patch JSON</code> | Conversation Owner/Admin: edit group name and membership; Company role does not confer access | Shared views / group conversations | chat |

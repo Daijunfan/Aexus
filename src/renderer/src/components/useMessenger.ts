@@ -10,8 +10,25 @@ import {EMPTY_MESSENGER,hasDraftContent,type MessengerState,type ConversationPre
 export type MessageTarget={conversation:string;id:string;quote?:MessageQuote}
 export type ReplyDestination=MessageTarget&{text:string;images:number}
 type LocalDraft=MessageDraft&{expectedClientMessageId?:string}
+type DirectoryState={scope:'all'|'favorites'|'archive';folderId:string|null;query:string;conversationType:import('../../../shared/message-categories').ConversationType;filterEnabled:boolean}
+const DEFAULT_DIRECTORY:DirectoryState={scope:'all',folderId:null,query:'',conversationType:'all',filterEnabled:false}
+const directoryKey=()=>'agents-company-message-directory-'+(api.mode==='web'?sessionStorage.getItem('agents-company-client'):'desktop')
+function rememberedDirectory():DirectoryState{
+ try{
+  const value=JSON.parse(localStorage.getItem(directoryKey())??'{}')
+  return {scope:['all','favorites','archive'].includes(value.scope)?value.scope:'all',folderId:typeof value.folderId==='string'?value.folderId:null,query:typeof value.query==='string'?value.query:'',conversationType:['all','private','groups','channels','telegram','x','youtube'].includes(value.conversationType)?value.conversationType:'all',filterEnabled:value.filterEnabled===true}
+ }catch{return DEFAULT_DIRECTORY}
+}
+
 
 export function useMessengerState(enabled:boolean){
+ const [directory,setDirectory]=useState<DirectoryState>(rememberedDirectory)
+ const updateDirectory=useCallback((patch:Partial<DirectoryState>)=>setDirectory(previous=>({...previous,...patch})),[])
+ useEffect(()=>{try{localStorage.setItem(directoryKey(),JSON.stringify(directory))}catch{}},[directory])
+ const [channelViews,setChannelViews]=useState<Record<string,{view:'conversation'|'posts';source:string}>>(()=>{try{return JSON.parse(localStorage.getItem(directoryKey()+'-feeds')??'{}')??{}}catch{return {}}})
+ useEffect(()=>{try{localStorage.setItem(directoryKey()+'-feeds',JSON.stringify(channelViews))}catch{}},[channelViews])
+ const rememberChannelView=useCallback((key:string,value:{view:'conversation'|'posts';source:string})=>setChannelViews(previous=>({...previous,[key]:value})),[])
+
  const [replyTarget,setReplyTarget]=useState<ReplyDestination|null>(null),[replyIntent,setReplyIntent]=useState<{conversation:string;source:MessageTarget;reply:MessageReply;textOnly?:boolean}|null>(null)
  const [navigationReturn,setNavigationReturn]=useState<{from:MessageTarget;viewing:string}|null>(null)
  const [selection,setSelection]=useState<{conversation:string;ids:string[]}|null>(null)
@@ -76,7 +93,7 @@ export function useMessengerState(enabled:boolean){
  },[flushDrafts,draft,accept,getDraft])
  useEffect(()=>onPluginFlush(flushDrafts),[flushDrafts])
  useEffect(()=>()=>{clearTimeout(draftTimer.current);void flushDrafts().catch(()=>{})},[flushDrafts])
- return useMemo(()=>({replyTarget,setReplyTarget,replyIntent,setReplyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,reorder,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,prepareSend,refresh,library,setLibrary,jump,setJump,forward,setForward,selection,setSelection,toggleSelection,messages}),[replyTarget,replyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,reorder,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,prepareSend,refresh,library,jump,forward,selection,toggleSelection,messages])
+ return useMemo(()=>({directory,updateDirectory,channelViews,rememberChannelView,replyTarget,setReplyTarget,replyIntent,setReplyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,reorder,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,prepareSend,refresh,library,setLibrary,jump,setJump,forward,setForward,selection,setSelection,toggleSelection,messages}),[directory,updateDirectory,channelViews,rememberChannelView,replyTarget,replyIntent,prepareReply,navigationReturn,navigate,state,ready,error,conversations,reorder,message,saveFolder,deleteFolder,saveForward,draft,scheduleDraft,getDraft,clearDraft,prepareSend,refresh,library,jump,forward,selection,toggleSelection,messages])
 }
 export type MessengerController=ReturnType<typeof useMessengerState>
 export const MessengerContext=createContext<MessengerController|null>(null)

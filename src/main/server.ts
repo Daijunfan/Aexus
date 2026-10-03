@@ -1,3 +1,4 @@
+import {employeeReady} from '../shared/types'
 import {directoryName} from '../shared/directory-names'
 import {assetNaming} from './asset-naming'
 import {assetIndex} from './asset-index'
@@ -66,7 +67,7 @@ import { openTerminal,listTerminals,readTerminal,waitTerminalOutput,inputTermina
 // command maps onto the same operations the GUI uses, which is what makes
 // headless testing meaningful: the CLI and the window share one code path.
 
-import { getView,setView } from './presentation'
+import { getView,getMessagesView,setView } from './presentation'
 import type { ViewState } from '../shared/view'
 import { createServer,connect,type Server,type Socket } from 'node:net'
 import { existsSync,unlinkSync,cpSync,renameSync,rmSync,chmodSync,realpathSync,statSync } from 'node:fs'
@@ -395,6 +396,16 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       if(mode.id==='company'&&a.teamViewId!==undefined&&!teamViewList().views.some(item=>item.id===a.teamViewId))throw Error('Unknown Company subview')
       await beforeViewChange()
       if(mode.id==='company')selectTeamView(a.teamViewId??'all')
+      if(mode.id==='messages'){
+        const saved={...getMessagesView(),shared:getView().shared}
+        try{
+          if(saved.employee&&!readStore().sessions.some(card=>card.id===saved.employee&&!card.deleting&&employeeReady(card)))return setView({kind:'messages'})
+          if(saved.chatId)getChatGroup(saved.chatId)
+          if(saved.sourceId)saved.channelId=socialIdentity('source:'+saved.sourceId).channelId
+          if(saved.channelId)getChannel(saved.channelId)
+          return setView(saved)
+        }catch{return setView({kind:'messages'})}
+      }
       return setView({kind:mode.kind})
     }
     case 'view.get': return getView()
