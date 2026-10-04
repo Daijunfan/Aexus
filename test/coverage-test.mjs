@@ -55,10 +55,12 @@ const cli = readFileSync(join(ROOT, 'bin', 'agents'), 'utf8')
 const protocol = readFileSync(join(ROOT, 'src', 'shared', 'api-registry.ts'), 'utf8')
 
 // Most commands are `case 'x.y':`, but streaming ones are `if (req.cmd === 'x.y')`.
+const {MESSAGE_COLLABORATION_APIS}=await import('../src/shared/message-collaboration.ts')
+if(!server.includes('return messageCollaborationRequest(req.cmd,a,fileEndpoint)'))throw Error('Message collaboration is not dispatched by Core')
 const {CONVERSATION_CONTROL_APIS}=await import('../src/shared/conversation-control-schema.ts')
 if(!server.includes('CONVERSATION_CONTROL_APIS.has(req.cmd)')||!server.includes('return conversationControlRequest(req.cmd,a)'))throw Error('Conversation controls are not dispatched by Core')
 const serverCommands = new Set([
-  ...CONVERSATION_CONTROL_APIS,
+  ...CONVERSATION_CONTROL_APIS,...MESSAGE_COLLABORATION_APIS,
   ...[...server.matchAll(/case '([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1]),
   ...[...server.matchAll(/(?:req\.cmd|command)\s*===\s*'([a-z][a-z-]*\.[a-z][a-z-]*)'/g)].map((m) => m[1])
 ])

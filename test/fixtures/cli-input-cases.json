@@ -5096,5 +5096,256 @@
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       }
     }
+  },
+  {
+    "args": [
+      "assets",
+      "locate",
+      "shared|notes.md"
+    ],
+    "expected": {
+      "cmd": "assets.locate",
+      "args": {
+        "id": "shared|notes.md"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "search",
+      "--view",
+      "Messages",
+      "--team",
+      "Team",
+      "--employee",
+      "worker",
+      "--kind",
+      "image",
+      "--sort",
+      "modified"
+    ],
+    "expected": {
+      "cmd": "assets.search",
+      "args": {
+        "view": "Messages",
+        "team": "Team",
+        "employee": "worker",
+        "kind": "image",
+        "sort": "modified"
+      }
+    }
+  },
+  {
+    "args": [
+      "workspace",
+      "catalog"
+    ],
+    "expected": {
+      "cmd": "workspace.catalog",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "entry",
+      "channel:nc_example",
+      "--id",
+      "np_example"
+    ],
+    "expected": {
+      "cmd": "conversation.entry",
+      "args": {
+        "conversation": "channel:nc_example",
+        "id": "np_example"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "download",
+      "channel:nc_example",
+      "--entry-id",
+      "np_example",
+      "--attachment-id",
+      "document:file1",
+      "--client-request-id",
+      "copy-1",
+      "--workspace",
+      "company:my-id",
+      "--path",
+      "notes"
+    ],
+    "expected": {
+      "cmd": "conversation.download",
+      "args": {
+        "conversation": "channel:nc_example",
+        "entryId": "np_example",
+        "attachmentId": "document:file1",
+        "clientRequestId": "copy-1",
+        "workspace": "company:my-id",
+        "path": "notes"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "download-status",
+      "cd_example"
+    ],
+    "expected": {
+      "cmd": "conversation.download-status",
+      "args": {
+        "id": "cd_example"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-list",
+      "nc_example"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-list",
+      "args": {
+        "id": "nc_example"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-set",
+      "nc_example",
+      "--employee",
+      "e_reader",
+      "--every-posts",
+      "100",
+      "--prompt",
+      "Summarize the counted batch.",
+      "--enabled",
+      "false",
+      "--expected-revision",
+      "0"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-set",
+      "args": {
+        "id": "nc_example",
+        "employee": "e_reader",
+        "everyPosts": 100,
+        "prompt": "Summarize the counted batch.",
+        "enabled": false,
+        "expectedRevision": 0
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-remove",
+      "nc_example",
+      "--employee",
+      "e_reader",
+      "--expected-revision",
+      "2"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-remove",
+      "args": {
+        "id": "nc_example",
+        "employee": "e_reader",
+        "expectedRevision": 2
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-history",
+      "nc_example",
+      "--employee",
+      "e_reader",
+      "--offset",
+      "20",
+      "--limit",
+      "10"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-history",
+      "args": {
+        "id": "nc_example",
+        "employee": "e_reader",
+        "offset": 20,
+        "limit": 10
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-batch",
+      "nc_example",
+      "--batch-id",
+      "cpb_example",
+      "--offset",
+      "50",
+      "--limit",
+      "50"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-batch",
+      "args": {
+        "id": "nc_example",
+        "batchId": "cpb_example",
+        "offset": 50,
+        "limit": 50
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "member",
+      "channel:nc_example",
+      "--employee",
+      "e_reader",
+      "--action",
+      "add",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "conversation.member",
+      "args": {
+        "conversation": "channel:nc_example",
+        "employee": "e_reader",
+        "action": "add",
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "audit",
+      "group:cg_example",
+      "--before",
+      "10",
+      "--limit",
+      "5"
+    ],
+    "expected": {
+      "cmd": "conversation.audit",
+      "args": {
+        "conversation": "group:cg_example",
+        "before": 10,
+        "limit": 5
+      }
+    }
   }
 ]

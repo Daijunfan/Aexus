@@ -1,7 +1,7 @@
 {
   "name": "agents-company",
   "productName": "Anexus",
-  "version": "0.56.5",
+  "version": "0.57.0",
   "description": "Open CLI-first infrastructure for coding-agent interaction, experiments, games and user-defined work",
   "main": "./out/main/index.js",
   "author": {
@@ -165,7 +165,10 @@
       "docs/PLAN_VIEW_PARITY.md",
       "docs/CONVERSATION_WORKSPACES.md",
       "docs/SECRETARY_API_PARITY.md",
-      "docs/CONVERSATION_CONTROLS.md"
+      "docs/CONVERSATION_CONTROLS.md",
+      "docs/MESSAGE_COLLABORATION.md",
+      "docs/FILES_WORKBENCH.md",
+      "docs/releases/0.57.0.zh-CN.md"
     ],
     "mac": {
       "target": [

@@ -27,7 +27,7 @@ export function channelDocuments(value:unknown):ChannelDocument[]{
  return files
 }
 async function digest(file:string){const hash=createHash('sha256');for await(const chunk of fs.createReadStream(file))hash.update(chunk);return hash.digest('hex')}
-function source(post:Row,file:ChannelDocument):FileEndpoint{
+export function cloudDocumentSource(post:Row,file:ChannelDocument):FileEndpoint{
  const engine=channelEngine(post.channel_id)
  if(engine.kind!=='external'||!engine.fileStorage)throw Error('This channel has no configured cloud file storage')
  const storage=engine.fileStorage,remote=cloudHostTarget(storage.hostId,storage.directory),relative=file.sha256.slice(0,2)+'/'+file.sha256,context=requestContext()
@@ -59,7 +59,7 @@ export async function downloadChannelFile(postId:string,fileId:string):Promise<C
   await originalValidate?.(operation,args)
   if(operation==='copy-commit'){const staged=path.resolve(target.root,String(args.path));if(fs.statSync(staged).size!==file.bytes||await digest(staged)!==file.sha256)throw Error('The cloud document did not match its size or SHA-256; no local file was saved')}
  }
- const endpoint=source(post,file);endpoint.name=name
+ const endpoint=cloudDocumentSource(post,file);endpoint.name=name
  const job=startTransfer({channel:post.channel_id,path:postId+'/'+fileId},{conversation:'channel:'+post.channel_id,path:'.'},endpoint,target),status:ChannelFileStatus={postId,fileId,id:job.id,state:job.state==='queued'?'queued':'running',bytes:0,totalBytes:file.bytes}
  imports.set(key(postId,fileId),status)
  void withCaller(context,async()=>{

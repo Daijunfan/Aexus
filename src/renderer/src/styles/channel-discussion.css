@@ -1,7 +1,7 @@
 .channel-conversation{position:relative}
 .channel-conversation .channel-person{cursor:pointer;border:0;background:none;padding:0;text-align:left;color:inherit}
 .channel-timeline{display:flex;flex-direction:column;gap:0;padding-bottom:20px}
-.channel-timeline>[data-chat-item]{flex-shrink:0;min-width:0}
+.channel-timeline>:is([data-chat-item],.channel-discussion-row){flex-shrink:0;min-width:0}
 .channel-news-item{width:100%;max-width:720px;align-self:flex-start}
 /* One paper surface with a soft, left-pointing lower corner; media clips itself. */
 .channel-timeline .channel-news-card{--bubble-fill:var(--message-paper,var(--bg-elev));margin-bottom:20px;border:0;border-radius:22px 22px 22px 6px;background:var(--bubble-fill);overflow:visible;box-shadow:0 3px 12px color-mix(in srgb,var(--accent) 7%,transparent),0 0 0 .5px color-mix(in srgb,var(--fg) 8%,transparent)}

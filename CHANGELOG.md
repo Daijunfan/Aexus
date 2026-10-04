@@ -2,6 +2,15 @@
 
 > 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
 
+## 0.57.0 — Channel collaboration and workspace tools
+
+- Separate Owner/Admin/Member offices and membership from Company roles across groups and channels, with revision-checked moderation and governance history.
+- Add per-member new-post counters, editable prompts and exact durable batches, independent of Plan and fixed-text timed notices.
+- Expose every employee's Company and Message workspaces, complete published content and verified attachment copies into an own selected workspace; permit current-member Secretaries to maintain direct shared-root files without peer-folder access.
+- Refine the file workbench with cross-view ownership filters, canonical file references, in-app folder navigation and resilient editing; fix published channel media lookup.
+- Place channel discussion portraits outside bubbles while retaining source portraits inside articles and preserving message identity, receipts and drafts.
+- Detailed Chinese release notes: [0.57.0](docs/releases/0.57.0.zh-CN.md).
+
 ## 0.56.5 — Exclusive Message filtering
 
 - Give Filter priority over saved categories, favorites and archive scopes; category buttons become disabled and grey until Filter is turned off. Restore the saved category and keep the selected type.

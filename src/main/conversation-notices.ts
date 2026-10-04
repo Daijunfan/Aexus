@@ -7,7 +7,7 @@ import type {RequestContext} from '../shared/management'
 import type {ConversationNotice,NoticeSpec,NoticeOccurrence,NoticeReceipt} from '../shared/conversation-controls'
 import {CONVERSATION_CONTROL_APIS} from '../shared/conversation-control-schema'
 import {noticeRule,noticeInstant,nextNoticeAt,noticePreview} from './conversation-notice-time'
-import {requireConversation,requireConversationPublisher,conversationPolicy,changeConversationRole,moderateConversation} from './conversation-policy'
+import {requireConversation,requireConversationPublisher,conversationPolicy,changeConversationRole,changeConversationMember,conversationAudit,moderateConversation} from './conversation-policy'
 import {requestContext} from './request-context'
 import {credentialActive} from './agent-access'
 import {publishGroupNotice} from './chat-groups'
@@ -58,11 +58,13 @@ function validatePublisher(conversation:string,publisherId:string,caller:Request
 /** Public dispatcher is separate from conversation files and from every Plan command. */
 export function conversationControlRequest(command:string,args:Record<string,any>){
  if(!CONVERSATION_CONTROL_APIS.has(command))throw Error('Unknown conversation control command')
- const allowed:Record<string,string[]>={policy:[],role:['employee','role','expectedRevision'],mute:['member','muted','durationSeconds','expectedRevision'],silence:['silent','expectedRevision'],'notice-list':['offset','limit'],'notice-get':['id'],'notice-create':['spec','clientRequestId'],'notice-update':['id','patch','expectedRevision'],'notice-delete':['id','expectedRevision'],'notice-preview':['rule','from'],'notice-history':['id','offset','limit']}
+ const allowed:Record<string,string[]>={policy:[],member:['employee','action','expectedRevision'],audit:['before','limit'],role:['employee','role','expectedRevision'],mute:['member','muted','durationSeconds','expectedRevision'],silence:['silent','expectedRevision'],'notice-list':['offset','limit'],'notice-get':['id'],'notice-create':['spec','clientRequestId'],'notice-update':['id','patch','expectedRevision'],'notice-delete':['id','expectedRevision'],'notice-preview':['rule','from'],'notice-history':['id','offset','limit']}
  const op=command.slice('conversation.'.length);fields(args,['conversation',...allowed[op]])
  const current=requireConversation(args.conversation,op==='policy'?'read':'admin'),conversation=current.conversation,caller=requestContext()
  if(op==='policy')return conversationPolicy(conversation)
  if(op==='role'){const result=changeConversationRole(args);if(current.kind==='channel')syncConversationChannelMembers(current.id);return result}
+ if(op==='member'){const result=changeConversationMember(args);if(current.kind==='channel')syncConversationChannelMembers(current.id);return result}
+ if(op==='audit')return conversationAudit(args)
  if(op==='mute'||op==='silence')return moderateConversation(args,op==='silence')
  reconcileConversationNotices()
  if(op==='notice-preview')return {occurrences:noticePreview(noticeRule(args.rule),args.from===undefined?Date.now():Date.parse(noticeInstant(args.from))),policy:'No Plan task or agent execution. Calendar reminders resolve DST once, using compatible local time.'}

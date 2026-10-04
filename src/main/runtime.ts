@@ -1,5 +1,6 @@
 import {setConversationPolicyEmitter} from './conversation-policy'
 import {startConversationNotices,stopConversationNotices,reconcileConversationNotices} from './conversation-notices'
+import {startPostTriggers,stopPostTriggers,reconcilePostTriggers} from './channel-post-triggers'
 import {assetIndex} from './asset-index'
 import {closeMessageIndex} from './message-index-client'
 import {closeAllMedia} from './media'
@@ -47,7 +48,7 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
   exposeClaudeSdk()
   setDesktopEvent(notify)
   setChatEmitter((id,editedMessageId,messageId)=>publishEvent('chat:changed',{id,...(editedMessageId?{editedMessageId}:{}),...(messageId?{messageId}:{})}))
-  setConversationPolicyEmitter(conversation=>{reconcileConversationNotices();publishEvent('conversation:controls',{conversation});if(conversation.startsWith('group:'))publishEvent('chat:changed',{id:conversation.slice(6)})})
+  setConversationPolicyEmitter(conversation=>{reconcilePostTriggers();revokeInvalidDelegations();reconcileConversationNotices();publishEvent('conversation:controls',{conversation});if(conversation.startsWith('group:'))publishEvent('chat:changed',{id:conversation.slice(6)})})
   setPlanEmitter(()=>publishEvent('plan:changed',{}))
   setMessengerEmitter(payload=>publishEvent('messenger:changed',payload))
   recoverChatDeliveries()
@@ -87,9 +88,9 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
   }
   setEmitter(broadcast)
   setTerminalEmitter(broadcast)
-  const unsubscribe = onStoreChange((store,changes) => { if(changes.authority){reconcileConversationNotices();reconcileSchedules();revokeInvalidDelegations();pruneManagementActivity()} broadcast('store:changed', {...store,changes}) })
+  const unsubscribe = onStoreChange((store,changes) => { if(changes.authority){reconcilePostTriggers();reconcileConversationNotices();reconcileSchedules();revokeInvalidDelegations();pruneManagementActivity()} broadcast('store:changed', {...store,changes}) })
   const unwindows=onPluginWindows(windows=>broadcast('plugin:windows',windows))
   const unview = onViewChange((state,clientId) => publishEvent('view:changed',state,clientId))
-  startServer(() => {startInitializations();startScheduler(broadcast);startConversationNotices(broadcast)})
-  return async () => {stopConversationNotices();setConversationPolicyEmitter(()=>{});await closeChannelIngress();stopExports();closeAllMedia();closeEngineLogins();await closeInstallations();await closeUploads();resetManagementActivity(); await closePluginWindows(); unwindows(); unsubscribe(); unview(); await stopInitializations(); await stopScheduler(); await closeAll(); await closeTransfers(); closeRemoteFiles(); await closeHostConnections(); await closeTerminals(); stopServer(); setDesktopEvent(()=>{}); await closePlugins();setChatEmitter(()=>{});setPlanEmitter(()=>{});setMessengerEmitter(()=>{});await closeChannels();await closeMessageIndex();await assetIndex.close();setChannelsEmitter(()=>{});releaseLock() }
+  startServer(() => {startInitializations();startScheduler(broadcast);startConversationNotices(broadcast);startPostTriggers()})
+  return async () => {await stopPostTriggers();stopConversationNotices();setConversationPolicyEmitter(()=>{});await closeChannelIngress();stopExports();closeAllMedia();closeEngineLogins();await closeInstallations();await closeUploads();resetManagementActivity(); await closePluginWindows(); unwindows(); unsubscribe(); unview(); await stopInitializations(); await stopScheduler(); await closeAll(); await closeTransfers(); closeRemoteFiles(); await closeHostConnections(); await closeTerminals(); stopServer(); setDesktopEvent(()=>{}); await closePlugins();setChatEmitter(()=>{});setPlanEmitter(()=>{});setMessengerEmitter(()=>{});await closeChannels();await closeMessageIndex();await assetIndex.close();setChannelsEmitter(()=>{});releaseLock() }
 }

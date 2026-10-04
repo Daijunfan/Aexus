@@ -30,9 +30,9 @@ The descriptor includes `root`, `folderName`, `members`, and, for a selected emp
 
 ## Member access
 
-A current group member or channel administrator may read shared files, including user originals and other members' working files. Agent writes, renames, deletes, restoration and copy destinations are limited to that Agent's own named subfolder. The operator may manage user files. No company management role, creation line or archive state substitutes for membership. Copying to another employee's private workspace is not allowed by the member copy API.
+A current group or channel member may read shared files, including originals and other members' working files. Agents can edit their own named subtree. An Agent whose Company office is Secretary and who currently belongs to this conversation can additionally maintain direct regular files at the shared root. This exception never permits writing another employee's folder. Owner/Admin conversation offices alone do not grant root-file write access. The human user retains full access. No Company office substitutes for membership. Copying to another employee's private workspace is not allowed by the member copy API.
 
-User originals at the conversation root are read-only to Agents through the Core APIs. This is application authorization, not an operating-system sandbox for arbitrary shell processes running as the same trusted macOS account. Native tools keep their existing access/approval mode. No engine is granted a broader execution sandbox by joining a conversation.
+Direct root originals are read-only to ordinary Agents; a current-member Secretary can maintain those files through the same Core APIs. This is application authorization, not an operating-system sandbox for arbitrary shell processes running as the same trusted macOS account. Native tools keep their existing access/approval mode. No engine is granted a broader execution sandbox by joining a conversation.
 
 ```sh
 agents conversation file group:GROUP_ID --operation list --json
@@ -41,11 +41,11 @@ agents conversation file group:GROUP_ID --operation image --path reference.png -
 agents conversation file group:GROUP_ID --operation write --path 'Alice/result.md' --content 'Review completed.' --create --json
 ```
 
-Use the returned file `hash` to update an existing text file. Text writes are limited to 4 MiB; `chunk` reads bounded binary data. Absolute paths, parent traversal, symlinks and internal transfer/trash paths are rejected. Managed member-root directories cannot be renamed or removed through this API. Each member's trash and restore operate inside that member directory.
+Use the returned file `hash` to update an existing text file. Text writes are limited to 4 MiB; `chunk` reads bounded binary data. Absolute paths, parent traversal, symlinks and internal transfer/trash paths are rejected. Managed member-root directories cannot be renamed or removed through this API. Ordinary member trash and restore operate inside that member directory. Secretary direct-root file trash returns a `root:…` receipt; restoration checks both the current office and the original file scope.
 
 ## Explicit copies and work location
 
-The employee chooses its named conversation folder or its existing personal Workspace. The recommended location for work originating in a group is the named member folder. Copying to the personal Workspace remains available.
+`workspace.catalog` returns the employee's Company workspace and all joined Message member workspaces, with exact paths, host location and permissions. The employee selects the location appropriate to the task. The catalog and APIs impose no task-to-workspace placement rule.
 
 ```sh
 # Copy a root original to your named folder, without modifying the original.
@@ -60,11 +60,15 @@ agents conversation transfer TRANSFER_ID --cancel --json
 
 A destination is an existing directory. Transfers preserve source files, never overwrite an existing target, and recheck membership and workspace identity during IO. A queued/running transfer is not a completed copy. An interrupted Core does not silently replay the transfer. `conversation.transfer` belongs to its authenticated initiating identity.
 
+## Published content and document downloads
+
+`conversation.entry {conversation,id}` returns complete stored public text, links, reply data, images, document descriptors and available platform metadata. Its attachment IDs are accepted by `conversation.download`, which streams a copy into the authenticated employee's chosen own workspace. `conversation.download-status` reports the committed path or failure. Existing originals are never overwritten; membership and SHA-256 are checked during transfer. The old human-only `channel.file-download` still imports into the shared root. See [Message collaboration](MESSAGE_COLLABORATION.md) for exact schemas, retry keys, remote-host semantics and per-Agent channel post-count rules.
+
 ## User attachments and task routing
 
 A message may contain text, up to 16 combined images/files, or attachments alone. New user uploads are committed directly under the conversation root. Simultaneous duplicate filenames receive suffixes such as `brief (2).txt`. Completed uploads are readable by current members immediately; pressing Send notifies them. Upload staging remains hidden. The system does not overwrite another upload or a member folder. Private-chat uploads retain their existing storage behavior.
 
-Published attachments keep stable `@workspace/relative-path` references and file metadata in the group/channel message. The visible message still displays the user's original text, image album and file cards. Files persist independently of channel news retention.
+Published attachments keep stable `@workspace/relative-path` references and file metadata in the group/channel message. Members may explicitly publish visible shared attachment references with a nonempty public caption; arbitrary private paths are not accepted. The visible message still displays the user's original text, image album and file cards. Files persist independently of channel news retention.
 
 Each addressed employee receives one **text-only task** containing the original user text plus a structured list of uploaded filenames, references, byte sizes and types. No image/file array is added to the employee's private transcript, no attachment bytes are automatically sent to its native model, and no automatic employee-workspace copy occurs. Non-addressed recipients keep the existing context-only behavior. An employee reads or copies files explicitly when needed. Legacy group attachments remain readable through their existing `chat.file` references; this feature does not move or delete old attachment storage.
 

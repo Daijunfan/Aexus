@@ -1,7 +1,7 @@
 import {rolePolicy,type ManagementRole} from './roles'
 export type {ManagementRole} from './roles'
 export type PrincipalRef={kind:'operator'}|{kind:'agent';employeeId:string}
-export type Delegation={requestedBy:PrincipalRef;relationId?:string;globalGrantId?:string;requestId:string;credentialHash?:string;selfSchedule?:true;schedule?:{channelId?:string;eventChannelId?:string};groupNotice?:{groupId:string;messageId:string;employeeId:string};channelNotice?:{channelId:string;entryId:string;employeeId:string}}
+export type Delegation={requestedBy:PrincipalRef;relationId?:string;globalGrantId?:string;requestId:string;credentialHash?:string;selfSchedule?:true;channelTrigger?:{channelId:string;entryId:string;batchId:string;employeeId:string};schedule?:{channelId?:string;eventChannelId?:string};groupNotice?:{groupId:string;messageId:string;employeeId:string};channelNotice?:{channelId:string;entryId:string;employeeId:string}}
 export type RequestContext={principal:PrincipalRef;requestId:string;credentialHash?:string;clientId?:string}
 export type ManagementRelation={id:string;managerId:string;employeeId:string;state:'pending'|'active';requestedBy:PrincipalRef;approvedBy?:PrincipalRef;createdAt:number;updatedAt:number;origin?:'binding'}
 /** Explicit visual overrides, including disabled creation lines. Never used for authorization. */

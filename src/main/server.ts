@@ -2,8 +2,10 @@ import {employeeReady} from '../shared/types'
 import {directoryName} from '../shared/directory-names'
 import {assetNaming} from './asset-naming'
 import {assetIndex} from './asset-index'
-import {assetRequest,assetLocation} from './assets'
+import {assetRequest,assetLocation,assetReference} from './assets'
 import {socialIdentity} from './message-categories'
+import {MESSAGE_COLLABORATION_APIS} from '../shared/message-collaboration'
+import {messageCollaborationRequest} from './message-collaboration'
 import {CONVERSATION_CONTROL_APIS} from '../shared/conversation-control-schema'
 import {conversationControlRequest,reconcileConversationNotices} from './conversation-notices'
 import {conversationWorkspaceRequest,conversationFileEndpoint} from './conversation-workspaces'
@@ -186,7 +188,7 @@ export async function handleRequest(req:Request,context?:RequestContext&{signal?
   if(a.patch&&'managementRole' in a.patch||a.managementRole!==undefined&&req.cmd!=='card.create')throw Error('Use card.management-role to assign roles')
   if(req.cmd==='card.create'&&a.group===undefined&&caller.principal.kind==='agent')a.group=callerEmployee(caller.principal)!.group
   // Conversation members are not Company employee-control targets.
-  let target=CONVERSATION_CONTROL_APIS.has(req.cmd)?undefined:employeeId(a.employee??a.cardId??a.id)
+  let target=CONVERSATION_CONTROL_APIS.has(req.cmd)||MESSAGE_COLLABORATION_APIS.has(req.cmd)?undefined:employeeId(a.employee??a.cardId??a.id)
   if(['card.','session.','config.'].some(prefix=>req.cmd.startsWith(prefix))&&new Set([a.employee,a.cardId,a.id].filter(value=>value!==undefined).map(employeeId).filter(Boolean)).size>1)throw Error('Forbidden: conflicting employee identifiers')
   if(req.cmd.startsWith('card.'))target=employeeId(req.cmd==='card.rename'?a.cardId:a.id)
   if(req.cmd.startsWith('config.')||req.cmd.startsWith('commands.')||req.cmd.startsWith('approval.')||['engine.inspect','engine.skill'].includes(req.cmd))target=employeeId(a.id)
@@ -258,6 +260,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
   if(req.cmd.startsWith('group.')&&!['group.list','group.remove'].includes(req.cmd))assertTeamAvailable(a.name)
   if(['card.update','card.avatar','card.move','card.remove','card.rename'].includes(req.cmd))assertTeamAvailable(readStore().sessions.find(c=>c.id===(a.id??a.cardId))?.group)
   if(['card.create','card.move','card.update','session.new'].includes(req.cmd))assertTeamAvailable(a.group??a.patch?.group)
+  if(MESSAGE_COLLABORATION_APIS.has(req.cmd))return messageCollaborationRequest(req.cmd,a,fileEndpoint)
   if(req.cmd.startsWith('channel.')&&!['channel.settings','channel.image','channel.export'].includes(req.cmd))return channelRequest(req.cmd,a)
   if(CONVERSATION_CONTROL_APIS.has(req.cmd))return conversationControlRequest(req.cmd,a)
   if(req.cmd.startsWith('conversation.'))return conversationWorkspaceRequest(req.cmd,a,fileEndpoint)
@@ -450,8 +453,9 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     }
     case 'assets.naming':
       return assetNaming(a,async(ids)=>{if(listTransfers().some(job=>['queued','running'].includes(job.state)))throw Error('Finish active file transfers before migrating directories');for(const live of listLive()){const info=sessionInfo(live.id);if(info&&ids.includes(info.cardId!)&&info.busy)throw Error('员工正在工作，请等待空闲再迁移目录')}for(const id of ids)await closeForWorkspaceChange(id)},async(mount,operation,args)=>{const end=fileEndpoint({...mount.scope,path:'.'},false);if(!end.remote)throw Error('Expected a remote workspace');return remoteFiles('asset-naming-'+mount.id,end.remote,operation,args)})
-    case 'assets.tree':case 'assets.children':case 'assets.search':case 'assets.file':
-      if(req.cmd==='assets.file'&&String(a.id).startsWith('published:')){if(!['list','read','image','info','chunk'].includes(a.operation))throw Error('Published attachments are read-only; copy them to a workspace to edit');const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=({image:'read-image',info:'copy-info',chunk:'copy-read'} as Record<string,string>)[a.operation]??a.operation;return workspaceFiles(end.root,op,{path:end.path,offset:a.offset??0,length:262144,hidden:a.hidden})}
+    case 'assets.tree':case 'assets.children':case 'assets.search':case 'assets.locate':case 'assets.file':
+      if(req.cmd==='assets.file'){const ref=assetReference(s(a.id),a.path);a.id=ref.asset;a.path=ref.path}
+      if(req.cmd==='assets.file'&&String(a.id).startsWith('published:')&&!(String(a.id).startsWith('published:channel:')&&a.operation==='list')){if(!['list','read','image','info','chunk'].includes(a.operation))throw Error('Published attachments are read-only; copy them to a workspace to edit');const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=({image:'read-image',info:'copy-info',chunk:'copy-read'} as Record<string,string>)[a.operation]??a.operation;return workspaceFiles(end.root,op,{path:end.path,offset:a.offset??0,length:262144,hidden:a.hidden})}
       if(req.cmd==='assets.file'&&['info','chunk'].includes(a.operation)){const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=a.operation==='info'?'copy-info':'copy-read',args={path:end.path,offset:a.offset??0,length:262144};await end.validate?.(op,args);return end.remote?remoteFiles('assets-file-'+a.id,end.remote,op,args):workspaceFiles(end.root,op,args)}
       return assetRequest(req.cmd,a,(cmd,args)=>handleRequest({cmd,args}),async(ref,args)=>{const end=fileEndpoint(ref,false);if(!end.remote)throw Error('Remote inventory requires a remote workspace');return remoteFiles('asset-index-'+String(ref.team??ref.employee),end.remote,'inventory',args)})
     case 'workspace.reveal': return revealWorkspaceFile(fileEndpoint(a.from,false))

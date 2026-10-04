@@ -1,6 +1,6 @@
 import {requireConversation,conversationPolicy,moderateConversation,controlChanged} from './conversation-policy'
 import {groupRole,type NoticeReceipt} from '../shared/conversation-controls'
-import {conversationFileEndpoint,workspaceForMember} from './conversation-workspaces'
+import {sharedAttachments,conversationFileEndpoint,workspaceForMember} from './conversation-workspaces'
 import {WORKSPACE_FILE_PREFIX,sharedUploadNotice} from '../shared/conversation-workspaces'
 import {removeIndexedConversation} from './message-index-client'
 import {SingleFlight} from './single-flight'
@@ -92,6 +92,7 @@ function groupAttachments(id:string,images:unknown,files:unknown):MessageAttachm
  const photos=attachmentPaths(images),documents=attachmentPaths(files)
  if(photos.length+documents.length>16)throw Error('Choose at most 16 attachments')
  if(!photos.length&&!documents.length)return []
+ if(requestContext().principal.kind==='agent')return sharedAttachments('group:'+id,images,files)
  operator();const root=groupMediaRoot(id)
  const file=(value:string,kind:'image'|'file')=>{const end=value.startsWith(WORKSPACE_FILE_PREFIX)?conversationFileEndpoint('group:'+id,value):{root,path:value};return attachmentInfo(value,workspaceFiles(end.root,'copy-info',{path:end.path}),kind,kind==='image'?workspaceFiles(end.root,'read-image',{path:end.path}).mimeType:undefined)}
  return [...photos.map(value=>file(value,'image')),...documents.map(value=>file(value,'file'))]
@@ -214,7 +215,7 @@ export function chatTaskPrompt(context:ChatTaskContext|undefined,employeeId:stri
  const reply=message.reply??(original?{id:original.id,author:original.author,authorName:original.authorName,text:message.replyQuote?.text??original.text,...(message.replyQuote?{quote:message.replyQuote}:{})}:undefined)
  const base='[Group request]\n'+JSON.stringify({conversationType:'group',conversationId:group.id,groupId:group.id,groupName:group.name,messageId:message.id,sequence:message.sequence,sender:message.authorName,author:message.author,createdAt:message.createdAt,broadcast:!!message.broadcast,addressedTo,directlyAddressed:addressedTo.includes(employeeId),acknowledgment:chatAcknowledgmentPolicy(context,employeeId),...(reply?{replyTo:message.replyTo,reply}:{})})+'\n'+text
  if(reading)return base
- return base+'\n\n[Group reporting]\n'+GROUP_PUBLISH_POLICY.guidance+'\n[Shared workspace]\n'+JSON.stringify(workspaceForMember('group:'+group.id,employeeId))+'\nRead shared context with agents chat context '+group.id+' --message '+message.id+' --json. Older messages: agents chat history '+group.id+' --before '+message.sequence+' --limit 50 --json; use nextBefore for the next page. Publish with agents chat post '+group.id+' --reply-to '+message.id+' --text "Reply text" --json. Workspace writes are limited to your memberDirectory or personal Workspace.'
+ return base+'\n\n[Group reporting]\n'+GROUP_PUBLISH_POLICY.guidance+'\n[Shared workspace]\n'+JSON.stringify(workspaceForMember('group:'+group.id,employeeId))+'\nRead shared context with agents chat context '+group.id+' --message '+message.id+' --json. Older messages: agents chat history '+group.id+' --before '+message.sequence+' --limit 50 --json; use nextBefore for the next page. Publish with agents chat post '+group.id+' --reply-to '+message.id+' --text "Reply text" --json. Use workspace.catalog for your available locations and permissions. Read shared files with agents conversation file; use the returned memberDirectory paths.'
 }
 type PrepareGroupAttachments=(employee:string,groupId:string,message:ChatMessage)=>Promise<{images:string[];files:string[]}>
 const sending=new SingleFlight<ChatMessage>()

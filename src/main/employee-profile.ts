@@ -1,3 +1,4 @@
+import {channelOffices,channelMemberIds} from './channel-members'
 import {groupRole} from '../shared/conversation-controls'
 import {conversationMuted} from './conversation-policy'
 import {authorize,requestContext,isAppAdministrator} from './authorization'
@@ -31,7 +32,7 @@ export async function employeeProfile(args:Record<string,unknown>):Promise<Emplo
  if(!card)throw Error('Employee no longer exists')
  const principal=requestContext().principal,admin=isAppAdministrator(),settings=employeeSettings(store,card),team=teamSettings(store,card.group)
  const groups=catalog().groups.filter(g=>g.memberIds.includes(id)&&(principal.kind==='operator'||principal.kind==='agent'&&g.memberIds.includes(principal.employeeId))).map(g=>({id:g.id,name:g.name,kind:'group' as const,role:groupRole(g,id)!,muted:effectiveChatMute(g,id)!==undefined,canOpenWorkspace:principal.kind==='operator'||principal.kind==='agent'&&g.memberIds.includes(principal.employeeId)}))
- const channels=all('SELECT id,name,admin_ids FROM channels').filter(c=>{const members=JSON.parse(c.admin_ids) as string[];return members.includes(id)&&(principal.kind==='operator'||principal.kind==='agent'&&members.includes(principal.employeeId))}).map(c=>({id:c.id as string,name:c.name as string,kind:'channel' as const,role:'admin' as const,muted:conversationMuted('channel:'+c.id,id)!==undefined,canOpenWorkspace:principal.kind==='operator'||principal.kind==='agent'&&(JSON.parse(c.admin_ids) as string[]).includes(principal.employeeId)}))
+ const channels=all('SELECT id,name,admin_ids FROM channels').filter(c=>{const members=channelMemberIds(c.id);return members.includes(id)&&(principal.kind==='operator'||principal.kind==='agent'&&members.includes(principal.employeeId))}).map(c=>({id:c.id as string,name:c.name as string,kind:'channel' as const,role:groupRole(channelOffices(c.id),id)!,muted:conversationMuted('channel:'+c.id,id)!==undefined,canOpenWorkspace:principal.kind==='operator'||principal.kind==='agent'&&channelMemberIds(c.id).includes(principal.employeeId)}))
  const memberships:ProfileMembership[]=[...groups,...channels].map(item=>{
   const conversation=item.kind+':'+item.id
   try{return {...item,conversation,workspace:workspaceForMember(conversation,id,false)}}catch(error){return {...item,conversation,workspace:null,workspaceError:(error as Error).message}}

@@ -17,7 +17,7 @@ function request(operation:string,args:any):Promise<any>{
 export const assetIndex={
  invalidate(){preparedAt=0},
  async prepare(roots:AssetMount[],inventory?: (ref:FileLocation,args:any)=>Promise<any>,refresh=false){
-  const input=roots.map(root=>({id:root.id,root:root.root.replaceAll('\\','/'),key:root.remote?'remote:'+root.owner.team:'local',remote:root.remote,owner:root.owner,members:root.members,readOnly:root.readOnly})),next=JSON.stringify(input)
+  const input=roots.map(root=>({id:root.id,root:root.root.replaceAll('\\','/'),key:root.remote?'remote:'+root.owner.team:'local',remote:root.remote,owner:root.owner,members:root.members,memberOwners:root.memberOwners,readOnly:root.readOnly})),next=JSON.stringify(input)
   if(signature===next&&(!refresh&&(pending||remotePending||Date.now()-preparedAt<30000)))return
   signature=next;preparedAt=Date.now();pending=true;remoteErrors=[];const token=++epoch,configured=await request('configure',{roots:input});remotePending=configured.remoteSources.length
   // Remote scopes remain on their original execution host; metadata only crosses the API.
@@ -27,11 +27,11 @@ export const assetIndex={
    do{if(epoch!==token)return;const page=await inventory({...root.scope,path:'.'},{cursor,refresh:refresh&&firstRequest});firstRequest=false;if(epoch!==token)return;if(page.indexing){await new Promise(r=>setTimeout(r,500));continue}await request('remote',{root:root.id,entries:page.entries??[],directories:page.directories??[]});cursor=page.nextCursor??-1;if(page.errors?.length)remoteErrors.push(...page.errors)}while(cursor!==-1)
   })().catch(error=>{if(epoch===token)remoteErrors.push(root.label+': '+error.message)}).finally(()=>{if(epoch===token)remotePending--})}
  },
- async counts(nodes:AssetNode[],hidden=false){const physical=nodes.filter(node=>node.directory&&node.location?.asset);if(!physical.length)return nodes;const counted=await request('stats',{nodes:physical,hidden});const byId=new Map(counted.map((node:AssetNode)=>[node.id,node]));return nodes.map(node=>byId.get(node.id)??node) as AssetNode[]},
+ async counts(nodes:AssetNode[],hidden=false,filters:Record<string,unknown>={}){const physical=nodes.filter(node=>node.directory&&node.location?.asset);if(!physical.length)return nodes;const counted=await request('stats',{nodes:physical,hidden,filters});const byId=new Map(counted.map((node:AssetNode)=>[node.id,node]));return nodes.map(node=>byId.get(node.id)??node) as AssetNode[]},
  async children(root:string,args:Record<string,unknown>){return request('children',{root,...args})},
- async treeCounts(tree:AssetNode):Promise<AssetNode>{
+ async treeCounts(tree:AssetNode,filters:Record<string,unknown>={}):Promise<AssetNode>{
   const visit=async(node:AssetNode):Promise<AssetNode>=>{
-   if(node.location){const [counted]=await this.counts([node]);const children=await Promise.all((node.children??[]).map(visit));const outside=children.filter(child=>child.external),known=counted.fileCount!==undefined&&outside.every(child=>child.fileCount!==undefined);return {...counted,children:children.length?children:undefined,...(known?{fileCount:counted.fileCount!+outside.reduce((n,child)=>n+child.fileCount!,0),nonemptyFolders:(counted.nonemptyFolders??0)+outside.filter(child=>child.fileCount!>0).length}:{})}}
+   if(node.location){const [counted]=await this.counts([node],false,filters);const children=await Promise.all((node.children??[]).map(visit));const outside=children.filter(child=>child.external),known=counted.fileCount!==undefined&&outside.every(child=>child.fileCount!==undefined);return {...counted,children:children.length?children:undefined,...(known?{fileCount:counted.fileCount!+outside.reduce((n,child)=>n+child.fileCount!,0),nonemptyFolders:(counted.nonemptyFolders??0)+outside.filter(child=>child.fileCount!>0).length}:{})}}
    const children=await Promise.all((node.children??[]).map(visit)),known=children.every(child=>child.fileCount!==undefined)
    return {...node,children,nonemptyFolders:known?children.filter(child=>(child.fileCount??0)>0).length:undefined,...(known?{fileCount:children.reduce((n,child)=>n+(child.fileCount??0),0)}:{})}
   }

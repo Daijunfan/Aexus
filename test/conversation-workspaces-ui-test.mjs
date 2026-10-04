@@ -32,6 +32,7 @@ try{
  let dialog=page.getByRole('dialog',{name:'New group',exact:true});await dialog.locator('[name=chat-team]').selectOption('Product');await dialog.locator('.group-member-options label').filter({hasText:'Bob'}).getByRole('checkbox').check();await dialog.locator('[name=chat-name]').fill('Release room');await dialog.getByRole('button',{name:'Create group',exact:true}).click()
  const group=(await rpc('chat.list')).find(value=>value.name==='Release room'),ref='group:'+group.id,channelRef='channel:'+channel.id
  checks.push('Company alone has two labelled creation buttons at desktop, 1000px, 720px and 400px; Messages/Plan do not render them; existing New group still works')
+ await expect(page.getByRole('button',{name:'Filter',exact:true})).toHaveAttribute('aria-pressed','true');await page.getByRole('button',{name:'Filter',exact:true}).click();await expect(page.getByRole('button',{name:'Filter',exact:true})).toHaveAttribute('aria-pressed','false')
  for(const title of ['Alice','Release room','Research channel']){await page.getByRole('button',{name:'Actions for '+title,exact:true}).click();await page.getByRole('menuitem',{name:'Archive conversation',exact:true}).click()}
  await page.getByRole('button',{name:'Archived chats',exact:true}).click();await expect(page.locator('.message-archive-heading')).toContainText('3')
  for(const title of ['Alice','Release room','Research channel'])await expect(page.getByRole('button',{name:'Restore '+title,exact:true})).toBeVisible()
@@ -50,7 +51,7 @@ try{
  await settled();const published=(await rpc('chat.history',{id:group.id})).messages[0];assert.equal(published.attachments.length,4)
  await page.locator('.group-message .message-photo').first().click();await expect(page.locator('.message-image-dialog')).toBeVisible();await expect.poll(()=>page.locator('.message-image-viewport img').evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);if(native)await page.getByRole('button',{name:'Close image preview',exact:true}).click();else await page.keyboard.press('Escape');await expect(page.locator('.message-image-dialog')).toHaveCount(0)
  await page.locator('.group-conversation .message-thread-header').getByRole('button',{name:'Shared workspace',exact:true}).click();dialog=page.getByRole('dialog',{name:'Shared workspace',exact:true})
- await expect(dialog.locator('.file-row[data-file="requirements.txt"]')).toBeVisible();await expect(dialog.locator('.file-row[data-file="Alice"]')).toBeVisible();await expect(dialog.locator('.file-row[data-file="Bob"]')).toBeVisible()
+ const shared=await rpc('conversation.workspace',{conversation:ref});await expect(dialog.locator('.file-row[data-file="requirements.txt"]')).toBeVisible();for(const member of shared.members)await expect(dialog.locator('.file-row[data-file="'+member.directory+'"]')).toBeVisible()
  await page.screenshot({path:path.join(out,'group-shared-root.png'),animations:'disabled'})
  const wa=await rpc('conversation.workspace',{conversation:ref,employee:a.id})
  await dialog.getByRole('combobox',{name:'Shared workspace folder',exact:true}).selectOption(wa.memberDirectory)

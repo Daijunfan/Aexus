@@ -16,6 +16,16 @@ export function db(){
  INSERT OR IGNORE INTO metadata VALUES('revision','0'),('settings','{"enabled":false,"host":"127.0.0.1","port":5152}');
  INSERT OR IGNORE INTO metadata SELECT 'config_revision',value FROM metadata WHERE key='revision';
  CREATE TABLE IF NOT EXISTS channels(id TEXT PRIMARY KEY,name TEXT NOT NULL,kind TEXT NOT NULL,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,admin_ids TEXT NOT NULL DEFAULT '[]',revision INTEGER NOT NULL DEFAULT 1);
+ CREATE TABLE IF NOT EXISTS channel_post_rules(id TEXT PRIMARY KEY,channel_id TEXT NOT NULL,employee_id TEXT NOT NULL,data TEXT NOT NULL,UNIQUE(channel_id,employee_id));
+ CREATE TABLE IF NOT EXISTS channel_post_events(post_id TEXT PRIMARY KEY,channel_id TEXT NOT NULL,created_at INTEGER NOT NULL);
+ CREATE TABLE IF NOT EXISTS channel_post_batches(id TEXT PRIMARY KEY,rule_id TEXT NOT NULL,channel_id TEXT NOT NULL,employee_id TEXT NOT NULL,data TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS channel_post_batches_scope ON channel_post_batches(channel_id,employee_id);
+ CREATE INDEX IF NOT EXISTS channel_post_batches_pending ON channel_post_batches(json_extract(data,'$.state'));
+ CREATE TABLE IF NOT EXISTS channel_message_triggers(message_id TEXT PRIMARY KEY REFERENCES channel_messages(id),metadata TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS conversation_downloads(id TEXT PRIMARY KEY,request_key TEXT NOT NULL UNIQUE,data TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS channel_membership(channel_id TEXT PRIMARY KEY REFERENCES channels(id),owner_id TEXT,member_ids TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS conversation_audit(id INTEGER PRIMARY KEY AUTOINCREMENT,conversation TEXT NOT NULL,actor TEXT NOT NULL,action TEXT NOT NULL,details TEXT NOT NULL,created_at INTEGER NOT NULL);
+ CREATE INDEX IF NOT EXISTS conversation_audit_scope ON conversation_audit(conversation,id);
  CREATE TABLE IF NOT EXISTS channel_conversation_controls(channel_id TEXT PRIMARY KEY REFERENCES channels(id) ON DELETE CASCADE,mutes TEXT NOT NULL DEFAULT '{}',silent INTEGER NOT NULL DEFAULT 0);
  CREATE TABLE IF NOT EXISTS sources(id TEXT PRIMARY KEY,plugin TEXT NOT NULL,target_id TEXT NOT NULL,locator TEXT NOT NULL,name TEXT NOT NULL,enabled INTEGER NOT NULL,poll_seconds INTEGER NOT NULL,channel_id TEXT NOT NULL REFERENCES channels(id),created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,UNIQUE(plugin,target_id));
  CREATE TABLE IF NOT EXISTS posts(id TEXT PRIMARY KEY,source_id TEXT NOT NULL REFERENCES sources(id),external_id TEXT NOT NULL,state TEXT NOT NULL,title TEXT,body TEXT,url TEXT,author_name TEXT,author_url TEXT,avatar_media_id TEXT,published_at INTEGER NOT NULL,received_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,expires_at INTEGER NOT NULL,saved_at INTEGER,content_hash TEXT NOT NULL,payload_hash TEXT NOT NULL,media_ids TEXT NOT NULL DEFAULT '[]',forget_at INTEGER,UNIQUE(source_id,external_id));

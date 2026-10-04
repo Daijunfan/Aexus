@@ -20,7 +20,7 @@ export const NEWS_RETENTION_MS=48*60*60*1000
 export const CHANNEL_IMAGE_LIMIT=8*1024*1024
 export type ChannelSettings={enabled:boolean;host:'127.0.0.1';port:number}
 export type ChannelMedia={id:string;name:string;mimeType:string;bytes:number;sha256:string}
-export type ChannelRecord={id:string;name:string;kind:ChannelPlugin|'custom';createdAt:number;updatedAt:number;adminIds:string[];revision:number;engine?:ChannelEngine}
+export type ChannelRecord={memberIds?:string[];ownerId?:string|null;id:string;name:string;kind:ChannelPlugin|'custom';createdAt:number;updatedAt:number;adminIds:string[];revision:number;engine?:ChannelEngine}
 export type ChannelSource={id:string;plugin:ChannelPlugin;targetId:string;locator:string;name:string;enabled:boolean;pollSeconds:number;channelId:string;createdAt:number;updatedAt:number;avatar?:{postId:string;mediaId:string};authorUrl?:string}
 export type ChannelPost={telegram?:TelegramPostInfo;files?:ChannelDocument[];sourceAvatar?:{sourceId:string;sha256:string};id:string;sourceId:string;externalId:string;channelId:string;sourceName:string;plugin:ChannelPlugin;title:string;body:string;url?:string;authorName?:string;authorUrl?:string;avatarMediaId?:string;publishedAt:number;receivedAt:number;updatedAt:number;expiresAt:number;contentHash:string;saved:boolean;savedAt?:number;media:ChannelMedia[]}
 export type ChannelReadSummary={unreadCount:number;firstUnread?:{id:string;kind:'news'|'message'}}
@@ -42,7 +42,7 @@ export type ChannelEvent={kind:'settings'|'sources'|'posts'|'channels'|'messages
 export type ChannelFileRef={channelId:string;postId?:string;mediaId?:string;path?:string}
 
 export type ChannelTaskContext={channelId:string;entryId:string}
-export type ChannelMessage={notice?:import('./conversation-controls').NoticeReceipt;attachments?:MessageAttachment[];id:string;channelId:string;sequence:number;createdAt:number;author:PrincipalRef;authorName:string;text:string;kind:'message'|'summary'|'decision'|'blocker'|'question'|'result';mentions:string[];replyTo?:string;requestId?:string;acknowledgmentOf?:string;deliveries:ChatDelivery[];clientMessageId:string;fingerprint:string}
+export type ChannelMessage={trigger?:import('./message-collaboration').PostBatchReceipt;notice?:import('./conversation-controls').NoticeReceipt;attachments?:MessageAttachment[];id:string;channelId:string;sequence:number;createdAt:number;author:PrincipalRef;authorName:string;text:string;kind:'message'|'summary'|'decision'|'blocker'|'question'|'result';mentions:string[];replyTo?:string;requestId?:string;acknowledgmentOf?:string;deliveries:ChatDelivery[];clientMessageId:string;fingerprint:string}
 export type ChannelHistory={messages:ChannelMessage[];nextBefore:number|null}
 export type ChannelTimelineEntry={kind:'news';id:string;time:number;post:Omit<ChannelPost,'saved'|'savedAt'>}|{kind:'message';id:string;time:number;message:ChannelMessage}
 export type ChannelTimeline={entries:ChannelTimelineEntry[];nextCursor:string|null;order:'chronological'}

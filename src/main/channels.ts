@@ -1,3 +1,5 @@
+import {channelMemberIds,channelOffices} from './channel-members'
+import {requireConversation} from './conversation-policy'
 import {controlChanged} from './conversation-policy'
 import {channelDocuments,channelFileStatus,downloadChannelFile} from './channel-files'
 import {notifyChannelSchedule,reconcileSchedules} from './scheduler/service'
@@ -36,7 +38,7 @@ function settings(patch?:Record<string,unknown>){
 }
 function channelRow(id:unknown){const row=one('SELECT * FROM channels WHERE id=?',text(id,'channel ID'));if(!row)throw fail('Unknown news channel','CHANNEL_NOT_FOUND',404);return row}
 function sourceRow(id:unknown){const row=one('SELECT * FROM sources WHERE id=?',text(id,'source ID'));if(!row)throw fail('Unknown news source','SOURCE_NOT_FOUND',404);return row}
-const record=(row:Row):ChannelRecord=>({id:row.id,name:row.name,kind:row.kind,createdAt:row.created_at,updatedAt:row.updated_at,adminIds:channelAdminIds(row.id),revision:row.revision,engine:channelEngine(row.id)})
+const record=(row:Row):ChannelRecord=>({...channelOffices(row.id),id:row.id,name:row.name,kind:row.kind,createdAt:row.created_at,updatedAt:row.updated_at,adminIds:channelAdminIds(row.id),revision:row.revision,engine:channelEngine(row.id)})
 const unreadEntries="SELECT p.id,'news' AS kind,p.published_at AS time FROM posts p JOIN sources s ON s.id=p.source_id LEFT JOIN channel_user_reads r ON r.entry_id=p.id WHERE s.channel_id=? AND p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) AND r.entry_id IS NULL UNION ALL SELECT m.id,'message' AS kind,m.created_at AS time FROM channel_messages m LEFT JOIN channel_user_reads r ON r.entry_id=m.id WHERE m.channel_id=? AND json_extract(m.author,'$.kind')='agent' AND r.entry_id IS NULL"
 function readSummary(id:string,now=Date.now()):ChannelReadSummary{const first=one('SELECT id,kind,COUNT(*) OVER() AS count FROM ('+unreadEntries+') ORDER BY time,id COLLATE BINARY LIMIT 1',id,now,id);return {unreadCount:Number(first?.count??0),...(first?{firstUnread:{id:first.id,kind:first.kind}}:{})}}
 function readEntryIds(input:unknown){if(!Array.isArray(input)||input.length>200||input.some(id=>typeof id!=='string'||!id||id!==id.trim()))throw fail('Choose up to 200 channel entry IDs');return [...new Set(input)] as string[]}
@@ -161,10 +163,10 @@ function updateSource(id:unknown,patch:ChannelSourcePatch):ChannelSource{
  run('UPDATE sources SET name=?,enabled=?,poll_seconds=?,channel_id=?,updated_at=? WHERE id=?',patch.name===undefined?row.name:text(patch.name,'source name'),patch.enabled===undefined?row.enabled:Number(patch.enabled),patch.pollSeconds===undefined?row.poll_seconds:positive(patch.pollSeconds,'poll interval'),patch.channelId??row.channel_id,Date.now(),row.id)
  changed('sources',{channelIds:[...new Set([row.channel_id,patch.channelId??row.channel_id])]});return source(sourceRow(row.id))
 }
-export function getChannelPost(id:unknown):ChannelPost{requireAppAdministrator();return projected(livePost(id))}
+export function getChannelPost(id:unknown):ChannelPost{const row=livePost(id);requireConversation('channel:'+row.channel_id);return projected(row)}
 function memberRecord(row:Row):ChannelRecord{const value=record(row);if(value.engine?.kind==='external')value.engine={kind:'external',location:value.engine.location};return value}
-export function getChannel(id:unknown):ChannelRecord{const row=channelRow(id),principal=requestContext().principal,value=isAppAdministrator(principal)?record(row):memberRecord(row);if(principal.kind==='agent'&&!isAppAdministrator(principal)&&!value.adminIds.includes(principal.employeeId))throw fail('Not a channel administrator','FORBIDDEN',403);return value}
-export function listChannels():ChannelRecord[]{const rows=all('SELECT * FROM channels ORDER BY created_at,id'),principal=requestContext().principal;return isAppAdministrator(principal)?rows.map(channelView):rows.map(memberRecord).filter(value=>principal.kind==='agent'&&value.adminIds.includes(principal.employeeId))}
+export function getChannel(id:unknown):ChannelRecord{const row=channelRow(id),principal=requestContext().principal,value=isAppAdministrator(principal)?record(row):memberRecord(row);if(principal.kind==='agent'&&!isAppAdministrator(principal)&&!value.memberIds!.includes(principal.employeeId))throw fail('Not a channel administrator','FORBIDDEN',403);return value}
+export function listChannels():ChannelRecord[]{const rows=all('SELECT * FROM channels ORDER BY created_at,id'),principal=requestContext().principal;return isAppAdministrator(principal)?rows.map(channelView):rows.map(memberRecord).filter(value=>principal.kind==='agent'&&value.memberIds!.includes(principal.employeeId))}
 export function listChannelSources(args:{channelId?:string;plugin?:string;includeDisabled?:boolean}={}):ChannelSource[]{requireAppAdministrator();fields(args as any,['channelId','plugin','includeDisabled']);const where:string[]=[],values:SQLInputValue[]=[];if(args.channelId){where.push('channel_id=?');values.push(args.channelId)}if(args.plugin){where.push('plugin=?');values.push(args.plugin)}if(!args.includeDisabled)where.push('enabled=1');return all('SELECT * FROM sources'+(where.length?' WHERE '+where.join(' AND '):'')+' ORDER BY created_at,id',...values).map(source)}
 export function queryChannelPosts(args:Record<string,any>={}):ChannelPostPage{
  requireAppAdministrator();fields(args,['channelId','sourceId','saved','query','media','links','messageOrder','cursor','offset','limit']);const limit=args.limit??50,offset=args.offset??0;if(!Number.isSafeInteger(limit)||limit<1||!Number.isSafeInteger(offset)||offset<0)throw fail('Invalid news limit or offset')
@@ -276,7 +278,7 @@ export function channelCollectorRequest(token:unknown,command:string,args:Record
  const result=execute();recordCollectorActivity(collector.id);return result
 }
 export function channelFileEndpoint(ref:Partial<ChannelFileRef>):{root:string;path:string;name:string;mimeType:string;bytes:number}{
- requireAppAdministrator();const parts=ref.path?.split('/'),id=ref.postId??parts?.[0],mediaId=ref.mediaId??parts?.[1],post=livePost(id);channelRow(ref.channelId)
+ const parts=ref.path?.split('/'),id=ref.postId??parts?.[0],mediaId=ref.mediaId??parts?.[1],post=livePost(id);channelRow(ref.channelId);requireConversation('channel:'+ref.channelId)
  if(post.channel_id!==ref.channelId||!mediaId||!(JSON.parse(post.media_ids).includes(mediaId)||post.avatar_media_id===mediaId))throw fail('Image is not published in this channel item','MEDIA_SCOPE_MISMATCH',403)
  const asset=one('SELECT * FROM media WHERE id=? AND post_id=?',mediaId,post.id);if(!asset)throw fail('News image is unavailable','MEDIA_NOT_FOUND',404)
  return {root:mediaDirectory,path:asset.file,name:asset.name,mimeType:asset.mime_type,bytes:asset.bytes}
@@ -287,6 +289,7 @@ export function channelRequest(command:string,args:Record<string,any>={}){
  switch(command){case 'channel.list':fields(args,[]);return listChannels();case 'channel.get':fields(args,['id']);return getChannel(args.id);case 'channel.history':return channelHistory(args);case 'channel.context':return channelContext(args);case 'channel.message-send':return sendChannelMessage(args);case 'channel.message-post':return postChannelMessage(args)}
  if(command==='channel.publish')return publish(args as ChannelPublishInput)
  if(command==='channel.media-put')return mediaPut(args as ChannelMediaInput)
+ if(command==='channel.post'){fields(args,['id']);return getChannelPost(args.id)}
  requireAppAdministrator()
  switch(command){
   case 'channel.file-download':fields(args,['postId','fileId']);return downloadChannelFile(text(args.postId,'post ID'),text(args.fileId,'file ID'))

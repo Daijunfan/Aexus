@@ -1,0 +1,28 @@
+import {useEffect,useRef,useState} from 'react'
+import {createPortal} from 'react-dom'
+import {api} from '../api'
+import {useDialogFocus} from '../office/useDialogFocus'
+import {translate as uiText,useI18n} from '../i18n'
+import type {ConversationPolicy} from '../../../shared/conversation-controls'
+import type {WorkspaceChoice} from '../../../shared/message-collaboration'
+import {attachmentSize} from '../../../shared/message-attachments'
+import {Icon} from './Icon'
+import '../styles/message-collaboration.css'
+
+type Receipt={id:string;state:string;bytes:number;totalBytes:number;absolutePath?:string;error?:string}
+export function ConversationDownload({conversation,entryId,attachmentId,name}:{conversation:string;entryId:string;attachmentId:string;name:string}){
+ const [open,setOpen]=useState(false)
+ return <><button type="button" className="workspace-copy-trigger" aria-label={uiText('Copy {0} to an Agent workspace',[name])} title={uiText('Copy to Agent workspace')} onClick={()=>setOpen(true)}><Icon name="copy"/></button>{open&&<WorkspaceCopyDialog conversation={conversation} entryId={entryId} attachmentId={attachmentId} name={name} onClose={()=>setOpen(false)}/>}</>
+}
+function WorkspaceCopyDialog({conversation,entryId,attachmentId,name,onClose}:{conversation:string;entryId:string;attachmentId:string;name:string;onClose:()=>void}){
+ useI18n();useDialogFocus('.workspace-copy-dialog',true)
+ const [policy,setPolicy]=useState<ConversationPolicy>(),[employee,setEmployee]=useState(''),[workspaces,setWorkspaces]=useState<WorkspaceChoice[]>([]),[workspace,setWorkspace]=useState(conversation),[error,setError]=useState(''),[receipt,setReceipt]=useState<Receipt>(),[busy,setBusy]=useState(false),key=useRef(crypto.randomUUID()),lock=useRef(false),active=useRef(true)
+ useEffect(()=>{active.current=true;void api.call<ConversationPolicy>('conversation.policy',{conversation}).then(value=>{if(active.current){setPolicy(value);setEmployee(value.members[0]?.id??'')}}).catch(cause=>active.current&&setError(cause.message));return()=>{active.current=false}},[conversation])
+ useEffect(()=>{let live=true;setWorkspaces([]);if(employee)void api.call<{workspaces:WorkspaceChoice[]}>('workspace.catalog',{employee}).then(value=>{if(live){setWorkspaces(value.workspaces);setWorkspace(conversation);key.current=crypto.randomUUID();setReceipt(undefined)}}).catch(cause=>live&&setError(cause.message));return()=>{live=false}},[employee,conversation])
+ const pending=receipt&&['running','queued'].includes(receipt.state)
+ useEffect(()=>{if(!pending)return;let live=true;const timer=setTimeout(()=>void api.call<Receipt>('conversation.download-status',{id:receipt.id}).then(value=>live&&setReceipt(value)).catch(cause=>live&&setError(cause.message)),250);return()=>{live=false;clearTimeout(timer)}},[receipt,pending])
+ const copy=async()=>{if(lock.current)return;lock.current=true;setBusy(true);setError('');if(receipt&&['failed','cancelled'].includes(receipt.state))key.current=crypto.randomUUID();try{const value=await api.call<Receipt>('conversation.download',{conversation,entryId,attachmentId,employee,workspace,clientRequestId:key.current});if(active.current)setReceipt(value)}catch(cause){if(active.current)setError((cause as Error).message)}finally{lock.current=false;if(active.current)setBusy(false)}}
+ const cancel=async()=>{if(!receipt)return;try{setReceipt(await api.call<Receipt>('conversation.download-status',{id:receipt.id,cancel:true}))}catch(cause){setError((cause as Error).message)}}
+ const destination=workspaces.find(w=>w.id===workspace)
+ return createPortal(<div className="workspace-copy-overlay" onKeyDown={event=>{if(event.key==='Escape'&&!event.nativeEvent.isComposing){event.preventDefault();event.stopPropagation();if(!busy)onClose()}}}><section className="workspace-copy-dialog" role="dialog" aria-modal="true" aria-label={uiText('Copy to Agent workspace')}><header><h3>{uiText('Copy to Agent workspace')}</h3><button disabled={busy} aria-label={uiText('Close workspace copy')} onClick={onClose}><Icon name="close"/></button></header><p>{name}</p><label>{uiText('Agent member')}<select aria-label={uiText('Agent member')} value={employee} disabled={busy||!!pending} onChange={event=>setEmployee(event.target.value)}>{policy?.members.map(member=><option key={member.id} value={member.id}>{member.name}</option>)}</select></label><label>{uiText('Destination workspace')}<select aria-label={uiText('Destination workspace')} value={workspace} disabled={busy||!!pending} onChange={event=>{setWorkspace(event.target.value);key.current=crypto.randomUUID();setReceipt(undefined)}}>{workspaces.map(w=><option key={w.id} value={w.id}>{w.view==='company'?'Company':'Messages'} · {w.name}</option>)}</select></label><small>{destination?.path}</small><p>{uiText('Creates an editable copy for this Agent. Shared originals and existing files are kept.')}</p>{receipt&&<div role="status"><progress aria-label={uiText('Download progress')} value={receipt.bytes} max={receipt.totalBytes||1}/><p>{uiText(receipt.state)} · {attachmentSize(receipt.bytes)} / {attachmentSize(receipt.totalBytes)}</p>{receipt.absolutePath&&<small>{receipt.absolutePath}</small>}</div>}{(error||receipt?.error)&&<p role="alert" className="conversation-control-error">{error||receipt?.error}</p>}<footer>{pending&&<button onClick={()=>void cancel()}>{uiText('Cancel download')}</button>}<button disabled={busy} onClick={onClose}>{uiText('Close')}</button><button className="primary" disabled={!employee||!destination||busy||!!pending||receipt?.state==='completed'} onClick={()=>void copy()}>{uiText(receipt?.state==='completed'?'Copied':busy?'Starting…':'Copy document')}</button></footer></section></div>,document.body)
+}

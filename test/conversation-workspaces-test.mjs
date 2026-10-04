@@ -65,7 +65,7 @@ try{
   const transcript=await rpc('session.transcript',{employee:employee.id}),notice=transcript.items.find(item=>item.role==='user'&&item.text.startsWith(body))
   assert.ok(notice);assert.ok(notice.text.includes('[User uploaded shared files]'));for(const name of [photo,photo2,brief,empty])assert.ok(notice.text.includes(name))
   assert.equal(notice.images?.length??0,0);assert.equal(notice.files?.length??0,0)
-  const work=JSON.parse(fs.readFileSync(path.join(f.control,employee.id+'-work.json'),'utf8'));assert.ok(work.text.includes('memberDirectory'));assert.ok(work.text.includes('conversation file'))
+  const work=JSON.parse(fs.readFileSync(path.join(f.control,employee.id+'-work.json'),'utf8'));assert.ok(work.text.includes('memberDirectory'));assert.ok(work.text.includes('conversation.file'));assert.ok(work.text.includes('workspace.catalog'))
  }
  assert.deepEqual(fs.readdirSync(a.cwd).sort(),personalFiles);assert.deepEqual((await f.status(a.id)).lastReply,previousReply)
  assert.equal((await rpc('chat.send',{id:group.id,text:body,images:[photo,photo2],files:[brief,empty],mentions:'all',clientMessageId:'shared-attachments-once'})).id,message.id)

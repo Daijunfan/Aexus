@@ -1094,7 +1094,7 @@
   {
     "name": "channel.timeline",
     "args": "ID [--kind all|news|message] [--before-entry ID] [--cursor CURSOR] [--limit N]",
-    "summary": "Read retained channel news and discussion with full content; choose 1–100 entries and paginate older history. Administrators may read their channels; no read receipts or model calls.",
+    "summary": "Read retained channel news and discussion with full content; choose 1–100 entries and paginate older history. Current members may read their channels; no read receipts or model calls.",
     "gui": "Channel history",
     "inputSchema": {
       "type": "object",
@@ -1175,7 +1175,7 @@
   {
     "name": "channel.context",
     "args": "ID [--entry ID]",
-    "summary": "Read retained news or discussion context within a current channel administrator assignment",
+    "summary": "Read retained news or discussion context within a current channel membership",
     "gui": "Channel discussion",
     "inputSchema": {
       "type": "object",
@@ -1201,7 +1201,7 @@
   {
     "name": "channel.message-send",
     "args": "ID [--text TEXT] [--file PATH] [--images JSON] [--files JSON] [--mentions JSON|all] [--reply-to ID] [--client-message-id ID]",
-    "summary": "User or Secretary: share a channel message with all current administrators and assign work to its dialogue targets",
+    "summary": "User or Secretary: share a channel message with all current members and assign work to its dialogue targets",
     "gui": "Channel composer",
     "inputSchema": {
       "type": "object",
@@ -1423,7 +1423,7 @@
   {
     "name": "channel.list",
     "args": "",
-    "summary": "List your current administrator channel identities; the user additionally receives retained-item summaries",
+    "summary": "List your current channel memberships; the user additionally receives retained-item summaries",
     "gui": "News channels",
     "inputSchema": {
       "type": "object",
@@ -1438,7 +1438,7 @@
   {
     "name": "channel.get",
     "args": "ID",
-    "summary": "Read one channel identity as the user or a current administrator without scanning news histories",
+    "summary": "Read one channel identity as the user or a current member without scanning news histories",
     "gui": "News channels",
     "inputSchema": {
       "type": "object",
@@ -2048,7 +2048,7 @@
       ]
     },
     "readOnly": true,
-    "permission": "operator",
+    "permission": "chat",
     "target": "request"
   },
   {
@@ -2128,7 +2128,7 @@
       ]
     },
     "readOnly": true,
-    "permission": "operator",
+    "permission": "chat",
     "target": "request"
   },
   {
@@ -3573,13 +3573,33 @@
   },
   {
     "name": "assets.tree",
-    "args": "",
+    "args": "[--view Company|Messages|Plan] [--team NAME] [--employee ID] [--conversation REF]",
     "summary": "User-only: read the fixed Company, Messages and Plan workspace tree",
     "gui": "Files and assets",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
-      "properties": {}
+      "properties": {
+        "view": {
+          "enum": [
+            "Company",
+            "Messages",
+            "Plan"
+          ]
+        },
+        "team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conversation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "readOnly": true,
     "permission": "workspace",
@@ -3594,6 +3614,25 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "view": {
+          "enum": [
+            "Company",
+            "Messages",
+            "Plan"
+          ]
+        },
+        "team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conversation": {
+          "type": "string",
+          "minLength": 1
+        },
         "id": {
           "type": "string",
           "minLength": 1
@@ -3621,13 +3660,58 @@
   },
   {
     "name": "assets.search",
-    "args": "[--query TEXT] [--root ID] [--offset N] [--limit N] [--hidden] [--refresh]",
+    "args": "[--query TEXT] [--root ID] [--offset N] [--limit N] [--hidden] [--refresh] [--view Company|Messages|Plan] [--team NAME] [--employee ID] [--conversation REF] [--kind TYPE] [--storage local|remote|cloud] [--sort name|modified|size]",
     "summary": "User-only: page background-indexed files with their Team, employee, group or channel ownership",
     "gui": "Asset list",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "view": {
+          "enum": [
+            "Company",
+            "Messages",
+            "Plan"
+          ]
+        },
+        "team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conversation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "all",
+            "document",
+            "image",
+            "audio",
+            "video",
+            "code",
+            "archive",
+            "other"
+          ]
+        },
+        "storage": {
+          "enum": [
+            "local",
+            "remote",
+            "cloud"
+          ]
+        },
+        "sort": {
+          "enum": [
+            "name",
+            "modified",
+            "size"
+          ]
+        },
         "query": {
           "type": "string"
         },
@@ -3651,6 +3735,28 @@
           "type": "boolean"
         }
       }
+    },
+    "readOnly": true,
+    "permission": "workspace",
+    "target": "request"
+  },
+  {
+    "name": "assets.locate",
+    "args": "ID",
+    "summary": "User-only: resolve a current asset, its parent workspace and human-readable breadcrumbs without opening Finder or downloading cloud documents",
+    "gui": "Show in folder",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
     },
     "readOnly": true,
     "permission": "workspace",
@@ -3767,7 +3873,7 @@
   {
     "name": "conversation.file",
     "args": "CONVERSATION --operation list|read|image|info|chunk|write|mkdir|move|trash|restore [--path PATH] [--to PATH] [--content TEXT] [--hash HASH] [--create] [--hidden] [--offset N] [--id TRASH_ID]",
-    "summary": "Operate shared files with current membership checks; user uploads and other member folders are read-only for Agents",
+    "summary": "Operate shared files with current membership checks; own member folder is writable; only a member Secretary may modify direct root files; peer folders are read-only",
     "gui": "Shared file browser",
     "inputSchema": {
       "type": "object",
@@ -3917,6 +4023,76 @@
     "target": "request"
   },
   {
+    "name": "conversation.member",
+    "args": "CONVERSATION --employee ID --action add|remove --expected-revision N",
+    "summary": "Owner/Admin adds an Agent as Member or removes membership without deleting the employee or files; transfer Owner first",
+    "gui": "Conversation members",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conversation": {
+          "type": "string",
+          "pattern": "^(group|channel):[a-zA-Z0-9_-]+$"
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "enum": [
+            "add",
+            "remove"
+          ]
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "conversation",
+        "employee",
+        "action",
+        "expectedRevision"
+      ]
+    },
+    "readOnly": false,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "conversation.audit",
+    "args": "CONVERSATION [--before ID --limit N]",
+    "summary": "Owner/Admin reads paged governance events with the actual actor, action and time; no private model traces",
+    "gui": "Conversation audit history",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conversation": {
+          "type": "string",
+          "pattern": "^(group|channel):[a-zA-Z0-9_-]+$"
+        },
+        "before": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "conversation"
+      ]
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
     "name": "conversation.policy",
     "args": "CONVERSATION",
     "summary": "Read independent Owner/Admin/Member offices, moderation state and allowed actions; Company rank grants no conversation office",
@@ -3941,7 +4117,7 @@
   {
     "name": "conversation.role",
     "args": "CONVERSATION --employee ID --role owner|admin|member --expected-revision N",
-    "summary": "Owner/Admin may appoint or revoke Admins; only Owner transfers ownership. In channels member removes an Admin; channels have no Owner office.",
+    "summary": "Owner/Admin may appoint or revoke Admins; only Owner transfers ownership. Member demotes an Admin without removing membership; use conversation.member to remove. Owner exists in both groups and channels.",
     "gui": "Conversation roles",
     "inputSchema": {
       "type": "object",
@@ -4549,6 +4725,304 @@
       },
       "required": [
         "conversation"
+      ]
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "workspace.catalog",
+    "args": "[--employee ID|self]",
+    "summary": "List your Company workspace and every joined group/channel member workspace with exact paths, location, permissions and file API; does not choose a workspace or move files",
+    "gui": "Employee workspace selector",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "conversation.entry",
+    "args": "CONVERSATION --id ENTRY_ID",
+    "summary": "Read a complete published group message, channel message or post: text, links, replies, media and downloadable document descriptors; current membership required",
+    "gui": "Published content and files",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conversation": {
+          "type": "string",
+          "pattern": "^(group|channel):[a-zA-Z0-9_-]+$"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "conversation",
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "conversation.download",
+    "args": "CONVERSATION --entry-id ID --attachment-id ID --client-request-id KEY [--workspace WORKSPACE_ID --employee ID --path DIR --name FILENAME]",
+    "summary": "Copy one published attachment into your own Company or joined Message member workspace; defaults to this conversation’s member workspace. Streams documents/images with integrity checks, never writes shared originals or overwrites files.",
+    "gui": "Download to employee workspace",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conversation": {
+          "type": "string",
+          "pattern": "^(group|channel):[a-zA-Z0-9_-]+$"
+        },
+        "entryId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attachmentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "clientRequestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "workspace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "conversation",
+        "entryId",
+        "attachmentId",
+        "clientRequestId"
+      ]
+    },
+    "readOnly": false,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "conversation.download-status",
+    "args": "ID [--cancel]",
+    "summary": "Read your attachment copy progress, final path or failure; cancel affects only your copy. Restart never blindly replays interrupted downloads.",
+    "gui": "Attachment copy progress",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cancel": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "channel.post-trigger-list",
+    "args": "CHANNEL_ID",
+    "summary": "Read per-Agent post-count rules and progress. Owner/Admin sees all; Members see their own rule. Independent of Plan and static timed notices.",
+    "gui": "Channel post-count rules",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "channel.post-trigger-set",
+    "args": "CHANNEL_ID --employee ID --every-posts N --prompt TEXT --enabled true|false --expected-revision N",
+    "summary": "Owner/Admin explicitly enables a saved prompt for one channel member every N newly accepted posts. Revision 0 creates; edits reset only this member’s counter. No Plan record; may invoke the selected Agent.",
+    "gui": "Per-Agent post-count editor",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "everyPosts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "employee",
+        "everyPosts",
+        "prompt",
+        "enabled",
+        "expectedRevision"
+      ]
+    },
+    "readOnly": false,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "channel.post-trigger-remove",
+    "args": "CHANNEL_ID --employee ID --expected-revision N",
+    "summary": "Remove one post-count configuration and cancel its unstarted batches. Existing results and batch history remain; ordinary channel awareness resumes.",
+    "gui": "Remove post-count rule",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "employee",
+        "expectedRevision"
+      ]
+    },
+    "readOnly": false,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "channel.post-trigger-history",
+    "args": "CHANNEL_ID [--employee ID --offset N --limit N]",
+    "summary": "Read counted batches and actual queued/running/completed/failed states, exact batch IDs and message references. Never reports a queued task as a completed summary.",
+    "gui": "Channel batch history",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "chat",
+    "target": "request"
+  },
+  {
+    "name": "channel.post-trigger-batch",
+    "args": "CHANNEL_ID --batch-id ID [--offset N --limit N]",
+    "summary": "Read the exact counted batch with paged complete posts and explicit unavailable entries; no approximate latest-N window, model call or user-read acknowledgment",
+    "gui": "Batch source posts",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "batchId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "id",
+        "batchId"
       ]
     },
     "readOnly": true,

@@ -1273,10 +1273,67 @@
     ]
   },
   "assets.tree": {
-    "fields": []
+    "fields": [
+      [
+        "view",
+        "view",
+        "text",
+        false,
+        false
+      ],
+      [
+        "team",
+        "team",
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "conversation",
+        "conversation",
+        "text",
+        false,
+        false
+      ]
+    ]
   },
   "assets.children": {
     "fields": [
+      [
+        "view",
+        "view",
+        "text",
+        false,
+        false
+      ],
+      [
+        "team",
+        "team",
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "conversation",
+        "conversation",
+        "text",
+        false,
+        false
+      ],
       [
         "id",
         0,
@@ -1310,6 +1367,55 @@
   "assets.search": {
     "fields": [
       [
+        "view",
+        "view",
+        "text",
+        false,
+        false
+      ],
+      [
+        "team",
+        "team",
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "conversation",
+        "conversation",
+        "text",
+        false,
+        false
+      ],
+      [
+        "kind",
+        "kind",
+        "text",
+        false,
+        false
+      ],
+      [
+        "storage",
+        "storage",
+        "text",
+        false,
+        false
+      ],
+      [
+        "sort",
+        "sort",
+        "text",
+        false,
+        false
+      ],
+      [
         "query",
         "query",
         "text",
@@ -1348,6 +1454,17 @@
         "refresh",
         "refresh",
         "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.locate": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
         false,
         false
       ]
@@ -1561,6 +1678,63 @@
         "cancel",
         "cancel",
         "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.member": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "action",
+        "action",
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.audit": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "before",
+        "before",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
         false,
         false
       ]
@@ -1849,6 +2023,259 @@
       [
         "offset",
         "offset",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "workspace.catalog": {
+    "fields": [
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.entry": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "id",
+        "id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.download": {
+    "fields": [
+      [
+        "conversation",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "entryId",
+        "entry-id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "attachmentId",
+        "attachment-id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "clientRequestId",
+        "client-request-id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "workspace",
+        "workspace",
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "path",
+        "path",
+        "text",
+        false,
+        false
+      ],
+      [
+        "name",
+        "name",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "conversation.download-status": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "cancel",
+        "cancel",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.post-trigger-list": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.post-trigger-set": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "everyPosts",
+        "every-posts",
+        "number",
+        false,
+        false
+      ],
+      [
+        "prompt",
+        "prompt",
+        "text",
+        false,
+        false
+      ],
+      [
+        "enabled",
+        "enabled",
+        "boolean-value",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.post-trigger-remove": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.post-trigger-history": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "channel.post-trigger-batch": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "batchId",
+        "batch-id",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
         "number",
         false,
         false

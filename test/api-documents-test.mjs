@@ -11,7 +11,7 @@ const root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(
 const keys=['AGENTS_COMPANY_HOME','AGENTS_COMPANY_PACKAGE_ROOT','AGENTS_COMPANY_BUILTIN_PLUGINS','AGENTS_COMPANY_PLUGIN_DIRS'],previous=Object.fromEntries(keys.map(key=>[key,process.env[key]])),checks=[]
 try{
  fs.mkdirSync(resources);fs.mkdirSync(plugins);fs.writeFileSync(path.join(resources,'package.json'),'{"name":"agents-company"}')
- for(const file of ['API.md','PERMISSIONS.md','PLAN.md','SCHEDULER.md','ARCHITECTURE.md','docs/CONVERSATION_WORKSPACES.md','docs/CONVERSATION_CONTROLS.md','docs/SECRETARY_API_PARITY.md']){fs.mkdirSync(path.dirname(path.join(resources,file)),{recursive:true});fs.copyFileSync(path.join(root,file),path.join(resources,file))}
+ for(const file of ['API.md','PERMISSIONS.md','PLAN.md','SCHEDULER.md','ARCHITECTURE.md','docs/CONVERSATION_WORKSPACES.md','docs/CONVERSATION_CONTROLS.md','docs/MESSAGE_COLLABORATION.md','docs/SECRETARY_API_PARITY.md']){fs.mkdirSync(path.dirname(path.join(resources,file)),{recursive:true});fs.copyFileSync(path.join(root,file),path.join(resources,file))}
  const makePlugin=(id,version)=>{
   const directory=path.join(plugins,id);fs.mkdirSync(directory,{recursive:true})
   const api=`---\nschema: agents-company.cli/v1\nplugin: ${id}\n---\n# ${id} ${version}\n\n${['Purpose','Workspace','Quick start','Commands','Files','Errors','Compatibility'].map(title=>'## '+title+'\n\nFixture '+title+'\n').join('\n')}`
@@ -33,7 +33,7 @@ try{
  const parsed=JSON.parse(execFileSync(process.execPath,[path.join(root,'bin/agents'),'plugin','call','mininotion','page.create','--employee','fixture-employee','--params','{"title":"..."}','--json'],{env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8'}))
  assert.equal(parsed.cmd,'plugin.call');assert.equal(parsed.args.employee,'fixture-employee');assert.equal(parsed.args.method,'page.create');assert.deepEqual(parsed.args.params,{title:'...'})
  checks.push('Short default index separates all three Core views from installed plugins without injecting the full command catalogue')
- for(const [id,file] of [['api','API.md'],['permissions','PERMISSIONS.md'],['plan','PLAN.md'],['scheduler','SCHEDULER.md'],['architecture','ARCHITECTURE.md'],['conversation-workspaces','docs/CONVERSATION_WORKSPACES.md'],['conversation-controls','docs/CONVERSATION_CONTROLS.md'],['secretary-api','docs/SECRETARY_API_PARITY.md']]){
+ for(const [id,file] of [['api','API.md'],['permissions','PERMISSIONS.md'],['plan','PLAN.md'],['scheduler','SCHEDULER.md'],['architecture','ARCHITECTURE.md'],['conversation-workspaces','docs/CONVERSATION_WORKSPACES.md'],['conversation-controls','docs/CONVERSATION_CONTROLS.md'],['message-collaboration','docs/MESSAGE_COLLABORATION.md'],['secretary-api','docs/SECRETARY_API_PARITY.md']]){
   const result=readApiDocument('core/'+id),source=fs.readFileSync(path.join(resources,file),'utf8');assert.equal(result.markdown,source);assert.equal(fs.readFileSync(result.path,'utf8'),source)
  }
  assert.equal(readApiDocument('plugin/mininotion/api').markdown,first.api);assert.equal(JSON.parse(readApiDocument('plugin/fixture-notes/schema').markdown).version,'2.0.0');assert.equal(fs.existsSync(path.join(temp,'runtime-started')),false)

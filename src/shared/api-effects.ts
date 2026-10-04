@@ -1,7 +1,8 @@
 /** Native approval classification only. Unknown commands require write approval; Core authorization is independent. */
 export const READ_ONLY_APIS=new Set(`
-conversation.policy conversation.notice-list conversation.notice-get conversation.notice-preview conversation.notice-history
-assets.tree assets.children assets.search
+workspace.catalog conversation.entry conversation.download-status channel.post-trigger-list channel.post-trigger-history channel.post-trigger-batch
+conversation.policy conversation.audit conversation.notice-list conversation.notice-get conversation.notice-preview conversation.notice-history
+assets.tree assets.children assets.locate assets.search
 status auth.whoami api.list api.describe api.docs avatar.list management.roles management.topology management.activity
 system.info system.directories settings.get engine.list engine.check engine.capabilities engine.models engine.inspect engine.install-plan engine.install-status engine.login-status
 session.list session.status session.info session.snapshot session.activity session.transcript session.inbox session.queue session.background session.search commands.list commands.complete
@@ -17,6 +18,7 @@ plugin.list plugin.describe plugin.windows host.list host.get host.fingerprints 
 export function apiReadOnly(command:string,args:Record<string,unknown>={}){
  if(command==='assets.naming')return !args.apply
  if(command==='conversation.file')return ['list','read','image','info','chunk'].includes(String(args.operation))
+ if(command==='conversation.download-status')return !args.cancel
  if(command==='conversation.transfer')return !args.cancel
  if(command==='channel.settings')return args.patch===undefined
  return READ_ONLY_APIS.has(command)
