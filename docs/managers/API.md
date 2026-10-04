@@ -69,7 +69,7 @@ The full GUI/API comparison and Plan workflow are available as `core/secretary-a
 
 `messenger.directory` lists current workers, groups, parent channels and social elements
 without loading messages, starting engines or acknowledging reads. It is available to
-the user and Secretary. The UI uses the same category/type predicates over live catalogs. Filter enables the type picker; its switch, selected type and category are remembered on this client.
+the user and Secretary. The UI uses the same category/type predicates over live catalogs. Filter enables the type picker across the inbox and disables category controls; turning it off restores the saved category. Its switch, selected type and category are remembered on this client.
 A one-source Telegram channel and its source appear once when both match: the channel
 row keeps the shared discussion reachable. Source-only Telegram filters and categories
 retain the source identity; X/YouTube aggregate channels remain separate.

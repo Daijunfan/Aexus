@@ -2,6 +2,10 @@
 
 > 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
 
+## 0.56.5 — Exclusive Message filtering
+
+- Give Filter priority over saved categories, favorites and archive scopes; category buttons become disabled and grey until Filter is turned off. Restore the saved category and keep the selected type.
+
 ## 0.56.4 — Message navigation and filter memory
 
 - Resume the last employee, group, channel or source when returning to Messages; retain each channel's conversation/Posts mode across refresh and restart.

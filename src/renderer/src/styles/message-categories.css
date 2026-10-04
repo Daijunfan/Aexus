@@ -46,3 +46,6 @@
 .message-sidebar .message-list-heading{padding-top:8px;min-height:44px}
 .message-sidebar .message-list-caption{padding-top:3px;padding-bottom:4px;min-height:24px}
 .message-sidebar .message-category-bar{margin-bottom:3px}
+
+/* Type filtering owns the list while category choices are paused. */
+.message-category-tabs.message-sortable>button:disabled,.message-category-add:disabled,.message-sidebar .message-archive-entry:disabled{color:var(--fg-dim);background:var(--bg-alt);border-color:transparent;opacity:.45;cursor:default}
