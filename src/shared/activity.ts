@@ -1,12 +1,12 @@
 import type {ActivityPreview,Session} from './types'
 
 const excerpt=(text:string)=>text.length>360?'…'+text.slice(-360):text
-/** Only actual, engine-published content from the current turn; never invent reasoning. */
+/** Actual current-turn output, or the submitted task while awaiting engine output. */
 export function activityPreview(session:Session):ActivityPreview|null {
   if(!session.busy)return null
   for(let i=session.items.length-1;i>=0;i--){
     const item=session.items[i]
-    if(item.role==='user')break
+    if(item.role==='user')return item.text.trim()?{kind:'tool',tool:'Task',text:item.text.trim().slice(0,360),running:true}:null
     if(item.role!=='assistant')continue
     for(let j=item.blocks.length-1;j>=0;j--){
       const block=item.blocks[j]

@@ -44,6 +44,8 @@ try{
  assert.equal((await activity()).filter(task=>task.highlighted).length,1,'only the newly communicating pair relights')
  another.destroy()
  duplicate.destroy();streams.forEach(socket=>socket.destroy());await rpc(auth,'session.info',{employee:workers[1].id})
+ for(let i=0;i<12;i++){const disconnected=await follow(workers[i%workers.length].id);disconnected.destroy();await rpc(auth,'session.enqueue',{employee:workers[i%workers.length].id,text:'Queued during subscriber disconnect'})}
+ assert.equal((await rpc(null,'status')).running,true,'disconnecting progress subscribers cannot crash the Core during broadcasts')
  assert.equal((await activity()).length,3,'closing a reply subscription cannot hide actual delegated work')
  fs.rmSync(path.join(control,workers[0].id+'.hold-user'))
  await until(async()=>(await activity()).length===2,'completion clears only its task immediately')

@@ -1254,6 +1254,123 @@
       ]
     ]
   },
+  "assets.browse": {
+    "fields": [
+      [
+        "host",
+        "host",
+        "text",
+        false,
+        false
+      ],
+      [
+        "view",
+        "view",
+        "text",
+        false,
+        false
+      ],
+      [
+        "team",
+        "team",
+        "text",
+        false,
+        false
+      ],
+      [
+        "employee",
+        "employee",
+        "text",
+        false,
+        false
+      ],
+      [
+        "conversation",
+        "conversation",
+        "text",
+        false,
+        false
+      ],
+      [
+        "kind",
+        "kind",
+        "text",
+        false,
+        false
+      ],
+      [
+        "storage",
+        "storage",
+        "text",
+        false,
+        false
+      ],
+      [
+        "sort",
+        "sort",
+        "text",
+        false,
+        false
+      ],
+      [
+        "root",
+        "root",
+        "text",
+        false,
+        false
+      ],
+      [
+        "query",
+        "query",
+        "text",
+        false,
+        false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ],
+      [
+        "hidden",
+        "hidden",
+        "boolean",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.info": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "assets.preview": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
   "assets.naming": {
     "fields": [
       [
@@ -1274,6 +1391,13 @@
   },
   "assets.tree": {
     "fields": [
+      [
+        "host",
+        "host",
+        "text",
+        false,
+        false
+      ],
       [
         "view",
         "view",
@@ -1307,6 +1431,13 @@
   "assets.children": {
     "fields": [
       [
+        "host",
+        "host",
+        "text",
+        false,
+        false
+      ],
+      [
         "view",
         "view",
         "text",
@@ -1330,6 +1461,13 @@
       [
         "conversation",
         "conversation",
+        "text",
+        false,
+        false
+      ],
+      [
+        "sort",
+        "sort",
         "text",
         false,
         false
@@ -1367,6 +1505,13 @@
   "assets.search": {
     "fields": [
       [
+        "host",
+        "host",
+        "text",
+        false,
+        false
+      ],
+      [
         "view",
         "view",
         "text",
@@ -1453,6 +1598,13 @@
       [
         "refresh",
         "refresh",
+        "boolean",
+        false,
+        false
+      ],
+      [
+        "folders",
+        "folders",
         "boolean",
         false,
         false

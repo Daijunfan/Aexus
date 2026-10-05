@@ -20,7 +20,7 @@ try{
   if(request.cmd==='assets.children'&&args.id==='shared|Documents'&&failFolder){failFolder=false;await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({ok:false,error:'Fixture folder interrupted'})});return}
   const pauseRead=request.cmd==='assets.file'&&args.operation==='read'&&args.path==='race-a.txt'&&delayedRead
   const pauseWrite=request.cmd==='assets.file'&&args.operation==='write'&&args.path==='race-b.txt'&&delayedWrite
-  const pauseSearch=request.cmd==='assets.search'&&args.query==='race-a'&&delayedSearch
+  const pauseSearch=request.cmd==='assets.browse'&&args.query==='race-a'&&delayedSearch
   const pauseLocate=request.cmd==='assets.locate'&&String(args.id).includes('race-a')&&delayedLocate
   if(request.cmd==='assets.file'&&args.operation==='write'&&args.path==='race-b.txt')writeCount++
   if(pauseRead||pauseWrite||pauseSearch||pauseLocate){if(pauseRead)delayedRead=false;if(pauseWrite)delayedWrite=false;if(pauseSearch)delayedSearch=false;if(pauseLocate)delayedLocate=false;const response=await route.fetch();await new Promise(resolve=>{if(pauseRead)releaseRead=resolve;else if(pauseWrite)releaseWrite=resolve;else if(pauseSearch)releaseSearch=resolve;else releaseLocate=resolve});await route.fulfill({response});return}
@@ -40,7 +40,7 @@ try{
  check('Late search results cannot replace the current query; deleted files give a refreshable location error')
  await search.fill('race-a');await expect(drawer.locator('.asset-list-row')).toHaveCount(1)
  await drawer.locator('.asset-entry').evaluate(node=>{window.stableAssetNode=node;window.assetDisconnected=false;window.assetObserver=new MutationObserver(()=>{if(!node.isConnected)window.assetDisconnected=true});window.assetObserver.observe(node.closest('.asset-scroll'),{childList:true,subtree:true})})
- const refreshed=page.waitForResponse(response=>{if(!response.url().endsWith('/api/rpc'))return false;const body=response.request().postDataJSON();return body?.cmd==='assets.search'&&body.args?.query==='race-a'&&body.args?.limit===100});await drawer.getByRole('button',{name:'Refresh files',exact:true}).click();await refreshed
+ const refreshed=page.waitForResponse(response=>{if(!response.url().endsWith('/api/rpc'))return false;const body=response.request().postDataJSON();return body?.cmd==='assets.browse'&&body.args?.query==='race-a'&&body.args?.limit===60});await drawer.getByRole('button',{name:'Refresh files',exact:true}).click();await refreshed
  assert.ok(await page.evaluate(()=>{window.assetObserver.disconnect();return window.stableAssetNode.isConnected&&!window.assetDisconnected}),'Refreshing the same query keeps the original row mounted')
  check('Background refresh retains the current file row instead of blanking and flashing the list')
  delayedLocate=true;await drawer.getByRole('button',{name:'Show in folder: race-a.txt',exact:true}).click();await expect.poll(()=>!!releaseLocate).toBe(true);await drawer.getByRole('button',{name:'Close shared transfer area',exact:true}).click();releaseLocate();await expect(drawer).toHaveCount(0);await expect(preview).toHaveCount(0)

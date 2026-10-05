@@ -3,7 +3,7 @@ import path from 'node:path'
 import {createHash} from 'node:crypto'
 import {create as tar,list as listTar} from 'tar'
 import {root,sourceFiles} from './source-files.mjs'
-const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')),name='Anexus-'+pkg.version+'-source'
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')),name='Avalon-'+pkg.version+'-source'
 const output=path.join(root,'release'),stage=path.join(root,'.dist',name)
 fs.mkdirSync(output,{recursive:true});fs.rmSync(stage,{recursive:true,force:true});fs.mkdirSync(stage,{recursive:true})
 const manifest=[],files=sourceFiles()

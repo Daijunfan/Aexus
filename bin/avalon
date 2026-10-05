@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// Both command names use the same parser, transport and authenticated Core.
+require('./agents')

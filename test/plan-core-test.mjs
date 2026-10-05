@@ -29,7 +29,9 @@ try{
  await f.until(async()=>(await f.call(at,'schedule','history',self.id)).some(run=>run.status==='succeeded'),'self wake runs through the existing employee')
  assert.ok((await f.cli('session','transcript',a.id)).text.includes('SELF_WAKE_PROOF'));assert.equal((await f.call(at,'plan','query')).rows.find(row=>row.id===self.id).status,'completed')
  const weekly=await f.call(mt,'schedule','create','--name','Sunday review','--employee',b.id,'--time','17:00','--days','7','--timezone','Asia/Shanghai','--prompt','WEEKLY_REVIEW','--priority','urgent','--tags','["review","team"]','--max-occurrences','4','--paused')
- assert.deepEqual((await f.call(mt,'schedule','preview',weekly.id,'--after','2026-10-02T00:00:00Z','--count','2')).times,['2026-10-04T09:00:00.000Z','2026-10-11T09:00:00.000Z'])
+ const sundayDraft={name:weekly.name,action:weekly.action,rule:weekly.rule,enabled:false}
+ assert.deepEqual((await rpc(mt,'schedule.preview',{spec:sundayDraft,after:'2026-10-02T00:00:00Z',count:2})).times,['2026-10-04T09:00:00.000Z','2026-10-11T09:00:00.000Z'])
+ const savedPreview=(await f.call(mt,'schedule','preview',weekly.id,'--count','2')).times;assert.ok(savedPreview.every(time=>Date.parse(time)>=Date.now()-1000));assert.equal(Date.parse(savedPreview[1])-Date.parse(savedPreview[0]),7*86400000)
  const monthly=await f.cli('schedule','create','--name','Month end','--employee',b.id,'--time','17:00','--month-day','last','--timezone','Asia/Shanghai','--prompt','MONTH_END','--paused')
  assert.equal((await f.cli('schedule','preview',monthly.id,'--after','2028-02-01T00:00:00Z','--count','1')).times[0],'2028-02-29T09:00:00.000Z')
  const month31={name:'Month 31',action:{type:'agent',employeeId:b.id,prompt:'CHECK'},rule:{kind:'monthly',day:31,time:'09:00',timezone:'UTC'},enabled:false}

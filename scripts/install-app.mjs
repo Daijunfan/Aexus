@@ -12,19 +12,21 @@ const plist=(app,key)=>execFileSync('/usr/libexec/PlistBuddy',['-c','Print :'+ke
 export function runningApp(target) {
   return execFileSync('/bin/ps',['-axo','command='],{encoding:'utf8'}).split('\n').filter(line=>line.trim().startsWith(target+'/Contents/'))
 }
-export function installApp({source,target='/Applications/Anexus.app',home=process.env.AGENTS_COMPANY_HOME||path.join(os.homedir(),'AgentsCompany')}) {
+export function installApp({source,target='/Applications/Avalon.app',home=process.env.AGENTS_COMPANY_HOME||path.join(os.homedir(),'AgentsCompany')}) {
   source=path.resolve(source);target=path.resolve(target)
   if(source===target)throw new Error('Source and target must differ')
-  const legacy=path.basename(target)==='Anexus.app'?path.join(path.dirname(target),'Agents Company.app'):null
-  const replaced=[target,...(legacy&&legacy!==source?[legacy]:[])].filter(app=>fs.existsSync(app))
-  const stopped=()=>{if([...new Set([source,target,...replaced])].some(app=>runningApp(app).length))throw new Error('Close Anexus and Agents Company before installing. Running applications cannot be replaced; no app files were changed.')}
+  const legacyNames=path.basename(target)==='Avalon.app'?['Anexus.app','Agents Company.app']:path.basename(target)==='Anexus.app'?['Agents Company.app']:[]
+  const legacies=legacyNames.map(name=>path.join(path.dirname(target),name))
+  const legacy=legacies.find(app=>fs.existsSync(app)&&app!==source)??null
+  const replaced=[target,...legacies.filter(app=>app!==source)].filter(app=>fs.existsSync(app))
+  const stopped=()=>{if([...new Set([source,target,...replaced])].some(app=>runningApp(app).length))throw new Error('Close Avalon and legacy application versions before installing. Running applications cannot be replaced; no app files were changed.')}
   stopped()
   if([source,...replaced].some(app=>plist(app,'CFBundleIdentifier')!==bundleId))throw new Error('Unexpected application identity')
   const archive=path.join(source,'Contents/Resources/app.asar'),html=asar.extractFile(archive,'out/renderer/index.html').toString('utf8')
   if(!html.startsWith('<!doctype html>')||!html.includes('id="root"'))throw new Error('Invalid renderer HTML')
   for(const [,file] of html.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g))if(!asar.extractFile(archive,'out/renderer/'+file).length)throw new Error('Empty renderer asset: '+file)
   const version=plist(source,'CFBundleShortVersionString'),stamp=Date.now().toString(),backups=path.join(home,'backups')
-  const stage=path.join(path.dirname(target),'.Anexus-'+stamp+'-stage'),moved=[]
+  const stage=path.join(path.dirname(target),'.Avalon-'+stamp+'-stage'),moved=[]
   fs.mkdirSync(backups,{recursive:true})
   try {
     execFileSync('/usr/bin/ditto',[source,stage])
@@ -42,6 +44,6 @@ export function installApp({source,target='/Applications/Anexus.app',home=proces
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2),value=key=>args[args.indexOf(key)+1]
-  try{if(!args.includes('--source'))throw new Error('Usage: npm run install:mac -- --source /path/Anexus.app [--target /path/Anexus.app]');console.log(JSON.stringify(installApp({source:value('--source'),target:args.includes('--target')?value('--target'):undefined}),null,2))}
+  try{if(!args.includes('--source'))throw new Error('Usage: npm run install:mac -- --source /path/Avalon.app [--target /path/Avalon.app]');console.log(JSON.stringify(installApp({source:value('--source'),target:args.includes('--target')?value('--target'):undefined}),null,2))}
   catch(error){console.error(error.message);process.exitCode=1}
 }

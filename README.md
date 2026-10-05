@@ -2,13 +2,33 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-**为 Coding Agent 增加交互、组织与工作空间的开放基础设施，CLI 优先。**
+**把 Coding Agent 组织成能协作的小队：Company 看分工，Messages 聊任务，Plan 安排下一步。**
 
 Avalon 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
 
-![Avalon：同一工作空间中的 Coding Agent 团队](docs/images/cover.png)
+**当前源码版本：0.58.1。** 应用显示名、窗口标题和 macOS 安装目录已统一为 Avalon，旧 Anexus 应用沿用原有数据迁移。详见 [0.58.1 更新说明](docs/releases/0.58.1.zh-CN.md)。
 
-真实运行截图：Claude Code、Cline 和 Pi 协作处理本机、Linux 与 Windows 工作目录；图中 Codex 连接失败，未计入本次成功执行。
+## 三个视图，同一支小队
+
+### Company：把协作关系看清楚
+
+秘书居中协调六位 Manager，每位 Manager 管理两名员工。不同 Coding Agent 在同一画布中工作，团队绑定实际工作区；工作消息框、休息状态与绿色通信连线可以一起查看。
+
+![Avalon Company 实拍：秘书、Manager 和员工的两层协作关系](docs/images/company-live.png)
+
+### Messages：群组里协作，频道里读新闻和 AI 摘要
+
+群消息送达全部成员，@ 点名和回复确定处理对象；员工根据任务需要公开回应。频道保留原始新闻、来源和图像，员工可以在同一处发布摘要与分析。
+
+![Avalon Messages 实拍：真实新闻原帖与员工生成的中文摘要](docs/images/messages-live.png)
+
+### Plan：把下一步排到日期上
+
+用月历、周计划、看板、时间线等十种布局管理一次、重复与事件任务。计划事项与实际执行记录分别呈现，方便查看负责人、后续安排和结果。
+
+![Avalon Plan 实拍：月历里的已保存任务与工作安排](docs/images/plan-live.png)
+
+三张均为 2026-10-04 的真实运行界面截图。Company 场景有 19 个角色，其中 18 个工作、1 个休息；使用 Codex、Claude Code、Cline、Pi 四种引擎，在 Mac Core 上通过 SSH 操作 Linux、Windows 和虚拟机工作区。Messages 中的摘要由实际员工生成；Plan 中的未来事项是已保存排期。截图保留拍摄时的 Anexus 显示名，当前软件名称为 Avalon。各视图、角色与执行位置以实际能力为准。
 
 [下载安装包](https://github.com/Daijunfan/Avalon/releases) · [安装与部署](docs/DEPLOYMENT.md) · [全部 CLI / API](API.md) · [权限说明](PERMISSIONS.md) · [参与开发](CONTRIBUTING.md)
 
@@ -95,17 +115,17 @@ npm run dev
 
 ### CLI 与浏览器
 
-现有 0.56.1 安装包仍使用 `Anexus.app` 和 `anexus` 命令名；这些兼容入口连接同一 Core。
+当前应用名称为 `Avalon.app`，命令入口为 `agents` 和 `avalon`。旧 `Anexus.app` 会由安装器迁移，`anexus` 命令仍作为兼容入口连接同一 Core。
 
 ```sh
 npm run build:server
 npm run build:web
-node bin/anexus serve --web --port 5151
+node bin/avalon serve --web --port 5151
 ```
 
-另开终端运行 `node bin/anexus web token`，在 `http://127.0.0.1:5151` 输入令牌登录。令牌用于建立认证会话，不放入 URL。异机访问使用 HTTPS 或 SSH 转发。
+另开终端运行 `node bin/avalon web token`，在 `http://127.0.0.1:5151` 输入令牌登录。令牌用于建立认证会话，不放入 URL。异机访问使用 HTTPS 或 SSH 转发。
 
-`anexus` 与原有 `agents` 命令使用同一个解析器与 Core。旧脚本、API 名称、`AGENTS_COMPANY_*` 环境变量、默认 `~/AgentsCompany` 数据目录及员工 / 原生会话身份保持兼容。项目的 GitHub 地址为 [Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。
+`avalon`、兼容入口 `anexus` 和原有 `agents` 命令使用同一个解析器与 Core。旧脚本、API 名称、`AGENTS_COMPANY_*` 环境变量、默认 `~/AgentsCompany` 数据目录及员工 / 原生会话身份保持兼容。项目的 GitHub 地址为 [Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。
 
 不要让桌面和独立后端同时打开同一个数据目录。安装、存储与部署细节见[部署文档](docs/DEPLOYMENT.md)。
 

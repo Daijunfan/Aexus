@@ -1,5 +1,5 @@
 import type {AssetNode} from './asset-schema'
-export const ASSET_KINDS=['all','document','image','audio','video','code','archive','other'] as const
+export const ASSET_KINDS=['all','folder','document','image','audio','video','code','archive','other'] as const
 export function assetFileKind(name:string){
  const ext=name.split('.').at(-1)?.toLowerCase()??''
  if(/^(png|jpe?g|gif|webp|svg|bmp|heic|avif|ico)$/.test(ext))return 'image'

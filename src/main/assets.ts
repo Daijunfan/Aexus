@@ -1,13 +1,15 @@
+import {assetHost,localAssetHost} from './asset-hosts'
+import {channelEngine} from './channel-engines'
 import fs from 'node:fs'
 import path from 'node:path'
 import {APP_HOME} from '../shared/core-paths'
 import {directoryName} from '../shared/directory-names'
-import type {AssetNode,AssetOwner,AssetFilters,AssetTree,AssetLocation} from '../shared/asset-schema'
+import type {AssetNode,AssetOwner,AssetFilters,AssetTree,AssetLocation,AssetHost,AssetBrowse} from '../shared/asset-schema'
 import {assetFileKind,assetNodeId} from '../shared/asset-presentation'
 import type {FileLocation} from '../shared/transfers'
 import {requestContext} from './authorization'
 import {readStore} from './store'
-import {teamSettings} from '../shared/types'
+import {teamSettings,employeeSettings} from '../shared/types'
 import {catalog} from './chat-group-store'
 import {groupMediaRoot} from './chat-groups'
 import {all,projectChannelDocuments,postSelect} from './channel-store'
@@ -17,25 +19,25 @@ import {workspaceFiles,workspacePath} from './files'
 import {assetIndex} from './asset-index'
 
 type Call=(command:string,args:Record<string,unknown>)=>Promise<any>
-export type AssetMount={id:string;name:string;label:string;root:string;scope:Omit<FileLocation,'path'>;owner:AssetOwner;remote?:boolean;readOnly?:boolean;members?:Record<string,string>;memberOwners?:Record<string,AssetOwner>;kind?:string}
+export type AssetMount={host?:AssetHost;id:string;name:string;label:string;root:string;scope:Omit<FileLocation,'path'>;owner:AssetOwner;remote?:boolean;readOnly?:boolean;members?:Record<string,string>;memberOwners?:Record<string,AssetOwner>;kind?:string}
 const operator=()=>{if(requestContext().principal.kind!=='operator')throw Error('Only the user may browse all company assets')}
 const folder=(id:string,name:string,children:AssetNode[]=[]):AssetNode=>({id,name,directory:true,locked:true,children})
-const mountNode=(mount:AssetMount):AssetNode=>({...folder(mount.id,mount.name),label:mount.label,kind:mount.kind,storage:mount.remote?'remote':'local',owner:mount.owner,readOnly:mount.readOnly,location:{asset:mount.id,path:'.'},children:undefined})
+const mountNode=(mount:AssetMount):AssetNode=>({...folder(mount.id,mount.name),host:mount.host,label:mount.label,kind:mount.kind,storage:mount.remote?'remote':'local',owner:mount.owner,readOnly:mount.readOnly,location:{asset:mount.id,path:'.'},children:undefined})
 
 /** View folders are a projection of existing identities, never a second workspace store. */
 export function assetCatalog(){
- operator();const store=readStore(),mounts:AssetMount[]=[],add=(mount:AssetMount)=>{mounts.push(mount);return mountNode(mount)}
+ operator();const store=readStore(),mounts:AssetMount[]=[],add=(mount:AssetMount)=>{mount.host??=localAssetHost();mounts.push(mount);return mountNode(mount)}
  const company=[add({id:'shared',name:'Shared',label:'Shared',root:sharedDirectory(),scope:{shared:true},kind:'shared',owner:{view:'Company',label:'Shared'}})]
  for(const team of store.groups){
   const config=teamSettings(store,team),root=store.teamRoots?.[team];if(!root)continue
   const owner:AssetOwner={view:'Company',label:team,team},id='team:'+encodeURIComponent(team)
-  const workspace=add({id,name:'Workspace',label:team,root,scope:{team},kind:'team',owner,remote:config.mode==='cloud'})
-  const employees=store.sessions.filter(card=>card.group===team&&!card.deleting).map(card=>add({id:'employee:'+card.id,name:directoryName(card.title,'employee'),label:card.title,root:card.cwd,scope:{employee:card.id},kind:'employee',owner:{...owner,label:team+' / '+card.title,employee:card.id,employeeName:card.title},remote:config.mode==='cloud'&&card.workEnvironment!=='local'}))
+  const workspace=add({id,name:'Workspace',label:team,root,scope:{team},kind:'team',owner,host:assetHost(config),remote:config.mode==='cloud'})
+  const employees=store.sessions.filter(card=>card.group===team&&!card.deleting).map(card=>add({id:'employee:'+card.id,name:directoryName(card.title,'employee'),label:card.title,root:card.cwd,scope:{employee:card.id},kind:'employee',owner:{...owner,label:team+' / '+card.title,employee:card.id,employeeName:card.title,avatar:card.avatar,color:card.color},host:assetHost(employeeSettings(store,card)),remote:employeeSettings(store,card).mode==='cloud'}))
   workspace.children=employees.map(employee=>{const paths=root.includes('\\')?path.win32:path.posix,member=mounts.find(mount=>mount.id===employee.id)!,part=paths.relative(root,member.root);return {...employee,external:part==='..'||part.startsWith('..'+paths.sep)||paths.isAbsolute(part)}});company.push({...folder('company:'+encodeURIComponent(team),directoryName(team,'team'),[workspace]),label:team,kind:'team',owner})
  }
  const conversation=(kind:'group'|'channel',item:{id:string;name:string})=>{
   const ref=kind+':'+item.id,workspace=workspaceForMember(ref,undefined,false)
-  return add({id:ref,name:workspace.folderName,label:item.name,root:workspace.root,scope:{conversation:ref},owner:{view:'Messages',label:item.name,conversation:ref,conversationName:item.name},kind,members:Object.fromEntries(workspace.members.map(member=>[member.directory,member.employeeId])),memberOwners:Object.fromEntries(workspace.members.map(member=>[member.directory,{view:'Messages',label:item.name+' / '+member.name,conversation:ref,conversationName:item.name,employee:member.employeeId,employeeName:member.name,team:store.sessions.find(card=>card.id===member.employeeId)?.group}]))})
+  return add({id:ref,name:workspace.folderName,label:item.name,root:workspace.root,scope:{conversation:ref},owner:{view:'Messages',label:item.name,conversation:ref,conversationName:item.name},kind,members:Object.fromEntries(workspace.members.map(member=>[member.directory,member.employeeId])),memberOwners:Object.fromEntries(workspace.members.map(member=>[member.directory,{view:'Messages',label:item.name+' / '+member.name,conversation:ref,conversationName:item.name,employee:member.employeeId,employeeName:member.name,avatar:store.sessions.find(card=>card.id===member.employeeId)?.avatar,color:store.sessions.find(card=>card.id===member.employeeId)?.color,team:store.sessions.find(card=>card.id===member.employeeId)?.group}]))})
  }
  const groups=catalog().groups.map(item=>{const node=conversation('group',item);const published=add({id:'published:group:'+item.id,name:'Published',label:item.name+' / Published',root:groupMediaRoot(item.id),scope:{group:item.id},kind:'published',owner:{view:'Messages',label:item.name,conversation:'group:'+item.id},readOnly:true});published.external=true;node.children=[published];return node}),channels=all('SELECT id,name FROM channels').map(item=>conversation('channel',{id:String(item.id),name:String(item.name)}))
  const plan=add({id:'plan:exports',name:'Exports',label:'Plan exports',root:path.join(APP_HOME,'plan-assets'),scope:{},kind:'exports',owner:{view:'Plan',label:'Exports'}})
@@ -68,13 +70,14 @@ export function assetReference(id:string,value?:string){
 }
 const split=(id:string)=>{const ref=assetReference(id);return [ref.asset,ref.path]}
 
+const documentHost=(channelId:string)=>{const engine=channelEngine(channelId);return engine.kind==='external'&&engine.fileStorage?assetHost({mode:'cloud',hostId:engine.fileStorage.hostId}):undefined}
 function cloudDocuments(root?:string,query=''):AssetNode[]{
  const result:AssetNode[]=[]
  for(const row of all(postSelect+" WHERE p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) AND p.remote_files<>'[]'",Date.now())){
   if(root&&root!=='channel:'+row.channel_id)continue
-  for(const file of projectChannelDocuments(row))if(!file.savedPath&&(!query||(file.name+' '+row.source_name).toLocaleLowerCase().includes(query.toLocaleLowerCase())))result.push({id:'cloud:'+row.id+':'+file.id,name:file.name,directory:false,locked:true,storage:'cloud',kind:assetFileKind(file.name),bytes:file.bytes,modifiedAt:row.published_at,owner:{view:'Messages',label:row.source_name,conversation:'channel:'+row.channel_id},document:{postId:row.id,fileId:file.id}})
+  for(const file of projectChannelDocuments(row))if(!file.savedPath&&(!query||(file.name+' '+row.source_name).toLocaleLowerCase().includes(query.toLocaleLowerCase())))result.push({id:'cloud:'+row.id+':'+file.id,name:file.name,directory:false,locked:true,storage:'cloud',kind:assetFileKind(file.name),host:documentHost(row.channel_id),bytes:file.bytes,modifiedAt:row.published_at,owner:{view:'Messages',label:row.source_name,conversation:'channel:'+row.channel_id},document:{postId:row.id,fileId:file.id}})
  }
- for(const row of all("SELECT m.*,s.channel_id,s.name AS source_name FROM media m JOIN posts p ON p.id=m.post_id JOIN sources s ON s.id=p.source_id WHERE p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) AND EXISTS(SELECT 1 FROM json_each(p.media_ids) WHERE value=m.id)",Date.now()))if((!root||root==='channel:'+row.channel_id)&&(!query||(row.name+' '+row.source_name).toLocaleLowerCase().includes(query.toLocaleLowerCase())))result.push({id:'published-media:'+row.id,name:row.name,directory:false,locked:true,readOnly:true,storage:'local',kind:assetFileKind(row.name),bytes:row.bytes,owner:{view:'Messages',label:row.source_name,conversation:'channel:'+row.channel_id},location:{asset:'published:channel:'+row.channel_id,path:row.post_id+'/'+row.id}})
+ for(const row of all("SELECT m.*,s.channel_id,s.name AS source_name FROM media m JOIN posts p ON p.id=m.post_id JOIN sources s ON s.id=p.source_id WHERE p.state='active' AND (p.saved_at IS NOT NULL OR p.expires_at>?) AND EXISTS(SELECT 1 FROM json_each(p.media_ids) WHERE value=m.id)",Date.now()))if((!root||root==='channel:'+row.channel_id)&&(!query||(row.name+' '+row.source_name).toLocaleLowerCase().includes(query.toLocaleLowerCase())))result.push({id:'published-media:'+row.id,name:row.name,directory:false,locked:true,readOnly:true,storage:'local',host:localAssetHost(),kind:assetFileKind(row.name),bytes:row.bytes,owner:{view:'Messages',label:row.source_name,conversation:'channel:'+row.channel_id},location:{asset:'published:channel:'+row.channel_id,path:row.post_id+'/'+row.id}})
  return result
 }
 
@@ -85,11 +88,11 @@ function queryScope(args:Record<string,any>,catalog:Catalog):QueryScope{
  if(args.view!==undefined&&!['Company','Messages','Plan'].includes(args.view))throw Error('Choose Company, Messages or Plan')
  if(args.employee!==undefined&&!employee)throw Error('Employee no longer exists; clear the employee filter')
  if(args.team!==undefined&&!store.groups.includes(args.team))throw Error('Team no longer exists; clear the Team filter')
- if(args.kind!==undefined&&!['all','document','image','audio','video','code','archive','other'].includes(args.kind))throw Error('Choose a supported asset type')
+ if(args.kind!==undefined&&!['folder','all','document','image','audio','video','code','archive','other'].includes(args.kind))throw Error('Choose a supported asset type')
  if(args.storage!==undefined&&!['local','remote','cloud'].includes(args.storage))throw Error('Choose local, remote or cloud storage')
  if(args.sort!==undefined&&!['name','modified','size'].includes(args.sort))throw Error('Choose name, modified or size sorting')
  const sharedConversations=catalog.mounts.filter(mount=>mount.owner.conversation&&Object.values(mount.memberOwners??{}).some(owner=>(!employee||owner.employee===employee.id)&&(!args.team||owner.team===args.team))).map(mount=>mount.owner.conversation!)
- return {view:args.view,team:args.team,employee:args.employee,conversation:args.conversation,kind:args.kind,storage:args.storage,sort:args.sort,sharedConversations,employeeTeam:employee?.group}
+ return {host:args.host,view:args.view,team:args.team,employee:args.employee,conversation:args.conversation,kind:args.kind,storage:args.storage,sort:args.sort,sharedConversations,employeeTeam:employee?.group}
 }
 function owns(owner:AssetOwner|undefined,scope:QueryScope){
  if(!owner)return !scope.view&&!scope.team&&!scope.employee&&!scope.conversation
@@ -98,19 +101,19 @@ function owns(owner:AssetOwner|undefined,scope:QueryScope){
  if(scope.employee&&owner.employee!==scope.employee&&!(owner.employee===undefined&&(owner.conversation&&scope.sharedConversations.includes(owner.conversation)||!owner.conversation&&owner.team===scope.employeeTeam)))return false
  return true
 }
-function memberNodes(mount:AssetMount):AssetNode[]{return Object.entries(mount.memberOwners??{}).map(([directory,owner])=>({id:assetNodeId(mount.id,directory),name:directory,label:owner.employeeName,kind:'member',storage:mount.remote?'remote':'local',directory:true,locked:true,owner,location:{asset:mount.id,path:directory}}))}
-const publishedWorkspace=(channelId:string,name:string):AssetNode=>({id:'published:channel:'+channelId,name:'Published',label:'Published attachments',kind:'published',directory:true,locked:true,readOnly:true,storage:'local',owner:{view:'Messages',label:name,conversation:'channel:'+channelId,conversationName:name},location:{asset:'published:channel:'+channelId,path:'.'}})
+function memberNodes(mount:AssetMount):AssetNode[]{return Object.entries(mount.memberOwners??{}).map(([directory,owner])=>({id:assetNodeId(mount.id,directory),name:directory,label:owner.employeeName,kind:'member',host:mount.host,storage:mount.remote?'remote':'local',directory:true,locked:true,owner,location:{asset:mount.id,path:directory}}))}
+const publishedWorkspace=(channelId:string,name:string):AssetNode=>({id:'published:channel:'+channelId,name:'Published',label:'Published attachments',kind:'published',directory:true,locked:true,readOnly:true,storage:'local',host:localAssetHost(),owner:{view:'Messages',label:name,conversation:'channel:'+channelId,conversationName:name},location:{asset:'published:channel:'+channelId,path:'.'}})
 function enrichedTree(catalog:Catalog,scope:QueryScope):AssetNode{
  const visit=(node:AssetNode):AssetNode|undefined=>{
   const mount=catalog.mounts.find(mount=>mount.id===node.id),members=mount?memberNodes(mount):[],published=node.id.startsWith('channel:')?[publishedWorkspace(node.id.slice(8),mount?.label??node.name)]:[]
   const children=[...(node.children??[]),...members,...published].map(visit).filter((node):node is AssetNode=>!!node)
-  if(node.location&&!owns(node.owner,scope)&&!children.length)return
+  if(node.location&&(!owns(node.owner,scope)||scope.host&&node.host?.id!==scope.host)&&!children.length)return
   if(!node.location&&!['root','company','messages','groups','channels','plan'].includes(node.id)&&!children.length)return
   return {...node,children:children.length||node.children?children:undefined}
  }
  return visit(catalog.tree)!
 }
-const facets=(catalog:Catalog)=>{const store=readStore();return {teams:[...store.groups],employees:store.sessions.filter(card=>!card.deleting).map(card=>({id:card.id,name:card.title,team:card.group})),conversations:catalog.mounts.filter(mount=>mount.kind==='group'||mount.kind==='channel').map(mount=>({id:mount.id,name:mount.label,kind:mount.kind as 'group'|'channel'}))}}
+const facets=(catalog:Catalog)=>{const store=readStore();return {hosts:[...new Map([...catalog.mounts.map(mount=>mount.host!),...cloudDocuments().map(node=>node.host).filter((host):host is AssetHost=>!!host)].map(host=>[host.id,host])).values()],teams:[...store.groups],employees:store.sessions.filter(card=>!card.deleting).map(card=>({id:card.id,name:card.title,team:card.group})),conversations:catalog.mounts.filter(mount=>mount.kind==='group'||mount.kind==='channel').map(mount=>({id:mount.id,name:mount.label,kind:mount.kind as 'group'|'channel'}))}}
 const pageSlice=(entries:AssetNode[],args:Record<string,any>)=>{const offset=args.offset??0,limit=args.limit??500;return {entries:entries.slice(offset,offset+limit),total:entries.length,nextOffset:offset+limit<entries.length?offset+limit:null}}
 function publishedImages(id:string,value='.'){
  const channelId=id.slice(18),files=cloudDocuments('channel:'+channelId).filter(node=>!node.document&&node.location)
@@ -123,9 +126,9 @@ function rootScopes(catalog:Catalog,id?:string){
  const node=find(enrichedTree(catalog,{sharedConversations:[]}),root);if(!node)throw Error('Workspace no longer exists; refresh the file list')
  const scopes:{id:string;path:string}[]=[];const walk=(node:AssetNode)=>{if(node.location?.asset)scopes.push({id:node.location.asset,path:node.location.path});for(const child of node.children??[])walk(child)};walk(node);return scopes
 }
-function filterCloud(nodes:AssetNode[],scope:QueryScope,scopes?:{id:string;path:string}[]){return nodes.filter(node=>owns(node.owner,scope)&&(!scope.kind||scope.kind==='all'||assetFileKind(node.name)===scope.kind)&&(!scope.storage||node.storage===scope.storage)&&(!scopes||scopes.some(root=>root.path==='.'&&(root.id===node.owner?.conversation||root.id===node.location?.asset))))}
+function filterCloud(nodes:AssetNode[],scope:QueryScope,scopes?:{id:string;path:string}[]){return nodes.filter(node=>owns(node.owner,scope)&&(!scope.host||node.host?.id===scope.host)&&(!scope.kind||scope.kind==='all'||assetFileKind(node.name)===scope.kind)&&(!scope.storage||node.storage===scope.storage)&&(!scopes||scopes.some(root=>root.path==='.'&&(root.id===node.owner?.conversation||root.id===node.location?.asset))))}
 function ancestors(node:AssetNode,id:string,path:{id:string;name:string}[]=[]):{id:string;name:string}[]|undefined{const here=[...path,{id:node.id,name:node.label??node.name}];return node.id===id?here:node.children?.map(child=>ancestors(child,id,here)).find(Boolean)}
-async function locateAsset(id:string,catalog:Catalog,call:Call):Promise<AssetLocation>{
+export async function locateAsset(id:string,catalog:Catalog,call:Call):Promise<AssetLocation>{
  const tree=enrichedTree(catalog,{sharedConversations:[]}),advertised=cloudDocuments().find(node=>node.id===id)
  if(advertised?.document){const parent=find(tree,advertised.owner!.conversation!)!;return {node:advertised,workspace:parent,parent,breadcrumbs:ancestors(tree,parent.id)??[],canReveal:false}}
  let ref=advertised?.location?.asset?{asset:advertised.location.asset,path:advertised.location.path}:assetReference(id)
@@ -145,7 +148,7 @@ async function locateAsset(id:string,catalog:Catalog,call:Call):Promise<AssetLoc
  else{
   const info=await call('assets.file',{id:ref.asset,path:ref.path,operation:'info'});if(!info.exists)throw Error('File no longer exists; refresh the file list')
   const owner=mount?.memberOwners?.[pathParts[0]]??mount?.owner??workspace.owner
-  node={id:assetNodeId(ref.asset,ref.path),name:pathParts.at(-1)!,directory:!!info.directory,locked:!!workspace.readOnly||!!mount?.members?.[ref.path],readOnly:workspace.readOnly,storage:workspace.storage,owner,bytes:info.bytes,modifiedAt:info.modifiedAt,symlink:info.symlink,location:{asset:ref.asset,path:ref.path}}
+  node={id:assetNodeId(ref.asset,ref.path),name:pathParts.at(-1)!,directory:!!info.directory,locked:!!workspace.readOnly||!!mount?.members?.[ref.path],readOnly:workspace.readOnly,storage:workspace.storage,host:workspace.host,kind:mount?.members?.[ref.path]?'member':info.directory?'folder':assetFileKind(pathParts.at(-1)!),owner,bytes:info.bytes,modifiedAt:info.modifiedAt,symlink:info.symlink,location:{asset:ref.asset,path:ref.path}}
  }
  const parent=node.directory?node:media||parentPath==='.'?workspace:{...workspace,id:assetNodeId(ref.asset,parentPath),name:parentPath.split('/').at(-1)!,label:mount?.memberOwners?.[parentPath]?.employeeName,location:{asset:ref.asset,path:parentPath},children:undefined}
  const breadcrumbs=[...base,...(media?[]:pathParts.slice(0,node.directory?undefined:-1)).map((name,index)=>({id:assetNodeId(ref.asset,pathParts.slice(0,index+1).join('/')),name:mount?.memberOwners?.[pathParts.slice(0,index+1).join('/')]?.employeeName??name}))]
@@ -155,6 +158,7 @@ async function locateAsset(id:string,catalog:Catalog,call:Call):Promise<AssetLoc
 export async function assetRequest(command:string,args:Record<string,any>,call:Call,inventory?:(ref:FileLocation,args:any)=>Promise<any>){
  operator();for(const field of ['offset','limit'])if(args[field]!==undefined&&(!Number.isSafeInteger(args[field])||args[field]<(field==='limit'?1:0)||field==='limit'&&args[field]>(command==='assets.children'?1000:500)))throw Error('Invalid asset pagination');if(args.query!==undefined&&(typeof args.query!=='string'||args.query.length>500))throw Error('Asset search must be at most 500 characters')
  const catalog=assetCatalog(),scope=queryScope(args,catalog)
+ if(command==='assets.browse')return browseAssets(args,catalog,scope,call,inventory)
  if(command==='assets.locate')return locateAsset(args.id,catalog,call)
  if(command==='assets.tree'){
   await assetIndex.prepare(catalog.mounts,inventory);const tree=await assetIndex.treeCounts(enrichedTree(catalog,scope),scope),cloud=filterCloud(cloudDocuments(),scope)
@@ -193,9 +197,9 @@ export async function assetRequest(command:string,args:Record<string,any>,call:C
   let result:any
   try{
    if(mount.remote){const data=await call('assets.file',{id,operation:'list',path:value,hidden:args.hidden}),items=data.entries.filter((entry:any)=>!skip.includes(entry.path));result={entries:items.slice(physicalOffset,physicalOffset+physicalLimit),total:items.length}}
-   else result=await assetIndex.children(id,{path:value,hidden:args.hidden,offset:physicalOffset,limit:physicalLimit,exclude:skip})
+   else result=await assetIndex.children(id,{path:value,hidden:args.hidden,offset:physicalOffset,limit:physicalLimit,exclude:skip,sort:args.sort})
   }catch(error){if(!mount.remote&&!fs.existsSync(mount.root)&&value==='.')result={entries:[],total:0};else throw error}
-  const entries:AssetNode[]=result.entries.map((entry:any)=>{const owner=mount.memberOwners?.[entry.path.split('/')[0]]??mount.owner;return {id:assetNodeId(id,entry.path),name:entry.name,label:mount.memberOwners?.[entry.path]?.employeeName,directory:entry.directory,kind:entry.directory?(mount.members?.[entry.path]?'member':undefined):assetFileKind(entry.name),locked:!!mount.members?.[entry.path]||!!mount.readOnly,readOnly:mount.readOnly,storage:mount.remote?'remote':'local',symlink:entry.symlink,bytes:entry.bytes,modifiedAt:entry.modifiedAt,location:{asset:id,path:entry.path},owner}})
+  const entries:AssetNode[]=result.entries.map((entry:any)=>{const owner=mount.memberOwners?.[entry.path.split('/')[0]]??mount.owner;return {id:assetNodeId(id,entry.path),name:entry.name,label:mount.memberOwners?.[entry.path]?.employeeName,directory:entry.directory,kind:entry.directory?(mount.members?.[entry.path]?'member':undefined):assetFileKind(entry.name),locked:!!mount.members?.[entry.path]||!!mount.readOnly,readOnly:mount.readOnly,host:mount.host,storage:mount.remote?'remote':'local',symlink:entry.symlink,bytes:entry.bytes,modifiedAt:entry.modifiedAt,location:{asset:id,path:entry.path},owner}})
   const total=extra.length+result.total
   const counted=await assetIndex.counts([...prefix,...(prefix.length===limit?[]:entries)],args.hidden,scope)
   for(const node of counted)if(node.id.startsWith('published:channel:')&&node.directory)node.fileCount=filterCloud(publishedImages(node.id),scope).length
@@ -214,3 +218,25 @@ export async function assetRequest(command:string,args:Record<string,any>,call:C
  }
  throw Error('Unknown asset operation')
 }
+
+async function browseAssets(args:Record<string,any>,catalog:Catalog,scope:QueryScope,call:Call,inventory?: (ref:FileLocation,args:any)=>Promise<any>):Promise<AssetBrowse>{
+ const root=args.root??'root',offset=args.offset??0,limit=args.limit??60
+ if(typeof root!=='string'||!Number.isSafeInteger(limit)||limit<1||limit>200)throw Error('Use a canonical root and limit 1–200')
+ const recursive=!!args.query?.trim()||!!scope.storage||!!scope.kind&&scope.kind!=='all'
+ if(recursive){
+  const result=await assetRequest('assets.search',{...args,root:root==='root'?undefined:root,query:args.query?.trim(),offset,limit,folders:true},call,inventory)
+  return {...result,nextOffset:offset+limit<result.total?offset+limit:null,parent:folder('root','Search results'),breadcrumbs:[{id:'root',name:'All spaces'}]}
+ }
+ await assetIndex.prepare(catalog.mounts,inventory)
+ if(root==='root'){
+  const candidates=catalog.mounts.flatMap(mount=>scope.employee?[...(mount.owner.employee===scope.employee?[mountNode(mount)]:[]),...memberNodes(mount).filter(node=>node.owner?.employee===scope.employee)]:mount.owner.employee||mount.kind==='published'?[]:[mountNode(mount)])
+  const matching=candidates.filter(node=>owns(node.owner,scope)&&(!scope.host||node.host?.id===scope.host)).sort((a,b)=>(a.owner?.view??'').localeCompare(b.owner?.view??'')||assetTitleForSort(a).localeCompare(assetTitleForSort(b)))
+  const entries=await assetIndex.counts(matching.slice(offset,offset+limit),args.hidden,scope),status=await assetIndex.search({limit:1})
+  return {entries,total:matching.length,nextOffset:offset+limit<matching.length?offset+limit:null,parent:folder('root','Your file library'),breadcrumbs:[{id:'root',name:'All spaces'}],indexing:status.indexing,errors:status.errors}
+ }
+ const location=await locateAsset(root,catalog,call)
+ if(!location.node.directory)throw Error('Choose a folder to browse')
+ const result=await assetRequest('assets.children',{...args,id:root,offset,limit},call,inventory),status=await assetIndex.search({limit:1})
+ return {...result,parent:location.node,breadcrumbs:location.breadcrumbs,indexing:status.indexing,errors:status.errors}
+}
+const assetTitleForSort=(node:AssetNode)=>node.label??node.name

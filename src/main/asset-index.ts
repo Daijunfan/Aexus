@@ -17,7 +17,7 @@ function request(operation:string,args:any):Promise<any>{
 export const assetIndex={
  invalidate(){preparedAt=0},
  async prepare(roots:AssetMount[],inventory?: (ref:FileLocation,args:any)=>Promise<any>,refresh=false){
-  const input=roots.map(root=>({id:root.id,root:root.root.replaceAll('\\','/'),key:root.remote?'remote:'+root.owner.team:'local',remote:root.remote,owner:root.owner,members:root.members,memberOwners:root.memberOwners,readOnly:root.readOnly})),next=JSON.stringify(input)
+  const input=roots.map(root=>({id:root.id,root:root.root.replaceAll('\\','/'),key:root.remote?'remote:'+root.owner.team:'local',remote:root.remote,host:root.host,owner:root.owner,members:root.members,memberOwners:root.memberOwners,readOnly:root.readOnly})),next=JSON.stringify(input)
   if(signature===next&&(!refresh&&(pending||remotePending||Date.now()-preparedAt<30000)))return
   signature=next;preparedAt=Date.now();pending=true;remoteErrors=[];const token=++epoch,configured=await request('configure',{roots:input});remotePending=configured.remoteSources.length
   // Remote scopes remain on their original execution host; metadata only crosses the API.

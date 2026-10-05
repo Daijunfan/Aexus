@@ -29,7 +29,7 @@ export async function invokeApiTool(state:Live,input:unknown,callId:string,signa
   if(state.permissionMode==='dontAsk')throw Error('Write approval is disabled in this execution mode')
   if(state.permissionMode!=='bypassPermissions'){
    const approve=approvals.get(state);if(!approve)throw Error('Employee API approval is unavailable; reopen this employee')
-   const answer=await approve(API_TOOL.name,{command,args},{signal:signal??new AbortController().signal,toolUseID:callId+':'+randomUUID(),requestId:callId,title:'Anexus: '+command})
+   const answer=await approve(API_TOOL.name,{command,args},{signal:signal??new AbortController().signal,toolUseID:callId+':'+randomUUID(),requestId:callId,title:'Avalon: '+command})
    if(answer?.behavior!=='allow')throw Error('Declined by user')
    approved=true;active();available()
    if(state.planMode||['plan','dontAsk'].includes(state.permissionMode))throw Error('Execution permissions changed while awaiting approval')

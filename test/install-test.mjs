@@ -44,4 +44,13 @@ try{
  assert.equal(migrated.backup,migrated.legacyBackup)
  assert.equal(fs.readFileSync(path.join(home,'sessions.json'),'utf8'),'original data')
  console.log('PASS Anexus upgrade refuses a running legacy app and preserves its bundle in a backup')
+ const renamed=path.join(temp,'Avalon.app')
+ process_=spawn('/bin/sleep',['30'],{argv0:path.join(target,'Contents/MacOS/Anexus')})
+ await new Promise(r=>process_.once('spawn',r))
+ assert.throws(()=>installApp({source,target:renamed,home}),/Running applications cannot be replaced/)
+ const renameEnded=new Promise(r=>process_.once('exit',r));process_.kill();await renameEnded;process_=undefined
+ const upgraded=installApp({source,target:renamed,home})
+ assert.ok(fs.existsSync(renamed));assert.equal(fs.existsSync(target),false)
+ assert.ok(fs.existsSync(upgraded.legacyBackup));assert.equal(fs.readFileSync(path.join(home,'sessions.json'),'utf8'),'original data')
+ console.log('PASS Avalon upgrade detects the running Anexus app and safely migrates its bundle')
 }finally{process_?.kill();fs.rmSync(temp,{recursive:true,force:true})}

@@ -19,6 +19,9 @@ try{
   const visit=node=>{if(ts.isStringLiteralLike(node)&&known.has(node.text)){const sites=references.get(node.text)??new Set();sites.add(path.relative(root,file)+':'+(source.getLineAndCharacterOfPosition(node.pos).line+1));references.set(node.text,sites)}ts.forEachChild(node,visit)};visit(source)
  }}};walk(path.join(root,'src/renderer/src'))
  const exclusions={
+  'assets.browse':'User-owned cross-company library; Agents retain own workspace.catalog discovery',
+  'assets.info':'Explicit user filesystem information; no expansion of Agent access',
+  'assets.preview':'Derived user file covers; no Agent-wide file access',
   'assets.locate':'Human asset-index navigation; Agents use workspace.catalog and member-scoped conversation/workspace file tools',
   'workspace.reveal':'Human desktop file manager navigation', 'messenger.profile':'Human personal avatar', 'messenger.profile-image':'Human personal avatar image', 'assets.tree':'Human global filesystem catalog', 'assets.children':'Human global filesystem catalog', 'assets.search':'Human global filesystem catalog', 'assets.file':'Human scoped asset operations', 'assets.naming':'Human filesystem and binding migration',
   'auth.agent-token':'User credential issuance','auth.revoke':'User credential revocation',

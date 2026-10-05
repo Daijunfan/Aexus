@@ -9,7 +9,9 @@ try{
  await build({entryPoints:['src/shared/activity.ts','src/shared/transcript.ts'],outdir:temp,bundle:true,platform:'node',format:'cjs',logLevel:'silent'})
  const require=createRequire(import.meta.url),{activityPreview}=require(path.join(temp,'activity.js')),{applyStream}=require(path.join(temp,'transcript.js'))
  let session={busy:true,items:[{role:'assistant',id:'old',blocks:[{kind:'text',text:'previous turn'}]},{role:'user',id:'user',text:'current task'}]}
- assert.equal(activityPreview(session),null)
+ assert.deepEqual(activityPreview(session),{kind:'tool',tool:'Task',text:'current task',running:true})
+ assert.equal(activityPreview({...session,items:[{role:'user',id:'empty',text:'   '}]}),null)
+ assert.equal(activityPreview({...session,busy:false}),null)
  const event=e=>{session=applyStream(session,{event:e})}
  event({type:'content_block_start',index:0,content_block:{type:'thinking'}});event({type:'content_block_delta',index:0,delta:{type:'thinking_delta',thinking:'Published reasoning summary'}})
  assert.deepEqual(activityPreview(session),{kind:'thinking',text:'Published reasoning summary'})
@@ -17,5 +19,5 @@ try{
  assert.equal(activityPreview(session).kind,'speech')
  event({type:'content_block_start',index:2,content_block:{type:'tool_use',id:'tool',name:'Read'}});event({type:'content_block_delta',index:2,delta:{type:'input_json_delta',partial_json:'{"file_path":"src/main.ts"}'}})
  assert.equal(activityPreview(session).kind,'tool');assert.equal(activityPreview(session).text,'src/main.ts');assert.equal(activityPreview({...session,busy:false}),null)
- console.log('PASS Claude published-thinking/text/tool streams, current-turn isolation and idle clearing')
+ console.log('PASS actual submitted-task fallback, Claude published-thinking/text/tool priority, current-turn isolation and idle clearing')
 }finally{fs.rmSync(temp,{recursive:true,force:true})}

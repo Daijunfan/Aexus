@@ -77,7 +77,7 @@ try{
   assert.deepEqual(agent('list'),[])
   rpc('update',{id:x.channelId,adminIds:[role]});rpc('update',{id:custom.id,adminIds:[role]})
   const own=agent('list');assert.deepEqual(own.map(value=>value.id).sort(),[x.channelId,custom.id].sort());assert.deepEqual(own.find(value=>value.id===x.channelId),agent('get',{id:x.channelId}))
-  for(const value of own)assert.deepEqual(Object.keys(value).sort(),['adminIds','createdAt','engine','id','kind','name','revision','updatedAt'],'employee discovery returns identity only, not user news/collection projections')
+  for(const value of own)assert.deepEqual(Object.keys(value).sort(),['adminIds','createdAt','engine','id','kind','memberIds','name','ownerId','revision','updatedAt'],'employee discovery returns identity only, not user news/collection projections')
   assert.throws(()=>agent('get',{id:tg.channelId}),/Not a channel administrator/)
   for(const [command,args] of [['sources',{}],['posts',{}],['update',{id:x.channelId,adminIds:[]}],['settings',{}]])assert.throws(()=>agent(command,args),/Only the user/)
   rpc('update',{id:x.channelId,adminIds:[]});assert.deepEqual(agent('list').map(value=>value.id),[custom.id]);assert.throws(()=>agent('get',{id:x.channelId}),/Not a channel administrator/)

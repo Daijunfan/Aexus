@@ -19,7 +19,7 @@ export function acquireRuntimeLock(){
       try{old=JSON.parse(fs.readFileSync(file,'utf8'))}catch{throw Error('Invalid runtime.lock; inspect the service before removing it')}
       if(old.host!==hostname())throw Error('Data directory is already owned by a different host')
       let alive=true;try{process.kill(old.pid,0)}catch(e){alive=(e as NodeJS.ErrnoException).code!=='ESRCH'}
-      if(alive)throw Error('Anexus already owns this data directory (PID '+old.pid+')')
+      if(alive)throw Error('Avalon already owns this data directory (PID '+old.pid+')')
       if(retry===1)throw Error('Runtime lock changed; retry startup')
       if(JSON.parse(fs.readFileSync(file,'utf8')).nonce!==old.nonce)throw Error('Runtime lock changed')
       fs.unlinkSync(file)

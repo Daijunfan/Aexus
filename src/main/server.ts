@@ -1,6 +1,8 @@
 import {employeeReady} from '../shared/types'
 import {directoryName} from '../shared/directory-names'
 import {assetNaming} from './asset-naming'
+import {assetInfo} from './asset-details'
+import {assetPreview} from './asset-previews'
 import {assetIndex} from './asset-index'
 import {assetRequest,assetLocation,assetReference} from './assets'
 import {socialIdentity} from './message-categories'
@@ -150,11 +152,11 @@ export function publishEvent(channel: string, payload: unknown,clientId?:string)
   if(clientId&&clientId!=='desktop')return
   for (const [sock, sessionId] of following) {
     if (!sock.writable) continue
+    const p = payload as { sessionId?: string }
+    if (p?.sessionId && p.sessionId !== sessionId) continue
     const context=followerContexts.get(sock)!
     try{authorize('session.follow',{},employeeId(sessionId),context);assertEmployeeReady(employeeId(sessionId))}catch{sock.end(JSON.stringify({type:'done',error:'Access revoked'})+'\n');following.delete(sock);followerContexts.delete(sock);continue}
-    const p = payload as { sessionId?: string }
     if(!p?.sessionId&&context.principal.kind==='agent')continue
-    if (p?.sessionId && p.sessionId !== sessionId) continue
     // A raw follower gets every event verbatim; a normal one gets only the
     // channels needed to render a conversation.
     if (!rawFollowers.has(sock) && !RENDERED_CHANNELS.has(channel)) continue
@@ -453,7 +455,9 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     }
     case 'assets.naming':
       return assetNaming(a,async(ids)=>{if(listTransfers().some(job=>['queued','running'].includes(job.state)))throw Error('Finish active file transfers before migrating directories');for(const live of listLive()){const info=sessionInfo(live.id);if(info&&ids.includes(info.cardId!)&&info.busy)throw Error('员工正在工作，请等待空闲再迁移目录')}for(const id of ids)await closeForWorkspaceChange(id)},async(mount,operation,args)=>{const end=fileEndpoint({...mount.scope,path:'.'},false);if(!end.remote)throw Error('Expected a remote workspace');return remoteFiles('asset-naming-'+mount.id,end.remote,operation,args)})
-    case 'assets.tree':case 'assets.children':case 'assets.search':case 'assets.locate':case 'assets.file':
+    case 'assets.info':return assetInfo(s(a.id),(cmd,args)=>handleRequest({cmd,args}),fileEndpoint)
+    case 'assets.preview':return assetPreview(s(a.id),(cmd,args)=>handleRequest({cmd,args}),fileEndpoint)
+    case 'assets.browse':case 'assets.tree':case 'assets.children':case 'assets.search':case 'assets.locate':case 'assets.file':
       if(req.cmd==='assets.file'){const ref=assetReference(s(a.id),a.path);a.id=ref.asset;a.path=ref.path}
       if(req.cmd==='assets.file'&&String(a.id).startsWith('published:')&&!(String(a.id).startsWith('published:channel:')&&a.operation==='list')){if(!['list','read','image','info','chunk'].includes(a.operation))throw Error('Published attachments are read-only; copy them to a workspace to edit');const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=({image:'read-image',info:'copy-info',chunk:'copy-read'} as Record<string,string>)[a.operation]??a.operation;return workspaceFiles(end.root,op,{path:end.path,offset:a.offset??0,length:262144,hidden:a.hidden})}
       if(req.cmd==='assets.file'&&['info','chunk'].includes(a.operation)){const end=fileEndpoint(assetLocation(s(a.id),s(a.path||'.')),false),op=a.operation==='info'?'copy-info':'copy-read',args={path:end.path,offset:a.offset??0,length:262144};await end.validate?.(op,args);return end.remote?remoteFiles('assets-file-'+a.id,end.remote,op,args):workspaceFiles(end.root,op,args)}
@@ -1094,6 +1098,7 @@ export function startServer(onListening: () => void = () => {}): void {
     sock.on('error', drop)
 
     const rl = createInterface({ input: sock })
+    rl.on('error', drop)
     rl.on('line', async (line) => {
       let req: Request
       try {
@@ -1148,7 +1153,7 @@ export function startServer(onListening: () => void = () => {}): void {
   const probe = connect(SOCKET_PATH)
   probe.once('connect', () => {
     probe.destroy()
-    console.error(`Anexus is already running at ${SOCKET_PATH}`)
+    console.error(`Avalon is already running at ${SOCKET_PATH}`)
     process.exit(1)
   })
   probe.once('error', (err: NodeJS.ErrnoException) => {

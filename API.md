@@ -3083,10 +3083,14 @@ The current contract is [MESSAGE_COLLABORATION.md](docs/MESSAGE_COLLABORATION.md
 
 Three automation contracts stay separate: `conversation.notice-*` posts timed literal text without Agent work; `channel.post-trigger-*` counts new article IDs independently for each member and executes its saved prompt on an exact batch; `schedule.*`/`plan.*` manage Plan schedules. Neither Message capability creates a Plan record. A saved count rule replaces that Agent's per-post automatic reading, including while paused; removing it restores ordinary per-post awareness. Each rule has an editable prompt, threshold, enabled state, configuration revision, progress and actual batch history.
 
+## File library and storage information
+
+`assets.browse` provides paged workspace shelves, folder navigation and recursive file/folder search, filtered by view, Team, employee, conversation, storage host, file type or storage class. `assets.info` explicitly returns physical location, host metadata, logical ownership and verification state. `assets.preview` derives a bounded cover from a local file or already-cached publication thumbnail; it never downloads remote originals. All three are user asset operations and do not broaden Agent workspace access. GUI actions reuse the same Core and existing file mutation APIs. Full interaction, limits and CLI examples: [FILES_WORKBENCH.md](docs/FILES_WORKBENCH.md).
+
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 320 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 323 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3156,6 +3160,9 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents messenger message</code> | <code>CONVERSATION [MESSAGE_ID &#124; --ids JSON] --patch JSON</code> | User or Secretary: save, pin, react to or hide an existing public message; native history stays intact | Messages actions | operator |
 | <code>agents messenger draft</code> | <code>CONVERSATION --data JSON</code> | User or Secretary: persist a draft and its send identity, or conditionally clear the matching draft; never sends or opens an engine | Messages composer | operator |
 | <code>agents messenger search</code> | <code>[--conversation REF] [--query TEXT] [--filter all&#124;saved&#124;pinned&#124;media&#124;audio&#124;files&#124;links] [--author all&#124;you&#124;employee] [--offset N] [--limit N]</code> | User or Secretary: search full public histories and saved/media/link references without inference or read acknowledgements | Messages search and shared content | operator |
+| <code>agents assets browse</code> | <code>[--root ID --query TEXT --view Company&#124;Messages&#124;Plan --team NAME --employee ID --conversation REF --host ID --kind TYPE --storage local&#124;remote&#124;cloud --sort name&#124;modified&#124;size --offset N --limit N --hidden]</code> | User-only: page real workspace shelves, one folder or recursive file/folder search with stable IDs and ownership; no implicit cloud download | File library | workspace |
+| <code>agents assets info</code> | <code>ID</code> | User-only: explicitly inspect a file/folder physical path, storage host, metadata and logical ownership. Cloud-only items return metadata without downloading originals. | Get Info | workspace |
+| <code>agents assets preview</code> | <code>ID</code> | User-only: derive a bounded local PDF, article or image cover with the installed Reader renderer; never fetch remote originals or mutate files | Document cover | workspace |
 | <code>agents assets naming</code> | <code>[--id PREVIEW_ID --apply]</code> | User-only: preview or apply English directory names across managed and externally bound workspaces, retaining identities and legacy references | English folder names | operator |
 | <code>agents assets tree</code> | <code>[--view Company&#124;Messages&#124;Plan] [--team NAME] [--employee ID] [--conversation REF]</code> | User-only: read the fixed Company, Messages and Plan workspace tree | Files and assets | workspace |
 | <code>agents assets children</code> | <code>ID [--hidden] [--offset N] [--limit N]</code> | User-only: lazily page one real directory and its direct nonempty-folder count | Files and assets tree | workspace |

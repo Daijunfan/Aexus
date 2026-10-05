@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The `agents` CLI: drives the running Anexus app over its local
+// The `agents` CLI: drives the running Avalon app over its local
 // socket. Every command maps to the same operation the GUI performs, so this
 // is a faithful remote control rather than a parallel implementation.
 
@@ -108,7 +108,7 @@ function send(req, { stream = false } = {}) {
   if(process.env.AGENTS_COMPANY_URL)return require('./http-client.cjs').send(req,{stream,onEvent})
   return new Promise((resolve, reject) => {
     if (process.platform!=='win32'&&!process.env.AGENTS_COMPANY_PORT&&!existsSync(SOCKET)) {
-      reject(new Error('Anexus is not running. Run `agents serve` first.'))
+      reject(new Error('Avalon is not running. Run `agents serve` first.'))
       return
     }
     let auth
@@ -177,7 +177,7 @@ function out(data, human) {
 
 // ---------- commands ----------
 
-const help = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['agents / anexus — Anexus authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','Raw API payload: agents api call COMMAND --args JSON|@file --json (same authenticated endpoint).' ,'',...commands.filter(c=>!c.replacement).map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})
+const help = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['agents / avalon / anexus — Avalon authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','Raw API payload: agents api call COMMAND --args JSON|@file --json (same authenticated endpoint).' ,'',...commands.filter(c=>!c.replacement).map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})
 
 let onEvent = (m) => {
   if (useJson) console.log(JSON.stringify(m.payload))

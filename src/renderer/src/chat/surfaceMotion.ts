@@ -1,6 +1,6 @@
 import {useLayoutEffect,useRef} from 'react'
 
-export type SurfaceMotion='menu'|'panel'|'dialog'|'strip'
+export type SurfaceMotion='menu'|'file-menu'|'panel'|'dialog'|'strip'
 export const messageEase='cubic-bezier(.22,1,.36,1)'
 export const motionAllowed=()=>!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -29,7 +29,7 @@ function exitSurface(node:HTMLElement,kind:SurfaceMotion){
   // Exit snapshots are visual only; never reopen a released media grant or blob URL.
   for(const media of copy.querySelectorAll<HTMLMediaElement>('audio,video')){media.removeAttribute('src');media.removeAttribute('autoplay');media.preload='none';for(const source of media.querySelectorAll('source'))source.removeAttribute('src')}
   for(const element of [copy,...copy.querySelectorAll('*')]){element.removeAttribute('id');element.removeAttribute('autofocus');element.removeAttribute('data-reply-id');element.removeAttribute('data-group-read')}
-  Object.assign(copy.style,{position:'fixed',inset:'auto',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px',maxWidth:'none',maxHeight:'none',margin:'0',boxSizing:'border-box',pointerEvents:'none',animation:'none',transform:'none',opacity:style.opacity,zIndex:kind==='menu'?'10100':kind==='dialog'?'10055':kind==='panel'?'35':'3'})
+  Object.assign(copy.style,{position:'fixed',inset:'auto',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px',maxWidth:'none',maxHeight:'none',margin:'0',boxSizing:'border-box',pointerEvents:'none',animation:'none',transform:'none',opacity:style.opacity,zIndex:kind==='menu'||kind==='file-menu'?'10100':kind==='dialog'?'10055':kind==='panel'?'35':'3'})
   copy.style.setProperty('--message-accent',style.getPropertyValue('--message-accent')||'#5873c7')
   document.body.append(copy)
   const sources=[node,...node.querySelectorAll<HTMLElement>('*')],targets=[copy,...copy.querySelectorAll<HTMLElement>('*')]
@@ -47,11 +47,11 @@ export function useSurfaceMotion<T extends HTMLElement>(kind:SurfaceMotion){
     // Reopening a surface replaces its previous closing snapshot.
     document.querySelectorAll(`[data-message-exit="${kind}"],[data-message-spacer="${kind}"]`).forEach(element=>element.remove())
     node.dataset.messageSurface=kind
-    const transform=kind==='menu'?'scale(.1)':kind==='panel'?'translateX(24px)':'none'
+    const transform=kind==='file-menu'?'translateY(-4px) scale(.98)':kind==='menu'?'scale(.1)':kind==='panel'?'translateX(24px)':'none'
     const animations:Animation[]=[]
     const style=getComputedStyle(node)
     const frames=kind==='strip'?[{height:'0px',paddingTop:'0px',paddingBottom:'0px',marginTop:'0px',marginBottom:'0px',opacity:0},{height:node.getBoundingClientRect().height+'px',paddingTop:style.paddingTop,paddingBottom:style.paddingBottom,marginTop:style.marginTop,marginBottom:style.marginBottom,opacity:1}]:[{opacity:kind==='menu'?.1:0,transform},{opacity:1,transform:'none'}]
-    const enter=playMessageMotion(node,frames,kind==='panel'?250:200)
+    const enter=playMessageMotion(node,frames,kind==='file-menu'?150:kind==='panel'?250:200)
     if(enter)animations.push(enter)
     if(kind==='dialog'){const card=node.querySelector('[role=dialog]');if(card){const animation=playMessageMotion(card,[{transform:'translateY(10px) scale(.96)'},{transform:'none'}],250);if(animation)animations.push(animation)}}
     return()=>{exitSurface(node,kind);animations.forEach(animation=>animation.cancel())}

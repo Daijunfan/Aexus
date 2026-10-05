@@ -88,7 +88,7 @@ export const HomeView=memo(function HomeView({ groupUnread=0, store, view, busyI
   const lastTeam=store.groups.at(-1)
   return <div className="home office-home">
     <header className="company-header">
-      <div className="company-brand"><img className="brand-symbol" src={companyIcon} alt="" aria-hidden="true"/><span>Anexus</span></div>
+      <div className="company-brand"><img className="brand-symbol" src={companyIcon} alt="" aria-hidden="true"/><span>Avalon</span></div>
       <TeamViews store={store} view={view} act={act} groupUnread={groupUnread}/>
       {presentationForView(view)==='company'&&<div className="company-actions"><button className="add-team" aria-label={uiText("Add Team")} title={uiText("Add Team")} onClick={()=>void showPanel({kind:'team'})}><span>＋</span>  {uiText("Add Team")}</button><button className="add-employee" aria-label={uiText("Add Employee")} title={uiText("Add Employee")} onClick={()=>void showPanel({kind:'employee'})}><span>＋</span>  {uiText("Add Employee")}</button></div>}
     </header>

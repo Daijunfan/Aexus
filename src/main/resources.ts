@@ -7,7 +7,7 @@ export function applicationRoot(){
     try{if(JSON.parse(fs.readFileSync(file,'utf8')).name==='agents-company')return current}catch{}
     if(path.dirname(current)===current)break
   }
-  throw Error('Anexus package resources are missing')
+  throw Error('Avalon package resources are missing')
 }
 export const rendererDirectory=()=>path.join(applicationRoot(),'out','renderer')
 export const applicationVersion=()=>String(JSON.parse(fs.readFileSync(path.join(applicationRoot(),'package.json'),'utf8')).version)

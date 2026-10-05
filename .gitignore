@@ -31,3 +31,8 @@ __pycache__/
 
 # Legacy local deployment notes; maintained release template lives in docs/deploy.
 /deploy/
+
+# Local promotional libraries and ready-to-publish copies; README captures live in docs/images.
+/promo_avalon_*/
+/publish/
+/Avalon_Live_Views_*.zip

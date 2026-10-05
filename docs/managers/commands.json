@@ -3550,6 +3550,134 @@
     "target": "request"
   },
   {
+    "name": "assets.browse",
+    "args": "[--root ID --query TEXT --view Company|Messages|Plan --team NAME --employee ID --conversation REF --host ID --kind TYPE --storage local|remote|cloud --sort name|modified|size --offset N --limit N --hidden]",
+    "summary": "User-only: page real workspace shelves, one folder or recursive file/folder search with stable IDs and ownership; no implicit cloud download",
+    "gui": "File library",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
+        "view": {
+          "enum": [
+            "Company",
+            "Messages",
+            "Plan"
+          ]
+        },
+        "team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conversation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "folder",
+            "all",
+            "document",
+            "image",
+            "audio",
+            "video",
+            "code",
+            "archive",
+            "other"
+          ]
+        },
+        "storage": {
+          "enum": [
+            "local",
+            "remote",
+            "cloud"
+          ]
+        },
+        "sort": {
+          "enum": [
+            "name",
+            "modified",
+            "size"
+          ]
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "query": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "hidden": {
+          "type": "boolean"
+        }
+      }
+    },
+    "readOnly": true,
+    "permission": "workspace",
+    "target": "request"
+  },
+  {
+    "name": "assets.info",
+    "args": "ID",
+    "summary": "User-only: explicitly inspect a file/folder physical path, storage host, metadata and logical ownership. Cloud-only items return metadata without downloading originals.",
+    "gui": "Get Info",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "workspace",
+    "target": "request"
+  },
+  {
+    "name": "assets.preview",
+    "args": "ID",
+    "summary": "User-only: derive a bounded local PDF, article or image cover with the installed Reader renderer; never fetch remote originals or mutate files",
+    "gui": "Document cover",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "workspace",
+    "target": "request"
+  },
+  {
     "name": "assets.naming",
     "args": "[--id PREVIEW_ID --apply]",
     "summary": "User-only: preview or apply English directory names across managed and externally bound workspaces, retaining identities and legacy references",
@@ -3580,6 +3708,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
         "view": {
           "enum": [
             "Company",
@@ -3614,6 +3746,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
         "view": {
           "enum": [
             "Company",
@@ -3632,6 +3768,13 @@
         "conversation": {
           "type": "string",
           "minLength": 1
+        },
+        "sort": {
+          "enum": [
+            "name",
+            "modified",
+            "size"
+          ]
         },
         "id": {
           "type": "string",
@@ -3667,6 +3810,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
         "view": {
           "enum": [
             "Company",
@@ -3688,6 +3835,7 @@
         },
         "kind": {
           "enum": [
+            "folder",
             "all",
             "document",
             "image",
@@ -3732,6 +3880,9 @@
           "type": "boolean"
         },
         "refresh": {
+          "type": "boolean"
+        },
+        "folders": {
           "type": "boolean"
         }
       }

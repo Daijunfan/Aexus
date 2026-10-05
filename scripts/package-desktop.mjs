@@ -19,14 +19,14 @@ run('npx',['--no-install','electron-vite','build'],{AGENTS_COMPANY_RELEASE:'1'})
 // Do not ship a developer-specific global CLI wrapper; regenerate a portable one.
 fs.mkdirSync(path.join(root,'build/cli'),{recursive:true})
 const cliRoot=path.join(root,'build/cli')
-for(const name of ['agents','agents.cmd','anexus','anexus.cmd'])fs.rmSync(path.join(cliRoot,name),{force:true})
+for(const name of ['agents','agents.cmd','avalon','avalon.cmd','anexus','anexus.cmd'])fs.rmSync(path.join(cliRoot,name),{force:true})
 if(platform==='win'){
-  for(const name of ['agents.cmd','anexus.cmd'])fs.writeFileSync(path.join(cliRoot,name),'@echo off\r\nsetlocal DisableDelayedExpansion\r\nset "ELECTRON_RUN_AS_NODE=1"\r\n"%~dp0..\\..\\Anexus.exe" "%~dp0..\\app.asar\\bin\\agents" %*\r\n')
+  for(const name of ['agents.cmd','avalon.cmd','anexus.cmd'])fs.writeFileSync(path.join(cliRoot,name),'@echo off\r\nsetlocal DisableDelayedExpansion\r\nset "ELECTRON_RUN_AS_NODE=1"\r\n"%~dp0..\\..\\Avalon.exe" "%~dp0..\\app.asar\\bin\\agents" %*\r\n')
 }else{
-  const program=platform==='mac'?'$ROOT/MacOS/Anexus':'$ROOT/agents-company'
+  const program=platform==='mac'?'$ROOT/MacOS/Avalon':'$ROOT/agents-company'
   const script=platform==='mac'?'$ROOT/Resources/app.asar/bin/agents':'$ROOT/resources/app.asar/bin/agents'
   const cli=`#!/bin/sh\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"\nexec env ELECTRON_RUN_AS_NODE=1 "${program}" "${script}" "$@"\n`
-  for(const name of ['agents','anexus'])fs.writeFileSync(path.join(cliRoot,name),cli,{mode:0o755})
+  for(const name of ['agents','avalon','anexus'])fs.writeFileSync(path.join(cliRoot,name),cli,{mode:0o755})
 }
 const nativeOptions=[]
 // Local macOS candidates need a fresh signature after Electron's bundle is renamed.

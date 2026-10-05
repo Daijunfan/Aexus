@@ -5347,5 +5347,57 @@
         "limit": 5
       }
     }
+  },
+  {
+    "args": [
+      "assets",
+      "info",
+      "employee:fixture"
+    ],
+    "expected": {
+      "cmd": "assets.info",
+      "args": {
+        "id": "employee:fixture"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "preview",
+      "shared|Documents%2Fissue.pdf"
+    ],
+    "expected": {
+      "cmd": "assets.preview",
+      "args": {
+        "id": "shared|Documents%2Fissue.pdf"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "browse",
+      "--host",
+      "fixture-host",
+      "--query",
+      "report",
+      "--kind",
+      "folder",
+      "--limit",
+      "20",
+      "--offset",
+      "40"
+    ],
+    "expected": {
+      "cmd": "assets.browse",
+      "args": {
+        "host": "fixture-host",
+        "query": "report",
+        "kind": "folder",
+        "limit": 20,
+        "offset": 40
+      }
+    }
   }
 ]

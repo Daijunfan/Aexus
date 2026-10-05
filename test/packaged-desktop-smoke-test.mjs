@@ -22,6 +22,11 @@ try{
   const page=await app.firstWindow();page.setDefaultTimeout(20000)
   page.on('pageerror',error=>errors.push(error.message))
   await page.locator('.infinite-canvas').waitFor()
+  const product=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).productName
+  await expect(page.locator('.company-brand span')).toHaveText(product)
+  assert.equal(await page.title(),product)
+  assert.equal(await app.evaluate(({app})=>app.getName()),product)
+  checks.push('Actual product name, window title and Company header match '+product)
   const call=(cmd,args={})=>page.evaluate(({cmd,args})=>window.agents.call(cmd,args),{cmd,args})
   const plugins=await call('plugin.list')
   const lock=JSON.parse(fs.readFileSync(path.join(root,'plugins.lock.json'),'utf8')).plugins

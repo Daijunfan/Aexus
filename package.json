@@ -1,11 +1,11 @@
 {
   "name": "agents-company",
-  "productName": "Anexus",
-  "version": "0.57.0",
+  "productName": "Avalon",
+  "version": "0.58.1",
   "description": "Open CLI-first infrastructure for coding-agent interaction, experiments, games and user-defined work",
   "main": "./out/main/index.js",
   "author": {
-    "name": "Anexus",
+    "name": "Avalon",
     "email": "Daijunfan@users.noreply.github.com"
   },
   "scripts": {
@@ -130,7 +130,7 @@
   },
   "build": {
     "appId": "com.agentscompany.app",
-    "productName": "Anexus",
+    "productName": "Avalon",
     "directories": {
       "output": "release"
     },
@@ -168,7 +168,8 @@
       "docs/CONVERSATION_CONTROLS.md",
       "docs/MESSAGE_COLLABORATION.md",
       "docs/FILES_WORKBENCH.md",
-      "docs/releases/0.57.0.zh-CN.md"
+      "docs/releases/0.57.0.zh-CN.md",
+      "docs/releases/0.58.0.zh-CN.md"
     ],
     "mac": {
       "target": [
@@ -294,7 +295,8 @@
   },
   "bin": {
     "agents": "./bin/agents",
-    "anexus": "./bin/anexus"
+    "anexus": "./bin/anexus",
+    "avalon": "./bin/avalon"
   },
   "optionalDependencies": {
     "node-pty": "1.1.0"

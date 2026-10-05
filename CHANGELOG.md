@@ -2,6 +2,23 @@
 
 > 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
 
+## 0.58.1 — Avalon application naming and live view captures
+
+- Rename the current product, UI, window title, package and CLI documentation to Avalon; retain data identities and legacy CLI/API namespaces.
+- Add avalon CLI and migrate stopped Anexus / Agents Company installations through the standard installer.
+- Show the actual submitted task while waiting for engine activity; preserve real output and unread-reply semantics.
+- Handle readline connection errors for disconnected progress streams and filter unrelated session events before subscription checks.
+- Replace README artwork with three real Company, Messages and Plan captures.
+- Detailed Chinese notes: [0.58.1](docs/releases/0.58.1.zh-CN.md).
+
+## 0.58.0 — File library and storage identity
+
+- Add a large-icon file library alongside the workspace tree, with persistent layout/icon size, precise selection/context actions and local document covers rendered by the bundled Reader.
+- Show real employee portraits and storage-host identities; physical paths are exposed only through explicit Get Info.
+- Filter and search workspace folders/files across views by Team, employee, conversation, host, type and storage; retain original Core file permissions and recoverable actions.
+- Keep the existing Company, Message and Plan layouts; no reverted engineering-workbench changes are included.
+- Detailed Chinese notes: [0.58.0](docs/releases/0.58.0.zh-CN.md).
+
 ## 0.57.0 — Channel collaboration and workspace tools
 
 - Separate Owner/Admin/Member offices and membership from Company roles across groups and channels, with revision-checked moderation and governance history.
