@@ -1,0 +1,11 @@
+import './style.css'
+import {useEffect,useState} from 'react'
+import type {ContractClient} from '../../Contract/protocol'
+import {runAudit,type AuditReport} from './workflow.mjs'
+export default function WorkspaceAudit({client}:{client:ContractClient}){
+ const [teams,setTeams]=useState<string[]>([]),[team,setTeam]=useState(''),[report,setReport]=useState<AuditReport>(),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ useEffect(()=>{let active=true;void client.invoke<string[]>('group.list').then(rows=>{if(active){setTeams(rows);setTeam(t=>t||rows[0]||'')}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[client])
+ const run=async()=>{setBusy(true);setError('');try{setReport(await runAudit(client,{team}))}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
+ const download=()=>{if(!report)return;const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='workspace-audit.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+ return <section className="engine-workflow workspace-audit" aria-label="Workspace audit"><p className="engine-eyebrow">REFERENCE ENGINE · CONTRACT 1.0</p><h1>One Team. A verified inventory.</h1><p>Read existing Company workspaces and produce a checkable report. This example never starts an Agent or changes your files.</p><label>Team<select aria-label="Audit Team" value={team} disabled={busy} onChange={e=>{setTeam(e.target.value);setReport(undefined);setError('')}}>{teams.map(t=><option key={t}>{t}</option>)}</select></label><button className="engine-primary" disabled={busy||!team} onClick={()=>void run()}>{busy?'Inspecting…':'Run audit'}</button>{!teams.length&&!error&&<p>Create a Team in Infra before running this example.</p>}{error&&<p role="alert">{error}</p>}{report&&<div className="engine-delivery"><header><h2>Inventory verified</h2><button onClick={download}>Download report</button></header><p>{report.team} · {report.workspaces.length} workspaces</p>{report.workspaces.map(w=><article key={w.employeeId??'team'}><strong>{w.name}</strong><span>{w.files} files · {w.folders} folders</span><small>{w.path}</small></article>)}<details><summary>Acceptance evidence</summary>{report.acceptance.checks.map(c=><p key={c}>{c}</p>)}</details></div>}</section>
+}

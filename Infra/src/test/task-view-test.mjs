@@ -1,0 +1,25 @@
+import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {fixtureCore} from './fixtures/headless-core.mjs';
+const f=await fixtureCore();const info=id=>f.cli('session','info','--employee',id),input=id=>JSON.parse(fs.readFileSync(path.join(f.control,id+'-user.json'),'utf8')).text;
+try{
+ await f.cli('group','add','A');await f.cli('group','add','B');const g=await f.create('Governor','A','governor'),employee=await f.create('Worker','B'),token=await f.token(g.id);
+ const a=await f.cli('team-view','create','--name','研发','--teams','["A"]'),b=await f.cli('team-view','create','--name','知识库','--teams','["B"]');
+ await f.cli('team-view','select',b.id);const before=(await f.cli('office','layout')).rooms;
+ await f.call(token,'canvas','set','--view',a.id,'--x','110','--y','80','--zoom','.6');assert.equal((await f.call(token,'team-view','list')).activeId,b.id);assert.deepEqual(await f.call(token,'canvas','view','--view',a.id),{x:110,y:80,zoom:.6});assert.notEqual((await f.cli('canvas','view')).x,110);
+ assert.deepEqual((await f.call(token,'office','layout','--view',a.id)).rooms.map(r=>r.name),['A']);assert.deepEqual((await f.cli('office','layout')).rooms,before);
+ await assert.rejects(()=>f.cli('office','layout','--view','deleted'),/视图不存在/);await assert.rejects(()=>f.cli('canvas','set','--view','deleted','--x','1','--y','2','--zoom','1'),/视图不存在/);
+ const hold=path.join(f.control,g.id+'.hold-user');fs.writeFileSync(hold,'');await f.cli('team-view','select',a.id);await f.cli('session','send','--employee',g.id,'--text','整理这页');await f.cli('team-view','select',b.id);
+ await f.until(()=>fs.existsSync(path.join(f.control,g.id+'-user.json')),'model input');assert.ok(input(g.id).includes(a.id));assert.equal((await info(g.id)).currentTask.viewId,a.id);
+ const transcript=(await f.cli('session','transcript','--employee',g.id)).text;assert.ok(transcript.includes('整理这页'));assert.ok(!transcript.includes('[Aexus task view]'),'host metadata is not user-visible chat');
+ const next=await f.cli('session','enqueue','--employee',g.id,'--text','排队的第二页');assert.equal(next.viewId,b.id);await f.cli('team-view','select',a.id);fs.unlinkSync(hold);
+ await f.until(()=>input(g.id).includes('排队的第二页'),'queued turn');await f.until(async()=>!(await info(g.id)).busy,'queue complete');assert.ok(input(g.id).includes(b.id));assert.equal((await info(g.id)).currentTask.viewId,b.id);
+ const live=(await info(g.id)).id;await f.cli('session','send',live,'明确目标','--view',b.id);await f.until(()=>input(g.id).includes('明确目标'),'positional view');assert.ok(input(g.id).includes(b.id));await f.until(async()=>!(await info(g.id)).busy,'explicit complete');
+ fs.writeFileSync(hold,'');await f.cli('session','send','--employee',g.id,'--text','第一轮继续','--view',a.id);await f.cli('session','enqueue','--employee',g.id,'--text','已删视图不应执行','--view',b.id);await f.cli('session','enqueue','--employee',g.id,'--text','第三轮合法任务','--view',a.id);await f.cli('team-view','remove',b.id);fs.unlinkSync(hold);
+ await f.until(()=>input(g.id).includes('第三轮合法任务'),'failed queued target does not block next task');await f.until(async()=>!(await info(g.id)).busy,'third complete');assert.ok(!(await f.cli('session','transcript','--employee',g.id)).text.includes('已删视图不应执行'));
+ await assert.rejects(()=>f.cli('session','send','--employee',g.id,'--text','不回退 All','--view',b.id),/视图不存在/);
+ await f.cli('session','send','--employee',employee.id,'--text','员工纯净请求');await f.until(()=>fs.existsSync(path.join(f.control,employee.id+'-user.json')),'employee input');assert.ok(input(employee.id).startsWith('[Aexus role]\n'+JSON.stringify({employeeId:employee.id,managementRole:'employee'})+'\n\n'));assert.ok(input(employee.id).includes('[Aexus message source]\n{"sourceView":null}'));assert.ok(input(employee.id).endsWith('[Current message]\n员工纯净请求'));assert.ok(!input(employee.id).includes('[Aexus task view]'));
+ await assert.rejects(()=>f.cli('schedule','create','--name','missing','--employee',g.id,'--prompt','布局','--every-seconds','3600','--paused'),/必须指定/);
+ const job=await f.cli('schedule','create','--name','Pinned','--employee',g.id,'--prompt','定时整理研发','--view',a.id,'--every-seconds','3600','--paused');assert.equal(job.action.viewId,a.id);await f.cli('team-view','select','all');
+ const run=await f.cli('schedule','run',job.id);await f.until(async()=>(await f.cli('schedule','history',job.id)).find(r=>r.id===run.id)?.status==='succeeded','schedule');assert.ok(input(g.id).includes(a.id));assert.equal((await info(g.id)).currentTask.viewId,a.id);
+ await f.stop();await f.start();assert.equal((await f.cli('schedule','get',job.id)).action.viewId,a.id);assert.deepEqual(await f.cli('canvas','view','--view',a.id),{x:110,y:80,zoom:.6});
+ console.log('PASS Governor view discovery, explicit layout/camera targeting without tab changes, shared coordinates, send/queue/model context, deleted-view rejection with next-message recovery, scheduler pin/restart, ordinary Employee pristine input. No model calls.');
+}finally{await f.close()}

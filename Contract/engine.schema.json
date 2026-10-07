@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aexus business Engine manifest",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "contractVersion",
+    "description",
+    "ui",
+    "cli",
+    "requiredCommands",
+    "inputSchema",
+    "outputSchema"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9]*(-[A-Za-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "contractVersion": {
+      "const": "1.0.0"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ui": {
+      "const": "Page.tsx"
+    },
+    "cli": {
+      "const": "cli.mjs"
+    },
+    "requiredCommands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "inputSchema": {
+      "type": "object"
+    },
+    "outputSchema": {
+      "type": "object"
+    },
+    "runtime": {
+      "const": "runtime.mjs",
+      "description": "Optional trusted Node workflow runtime; execution starts only through workflow.start."
+    }
+  },
+  "additionalProperties": false
+}

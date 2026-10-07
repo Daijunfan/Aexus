@@ -1,155 +1,117 @@
-# Avalon
+# Aexus
 
-[简体中文](README.md) · [English](README.en.md)
+[GitHub](https://github.com/Daijunfan/Aexus) · [English](Infra/src/docs/README.en.md) · [0.59.0 更新记录](Infra/src/docs/releases/0.59.0.zh-CN.md)
 
-**把 Coding Agent 组织成能协作的小队：Company 看分工，Messages 聊任务，Plan 安排下一步。**
+**面向明确目标的业务 Engine，建立在同一套多 Agent 协作 Infra 上。**
 
-Avalon 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
+Engine 定义用户输入、领域流程、界面和可验证的交付结果；Infra 提供员工、团队、原生编码会话、消息、文件、权限及调度。Contract 是两层之间的版本化接口。新增求职、科研、活动策划或软件工程应用时，不需要重写 Infra，也不复制员工和聊天数据库。
 
-**当前源码版本：0.58.1。** 应用显示名、窗口标题和 macOS 安装目录已统一为 Avalon，旧 Anexus 应用沿用原有数据迁移。详见 [0.58.1 更新说明](docs/releases/0.58.1.zh-CN.md)。
+启动后首先进入 **Engine library** 首页，选择引擎封面并点击 **Load**，或把封面拖入加载区，才进入工作区。未选择前不挂载业务页面、员工、会话、Plan 或文件内容。进入后顶部为 **Engine / Infra**，Company、Messages、Plan 和相关文件均限定到当前引擎关联的资源。
 
-## 三个视图，同一支小队
+**多个引擎可同时在后台工作，每个窗口一次只查看一个。** 切换引擎或返回首页不会取消任务、关闭原生会话或暂停计划；重新 Load 恢复查看，不重复派发工作。已有资源通过 **Linked Engine resources** 显式关联，原身份、历史、目录和权限保持。完整行为与 CLI 见 [Engine 工作区](Infra/src/docs/ENGINE_WORKSPACES.md)。
 
-### Company：把协作关系看清楚
+## 目录与职责
 
-秘书居中协调六位 Manager，每位 Manager 管理两名员工。不同 Coding Agent 在同一画布中工作，团队绑定实际工作区；工作消息框、休息状态与绿色通信连线可以一起查看。
+```text
+Aexus/
+├── Engine/                   每个一级子目录对应一个业务应用
+│   ├── deep-research/        分阶段研究与证据交付
+│   ├── profile-improvement/  简历与岗位匹配、Word 模板修改
+│   ├── PPT-maker/            演示文稿制作、编辑与 PPTX 导出
+│   └── workspace-audit/      可运行的只读参考 Engine
+├── Contract/                 协议、客户端、能力清单、引擎清单 schema
+├── Infra/
+│   ├── src/                 Core、桌面/Web、CLI、测试、文档与构建工具
+│   └── Plugins/             已有独立软件插件，保留各自发布结构
+├── README.md                全项目导航与协作入口
+└── .aexus/                  不提交的构建、验收、进度和本地产物
+```
 
-![Avalon Company 实拍：秘书、Manager 和员工的两层协作关系](docs/images/company-live.png)
+`Infra/src/main` 是唯一的核心业务实现；`shared` 是 Infra 内部类型和命令定义；`renderer`、`preload` 是展示与桌面接入；`cli` 是终端入口；`test`、`tooling`、`docs`、`resources`、`tunnel` 分别放测试、构建工具、内部文档、资源和远端协议。生成输出统一到 `.aexus/out`，不把第二份实现放回项目根目录。
 
-### Messages：群组里协作，频道里读新闻和 AI 摘要
+**业务 Engine 与 Coding Agent 适配器不同。** Codex、Claude Code、Cline、Pi 留在 `Infra/src/main/engines`，继续执行员工的原生会话。`Engine/*` 是面向最终用户的领域软件。
 
-群消息送达全部成员，@ 点名和回复确定处理对象；员工根据任务需要公开回应。频道保留原始新闻、来源和图像，员工可以在同一处发布摘要与分析。
+## 给 Engine 开发者
 
-![Avalon Messages 实拍：真实新闻原帖与员工生成的中文摘要](docs/images/messages-live.png)
+先读 [Contract 总览](Contract/README.md)、[协议](Contract/PROTOCOL.md) 和 [Engine 开发指南](Contract/ENGINE_GUIDE.md)。机器可读接口为 [commands.v1.json](Contract/commands.v1.json)，清单格式为 [engine.schema.json](Contract/engine.schema.json)。
 
-### Plan：把下一步排到日期上
+一个 Engine 至少包含：
 
-用月历、周计划、看板、时间线等十种布局管理一次、重复与事件任务。计划事项与实际执行记录分别呈现，方便查看负责人、后续安排和结果。
+```text
+Engine/my-engine/
+  engine.json     id、版本、所需能力及输入/输出 schema
+  Page.tsx        独立页面，接收 ContractClient
+  cli.mjs         无界面运行入口
+  workflow.mjs     自己的领域流程，UI/CLI共用
+```
 
-![Avalon Plan 实拍：月历里的已保存任务与工作安排](docs/images/plan-live.png)
+允许依赖 `Contract` 和本 Engine；禁止导入 `Infra/src/main`、直接读写 Core 数据库或借 Engine ID 增加操作权限。新增目录后重新构建即可载入页面，不必修改 Infra 导航或添加一份员工 Store。
 
-三张均为 2026-10-04 的真实运行界面截图。Company 场景有 19 个角色，其中 18 个工作、1 个休息；使用 Codex、Claude Code、Cline、Pi 四种引擎，在 Mac Core 上通过 SSH 操作 Linux、Windows 和虚拟机工作区。Messages 中的摘要由实际员工生成；Plan 中的未来事项是已保存排期。截图保留拍摄时的 Anexus 显示名，当前软件名称为 Avalon。各视图、角色与执行位置以实际能力为准。
-
-[下载安装包](https://github.com/Daijunfan/Avalon/releases) · [安装与部署](docs/DEPLOYMENT.md) · [全部 CLI / API](API.md) · [权限说明](PERMISSIONS.md) · [参与开发](CONTRIBUTING.md)
-
-## 一个 Core，多种用法
-
-Avalon 在传统 Coding Agent 外提供身份、Team、消息、文件、调度和插件能力。引擎负责执行；Core 管理应用内权限、工作空间和协作记录。Electron、浏览器、CLI 和 Agent 原生工具调用同一套认证操作。
-
-| 你想做的事 | 可组合的现有能力 |
-| --- | --- |
-| 重度开发 | 按项目组织 Team，分配员工，使用文件编辑器、终端、审批、任务队列和远程工作区 |
-| 日常任务 | 汇总资料、整理文档、定时处理工作，并在会话中查看结果 |
-| 工作实验 | 给不同角色设定任务与协作方式，观察过程、比较输出，保留文件和记录 |
-| 社会互动实验 | 组织群组与频道，设置成员和会话规则，观察受控条件下的 Agent 互动 |
-| 游戏与模拟 | 自行设计角色、规则和回合，用消息、状态、文件与 CLI 驱动流程 |
-| 自定义工作流 | 组合公开 Core API、原生引擎、自己的程序与插件 |
-
-实验与游戏需要你定义具体规则、输入和评价方法。一次 Agent 输出并不保证任务正确完成；你可以检查执行记录、文件与实际结果。
-
-## 核心能力
-
-- **Company、Messages、Plan**：在画布中组织团队，在会话中交流，在 Plan 中管理定时、重复与事件触发的员工工作。
-- **同一身份与工作空间**：员工跨视图保留原身份、引擎和目录；群组、频道拥有各自的成员关系与共享文件边界。
-- **文件与资产**：查找工作资料、查看和编辑文件、使用交互终端，并在授权范围内传输文件。
-- **本地与远端**：Team 绑定实际主机和目录。“本机”始终指运行 Core 的机器，浏览器中的文件需要上传。
-- **可见协作**：工作状态、未读回复与管理关系直接呈现；绿色活动提示对应正在发生的管理通信或仍在执行的委派任务。
-- **开放接口**：团队、员工、引擎、主机、文件和插件通过公开 CLI / Core API 操作；原生工具沿用员工本人的授权。
-- **可选外观**：主题、角色和动画提供另一种呈现方式，角色外观不决定权限。第三方素材保留各自声明与审核记录。
-
-Secretary 协助用户管理应用与插件，Governor 跨 Team 组织工作，Manager 管理本 Team 的员工。**权限来自职位与当前授权**，群组和频道还会检查真实成员身份；连线、名称和视图不会授予权限。只有用户可以任免 Secretary。详见[权限说明](PERMISSIONS.md)。
-
-## 群聊与 Agent 规则
-
-- 群消息送达全部当前成员；艾特和回复确定处理对象，其他成员同步知悉。
-- 员工公开发言通过发布 API；普通会话输出留在本人会话。
-- 文档与 Agent 说明只保留必要接口、事实和基本规则，具体理解与沟通由 LLM 自行判断。
-
-## 引擎与插件
-
-| 引擎 | 接入协议 | 执行范围 |
-| --- | --- | --- |
-| Codex | App Server | Core 本地及已支持的 SSH / 云端原生工作区 |
-| Claude Code | Claude Agent SDK | Core 本地及已支持的 SSH / 云端原生工作区 |
-| Cline | ACP | Core 本地 Build / 插件目录，或通过 Tunnel 操作远端工作区 |
-| Pi | RPC | Core 本地 Build / 插件目录，或通过 Tunnel 操作远端工作区 |
-
-模型服务商和编码引擎分别配置。Cline / Pi 暂不支持云端原生执行；具体图片、恢复、审批和运行设置以[引擎适配文档](docs/ENGINE_ADAPTERS.md)与实际能力查询为准。
-
-**员工引擎在创建时确定。** 使用另一引擎需要重新创建员工；同一引擎内可调整其支持的模型和运行设置。引擎程序及 Claude SDK 控制库单独安装，兼容的已有安装可以复用。模型账号、额度和费用由所选服务商提供。
-
-三个插件的完整源码在 `PlugIns/`，包含各自 CLI、命令 schema 与运行时：
-
-- **Cloud Hosts**：SSH 主机、连接状态和远程桌面入口。
-- **MiniNotion**：本地笔记、数据库、计划、日历和知识组织。
-- **Margin Reader**：文档阅读、摘录和资料整理。
-
-插件工作资料与凭据位于应用安装包之外。已有工作目录不会因升级自动移动。
-
-## 分享 Avalon
-
-项目主页：[https://github.com/Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。对外分享统一使用这个地址。
-
-## 开始使用
-
-1. 启动桌面版，或连接自己的 Core 浏览器后端。
-2. 在设置中配置所需引擎，查看程序路径、版本、协议和认证状态。
-3. 创建 Team 并绑定项目目录、插件工作区或已登记的 SSH 主机。
-4. 添加员工，确定角色与权限，再发送任务。也可以让管理者通过相同的 API 组织流程。
-
-普通引擎检测不调用模型；测试调用会在确认后发送一次可能计费的请求。Claude Agent 使用 API Key / 服务商配置，本应用不提供 claude.ai 订阅登录。
-
-### 从源码启动
-
-需要 Node.js **22.18+**（Pi 需要 **22.19+**；验证基线为 Node 24）和 npm。SSH / POSIX 终端需要 Python 与 OpenSSH；Windows 本地终端使用 ConPTY。
+参考实现 [workspace-audit](Engine/workspace-audit/engine.json) 的明确起点是一个已有 Team；终点是包含真实目录条目、数量和验收检查的 JSON。它只验证基础设施接入，不冒充已完成的求职或科研产品。
 
 ```sh
-git clone https://github.com/Daijunfan/Avalon.git
-cd Avalon
+node Engine/workspace-audit/cli.mjs --input '{"team":"Research"}' --output audit.json
+```
+
+请为自己的应用提供明确的输入、持久任务 ID、失败处理和真实验收标准。多步执行中途失败时，报告已完成与未完成的部分；不要把“消息已送达”写成“任务已成功”。
+
+## 开发与运行
+
+支持的 Node/npm 版本以 `package.json` 为准。在本目录安装依赖和构建：
+
+```sh
 npm ci
-npm run setup
 npm run build:plugins
+npm run contract:check
 npm run build
 npm run dev
 ```
 
-### CLI 与浏览器
-
-当前应用名称为 `Avalon.app`，命令入口为 `agents` 和 `avalon`。旧 `Anexus.app` 会由安装器迁移，`anexus` 命令仍作为兼容入口连接同一 Core。
+无窗口 Core/Web：
 
 ```sh
-npm run build:server
-npm run build:web
-node bin/avalon serve --web --port 5151
+node Infra/src/cli/aexus serve --web
+node Infra/src/cli/aexus contract info --json
+node Infra/src/cli/aexus contract describe --domain company --json
 ```
 
-另开终端运行 `node bin/avalon web token`，在 `http://127.0.0.1:5151` 输入令牌登录。令牌用于建立认证会话，不放入 URL。异机访问使用 HTTPS 或 SSH 转发。
+现有 `agents`、`avalon`、`anexus` CLI 别名保留。`aexus infra …` 与原员工 CLI 进入同一 Core；`aexus contract …` 是业务 Engine 的版本化入口。安装版和远端部署沿用已授权的身份凭据；本地开发不要指向正式数据运行测试。
 
-`avalon`、兼容入口 `anexus` 和原有 `agents` 命令使用同一个解析器与 Core。旧脚本、API 名称、`AGENTS_COMPANY_*` 环境变量、默认 `~/AgentsCompany` 数据目录及员工 / 原生会话身份保持兼容。项目的 GitHub 地址为 [Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。
+## Infra 开发与内部 API
 
-不要让桌面和独立后端同时打开同一个数据目录。安装、存储与部署细节见[部署文档](docs/DEPLOYMENT.md)。
+先读 [开发约束](Infra/src/docs/AGENTS.md)、[架构](Infra/src/docs/ARCHITECTURE.md)、[安全边界](Infra/src/docs/SECURITY.md)、[权限](Infra/src/docs/PERMISSIONS.md)。
 
-## 支持范围与验证
+[Infra API 工作流](Infra/src/docs/INFRA_API.md) 区分员工协作与可视化；[完整 API](Infra/src/docs/API.md) 保留原操作与参数。插件有自己的独立协议，不混入本次内部 API 清单。
 
-主要使用方式为 Mac 桌面、Windows 桌面，以及 Linux Core / Web 后端搭配另一台设备的浏览器。各平台应在目标系统上分别验证；一次本机构建不代表其他平台通过。严格进程隔离当前仅支持 macOS。
+```sh
+node Infra/src/cli/aexus infra api --domain company --json
+node Infra/src/cli/aexus infra api --domain messages --json
+node Infra/src/cli/aexus infra api --domain plan --json
+node Infra/src/cli/aexus api describe schedule.create --all --json
+```
 
-这是单用户、自托管、可从多设备访问的软件。执行主机、操作系统权限、引擎原生权限与 Core 应用权限各有边界，见[安全说明](SECURITY.md)。升级不会自动提高已有员工的权限。
+| Infra 子视图 | 职责 | 权威接口 |
+| --- | --- | --- |
+| Company | Team、员工、权限、关系和画布 | `group.*`、`card.*`、`management.*`、`office.*`、`room.*` |
+| Messages | 私聊、群组、频道、文件、阅读状态 | `session.*`、`chat.*`、`channel.*`、`messenger.*`、`conversation.*` |
+| Plan | 定时、重复、事件任务及运行验收 | `plan.*`、`schedule.*` |
+
+## 验证与并行协作
 
 ```sh
 npm run typecheck
-npm test
+npm run contract:check
+npm run test:contract
+npm run test:layers
+npm run test:engine-scope
+npm run test:release-core
 npm run test:release-ui
-npm run test:release-engines
 ```
 
-普通验证使用临时数据与确定性协议 fixture。真实模型、真实云主机和生产数据操作需要单独明确授权。构建不等于安装；macOS 安装使用项目安装器，先停止旧应用并备份，再验证隔离的隐藏窗口。
+测试默认使用一次性数据目录、确定性协议替身和隐藏桌面；不使用正式员工或收费模型。构建不代表安装。发布与打包规则见 [部署](Infra/src/docs/DEPLOYMENT.md) 和 [许可](Infra/src/docs/LICENSING.md)。
 
-- [架构与模块边界](ARCHITECTURE.md)
-- [CLI / API](API.md) · [插件开发](PLUGIN_SPEC.md)
-- [贡献与 CI](CONTRIBUTING.md) · [变更记录](CHANGELOG.md)
+并行 Agent 在 `share_chat/` 记录占用范围和交接，在 `progress/Agents-company.md` 追加关键步骤；这两个路径映射到 `.aexus`，不会成为新的源码层。Engine 作者只改自己的子目录，协议变更先协商。
 
-## 许可
+本次源码从 `Agents-company` 迁移到 `Aexus`。员工 ID、Team 和实际工作区、凭据、原生会话、`AGENTS_COMPANY_HOME` 及既有 API 名称保持兼容；外部用户工作区不随源码改名。Electron 的历史资料目录也保持原路径，保留本机筛选和频道显示偏好；旧目录名仅用于数据兼容，界面品牌统一为 Aexus。旧源码路径保留有限的 CLI/本地工作区兼容桥接，开发请使用新根目录。当前仓库地址统一为 https://github.com/Daijunfan/Aexus；历史发布记录中的旧产品名保留为历史信息。
 
-项目代码采用 **GNU GPL v3**。第三方代码与素材保留各自许可、声明及审核记录；项目 GPL 不额外授予第三方品牌素材的权利。单独安装的 Coding Agent 程序与模型服务遵守各自条款。
-
-见 [LICENSE](LICENSE)、[LICENSING.md](LICENSING.md) 和[第三方声明](THIRD_PARTY_NOTICES.md)。
+新建 Codex 员工默认使用 `gpt-6.1-sol`，思考强度为 `high`；创建时可覆盖，已有员工配置不变。Claude Code、Cline、Pi 的接口和密钥由本机引擎设置管理，密钥不随源码发布。

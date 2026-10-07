@@ -1,0 +1,24 @@
+{
+  "name": "@aexus-engine/profile-improvement",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Evidence-grounded resume tailoring through Aexus Contract, preserving the uploaded Word template.",
+  "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "test": "node --test test/document.test.mjs test/workflow.test.mjs test/boundary.test.mjs test/creation-recovery.test.mjs",
+    "test:layout": "node --test test/layout.test.mjs",
+    "test:ui": "node test/ui-test.mjs",
+    "test:infra": "node test/infra-test.mjs",
+    "cli": "node cli.mjs",
+    "test:ui:desktop": "node test/ui-test.mjs --desktop"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "0.9.12",
+    "docx-preview": "0.4.1",
+    "fflate": "0.8.3"
+  }
+}

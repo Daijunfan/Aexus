@@ -1,0 +1,9 @@
+import {objectSchema,nonemptySchema,booleanSchema} from './api-schema.ts'
+const resources=objectSchema(Object.fromEntries(['teams','employees','groups','channels','schedules'].map(kind=>[kind,{type:'array',items:nonemptySchema,maxItems:2000,uniqueItems:true}])))
+export const ENGINE_SCOPE_COMMANDS=[
+ {name:'view.load-engine',args:'ENGINE_ID',summary:'Load one installed Engine for this client; clear unrelated open panels without executing its workflow',gui:'Engine library load dock',cli:{positionals:['engineId']},inputSchema:objectSchema({engineId:nonemptySchema},['engineId'])},
+ {name:'view.launcher',args:'',summary:'Return to the Engine library; no Infra or Engine page is visible until another explicit load',gui:'Engine library Home',cli:{},inputSchema:objectSchema({})},
+ {name:'infra.scope',args:'[--engine-id ID] [--available]',summary:'User-only: inspect current Engine associations; available explicitly opens the resource linking catalog',gui:'Linked resources',cli:{},inputSchema:objectSchema({engineId:nonemptySchema,available:booleanSchema})},
+ {name:'infra.bind',args:'--resources JSON [--engine-id ID] [--expected-revision N]',summary:'User-only: explicitly link existing resources to an Engine without cloning them or granting Agent authority',gui:'Link existing resources',cli:{required:['resources']},inputSchema:objectSchema({engineId:nonemptySchema,resources,expectedRevision:{type:'integer',minimum:0}},['resources'])},
+ {name:'infra.unbind',args:'--resources JSON [--engine-id ID] [--expected-revision N]',summary:'User-only: unlink resources from an Engine; files, employees and history are retained',gui:'Unlink Engine resources',cli:{required:['resources']},inputSchema:objectSchema({engineId:nonemptySchema,resources,expectedRevision:{type:'integer',minimum:0}},['resources'])}
+]

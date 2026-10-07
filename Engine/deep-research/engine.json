@@ -1,0 +1,29 @@
+{
+  "id": "deep-research",
+  "name": "Deep Research",
+  "version": "1.0.0",
+  "contractVersion": "1.0.0",
+  "description": "一句话开始，三轮确认研究目标与重点，多 Coding Agent 独立搜证、交叉审查，只交付最终报告与证据表。",
+  "ui": "Page.tsx",
+  "cli": "cli.mjs",
+  "runtime": "runtime.mjs",
+  "requiredCommands": ["workflow.start", "workflow.list", "workflow.get", "workflow.respond", "workflow.resume", "workflow.cancel", "workflow.file", "engine.check", "group.list", "group.add", "card.create", "session.list", "session.status", "session.send", "session.transcript", "session.interrupt", "view.open"],
+  "inputSchema": {
+    "type": "object",
+    "required": ["topic"],
+    "additionalProperties": false,
+    "properties": {
+      "topic": {"type": "string", "minLength": 1, "maxLength": 4000},
+      "engines": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"type": "object", "required": ["engine"], "additionalProperties": false, "properties": {"engine": {"enum": ["codex", "claude", "cline", "pi"]}, "model": {"type": "string"}}}}
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "required": ["id", "status", "files"],
+    "properties": {
+      "id": {"type": "string"},
+      "status": {"const": "completed"},
+      "files": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "required": ["name", "sha256", "bytes"], "properties": {"name": {"enum": ["research-report.html", "research-report.md", "evidence.csv"]}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 1}}}}
+    }
+  }
+}

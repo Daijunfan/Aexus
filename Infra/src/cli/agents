@@ -1,0 +1,606 @@
+#!/usr/bin/env node
+// The `agents` CLI: drives the running Aexus app over its local
+// socket. Every command maps to the same operation the GUI performs, so this
+// is a faithful remote control rather than a parallel implementation.
+
+const { connect } = require('node:net')
+const { existsSync } = require('node:fs')
+const { join } = require('node:path')
+const { homedir } = require('node:os')
+
+const APP_HOME = process.env.AGENTS_COMPANY_HOME || join(homedir(), 'AgentsCompany')
+const SOCKET = process.env.AGENTS_COMPANY_SOCKET || require('./platform.cjs').controlEndpoint(APP_HOME)
+
+const useJson = process.argv.includes('--json')
+const argv = process.argv.slice(2).filter((a) => a !== '--json')
+let engineScope=process.env.AEXUS_ENGINE_ID
+const scopeAt=argv.indexOf('--engine-scope');if(scopeAt>=0){engineScope=argv[scopeAt+1];if(!engineScope||engineScope.startsWith('--'))throw Error('--engine-scope requires an Engine ID');argv.splice(scopeAt,2)}
+if(engineScope!==undefined&&!/^[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*$/.test(engineScope))throw Error('Invalid Engine scope')
+if(argv[0]==='infra'&&!['scope','bind','unbind'].includes(argv[1])&&(argv[1]!=='api'||['list','describe','docs','call'].includes(argv[2])))argv.shift()
+const parseOnly = process.env.AGENTS_COMPANY_PARSE_ONLY === '1'
+let remoteInputs
+function readInputFile(file) {
+  if(!parseOnly)return require('node:fs').readFileSync(file==='-'?0:file,'utf8')
+  remoteInputs??=JSON.parse(require('node:fs').readFileSync(0,'utf8'))
+  if(!Object.prototype.hasOwnProperty.call(remoteInputs,file)||typeof remoteInputs[file]!=='string')throw new Error('Remote input file was not supplied by the remote CLI')
+  return remoteInputs[file]
+}
+
+function die(msg,code) {
+  if (useJson) console.log(JSON.stringify({ ok: false, error: msg, ...(code?{code}:{}) }))
+  else console.error(`error: ${msg}`)
+  process.exit(1)
+}
+
+/** Parse `--flag value` pairs and positional args. */
+function parse(args) {
+  const out = { _: [] }
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]
+    if (a.startsWith('--')) {
+      const key = a.slice(2)
+      const next = args[i + 1]
+      if (next === undefined || next.startsWith('--')) out[key] = true
+      else {
+        out[key] = next
+        i++
+      }
+    } else out._.push(a)
+  }
+  return out
+}
+
+function remoteFlags(p) {
+  if(p.local)return null
+  if(!p['remote-host']&&!p['remote-dir'])return undefined
+  return {host:p['remote-host'],directory:p['remote-dir'],os:p['remote-os']||'linux',distribution:p['remote-distribution'],port:p['ssh-port'],identityFile:p['ssh-key'],knownHosts:p['known-hosts'],sshConfig:p['ssh-config'],jump:p['ssh-jump']}
+}
+
+function jsonArgument(value) {
+  if (!value || typeof value !== 'string') throw new Error('Expected JSON or @file')
+  return JSON.parse(value.startsWith('@') ? readInputFile(value.slice(1)) : value)
+}
+/** Presentation is per message, never inferred from the Core's active window. */
+function messageSourceOption(parts) {
+  const index=parts.indexOf('--source-view');if(index<0)return {}
+  const sourceView=parts[index+1]
+  if(!['company','messages','plan'].includes(sourceView))throw Error('--source-view requires company, messages or plan')
+  parts.splice(index,2);return {sourceView}
+}
+/** Preserve literal message words while consuming only the established send options. */
+function positionalMessage(argv) {
+  const parts=argv.slice(1),input={id:argv[0],...messageSourceOption(parts)}
+  for(const [flag,key,type] of [['images','images','json'],['files','files','file-json'],['view','viewId','view ID'],['reply-to','replyTo','message ID'],['reply-quote','replyQuote','file-json'],['reply-conversation','replyConversation','conversation reference'],['client-message-id','clientMessageId','request ID']]) {
+    const index=parts.indexOf('--'+flag);if(index<0)continue
+    const value=parts[index+1]
+    if(type==='json')input[key]=JSON.parse(value)
+    else if(type==='file-json')input[key]=jsonArgument(value)
+    else {if(!value||flag==='client-message-id'&&value.startsWith('--'))throw Error('--'+flag+' requires a '+type);input[key]=value}
+    parts.splice(index,2)
+  }
+  const textOnly=parts.indexOf('--reply-text-only')
+  if(textOnly>=0){input.replyTextOnly=true;parts.splice(textOnly,1)}
+  return {...input,text:parts.join(' ')}
+}
+
+function scheduleSpec(p) {
+  if (p.enabled !== undefined && !['true','false','on','off'].includes(p.enabled)) throw new Error('--enabled must be true|false|on|off')
+  if (p.paused !== undefined && p.paused !== true) throw new Error('--paused is a flag; use --enabled true|false')
+  if (p.enabled !== undefined && p.paused !== undefined) throw new Error('Choose --enabled or --paused')
+  if (p.spec && (p.enabled !== undefined || p.paused !== undefined)) throw new Error('Set enabled inside --spec instead of combining it with --enabled or --paused')
+  if (p.spec) return jsonArgument(p.spec)
+  const timezone = p.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+  if ([p.at, p['after-seconds'], p['every-seconds'], p.time, p['on-event']].filter(v => v !== undefined).length !== 1) throw new Error('Choose one: --at, --after-seconds, --every-seconds, --time, --on-event')
+  if (p.thinking !== undefined && !['on','off'].includes(p.thinking)) throw new Error('--thinking must be on|off')
+  if(p['month-day']!==undefined&&(!p.time||p.days))throw Error('--month-day requires --time and cannot be combined with --days')
+  if((p['event-channel']!==undefined||p['cooldown-seconds']!==undefined)&&!p['on-event'])throw Error('Event options require --on-event')
+  const rule = p['on-event']?{kind:'event',event:p['on-event'],channelId:p['event-channel'],cooldownSeconds:p['cooldown-seconds']===undefined?60:Number(p['cooldown-seconds'])}:p['after-seconds']!==undefined?undefined:p.at ? { kind: 'once', at: p.at }
+    : p.time&&p['month-day']!==undefined?{kind:'monthly',time:p.time,timezone,day:p['month-day']==='last'?'last':Number(p['month-day'])}:p.time ? { kind: 'weekly', time: p.time, timezone, days: (p.days || '1,2,3,4,5,6,7').split(',').map(Number) }
+    : { kind: 'interval', everySeconds: Number(p['every-seconds']), anchor: p.start }
+  let window
+  if (p.window) {
+    if (typeof p.window !== 'string' || !/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(p.window)) throw new Error('--window must be HH:mm-HH:mm')
+    const [start,end] = p.window.split('-')
+    window = { start,end,timezone,days:p['window-days']?.split(',').map(Number) }
+  }
+  return { name:p.name,action:{type:'agent',employeeId:p.employee,channelId:p.channel,prompt:p['prompt-file']?readInputFile(p['prompt-file']):p.prompt,viewId:p.view,model:p.model,effort:p.effort,thinking:p.thinking===undefined?undefined:p.thinking==='on'},rule,window,until:p.until,
+    timeoutSeconds:p.timeout===undefined?undefined:Number(p.timeout),graceSeconds:p.grace===undefined?undefined:Number(p.grace),enabled:p.enabled===undefined?!p.paused:['true','on'].includes(p.enabled),source:p.source,afterSeconds:p['after-seconds']===undefined?undefined:Number(p['after-seconds']),maxOccurrences:p['max-occurrences']===undefined?undefined:Number(p['max-occurrences']),...(p.priority||p.tags||p.notes||p['notes-file']||p['duration-minutes']!==undefined?{plan:{priority:p.priority??'normal',tags:p.tags?jsonArgument(p.tags):[],notes:p['notes-file']?readInputFile(p['notes-file']):p.notes??'',...(p['duration-minutes']===undefined?{}:{durationMinutes:Number(p['duration-minutes'])})}}:{}) }
+}
+
+function send(req, { stream = false } = {}) {
+  if(engineScope!==undefined)req={...req,engineScope}
+  if(parseOnly){process.stdout.write(JSON.stringify(req)+'\n');process.exit(0)}
+  if(process.env.AGENTS_COMPANY_URL)return require('./http-client.cjs').send(req,{stream,onEvent})
+  return new Promise((resolve, reject) => {
+    if (process.platform!=='win32'&&!process.env.AGENTS_COMPANY_PORT&&!existsSync(SOCKET)) {
+      reject(new Error('Aexus is not running. Run `agents serve` first.'))
+      return
+    }
+    let auth
+    if(process.env.AGENTS_COMPANY_EMPLOYEE&&!process.env.AGENTS_COMPANY_TOKEN&&!process.env.AGENTS_COMPANY_TOKEN_FILE){reject(new Error('Agent identity missing; reopen this employee'));return}
+    try{auth=process.env.AGENTS_COMPANY_TOKEN||require('node:fs').readFileSync(process.env.AGENTS_COMPANY_TOKEN_FILE||join(APP_HOME,'control.token'),'utf8').trim()}catch{reject(new Error('Cannot read control credential; use your assigned Agent CLI channel'));return}
+    req={...req,auth}
+    const sock = connect(process.env.AGENTS_COMPANY_PORT?{host:'127.0.0.1',port:Number(process.env.AGENTS_COMPANY_PORT)}:SOCKET)
+    sock.setEncoding('utf8')
+    let buf = ''
+    let first = true
+    sock.on('connect', () => sock.write(JSON.stringify(req) + '\n'))
+    sock.on('data', (chunk) => {
+      buf += chunk.toString()
+      const lines = buf.split('\n')
+      buf = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.trim()) continue
+        let msg
+        try {
+          msg = JSON.parse(line)
+        } catch {
+          continue
+        }
+        if (first) {
+          first = false
+          if (!msg.ok) {
+            sock.end()
+            reject(Object.assign(new Error(msg.error),{code:msg.code}))
+            return
+          }
+          if (!stream) {
+            sock.end()
+            resolve(msg.data)
+            return
+          }
+          resolve({ stream: sock, initial: msg.data })
+        } else if (stream) {
+          if (msg.type === 'event') onEvent(msg)
+          else if (msg.type === 'done') sock.end()
+        }
+      }
+    })
+    sock.on('error', (e) => reject(e))
+  })
+}
+
+// ---------- output helpers ----------
+
+function table(rows, cols) {
+  if (!rows.length) return '(none)'
+  const widths = cols.map((c) =>
+    Math.max(c.label.length, ...rows.map((r) => String(r[c.key] ?? '').length))
+  )
+  const head = cols.map((c, i) => c.label.padEnd(widths[i])).join('  ')
+  const sep = widths.map((w) => '-'.repeat(w)).join('  ')
+  const body = rows
+    .map((r) => cols.map((c, i) => String(r[c.key] ?? '').padEnd(widths[i])).join('  '))
+    .join('\n')
+  return `${head}\n${sep}\n${body}`
+}
+
+function out(data, human) {
+  if (useJson) console.log(JSON.stringify({ ok: true, data }, null, 2))
+  else console.log(human ? human(data) : JSON.stringify(data, null, 2))
+}
+
+// ---------- commands ----------
+
+const help = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['aexus / agents / avalon / anexus — Aexus authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','Raw API payload: agents api call COMMAND --args JSON|@file --json (same authenticated endpoint).' ,'',...commands.filter(c=>!c.replacement).map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})
+
+let onEvent = (m) => {
+  if (useJson) console.log(JSON.stringify(m.payload))
+  else if (m.channel === 'session:codex') {
+    const e = m.payload.event
+    if (e.kind === 'text') process.stdout.write(e.text)
+    else if (e.kind === 'tool-start') console.log(`\n  $ ${e.command}`)
+    else if (e.kind === 'tool-end') console.log(`  → exit ${e.exitCode}`)
+  } else if (m.channel === 'session:message') {
+    const msg = m.payload.message
+    if (msg.type === 'assistant') {
+      for (const c of msg.message?.content ?? []) {
+        if (c.type === 'text') process.stdout.write(c.text)
+        else if (c.type === 'tool_use') console.log(`\n  ⚙ ${c.name}`)
+      }
+    }
+  } else if (m.channel === 'session:turn-end' || m.channel === 'session:end') {
+    console.log()
+  }
+}
+
+async function main() {
+  const [group, sub, ...rest] = argv
+  if(group==='web'&&sub==='token'){if(parseOnly||process.env.AGENTS_COMPANY_EMPLOYEE||process.env.AGENTS_COMPANY_TOKEN||process.env.AGENTS_COMPANY_TOKEN_FILE)throw Error('Only the local user can read the web access token');const token=require('node:fs').readFileSync(join(APP_HOME,'control.token'),'utf8').trim();return out({token},value=>value.token)}
+  if(parseOnly&&group==='serve')throw new Error('Remote CLI cannot start a host service')
+  if (!group || group === 'help' || group === '--help') {
+    if(parseOnly||process.env.AGENTS_COMPANY_EMPLOYEE||process.env.AGENTS_COMPANY_TOKEN||process.env.AGENTS_COMPANY_TOKEN_FILE||process.env.AGENTS_COMPANY_PORT){
+      const commands=await send({cmd:'api.list'})
+      out(commands,items=>['Aexus — 当前身份可调用的 CLI',...items.map(c=>'agents '+c.name.replaceAll('.',' ')+' '+c.args+'\n  '+c.summary),'共享文档索引：agents api docs；完整命令目录：agents api list --all'].join('\n'))
+    }else console.log(help())
+    return
+  }
+
+  const call = (cmd, args) => send({ cmd, args })
+
+  if(group==='session'&&rest.includes('--source-view')){if(!['send','enqueue','steer'].includes(sub))throw Error('--source-view is supported by session send, enqueue and steer');messageSourceOption([...rest])}
+  if(group==='session'&&rest.includes('--client-message-id')&&!['send','enqueue'].includes(sub))throw Error('--client-message-id is supported by session send and enqueue')
+  if(group==='session'&&(rest.includes('--reply-to')||rest.includes('--reply-quote')||rest.includes('--reply-conversation')||rest.includes('--reply-text-only'))&&!['send','enqueue'].includes(sub))throw Error('--reply-to / --reply-quote are supported by session send and enqueue')
+  if(group==='session'&&['info','snapshot','transcript','send','steer','follow','interrupt','enqueue','queue','dequeue','open'].includes(sub)&&rest.includes('--employee')){
+    const p=parse(rest);if((p.images!==undefined||p.files!==undefined)&&!['send','enqueue'].includes(sub))throw Error('--images is supported by session send and enqueue');const result=await send({cmd:'session.'+sub,args:{employee:p.employee,clientMessageId:p['client-message-id'],viewId:p.view,sourceView:p['source-view'],replyTo:p['reply-to'],replyConversation:p['reply-conversation'],replyTextOnly:p['reply-text-only']?true:undefined,replyQuote:p['reply-quote']===undefined?undefined:jsonArgument(p['reply-quote']),images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),text:p.text??p._.join(' '),limit:p.limit?Number(p.limit):undefined,thinking:!!p.thinking,raw:!!p.raw,messageId:p['message-id'],expectedMessageId:p['expected-message-id']}},{stream:sub==='follow'});if(sub==='follow'){if(useJson)console.log(JSON.stringify({type:'snapshot',...result.initial}));else if(result.initial.text)console.log(result.initial.text);process.on('SIGINT',()=>{result.stream.end();process.exit(0)});return}return out(result)
+  }
+  const command=`${group}${sub && !sub.startsWith('-') ? '.' + sub : ''}`
+  const input=require('./command-inputs.cjs').commandInput(command,rest,parse,jsonArgument)
+  if(input!==undefined)return out(await call(command,input))
+  switch (command) {
+    case 'system.directories': {const p=parse(rest);return out(await call('system.directories',{path:p.path}))}
+    case 'engine.capabilities': {const p=parse(rest);return out(await call('engine.capabilities',{engine:p.engine}))}
+    case 'engine.check': {const p=parse(rest);return out(await call('engine.check',{engine:p.engine,team:p.team,force:!!p.force}))}
+    case 'engine.probe': {const p=parse(rest);return out(await call('engine.probe',{engine:p.engine,model:p.model,confirm:p.confirm===true}))}
+    case 'engine.configure': {const p=parse(rest);return out(await call('engine.configure',{engine:p.engine,patch:jsonArgument(p.data)}))}
+    case 'engine.install-plan': case 'engine.install': case 'engine.login': {const p=parse(rest);return out(await call('engine.'+sub,{engine:p.engine,confirm:!!p.confirm}))}
+    case 'transfer.upload-begin': {const p=parse(rest);return out(await call('transfer.upload-begin',{to:jsonArgument(p.to),name:p.name,bytes:Number(p.bytes)}))}
+    case 'transfer.upload-chunk': {const p=parse(rest);return out(await call('transfer.upload-chunk',{id:p._[0],offset:Number(p.offset),data:p['data-file']?readInputFile(p['data-file']).trim():p.data}))}
+    case 'transfer.download-info': case 'transfer.download-chunk': {const p=parse(rest);return out(await call('transfer.'+sub,{from:jsonArgument(p.from),offset:Number(p.offset??0),modifiedAt:p['modified-at']===undefined?undefined:Number(p['modified-at'])}))}
+    case 'schedule.list': { const p=parse(rest); return out(await call('schedule.list',{employee:p.employee,source:p.source})) }
+    case 'schedule.create': { const p=parse(rest);return out(await call('schedule.create',{spec:scheduleSpec(p),clientRequestId:p['client-request-id']})) }
+    case 'schedule.update': { const p=parse(rest);return out(await call('schedule.update',{id:p._[0],patch:jsonArgument(p.patch),expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])})) }
+    case 'schedule.preview': { const p=parse(rest);return out(await call('schedule.preview',{id:p._[0],spec:p.spec||p.name?scheduleSpec(p):undefined,patch:p.patch?jsonArgument(p.patch):undefined,after:p.after,count:p.count===undefined?undefined:Number(p.count)})) }
+    case 'schedule.history': { const p=parse(rest);return out(await call('schedule.history',{id:p._[0],employee:p.employee,limit:p.limit===undefined?undefined:Number(p.limit)})) }
+    case 'view.shared': {if(!['on','off'].includes(rest[0]))throw Error('view shared accepts on|off');return out(await call('view.shared',{enabled:rest[0]==='on'}))}
+    case 'transfer.start': {const p=parse(rest);return out(await call('transfer.start',{from:jsonArgument(p.from),to:jsonArgument(p.to)}))}
+    case 'settings.set': {
+      const p=parse(rest),a={};if(p.language!==undefined)a.language=p.language;if(p.theme!==undefined)a.theme=p.theme;if(p['theme-color']!==undefined)a.themeColor=p['theme-color'];if(p['default-permission']!==undefined)a.defaultPermissionMode=p['default-permission'];for(const [key,flag] of [['defaultCodexModel','default-codex-model'],['defaultClaudeModel','default-claude-model'],['defaultClineModel','default-cline-model'],['defaultPiModel','default-pi-model']])if(p[flag]!==undefined)a[key]=p[flag];for(const [key,flag] of [['assetDrawerWidth','asset-drawer-width'],['explorerWidth','explorer-width'],['terminalHeight','terminal-height'],['pageZoom','page-zoom'],['zoomSensitivity','zoom-sensitivity'],['panSensitivity','pan-sensitivity'],['sidebarWidth','sidebar-width']])if(p[flag]!==undefined)a[key]=Number(p[flag]);for(const [key,flag] of [['snapEmployees','snap-employees'],['showTeamOverview','team-overview']])if(p[flag]!==undefined){if(!['on','off'].includes(p[flag]))throw new Error(`--${flag} accepts on|off`);a[key]=p[flag]==='on'}
+      if(p['message-wallpaper']!==undefined)a.messageWallpaper=jsonArgument(p['message-wallpaper'])
+      if(p['view-appearance']!==undefined)a.viewAppearance=jsonArgument(p['view-appearance'])
+      if(p.view!==undefined){
+        if(!['company','messages','plan'].includes(p.view))throw Error('--view accepts company, messages or plan')
+        if(p['view-appearance']!==undefined)throw Error('Choose --view or --view-appearance')
+        if(a.theme===undefined&&a.themeColor===undefined)throw Error('--view requires --theme or --theme-color')
+        a.viewAppearance={[p.view]:{...(a.theme!==undefined?{theme:a.theme}:{}),...(a.themeColor!==undefined?{themeColor:a.themeColor}:{})}};delete a.theme;delete a.themeColor
+      }
+      return out(await call('settings.set',a))
+    }
+    case 'api.list':{const p=parse(rest);return out(await call('api.list',{...(p.all===true?{all:true}:{}),...(p.prefix!==undefined?{prefix:p.prefix}:{}),...(p.search!==undefined?{search:p.search}:{})}))}
+    case 'api.call':{const p=parse(rest),args=p.args===undefined?{}:jsonArgument(p.args);if(p._.length!==1||!/^[a-z][a-z0-9.-]*$/.test(p._[0])||!args||typeof args!=='object'||Array.isArray(args)||Object.keys(p).some(key=>!['_','args'].includes(key)))throw Error('Usage: agents api call COMMAND --args JSON|@file');return out(await call(p._[0],args))}
+    case 'api.docs':{const p=parse(rest);return out(await call('api.docs',{document:p.document??p._[0]}),data=>data.markdown)}
+    case 'api.describe':{const p=parse(rest);return out(await call('api.describe',{command:p._[0],...(p.all===true?{all:true}:{})}))}
+    case 'connector.get':case 'connector.set':case 'connector.reset':case 'connector.segment': {const p=parse(rest),a={manager:p.manager,employee:p.employee};for(const end of ['source','target']){if(p[end+'-offset']!==undefined&&p[end]===undefined)throw Error('--'+end+'-offset requires --'+end);if(p[end]!==undefined)a[end]={side:p[end],...(p[end+'-offset']===undefined?{}:{offset:Number(p[end+'-offset'])})}}if(p.points!==undefined&&p['auto-route'])throw Error('Choose --points or --auto-route');if(p.points!==undefined)a.route=jsonArgument(p.points);if(p['auto-route'])a.route=null;if(sub==='segment'){a.index=Number(p.index);a.x=Number(p.x);a.y=Number(p.y)}return out(await call('connector.'+sub,a))}
+    case 'office.layout': {const p=parse(rest);return out(await call('office.layout',{team:p.team,viewId:p.view}))}
+    case 'session.acknowledge': {const p=parse(rest);return out(await call('session.acknowledge',{employee:p.employee??p._[0],replyId:p['reply-id']}))}
+    case 'management.relayout': {const p=parse(rest);return out(await call('management.relayout',{team:p.team}))}
+    case 'management.topology':{const p=parse(rest);return out(await call('management.topology',{team:p.team,creator:p.creator,teamsOnly:p['teams-only']===true}))}
+    case 'management.activity':{const p=parse(rest);return out(await call('management.activity',{team:p.team}))}
+    case 'management.request':{const p=parse(rest);return out(await call('management.request',{employee:p.employee,manager:p.manager}))}
+    case 'management.bind':case 'management.unbind': {
+      const p=parse(rest)
+      if(p._.length>(sub==='unbind'?1:0)||Object.keys(p).some(key=>!['_','employee','manager','json'].includes(key)))throw Error('Use --employee ID [--manager ID], or a relation ID for unbind')
+      return out(await call('management.'+sub,{employee:p.employee,manager:p.manager,...(p._[0]===undefined?{}:{id:p._[0]})}))
+    }
+    case 'management.team': {const p=parse(rest);if(p.clear&&p.team)throw Error('Use --team or --clear');return out(await call('management.team',{team:p.team,clear:!!p.clear}))}
+    case 'management.global':if(!['on','off'].includes(rest[1]))throw Error('Use on or off');return out(await call('management.global',{id:rest[0],enabled:rest[1]==='on'}))
+    case 'session.status':{const p=parse(rest);return out(await call('session.status',{employee:p.employee}))}
+    case 'view.select': {const p=parse(rest);return out(await call('view.select',{id:p._[0],teamViewId:p['team-view']}))}
+    case 'transfer.download-save':{const p=parse(rest);if(!p.path)throw Error('Provide --path on the Core host');return out(await call('transfer.download-save',{from:jsonArgument(p.from),path:p.path,overwrite:!!p.overwrite}))}
+    case 'chat.file':{const p=parse(rest);return out(await call('chat.file',{id:p._[0],path:p.path,operation:p.operation,offset:Number(p.offset??0)}))}
+    case 'messenger.draft':{const p=parse(rest),data=jsonArgument(p.data);if(!data||typeof data!=='object'||Array.isArray(data)||'conversation' in data)throw Error('Use a draft object without conversation');return out(await call('messenger.draft',{...data,conversation:p._[0]}))}
+    case 'channel.read-state':case 'channel.acknowledge':{const p=parse(rest);return out(await call('channel.'+sub,{id:p._[0],entryIds:p.entries===undefined?undefined:jsonArgument(p.entries),...(p.all?{all:true}:{}),...(p.source?{sourceId:p.source}:{})}))}
+    case 'channel.message-send':case 'channel.message-post':{const p=parse(rest);if(p.silent!==undefined)throw Error('Silent publication is removed. To remain silent, do not call the publication API');return out(await call('channel.'+sub,{id:p._[0],text:p.file?readInputFile(p.file):p.text,images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),replyTo:p['reply-to'],clientMessageId:p['client-message-id'],...(sub==='message-send'?{mentions:p.mentions===undefined?undefined:p.mentions==='all'?'all':jsonArgument(p.mentions)}:{kind:p.kind})}))}
+    case 'channel.source-add':case 'channel.publish':case 'channel.media-put':case 'channel.source-avatar-put': {const p=parse(rest);return out(await call('channel.'+sub,jsonArgument(p.data)))}
+    case 'channel.save': {if(!['on','off'].includes(rest[1]))throw Error('Use channel save POST_ID on|off');return out(await call('channel.save',{id:rest[0],saved:rest[1]==='on'}))}
+    case 'channel.collector-add': {const p=parse(rest);return out(await call('channel.collector-add',{name:p.name,...(p.channel?{channelId:p.channel,...(p.sources!==undefined?{sourceIds:p.sources==='all'?'all':jsonArgument(p.sources)}:{})}:{sourceIds:p.sources===undefined||p.sources==='all'?'all':jsonArgument(p.sources)})}))}
+    case 'chat.update': {const p=parse(rest),patch=jsonArgument(p.patch);if(!patch||typeof patch!=='object'||Array.isArray(patch)||'id' in patch)throw Error('Use a group patch without id');return out(await call('chat.update',{...patch,id:p._[0]}))}
+    case 'chat.edit': {const p=parse(rest);return out(await call('chat.edit',{id:p._[0],messageId:p.message,text:p.file?readInputFile(p.file):p.text,expectedRevision:p['expected-revision']===undefined?undefined:Number(p['expected-revision'])}))}
+    case 'chat.mute': {const p=parse(rest);return out(await call('chat.mute',{id:p._[0],member:p.member,muted:!p.off,durationSeconds:p.for===undefined?undefined:Number(p.for)}))}
+    case 'chat.send':case 'chat.post': {const p=parse(rest);if(p.silent!==undefined)throw Error('Silent publication is removed. To remain silent, do not call chat post');const a={id:p._[0],text:p.file?readInputFile(p.file):p.text,images:p.images===undefined?undefined:jsonArgument(p.images),files:p.files===undefined?undefined:jsonArgument(p.files),clientMessageId:p['client-message-id'],replyTo:p['reply-to'],replyConversation:p['reply-conversation'],replyTextOnly:p['reply-text-only']?true:undefined,replyQuote:p['reply-quote']===undefined?undefined:jsonArgument(p['reply-quote'])};if(sub==='send'){a.mentions=p.mentions===undefined?[]:p.mentions==='all'?'all':jsonArgument(p.mentions);a.viewId=p.view}else a.kind=p.kind;return out(await call('chat.'+sub,a))}
+    case 'team-view.create': {const p=parse(rest);return out(await call('team-view.create',{name:p.name,teams:p.teams?jsonArgument(p.teams):[]}))}
+    case 'team-view.update': {const p=parse(rest);return out(await call('team-view.update',{id:p._[0],patch:jsonArgument(p.patch)}))}
+    case 'view.open': {
+      const p=parse(rest);return out(await call('view.open',{kind:p._[0],name:p.name,employee:p.employee,chatId:p.chat,channelId:p.channel,sourceId:p.source,planViewId:p['plan-view'],pluginId:p.plugin,settings:p.mode?{mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}:undefined,details:!!p.details}))
+    }
+    case 'view.details': return out(await call('view.details',{enabled:rest[0]==='on'}))
+    case 'remote.check': {const p=parse(rest);return out(await call('remote.check',{employee:p.employee,team:p.team,remote:remoteFlags(p)}))}
+    case 'terminal.open': {const p=parse(rest);return out(await call('terminal.open',{employee:p.employee,cols:p.cols?Number(p.cols):undefined,rows:p.rows?Number(p.rows):undefined}))}
+    case 'terminal.list': {const p=parse(rest);return out(await call('terminal.list',{employee:p.employee}))}
+    case 'terminal.read': {const p=parse(rest);return out(await call('terminal.read',{id:p._[0],cursor:Number(p.cursor??0)}),r=>r.output)}
+    case 'terminal.input': {const p=parse(rest),data=p.file?readInputFile(p.file):p.data??p._[1]??'';return out(await call('terminal.input',{id:p._[0],data:data+(p.enter?'\r':'')}))}
+    case 'terminal.resize': {const p=parse(rest);return out(await call('terminal.resize',{id:p._[0],cols:Number(p.cols),rows:Number(p.rows)}))}
+    case 'workspace.suggest':case 'workspace.choose': {
+      const p=parse(rest);return out(await call(`workspace.${sub}`,{team:p.team,path:p.path,workEnvironment:p['work-environment'],mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}))
+    }
+    case 'workspace.image':case 'workspace.list':case 'workspace.read':case 'workspace.write':case 'workspace.mkdir':case 'workspace.move':case 'workspace.trash':case 'workspace.restore': {
+      const p=parse(rest),content=p.file?readInputFile(p.file):p.content
+      return out(await call(`workspace.${sub}`,{shared:!!p.shared,team:p.team,employee:p.employee,path:p._[0]??p.path,to:p.to,content,contentBase64:p['base64-file']?readInputFile(p['base64-file']).trim():p['content-base64'],hash:p.hash,create:!!p.create,hidden:!!p.hidden,id:p.id}))
+    }
+    case 'serve': {
+      const p=parse(argv.slice(1));if(p.web)process.env.AGENTS_COMPANY_WEB='1';for(const [flag,key] of [['host','HOST'],['port','PORT'],['public-url','PUBLIC_URL']])if(p[flag]!==undefined)process.env['AGENTS_COMPANY_WEB_'+key]=p[flag];if(p['allow-insecure'])process.env.AGENTS_COMPANY_WEB_ALLOW_INSECURE='1';
+      require(join(__dirname, '../../..', '.aexus/out', 'main', 'daemon.js'))
+    }
+      return
+    case 'plugin.call': {
+      const p=parse(rest)
+      const params=p.params ? JSON.parse(String(p.params).startsWith('@')?readInputFile(String(p.params).slice(1)):String(p.params)) : {}
+      return out(await call('plugin.call',{id:p._[0],method:p._[1],team:p.team,workspace:p.workspace,employee:p.employee,params,raw:p.raw===true}))
+    }
+    case 'plugin.place': {const p=parse(rest),bounds={};for(const key of ['x','y','width','height'])if(p[key]!==undefined)bounds[key]=Number(p[key]);return out(await call('plugin.place',{id:p._[0],bounds}))}
+    case 'plugin.open': {const p=parse(rest);return out(await call('plugin.open',{id:p._[0],team:p.team,employee:p.employee,workspace:p.workspace}))}
+    case 'plugin.view': {
+      const p=parse(rest)
+      return out(await call('plugin.view',{id:p._[0],team:p.team,workspace:p.workspace,employee:p.employee}))
+    }
+    case 'workspace.docs': {
+      const p=parse(rest)
+      return out(await call('workspace.docs',{team:p.team,workspace:p.workspace,employee:p.employee}))
+    }
+    case 'status':
+      return out(await call('status'), (d) =>
+        `running   ${d.running}\nhome      ${d.home}\nteamRoots ${Object.keys(d.teamRoots ?? {}).length}\nlive      ${d.live}\nstored    ${d.stored}`
+      )
+    case 'session.list': {
+      const p = parse(argv.slice(1))
+      const d = await call('session.list', { live: !!p.live })
+      if (p.live)
+        return out(d, (rows) =>
+          table(rows, [
+            { key: 'id', label: 'ID' },
+            { key: 'engine', label: 'ENGINE' },
+            { key: 'busy', label: 'BUSY' }
+          ])
+        )
+      return out(d, (s) =>
+        table(s.sessions, [
+          { key: 'id', label: 'ID' },
+          { key: 'engine', label: 'ENGINE' },
+          { key: 'group', label: 'DEPARTMENT' },
+          { key: 'title', label: 'TITLE' }
+        ]) + `\n\ndepartments: ${s.groups.join(', ') || '(none)'}`
+      )
+    }
+
+    case 'session.new': {
+      const p = parse(argv.slice(1))
+      const d = await call('session.new', {
+        engine: p.engine,
+        group: p.group,
+        model: p.model,workEnvironment:p['work-environment'],
+        cwd: p.cwd,
+        directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p),
+        title: p.title,
+        seat: p.seat,
+        permissionMode: p.permission,
+        effort: p.effort,
+        thinking: p.thinking === undefined ? undefined : p.thinking === 'on'
+      })
+      return out(d, (x) => `${x.sessionId}  ${x.engine}  ${x.cwd}`)
+    }
+
+    case 'session.open':
+      return out(await call('session.open', { cardId: rest[0] }), (x) => `${x.sessionId}  open`)
+    case 'session.search':
+      return out(await call('session.search', { query: rest.join(' ') }))
+    case 'approval.respond': {const p=parse(rest);return out(await call('approval.respond',{id:p._[0],requestId:p._[1],decision:p._[2],answers:p.answers?JSON.parse(p.answers):undefined,form:p.form?JSON.parse(p.form):undefined}))}
+
+    case 'session.send': case 'session.enqueue': return out(await call('session.'+sub,positionalMessage(rest)))
+    case 'session.transcript': {
+      const p = parse(argv.slice(1))
+      return out(await call('session.transcript', { id: p._[1] ?? rest[0], limit:p.limit===undefined?undefined:Number(p.limit), thinking: !!p.thinking }), (d) => d.text)
+    }
+
+    case 'session.info':
+      return out(await call('session.info', { id: rest[0] }), (d) =>
+        [
+          `engine      ${d.engine}`,
+          `model       ${d.model ?? '(default)'}`,
+          `permission  ${d.permissionMode}`,
+          `thinking    ${d.thinkingSupported ? (d.thinking ? 'on' : 'off') : 'n/a'}`,
+          `effort      ${d.effort ?? '(default)'}`,
+          `speed       ${d.fastMode ? 'Fast' : 'Standard'}`,
+          `busy        ${d.busy}`,
+          `models      ${d.models.map((m) => m.value).join(', ') || '(none)'}`,
+          `commands    ${d.commands.length} available`
+        ].join('\n')
+      )
+
+    case 'session.follow': {
+      const p = parse(argv.slice(1))
+      const id = p._[1] ?? rest[0]
+      const res = await send({ cmd: 'session.follow', args: { id, raw: !!p.raw } }, { stream: true })
+      if (useJson) console.log(JSON.stringify({ type: 'snapshot', ...res.initial }))
+      else if (res.initial.text) console.log(res.initial.text)
+      // The server ends the stream on completion, failure, or close.
+      process.on('SIGINT', () => {
+        res.stream.end()
+        process.exit(0)
+      })
+      return
+    }
+    case 'config.remote-admin': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.remote-admin',{id:rest[0],enabled:rest[1]==='on'}))}
+    case 'config.effort':
+      // 'default' clears the override, like the Default entry in the GUI menu.
+      return out(await call('config.effort', { id: rest[0], effort: rest[1] ?? 'default' }))
+
+    case 'config.plan': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.plan',{id:rest[0],enabled:rest[1]==='on'}))}
+    case 'engine.models': {const p=parse(rest);return out(await call('engine.models',{engine:p.engine,kind:p.kind,team:p.team}))}
+    case 'engine.skill': return out(await call('engine.skill',{id:rest[0],name:rest[1],prompt:rest.slice(2).join(' ')}))
+    case 'session.steer': {const parts=rest.slice(1),source=messageSourceOption(parts);return out(await call('session.steer',{id:rest[0],text:parts.join(' '),...source}))}
+    case 'session.background-stop': {const p=parse(rest);return out(await call('session.background-stop',{id:p._[0],processId:p.process}))}
+    case 'session.review': {const p=parse(rest);return out(await call('session.review',{id:p._[0],base:p.base,commit:p.commit,instructions:p.instructions}))}
+    case 'session.export': {const p=parse(rest);return out(await call('session.export',{id:p._[0],format:p.format,path:p.path}),d=>d.content??JSON.stringify(d))}
+    case 'view.tools': return out(await call('view.tools',{section:rest[0]==='off'?null:rest[0]}))
+    case 'config.fast': {if(!['on','off'].includes(rest[1]))throw new Error('Use on|off');return out(await call('config.fast',{id:rest[0],enabled:rest[1]==='on'}))}
+    case 'commands.run': return out(await call('commands.run',{id:rest[0],text:rest.slice(1).join(' ')}))
+    case 'commands.list': {
+      const p = parse(argv.slice(1))
+      const id = p._[1] ?? rest[0]
+      const rows = await call('commands.list', { id, filter: p.filter, all: !!p.all })
+      return out(rows, (r) =>
+        r.length
+          ? r.map((c) => `/${c.name}${c.argumentHint ? ' ' + c.argumentHint : ''}  —  ${c.description}`).join('\n')
+          : '(no matching commands)'
+      )
+    }
+
+    case 'commands.complete': {
+      const p = parse(argv.slice(1))
+      const id = p._[1] ?? rest[0]
+      const name = p._[2] ?? rest[1]
+      return out(await call('commands.complete', { id, name }), (d) => d.completion)
+    }
+
+    case 'ui.style': {
+      const p = parse(argv.slice(1))
+      const sel = p._[1] ?? rest[0]
+      return out(await call('ui.style', { selector: sel }), (d) =>
+        Object.entries(d)
+          .map(([k, v]) => `${k.padEnd(10)} ${v}`)
+          .join('\n')
+      )
+    }
+
+    case 'ui.screenshot':
+      return out(await call('ui.screenshot', { path: rest[0],privacy:!!parse(rest).privacy }))
+    case 'ui.drag':
+    case 'ui.wheel': {
+      const p=parse(rest)
+      return out(await call(`ui.${sub}`,{selector:p._[0],dx:Number(p.dx??0),dy:Number(p.dy??0),zoom:!!p.zoom}))
+    }
+
+    case 'ui.view':
+      return out(await call('ui.view'), (d) => {
+        const lines = [`view        ${d.view}`]
+        if (d.view === 'home') {
+          lines.push(`departments ${d.departments.join(', ') || '(none)'}`)
+          lines.push(`cards       ${d.cards.length}`)
+          for (const c of d.cards) lines.push(`  · ${c.title}  [${c.engine}]  ${c.group || 'Unassigned'}`)
+        } else if (d.session) {
+          const s = d.session
+          lines.push(`session     ${s.title}`)
+          lines.push(`engine      ${s.engine}`)
+          lines.push(`model       ${s.model}`)
+          lines.push(`permission  ${s.permission}`)
+          lines.push(`thinking    ${s.thinking}`)
+          lines.push(`busy        ${s.busy}`)
+          lines.push(`turns       ${s.turns}`)
+          lines.push(`back button ${s.hasBackButton ? 'yes' : 'NO'}`)
+        }
+        return lines.join('\n')
+      })
+
+    case 'ui.text':
+      return out(await call('ui.text'), (d) => String(d))
+
+    case 'ui.dom': {
+      const p = parse(argv.slice(1))
+      const sel = p.sel || p.selector || 'body'
+      return out(await call('ui.dom', { selector: sel }), (rows) =>
+        rows.map((r) => `${r.visible ? '●' : '○'} ${r.tag}.${String(r.cls).split(' ')[0]}  ${r.text.slice(0, 70)}`).join('\n')
+      )
+    }
+
+    case 'ui.click':
+      return out(await call('ui.click', { selector: rest[0] }), (d) => `clicked ${d.clicked ?? rest[0]}`)
+
+    case 'ui.type':
+      return out(await call('ui.type', { selector: rest[0], value: rest.slice(1).join(' ') }))
+
+    case 'ui.wait': {
+      const p = parse(argv.slice(1))
+      // argv is ['ui','wait','<selector>'], so the selector is the second positional.
+      const sel = p._[1] ?? p._[0]
+      return out(await call('ui.wait', { selector: sel, timeout: p.timeout }), (d) =>
+        d.found ? 'found' : 'not found'
+      )
+    }
+
+    case 'room.place': {
+      const p = parse(argv.slice(1))
+      const name = p._[1] ?? p._[0]
+      return out(
+        await call('room.place', {
+          name,
+          col: p.col,
+          row: p.row,
+          w: p.w ?? 1,
+          h: p.h ?? 1
+        }),
+        (s) => JSON.stringify(s.rooms?.[name] ?? null)
+      )
+    }
+
+    case 'group.list':
+      {const p=parse(rest);return out(await call('group.list',{details:!!p.details}),g=>g.map(value=>typeof value==='string'?value:`${value.name} · ${value.mode}${value.remote?' · '+value.remote.host:value.pluginId?' · '+value.pluginId:''} · ${value.root??''}`).join('\n')||'(none)')}
+    case 'host.terminal-open': case 'host.terminal-list': case 'host.terminal-read': case 'host.terminal-input': case 'host.terminal-resize': case 'host.terminal-close':
+    case 'host.desktop-open': case 'host.desktop-list': case 'host.desktop-launch': case 'host.desktop-close': {
+      const p=parse(rest),a={id:p._[0],terminal:p.terminal,session:p.session,directory:p.directory}
+      for(const key of ['cols','rows','cursor'])if(p[key]!==undefined)a[key]=Number(p[key])
+      if(p['wait-ms']!==undefined)a.waitMs=Number(p['wait-ms'])
+      if(sub==='terminal-input')a.data=(p.file?readInputFile(p.file):p.data??'')+(p.enter?'\r':'')
+      return out(await call('host.'+sub,a))
+    }
+    case 'host.exec': {const p=parse(rest);return out(await call('host.exec',{id:p._[0],directory:p.directory,command:p['command-file']?readInputFile(p['command-file']):p.command,timeout:p.timeout?Number(p.timeout):undefined}))}
+    case 'host.list': {const p=parse(rest);return out(await call('host.list',{os:p.os,distribution:p.distribution,summary:!!p.summary,credentials:!!p.credentials}))}
+    case 'host.trust': {const p=parse(rest);return out(await call('host.trust',{id:p._[0],fingerprint:p.fingerprint}))}
+    case 'host.create': {const p=parse(rest);return out(await call('host.create',jsonArgument(p.data||'{}')))}
+    case 'host.update': {const p=parse(rest);return out(await call('host.update',{id:p._[0],patch:jsonArgument(p.data||'{}')}))}
+    case 'host.directories': {const p=parse(rest);return out(await call('host.directories',{id:p._[0],path:p.path}))}
+    case 'engine.remote-check': {const p=parse(rest);return out(await call('engine.remote-check',{team:p.team,engine:p.engine,directory:p.directory}))}
+    case 'engine.remote-sessions': {const p=parse(rest);return out(await call('engine.remote-sessions',{team:p.team,engine:p.engine}))}
+    case 'group.add':
+      {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p),os:p.os,distribution:p.distribution }), (s) => s.groups.join('\n'))}
+    case 'group.configure':
+      {const p=parse(rest);return out(await call('group.configure',{name:p._[0],mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],root:p.root,hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p)}))}
+    case 'group.root':
+      return out(await call('group.root',{name:rest[0],root:rest[1],create:!!parse(rest).create,directoryMode:parse(rest)['directory-mode']}))
+    case 'room.bounds': {
+      const p=parse(rest), bounds={}
+      for(const key of ['x','y','width','height']) if(p[key]!==undefined) bounds[key]=Number(p[key])
+      for(const key of ['shape','arrangement']) if(p[key]!==undefined) bounds[key]=p[key]
+      if(p.points) bounds.points=JSON.parse(p.points).map(v=>Array.isArray(v)?{x:v[0],y:v[1]}:v)
+      return out(await call('room.bounds',{name:p._[0],bounds}))
+    }
+    case 'card.place': {
+      const p=parse(rest)
+      if(p.snap!==undefined&&!['on','off'].includes(p.snap))throw new Error('--snap accepts on|off');return out(await call('card.place',{id:p._[0],x:p.x,y:p.y,snap:p.snap===undefined?undefined:p.snap==='on',zoom:p.zoom===undefined?undefined:Number(p.zoom)}))
+    }
+    case 'canvas.view':
+      return out(await call('canvas.view',{viewId:parse(rest).view}))
+    case 'canvas.set': {
+      const p=parse(rest)
+      return out(await call('canvas.set',{x:p.x,y:p.y,zoom:p.zoom,viewId:p.view}))
+    }
+    case 'group.remove':
+      {const p=parse(rest);if(p['delete-workspace']!==undefined&&p['delete-workspace']!==true)throw Error('--delete-workspace is a flag');return out(await call('group.remove', { ...(p._.length===1?{name:p._[0]}:{names:p._}),deleteWorkspace:p['delete-workspace']===true }), (s) => s.groups.join('\n'))}
+
+    case 'card.rename':
+      return out(await call('card.rename', { cardId: rest[0], title: rest.slice(1).join(' ') }))
+    case 'card.clone': {const p=parse(rest);return out(await call('card.clone',{id:p._[0],title:p.title,cwd:p.cwd,directoryMode:p['directory-mode']}))}
+    case 'card.initialize': {const p=parse(rest);return out(await call('card.initialize',{id:p._[0],model:p.model,effort:p.effort}))}
+    case 'avatar.list': {const p=parse(rest);return out(await call('avatar.list',{query:p.query,style:p.style,all:!!p.all}))}
+    case 'card.avatar': {const p=parse(rest);return out(await call('card.avatar',{id:p._[0],avatar:p.avatar??p._[1],character:p.character,avatarStyle:p['avatar-style']}))}
+    case 'card.create': {
+      const p = parse(rest)
+      if(p.thinking!==undefined&&!['on','off'].includes(p.thinking))throw new Error('--thinking must be on or off')
+      if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
+      return out(await call('card.create', { ...p, thinking:p.thinking===undefined?undefined:p.thinking==='on', permissionMode:p.permission, avatarStyle:p['avatar-style'], workEnvironment:p['work-environment'],managementRole:p['management-role'],accessMode:p['access-mode'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
+    }
+    case 'card.update': {
+      const p = parse(rest)
+      if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
+      return out(await call('card.update', { id: p._[0], patch: { ...p, avatarStyle:p['avatar-style'], workEnvironment:p['work-environment'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined } }))
+    }
+    case 'room.design': {
+      const p = parse(rest)
+      const design = { theme: p.theme, wall: p.wall, desk: p.desk, subtitle: p.subtitle, background:p.background,pattern:p.pattern }
+      for (const key of ['plants', 'shelf', 'lamp', 'art', 'scenery']) if (p[key] !== undefined) design[key] = p[key] === 'on'
+      return out(await call('room.design', { name: p._[0] ?? '', design }))
+    }
+    case 'card.move': {
+      const p = parse(argv.slice(1))
+      return out(
+        await call('card.move', { id: p._[1], group: p._[2] ?? '', before: p.before, cwd: p.cwd })
+      )
+    }
+    case 'card.remove':
+      {const p=parse(rest);if(p['delete-workspace']!==undefined&&p['delete-workspace']!==true)throw Error('--delete-workspace is a flag');return out(await call('card.remove', { ...(p._.length===1?{id:p._[0]}:{ids:p._}),deleteWorkspace:p['delete-workspace']===true }))}
+
+    default:
+      die(`unknown command: ${argv.join(' ')}\n\n${help()}`)
+  }
+}
+
+main().catch((e) => die(e.message,e.code))

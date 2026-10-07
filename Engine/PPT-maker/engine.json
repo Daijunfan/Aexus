@@ -1,0 +1,253 @@
+{
+  "id": "PPT-maker",
+  "name": "PPT-maker",
+  "version": "1.0.0",
+  "contractVersion": "1.0.0",
+  "description": "一句需求或一份模板，由策划、设计、审校员工协作制作。预览、按页修改，最终交付原生可编辑PPTX。",
+  "ui": "Page.tsx",
+  "cli": "cli.mjs",
+  "runtime": "runtime.mjs",
+  "requiredCommands": [
+    "workflow.start",
+    "workflow.list",
+    "workflow.get",
+    "workflow.respond",
+    "workflow.resume",
+    "workflow.cancel",
+    "workflow.file",
+    "engine.check",
+    "group.list",
+    "group.add",
+    "card.create",
+    "session.list",
+    "session.status",
+    "session.send",
+    "session.transcript",
+    "session.interrupt",
+    "session.dequeue",
+    "view.open"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "anyOf": [
+      {
+        "required": [
+          "brief"
+        ]
+      },
+      {
+        "required": [
+          "template"
+        ]
+      },
+      {
+        "required": [
+          "parentId"
+        ]
+      }
+    ],
+    "properties": {
+      "brief": {
+        "type": "string",
+        "maxLength": 6000
+      },
+      "audience": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "slideCount": {
+        "type": "integer",
+        "minimum": 3,
+        "maximum": 24,
+        "default": 8
+      },
+      "style": {
+        "enum": [
+          "executive",
+          "blueprint",
+          "editorial",
+          "midnight"
+        ]
+      },
+      "ratio": {
+        "enum": [
+          "16:9",
+          "4:3"
+        ]
+      },
+      "language": {
+        "enum": [
+          "zh-CN",
+          "en"
+        ]
+      },
+      "confirmOutline": {
+        "type": "boolean"
+      },
+      "template": {
+        "type": "object",
+        "required": [
+          "name",
+          "content"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": ".*\\.(pptx|potx)$"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 5592408,
+            "description": "Canonical base64; max4MiB decoded"
+          }
+        }
+      },
+      "materials": {
+        "type": "array",
+        "maxItems": 8,
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "content"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 160
+            },
+            "content": {
+              "type": "string",
+              "maxLength": 80000
+            }
+          }
+        }
+      },
+      "engines": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 4,
+        "items": {
+          "type": "object",
+          "required": [
+            "engine"
+          ],
+          "properties": {
+            "engine": {
+              "enum": [
+                "codex",
+                "claude",
+                "cline",
+                "pi"
+              ]
+            },
+            "model": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "parentId": {
+        "type": "string",
+        "minLength": 1
+      },
+      "deck": {
+        "type": "object",
+        "description": "Explicit edits to a completed parent; document semantics validated by Engine"
+      },
+      "parentSnapshot": {
+        "type": "object",
+        "required": [
+          "deck",
+          "revision"
+        ],
+        "additionalProperties": false,
+        "description": "UI/CLI prepareRevision reads the authorized completed parent; runtime receives a self-contained snapshot, not private Infra state. parentId is a user-supplied lineage reference.",
+        "properties": {
+          "deck": {
+            "type": "object"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "file": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "content",
+              "bytes",
+              "sha256"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "required": [
+      "id",
+      "status",
+      "files"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "status": {
+        "const": "completed"
+      },
+      "files": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "mediaType",
+            "bytes",
+            "sha256"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": ".*\\.pptx$"
+            },
+            "mediaType": {
+              "const": "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "encoding": {
+              "const": "base64"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "workspace-audit",
+  "name": "Workspace audit",
+  "version": "1.0.0",
+  "contractVersion": "1.0.0",
+  "description": "Reference Engine: select one Team, inspect its existing workspaces, and return a verifiable inventory. No model calls or workspace writes.",
+  "ui": "Page.tsx",
+  "cli": "cli.mjs",
+  "requiredCommands": [
+    "group.list",
+    "session.list",
+    "workspace.list"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "required": [
+      "team"
+    ],
+    "properties": {
+      "team": {
+        "type": "string",
+        "minLength": 1
+      },
+      "hidden": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "type": "object",
+    "required": [
+      "engineId",
+      "team",
+      "workspaces",
+      "acceptance"
+    ],
+    "properties": {
+      "engineId": {
+        "const": "workspace-audit"
+      },
+      "team": {
+        "type": "string"
+      },
+      "workspaces": {
+        "type": "array"
+      },
+      "acceptance": {
+        "type": "object"
+      }
+    }
+  }
+}

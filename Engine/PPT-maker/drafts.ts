@@ -1,0 +1,6 @@
+import type {Deck} from './types'
+export type Draft={id:string;baseRevision:number;deck:Deck;at:number}
+let writes:Promise<void>=Promise.resolve()
+const database=()=>new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open('aexus-ppt-maker-drafts-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts',{keyPath:'id'});r.onerror=()=>reject(r.error);r.onsuccess=()=>resolve(r.result)})
+export async function readDraft(id:string):Promise<Draft|undefined>{await writes.catch(()=>{});const db=await database();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readonly'),r=tx.objectStore('drafts').get(id);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}finally{db.close()}}
+export function writeDraft(draft:Draft|null,id:string){const snapshot=draft?structuredClone(draft):null;const task=writes.catch(()=>{}).then(async()=>{const db=await database();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('drafts','readwrite'),store=tx.objectStore('drafts');if(snapshot)store.put(snapshot);else store.delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error)})}finally{db.close()}});writes=task;return task}

@@ -1,0 +1,32 @@
+{
+  "id": "profile-improvement",
+  "name": "简历优化",
+  "version": "1.0.0",
+  "contractVersion": "1.0.0",
+  "description": "上传 Word 简历和目标岗位，三位 Agent 分工核查、分析、改写与审校，保留原模板并交付独立岗位版本。",
+  "ui": "Page.tsx",
+  "cli": "cli.mjs",
+  "runtime": "runtime.mjs",
+  "requiredCommands": ["workflow.start", "workflow.list", "workflow.get", "workflow.resume", "workflow.cancel", "workflow.file", "engine.check", "group.list", "group.add", "card.create", "session.list", "session.status", "session.send", "session.transcript", "session.interrupt", "view.open", "view.layer"],
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["resume", "targets"],
+    "properties": {
+      "resume": {"type": "object", "additionalProperties": false, "required": ["name", "data"], "properties": {"name": {"type": "string", "maxLength": 240, "description": "Original .docx filename"}, "data": {"type": "string", "minLength": 1, "maxLength": 5592408, "description": "Base64 of the user-selected DOCX, maximum 4 MiB decoded"}}},
+      "targets": {"type": "string", "minLength": 1, "maxLength": 4000, "description": "One to three target roles separated by newlines or semicolons"},
+      "jobDescription": {"type": "string", "maxLength": 12000},
+      "engine": {"enum": ["auto", "codex", "claude", "cline", "pi"]},
+      "model": {"type": "string", "maxLength": 200}
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "required": ["id", "status", "files"],
+    "properties": {
+      "id": {"type": "string"},
+      "status": {"const": "completed"},
+      "files": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"type": "object", "required": ["name", "mediaType", "bytes", "sha256"], "properties": {"name": {"type": "string", "pattern": "\\.docx$"}, "mediaType": {"const": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}, "bytes": {"type": "integer", "minimum": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "encoding": {"const": "base64"}}}}
+    }
+  }
+}

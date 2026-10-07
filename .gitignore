@@ -1,26 +1,19 @@
 node_modules/
-out/
-release/
-artifacts/
-.dist/
-build/plugins/
-build/cli/
-build/Source.zip
-PlugIns/*/node_modules/
-PlugIns/*/dist/
-PlugIns/*/dist-cli/
-PlugIns/*/dist-plugin/
-PlugIns/*/test-results/
-PlugIns/*/release.noindex/
-PlugIns/*/build/
-PlugIns/*/.local-data/
-PlugIns/*/workspaces/
-PlugIns/*/.agents-company/
-PlugIns/*/.tunnel/
-/Agents-Managers/*/
-/Shared/*
-!/Shared/.gitkeep
-/宣传素材*/
+.aexus/
+/progress
+/share_chat
+Infra/src/resources/plugins/
+Infra/src/resources/cli/
+Infra/src/resources/Source.zip
+Infra/Plugins/*/node_modules/
+Infra/Plugins/*/dist*/
+Infra/Plugins/*/build/
+Infra/Plugins/*/test-results/
+Infra/Plugins/*/release.noindex/
+Infra/Plugins/*/.local-data/
+Infra/Plugins/*/workspaces/
+Infra/Plugins/*/.agents-company/
+Infra/Plugins/*/.tunnel/
 *.tsbuildinfo
 .DS_Store
 __pycache__/
@@ -29,10 +22,5 @@ __pycache__/
 .env.*
 !.env.example
 
-# Legacy local deployment notes; maintained release template lives in docs/deploy.
-/deploy/
-
-# Local promotional libraries and ready-to-publish copies; README captures live in docs/images.
-/promo_avalon_*/
-/publish/
-/Avalon_Live_Views_*.zip
+artifacts/
+Engine/*/test-artifacts/

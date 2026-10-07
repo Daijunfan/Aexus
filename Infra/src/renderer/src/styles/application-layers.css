@@ -1,0 +1,34 @@
+/* Shell layers share chrome and products, not domain implementation state. */
+html .app.in-office:has(.aexus-home){--company-header-height:72px}
+html .company-header.aexus-header{height:var(--company-header-height);min-height:var(--company-header-height);flex:none;display:grid;grid-template-columns:minmax(100px,1fr) auto minmax(100px,1fr);grid-template-rows:1fr;gap:16px;padding:0 22px;isolation:isolate}
+html .company-header.aexus-header>.company-brand{grid-column:1;grid-row:1;display:flex;padding-left:60px}
+html .company-header.aexus-header>.application-layers{grid-column:2;grid-row:1;-webkit-app-region:no-drag}
+html .company-header.aexus-header>.layer-indicator{grid-column:3;grid-row:1;justify-self:end}
+.aexus-home>.office-layout{flex:1;min-height:0;overflow:hidden}
+@media(max-width:760px){html .app.in-office:has(.aexus-home){--company-header-height:64px}html .company-header.aexus-header{grid-template-columns:minmax(64px,1fr) auto minmax(0,1fr);gap:8px;padding-inline:14px}html .company-header.aexus-header>.company-brand{padding-left:0;font-size:13px}html .company-header.aexus-header>.company-brand span{display:block}html .company-header.aexus-header>.company-brand .brand-symbol{display:none}}
+.application-layers{display:flex;align-items:center;gap:4px;padding:5px;border:1px solid var(--border-soft);border-radius:15px;background:var(--bg-elev)}
+.application-layers button{display:flex;align-items:center;justify-content:center;gap:9px;width:140px;flex:0 0 140px;min-width:0;height:42px;padding:0 22px;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--fg-dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.application-layers button[aria-pressed=true]{background:var(--bg);border-color:color-mix(in srgb,var(--accent) 30%,var(--border));color:var(--accent);box-shadow:0 2px 6px color-mix(in srgb,var(--fg) 5%,transparent)}
+.application-layers button:hover{background:var(--bg-hover)}
+.application-layers button:focus-visible,.engine-surface button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.company-header>.application-layers{margin-inline:auto}.company-header>.layer-indicator{width:140px;color:var(--fg-faint);font-size:10px;letter-spacing:.12em;text-align:right}
+.infra-surface{display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;overflow:hidden}.infra-surface[hidden]{display:none}
+.infra-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 18px;border-bottom:1px solid var(--border-soft);background:var(--bg);flex:none;min-height:60px;position:relative;z-index:22}
+.infra-toolbar .company-navigation{position:relative;left:auto;top:auto;transform:none;margin:0;flex:0 1 auto;min-width:0;box-shadow:none;padding:3px;background:var(--bg-elev)}
+.infra-toolbar .app-view-button{height:36px;font-size:12px}.infra-toolbar .company-actions{margin:0;flex:none}.infra-content{display:flex;flex:1;min-width:0;min-height:0;position:relative;overflow:hidden}.infra-content>.message-view,.infra-content>.plan-view{flex:1;min-width:0}
+.engine-surface{flex:1;min-width:0;min-height:0;overflow:auto;background:var(--bg);color:var(--fg)}
+.engine-context{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 24px;border-bottom:1px solid var(--border-soft)}.engine-context>span{margin-left:auto;font-size:10px;letter-spacing:.12em;color:var(--fg-faint)}
+.engine-context button{display:flex;align-items:center;gap:9px;border:0;border-radius:9px;padding:8px 10px;background:transparent;color:var(--fg-dim);font:inherit;font-size:12px;cursor:pointer}
+.engine-catalog{max-width:1020px;margin:auto;padding:64px 42px 80px}.engine-eyebrow{font-size:10px;font-weight:650;letter-spacing:.16em;color:var(--accent);margin:0 0 20px}
+.engine-catalog h1{font-size:clamp(30px,4vw,49px);font-weight:650;letter-spacing:-.035em;line-height:1.12;margin:0 0 22px;max-width:700px}
+.engine-catalog>p:not(.engine-eyebrow){max-width:680px;color:var(--fg-dim);font-size:14px;line-height:1.85}
+.engine-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:36px}.engine-card{border:1px solid var(--border);border-radius:18px;padding:26px;background:var(--bg-elev);color:var(--fg);text-align:left;cursor:pointer;max-width:480px;transition:background .15s,border-color .15s}.engine-card:hover{background:var(--bg-hover);border-color:var(--accent)}
+.engine-card-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);margin-bottom:18px}.engine-card-icon .codicon{font-size:22px}.engine-card strong{font-size:19px}.engine-card p{font-size:12px;line-height:1.85;color:var(--fg-dim)}.engine-card footer{display:flex;justify-content:space-between;gap:10px;margin-top:24px;font-size:11px;color:var(--accent)}
+.engine-error{padding:18px 24px;color:var(--red);line-height:1.7}.engine-loading{padding:36px;color:var(--fg-dim)}
+@media(max-width:760px){.application-layers button{width:100px;flex-basis:100px;min-width:0;padding-inline:12px;height:37px}.company-header>.layer-indicator{display:none}.infra-toolbar{padding:7px 10px;gap:5px;flex-wrap:wrap}.infra-toolbar .company-navigation{max-width:100%}.infra-toolbar .company-actions{margin-left:auto}.engine-catalog{padding:34px 22px}.engine-context{padding:9px 16px}}
+
+/* Keep Infra editor state while another layer is shown; overlays cannot leak over Engine pages. */
+.infra-overlays{display:contents}.infra-overlays[hidden]{display:none}
+
+/* Workbench is already inside Infra content: do not position it over the layer or view toolbar. */
+html .app .infra-content>.conversation-layer{position:absolute;inset:0;left:0;top:0;right:0;bottom:0;padding:10px}

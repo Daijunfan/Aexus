@@ -1,0 +1,12 @@
+export const MAX_UPLOAD_BYTES:number
+export const DOCX_MIME:string
+export type ResumeUnit={id:string;paragraphId:string;text:string;context:string;table:boolean;textbox:boolean;editable:boolean;lockedReason?:string;bold:boolean;maxWidth:number;maxCharacters:number}
+export type ResumeDocument={name:string;bytes:number;characters:number;units:ResumeUnit[];paragraphs:{id:string;text:string;units:string[];table:boolean;textbox:boolean}[];fonts:string[];tables:number;images:number;editableUnits:number}
+export type TextPatch={id:string;before:string;after:string;reason:string;evidenceIds:string[]}
+export function inspectDocument(bytes:Uint8Array,name?:string):ResumeDocument
+export function decodeBase64(value:string):Uint8Array<ArrayBuffer>
+export function encodeBase64(value:Uint8Array):string
+export function normalize(value:unknown):string
+export function visualWidth(value:string):number
+export function validatePatches(document:ResumeDocument,patches:unknown,options?:{protectedIds?:string[]}):TextPatch[]
+export function applyPatches(bytes:Uint8Array,patches:TextPatch[],options?:{protectedIds?:string[]}):{bytes:Uint8Array;patches:TextPatch[];verification:Record<string,unknown>}

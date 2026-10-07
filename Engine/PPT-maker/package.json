@@ -1,0 +1,25 @@
+{
+  "name": "@aexus/ppt-maker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Contract-only collaborative editable PowerPoint engine",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:ui": "node test/ui.mjs",
+    "test:contract": "node test/contract.mjs",
+    "examples": "node test/examples.mjs",
+    "test:infra": "node test/infra.mjs",
+    "test:host-ui": "node test/host-ui.mjs",
+    "test:host-desktop": "node test/host-ui.mjs --desktop",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "0.9.12",
+    "jszip": "3.10.1",
+    "pptxgenjs": "4.0.1"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}

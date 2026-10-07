@@ -1,0 +1,5698 @@
+[
+  {
+    "args": [
+      "plan",
+      "schema"
+    ],
+    "expected": {
+      "cmd": "plan.schema",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "schema"
+    ],
+    "expected": {
+      "cmd": "plan.schema",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "query"
+    ],
+    "expected": {
+      "cmd": "plan.query",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "query",
+      "--filter",
+      "[\"one\",\"two\"]",
+      "--sort",
+      "sample",
+      "--direction",
+      "sample",
+      "--offset",
+      "7",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "plan.query",
+      "args": {
+        "filter": [
+          "one",
+          "two"
+        ],
+        "limit": 7,
+        "sort": "sample",
+        "direction": "sample",
+        "offset": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "calendar"
+    ],
+    "expected": {
+      "cmd": "plan.calendar",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "calendar",
+      "--from",
+      "sample",
+      "--to",
+      "sample",
+      "--timezone",
+      "sample",
+      "--filter",
+      "[\"one\",\"two\"]",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "plan.calendar",
+      "args": {
+        "filter": [
+          "one",
+          "two"
+        ],
+        "limit": 7,
+        "from": "sample",
+        "to": "sample",
+        "timezone": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "timeline"
+    ],
+    "expected": {
+      "cmd": "plan.timeline",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "timeline",
+      "--from",
+      "sample",
+      "--to",
+      "sample",
+      "--timezone",
+      "sample",
+      "--filter",
+      "[\"one\",\"two\"]",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "plan.timeline",
+      "args": {
+        "filter": [
+          "one",
+          "two"
+        ],
+        "limit": 7,
+        "from": "sample",
+        "to": "sample",
+        "timezone": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "analytics"
+    ],
+    "expected": {
+      "cmd": "plan.analytics",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "analytics",
+      "--metric",
+      "sample",
+      "--group-by",
+      "sample",
+      "--filter",
+      "[\"one\",\"two\"]",
+      "--outcomes",
+      "[\"one\",\"two\"]",
+      "--from",
+      "sample",
+      "--to",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "plan.analytics",
+      "args": {
+        "filter": [
+          "one",
+          "two"
+        ],
+        "outcomes": [
+          "one",
+          "two"
+        ],
+        "from": "sample",
+        "to": "sample",
+        "metric": "sample",
+        "groupBy": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "feed"
+    ],
+    "expected": {
+      "cmd": "plan.feed",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "feed",
+      "--filter",
+      "[\"one\",\"two\"]",
+      "--outcomes",
+      "[\"one\",\"two\"]",
+      "--from",
+      "sample",
+      "--to",
+      "sample",
+      "--before",
+      "sample",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "plan.feed",
+      "args": {
+        "filter": [
+          "one",
+          "two"
+        ],
+        "outcomes": [
+          "one",
+          "two"
+        ],
+        "from": "sample",
+        "to": "sample",
+        "before": "sample",
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "views"
+    ],
+    "expected": {
+      "cmd": "plan.views",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "views"
+    ],
+    "expected": {
+      "cmd": "plan.views",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-create"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-create",
+      "--spec",
+      "[\"one\",\"two\"]"
+    ],
+    "expected": {
+      "cmd": "plan.view-create",
+      "args": {
+        "spec": [
+          "one",
+          "two"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-update"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-update",
+      "reference-0",
+      "--patch",
+      "[\"one\",\"two\"]",
+      "--expected-revision",
+      "7"
+    ],
+    "expected": {
+      "cmd": "plan.view-update",
+      "args": {
+        "id": "reference-0",
+        "patch": [
+          "one",
+          "two"
+        ],
+        "expectedRevision": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-delete"
+    ],
+    "expected": {
+      "cmd": "plan.view-delete",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-delete",
+      "reference-0",
+      "--expected-revision",
+      "7"
+    ],
+    "expected": {
+      "cmd": "plan.view-delete",
+      "args": {
+        "id": "reference-0",
+        "expectedRevision": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "timeline"
+    ],
+    "expected": {
+      "cmd": "channel.timeline",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "timeline",
+      "reference-0",
+      "--kind",
+      "sample",
+      "--before-entry",
+      "sample",
+      "--cursor",
+      "sample",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "channel.timeline",
+      "args": {
+        "id": "reference-0",
+        "kind": "sample",
+        "beforeEntry": "sample",
+        "cursor": "sample",
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "history"
+    ],
+    "expected": {
+      "cmd": "channel.history",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "history",
+      "reference-0",
+      "--before",
+      "7",
+      "--around",
+      "sample",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "channel.history",
+      "args": {
+        "id": "reference-0",
+        "before": 7,
+        "around": "sample",
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "context"
+    ],
+    "expected": {
+      "cmd": "channel.context",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "context",
+      "reference-0",
+      "--entry",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "channel.context",
+      "args": {
+        "id": "reference-0",
+        "entryId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "source-image"
+    ],
+    "expected": {
+      "cmd": "channel.source-image",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "source-image",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.source-image",
+      "args": {
+        "sourceId": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "settings"
+    ],
+    "expected": {
+      "cmd": "channel.settings",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "settings",
+      "--patch",
+      "[\"one\",\"two\"]"
+    ],
+    "expected": {
+      "cmd": "channel.settings",
+      "args": {
+        "patch": [
+          "one",
+          "two"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "list"
+    ],
+    "expected": {
+      "cmd": "channel.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "list"
+    ],
+    "expected": {
+      "cmd": "channel.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "get"
+    ],
+    "expected": {
+      "cmd": "channel.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "get",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.get",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "sources"
+    ],
+    "expected": {
+      "cmd": "channel.sources",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "sources",
+      "--channel",
+      "sample",
+      "--plugin",
+      "sample",
+      "--include-disabled",
+      "false"
+    ],
+    "expected": {
+      "cmd": "channel.sources",
+      "args": {
+        "channelId": "sample",
+        "plugin": "sample",
+        "includeDisabled": true
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "create"
+    ],
+    "expected": {
+      "cmd": "channel.create",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "create",
+      "--name",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "channel.create",
+      "args": {
+        "name": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "update"
+    ],
+    "expected": {
+      "cmd": "channel.update",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "update",
+      "reference-0",
+      "--name",
+      "sample",
+      "--admins",
+      "[\"one\",\"two\"]",
+      "--expected-revision",
+      "7"
+    ],
+    "expected": {
+      "cmd": "channel.update",
+      "args": {
+        "id": "reference-0",
+        "adminIds": [
+          "one",
+          "two"
+        ],
+        "expectedRevision": 7,
+        "name": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "source-update"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "source-update",
+      "reference-0",
+      "--patch",
+      "[\"one\",\"two\"]"
+    ],
+    "expected": {
+      "cmd": "channel.source-update",
+      "args": {
+        "id": "reference-0",
+        "patch": [
+          "one",
+          "two"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "source-remove"
+    ],
+    "expected": {
+      "cmd": "channel.source-remove",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "source-remove",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.source-remove",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "posts"
+    ],
+    "expected": {
+      "cmd": "channel.posts",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "posts",
+      "--channel",
+      "sample",
+      "--source",
+      "sample",
+      "--saved",
+      "false",
+      "--query",
+      "sample",
+      "--cursor",
+      "sample",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "channel.posts",
+      "args": {
+        "channelId": "sample",
+        "sourceId": "sample",
+        "saved": true,
+        "query": "sample",
+        "cursor": "sample",
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post"
+    ],
+    "expected": {
+      "cmd": "channel.post",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.post",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "delete"
+    ],
+    "expected": {
+      "cmd": "channel.delete",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "delete",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.delete",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "image"
+    ],
+    "expected": {
+      "cmd": "channel.image",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "image",
+      "reference-0",
+      "--post",
+      "sample",
+      "--media",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "channel.image",
+      "args": {
+        "channelId": "reference-0",
+        "postId": "sample",
+        "mediaId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "export"
+    ],
+    "expected": {
+      "cmd": "channel.export",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "export",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.export",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "collectors"
+    ],
+    "expected": {
+      "cmd": "channel.collectors",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "collectors"
+    ],
+    "expected": {
+      "cmd": "channel.collectors",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "collector-revoke"
+    ],
+    "expected": {
+      "cmd": "channel.collector-revoke",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "collector-revoke",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.collector-revoke",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "collector-config"
+    ],
+    "expected": {
+      "cmd": "channel.collector-config",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "collector-config",
+      "--since-revision",
+      "7"
+    ],
+    "expected": {
+      "cmd": "channel.collector-config",
+      "args": {
+        "sinceRevision": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-open"
+    ],
+    "expected": {
+      "cmd": "messenger.media-open",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-open",
+      "reference-0",
+      "--path",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "messenger.media-open",
+      "args": {
+        "conversation": "reference-0",
+        "path": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-info"
+    ],
+    "expected": {
+      "cmd": "messenger.media-info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-info",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "messenger.media-info",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-read"
+    ],
+    "expected": {
+      "cmd": "messenger.media-read",
+      "args": {
+        "offset": 0
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-read",
+      "reference-0",
+      "--offset",
+      "7"
+    ],
+    "expected": {
+      "cmd": "messenger.media-read",
+      "args": {
+        "id": "reference-0",
+        "offset": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-close"
+    ],
+    "expected": {
+      "cmd": "messenger.media-close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-close",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "messenger.media-close",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "gallery"
+    ],
+    "expected": {
+      "cmd": "messenger.gallery",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "gallery",
+      "--conversation",
+      "sample",
+      "--anchor",
+      "[\"one\",\"two\"]",
+      "--through",
+      "[\"one\",\"two\"]",
+      "--direction",
+      "sample",
+      "--query",
+      "sample",
+      "--author",
+      "sample",
+      "--order",
+      "sample",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "messenger.gallery",
+      "args": {
+        "conversation": "sample",
+        "anchor": [
+          "one",
+          "two"
+        ],
+        "through": [
+          "one",
+          "two"
+        ],
+        "direction": "sample",
+        "query": "sample",
+        "author": "sample",
+        "order": "sample",
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "upload-begin"
+    ],
+    "expected": {
+      "cmd": "messenger.upload-begin",
+      "args": {
+        "bytes": null
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "upload-begin",
+      "reference-0",
+      "--name",
+      "sample",
+      "--bytes",
+      "7"
+    ],
+    "expected": {
+      "cmd": "messenger.upload-begin",
+      "args": {
+        "conversation": "reference-0",
+        "name": "sample",
+        "bytes": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "reference"
+    ],
+    "expected": {
+      "cmd": "messenger.reference",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "reference",
+      "reference-0",
+      "reference-1",
+      "--quote",
+      "[\"one\",\"two\"]",
+      "--text-only",
+      "false"
+    ],
+    "expected": {
+      "cmd": "messenger.reference",
+      "args": {
+        "conversation": "reference-0",
+        "id": "reference-1",
+        "quote": [
+          "one",
+          "two"
+        ],
+        "textOnly": true
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward",
+      "--messages",
+      "[\"one\",\"two\"]",
+      "--to",
+      "sample",
+      "--comment",
+      "sample",
+      "--text-only",
+      "false",
+      "--retry",
+      "false",
+      "--client-message-id",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "messenger.forward",
+      "args": {
+        "messages": [
+          "one",
+          "two"
+        ],
+        "to": "sample",
+        "comment": "sample",
+        "textOnly": true,
+        "retry": true,
+        "clientMessageId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward-draft"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward-draft",
+      "--data",
+      "[\"one\",\"two\"]",
+      "--expected-client-message-id",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "messenger.forward-draft",
+      "args": {
+        "value": [
+          "one",
+          "two"
+        ],
+        "expectedClientMessageId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward-status"
+    ],
+    "expected": {
+      "cmd": "messenger.forward-status",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward-status",
+      "--client-message-id",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "messenger.forward-status",
+      "args": {
+        "clientMessageId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "state"
+    ],
+    "expected": {
+      "cmd": "messenger.state",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "state"
+    ],
+    "expected": {
+      "cmd": "messenger.state",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "folder-save"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "folder-save",
+      "--id",
+      "sample",
+      "--name",
+      "sample",
+      "--conversations",
+      "[\"one\",\"two\"]",
+      "--expected-revision",
+      "7"
+    ],
+    "expected": {
+      "cmd": "messenger.folder-save",
+      "args": {
+        "id": "sample",
+        "name": "sample",
+        "conversations": [
+          "one",
+          "two"
+        ],
+        "expectedRevision": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "folder-delete"
+    ],
+    "expected": {
+      "cmd": "messenger.folder-delete",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "folder-delete",
+      "reference-0",
+      "--expected-revision",
+      "7"
+    ],
+    "expected": {
+      "cmd": "messenger.folder-delete",
+      "args": {
+        "id": "reference-0",
+        "expectedRevision": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "conversation"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "conversation",
+      "--conversations",
+      "[\"one\",\"two\"]",
+      "--patch",
+      "[\"one\",\"two\"]"
+    ],
+    "expected": {
+      "cmd": "messenger.conversation",
+      "args": {
+        "conversations": [
+          "one",
+          "two"
+        ],
+        "patch": [
+          "one",
+          "two"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "message"
+    ],
+    "expected": {
+      "ok": false,
+      "error": "Expected JSON or @file"
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "message",
+      "reference-0",
+      "reference-1",
+      "--ids",
+      "[\"one\",\"two\"]",
+      "--patch",
+      "[\"one\",\"two\"]"
+    ],
+    "expected": {
+      "cmd": "messenger.message",
+      "args": {
+        "conversation": "reference-0",
+        "id": "reference-1",
+        "ids": [
+          "one",
+          "two"
+        ],
+        "patch": [
+          "one",
+          "two"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "search"
+    ],
+    "expected": {
+      "cmd": "messenger.search",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "search",
+      "--conversation",
+      "sample",
+      "--query",
+      "sample",
+      "--filter",
+      "sample",
+      "--author",
+      "sample",
+      "--offset",
+      "7",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "messenger.search",
+      "args": {
+        "conversation": "sample",
+        "query": "sample",
+        "filter": "sample",
+        "author": "sample",
+        "offset": 7,
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "list"
+    ],
+    "expected": {
+      "cmd": "chat.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "list"
+    ],
+    "expected": {
+      "cmd": "chat.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "create"
+    ],
+    "expected": {
+      "cmd": "chat.create",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "create",
+      "--name",
+      "sample",
+      "--team",
+      "sample",
+      "--members",
+      "[\"one\",\"two\"]"
+    ],
+    "expected": {
+      "cmd": "chat.create",
+      "args": {
+        "name": "sample",
+        "team": "sample",
+        "members": [
+          "one",
+          "two"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "delete"
+    ],
+    "expected": {
+      "cmd": "chat.delete",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "delete",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "chat.delete",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "get"
+    ],
+    "expected": {
+      "cmd": "chat.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "get",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "chat.get",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "history"
+    ],
+    "expected": {
+      "cmd": "chat.history",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "history",
+      "reference-0",
+      "--around",
+      "sample",
+      "--before",
+      "7",
+      "--limit",
+      "7"
+    ],
+    "expected": {
+      "cmd": "chat.history",
+      "args": {
+        "id": "reference-0",
+        "around": "sample",
+        "before": 7,
+        "limit": 7
+      }
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "context"
+    ],
+    "expected": {
+      "cmd": "chat.context",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "context",
+      "reference-0",
+      "--message",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "chat.context",
+      "args": {
+        "id": "reference-0",
+        "messageId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "acknowledge"
+    ],
+    "expected": {
+      "cmd": "chat.acknowledge",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "chat",
+      "acknowledge",
+      "reference-0",
+      "--message",
+      "sample"
+    ],
+    "expected": {
+      "cmd": "chat.acknowledge",
+      "args": {
+        "id": "reference-0",
+        "messageId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-create",
+      "--spec",
+      "@draft.json"
+    ],
+    "input": {
+      "draft.json": "{\"name\":\"Weekly\",\"layout\":\"timeline\"}"
+    },
+    "expected": {
+      "cmd": "plan.view-create",
+      "args": {
+        "spec": {
+          "name": "Weekly",
+          "layout": "timeline"
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "query",
+      "--filter",
+      ""
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "plan.query",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "feed",
+      "--outcomes",
+      ""
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "plan.feed",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "media-read",
+      "sample",
+      "--offset",
+      "0"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "messenger.media-read",
+      "args": {
+        "id": "sample",
+        "offset": 0
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "sources",
+      "--include-disabled"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "channel.sources",
+      "args": {
+        "includeDisabled": true
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "forward",
+      "--messages",
+      "[]",
+      "--to",
+      "employee:x",
+      "--text-only",
+      "false"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "messenger.forward",
+      "args": {
+        "messages": [],
+        "to": "employee:x",
+        "textOnly": true,
+        "retry": false
+      }
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "view-update",
+      "x",
+      "--patch",
+      "@missing.json"
+    ],
+    "input": {},
+    "expected": {
+      "ok": false,
+      "error": "Remote input file was not supplied by the remote CLI"
+    }
+  },
+  {
+    "args": [
+      "plan",
+      "query",
+      "--limit"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "plan.query",
+      "args": {
+        "limit": 1
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "message",
+      "group:x",
+      "m1",
+      "--patch",
+      "{}",
+      "--ids",
+      "[\"m2\"]"
+    ],
+    "input": {},
+    "expected": {
+      "cmd": "messenger.message",
+      "args": {
+        "conversation": "group:x",
+        "id": "m1",
+        "ids": [
+          "m2"
+        ],
+        "patch": {}
+      }
+    }
+  },
+  {
+    "args": [
+      "system",
+      "info"
+    ],
+    "expected": {
+      "cmd": "system.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "system",
+      "info",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "system.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "system",
+      "info",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "system.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "list"
+    ],
+    "expected": {
+      "cmd": "engine.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "list",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "engine.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "list",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "engine.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "install-status"
+    ],
+    "expected": {
+      "cmd": "engine.install-status",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "install-status",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "engine.install-status",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "install-status",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "engine.install-status",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "cancel-install"
+    ],
+    "expected": {
+      "cmd": "engine.cancel-install",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "cancel-install",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "engine.cancel-install",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "cancel-install",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "engine.cancel-install",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "login-status"
+    ],
+    "expected": {
+      "cmd": "engine.login-status",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "login-status",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "engine.login-status",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "login-status",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "engine.login-status",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "cancel-login"
+    ],
+    "expected": {
+      "cmd": "engine.cancel-login",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "cancel-login",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "engine.cancel-login",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "cancel-login",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "engine.cancel-login",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "upload-commit"
+    ],
+    "expected": {
+      "cmd": "transfer.upload-commit",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "upload-commit",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "transfer.upload-commit",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "upload-commit",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "transfer.upload-commit",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "upload-abort"
+    ],
+    "expected": {
+      "cmd": "transfer.upload-abort",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "upload-abort",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "transfer.upload-abort",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "upload-abort",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "transfer.upload-abort",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "schema"
+    ],
+    "expected": {
+      "cmd": "schedule.schema",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "schema",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.schema",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "schema",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.schema",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "status"
+    ],
+    "expected": {
+      "cmd": "schedule.status",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "status",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.status",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "status",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.status",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "get"
+    ],
+    "expected": {
+      "cmd": "schedule.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "get",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.get",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "get",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.get",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "pause"
+    ],
+    "expected": {
+      "cmd": "schedule.pause",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "pause",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.pause",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "pause",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.pause",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "resume"
+    ],
+    "expected": {
+      "cmd": "schedule.resume",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "resume",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.resume",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "resume",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.resume",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "delete"
+    ],
+    "expected": {
+      "cmd": "schedule.delete",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "delete",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.delete",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "delete",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.delete",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "run"
+    ],
+    "expected": {
+      "cmd": "schedule.run",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "run",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.run",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "run",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.run",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "cancel"
+    ],
+    "expected": {
+      "cmd": "schedule.cancel",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "cancel",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "schedule.cancel",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "cancel",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "schedule.cancel",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "rename"
+    ],
+    "expected": {
+      "cmd": "session.rename",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "rename",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.rename",
+      "args": {
+        "id": "sample",
+        "title": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "rename",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.rename",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "title": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "shared",
+      "info"
+    ],
+    "expected": {
+      "cmd": "shared.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "shared",
+      "info",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "shared.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "shared",
+      "info",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "shared.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "list"
+    ],
+    "expected": {
+      "cmd": "transfer.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "list",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "transfer.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "list",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "transfer.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "get"
+    ],
+    "expected": {
+      "cmd": "transfer.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "get",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "transfer.get",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "get",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "transfer.get",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "cancel"
+    ],
+    "expected": {
+      "cmd": "transfer.cancel",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "cancel",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "transfer.cancel",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "transfer",
+      "cancel",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "transfer.cancel",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "settings",
+      "get"
+    ],
+    "expected": {
+      "cmd": "settings.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "settings",
+      "get",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "settings.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "settings",
+      "get",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "settings.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "whoami"
+    ],
+    "expected": {
+      "cmd": "auth.whoami",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "whoami",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "auth.whoami",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "whoami",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "auth.whoami",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "agent-token"
+    ],
+    "expected": {
+      "cmd": "auth.agent-token",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "agent-token",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "auth.agent-token",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "agent-token",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "auth.agent-token",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "revoke"
+    ],
+    "expected": {
+      "cmd": "auth.revoke",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "revoke",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "auth.revoke",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "auth",
+      "revoke",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "auth.revoke",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "management",
+      "roles"
+    ],
+    "expected": {
+      "cmd": "management.roles",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "management",
+      "roles",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "management.roles",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "management",
+      "roles",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "management.roles",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "management",
+      "decide"
+    ],
+    "expected": {
+      "cmd": "management.decide",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "management",
+      "decide",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "management.decide",
+      "args": {
+        "id": "sample",
+        "decision": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "management",
+      "decide",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "management.decide",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "decision": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "management-role"
+    ],
+    "expected": {
+      "cmd": "card.management-role",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "card",
+      "management-role",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "card.management-role",
+      "args": {
+        "id": "sample",
+        "role": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "management-role",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "card.management-role",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "role": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "access-mode"
+    ],
+    "expected": {
+      "cmd": "card.access-mode",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "card",
+      "access-mode",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "card.access-mode",
+      "args": {
+        "id": "sample",
+        "mode": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "access-mode",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "card.access-mode",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "mode": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "view",
+      "list"
+    ],
+    "expected": {
+      "cmd": "view.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "list",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "view.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "list",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "view.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "get"
+    ],
+    "expected": {
+      "cmd": "view.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "get",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "view.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "get",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "view.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "close"
+    ],
+    "expected": {
+      "cmd": "view.close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "close",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "view.close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "close",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "view.close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "list"
+    ],
+    "expected": {
+      "cmd": "team-view.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "list",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "team-view.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "list",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "team-view.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "remove"
+    ],
+    "expected": {
+      "cmd": "team-view.remove",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "remove",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "team-view.remove",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "remove",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "team-view.remove",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "select"
+    ],
+    "expected": {
+      "cmd": "team-view.select",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "select",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "team-view.select",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "team-view",
+      "select",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "team-view.select",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "terminal",
+      "close"
+    ],
+    "expected": {
+      "cmd": "terminal.close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "terminal",
+      "close",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "terminal.close",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "terminal",
+      "close",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "terminal.close",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "list"
+    ],
+    "expected": {
+      "cmd": "plugin.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "list",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "list",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "describe"
+    ],
+    "expected": {
+      "cmd": "plugin.describe",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "describe",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.describe",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "describe",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.describe",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "install"
+    ],
+    "expected": {
+      "cmd": "plugin.install",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "install",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.install",
+      "args": {
+        "path": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "install",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.install",
+      "args": {
+        "path": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "windows"
+    ],
+    "expected": {
+      "cmd": "plugin.windows",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "windows",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.windows",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "windows",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.windows",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "dismiss"
+    ],
+    "expected": {
+      "cmd": "plugin.dismiss",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "dismiss",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.dismiss",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "dismiss",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.dismiss",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "mode"
+    ],
+    "expected": {
+      "cmd": "plugin.mode",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "mode",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.mode",
+      "args": {
+        "id": "sample",
+        "mode": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "mode",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.mode",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "mode": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "close"
+    ],
+    "expected": {
+      "cmd": "plugin.close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "close",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "plugin.close",
+      "args": {
+        "viewId": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "plugin",
+      "close",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "plugin.close",
+      "args": {
+        "viewId": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "inbox"
+    ],
+    "expected": {
+      "cmd": "session.inbox",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "inbox",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.inbox",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "inbox",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.inbox",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "activity"
+    ],
+    "expected": {
+      "cmd": "session.activity",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "activity",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.activity",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "activity",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.activity",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "snapshot"
+    ],
+    "expected": {
+      "cmd": "session.snapshot",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "snapshot",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.snapshot",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "snapshot",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.snapshot",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "approval",
+      "list"
+    ],
+    "expected": {
+      "cmd": "approval.list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "approval",
+      "list",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "approval.list",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "approval",
+      "list",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "approval.list",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "interrupt"
+    ],
+    "expected": {
+      "cmd": "session.interrupt",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "interrupt",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.interrupt",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "interrupt",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.interrupt",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "close"
+    ],
+    "expected": {
+      "cmd": "session.close",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "close",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.close",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "close",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.close",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "engine"
+    ],
+    "expected": {
+      "cmd": "config.engine",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "config",
+      "engine",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "config.engine",
+      "args": {
+        "id": "sample",
+        "engine": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "engine",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "config.engine",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "engine": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "model"
+    ],
+    "expected": {
+      "cmd": "config.model",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "config",
+      "model",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "config.model",
+      "args": {
+        "id": "sample",
+        "model": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "model",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "config.model",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "model": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "permission"
+    ],
+    "expected": {
+      "cmd": "config.permission",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "config",
+      "permission",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "config.permission",
+      "args": {
+        "id": "sample",
+        "mode": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "permission",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "config.permission",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "mode": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "thinking"
+    ],
+    "expected": {
+      "cmd": "config.thinking",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "config",
+      "thinking",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "config.thinking",
+      "args": {
+        "id": "sample",
+        "enabled": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "thinking",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "config.thinking",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "enabled": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "external",
+      "open"
+    ],
+    "expected": {
+      "cmd": "external.open",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "external",
+      "open",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "external.open",
+      "args": {
+        "url": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "external",
+      "open",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "external.open",
+      "args": {
+        "url": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "inspect"
+    ],
+    "expected": {
+      "cmd": "engine.inspect",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "inspect",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "engine.inspect",
+      "args": {
+        "id": "sample",
+        "section": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "engine",
+      "inspect",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "engine.inspect",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "section": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "background"
+    ],
+    "expected": {
+      "cmd": "session.background",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "background",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.background",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "background",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.background",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "queue"
+    ],
+    "expected": {
+      "cmd": "session.queue",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "queue",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.queue",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "queue",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.queue",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "dequeue"
+    ],
+    "expected": {
+      "cmd": "session.dequeue",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "session",
+      "dequeue",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "session.dequeue",
+      "args": {
+        "id": "sample",
+        "messageId": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "session",
+      "dequeue",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "session.dequeue",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "messageId": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "fingerprints"
+    ],
+    "expected": {
+      "cmd": "host.fingerprints",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "host",
+      "fingerprints",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "host.fingerprints",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "fingerprints",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "host.fingerprints",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "get"
+    ],
+    "expected": {
+      "cmd": "host.get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "host",
+      "get",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "host.get",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "get",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "host.get",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "remove"
+    ],
+    "expected": {
+      "cmd": "host.remove",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "host",
+      "remove",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "host.remove",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "remove",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "host.remove",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "check"
+    ],
+    "expected": {
+      "cmd": "host.check",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "host",
+      "check",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "host.check",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "check",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "host.check",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "credentials"
+    ],
+    "expected": {
+      "cmd": "host.credentials",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "host",
+      "credentials",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "host.credentials",
+      "args": {
+        "id": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "host",
+      "credentials",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "host.credentials",
+      "args": {
+        "id": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "group",
+      "migrate"
+    ],
+    "expected": {
+      "cmd": "group.migrate",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "group",
+      "migrate",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "group.migrate",
+      "args": {
+        "name": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "group",
+      "migrate",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "group.migrate",
+      "args": {
+        "name": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "room",
+      "layout"
+    ],
+    "expected": {
+      "cmd": "room.layout",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "room",
+      "layout",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "room.layout",
+      "args": {
+        "name": "sample"
+      }
+    }
+  },
+  {
+    "args": [
+      "room",
+      "layout",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "room.layout",
+      "args": {
+        "name": "--looks-like-a-flag"
+      }
+    }
+  },
+  {
+    "args": [
+      "group",
+      "rename"
+    ],
+    "expected": {
+      "cmd": "group.rename",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "group",
+      "rename",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "group.rename",
+      "args": {
+        "name": "sample",
+        "nextName": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "group",
+      "rename",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "group.rename",
+      "args": {
+        "name": "--looks-like-a-flag",
+        "nextName": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "native-bind"
+    ],
+    "expected": {
+      "cmd": "card.native-bind",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "card",
+      "native-bind",
+      "sample",
+      "value",
+      "ignored"
+    ],
+    "expected": {
+      "cmd": "card.native-bind",
+      "args": {
+        "id": "sample",
+        "sessionId": "value"
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "native-bind",
+      "--looks-like-a-flag",
+      "off"
+    ],
+    "expected": {
+      "cmd": "card.native-bind",
+      "args": {
+        "id": "--looks-like-a-flag",
+        "sessionId": "off"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "connection"
+    ],
+    "expected": {
+      "cmd": "channel.connection",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "connection",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.connection",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "avatar-image"
+    ],
+    "expected": {
+      "cmd": "channel.avatar-image",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "avatar-image",
+      "reference-0"
+    ],
+    "expected": {
+      "cmd": "channel.avatar-image",
+      "args": {
+        "id": "reference-0"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "create",
+      "--name",
+      "Engine channel",
+      "--engine",
+      "{\"kind\":\"external\",\"location\":\"local\",\"name\":\"Fixture publisher\"}"
+    ],
+    "expected": {
+      "cmd": "channel.create",
+      "args": {
+        "name": "Engine channel",
+        "engine": {
+          "kind": "external",
+          "location": "local",
+          "name": "Fixture publisher"
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "workspace",
+      "group:fixture",
+      "--employee",
+      "fixture-employee"
+    ],
+    "expected": {
+      "cmd": "conversation.workspace",
+      "args": {
+        "conversation": "group:fixture",
+        "employee": "fixture-employee"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "workspaces",
+      "--employee",
+      "fixture-employee"
+    ],
+    "expected": {
+      "cmd": "conversation.workspaces",
+      "args": {
+        "employee": "fixture-employee"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "file",
+      "group:fixture",
+      "--operation",
+      "read",
+      "--path",
+      "example.txt",
+      "--offset",
+      "10"
+    ],
+    "expected": {
+      "cmd": "conversation.file",
+      "args": {
+        "conversation": "group:fixture",
+        "operation": "read",
+        "path": "example.txt",
+        "offset": 10
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "copy",
+      "--from",
+      "{\"conversation\": \"group:source\", \"path\": \"example.txt\"}",
+      "--to",
+      "{\"conversation\": \"group:target\", \"path\": \"example.txt\"}"
+    ],
+    "expected": {
+      "cmd": "conversation.copy",
+      "args": {
+        "from": {
+          "conversation": "group:source",
+          "path": "example.txt"
+        },
+        "to": {
+          "conversation": "group:target",
+          "path": "example.txt"
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "transfer",
+      "transfer-id",
+      "--cancel"
+    ],
+    "expected": {
+      "cmd": "conversation.transfer",
+      "args": {
+        "id": "transfer-id",
+        "cancel": true
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "reorder",
+      "all",
+      "--order",
+      "[\"channel:sample\",\"employee:sample\"]",
+      "--expected-order",
+      "[]"
+    ],
+    "expected": {
+      "cmd": "messenger.reorder",
+      "args": {
+        "scope": "all",
+        "order": [
+          "channel:sample",
+          "employee:sample"
+        ],
+        "expectedOrder": []
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "reorder",
+      "categories",
+      "--order",
+      "[\"all\"]"
+    ],
+    "expected": {
+      "cmd": "messenger.reorder",
+      "args": {
+        "scope": "categories",
+        "order": [
+          "all"
+        ]
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "reorder",
+      "all",
+      "--order",
+      "null"
+    ],
+    "expected": {
+      "cmd": "messenger.reorder",
+      "args": {
+        "scope": "all",
+        "order": null
+      }
+    }
+  },
+  {
+    "args": [
+      "card",
+      "profile",
+      "reference-0",
+      "--offset",
+      "2",
+      "--limit",
+      "10"
+    ],
+    "expected": {
+      "cmd": "card.profile",
+      "args": {
+        "id": "reference-0",
+        "offset": 2,
+        "limit": 10
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "trigger",
+      "reference-0",
+      "--event-id",
+      "fixture-event"
+    ],
+    "expected": {
+      "cmd": "schedule.trigger",
+      "args": {
+        "id": "reference-0",
+        "eventId": "fixture-event"
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "delete",
+      "--ids",
+      "[\"a\",\"b\"]",
+      "--expected-revisions",
+      "{\"a\":1,\"b\":2}"
+    ],
+    "expected": {
+      "cmd": "schedule.delete",
+      "args": {
+        "ids": [
+          "a",
+          "b"
+        ],
+        "expectedRevisions": {
+          "a": 1,
+          "b": 2
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "pause",
+      "a",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "schedule.pause",
+      "args": {
+        "id": "a",
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "schedule",
+      "resume",
+      "a",
+      "--expected-revision",
+      "4"
+    ],
+    "expected": {
+      "cmd": "schedule.resume",
+      "args": {
+        "id": "a",
+        "expectedRevision": 4
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "social"
+    ],
+    "expected": {
+      "cmd": "messenger.social",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "social",
+      "--platform",
+      "x",
+      "--include-disabled"
+    ],
+    "expected": {
+      "cmd": "messenger.social",
+      "args": {
+        "platform": "x",
+        "includeDisabled": true
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "folder-save",
+      "--name",
+      "People",
+      "--conversations",
+      "[]",
+      "--include",
+      "private",
+      "--excluded",
+      "[]"
+    ],
+    "expected": {
+      "cmd": "messenger.folder-save",
+      "args": {
+        "name": "People",
+        "conversations": [],
+        "include": "private",
+        "excluded": []
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "file-download",
+      "--post",
+      "POST",
+      "--file",
+      "FILE"
+    ],
+    "expected": {
+      "cmd": "channel.file-download",
+      "args": {
+        "postId": "POST",
+        "fileId": "FILE"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "file-status",
+      "--post",
+      "POST",
+      "--file",
+      "FILE"
+    ],
+    "expected": {
+      "cmd": "channel.file-status",
+      "args": {
+        "postId": "POST",
+        "fileId": "FILE"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "directory"
+    ],
+    "expected": {
+      "cmd": "messenger.directory",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "directory",
+      "--type",
+      "groups",
+      "--query",
+      "Review",
+      "--archived",
+      "include",
+      "--offset",
+      "5",
+      "--limit",
+      "10"
+    ],
+    "expected": {
+      "cmd": "messenger.directory",
+      "args": {
+        "type": "groups",
+        "query": "Review",
+        "archived": "include",
+        "offset": 5,
+        "limit": 10
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "directory",
+      "--folder",
+      "mf_fixture",
+      "--type",
+      "x"
+    ],
+    "expected": {
+      "cmd": "messenger.directory",
+      "args": {
+        "folder": "mf_fixture",
+        "type": "x"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "tree"
+    ],
+    "expected": {
+      "cmd": "assets.tree",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "children",
+      "node-fixture",
+      "--offset",
+      "1",
+      "--limit",
+      "20"
+    ],
+    "expected": {
+      "cmd": "assets.children",
+      "args": {
+        "id": "node-fixture",
+        "offset": 1,
+        "limit": 20
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "search",
+      "--query",
+      "notes",
+      "--hidden",
+      "--refresh"
+    ],
+    "expected": {
+      "cmd": "assets.search",
+      "args": {
+        "query": "notes",
+        "hidden": true,
+        "refresh": true
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "file",
+      "node-fixture",
+      "--operation",
+      "read",
+      "--path",
+      "document.txt"
+    ],
+    "expected": {
+      "cmd": "assets.file",
+      "args": {
+        "id": "node-fixture",
+        "operation": "read",
+        "path": "document.txt"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "policy",
+      "group:cg_00000000-0000-4000-8000-000000000000"
+    ],
+    "expected": {
+      "cmd": "conversation.policy",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "role",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--employee",
+      "employee-1",
+      "--role",
+      "admin",
+      "--expected-revision",
+      "2"
+    ],
+    "expected": {
+      "cmd": "conversation.role",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "employee": "employee-1",
+        "role": "admin",
+        "expectedRevision": 2
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "mute",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--member",
+      "all",
+      "--muted",
+      "true",
+      "--duration-seconds",
+      "60",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "conversation.mute",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "member": "all",
+        "muted": true,
+        "durationSeconds": 60,
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "silence",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--silent",
+      "false",
+      "--expected-revision",
+      "4"
+    ],
+    "expected": {
+      "cmd": "conversation.silence",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "silent": false,
+        "expectedRevision": 4
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-list",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--offset",
+      "2",
+      "--limit",
+      "20"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-list",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "offset": 2,
+        "limit": 20
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-get",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--id",
+      "cn_00000000-0000-4000-8000-000000000001"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-get",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "id": "cn_00000000-0000-4000-8000-000000000001"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-create",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--spec",
+      "{\"name\":\"Notice\",\"text\":\"Saved announcement\",\"publisherId\":\"employee-1\",\"rule\":{\"kind\":\"once\",\"at\":\"2026-11-01T01:00:00Z\"},\"enabled\":false}",
+      "--client-request-id",
+      "new-notice"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-create",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "spec": {
+          "name": "Notice",
+          "text": "Saved announcement",
+          "publisherId": "employee-1",
+          "rule": {
+            "kind": "once",
+            "at": "2026-11-01T01:00:00Z"
+          },
+          "enabled": false
+        },
+        "clientRequestId": "new-notice"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-update",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--id",
+      "cn_00000000-0000-4000-8000-000000000001",
+      "--patch",
+      "{\"enabled\":true}",
+      "--expected-revision",
+      "2"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-update",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "id": "cn_00000000-0000-4000-8000-000000000001",
+        "patch": {
+          "enabled": true
+        },
+        "expectedRevision": 2
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-delete",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--id",
+      "cn_00000000-0000-4000-8000-000000000001",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-delete",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "id": "cn_00000000-0000-4000-8000-000000000001",
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-preview",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--rule",
+      "{\"kind\":\"once\",\"at\":\"2026-11-01T01:00:00Z\"}",
+      "--from",
+      "2026-10-03T00:00:00Z"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-preview",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "rule": {
+          "kind": "once",
+          "at": "2026-11-01T01:00:00Z"
+        },
+        "from": "2026-10-03T00:00:00Z"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "notice-history",
+      "group:cg_00000000-0000-4000-8000-000000000000",
+      "--id",
+      "cn_00000000-0000-4000-8000-000000000001",
+      "--offset",
+      "0",
+      "--limit",
+      "10"
+    ],
+    "expected": {
+      "cmd": "conversation.notice-history",
+      "args": {
+        "conversation": "group:cg_00000000-0000-4000-8000-000000000000",
+        "id": "cn_00000000-0000-4000-8000-000000000001",
+        "offset": 0,
+        "limit": 10
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "naming"
+    ],
+    "expected": {
+      "cmd": "assets.naming",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "naming",
+      "--id",
+      "preview-fixture",
+      "--apply"
+    ],
+    "expected": {
+      "cmd": "assets.naming",
+      "args": {
+        "id": "preview-fixture",
+        "apply": true
+      }
+    }
+  },
+  {
+    "args": [
+      "workspace",
+      "reveal",
+      "--from",
+      "{\"asset\":\"shared\",\"path\":\"report.md\"}"
+    ],
+    "expected": {
+      "cmd": "workspace.reveal",
+      "args": {
+        "from": {
+          "asset": "shared",
+          "path": "report.md"
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "profile",
+      "--avatar",
+      "byte"
+    ],
+    "expected": {
+      "cmd": "messenger.profile",
+      "args": {
+        "avatar": "byte"
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "profile",
+      "--image",
+      "{\"name\":\"me.png\",\"mimeType\":\"image/png\",\"data\":\"aGVsbG8=\"}"
+    ],
+    "expected": {
+      "cmd": "messenger.profile",
+      "args": {
+        "image": {
+          "name": "me.png",
+          "mimeType": "image/png",
+          "data": "aGVsbG8="
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "messenger",
+      "profile-image",
+      "--sha256",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "expected": {
+      "cmd": "messenger.profile-image",
+      "args": {
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "locate",
+      "shared|notes.md"
+    ],
+    "expected": {
+      "cmd": "assets.locate",
+      "args": {
+        "id": "shared|notes.md"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "search",
+      "--view",
+      "Messages",
+      "--team",
+      "Team",
+      "--employee",
+      "worker",
+      "--kind",
+      "image",
+      "--sort",
+      "modified"
+    ],
+    "expected": {
+      "cmd": "assets.search",
+      "args": {
+        "view": "Messages",
+        "team": "Team",
+        "employee": "worker",
+        "kind": "image",
+        "sort": "modified"
+      }
+    }
+  },
+  {
+    "args": [
+      "workspace",
+      "catalog"
+    ],
+    "expected": {
+      "cmd": "workspace.catalog",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "entry",
+      "channel:nc_example",
+      "--id",
+      "np_example"
+    ],
+    "expected": {
+      "cmd": "conversation.entry",
+      "args": {
+        "conversation": "channel:nc_example",
+        "id": "np_example"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "download",
+      "channel:nc_example",
+      "--entry-id",
+      "np_example",
+      "--attachment-id",
+      "document:file1",
+      "--client-request-id",
+      "copy-1",
+      "--workspace",
+      "company:my-id",
+      "--path",
+      "notes"
+    ],
+    "expected": {
+      "cmd": "conversation.download",
+      "args": {
+        "conversation": "channel:nc_example",
+        "entryId": "np_example",
+        "attachmentId": "document:file1",
+        "clientRequestId": "copy-1",
+        "workspace": "company:my-id",
+        "path": "notes"
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "download-status",
+      "cd_example"
+    ],
+    "expected": {
+      "cmd": "conversation.download-status",
+      "args": {
+        "id": "cd_example"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-list",
+      "nc_example"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-list",
+      "args": {
+        "id": "nc_example"
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-set",
+      "nc_example",
+      "--employee",
+      "e_reader",
+      "--every-posts",
+      "100",
+      "--prompt",
+      "Summarize the counted batch.",
+      "--enabled",
+      "false",
+      "--expected-revision",
+      "0"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-set",
+      "args": {
+        "id": "nc_example",
+        "employee": "e_reader",
+        "everyPosts": 100,
+        "prompt": "Summarize the counted batch.",
+        "enabled": false,
+        "expectedRevision": 0
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-remove",
+      "nc_example",
+      "--employee",
+      "e_reader",
+      "--expected-revision",
+      "2"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-remove",
+      "args": {
+        "id": "nc_example",
+        "employee": "e_reader",
+        "expectedRevision": 2
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-history",
+      "nc_example",
+      "--employee",
+      "e_reader",
+      "--offset",
+      "20",
+      "--limit",
+      "10"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-history",
+      "args": {
+        "id": "nc_example",
+        "employee": "e_reader",
+        "offset": 20,
+        "limit": 10
+      }
+    }
+  },
+  {
+    "args": [
+      "channel",
+      "post-trigger-batch",
+      "nc_example",
+      "--batch-id",
+      "cpb_example",
+      "--offset",
+      "50",
+      "--limit",
+      "50"
+    ],
+    "expected": {
+      "cmd": "channel.post-trigger-batch",
+      "args": {
+        "id": "nc_example",
+        "batchId": "cpb_example",
+        "offset": 50,
+        "limit": 50
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "member",
+      "channel:nc_example",
+      "--employee",
+      "e_reader",
+      "--action",
+      "add",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "conversation.member",
+      "args": {
+        "conversation": "channel:nc_example",
+        "employee": "e_reader",
+        "action": "add",
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "conversation",
+      "audit",
+      "group:cg_example",
+      "--before",
+      "10",
+      "--limit",
+      "5"
+    ],
+    "expected": {
+      "cmd": "conversation.audit",
+      "args": {
+        "conversation": "group:cg_example",
+        "before": 10,
+        "limit": 5
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "info",
+      "employee:fixture"
+    ],
+    "expected": {
+      "cmd": "assets.info",
+      "args": {
+        "id": "employee:fixture"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "preview",
+      "shared|Documents%2Fissue.pdf"
+    ],
+    "expected": {
+      "cmd": "assets.preview",
+      "args": {
+        "id": "shared|Documents%2Fissue.pdf"
+      }
+    }
+  },
+  {
+    "args": [
+      "assets",
+      "browse",
+      "--host",
+      "fixture-host",
+      "--query",
+      "report",
+      "--kind",
+      "folder",
+      "--limit",
+      "20",
+      "--offset",
+      "40"
+    ],
+    "expected": {
+      "cmd": "assets.browse",
+      "args": {
+        "host": "fixture-host",
+        "query": "report",
+        "kind": "folder",
+        "limit": 20,
+        "offset": 40
+      }
+    }
+  },
+  {
+    "args": [
+      "contract",
+      "info"
+    ],
+    "expected": {
+      "cmd": "contract.info",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "contract",
+      "describe",
+      "--version",
+      "1.0.0",
+      "--domain",
+      "company"
+    ],
+    "expected": {
+      "cmd": "contract.describe",
+      "args": {
+        "version": "1.0.0",
+        "domain": "company"
+      }
+    }
+  },
+  {
+    "args": [
+      "contract",
+      "call",
+      "--version",
+      "1.0.0",
+      "--command",
+      "group.list",
+      "--args",
+      "{}"
+    ],
+    "expected": {
+      "cmd": "contract.call",
+      "args": {
+        "version": "1.0.0",
+        "command": "group.list",
+        "args": {}
+      }
+    }
+  },
+  {
+    "args": [
+      "contract",
+      "engines"
+    ],
+    "expected": {
+      "cmd": "contract.engines",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "view",
+      "layer",
+      "engine",
+      "--engine",
+      "workspace-audit"
+    ],
+    "expected": {
+      "cmd": "view.layer",
+      "args": {
+        "layer": "engine",
+        "engineId": "workspace-audit"
+      }
+    }
+  },
+  {
+    "args": [
+      "infra",
+      "api",
+      "--domain",
+      "plan"
+    ],
+    "expected": {
+      "cmd": "infra.api",
+      "args": {
+        "domain": "plan"
+      }
+    }
+  },
+  {
+    "args": [
+      "view",
+      "load-engine",
+      "deep-research"
+    ],
+    "expected": {
+      "cmd": "view.load-engine",
+      "args": {
+        "engineId": "deep-research"
+      }
+    }
+  },
+  {
+    "args": [
+      "view",
+      "launcher"
+    ],
+    "expected": {
+      "cmd": "view.launcher",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "infra",
+      "scope",
+      "--engine-id",
+      "deep-research",
+      "--available"
+    ],
+    "expected": {
+      "cmd": "infra.scope",
+      "args": {
+        "engineId": "deep-research",
+        "available": true
+      }
+    }
+  },
+  {
+    "args": [
+      "infra",
+      "bind",
+      "--engine-id",
+      "deep-research",
+      "--resources",
+      "{\"teams\":[\"Research\"]}",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "infra.bind",
+      "args": {
+        "engineId": "deep-research",
+        "resources": {
+          "teams": [
+            "Research"
+          ]
+        },
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "infra",
+      "unbind",
+      "--engine-id",
+      "deep-research",
+      "--resources",
+      "{\"teams\":[\"Research\"]}",
+      "--expected-revision",
+      "3"
+    ],
+    "expected": {
+      "cmd": "infra.unbind",
+      "args": {
+        "engineId": "deep-research",
+        "resources": {
+          "teams": [
+            "Research"
+          ]
+        },
+        "expectedRevision": 3
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "start",
+      "--engine-id",
+      "deep-research",
+      "--input",
+      "{\"topic\":\"Fixture study\"}",
+      "--client-request-id",
+      "create-once"
+    ],
+    "expected": {
+      "cmd": "workflow.start",
+      "args": {
+        "engineId": "deep-research",
+        "input": {
+          "topic": "Fixture study"
+        },
+        "clientRequestId": "create-once"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "list",
+      "--engine-id",
+      "deep-research"
+    ],
+    "expected": {
+      "cmd": "workflow.list",
+      "args": {
+        "engineId": "deep-research"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "get",
+      "wf_11111111-1111-4111-8111-111111111111"
+    ],
+    "expected": {
+      "cmd": "workflow.get",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "cancel",
+      "wf_11111111-1111-4111-8111-111111111111"
+    ],
+    "expected": {
+      "cmd": "workflow.cancel",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "respond",
+      "wf_11111111-1111-4111-8111-111111111111",
+      "--expected-revision",
+      "2",
+      "--answer",
+      "{\"values\":{}}",
+      "--client-request-id",
+      "answer-once"
+    ],
+    "expected": {
+      "cmd": "workflow.respond",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111",
+        "expectedRevision": 2,
+        "answer": {
+          "values": {}
+        },
+        "clientRequestId": "answer-once"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "resume",
+      "wf_11111111-1111-4111-8111-111111111111",
+      "--expected-revision",
+      "3",
+      "--client-request-id",
+      "resume-once"
+    ],
+    "expected": {
+      "cmd": "workflow.resume",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111",
+        "expectedRevision": 3,
+        "clientRequestId": "resume-once"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "file",
+      "wf_11111111-1111-4111-8111-111111111111",
+      "--name",
+      "research-report.html"
+    ],
+    "expected": {
+      "cmd": "workflow.file",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111",
+        "name": "research-report.html"
+      }
+    }
+  }
+]

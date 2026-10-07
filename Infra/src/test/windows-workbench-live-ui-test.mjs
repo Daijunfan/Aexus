@@ -1,0 +1,16 @@
+import {desktopExecutable} from './fixtures/desktop-app.mjs'
+// Read-only UI check of the provisioned employee, using isolated host state and no model calls.
+import fs from'node:fs';import os from'node:os';import path from'node:path';import{createRequire}from'node:module';import{execFile}from'node:child_process';import{promisify}from'node:util';import assert from'node:assert/strict';
+const require=createRequire(import.meta.url),{_electron:electron,expect}=require('@playwright/test'),root=path.resolve(import.meta.dirname,'../../..'),run=promisify(execFile),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-win-ui-'));
+const original=JSON.parse(fs.readFileSync(path.join(os.homedir(),'AgentsCompany/sessions.json'),'utf8')),card=original.sessions.find(c=>c.group==='BUPT Windows'&&c.title==='Fireball');assert.ok(card);
+fs.writeFileSync(path.join(temp,'sessions.json'),JSON.stringify({sessions:[card],groups:[card.group],rooms:{},teamRoots:{[card.group]:original.teamRoots[card.group]},teamSettings:{[card.group]:original.teamSettings[card.group]},viewport:{x:80,y:110,zoom:1},preferences:original.preferences}));
+const env={...process.env,AGENTS_COMPANY_HOME:temp,AGENTS_COMPANY_HIDDEN:'1'};delete env.ELECTRON_RUN_AS_NODE;
+const app=await electron.launch({executablePath:desktopExecutable(process.env.AGENTS_COMPANY_TEST_APP||'/Applications/Anexus.app'),args:[],env}),page=await app.firstWindow();page.setDefaultTimeout(25000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const cli=async(...a)=>{const r=JSON.parse((await run(process.execPath,[root+'/Infra/src/cli/agents',...a,'--json'],{env,timeout:40000})).stdout);assert.ok(r.ok,r.error);return r.data};
+try{
+ await expect(page.locator(`[data-card-id="${card.id}"] [data-avatar="voltcoin"]`)).toBeVisible();await page.screenshot({path:root+'/.aexus/artifacts/windows-fireball-office.png'});
+ await cli('view','open','conversation','--employee',card.id);await expect(page.locator('.composer textarea')).toBeEnabled({timeout:30000});await expect(page.locator('.terminal-location')).toContainText('C:\\Users\\djf\\AgentsCompany\\Fireball');await expect(page.locator('.xterm')).toBeVisible();
+ const terms=await cli('terminal','list','--employee',card.id);assert.equal(terms.length,1);await cli('terminal','input',terms[0].id,'--data','$PSVersionTable.PSVersion.ToString()\r');
+ await expect.poll(async()=>(await cli('terminal','read',terms[0].id)).output).toContain('5.1.');await expect(page.locator('.workspace-error,.app-error')).toHaveCount(0);assert.equal(errors.length,0);
+ await page.screenshot({path:root+'/.aexus/artifacts/windows-fireball-workbench.png'});assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())));console.log('PASS installed hidden Windows employee, Fireball, file tree, PowerShell terminal and composer; no inference');
+}catch(e){console.error(await page.locator('.conversation-repair,.workspace-error,.app-error').allTextContents());await page.screenshot({path:root+'/.aexus/artifacts/windows-ui-error.png'});throw e}finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

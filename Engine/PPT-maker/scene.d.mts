@@ -1,0 +1,19 @@
+import type {Deck,Slide,Element,Chart} from './types'
+export const VERSION:1
+export const STYLES:Record<string,Deck['theme']&{name:string}>
+export const LAYOUTS:string[]
+export function clone<T>(value:T):T
+export function round(value:number):number
+export function xml(value:unknown):string
+export function plainColor(value:unknown):string|null
+export function wrapText(text:string,width:number,fontSize:number):string[]
+export function textMetrics(element:Partial<Element>):{lines:string[];height:number}
+export function makeDeck(plan:any,options?:any):Deck
+export function layoutSlide(spec:any,deck:Deck,index:number,total:number):Slide
+export function validateDeck(deck:any):Deck
+export function validateChart(chart:any):void
+export function inspectDeck(deck:Deck):{passed:boolean;errors:number;warnings:number;issues:{severity:string;code:string;slideId:string;elementId:string;message:string}[];slides:number;objects:number;scope:string}
+export function reconcileEdits(base:Deck,candidate:Deck):Deck
+export function slideSVG(deck:Deck,slide:Slide,options?:{interactive?:boolean}):string
+export function previewHTML(deck:Deck):string
+export function normalizeGenerated(deck:Deck):Deck

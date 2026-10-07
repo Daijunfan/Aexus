@@ -1,0 +1,26 @@
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),{spawn,execFile}=require('node:child_process'),{promisify}=require('node:util'),assert=require('node:assert/strict');
+const run=promisify(execFile),project=path.resolve(__dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'agents-cli-sandbox-'))),workspace=path.join(temp,'mini-notion-workspace'),home=path.join(temp,'home');fs.mkdirSync(workspace);fs.writeFileSync(path.join(workspace,'private.txt'),'parent data');
+const executable=process.env.AGENTS_COMPANY_TEST_CLI||process.execPath,prefix=process.env.AGENTS_COMPANY_TEST_CLI?[]:[project+'/Infra/src/cli/agents'];
+const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:temp},service=spawn(executable,[...prefix,'serve'],{env,stdio:'ignore'}),done=new Promise(r=>service.once('exit',r));
+const cli=async(...args)=>{const r=JSON.parse((await run(executable,[...prefix,...args,'--json'],{env})).stdout);assert.ok(r.ok,r.error);return r.data};
+(async()=>{try{
+  await require('esbuild').build({entryPoints:{scope:path.join(project,'Infra/src/main/scope.ts'),exec:path.join(project,'Infra/src/main/exec.ts')},outdir:temp,outExtension:{'.js':'.cjs'},bundle:true,platform:'node',format:'cjs',logLevel:'silent'});
+  const {workCodexConfig,workClaudeOptions}=require(path.join(temp,'scope.cjs'));
+  const binary=require(path.join(temp,'exec.cjs')).resolveBinary('codex',process.env.CODEX_BIN);
+  while(!fs.existsSync(path.join(home,'agents.sock')))await new Promise(r=>setTimeout(r,50));
+  const bound=path.join(workspace,'Sandbox');
+  await cli('group','add','Sandbox','--mode','work','--plugin','mininotion');
+  const employee=await cli('session','new','--engine','codex','--group','Sandbox','--cwd','worker','--model','gpt-5.6-luna','--effort','low');
+  const cwd=employee.cwd,shim=path.join(cwd,'.agents-company/bin/mininotion'),args=['sandbox','-P','agents-company-work','-C',cwd,...workCodexConfig(cwd,workspace)];
+  const {stdout}=await run(binary,[...args,shim,'api','fs.write','--data',JSON.stringify({path:'probe.md',content:'SCOPED_MAILBOX_OK'})],{env,timeout:15000});assert.equal(JSON.parse(stdout).content,'SCOPED_MAILBOX_OK');
+  console.log('PASS Codex scoped sandbox runs the bound plugin CLI without inspecting inaccessible ancestors');
+  await assert.rejects(()=>run(binary,[...args,process.execPath,'-e',`require('fs').readFileSync(${JSON.stringify(path.join(workspace,'private.txt'))})`],{env,timeout:10000}));
+  await assert.rejects(()=>run(binary,[...args,process.execPath,'-e',`require('fs').writeFileSync(${JSON.stringify(path.join(workspace,'escape.txt'))},'denied')`],{env,timeout:10000}));
+  assert.ok(!fs.existsSync(path.join(workspace,'escape.txt')));console.log('PASS Codex rejects reads and writes above its employee directory');
+  const options=workClaudeOptions(cwd,workspace),hook=options.hooks.PreToolUse[0].hooks[0];
+  assert.equal(options.settings.sandbox.allowUnsandboxedCommands,false);assert.equal(options.settings.sandbox.failIfUnavailable,true);
+  const denied=await hook({hook_event_name:'PreToolUse',tool_name:'Read',tool_input:{file_path:path.join(workspace,'private.txt')}});assert.equal(denied.hookSpecificOutput.permissionDecision,'deny');
+  assert.deepEqual(await hook({hook_event_name:'PreToolUse',tool_name:'Write',tool_input:{file_path:path.join(cwd,'nested/file.txt')}}),{});
+  console.log('PASS Claude in-process file tools apply the same folder boundary; shell sandbox cannot be bypassed');
+  console.log('PASS=3 FAIL=0 — no model calls');
+}finally{service.kill('SIGTERM');await done;fs.rmSync(temp,{recursive:true,force:true})}})().catch(e=>{console.error(e.stdout,e.stderr,e);process.exitCode=1});

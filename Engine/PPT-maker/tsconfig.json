@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowJs": false,
+    "esModuleInterop": true
+  },
+  "include": [
+    "Page.tsx",
+    "Editor.tsx",
+    "types.ts",
+    "drafts.ts",
+    "*.d.mts"
+  ]
+}

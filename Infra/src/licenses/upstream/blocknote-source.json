@@ -1,0 +1,13 @@
+{
+  "name": "BlockNote",
+  "version": "0.54.2",
+  "url": "https://codeload.github.com/TypeCellOS/BlockNote/tar.gz/refs/tags/v0.54.2",
+  "archive": "Infra/src/licenses/upstream/blocknote-0.54.2-source.tar.gz",
+  "sha256": "59b8a85fbe8932d4819c86b367a41ff2924e7db17a2d63a30109ab1d5c20095d",
+  "files": 5442,
+  "licenses": [
+    "MPL-2.0",
+    "GPL-3.0-only (multi-column)"
+  ],
+  "modified": false
+}

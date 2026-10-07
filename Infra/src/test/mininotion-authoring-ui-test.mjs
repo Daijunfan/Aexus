@@ -1,0 +1,74 @@
+// Real hosted renderer, same declared authoring API; packaged-app override supported.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+const require=createRequire(import.meta.url),{_electron:electron,expect}=require('@playwright/test');
+const root=path.resolve(import.meta.dirname,'../../..'),run=promisify(execFile);
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-authoring-ui-')));
+const out=process.env.AGENTS_COMPANY_TEST_ARTIFACTS||path.join(root,'.aexus/artifacts/mininotion-agent-delivery/authoring-ui');
+fs.mkdirSync(out,{recursive:true});
+const env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_PLUGIN_DIRS:''};
+for(const key of Object.keys(env))if(key.startsWith('AGENTS_COMPANY_TOKEN')||['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_URL','AGENTS_COMPANY_PLUGIN_RPC','AGENTS_COMPANY_BUILTIN_PLUGINS','MINI_NOTION_SOCKET','MINI_NOTION_WORKSPACE','MINI_NOTION_DATA_DIR'].includes(key))delete env[key];
+const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env});
+let page=await app.firstWindow();page.setDefaultTimeout(25000);
+const errors=[],checks=[];
+const cli=async(...args)=>{const r=JSON.parse((await run(process.execPath,[path.join(root,'Infra/src/cli/agents'),...args,'--json'],{env,cwd:root,timeout:30000,maxBuffer:16e6})).stdout);assert.ok(r.ok,r.error);return r.data};
+const api=(method,params={})=>cli('plugin','call','mininotion',method,'--params',JSON.stringify(params));
+const pass=text=>{checks.push(text);console.log('PASS '+text)};
+try{
+ await page.locator('.infinite-canvas').waitFor();
+ const descriptor=await cli('plugin','describe','mininotion');assert.equal((descriptor.plugin?.version??descriptor.version),JSON.parse(fs.readFileSync(path.join(root,'Infra/Plugins/mini-notion/package.json'),'utf8')).version);
+ const note=await api('page.create',{title:'CLI 技术分析',color:'white'});
+ const child=await api('page.create',{title:'子页面调用链',color:'white',parentId:note.id});
+ const leaf=await api('page.create',{title:'错误与恢复',color:'white',parentId:child.id});
+ const markdown='## 技术实现\n\n共享 **Core** 通过 `handleRequest` 接收请求。\n\n|模块|职责|\n|---|---|\n|Node Core|共享领域服务|\n|Renderer|调用 API|\n\n```js\nawait handleRequest(request);\n```\n\n- [x] 原生块已持久化\n\n```bash\necho hello\n```\n\n```mermaid\ngraph TD; A-->B;\n```\n\n```text\nasset://local/<attachment-id>\n```\n';
+ for(const n of [note,child,leaf])await api('page.write-markdown',{pageId:n.id,markdown});
+ const legacyLocation=await api('fs.path',{pageId:leaf.id});
+ const legacy=JSON.parse(fs.readFileSync(legacyLocation.absolutePath,'utf8'));
+ legacy.page.blocks.push({id:'legacy-table-fixture',type:'table',content:{rows:[{cells:[[{type:'text',text:'旧格式表格可见'}]]}]}});
+ fs.writeFileSync(legacyLocation.absolutePath,JSON.stringify(legacy));await api('fs.sync');
+ const opened=app.waitForEvent('window');await cli('plugin','open','mininotion');page=await opened;page.setDefaultTimeout(25000);page.on('pageerror',e=>errors.push(e.message));await page.locator('.sidebar').waitFor();
+ await api('page.open',{pageId:note.id});
+ await expect(page.getByRole('textbox',{name:'页面标题',exact:true})).toHaveValue(note.title);
+ await expect(page.locator('.bn-editor table')).toContainText('共享领域服务');
+ await expect(page.locator('.bn-editor')).toContainText('handleRequest');
+ await expect(page.locator('.bn-editor')).toContainText('asset://local/<attachment-id>');
+ await expect(page.locator('.bn-editor')).toContainText('graph TD; A-->B;');
+ await page.screenshot({path:path.join(out,'native-markdown-table.png'),animations:'disabled'});
+ pass('Markdown API produces editable headings, table, code aliases, unknown-language plaintext, literal asset syntax and checklists in the installed native renderer');
+ await api('page.open',{pageId:leaf.id});await expect(page.getByRole('textbox',{name:'页面标题',exact:true})).toHaveValue(leaf.title);
+ await expect(page.locator('.bn-editor table').first()).toContainText('Renderer');
+ await expect(page.locator('.bn-editor')).toContainText('旧格式表格可见');
+ assert.equal((await api('page.audit',{pageId:note.id})).maxDepth,3);
+ const treeAudit=await api('fs.audit');assert.equal(treeAudit.valid,true,JSON.stringify(treeAudit.errors));
+ const noteLocation=await api('fs.path',{pageId:note.id}),childLocation=await api('fs.path',{pageId:child.id});
+ assert.equal(path.dirname(noteLocation.absoluteDirectory),(await api('fs.info')).collectionRoot);
+ assert.equal(path.dirname(childLocation.absoluteDirectory),noteLocation.absoluteDirectory);
+ assert.equal(path.dirname(legacyLocation.absoluteDirectory),childLocation.absoluteDirectory);
+ assert.equal(noteLocation.mainPage,true);assert.equal(childLocation.mainPage,false);
+ for(const item of [note,child,leaf])await expect(page.locator(`.sidebar [data-page-id="${item.id}"]`).first()).toBeVisible();
+ await page.screenshot({path:path.join(out,'exact-folder-tree.png'),animations:'disabled'});
+ pass('each sidebar level matches its own physical folder; nested native pages and legacy tables open without promotion');
+ const db=await api('database.create',{parentId:note.id,title:'架构模块视图',color:'blue',view:'table'});
+ await api('record.create',{databaseId:db.id,title:'Node Core 分析',color:'white',values:{status:'已完成',date:'2026-09-29'},blocks:[{type:'paragraph',content:'源码证据与错误路径说明'}]});
+ for(const type of ['board','gallery','list','calendar'])await api('view.create',{databaseId:db.id,type,name:type});
+ await api('page.open',{pageId:db.id});
+ for(const view of await api('view.list',{databaseId:db.id})){
+  await api('view.select',{databaseId:db.id,viewId:view.id});
+  await expect(page.locator('.database')).toContainText('Node Core 分析');
+ }
+ await page.screenshot({path:path.join(out,'database-calendar.png'),animations:'disabled'});
+ assert.equal((await api('page.audit',{pageId:note.id})).databases[0].views.length,5);
+ pass('one real database renders the same record in table, board, gallery, list and calendar');
+ const win=(await cli('plugin','windows'))[0];await cli('plugin','dismiss',win.id);
+ assert.match((await api('page.read-markdown',{pageId:note.id})).markdown,/共享领域服务/);
+ assert.deepEqual(errors,[]);assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())));
+ pass('close flush, CLI readback, hidden windows and renderer error checks pass');
+ fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({checks,errors,version:(descriptor.plugin?.version??descriptor.version)},null,2));
+ console.log(`PASS=${checks.length} FAIL=0`);
+}catch(e){await page.screenshot({path:path.join(out,'error.png')}).catch(()=>{});throw e}
+finally{await app.close();fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}

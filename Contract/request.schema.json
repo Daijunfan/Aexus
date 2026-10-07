@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aexus Contract v1 invocation",
+  "type": "object",
+  "required": [
+    "version",
+    "command"
+  ],
+  "properties": {
+    "version": {
+      "const": "1.0.0"
+    },
+    "command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "args": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

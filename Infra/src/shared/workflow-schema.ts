@@ -1,0 +1,11 @@
+import {objectSchema,nonemptySchema} from './api-schema.ts'
+const id=nonemptySchema,key={type:'string',minLength:1,maxLength:160},revision={type:'integer',minimum:1},json={type:'object',additionalProperties:true}
+export const WORKFLOW_COMMANDS=[
+ {name:'workflow.start',args:'--engine-id ID --input JSON --client-request-id ID',summary:'Start an installed Engine workflow durably as the authenticated caller; same request ID never creates a second job',cli:{required:['engineId','input','clientRequestId']},inputSchema:objectSchema({engineId:id,input:json,clientRequestId:key},['engineId','input','clientRequestId'])},
+ {name:'workflow.list',args:'[--engine-id ID]',summary:'Read the caller-owned workflow summaries without exposing private runtime checkpoints',cli:{},inputSchema:objectSchema({engineId:id})},
+ {name:'workflow.get',args:'ID',summary:'Read durable status, clarification questions and final-file manifest; reading does not run a task',cli:{positionals:['id']},inputSchema:objectSchema({id},['id'])},
+ {name:'workflow.respond',args:'ID --expected-revision N --answer JSON --client-request-id ID',summary:'Answer the current clarification checkpoint exactly once; stale answers cannot change a later round',cli:{positionals:['id'],required:['answer','expectedRevision','clientRequestId']},inputSchema:objectSchema({id,expectedRevision:revision,answer:json,clientRequestId:key},['id','expectedRevision','answer','clientRequestId'])},
+ {name:'workflow.resume',args:'ID --expected-revision N --client-request-id ID',summary:'Explicitly resume a failed Engine from its saved checkpoint, preserving completed steps and identities',cli:{positionals:['id'],required:['expectedRevision','clientRequestId']},inputSchema:objectSchema({id,expectedRevision:revision,clientRequestId:key},['id','expectedRevision','clientRequestId'])},
+ {name:'workflow.cancel',args:'ID',summary:'Cancel this workflow and its exact owned pending tasks; never interrupts unrelated employee work',cli:{positionals:['id']},inputSchema:objectSchema({id},['id'])},
+ {name:'workflow.file',args:'ID --name FILE',summary:'Read one hash-verified final deliverable from a completed workflow; intermediate files are not downloadable',cli:{positionals:['id'],required:['name']},inputSchema:objectSchema({id,name:id},['id','name'])}
+].map(command=>({...command,gui:'Engine workflows'}))

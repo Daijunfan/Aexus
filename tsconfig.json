@@ -23,8 +23,10 @@
   },
   "include": [
     "electron.vite.config.ts",
-    "src/main/**/*",
-    "src/preload/**/*",
-    "src/renderer/src/**/*"
+    "Infra/src/main/**/*",
+    "Infra/src/preload/**/*",
+    "Infra/src/renderer/src/**/*",
+    "Contract/**/*.ts",
+    "Engine/**/*.tsx"
   ]
 }
