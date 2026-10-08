@@ -9,7 +9,7 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
   const nodes = Array.from({ length: nodeCount - 2 }, (_, i) => ({ id: 'search-' + i, kind: 'search', role: 'researcher', label: 'Investigate evidence question ' + i, dependencies: i > 1 ? ['search-' + Math.floor((i - 1) / 2)] : [], payload: { query: 'Evidence question ' + i } }));
   nodes.push({ id: 'report', kind: 'write', dependencies: nodes.map(n => n.id) }, { id: 'review', kind: 'review', dependencies: ['report'] });
   applyPlan(state, { nodes, dimensions: [] }, 'Projection benchmark'); state.phase = 'research';
-  state.sources = Array.from({ length: sourceCount }, (_, i) => ({ id: 'src-' + i, title: 'Retrieved evidence source ' + i, url: 'https://source-' + i + '.example/evidence', verified: false, acquisition: { status: 'read', excerpt: 'Measured original evidence passage. '.repeat(60), locator: 'Paragraph 1' } }));
+  state.sources = Array.from({ length: sourceCount }, (_, i) => ({ id: 'src-' + i, title: 'Retrieved evidence source ' + i, url: 'https://source-' + i + '.example/evidence', verified: false, acquisition: { status: 'read', method: 'independent-http', excerpts: [{excerpt: 'Measured original evidence passage. '.repeat(60), locator: 'Paragraph 1', sha256: 'a'.repeat(64), accessedAt: 1, finalUrl: 'https://source-' + i + '.example/evidence', match: 'normalized-text'}] } }));
   for (let i = 0; i < 5; i++) describe(state);
   const times = []; let bytes = 0;
   for (let i = 0; i < 30; i++) {
@@ -30,7 +30,7 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
   const cards = [], transcripts = new Map(), controller = new AbortController();
   const counts = [], measurements = [];
   let latest, failure;
-  const ctx = { id: 'checkpoint-benchmark', signal: controller.signal, checkpoint: async snapshot => {
+  const ctx = { id: 'checkpoint-benchmark', signal: controller.signal, sourceReader: async url => ({url, mediaType: 'text/plain', body: 'Measured original evidence passage. '.repeat(60)}), checkpoint: async snapshot => {
     latest = snapshot;
     const start = performance.now();
     structuredClone(snapshot);

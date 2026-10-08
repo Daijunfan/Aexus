@@ -1,6 +1,7 @@
 /** Research state and pure UI/control hooks. */
 import { graphView, planProgress, applyPlan, nodesFromDimensions } from './graph.mjs';
 import { wordCount } from './reports.mjs';
+import { sourceView, isIndependentSource } from './evidence.mjs';
 
 export const ENGINE_ID = 'deep-research';
 export const ENGINE_VERSION = '2.0.0';
@@ -92,11 +93,11 @@ export function describe(originalState) {
   const plan = state.plan ? Object.fromEntries(Object.entries(state.plan).filter(([key]) => key !== 'nodes')) : null;
   return {
     topic: state.input.topic, phase: state.phase, phaseLabel: PHASES[state.phase] || state.phase, scope: state.input.scope,
-    progress: { ...planProgress(state), sources: { collected: state.sources.length, max: state.input.maxSources, verified: state.sources.filter(s => s.verified).length, read: state.sources.filter(s => s.acquisition?.status === 'read').length, domains: domains.size }, findings: state.findings.length, contradictions: state.contradictions.length, entities: state.knowledgeGraph.entities.length },
+    progress: { ...planProgress(state), sources: { collected: state.sources.length, max: state.input.maxSources, verified: state.sources.filter(s => s.verified && isIndependentSource(s)).length, read: state.sources.filter(isIndependentSource).length, domains: domains.size }, findings: state.findings.length, contradictions: state.contradictions.length, entities: state.knowledgeGraph.entities.length },
     workers: state.workers.map(w => ({ ...w, status: Object.values(state.tasks).some(t => t.employeeId === w.id && ['running', 'approval'].includes(t.status)) ? 'working' : 'idle' })),
     tasks: Object.entries(state.tasks).map(([id, t]) => ({ id, role: t.role, label: t.label, status: t.status, employeeId: t.employeeId, messageId: t.receipt?.messageId, error: t.error, startedAt: t.startedAt, finishedAt: t.finishedAt })),
     plan, dimensions: state.dimensions, graph: graphView(state), planRevisions: state.planRevisions,
-    sources: state.sources, findingsDetails: state.findings, contradictions: state.contradictions,
+    sources: state.sources.map(sourceView), findingsDetails: state.findings, contradictions: state.contradictions,
     knowledgeGraph: state.knowledgeGraph, timeline: state.visualization.timeline,
     report: state.report ? { title: state.report.title, sections: state.report.sections.length, citations: state.report.citations.length, wordCount: wordCount(state.report) } : null,
     deliverable: state.report, review: state.review, attention: state.attention, managerReviews: state.managerReviews,

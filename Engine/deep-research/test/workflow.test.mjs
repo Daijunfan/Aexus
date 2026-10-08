@@ -6,6 +6,7 @@ import { normalizeSources } from '../evidence.mjs';
 import { applyPlan, normalizeNodes, planProgress } from '../graph.mjs';
 import { ask, provision } from '../agents.mjs';
 import { generateArtifacts } from '../reports.mjs';
+import { acquireSources } from '../source-read.mjs';
 
 const source = (name = 'seed') => ({ title: name, url: 'https://' + name + '.example/research', acquisition: { status: 'read', excerpt: name + ' actual retrieved body demonstrates the result.', locator: 'Results' } });
 const team = [
@@ -61,7 +62,7 @@ function fixture(options = {}) {
     if (command === 'session.interrupt' || command === 'session.dequeue') return {};
     throw Error('Unexpected public command: ' + command);
   } };
-  return { ctx: { id: 'wf_test', client, signal: signal.signal, checkpoint: async state => { checkpoints.push(structuredClone(state)); options.checkpoint?.(state); } }, calls, cards, checkpoints, signal, maxActive: () => maxActive };
+  return { ctx: { id: 'wf_test', client, signal: signal.signal, sourceReader: async url => { const name = new URL(url).hostname.split('.')[0]; return {url, mediaType: 'text/plain', body: source(name).acquisition.excerpt}; }, checkpoint: async state => { checkpoints.push(structuredClone(state)); await options.checkpoint?.(state); } }, calls, cards, checkpoints, signal, maxActive: () => maxActive };
 }
 
 test('first scouting has unknown progress and autoApprove is retained', () => {
@@ -387,11 +388,12 @@ test('independent verification branches receive their ancestors plus common scou
   const state = create({ topic: 'Independent evidence branches keep their source inputs isolated', autoApprove: true, team: { maxConcurrency: 2 } });
   let prepared = false;
   const f = fixture({
-    checkpoint: snapshot => {
+    checkpoint: async snapshot => {
       if (snapshot.phase === 'research' && !prepared) {
         prepared = true;
         for (const [id, name] of [['s1', 'first'], ['s2', 'second']]) {
-          const evidence = normalizeSources({ sources: [source(name)] }).sources[0]; state.sources.push(evidence);
+          const candidates = normalizeSources({ sources: [source(name)] }).sources;
+          const [evidence] = await acquireSources(state, candidates, {signal: f.ctx.signal, read: f.ctx.sourceReader}); state.sources.push(evidence);
           Object.assign(state.graph.nodes.find(n => n.id === id), { status: 'completed', sourceIds: [evidence.id] });
         }
       }
@@ -528,4 +530,58 @@ test('public projection retains canonical detail without repeating plan nodes, r
   assert.equal('nodes' in view.plan, false);
   assert.equal('content' in view.report, false);
   assert.equal('planHistory' in view, false);
+});
+
+test('unfinished older checkpoints reacquire saved search excerpts without repeating native research or deleting history', async () => {
+  const first = fixture(), done = await run(create({ topic: 'Saved evidence is reacquired before publishing a resumed report', autoApprove: true }), first.ctx);
+  const state = structuredClone(done.state); state.phase = 'review'; delete state.independentEvidence; delete state.artifacts;
+  for (const source of state.sources) source.acquisition = {status: 'read', excerpt: source.acquisition.excerpts[0].excerpt, locator: source.acquisition.excerpts[0].locator};
+  const previousReport = structuredClone(state.report), priorTasks = Object.keys(state.tasks);
+  const resumed = fixture();
+  const result = await run(state, resumed.ctx);
+  assert.equal(result.status, 'completed');
+  assert.deepEqual(result.state.historicalReport, previousReport); assert.ok(result.state.historicalFindings.length > 0);
+  assert.ok(priorTasks.every(key => result.state.tasks[key]));
+  assert.equal(resumed.calls.filter(call => call.task?.kind === 'search').length, 0);
+  assert.ok(result.state.sources.filter(source => source.verified).every(source => source.acquisition.method === 'independent-http'));
+});
+
+test('dimension-only saved plans reacquire finished search evidence before rebuilding later tasks', async () => {
+  const f = fixture(), done = await run(create({topic: 'Migrate a dimension-only checkpoint with saved original excerpts', autoApprove: true}), f.ctx);
+  const state = structuredClone(done.state); state.phase = 'review'; delete state.independentEvidence; delete state.artifacts;
+  state.graph = {version: 0, nodes: []}; state.plan = {dimensions: [{id: 'd1', query: 'first'}]};
+  state.dimensions = [{id: 'd1', query: 'first', status: 'completed'}];
+  const savedSearch = structuredClone(state.tasks['s1-v1']);
+  state.tasks['research-d1'] = savedSearch;
+  state.workers.push(...['verifier', 'synthesizer'].map(role => ({id: 'legacy-' + role, specId: role, role, engine: 'pi', active: true, managerIds: []})));
+  for (const source of state.sources) source.acquisition = {status: 'read', excerpt: source.acquisition.excerpts[0].excerpt};
+  const resumed = fixture({respond: task => task.kind === 'synthesize' ? {entities: [], relationships: [], insights: []} : undefined});
+  const result = await run(state, resumed.ctx);
+  assert.equal(result.status, 'completed');
+  assert.equal(resumed.calls.filter(call => call.task?.kind === 'search').length, 0);
+  assert.ok(result.state.sources.some(source => source.verified && source.acquisition.method === 'independent-http'));
+});
+
+test('completed historical research keeps its report and artifacts without claiming independent verification', async () => {
+  const f = fixture(), done = await run(create({topic: 'Completed historical research remains available as historical evidence', autoApprove: true}), f.ctx);
+  const state = structuredClone(done.state); delete state.independentEvidence;
+  for (const source of state.sources) source.acquisition = {status: 'read', excerpt: source.acquisition.excerpts[0].excerpt};
+  const oldReport = structuredClone(state.report), oldArtifacts = structuredClone(state.artifacts);
+  const historical = await run(state, {...f.ctx, sourceReader: async () => {throw Error('Historical completion must not refetch');}});
+  assert.deepEqual(historical.state.report, oldReport); assert.deepEqual(historical.artifacts, oldArtifacts);
+  const view = describe(historical.state);
+  assert.equal(view.progress.sources.read, 0); assert.equal(view.progress.sources.verified, 0);
+});
+
+test('describing an older waiting plan preserves its approval action and resumes evidence after approval', async () => {
+  const first = fixture(), waiting = await run(create({topic: 'An older waiting plan keeps the same visible and executable approval state'}), first.ctx);
+  const state = structuredClone(waiting.state); delete state.independentEvidence;
+  for (const source of state.sources) source.acquisition = {status: 'read', excerpt: source.acquisition.excerpts[0].excerpt};
+  const before = structuredClone(state);
+  assert.equal(describe(state).phase, 'planning'); assert.deepEqual(state, before);
+  const approved = respond(state, {action: 'approve-plan'});
+  const resumed = fixture(), done = await run(approved, resumed.ctx);
+  assert.equal(done.status, 'completed');
+  assert.equal(resumed.calls.filter(call => call.task?.kind === 'plan' || call.task?.kind === 'scout').length, 0);
+  assert.ok(done.state.sources.every(source => source.acquisition.method === 'independent-http'));
 });

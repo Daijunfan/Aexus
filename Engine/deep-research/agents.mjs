@@ -222,8 +222,8 @@ function buildPrompt(state, taskId, kind, payload) {
   const instructions = {
     scout: '先浏览关键一手资料确认术语、边界、争议和可用证据，再指出研究缺口；此阶段不估计总进度或完成时间。',
     plan: '根据初步证据选择员工数量、Manager 数量、研究问题和 DAG 拓扑；预算均为上限，任务数量由需要决定。每个 node 使用唯一 ID、kind、role、dependencies、payload。kind 仅 search/verify/synthesize/write/review；每版计划只有一个最终 write 和一个独立 review，全部研究任务必须沿依赖汇入 write，write 依赖相关证据核验，review 依赖 write。其他任务可自由分支、合并、增补研究，不能固定套用流程。team 覆盖各任务 role 并满足预算；Manager 审核分工并由计划选择最终审核责任。重规划原样保留可复用的已完成调查与在途节点及 ID；新增工作用新 ID。需要新稿时将旧 write/review 从当前 nodes 中移除（引擎会完整归档历史成果），增加新的 write/review ID，不把旧稿当新稿重复交付。',
-    search: '围绕具体问题检索多个查询变体，优先一手/官方/学术资料，并用独立发布机构交叉核查。来源广度按问题覆盖和不同域证据判断，不机械凑数。实际打开并阅读正文后才能 acquisition.status=read，保留原文 excerpt 与 locator；仅搜索摘要用 discovered，不假装完整阅读。',
-    verify: '逐项核验给定来源，判断发布方、方法、时效、与其他证据一致性。claims 必须逐字引用 acquisition.excerpt 中的片段；未获取正文来源不能提取已确认论断。所有 sourceId 使用给定稳定 ID。',
+    search: '围绕具体问题检索多个查询变体，优先一手/官方/学术资料，并用独立发布机构交叉核查。来源广度按问题覆盖和不同域证据判断，不机械凑数。实际打开并阅读正文后保留原文 excerpt 与 locator，引擎会独立获取并核对完整片段；仅搜索摘要用 discovered，不假装完整阅读。',
+    verify: '逐项核验给定来源，判断发布方、方法、时效、与其他证据一致性。claims 必须逐字引用 acquisition.excerpts 中单个已独立获取片段，不拼接不同片段；未独立获取正文来源不能提取已确认论断。所有 sourceId 使用给定稳定 ID。',
     synthesize: '整合已有论断，区分事实、推断、冲突和未知；引用支持的概念构成 entities/relationships，禁止编造未提供事实。',
     write: '交付详实、可读的研究报告。按真实问题组织章节，包含背景、方法、证据分析、反证、比较、影响、建议和研究局限（仅在适用时）。正文内容优先深度和具体性，不能泛泛总结。事实段落列出支持的已读取核验来源 ID；引用与原文论断对应，不把搜索摘要当证据。',
     review: '作为独立审查者核查引用对应原文、事实准确性、研究问题覆盖、反证、内容深度、局限和可操作结论。存在阻断问题用 revise，只有证据充分且报告可交付才 pass。',

@@ -2,6 +2,7 @@
 import { graphView } from './graph.mjs';
 import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
+import { sourceView, isIndependentSource } from './evidence.mjs';
 
 const html = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const csv = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
@@ -76,7 +77,7 @@ export function generateArtifacts(state) {
     <p class="meta">AEXUS · Deep Research · 计划 v${state.graph.version}</p>
     <h1>${html(report.title)}</h1>
     <div class="report-content">${markdown(report.abstract)}</div>
-    <p class="meta">${state.sources.length} 个已发现来源 · ${state.sources.filter(s => s.verified).length} 个已阅读并核验 · ${state.findings.length} 项论断 · ${state.planRevisions.length} 版计划</p>
+    <p class="meta">${state.sources.length} 个已发现来源 · ${state.sources.filter(s => s.verified && isIndependentSource(s)).length} 个已独立读取并核验 · ${state.findings.length} 项论断 · ${state.planRevisions.length} 版计划</p>
   </header>
   <nav><ol>${report.sections.map(s => `<li><a href="#${html(s.id)}">${html(s.heading)}</a></li>`).join('')}</ol></nav>
   ${sectionsHtml}
@@ -97,7 +98,7 @@ export function generateArtifacts(state) {
     + '\n## 来源与引用\n\n' + referencesMarkdown;
   const sourceCsv = [
     ['ID', 'Type', 'Title', 'URL', 'Author', 'Published', 'Acquisition', 'Credibility', 'Verified', 'Excerpt', 'Locator'],
-    ...state.sources.map(s => [s.id, s.type, s.title, s.url, s.author, s.publishedDate, s.acquisition?.status, s.credibilityScore, s.verified, s.acquisition?.excerpt, s.acquisition?.locator])
+    ...state.sources.map(sourceView).map(s => [s.id, s.type, s.title, s.url, s.author, s.publishedDate, s.acquisition.status, s.credibilityScore, s.verified && isIndependentSource(s), s.acquisition.excerpt, s.acquisition.locator])
   ].map(row => row.map(csv).join(',')).join('\r\n');
   return [
     { name: 'research-report.html', description: '完整研究报告、来源和原文证据', mediaType: 'text/html', content: htmlReport },
