@@ -414,16 +414,118 @@ function buildPrompt(state, taskId, kind, payload) {
 }
 
 function getTaskInstructions(kind, payload) {
-  // Placeholder - will be refined based on competitive analysis
   const templates = {
-    plan: '分析研究主题，规划调查维度和关键问题。返回结构化研究计划。',
-    search: '搜索相关来源，评估可信度，提取关键信息。',
-    extract: '从来源中提取事实、数据、论点，保持准确性。',
-    verify: '交叉验证信息，检测矛盾，评估证据强度。',
-    synthesize: '整合发现，构建知识图谱，发现模式和联系。',
-    write: '组织叙事，撰写清晰报告，管理引用。',
-    review: '审查报告质量、准确性、完整性。'
+    plan: `分析研究主题，规划调查维度和关键问题。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回接收到的 taskId",
+  "dimensions": [
+    {
+      "query": "具体的调查问题（字符串）",
+      "rationale": "为什么这个维度重要"
+    }
+  ],
+  "strategy": "研究策略说明",
+  "estimatedTime": 预计时间（分钟数）
+}
+
+注意：dimensions 必须是数组，每个元素的 query 必须是字符串，不能是对象。`,
+
+    search: `搜索相关来源，评估可信度，提取关键信息。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回",
+  "sources": [
+    {
+      "type": "web",
+      "title": "来源标题",
+      "url": "完整URL",
+      "snippet": "关键摘要"
+    }
+  ]
+}`,
+
+    extract: `从来源中提取事实、数据、论点，保持准确性。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回",
+  "findings": [
+    {
+      "claim": "发现的事实或论点",
+      "evidence": "支持证据",
+      "sourceId": "来源ID"
+    }
+  ]
+}`,
+
+    verify: `交叉验证信息，检测矛盾，评估证据强度。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回",
+  "verified": [
+    {
+      "findingId": "发现ID",
+      "status": "confirmed|disputed|uncertain",
+      "confidence": 0.0-1.0,
+      "notes": "验证说明"
+    }
+  ]
+}`,
+
+    synthesize: `整合发现，构建知识图谱，发现模式和联系。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回",
+  "synthesis": {
+    "keyThemes": ["主题1", "主题2"],
+    "connections": [
+      {
+        "from": "概念A",
+        "to": "概念B",
+        "relationship": "关系类型"
+      }
+    ],
+    "insights": ["洞察1", "洞察2"]
+  }
+}`,
+
+    write: `组织叙事，撰写清晰报告，管理引用。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回",
+  "report": {
+    "title": "报告标题",
+    "sections": [
+      {
+        "heading": "章节标题",
+        "content": "正文内容",
+        "citations": ["source-id-1", "source-id-2"]
+      }
+    ]
+  }
+}`,
+
+    review: `审查报告质量、准确性、完整性。
+
+返回 JSON 格式：
+{
+  "taskId": "原样返回",
+  "verdict": "pass|revise",
+  "issues": [
+    {
+      "severity": "critical|warning|note",
+      "description": "问题描述",
+      "suggestion": "改进建议"
+    }
+  ]
+}`
   };
 
-  return templates[kind] || '执行研究任务';
+  return templates[kind] || '执行研究任务并返回 JSON 结果。';
 }
