@@ -415,40 +415,72 @@ function buildPrompt(state, taskId, kind, payload) {
 
 function getTaskInstructions(kind, payload) {
   const templates = {
-    plan: `分析研究主题，规划调查维度和关键问题。
+    plan: `分析研究主题，规划调查维度和关键问题。返回结构化研究计划。
 
-**必须严格遵循以下 JSON 格式：**
+你的任务是生成一个研究计划，包含多个调查维度。每个维度代表研究的一个重要方面。
 
+**输出格式要求：**
+
+返回一个 JSON 对象，包含以下字段：
+
+\`\`\`json
 {
   "taskId": "原样返回接收到的 taskId",
   "dimensions": [
     {
-      "query": "具体的调查问题（必须是纯文本字符串）",
-      "rationale": "为什么这个维度重要（可选）"
+      "query": "具体的调查问题或主题",
+      "rationale": "为什么这个维度重要"
     }
   ],
-  "strategy": "研究策略说明（可选）",
+  "strategy": "整体研究策略",
   "estimatedTime": 15
 }
+\`\`\`
 
-**关键要求：**
-1. taskId 必须原样返回
-2. dimensions 必须是数组
-3. 每个 dimension 的 query 必须是**简单的字符串**，不能是对象或嵌套结构
-4. query 应该是一个清晰的调查问题或关键词，例如："量子计算硬件突破"、"AI 在医疗诊断中的应用"
-5. 不要返回复杂的嵌套对象、不要包含 questions 数组、不要包含 verifiedSeeds
-6. 保持简洁，quick scope 建议 4-6 个维度
+**字段说明：**
 
-**错误示例（不要这样做）：**
+1. **taskId** - 必须原样返回接收到的 taskId
+2. **dimensions** - 调查维度数组，每个维度包含：
+   - **query**: 一个清晰的调查问题或主题（纯文本字符串）
+     例如："量子纠错实验进展"、"大语言模型推理能力突破"、"可再生能源储能技术"
+   - **rationale**: 简短说明这个维度的重要性（可选）
+3. **strategy** - 整体研究策略说明（可选）
+4. **estimatedTime** - 预计完成时间（分钟）
+
+**范围指导：**
+- quick scope: 4-6 个维度
+- comprehensive scope: 8-12 个维度
+- deep scope: 12-18 个维度
+
+**完整示例：**
+
+\`\`\`json
 {
-  "query": { "name": "...", "questions": [...] }  // ❌ query 不能是对象
+  "taskId": "wf_abc123/research-plan",
+  "dimensions": [
+    {
+      "query": "2024年大语言模型推理能力突破",
+      "rationale": "推理是通往 AGI 的关键能力"
+    },
+    {
+      "query": "多模态模型在视觉理解方面的进展",
+      "rationale": "视觉是人类智能的重要组成部分"
+    },
+    {
+      "query": "AI 对齐和安全性研究新方法",
+      "rationale": "确保 AI 系统的可控性和安全性"
+    }
+  ],
+  "strategy": "先调查核心技术突破，再评估实际应用影响",
+  "estimatedTime": 20
 }
+\`\`\`
 
-**正确示例：**
-{
-  "query": "大语言模型推理能力突破",  // ✓ query 是简单字符串
-  "rationale": "推理是 2024 年的重要研究方向"
-}`,
+**重要提醒：**
+- 每个 dimension 的 query 必须是简单的字符串，不要使用嵌套对象或数组
+- 不要添加额外的字段如 questions、keyQuestions、verifiedSeeds、searchStrategy 等
+- 如果你想提供多个相关问题，将它们合并到一个 query 字符串中，用分号分隔
+- 保持 JSON 结构简洁，便于后续处理`,
 
     search: `搜索相关来源，评估可信度，提取关键信息。
 
