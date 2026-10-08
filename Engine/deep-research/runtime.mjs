@@ -225,6 +225,6 @@ function validateReview(result) {
   return { verdict: result.verdict, summary: String(result.summary || ''), issues: (result.issues || []).map(i => ({ severity: i.severity || 'warning', description: String(i.description || ''), suggestion: String(i.suggestion || '') })) };
 }
 async function finish(state, ctx) {
-  state.artifacts = generateArtifacts(state); state.phase = 'complete'; state.finishedAt ||= Date.now();
-  await ctx.checkpoint(state); return { status: 'completed', state, artifacts: state.artifacts };
+  const artifacts = generateArtifacts(state); state.phase = 'complete'; state.finishedAt ||= Date.now();
+  await ctx.checkpoint(state); return { status: 'completed', state, artifacts };
 }

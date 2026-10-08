@@ -4,7 +4,8 @@ import { applyPlan } from '../graph.mjs';
 import { run } from '../runtime.mjs';
 
 const records = [];
-for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
+const branchOnly = process.argv.includes('--branch-only');
+for (const [nodeCount, sourceCount] of branchOnly ? [] : [[48, 80], [128, 1000]]) {
   const state = create({ topic: 'Measure public research projection cost', maxSources: sourceCount, maxTasks: nodeCount });
   const nodes = Array.from({ length: nodeCount - 2 }, (_, i) => ({ id: 'search-' + i, kind: 'search', role: 'researcher', label: 'Investigate evidence question ' + i, dependencies: i > 1 ? ['search-' + Math.floor((i - 1) / 2)] : [], payload: { query: 'Evidence question ' + i } }));
   nodes.push({ id: 'report', kind: 'write', dependencies: nodes.map(n => n.id) }, { id: 'review', kind: 'review', dependencies: ['report'] });
@@ -21,7 +22,7 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
 console.log(JSON.stringify({ benchmark: 'describe + JSON serialization, synthetic 2 KB excerpts', records }, null, 2));
 
 const checkpointRecords = [];
-for (const [nodeCount, sourceCount, verifyBranches] of [[48, 80, 1], [128, 1000, 1], [128, 1000, 8]]) {
+for (const [nodeCount, sourceCount, verifyBranches] of branchOnly ? [[128, 1000, 8]] : [[48, 80, 1], [128, 1000, 1], [128, 1000, 8]]) {
   const state = create({ topic: 'Measure real task prompt and result checkpoint cost', maxSources: sourceCount, maxTasks: nodeCount, autoApprove: true });
   const initial = Array.from({ length: 8 }, (_, i) => ({ id: 'initial-' + i, kind: 'search', role: 'researcher', dependencies: [], payload: { query: 'Initial evidence ' + i } }));
   const followups = Array.from({ length: nodeCount - 10 - verifyBranches }, (_, i) => ({ id: 'followup-' + i, kind: 'search', role: 'researcher', dependencies: initial.map(n => n.id), payload: { query: 'Evidence followup ' + i } }));

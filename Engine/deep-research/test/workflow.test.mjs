@@ -567,6 +567,7 @@ test('dimension-only saved plans reacquire finished search evidence before rebui
 test('completed historical research keeps its report and artifacts without claiming independent verification', async () => {
   const f = fixture(), done = await run(create({topic: 'Completed historical research remains available as historical evidence', autoApprove: true}), f.ctx);
   const state = structuredClone(done.state); delete state.independentEvidence;
+  state.artifacts = structuredClone(done.artifacts);
   for (const source of state.sources) source.acquisition = {status: 'read', excerpt: source.acquisition.excerpts[0].excerpt};
   const oldReport = structuredClone(state.report), oldArtifacts = structuredClone(state.artifacts);
   const historical = await run(state, {...f.ctx, sourceReader: async () => {throw Error('Historical completion must not refetch');}});
@@ -621,4 +622,24 @@ test('a failed receipt checkpoint retains accepted ownership and resumes without
   assert.equal(result.sources.length, 1); assert.deepEqual(saved.tasks.search.receipt, receipt);
   assert.equal(f.calls.filter(call => call.command === 'session.send').length, 1);
   assert.equal('prompt' in saved.tasks.search, false);
+});
+
+test('completed research returns final artifacts to the Host without persisting duplicate file bodies', async () => {
+  const f = fixture(), done = await run(create({topic: 'Final delivery file bytes are owned by the Host publication boundary', autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed'); assert.equal(done.artifacts.length, 5);
+  assert.equal('artifacts' in done.state, false);
+  assert.ok(f.checkpoints.filter(snapshot => snapshot.phase === 'complete').every(snapshot => !('artifacts' in snapshot)));
+});
+
+test('a crash after the final Engine checkpoint regenerates byte-identical files without native research', async () => {
+  let persisted;
+  const f = fixture({checkpoint: snapshot => {
+    if (snapshot.phase === 'complete') {persisted = structuredClone(snapshot); throw Error('Crash before Host publication');}
+  }});
+  await assert.rejects(run(create({topic: 'Final checkpoint can recover without a second retained file-body store', autoApprove: true}), f.ctx), /Crash before Host publication/);
+  assert.equal('artifacts' in persisted, false);
+  const expected = generateArtifacts(persisted), resumed = fixture();
+  const done = await run(persisted, resumed.ctx);
+  assert.deepEqual(done.artifacts, expected); assert.equal(resumed.calls.length, 0);
+  assert.equal('artifacts' in done.state, false);
 });
