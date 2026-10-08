@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.64.0 — Orbital Launcher 与 Deep Research 空壳
+
+Engine library 改为固定视口的中央拖拽启动舱与环绕引擎布局，禁止页面滚动、点击卡片不能进入工作区；Deep Research 删除原业务逻辑，仅保留静态空壳。Infra → Plan 提供遗留研究任务停止、确认删除与可恢复本地归档，停止时精确取消所属 Agent 回合并安全关闭已空闲的原生会话。详见 [更新记录](releases/0.64.0.zh-CN.md)。
+
 ## 0.63.1 — Deep Research 1.6.0 的持久进度与独立复审
 
 完整保留 Research Studio 的文档工作台、Word/PDF 和关联后续研究，增加带历史时间线的进度事件、网页版本指纹、主编加独立研究员双重最终审查与 Company 按钮居中增强；Contract/Infra 同步新增 `workflow.events`。详见 [更新记录](releases/0.63.1.zh-CN.md)。

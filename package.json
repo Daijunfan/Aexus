@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.63.1",
+  "version": "0.64.0",
   "description": "Aexus: domain-specific engines on a CLI-first multi-Agent infrastructure",
   "main": "./.aexus/out/main/index.js",
   "author": {
@@ -133,12 +133,11 @@
     "test:layers": "node Infra/src/test/aexus-layers-ui-test.mjs",
     "test:boundaries": "node Infra/src/test/aexus-boundaries-test.mjs",
     "test:engine-scope": "node Infra/src/tooling/run-tests.mjs scope",
-    "test:deep-research": "node Infra/src/test/deep-research-unit-test.mjs && node --test Infra/src/test/deep-research-controls-unit-test.mjs Infra/src/test/deep-research-evidence-test.mjs && node Infra/src/test/deep-research-core-test.mjs && node Infra/src/test/deep-research-controls-core-test.mjs && npm run test:deep-research-studio",
-    "test:deep-research-ui": "node Infra/src/test/deep-research-ui-test.mjs",
-    "test:deep-research-desktop": "node Infra/src/test/deep-research-ui-test.mjs --desktop",
+    "test:deep-research": "node --test Infra/src/test/retired-research-unit-test.mjs && node Infra/src/test/retired-research-core-test.mjs",
+    "test:deep-research-ui": "node Infra/src/test/retired-research-ui-test.mjs",
+    "test:deep-research-desktop": "node Infra/src/test/engine-launcher-integrated-ui-test.mjs --desktop",
     "build:engines": "node Infra/src/tooling/build-engines.mjs",
-    "check:engine-deps": "node Infra/src/tooling/build-engines.mjs --check",
-    "test:deep-research-studio": "node --test Infra/src/test/deep-research-studio-test.mjs && node Infra/src/test/deep-research-studio-core-test.mjs"
+    "check:engine-deps": "node Infra/src/tooling/build-engines.mjs --check"
   },
   "build": {
     "appId": "com.agentscompany.app",

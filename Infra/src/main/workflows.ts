@@ -11,10 +11,11 @@ import {atomicJson,readJson} from './atomic-file'
 import {authorize,requestContext,withCaller} from './authorization'
 import {applicationRoot} from './resources'
 import {installedEngines,contractRequest} from './contract'
+import {stopRetiredResearch} from './retired-research'
 
 type WorkflowEvent={revision:number;at:number;status:WorkflowView['status'];phase?:string;progress?:number;completedTasks?:number;sourceCount?:number}
 type RecordEntry=WorkflowView&{owner:RequestContext;state:any;startKey:string;inputHash:string;answers:Record<string,{hash:string;operation:string}>;events?:WorkflowEvent[]}
-const directory=()=>path.join(APP_HOME,'workflows'),entries=new Map<string,RecordEntry>(),loadErrors=new Map<string,string>(),active=new Map<string,{controller:AbortController;done:Promise<void>}>()
+const directory=()=>path.join(APP_HOME,'workflows'),deletedDirectory=()=>path.join(APP_HOME,'workflow-deleted'),entries=new Map<string,RecordEntry>(),loadErrors=new Map<string,string>(),active=new Map<string,{controller:AbortController;done:Promise<void>}>()
 let ready=false,invoke:((name:string,args:Record<string,any>)=>Promise<any>)|undefined,emit:((channel:string,payload:any)=>void)=()=>{}
 const digest=(text:string|Buffer)=>createHash('sha256').update(text).digest('hex')
 const fault=(message:string)=>contractError('WORKFLOW_CONFLICT',message)
@@ -128,9 +129,26 @@ function launch(job:RecordEntry){
  })
  active.set(job.id,{controller,done})
 }
+async function stopLegacyResearch(job:RecordEntry){
+ try{
+  await stopRetiredResearch(job.state,async(command,args)=>withCaller({...job.owner,engineScope:job.engineId},async()=>{
+   const result=await contractRequest('contract.call',{version:CONTRACT_VERSION,command,args},(name,input)=>invoke!(name,input)) as {data:any}
+   return result.data
+  }))
+  job.controlPending=false;delete job.error
+ }catch(error){job.controlPending=true;job.error='Research cleanup is incomplete. Retry Stop; original Agent records are kept: '+(error as Error).message}
+ save(job)
+}
 export function startWorkflows(dispatch:NonNullable<typeof invoke>,publishEvent:typeof emit){
  invoke=dispatch;emit=publishEvent;load();ready=true
- for(const job of entries.values()){adoptWorkflowResources(job.engineId,job.state);launch(job)}
+ for(const job of entries.values()){
+  adoptWorkflowResources(job.engineId,job.state)
+  if(job.engineId==='deep-research'&&job.status==='running'){
+   // The retired Engine must never resume an old paid inference turn.
+   job.status='cancelled';job.controlPending=true;save(job)
+   const timer=setTimeout(()=>{if(ready)void stopLegacyResearch(job)},1200);timer.unref?.()
+  }else launch(job)
+ }
 }
 export async function stopWorkflows(){ready=false;for(const run of active.values())run.controller.abort(Error('Core is shutting down'));await Promise.all([...active.values()].map(run=>run.done));entries.clear();loadErrors.clear();emit=()=>{}}
 
@@ -147,9 +165,15 @@ async function dataOperation<T>(work:(signal:AbortSignal)=>Promise<T>):Promise<T
 
 async function workflowRequestInternal(command:string,args:Record<string,any>){
  if(!ready)throw Error('Workflow service is not ready')
- const schemas:Record<string,string[]>={prepare:['engineId','input'],fork:['id','expectedRevision','input','clientRequestId'],export:['id','format'],start:['engineId','input','clientRequestId'],list:['engineId'],get:['id','ifRevision'],events:['id','afterRevision','limit'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
+ const schemas:Record<string,string[]>={prepare:['engineId','input'],fork:['id','expectedRevision','input','clientRequestId'],export:['id','format'],start:['engineId','input','clientRequestId'],list:['engineId','offset','limit'],get:['id','ifRevision'],events:['id','afterRevision','limit'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],delete:['id'],file:['id','name']}
  const op=command.slice('workflow.'.length);if(!schemas[op]||Object.keys(args).some(key=>!schemas[op].includes(key)))throw Error('Unknown workflow request field')
- if(op==='list')return {jobs:[...entries.values()].filter(job=>(currentEngineScope()===undefined||currentEngineScope()===job.engineId)&&sameOwner(job.owner,requestContext())&&(!args.engineId||job.engineId===args.engineId)).sort((a,b)=>b.createdAt-a.createdAt).slice(0,100).map(project),errors:currentEngineScope()===undefined&&requestContext().principal.kind==='operator'?[...loadErrors].map(([id,error])=>({id,error})):[]}
+ if(op==='list'){
+  if(args.offset!==undefined&&(!Number.isSafeInteger(args.offset)||args.offset<0))throw Error('offset must be a non-negative integer')
+  if(args.limit!==undefined&&(!Number.isSafeInteger(args.limit)||args.limit<1||args.limit>100))throw Error('limit must be 1–100')
+  const matches=[...entries.values()].filter(job=>(currentEngineScope()===undefined||currentEngineScope()===job.engineId)&&sameOwner(job.owner,requestContext())&&(!args.engineId||job.engineId===args.engineId)).sort((a,b)=>b.createdAt-a.createdAt)
+  const offset=args.offset??0,limit=args.limit??100
+  return {jobs:matches.slice(offset,offset+limit).map(project),total:matches.length,hasMore:offset+limit<matches.length,errors:currentEngineScope()===undefined&&requestContext().principal.kind==='operator'?[...loadErrors].map(([id,error])=>({id,error})):[]}
+ }
  if(op==='prepare'){
   const input=jsonObject(args.input,'input'),manifest=installedEngines().engines.find(engine=>engine.id===args.engineId)
   if(!manifest)throw Error('Engine is not installed')
@@ -169,6 +193,14 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
   if(raced){if(raced.inputHash!==hash)throw fault('clientRequestId already belongs to different input');return project(raced)}
   const state=runtime.create(input),now=Date.now(),job:RecordEntry={id:'wf_'+randomUUID(),engineId:manifest.id,engineVersion:manifest.version,owner:{principal:owner.principal,requestId:owner.requestId,...(owner.credentialHash?{credentialHash:owner.credentialHash}:{})},state,summary:jsonObject(runtime.describe(state),'Workflow summary'),status:'running',revision:0,createdAt:now,updatedAt:now,files:[],startKey:key,inputHash:hash,answers:{}}
   fs.mkdirSync(home(job.id),{recursive:true});save(job);launch(job);return project(job)
+ }
+ // A deletion retry is idempotent, but must still check owner and Engine scope.
+ if(op==='delete'&&!entries.has(validId(args.id))){
+  const archived=path.join(deletedDirectory(),validId(args.id))
+  if(!fs.existsSync(path.join(archived,'state.json')))throw Error('Workflow not found for this caller')
+  const prior=readJson<RecordEntry>(path.join(archived,'state.json'),()=>{throw Error('Workflow not found for this caller')})
+  if(prior.engineId!=='deep-research'||currentEngineScope()!==undefined&&currentEngineScope()!==prior.engineId||!sameOwner(prior.owner,requestContext()))throw Error('Workflow not found for this caller')
+  return {id:prior.id,deleted:true,archived:true}
  }
  const job=own(args.id)
  if(op==='fork'){
@@ -234,7 +266,30 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
   else await pauseCleanup(job,loaded)
   return project(job)
  }
+ if(op==='delete'){
+  if(job.engineId!=='deep-research')throw fault('Only retired Deep Research workflows can be deleted here')
+  // Even a legacy `cancelled` or `completed` record may still own a live native
+  // turn. Always reconcile before archiving, not just on active statuses.
+  if(job.status==='completed'||job.status==='cancelled'&&!job.controlPending)await stopLegacyResearch(job)
+  else await workflowRequestInternal('workflow.cancel',{id:job.id})
+  if(job.controlPending||active.has(job.id))throw fault('Research Agent cleanup is incomplete. Retry Stop before deleting this task')
+  const archive=path.join(deletedDirectory(),job.id)
+  fs.mkdirSync(deletedDirectory(),{recursive:true,mode:0o700})
+  if(fs.existsSync(archive))throw fault('A preserved workflow backup already exists; refusing to overwrite it')
+  fs.renameSync(home(job.id),archive)
+  entries.delete(job.id)
+  emit('workflow:changed',{id:job.id,engineId:job.engineId,deleted:true,revision:job.revision})
+  return {id:job.id,deleted:true,archived:true}
+ }
  if(op==='cancel'){
+  if(job.engineId==='deep-research'){
+   if(job.status==='completed'||job.status==='cancelled'&&!job.controlPending)return project(job)
+   job.status='cancelled';job.controlPending=true;save(job)
+   const running=active.get(job.id)
+   if(running){running.controller.abort(Error('Research task stopped by its owner'));await running.done}
+   await stopLegacyResearch(job)
+   return project(job)
+  }
   if(['cancelled','completed'].includes(job.status))return project(job)
   job.controlPending=false;job.status='cancelled';save(job);const running=active.get(job.id)
   if(running)running.controller.abort(Error('Workflow cancelled by its owner'))
@@ -260,7 +315,7 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
 /** Serialize owner mutations across asynchronous Engine hooks. Reads remain non-blocking. */
 const mutations=new Map<string,Promise<unknown>>()
 export async function workflowRequest(command:string,args:Record<string,any>){
- if(!['workflow.pause','workflow.amend','workflow.respond','workflow.resume','workflow.cancel','workflow.fork'].includes(command))return workflowRequestInternal(command,args)
+ if(!['workflow.pause','workflow.amend','workflow.respond','workflow.resume','workflow.cancel','workflow.delete','workflow.fork'].includes(command))return workflowRequestInternal(command,args)
  const id=validId(args.id),previous=mutations.get(id)??Promise.resolve()
  const next=previous.catch(()=>{}).then(()=>workflowRequestInternal(command,args));mutations.set(id,next)
  try{return await next}finally{if(mutations.get(id)===next)mutations.delete(id)}

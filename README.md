@@ -1,21 +1,21 @@
 # Aexus
 
-[GitHub](https://github.com/Daijunfan/Aexus) · [English](Infra/src/docs/README.en.md) · [0.63.0 更新记录](Infra/src/docs/releases/0.63.0.zh-CN.md)
+[GitHub](https://github.com/Daijunfan/Aexus) · [English](Infra/src/docs/README.en.md) · [0.64.0 更新记录](Infra/src/docs/releases/0.64.0.zh-CN.md)
 
 **面向明确目标的业务 Engine，建立在同一套多 Agent 协作 Infra 上。**
 
 Engine 定义用户输入、领域流程、界面和可验证的交付结果；Infra 提供员工、团队、原生编码会话、消息、文件、权限及调度。Contract 是两层之间的版本化接口。新增求职、科研、活动策划或软件工程应用时，不需要重写 Infra，也不复制员工和聊天数据库。
 
-启动后首先进入 **Engine library** 首页，选择引擎封面并点击 **Load**，或把封面拖入加载区，才进入工作区。未选择前不挂载业务页面、员工、会话、Plan 或文件内容。进入后顶部为 **Engine / Infra**，Company、Messages、Plan 和相关文件均限定到当前引擎关联的资源。
+启动后首先进入 **Engine library** 全屏固定首页：引擎围绕中央启动舱分布，**必须将引擎卡片拖入正中央才会加载**。单击卡片不会打开。未选择前不挂载业务页面、员工、会话、Plan 或文件内容。进入后顶部为 **Engine / Infra**，Company、Messages、Plan 和相关文件均限定到当前引擎关联的资源。
 
-**多个引擎可同时在后台工作，每个窗口一次只查看一个。** 切换引擎或返回首页不会取消任务、关闭原生会话或暂停计划；重新 Load 恢复查看，不重复派发工作。已有资源通过 **Linked Engine resources** 显式关联，原身份、历史、目录和权限保持。完整行为与 CLI 见 [Engine 工作区](Infra/src/docs/ENGINE_WORKSPACES.md)。
+**多个引擎可同时在后台工作，每个窗口一次只查看一个。** 切换引擎或返回首页不会取消任务、关闭原生会话或暂停计划；重新拖入卡片恢复查看，不重复派发工作。已有资源通过 **Linked Engine resources** 显式关联，原身份、历史、目录和权限保持。完整行为与 CLI 见 [Engine 工作区](Infra/src/docs/ENGINE_WORKSPACES.md)。
 
 ## 目录与职责
 
 ```text
 Aexus/
 ├── Engine/                   每个一级子目录对应一个业务应用
-│   ├── deep-research/        分阶段研究与证据交付
+│   ├── deep-research/        可拖拽加载的空白引擎外壳（历史任务由 Infra Plan 管理）
 │   ├── profile-improvement/  简历与岗位匹配、Word 模板修改
 │   ├── PPT-maker/            演示文稿制作、编辑与 PPTX 导出
 │   └── workspace-audit/      可运行的只读参考 Engine

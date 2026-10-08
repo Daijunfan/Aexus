@@ -274,6 +274,20 @@
         "text",
         false,
         false
+      ],
+      [
+        "offset",
+        "offset",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
       ]
     ]
   },
@@ -421,6 +435,17 @@
     ]
   },
   "workflow.cancel": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "workflow.delete": {
     "fields": [
       [
         "id",

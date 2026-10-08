@@ -472,8 +472,8 @@
   },
   {
     "name": "workflow.list",
-    "args": "[--engine-id ID]",
-    "summary": "Read the caller-owned workflow summaries without exposing private runtime checkpoints",
+    "args": "[--engine-id ID] [--offset N] [--limit N]",
+    "summary": "Read paginated caller-owned workflows without exposing private checkpoints; includes total and hasMore",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -481,6 +481,15 @@
         "engineId": {
           "type": "string",
           "minLength": 1
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
         }
       }
     },
@@ -680,7 +689,29 @@
   {
     "name": "workflow.cancel",
     "args": "ID",
-    "summary": "Cancel this workflow and its exact owned pending tasks; never interrupts unrelated employee work",
+    "summary": "Stop a workflow; retired Deep Research stops only its receipt-verified native Agent turns and waits for confirmation",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "workflow.delete",
+    "args": "ID",
+    "summary": "Stop, verify and archive a retired Deep Research workflow; idempotent, owner-scoped, never removes Agent identities",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,

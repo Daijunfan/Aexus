@@ -15,6 +15,7 @@ import {api} from '../api'
 import {Icon} from './Icon'
 import {EmployeePortrait} from './EmployeePortrait'
 import {PlanEditor} from './PlanEditor'
+import {ResearchTaskManager} from './ResearchTaskManager'
 const label=(value:string)=>uiText(value[0].toUpperCase()+value.slice(1))
 const date=(value:string|null,timezone?:string)=>value?new Date(value).toLocaleString(interfaceLocale(),{timeZone:timezone,month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):uiText('No upcoming run')
 export function scheduleLabel(job:Pick<ScheduledJob,'rule'>){
@@ -75,6 +76,7 @@ export function PlanView({store,view,act}:{store:Store;view:ViewState;act:(cmd:s
  const status=(row:PlanRow)=><span className={`plan-status state-${row.status}`} title={row.status==='completed'?uiText("No future occurrences. Check Last run for the actual outcome."):undefined}><i/>{label(row.status)}</span>
  return <main className="plan-view" aria-label={uiText("Plan view")}>
   <header className="plan-heading"><div className="plan-page-icon"><Icon name="table"/></div><div className="plan-heading-copy"><h1>{uiText("Plan")}</h1><p>{uiText("Tasks, schedules and outcomes in one database.")}</p></div><div className="plan-heading-actions"><div className="plan-health"><span className={health?.running?'online':''}><i/>{health?.running?uiText("Scheduler online"):health?uiText("Scheduler offline"):uiText("Checking scheduler…")}</span><span><Icon name="globe"/>{timezone}</span><span><strong>{result.counts.running}</strong> {uiText("running")}</span></div><button className="plan-new primary" onClick={newSchedule}><Icon name="add"/>  {uiText("New schedule")}</button></div></header>
+  {view.engineId==='deep-research'&&<ResearchTaskManager/>}
   <section className="plan-database">
    <div className="plan-view-tabs" role="tablist" aria-label={uiText("Plan database views")} onKeyDown={event=>{
     if(!(event.target instanceof HTMLElement)||event.target.getAttribute('role')!=='tab'||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return

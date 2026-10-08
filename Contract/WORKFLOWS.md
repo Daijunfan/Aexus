@@ -39,14 +39,15 @@ The runtime is trusted, installed Node code, not a sandbox for arbitrary third-p
 | `workflow.fork` | `id`, `expectedRevision`, `input`, `clientRequestId` | Create a distinct follow-up from a completed caller-owned parent. Core stamps parent identity/revision; original is unchanged. |
 | `workflow.export` | `id`, `format` | Render a supported alternate final artifact from an approved completed job, returning verified bytes, encoding and SHA-256 without mutating its original delivery. |
 | `workflow.start` | `engineId`, `input`, `clientRequestId` | Durable job ID and public projection. Same request ID and input return the original job. |
-| `workflow.list` | Optional `engineId` | Up to 100 latest caller-owned jobs; unreadable persisted records are reported separately in `errors` to the user. |
+| `workflow.list` | Optional `engineId`, `offset` (≥0), `limit` (1–100) | Paginated caller-owned jobs, `total` and `hasMore`; unreadable persisted records are reported separately in `errors`. |
 | `workflow.get` | `id`, optional non-negative integer `ifRevision` | Status, revision, Engine-defined public summary and approved final-file manifest; unchanged revisions return only an identity/revision tuple. |
 | `workflow.events` | `id`, optional `afterRevision` and `limit` (1–100) | Owner-scoped, bounded history of persisted status, phase, progress and source/step counts. Never contains task prompts, full sources or native transcripts. Historical workflows return an empty array until their next checkpoint. |
 | `workflow.respond` | `id`, `expectedRevision`, `answer`, `clientRequestId` | Applies an answer only to the current waiting checkpoint and resumes execution. |
 | `workflow.resume` | `id`, `expectedRevision`, `clientRequestId` | Explicitly resumes a failed or fully paused job using its saved state. |
 | `workflow.pause` | `id` | Pauses a supporting Engine, stops only its owned native tasks and preserves its checkpoint. |
 | `workflow.amend` | `id`, `expectedRevision`, `update`, `clientRequestId` | Applies an Engine-validated revision to a fully paused job without launching it. |
-| `workflow.cancel` | `id` | Cancels this job and invokes its exact-task cleanup. |
+| `workflow.cancel` | `id` | Stops a workflow; retired Deep Research tasks use Infra-only cleanup to match native receipts, interrupt and confirm all owned Agent turns. Uncertain cleanup stays `controlPending: true` for explicit retry. |
+| `workflow.delete` | `id` | Retired Deep Research only: stop and confirm owned Agent turns, then archive task state/delivery to `workflow-deleted/<id>` and remove it from the active list. Idempotent and owner-/Engine-scoped; unrelated Agent identities and workspaces stay intact. |
 | `workflow.file` | `id`, `name` | One manifest-listed final file with content, encoding, MIME type, byte length and SHA-256. |
 
 All are available through `ContractClient.invoke` and the existing CLI. `get`, `list`, `file`, `prepare` and `export` are read/data operations; the rest are writes. Data transforms retain existing user-workflow authorization; a read effect does not make them public or grant Agent access. Schemas and native CLI spellings are generated from `Infra/src/shared/workflow-schema.ts`.
@@ -54,13 +55,10 @@ All are available through `ContractClient.invoke` and the existing CLI. `get`, `
 Example:
 
 ```sh
-node Infra/src/cli/aexus workflow start --engine-id deep-research --input '{"topic":"Research question"}' --client-request-id request-001 --json
+node Infra/src/cli/aexus workflow list --engine-id deep-research --json
 node Infra/src/cli/aexus workflow get WORKFLOW_ID --json
-node Infra/src/cli/aexus workflow respond WORKFLOW_ID --expected-revision 2 --answer '{"values":{}}' --client-request-id answer-001 --json
-node Infra/src/cli/aexus workflow pause WORKFLOW_ID --json
-node Infra/src/cli/aexus workflow amend WORKFLOW_ID --expected-revision 8 --update '{"note":"Narrow the research question"}' --client-request-id revision-001 --json
-node Infra/src/cli/aexus workflow resume WORKFLOW_ID --expected-revision 9 --client-request-id resume-001 --json
-node Infra/src/cli/aexus workflow file WORKFLOW_ID --name research-report.html --json
+node Infra/src/cli/aexus workflow cancel WORKFLOW_ID --json
+node Infra/src/cli/aexus workflow delete WORKFLOW_ID --json
 ```
 
 Preserve a request ID while retrying an uncertain transport response. A different input with the same ID is rejected. Answer/retry requests also use an expected revision, so a delayed answer cannot accidentally confirm the next question round. Readers never advance the task or acknowledge native messages.
@@ -69,13 +67,15 @@ Preserve a request ID while retrying an uncertain transport response. A differen
 
 Core persists the original authenticated principal and, for Agent callers, the credential identity used for authorization. Runtime calls are forwarded through the versioned Contract and the existing Core dispatcher as that original caller. They cannot substitute a user identity, request undeclared runtime capabilities, invoke recursive workflows or bypass native approvals. Credential revocation and role boundaries are rechecked on each delegated request.
 
+Deep Research 2.0 is an inert Engine shell. Existing historical Deep Research workflows can be read, stopped and archived through Infra even without the retired domain runtime. On restart, a previously `running` legacy record is marked stopped and its exact owned turns reconciled; no model inference is resumed. Archived records are retained under `workflow-deleted` for recovery; users must explicitly request a deletion. Other Engines keep their existing background behavior.
+
 State is stored separately from source under the configured Core data directory. The UI may close or switch layers while Core continues. Waiting, paused and terminal jobs remain idle on restart; running jobs resume from their checkpoints. A changed Engine version refuses continuation unless the installed runtime explicitly lists the stored version in `compatibleVersions`. Compatibility is an Engine-maintained, tested allowlist, not an inferred migration. An unreadable individual workflow is quarantined from execution and reported without overwriting its file or preventing other Core features from starting.
 
 The Engine must reconcile a native task using its persisted request ID and actual receipt/transcript. A lost connection, accepted message, stopped process or stream end is not proof of task completion. Interrupted work may require explicit retry. Cancellation must compare the current native task ID before interrupting a worker, so unrelated tasks cannot be stopped.
 
 ## Pause and owner revisions
 
-Owner mutations (`pause`, `amend`, `respond`, `resume`, `cancel`) are serialized per job. Read requests remain non-blocking. Pause persists the paused state before aborting the run; a separate non-aborted cleanup context allows the Engine to verify that only its own native tasks stopped. `controlPending: true` means cleanup is incomplete and changing/resuming the job is prohibited. Retry `workflow.pause` to finish cleanup. An unsupported Engine rejects pause without changing its state.
+Owner mutations (`pause`, `amend`, `respond`, `resume`, `cancel`, `delete`) are serialized per job. Read requests remain non-blocking. Pause persists the paused state before aborting the run; a separate non-aborted cleanup context allows the Engine to verify that only its own native tasks stopped. `controlPending: true` means cleanup is incomplete and changing/resuming the job is prohibited. Retry `workflow.pause` to finish cleanup. An unsupported Engine rejects pause without changing its state.
 
 Revisions require a fully paused job, current revision and stable request ID. Repeating the same revision request is idempotent; a different payload under the same ID is rejected. An Engine must invalidate obsolete downstream results and preserve truthful provenance. Completed delivery cannot be revised or paused; start another job instead. Applying a revision never starts a model call. Resuming is a separate explicit operation.
 

@@ -3122,7 +3122,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 347 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 348 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3141,14 +3141,15 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents workflow fork</code> | <code>ID --expected-revision N --input JSON --client-request-id ID</code> | Create a distinct caller-owned follow-up from a completed workflow; preserve the original report, lineage and idempotent request identity | Engine workflows | operator |
 | <code>agents workflow export</code> | <code>ID --format FORMAT</code> | Render one supported alternate final format from an approved completed workflow; no model call or modification to the original delivery | Engine workflows | operator |
 | <code>agents workflow start</code> | <code>--engine-id ID --input JSON --client-request-id ID</code> | Start an installed Engine workflow durably as the authenticated caller; same request ID never creates a second job | Engine workflows | operator |
-| <code>agents workflow list</code> | <code>[--engine-id ID]</code> | Read the caller-owned workflow summaries without exposing private runtime checkpoints | Engine workflows | operator |
+| <code>agents workflow list</code> | <code>[--engine-id ID] [--offset N] [--limit N]</code> | Read paginated caller-owned workflows without exposing private checkpoints; includes total and hasMore | Engine workflows | operator |
 | <code>agents workflow get</code> | <code>ID [--if-revision N]</code> | Read durable status and final files, or unchanged:true at the supplied revision; never runs or acknowledges a task | Engine workflows | operator |
 | <code>agents workflow events</code> | <code>ID [--after-revision N] [--limit N]</code> | Read a bounded, owner-authorized history of public workflow status, phase, progress and source counts without exposing prompts or evidence | Engine workflows | operator |
 | <code>agents workflow respond</code> | <code>ID --expected-revision N --answer JSON --client-request-id ID</code> | Answer the current clarification checkpoint exactly once; stale answers cannot change a later round | Engine workflows | operator |
 | <code>agents workflow resume</code> | <code>ID --expected-revision N --client-request-id ID</code> | Explicitly resume a failed or paused Engine from its saved checkpoint, preserving completed steps and identities | Engine workflows | operator |
 | <code>agents workflow pause</code> | <code>ID</code> | Pause a supported Engine and stop only its owned native tasks; preserve evidence and wait for explicit resume | Engine workflows | operator |
 | <code>agents workflow amend</code> | <code>ID --expected-revision N --update JSON --client-request-id ID</code> | Apply an Engine-validated revision to a fully paused workflow; never starts work or overwrites completed deliverables | Engine workflows | operator |
-| <code>agents workflow cancel</code> | <code>ID</code> | Cancel this workflow and its exact owned pending tasks; never interrupts unrelated employee work | Engine workflows | operator |
+| <code>agents workflow cancel</code> | <code>ID</code> | Stop a workflow; retired Deep Research stops only its receipt-verified native Agent turns and waits for confirmation | Engine workflows | operator |
+| <code>agents workflow delete</code> | <code>ID</code> | Stop, verify and archive a retired Deep Research workflow; idempotent, owner-scoped, never removes Agent identities | Engine workflows | operator |
 | <code>agents workflow file</code> | <code>ID --name FILE</code> | Read one hash-verified final deliverable from a completed workflow; intermediate files are not downloadable | Engine workflows | operator |
 | <code>agents plan schema</code> | <code>—</code> | Discover all ten layouts, fields, policies, authorized targets and mutation APIs | Plan database | schedule |
 | <code>agents plan query</code> | <code>[--filter JSON&#124;@file --sort nextAt&#124;name&#124;updatedAt&#124;priority --direction asc&#124;desc --offset N --limit N]</code> | Find real task IDs/revisions, assigned people/roles/Teams, complete rules/times and allowedActions; includes removed-target records for Secretary | Plan database | schedule |

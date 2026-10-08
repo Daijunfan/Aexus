@@ -53,7 +53,7 @@ npm run test:layers
 
 ## 加载、切换与后台任务
 
-宿主首页只展示清单；用户点击 Load 或拖放封面后才挂载 Page。页面收到的 ContractClient 固定到本 Engine，不使用别的窗口当前选择。Node CLI 显式传入自己的 engineId 或在进程启动时设置 AEXUS_ENGINE_ID，不在并发任务之间反复修改 process.env 来切换身份。
+宿主首页只展示清单；用户必须将引擎卡片拖入中央启动舱后才挂载 Page（键盘支持抓取卡片并投放）；普通单击不加载。页面收到的 ContractClient 固定到本 Engine，不使用别的窗口当前选择。Node CLI 显式传入自己的 engineId 或在进程启动时设置 AEXUS_ENGINE_ID，不在并发任务之间反复修改 process.env 来切换身份。
 
 页面卸载不等于业务取消。需要离开页面后继续的工作使用持久 workflow runtime；恢复时读取原任务、员工和产物 ID，不重新招聘或重复发送。用户可以在另一个 Engine 工作，同时你的 workflow、队列和 Plan 任务继续执行。只有明确取消操作才停止目标任务。
 

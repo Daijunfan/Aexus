@@ -44,7 +44,7 @@ aexus infra channel timeline CHANNEL_ID --limit 20 --json
 
 ## Plan：规则、状态与验收
 
-plan.query 是统一读取入口；plan.views / calendar / timeline / analytics 只展示相同任务。schedule.create/update/pause/resume/delete 管规则；schedule.history 查实际运行；schedule.trigger 明确触发事件规则。未来触发时间不能当作已经执行。
+plan.query 是调度任务的统一读取入口；plan.views / calendar / timeline / analytics 只展示相同任务。选择 Deep Research 引擎并切换到 **Infra → Plan → 历史研究任务** 可对遗留工作流执行 `workflow.cancel`（停止）或 `workflow.delete`（确认停止后归档删除）。删除前会核对真实原生任务回执并等待相关 Agent 停止；队列/后台任务属于他人时保持不动，未确认停止时禁止删除。schedule.create/update/pause/resume/delete 管规则；schedule.history 查实际运行；schedule.trigger 明确触发事件规则。未来触发时间不能当作已经执行。
 
 ```sh
 aexus infra plan query --json
@@ -59,7 +59,7 @@ schedule.preview 的准确参数以 api.describe 返回为准。修改使用当�
 
 文件编辑使用 hash 防覆盖；复制/上传先取得传输 ID，再等待完成，不把 queued 写成成功。普通成员只写自己的一级目录，现有 Secretary 特权按实际成员和角色检查，不由显示名称决定。
 
-启动页不挂载业务内容；view.load-engine 选择一个 Engine，view.launcher 返回首页。view.layer 切换 Engine/Infra，view.select 选择 Company/Messages/Plan，view.open/close 保留原会话返回关系。每个客户端一次查看一个 Engine，多引擎后台任务并行且不随查看切换。显式资源关联与请求作用域见 [ENGINE_WORKSPACES.md](ENGINE_WORKSPACES.md)；现有职位授权独立检查。
+启动页不挂载业务内容；Engine library 固定视口、环绕卡片，**仅拖入中央区域才触发 UI 加载**。CLI/Contract 的 `view.load-engine` 仍允许有权限的自动化调用；`view.launcher` 返回首页。view.layer 切换 Engine/Infra，view.select 选择 Company/Messages/Plan，view.open/close 保留原会话返回关系。每个客户端一次查看一个 Engine，多引擎后台任务并行且不随查看切换。显式资源关联与请求作用域见 [ENGINE_WORKSPACES.md](ENGINE_WORKSPACES.md)；现有职位授权独立检查。
 
 所有命令详细定义见 [API.md](API.md)，权限见 [PERMISSIONS.md](PERMISSIONS.md)。本轮补充的 schema 是既有输入的文档化，业务校验仍留在各领域实现；没有增加第二套员工 CRUD 或通用万能事务。
 

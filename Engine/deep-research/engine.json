@@ -1,193 +1,20 @@
 {
   "id": "deep-research",
   "name": "Deep Research",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "contractVersion": "1.0.0",
-  "description": "多 Agent 并行研究、来源快照指纹、进度事件时间线、双重报告审查、文档工作台、Word/PDF 导出与可追溯后续研究。",
+  "description": "空白研究引擎外壳。拖入主页中央加载区打开；历史任务可在 Infra / Plan 中停止及删除。",
   "ui": "Page.tsx",
   "cli": "cli.mjs",
-  "runtime": "runtime.mjs",
-  "requiredCommands": [
-    "workflow.start",
-    "workflow.list",
-    "workflow.get",
-    "workflow.events",
-    "workflow.respond",
-    "workflow.resume",
-    "workflow.cancel",
-    "workflow.file",
-    "engine.check",
-    "group.list",
-    "group.add",
-    "card.create",
-    "session.list",
-    "session.status",
-    "session.send",
-    "session.transcript",
-    "session.interrupt",
-    "view.open",
-    "workflow.pause",
-    "workflow.amend",
-    "workflow.prepare",
-    "workflow.fork",
-    "workflow.export"
-  ],
+  "requiredCommands": [],
   "inputSchema": {
     "type": "object",
-    "required": [
-      "topic"
-    ],
     "additionalProperties": false,
-    "properties": {
-      "topic": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 4000
-      },
-      "engines": {
-        "type": "array",
-        "minItems": 2,
-        "maxItems": 4,
-        "items": {
-          "type": "object",
-          "required": [
-            "engine"
-          ],
-          "additionalProperties": false,
-          "properties": {
-            "engine": {
-              "enum": [
-                "codex",
-                "claude",
-                "cline",
-                "pi"
-              ]
-            },
-            "model": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "depth": {
-        "enum": [
-          "standard",
-          "deep",
-          "exhaustive"
-        ]
-      },
-      "language": {
-        "enum": [
-          "zh-CN",
-          "en"
-        ]
-      },
-      "sourcePolicy": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "allowedDomains": {
-            "type": "array",
-            "maxItems": 20,
-            "items": {
-              "type": "string"
-            }
-          },
-          "preferredDomains": {
-            "type": "array",
-            "maxItems": 20,
-            "items": {
-              "type": "string"
-            }
-          },
-          "excludedDomains": {
-            "type": "array",
-            "maxItems": 20,
-            "items": {
-              "type": "string"
-            }
-          },
-          "seedUrls": {
-            "type": "array",
-            "maxItems": 12,
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "materials": {
-        "type": "array",
-        "maxItems": 6,
-        "items": {
-          "type": "object",
-          "required": [
-            "name",
-            "text"
-          ],
-          "additionalProperties": false,
-          "properties": {
-            "name": {
-              "type": "string",
-              "maxLength": 160
-            },
-            "text": {
-              "type": "string",
-              "maxLength": 80000
-            },
-            "provenance": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          }
-        }
-      }
-    }
+    "properties": {}
   },
   "outputSchema": {
     "type": "object",
-    "required": [
-      "id",
-      "status",
-      "files"
-    ],
-    "properties": {
-      "id": {
-        "type": "string"
-      },
-      "status": {
-        "const": "completed"
-      },
-      "files": {
-        "type": "array",
-        "minItems": 3,
-        "maxItems": 3,
-        "items": {
-          "type": "object",
-          "required": [
-            "name",
-            "sha256",
-            "bytes"
-          ],
-          "properties": {
-            "name": {
-              "enum": [
-                "research-report.html",
-                "research-report.md",
-                "evidence.csv"
-              ]
-            },
-            "sha256": {
-              "type": "string",
-              "pattern": "^[a-f0-9]{64}$"
-            },
-            "bytes": {
-              "type": "integer",
-              "minimum": 1
-            }
-          }
-        }
-      }
-    }
+    "additionalProperties": false,
+    "properties": {}
   }
 }
