@@ -98,7 +98,7 @@ async function diagnose(workflowId) {
     if (workflow.summary.plan) {
       console.log(colors.cyan + '📝 Research Plan:\n' + colors.reset);
       console.log(`  Strategy: ${workflow.summary.plan.strategy}`);
-      console.log(`  Dimensions: ${workflow.summary.plan.dimensions.length}`);
+      console.log(`  Planned Tasks: ${workflow.summary.graph?.nodes?.length ?? workflow.summary.plan.dimensions?.length ?? 0}`);
       console.log();
     }
 
@@ -162,7 +162,7 @@ async function diagnose(workflowId) {
     if (workflow.status === 'running' && workflow.summary.phase === 'planning') {
       console.log(colors.cyan + '  ℹ️  Still in planning phase.' + colors.reset);
       console.log('     The coordinator is generating the research plan.');
-      console.log('     This typically takes 1-3 minutes.');
+      console.log('     Task scope and duration depend on the research plan.');
       console.log();
     }
 

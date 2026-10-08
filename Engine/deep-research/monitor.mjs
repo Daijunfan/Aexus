@@ -298,8 +298,12 @@ async function monitor(jobId, refreshInterval = 2000) {
       console.log(renderFooter(data));
 
       // Check if complete
-      if (data.status === 'completed' || data.status === 'failed') {
+      if (data.status === 'completed') {
         console.log(colors.bright + colors.green + '\n✓ Research completed!\n' + colors.reset);
+        break;
+      }
+      if (['failed', 'cancelled', 'paused', 'waiting'].includes(data.status)) {
+        console.log((data.status === 'failed' ? colors.red : colors.yellow) + '\nResearch ' + data.status + (data.error ? ': ' + data.error : '') + '\n' + colors.reset);
         break;
       }
 
