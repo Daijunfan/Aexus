@@ -20,12 +20,15 @@ const before = hash(packageFile)
 const options = {...baseline.build, directories: {output: artifacts}, electronDist: path.join(root, 'node_modules/electron/dist'), electronVersion: JSON.parse(fs.readFileSync(path.join(root, 'node_modules/electron/package.json'), 'utf8')).version, npmRebuild: false, mac: {...baseline.build.mac, identity: '-'}}
 fs.writeFileSync(path.join(output, 'candidate-config.json'), JSON.stringify(options, null, 2))
 if (!process.argv.includes('--verify-only')) {
+  const startedAt = new Date().toISOString()
+  execFileSync(path.join(root, 'node_modules/.bin/electron-vite'), ['build'], {cwd: root, env: {...process.env, AGENTS_COMPANY_RELEASE: '1'}, stdio: 'inherit'})
+  fs.writeFileSync(path.join(output, 'source-build.json'), JSON.stringify({startedAt, finishedAt: new Date().toISOString(), exitCode: 0, head: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), packageSha256: before, rendererHtmlSha256: hash(path.join(root, '.aexus/out/renderer/index.html'))}, null, 2))
   fs.rmSync(stage, {recursive: true, force: true}); fs.mkdirSync(stage, {recursive: true})
   fs.copyFileSync(packageFile, path.join(stage, 'package.json'))
   for (const name of ['.aexus/out', 'Infra', 'Contract', 'Engine', 'README.md', 'LICENSE', 'NOTICE']) fs.cpSync(path.join(root, name), path.join(stage, name), {recursive: true, filter: p => !p.split(path.sep).includes('node_modules')})
   for (const directory of fs.readdirSync(path.join(root, 'Engine'))) {
     const dependencies = path.join(root, 'Engine', directory, 'node_modules')
-    if (fs.existsSync(dependencies)) fs.symlinkSync(dependencies, path.join(stage, 'Engine', directory, 'node_modules'), 'dir')
+    if (fs.existsSync(dependencies)) fs.cpSync(dependencies, path.join(stage, 'Engine', directory, 'node_modules'), {recursive: true, dereference: true})
   }
   fs.symlinkSync(path.join(root, 'node_modules'), path.join(stage, 'node_modules'), 'dir')
   await build({projectDir: stage, config: options, targets: Platform.MAC.createTarget('dir', Arch.arm64), publish: 'never'})
@@ -37,12 +40,35 @@ const packaged = JSON.parse(asar.extractFile(archive, 'package.json').toString()
 assert.equal(packaged.version, current.version)
 const manifest = JSON.parse(asar.extractFile(archive, 'Engine/deep-research/engine.json').toString())
 assert.equal(manifest.version, '2.0.0')
+const candidateLock = path.join(stage, 'Engine/deep-research/package-lock.json')
+const lockedEngine = JSON.parse(fs.readFileSync(candidateLock, 'utf8'))
+const privateDependencies = Object.keys(JSON.parse(asar.extractFile(archive, 'Engine/deep-research/package.json').toString()).dependencies || {}).map(name => {
+  const packagedFile = 'Engine/deep-research/node_modules/' + name + '/package.json'
+  const installed = JSON.parse(fs.readFileSync(path.join(root, packagedFile), 'utf8'))
+  const bundled = JSON.parse(asar.extractFile(archive, packagedFile).toString())
+  assert.equal(bundled.version, installed.version, 'Private Engine dependency must be packaged at its locked version')
+  assert.equal(bundled.version, lockedEngine.packages['node_modules/' + name].version)
+  return {name, version: bundled.version, path: packagedFile}
+})
 const candidateEngine = path.join(stage, 'Engine/deep-research')
 const coreFingerprint = Object.fromEntries(fs.readdirSync(candidateEngine).filter(f => /\.(mjs|tsx|css)$/.test(f)).map(f => {
   const bytes = asar.extractFile(archive, 'Engine/deep-research/' + f)
   assert.equal(createHash('sha256').update(bytes).digest('hex'), hash(path.join(candidateEngine, f)), 'Packaged source must match its candidate staging snapshot')
   return [f, createHash('sha256').update(bytes).digest('hex')]
 }))
+const rendererHtml = asar.extractFile(archive, '.aexus/out/renderer/index.html').toString()
+const rendererFiles = ['index.html', ...[...rendererHtml.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g)].map(match => match[1])]
+for (const file of rendererFiles) assert.equal(createHash('sha256').update(asar.extractFile(archive, '.aexus/out/renderer/' + file)).digest('hex'), hash(path.join(stage, '.aexus/out/renderer', file)), 'Packaged renderer entry assets must match the fresh build')
+const buildEvidence = JSON.parse(fs.readFileSync(path.join(output, 'source-build.json'), 'utf8'))
+assert.equal(buildEvidence.exitCode, 0)
+assert.equal(buildEvidence.rendererHtmlSha256, createHash('sha256').update(asar.extractFile(archive, '.aexus/out/renderer/index.html')).digest('hex'), 'ASAR renderer must match the recorded fresh build')
+const changedEngineSnapshot = Object.entries(coreFingerprint).flatMap(([file, sha256]) => {
+  try { return createHash('sha256').update(execFileSync('git', ['show', buildEvidence.head + ':Engine/deep-research/' + file], {cwd: root})).digest('hex') === sha256 ? [] : [file] }
+  catch { return [file] }
+})
+const pdfFixture = path.join(root, '.aexus/artifacts/deep-research-independent/engine-acquisition/w3c-dummy.pdf')
+const pdfHash = '3df79d34abbca99308e79cb94461c1893582604d68329a41fd4bec1885e6adb4'
+assert.equal(hash(pdfFixture), pdfHash, 'Saved public W3C PDF must match the independent retrieval fingerprint')
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aexus-research-package-')), trap = path.join(temp, 'engine-trap.mjs'), marker = path.join(temp, 'engine-called')
 fs.writeFileSync(trap, `#!${process.execPath}\nimport fs from 'node:fs';fs.appendFileSync(${JSON.stringify(marker)},'refused\\n');process.exit(99);\n`, {mode: 0o755})
 const env = {...process.env, AGENTS_COMPANY_HOME: path.join(temp, 'state'), AGENTS_COMPANY_PROJECTS: path.join(temp, 'projects'), AGENTS_COMPANY_WORKSPACES: path.join(temp, 'work'), AGENTS_COMPANY_SHARED_DIR: path.join(temp, 'shared'), CODEX_HOME: path.join(temp, 'codex'), AGENTS_COMPANY_HIDDEN: '1', AGENTS_COMPANY_WIDTH: '1440', AGENTS_COMPANY_HEIGHT: '1000', CODEX_BIN: trap, CLAUDE_BIN: trap, CLINE_BIN: trap, PI_BIN: trap}
@@ -66,13 +92,29 @@ try {
     assert.ok(Object.values(privateProof).every(Boolean))
     fs.writeFileSync(path.join(output, 'private-engine-verification.json'), JSON.stringify({passed: true, ...privateProof, scope: 'Updated Engine and its private locked dependencies imported from a disposable ASAR with the actual candidate Electron runtime; full candidate is unchanged', modelCalls: 0, agentProcesses: 0}, null, 2))
   }
-  const imported = await app.evaluate(async (_electron, archive) => {
+  const imported = await app.evaluate(async (_electron, {archive, dependencies, pdfFixture}) => {
     const vm = process.mainModule.require('node:vm'), url = process.mainModule.require('node:url').pathToFileURL(archive + '/Engine/deep-research/runtime.mjs').href
     const module = await vm.runInThisContext('import(' + JSON.stringify(url) + ')', {importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER})
     const state = module.create({topic: 'Packaged Deep Research safe startup acceptance'}), summary = module.describe(state)
-    return {methods: ['create', 'describe', 'respond', 'run', 'pause', 'cancel'].every(key => typeof module[key] === 'function'), phase: summary.phase, progress: summary.progress, employeeCount: state.workers.length}
-  }, archive)
+    const reports = await vm.runInThisContext('import(' + JSON.stringify(process.mainModule.require('node:url').pathToFileURL(archive + '/Engine/deep-research/reports.mjs').href) + ')', {importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER})
+    Object.assign(state, {report: {title: 'GFM proof', abstract: '', conclusion: '', limitations: [], citations: ['s1'], sections: [{id: 'section', heading: 'Evidence', content: '| A | B |\n| --- | --- |\n| 1 | 2 |\n\n- Item', citations: ['s1'], evidence: []}]}, sources: [{id: 's1', title: 'Fixture', url: 'https://example.org/evidence'}]})
+    const html = reports.generateArtifacts(state).find(a => a.name === 'research-report.html').content
+    const resolve = process.mainModule.require('node:module').createRequire(archive + '/Engine/deep-research/reports.mjs')
+    const dependencyPaths = dependencies.map(name => resolve.resolve(name))
+    const source = await vm.runInThisContext('import(' + JSON.stringify(process.mainModule.require('node:url').pathToFileURL(archive + '/Engine/deep-research/source-read.mjs').href) + ')', {importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER})
+    const fs = process.mainModule.require('node:fs'), data = fs.readFileSync(pdfFixture)
+    const [checked] = await source.acquireSources({sources: []}, [{id: 'w3c', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', acquisition: {excerpt: 'Dummy PDF file', locator: 'Agent claimed page 999'}}], {read: async url => ({url, data, mediaType: 'application/pdf'})})
+    const pdfRoot = archive + '.unpacked/Engine/deep-research/node_modules/pdfjs-dist/'
+    const pdfResources = ['legacy/build/pdf.worker.mjs', 'standard_fonts', 'cmaps', 'wasm'].map(name => ({name, exists: fs.existsSync(pdfRoot + name)}))
+    return {methods: ['create', 'describe', 'respond', 'run', 'pause', 'cancel'].every(key => typeof module[key] === 'function'), phase: summary.phase, progress: summary.progress, employeeCount: state.workers.length, gfmTable: html.includes('<table>'), gfmList: html.includes('<ul>'), dependencyPaths,
+      pdf: {status: checked.acquisition.status, proof: checked.acquisition.excerpts?.[0], resources: pdfResources}}
+  }, {archive, dependencies: privateDependencies.map(d => d.name), pdfFixture})
   assert.equal(imported.methods, true); assert.equal(imported.phase, 'init'); assert.equal(imported.progress.percent, null); assert.equal(imported.employeeCount, 0)
+  assert.equal(imported.gfmTable, true); assert.equal(imported.gfmList, true)
+  assert.ok(imported.dependencyPaths.every(file => file.includes('/Engine/deep-research/node_modules/')), 'GFM must resolve from private Engine dependencies, not top-level transitive packages')
+  assert.equal(imported.pdf.status, 'read', 'Actual packaged PDF parser must read the saved public PDF')
+  assert.equal(imported.pdf.proof.locator, 'Page 1'); assert.equal(imported.pdf.proof.sha256, pdfHash)
+  assert.deepEqual(imported.pdf.proof.pages, [1]); assert.ok(imported.pdf.resources.every(resource => resource.exists), 'Private PDF worker and supporting resources must be physically unpacked')
   const page = await app.firstWindow(); page.setDefaultTimeout(20000); page.on('pageerror', error => errors.push(error.message))
   await expect(page.locator('.engine-library')).toBeVisible()
   await page.locator('[data-engine-id="deep-research"]').dragTo(page.getByTestId('engine-load-dock'))
@@ -88,12 +130,12 @@ try {
     await expect.poll(() => page.evaluate(() => innerWidth)).toBe(size.width)
     chromeLayout.push(await page.evaluate(() => ({viewport: {width: innerWidth, height: innerHeight}, elements: Object.fromEntries(['.application-layers', '.engine-surface', '.engine-context', '.dr-app', '.dr-intake'].map(selector => {const r = document.querySelector(selector)?.getBoundingClientRect(); return [selector, r ? {x: r.x, y: r.y, width: r.width, height: r.height} : null]}))})))
   }
-  fs.writeFileSync(path.join(output, 'chrome-layout.json'), JSON.stringify({snapshot: 'candidate existing renderer, no research generation', layouts: chromeLayout}, null, 2))
+  fs.writeFileSync(path.join(output, 'chrome-layout.json'), JSON.stringify({snapshot: 'fresh source-built candidate renderer, no research generation', layouts: chromeLayout}, null, 2))
   assert.deepEqual(errors, [])
   assert.ok(await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows().every(w => !w.isVisible())))
   assert.ok(!fs.existsSync(marker), 'No engine executable may run during this candidate smoke test')
   assert.equal(hash(packageFile), before, 'User package.json must remain unchanged')
-  const proof = {passed: true, version: packaged.version, engineVersion: manifest.version, candidate: appPath, installed: false, buildConfig: 'HEAD package.json build field, explicit private output; current package metadata copied unchanged', sourcePackageSha256: before, engineFingerprint: coreFingerprint, rendererInput: 'Existing .aexus/out snapshot at candidate staging time; later UI iterations are separate source validations', checks: ['real ASAR runtime dynamic import', 'safe create/describe without workers', 'hidden packaged launcher loads Deep Research', 'empty isolated sessions/workflows', 'no engine executable invoked'], errors, modelCalls: 0, agentProcesses: 0, productionDataUsed: false}
+  const proof = {passed: true, version: packaged.version, engineVersion: manifest.version, candidate: appPath, asarSha256: hash(archive), asarBytes: fs.statSync(archive).size, installed: false, buildConfig: 'HEAD package.json build field, explicit private output; current package metadata copied unchanged', sourcePackageSha256: before, engineFingerprint: coreFingerprint, changedEngineSnapshot, candidateEngineLockSha256: hash(candidateLock), privateDependencies, pdf: imported.pdf, rendererInput: 'Fresh electron-vite release build before candidate staging; verify-only preserves the already-built candidate', buildEvidence, rendererFiles, checkedAgainstHead: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), checks: ['real ASAR runtime dynamic import', 'locked dependencies in private Engine directory', 'actual packaged GFM table and list export', 'actual packaged PDF page text and public raw fingerprint', 'physically unpacked private PDF worker/resources', 'safe create/describe without workers', 'hidden packaged launcher loads Deep Research', 'empty isolated sessions/workflows', 'no engine executable invoked'], errors, modelCalls: 0, agentProcesses: 0, productionDataUsed: false}
   fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify(proof, null, 2) + '\n')
   console.log(JSON.stringify(proof, null, 2))
 } finally {await app?.close(); fs.rmSync(temp, {recursive: true, force: true})}

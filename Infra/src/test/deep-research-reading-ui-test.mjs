@@ -13,7 +13,9 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aexus-research-reading-'))
 fs.mkdirSync(output, {recursive: true})
 const acquisition = JSON.parse(fs.readFileSync(path.join(root, '.aexus/artifacts/deep-research-independent/real-sources/acquisition.json'), 'utf8'))
 const corpus = process.argv.includes('--corpus')
-const state = corpus ? JSON.parse(fs.readFileSync(path.join(root, '.aexus/artifacts/deep-research-independent/research-corpus/state.json'), 'utf8')) : Object.assign(create({topic: '阅读真实公开资料的研究报告与可定位引用'}), acquisition.reportState)
+const independent = process.argv.includes('--independent')
+const corpusDirectory = path.join(root, '.aexus/artifacts/deep-research-independent/research-corpus', independent ? 'independent-proof' : '')
+const state = corpus ? JSON.parse(fs.readFileSync(path.join(corpusDirectory, 'state.json'), 'utf8')) : Object.assign(create({topic: '阅读真实公开资料的研究报告与可定位引用'}), acquisition.reportState)
 state.phase = 'complete'
 state.graph = {version: 1, nodes: normalizeNodes([{id: 'read', kind: 'search', dependencies: []}, {id: 'verify', kind: 'verify', dependencies: ['read']}, {id: 'write', kind: 'write', dependencies: ['verify']}, {id: 'review', kind: 'review', dependencies: ['write']}]).map(n => ({...n, status: 'completed'}))}
 state.report.sections[0].content += '\n\n[1](#' + state.sources[0].id + ')'
@@ -37,10 +39,12 @@ try {
   await expect(page.getByRole('heading', {name: state.report.title, exact: true})).toBeVisible()
   const citation = page.locator('.dr-inline-citation').first()
   const clickedId = await citation.innerText()
-  const currentSource = corpus ? state.sources.find(s => s.url === JSON.parse(fs.readFileSync(path.join(root, '.aexus/artifacts/deep-research-independent/research-corpus/acquisition.json'), 'utf8')).sources.find(s => s.id === clickedId).url) : state.sources[0]
+  const citationRecord = corpus && independent ? JSON.parse(fs.readFileSync(path.join(corpusDirectory, 'claims.json'), 'utf8')).find(claim => claim.id === clickedId) : null
+  const currentSource = citationRecord ? state.sources.find(source => source.id === citationRecord.sourceId) : corpus && !independent ? state.sources.find(s => s.url === JSON.parse(fs.readFileSync(path.join(corpusDirectory, 'acquisition.json'), 'utf8')).sources.find(s => s.id === clickedId).url) : state.sources[0]
   await citation.focus(); await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', {name: currentSource.title, exact: true})).toBeVisible()
-  await expect(page.getByText(currentSource.extractedClaims[0].locator, {exact: true}).first()).toBeVisible()
+  const expectedLocator = state.findings.flatMap(finding => finding.evidence).find(evidence => evidence.sourceId === currentSource.id).locator
+  await expect(page.locator('.dr-source-detail blockquote small').filter({hasText: expectedLocator}).first()).toBeVisible()
   assert.ok(await page.locator('a').filter({hasText: '阅读原文'}).getAttribute('href').then(href => href === currentSource.url))
   checks.push('Keyboard citation enters the real source record, evidence locator and original URL')
   await page.getByRole('tab', {name: '报告', exact: true}).click()
@@ -55,6 +59,6 @@ try {
     await page.getByRole('tab', {name: '报告', exact: true}).click()
   }
   assert.deepEqual(errors, [])
-  fs.writeFileSync(path.join(output, (corpus ? 'corpus-' : '') + 'verification.json'), JSON.stringify({passed: true, provenance: corpus ? 'Native Agent research corpus + actual Page/describe; browser Contract fixture, not application-generated research' : 'actual Page + actual describe + independently fetched source snapshots; browser Contract fixture', sources: state.sources.length, chapters: state.report.sections.length, checks, errors, modelCalls: 0, agentProcesses: 0}, null, 2))
+  fs.writeFileSync(path.join(output, (corpus ? 'corpus-' : '') + 'verification.json'), JSON.stringify({passed: true, provenance: corpus ? (independent ? 'Native Agent research over independently acquired raw-source proof + actual Page/describe' : 'Historical Native Agent corpus + actual Page/describe') + '; browser Contract fixture, not application-generated research' : 'actual Page + actual describe + independently fetched source snapshots; browser Contract fixture', sources: state.sources.length, chapters: state.report.sections.length, checks, errors, modelCalls: 0, agentProcesses: 0}, null, 2))
   console.log(JSON.stringify({passed: true, checks, output}, null, 2))
 } finally {await browser.close(); fs.rmSync(temp, {recursive: true, force: true})}

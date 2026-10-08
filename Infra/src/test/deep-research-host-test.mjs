@@ -56,11 +56,15 @@ function transport({reviseOnce = false} = {}) {
 }
 async function fixtureHost(home) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'Engine/deep-research/engine.json'), 'utf8'))
+  const appRoot = path.join(home, 'app'), engine = path.join(appRoot, 'Engine/deep-research')
+  fs.mkdirSync(engine, {recursive: true})
+  // Only the disposable module wrapper supplies raw HTTP text; actual acquisition validates and hashes it.
+  fs.writeFileSync(path.join(engine, 'runtime.mjs'), `export * from ${JSON.stringify(pathToFileURL(path.join(root, 'Engine/deep-research/runtime.mjs')).href)};import{run as actualRun}from ${JSON.stringify(pathToFileURL(path.join(root, 'Engine/deep-research/runtime.mjs')).href)};export const run=(state,context)=>actualRun(state,{...context,sourceReader:async url=>({url,mediaType:'text/plain',body:'Synthetic evidence costs 12 units.'})});`)
   const fixtures = {
     './engine-scope': 'export const currentEngineScope=()=>undefined;export const adoptWorkflowResources=()=>{};',
     '../shared/protocol': 'export const APP_HOME=' + JSON.stringify(home) + ';',
     './authorization': 'export const requestContext=()=>({principal:{kind:"operator"},requestId:"independent-fixture"});export const authorize=()=>{};export const withCaller=(_owner,fn)=>fn();',
-    './resources': 'export const applicationRoot=()=>' + JSON.stringify(root) + ';',
+    './resources': 'export const applicationRoot=()=>' + JSON.stringify(appRoot) + ';',
     './contract': 'export const installedEngines=()=>({engines:[' + JSON.stringify({...manifest, directory: 'deep-research'}) + ']});export const contractRequest=async(_cmd,args,invoke)=>({data:await invoke(args.command,args.args)});'
   }
   const file = path.join(home, 'host-fixture.mjs')
@@ -114,7 +118,7 @@ test('Current persisted research restarts, pauses, amends, resumes and exports t
 
 test('A revise verdict creates a new DAG and final draft while retaining completed research', {timeout: 5000}, async () => {
   const state = prepared(true), fixture = transport({reviseOnce: true})
-  const result = await run(state, {id: 'fixture/review-replan', signal: new AbortController().signal, client: {invoke: fixture.dispatch}, checkpoint: async () => {}})
+  const result = await run(state, {id: 'fixture/review-replan', signal: new AbortController().signal, sourceReader: async url => ({url, mediaType: 'text/plain', body: 'Synthetic evidence costs 12 units.'}), client: {invoke: fixture.dispatch}, checkpoint: async () => {}})
   assert.equal(result.status, 'completed')
   assert.equal(result.state.graph.version, 2)
   assert.equal(result.state.review.verdict, 'pass')

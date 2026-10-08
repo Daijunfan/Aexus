@@ -165,4 +165,13 @@ listener is separate from the full company API.
 
 Run `npm run build:engines` after a clean checkout; `npm run setup` also prepares them. Each Engine keeps its own package and lock. Production installs use `npm ci --omit=dev --ignore-scripts`; a linked dependency directory is rejected before mutation. `npm run check:engine-deps` validates direct locked runtime versions. Desktop packaging prepares these dependencies and explicitly includes them; native libraries and research worker entrypoints use unpacked physical paths. This prevents a packaged app from relying on a developer's global modules or source checkout. Revalidate the installed app in an isolated hidden-window test after upgrading.
 
-Deep Research PDF export uses installed host fonts; no OS font is redistributed by the application. Where required glyphs are unavailable, configure a legal host font via `AEXUS_REPORT_FONT` and optional `AEXUS_REPORT_FONT_FAMILY`, or export Word/HTML. Input PDF text extraction does not need a display, a cloud OCR service or a provider API key.
+The current Deep Research runtime publishes approved HTML, Markdown, source CSV,
+evidence JSON and plan JSON files. HTML rendering uses the Engine's own locked GFM
+dependencies. Public HTML/text input now requires independent Engine retrieval
+and excerpt matching. Public PDF input uses the Engine's locked PDF.js text-layer
+parser, bounded to 8 MiB, 80 pages and 800,000 extracted characters. Password
+protection, absent text layers and oversized input fail explicitly; OCR is not
+implemented. The `812cfe3` private macOS candidate passed actual packaged PDF
+parsing; this is not installed-app or other-platform acceptance.
+PDF/Word export is not implemented by the
+current runtime; generic optional workflow data hooks do not imply support.

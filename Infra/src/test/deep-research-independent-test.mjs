@@ -1,4 +1,5 @@
-// Independent domain acceptance with labelled synthetic evidence; no provider, process or user state.
+// Pure evidence gates use trusted synthetic acquisition records. The DAG test uses actual acquireSources with a raw-reader fixture.
+// No provider, process or user state; independent HTTP acquisition failures are tested in the Engine source-read suite.
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {normalizeNodes, applyPlan, readyNodes, planProgress} from '../../../Engine/deep-research/graph.mjs'
@@ -21,10 +22,14 @@ const plan = () => ({
   ], dimensions: []
 })
 const node = (state, id) => state.graph.nodes.find(n => n.id === id && n.active !== false)
-const evidenceFixture = () => normalizeSources({sources: [{
+const evidenceFixture = () => {
+  const source = normalizeSources({sources: [{
   title: 'Synthetic policy fixture, not a live source', url: 'https://example.org/policy?utm_source=fixture',
   acquisition: {status: 'read', excerpt: 'Synthetic evidence: Standard A applies from 2026-10-01. The price is 12 units.', locator: 'Fixture paragraph 1'}
 }]}).sources[0]
+  source.acquisition = {status: 'read', method: 'independent-http', excerpts: [{excerpt: 'Synthetic evidence: Standard A applies from 2026-10-01. The price is 12 units.', locator: 'Fixture paragraph 1', sha256: 'fixture-body-hash', accessedAt: 1, finalUrl: source.url}]}
+  return source
+}
 const verificationFixture = source => ({verifications: [{
   sourceId: source.id, credibilityScore: 1,
   claims: [{text: 'The synthetic price is 12 units.', excerpt: 'The price is 12 units.', locator: 'Fixture paragraph 1', confidence: 1}]
@@ -146,8 +151,8 @@ test('Verification rejects fabricated excerpts, unknown sources and excerpts fro
   const unknown = verificationFixture(source)
   unknown.verifications[0].sourceId = 'nonexistent'
   assert.throws(() => normalizeVerification(unknown, [source]), /未知/)
-  const discovered = {...source, acquisition: {...source.acquisition, status: 'discovered'}}
-  assert.throws(() => normalizeVerification(verificationFixture(source), [discovered]), /片段/)
+  const discovered = {...source, acquisition: {...source.acquisition, status: 'discovered', method: 'agent-reported'}}
+  assert.throws(() => normalizeVerification(verificationFixture(source), [discovered]), /独立|片段/)
 })
 
 test('Reports cite verified read sources and retain the exact evidence locator after serialization', () => {
@@ -237,7 +242,7 @@ function researchFixture(state, answer) {
   const sent = [], transcripts = new Map()
   state.workers = ['coordinator', 'researcher', 'verifier', 'synthesizer', 'writer'].flatMap(role =>
     Array.from({length: role === 'researcher' ? 3 : 1}, (_, i) => ({id: role + '-' + i, specId: role === 'coordinator' ? 'coordinator' : role + '-' + i, role, label: role, engine: 'fixture', managerIds: [], managementRole: role === 'coordinator' ? 'manager' : 'employee'})))
-  return {sent, ctx: {id: 'fixture/true-dag', signal: new AbortController().signal, checkpoint: async () => {}, client: {invoke: async (name, args) => {
+  return {sent, ctx: {id: 'fixture/true-dag', signal: new AbortController().signal, sourceReader: async url => ({url, mediaType: 'text/plain', body: 'Synthetic evidence: Standard A applies from 2026-10-01. The price is 12 units.'}), checkpoint: async () => {}, client: {invoke: async (name, args) => {
     if (name === 'session.status') return [{busy: false, initialization: {status: 'ready'}}]
     if (name === 'engine.check') return {ready: true}
     if (name === 'group.list') return [state.team]
@@ -285,7 +290,7 @@ test('A real fork/join DAG honors every parent, reuses a shared result, and adva
         assert.notEqual(node(state, 'unrelated').status, 'completed')
         followup.resolve()
       }
-      return {sources: [evidenceFixture()]}
+      return {sources: [{title: 'Synthetic fixture source', url: 'https://example.org/policy', acquisition: {status: 'read', excerpt: 'Synthetic evidence: Standard A applies from 2026-10-01. The price is 12 units.', locator: 'Fixture paragraph 1'}}]}
     }
     if (envelope.kind === 'verify') return verificationFixture(state.sources[0])
     if (envelope.kind === 'synthesize') return {entities: [], relationships: [], insights: ['Shared fixture insight']}

@@ -137,6 +137,16 @@ SOFTWARE.
 ### tiny-pinyin 1.3.2
 MIT-licensed directory-name romanization library by creeperyang. License: `Infra/src/licenses/tiny-pinyin-1.3.2-MIT.txt`. Source: https://github.com/creeperyang/pinyin.
 
-## Deep Research document runtime (1.5.0)
+## Historical Deep Research document runtime (1.5.0)
 
 Locked direct production libraries: PDFKit 0.20.2 (MIT), fontkit 2.0.4 (MIT), PDF.js / pdfjs-dist 6.4.299 (Apache-2.0), docx 9.9.0 (MIT), fflate 0.8.3 (MIT), @xmldom/xmldom 0.9.12 (MIT). The Engine package-lock records exact transitive packages and registry integrity hashes; original package licenses remain in bundled runtime directories. PDF.js text parsing may use its optional platform canvas dependency; preserve its upstream license files. These library notices do not authorize redistributing proprietary provider assets or host fonts. Existing unresolved release reviews remain unchanged.
+
+The current Deep Research 2.x HTML renderer uses private locked production
+dependencies micromark 4.0.2 and micromark-extension-gfm 3.0.0 (MIT), together
+with their upstream dependencies and license files. Independent HTML source
+parsing uses parse5 8.0.1 (MIT). PDF text-layer source parsing uses private
+pdfjs-dist 6.4.299 (Apache-2.0), including its worker, font/CMap/WASM resources and
+optional platform canvas dependencies with their upstream licenses. No OCR or
+host fonts are bundled for this input path. Their integrity and exact
+versions are recorded in `Engine/deep-research/package-lock.json`. The historical
+1.5.0 document libraries above are not a statement of current PDF/Word support.
