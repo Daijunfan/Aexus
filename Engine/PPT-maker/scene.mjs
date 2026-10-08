@@ -6,7 +6,7 @@ export const STYLES={
  editorial:{name:'杂志叙事',background:'F8F4EB',paper:'FFFCF6',ink:'282B26',muted:'6C7468',accent:'B74225',secondary:'416B53',font:'Arial'},
  midnight:{name:'深色发布',background:'101B2D',paper:'19283F',ink:'F2F6FF',muted:'A4B4CD',accent:'70ACFF',secondary:'65DBC4',font:'Arial'}
 };
-export const LAYOUTS=['cover','statement','cards','split','timeline','table','chart','closing'];
+export const LAYOUTS=['cover','statement','cards','split','timeline','table','chart','closing','metrics','process','comparison'];
 export const clone=value=>JSON.parse(JSON.stringify(value));
 export const round=value=>Math.round(value*1000)/1000;
 export const xml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
@@ -52,7 +52,7 @@ export function makeDeck(plan,{style='executive',ratio='16:9',sources=[],title,t
 }
 export function layoutSlide(spec,deck,index,total){
  const W=deck.width,H=deck.height,t=deck.theme,s={id:spec.id??'slide-'+(index+1),title:spec.title,notes:spec.notes??'',background:t.background,elements:[],sourceIds:[...(spec.sourceIds??[])]};
- const inner=W-1.3,top=1.9,bottom=H-.8,bodyH=bottom-top;
+ const inner=W-1.3,top=1.78,bottom=H-.72,bodyH=bottom-top;
  const add=(id,type,x,y,w,h,other={})=>{const e={id:s.id+'-'+id,type,x:round(x),y:round(y),w:round(w),h:round(h),...other};s.elements.push(e);return e;};
  const shape=(id,x,y,w,h,fill,extra={})=>add(id,'shape',x,y,w,h,{shape:'rect',fill,stroke:'none',...extra});
  const text=(id,value,x,y,w,h,size=22,extra={})=>{const e=add(id,'text',x,y,w,h,{text:String(value??''),fontSize:size,fontFamily:t.font,color:t.ink,align:'left',lineHeight:1.22,...extra});Object.assign(e,fitted(e,extra.minFontSize??14));return e;};
@@ -60,7 +60,7 @@ export function layoutSlide(spec,deck,index,total){
  const layout=LAYOUTS.includes(spec.layout)?spec.layout:'cards';s.layout=layout;
  shape('accent-rule',.65,.42,.5,.04,t.accent,{decorative:true});
  text('kicker',(spec.eyebrow??deck.title).slice(0,80),1.3,.3,W-2,.25,10,{color:t.muted,minFontSize:9,role:'eyebrow'});
- text('heading',spec.title,.65,.83,inner,1.01,34,{bold:true,minFontSize:26,role:'title'});
+ text('heading',spec.title,.65,.78,inner,.92,32,{bold:true,minFontSize:24,role:'title'});
  line('footer-rule',.65,H-.52,inner,t.muted);
  text('footer',s.sourceIds.length?'来源：'+s.sourceIds.join(' · '):deck.title,.65,H-.39,inner-1,.25,9,{color:t.muted,minFontSize:8,role:'footer',locked:true});
  text('page',String(index+1).padStart(2,'0')+' / '+String(total).padStart(2,'0'),W-1.55,H-.39,.9,.25,9,{color:t.muted,align:'right',minFontSize:9,role:'footer',locked:true,pageNumber:true});
@@ -84,6 +84,15 @@ export function layoutSlide(spec,deck,index,total){
   const items=spec.items??(spec.body??[]).map((body,k)=>({label:String(k+1),body})),count=Math.max(items.length,1),gap=.28,cw=(inner-gap*(count-1))/count;
   line('timeline',.92,top+.57,inner-.54,t.accent);
   items.forEach((item,k)=>{const x=.65+k*(cw+gap);add('dot-'+k,'shape',x+.19,top+.37,.4,.4,{shape:'ellipse',fill:t.accent,stroke:'none',decorative:true});text('step-'+k,String(k+1),x+.19,top+.435,.4,.22,11,{align:'center',color:t.background,bold:true,minFontSize:11,decorative:true});text('label-'+k,item.label,x,top+1.03,cw,.9,23,{bold:true,minFontSize:17});text('body-'+k,item.body,x,top+2.02,cw,bodyH-2.13,19,{minFontSize:14,role:'body'});});
+ }else if(layout==='metrics'){
+  const items=spec.items?.length?spec.items:(spec.body??[]).map((body,k)=>({label:['核心指标','关键变化','业务影响','下一步'][k]??'指标',body})),n=Math.min(Math.max(items.length,2),4),gap=.22,cw=(inner-gap*(n-1))/n;
+  items.slice(0,n).forEach((item,k)=>{const x=.65+k*(cw+gap);shape('metric-'+k,x,top,cw,bodyH,t.paper,{decorative:true});shape('metric-top-'+k,x,top,cw,.055,k%2?t.secondary:t.accent,{decorative:true});text('metric-label-'+k,item.label,x+.22,top+.28,cw-.44,.44,13,{bold:true,color:t.muted,minFontSize:11});text('metric-value-'+k,item.value??item.body?.split(/[:：]/)[0]??String(k+1),x+.22,top+.95,cw-.44,.82,30,{bold:true,color:k%2?t.secondary:t.accent,minFontSize:21});text('metric-body-'+k,item.value?item.body:(item.body?.includes('：')?item.body.split('：').slice(1).join('：'):''),x+.22,top+2.05,cw-.44,bodyH-2.35,16,{minFontSize:12,role:'body'});});
+ }else if(layout==='process'){
+  const items=spec.items?.length?spec.items:(spec.body??[]).map((body,k)=>({label:'步骤 '+(k+1),body})),n=Math.min(Math.max(items.length,2),5),gap=.18,cw=(inner-gap*(n-1))/n;
+  items.slice(0,n).forEach((item,k)=>{const x=.65+k*(cw+gap);text('process-num-'+k,String(k+1).padStart(2,'0'),x,top,cw,.42,12,{bold:true,color:t.accent,minFontSize:11});shape('process-card-'+k,x,top+.62,cw,bodyH-.62,t.paper,{decorative:true});text('process-label-'+k,item.label,x+.2,top+.9,cw-.4,.74,20,{bold:true,minFontSize:15});text('process-body-'+k,item.body,x+.2,top+1.82,cw-.4,bodyH-2.1,15,{minFontSize:11,role:'body'});if(k<n-1)text('process-arrow-'+k,'→',x+cw-.05,top+.08,.28,.3,16,{color:t.muted,decorative:true});});
+ }else if(layout==='comparison'){
+  const items=(spec.items??[]).slice(0,2),gap=.28,cw=(inner-gap)/2;
+  for(let k=0;k<2;k++){const item=items[k]??{label:k?'方案 B':'方案 A',body:''},x=.65+k*(cw+gap);shape('compare-'+k,x,top,cw,bodyH,t.paper,{decorative:true});shape('compare-head-'+k,x,top,cw,.08,k?t.secondary:t.accent,{decorative:true});text('compare-label-'+k,item.label,x+.3,top+.35,cw-.6,.7,24,{bold:true,minFontSize:18});text('compare-body-'+k,item.body,x+.3,top+1.35,cw-.6,bodyH-1.7,17,{minFontSize:12,role:'body'});}
  }else if(layout==='table'&&spec.table){
   const rows=[spec.table.columns,...spec.table.rows];add('table','table',.65,top,inner,bodyH-.65,{rows:clone(rows),fontSize:Math.max(13,Math.min(19,25-rows.length)),header:true,headerFill:t.accent,color:t.ink,fill:t.paper,headerColor:'FFFFFF',stroke:t.muted});text('caption',spec.subtitle??'',.65,bottom-.4,inner,.36,13,{color:t.muted,minFontSize:11});
  }else if(layout==='chart'&&spec.chart){
@@ -147,6 +156,16 @@ export function inspectDeck(deck){
     const fs=e.fontSize??15,cw=e.w/e.rows[0].length,rh=e.h/e.rows.length;
     if(e.rows.some(row=>row.some(value=>textMetrics({text:value,w:cw-.15,h:rh,fontSize:fs}).height>rh-.06)))issue(e.origin?'warning':'error','TABLE_OVERFLOW',slide,e,'表格文字可能溢出：请减少内容或增大表格');
    }
+  }
+  if(deck.kind==='generated'){
+   const meaningful=slide.elements.filter(e=>!e.decorative&&!['footer','eyebrow'].includes(e.role)&&e.type!=='shape');
+   const bodyChars=slide.elements.filter(e=>e.type==='text'&&e.role==='body').reduce((n,e)=>n+e.text.replace(/\s/g,'').length,0);
+   const dataObjects=slide.elements.filter(e=>['table','chart'].includes(e.type)).length;
+   const sparseExempt=['cover','closing','statement'].includes(slide.layout);
+   if(!sparseExempt&&meaningful.length<3)issue('error','LOW_INFORMATION_DENSITY',slide,null,'页面信息密度过低：至少需要三个有效信息单元或一个完整数据表达');
+   if(!sparseExempt&&!dataObjects&&bodyChars<70)issue('warning','THIN_CONTENT',slide,null,'正文信息偏少：建议补充证据、解释、约束或行动信息');
+   const title=slide.elements.find(e=>e.type==='text'&&e.role==='title');
+   if(title&&title.text.replace(/\s/g,'').length<6)issue('warning','WEAK_TITLE',slide,title,'标题过短，建议改为可独立理解的结论式标题');
   }
   const texts=slide.elements.filter(e=>e.type==='text'&&e.text.trim()&&!e.decorative&&!e.origin);
   for(let a=0;a<texts.length;a++)for(let b=a+1;b<texts.length;b++){

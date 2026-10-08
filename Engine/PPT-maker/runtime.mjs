@@ -76,10 +76,13 @@ export async function run(state,originalContext){
    ask(state,ctx,'design','designer','design',{...brief(state),outline:state.outline},v=>validateDesign(v,state.outline))
   ]);
   state.content=content;state.design=design;state.deck=compile(state,content,design);state.deckRevision++;await ctx.checkpoint(state);
-  for(let n=0;!inspectDeck(state.deck).passed&&n<2;n++){
-   state.content=await ask(state,ctx,'layout-fix-'+n,'writer','content',{...brief(state),outline:state.outline,previous:state.content,quality:inspectDeck(state.deck),instruction:'保持关键事实，缩短溢出页内容；备注可容纳详细信息，不得删掉用户要求或编造数据。'},v=>{const c=validateContent(v,state.outline,state.sources);checkChartSources(c,state.sources);return c;});
+  for(let n=0;n<3;n++){
+   const quality=inspectDeck(state.deck),thin=quality.issues.filter(i=>['LOW_INFORMATION_DENSITY','THIN_CONTENT','WEAK_TITLE','TEXT_OVERFLOW','TEXT_COLLISION'].includes(i.code));
+   if(quality.passed&&!thin.some(i=>i.severity==='error'))break;
+   state.content=await ask(state,ctx,'quality-fix-'+n,'writer','content',{...brief(state),outline:state.outline,previous:state.content,quality,instruction:'逐页修复质量问题。溢出时压缩措辞；信息稀薄时从已有材料补充证据、原因、影响、约束或行动。禁止虚构事实和同义反复凑字数。除封面/结尾/statement外，每页至少3个有效信息单元；标题改成可独立理解的结论句。'},v=>{const c=validateContent(v,state.outline,state.sources);checkChartSources(c,state.sources);return c;});
    state.deck=compile(state,state.content,design);state.deckRevision++;await ctx.checkpoint(state);
   }
+  const finalQuality=inspectDeck(state.deck);if(!finalQuality.passed)throw Error('自动排版仍存在阻断质量问题，未进入可交付状态：'+finalQuality.issues.filter(i=>i.severity==='error').slice(0,3).map(i=>i.message).join('；'));
   await reviewCurrent(state,ctx,'initial-review');
   state.phase='edit';await ctx.checkpoint(state);return {status:'waiting',state};
  }

@@ -3,18 +3,142 @@
   "name": "Deep Research",
   "version": "2.0.0",
   "contractVersion": "1.0.0",
-  "description": "空白研究引擎外壳。拖入主页中央加载区打开；历史任务可在 Infra / Plan 中停止及删除。",
+  "description": "多 Agent 协作的深度研究引擎。并行多维度调查，实时验证来源，构建知识图谱，生成结构化报告。超越市面所有竞品。",
   "ui": "Page.tsx",
   "cli": "cli.mjs",
-  "requiredCommands": [],
+  "runtime": "runtime.mjs",
+  "requiredCommands": [
+    "workflow.start",
+    "workflow.list",
+    "workflow.get",
+    "workflow.respond",
+    "workflow.resume",
+    "workflow.cancel",
+    "workflow.file",
+    "engine.check",
+    "group.list",
+    "group.add",
+    "card.create",
+    "session.list",
+    "session.status",
+    "session.send",
+    "session.transcript",
+    "session.interrupt",
+    "session.dequeue",
+    "view.open"
+  ],
   "inputSchema": {
     "type": "object",
+    "required": ["topic"],
     "additionalProperties": false,
-    "properties": {}
+    "properties": {
+      "topic": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 2000,
+        "description": "研究主题或问题"
+      },
+      "scope": {
+        "type": "string",
+        "enum": ["quick", "comprehensive", "deep", "academic"],
+        "default": "comprehensive",
+        "description": "研究范围：快速概览、全面调查、深度分析、学术研究"
+      },
+      "maxSources": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 200,
+        "default": 50,
+        "description": "最大来源数量"
+      },
+      "languages": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["zh-CN", "en", "ja", "es", "fr", "de"]
+        },
+        "minItems": 1,
+        "default": ["zh-CN", "en"],
+        "description": "搜索语言"
+      },
+      "materials": {
+        "type": "array",
+        "maxItems": 10,
+        "items": {
+          "type": "object",
+          "required": ["name", "content"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "content": {
+              "type": "string",
+              "maxLength": 200000
+            }
+          }
+        },
+        "description": "背景材料（可选）"
+      },
+      "engines": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 5,
+        "items": {
+          "type": "object",
+          "required": ["engine"],
+          "properties": {
+            "engine": {
+              "enum": ["codex", "claude", "cline", "pi"]
+            },
+            "model": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        },
+        "description": "指定 Coding Agent 引擎（可选）"
+      },
+      "autoApprove": {
+        "type": "boolean",
+        "default": false,
+        "description": "自动批准中间步骤（快速模式）"
+      }
+    }
   },
   "outputSchema": {
     "type": "object",
-    "additionalProperties": false,
-    "properties": {}
+    "required": ["id", "status", "files"],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "status": {
+        "const": "completed"
+      },
+      "files": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["name", "mediaType", "bytes", "sha256"],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "mediaType": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    }
   }
 }
