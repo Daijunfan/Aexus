@@ -196,7 +196,7 @@ export async function main(argv = process.argv.slice(2), client = createNodeClie
     if (file.encoding === 'base64') {
       content = Buffer.from(file.content, 'base64');
     } else {
-      content = file.content;
+      content = Buffer.from(file.content, 'utf8');
     }
 
     if (content.length !== file.bytes) {
