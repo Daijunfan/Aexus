@@ -1,5 +1,9 @@
 # Deep Research Schema Fix - "[object Object]" Issue
 
+> 历史实现记录（2026-10-09 标记）：本文描述旧维度格式修复与当时测试，
+> 不代表当前动态团队/DAG 的完整验收。当前行为见
+> [README](README.md) 与 [独立审核](../../Infra/src/docs/DEEP_RESEARCH_REVIEW.zh-CN.md)。
+
 ## 问题描述
 
 在 deep-research workflow 中，当 Agent 返回的 `questions` 数组包含对象而不是字符串时，normalization 代码会将其转换为字面字符串 `"[object Object]"`，导致 `dimension.query` 字段无效。

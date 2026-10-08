@@ -1,415 +1,120 @@
-# Deep Research 2.0 — Multi-Agent Research Engine
+# Deep Research
 
-一个强大的多 Agent 研究系统，提供实时进度展示、专业动画效果和完整的 Web UI。
+Aexus 的独立研究 Engine，版本 `2.0.0`，公开 Contract `1.0.0`。
+先进行初步调研，再生成团队与有向无环图（DAG）计划；执行期间可以补充问题、
+调整计划并保留已完成工作的记录。人员数量、Manager 数量和研究分支由计划决定，
+受用户设置的预算约束。
 
-## 🌟 核心特性
+## 使用
 
-### 多 Agent 协作
-- **研究协调员 (Coordinator)**: 规划研究路线，协调整体流程
-- **深度研究员 (Researcher)**: 搜索和收集来源
-- **证据核验员 (Verifier)**: 交叉验证信息，检测矛盾
-- **知识综合员 (Synthesizer)**: 整合发现，构建知识图谱
-- **报告撰写员 (Writer)**: 撰写结构化研究报告
+在 Aexus 的 Engine library 选择并加载 Deep Research，填写研究问题即可开始。
+原生 Agent 必须已经在 Infra 配置并就绪；研究任务使用该配置，可能产生模型费用。
+Engine 不自行安装模型或配置服务商，也不能根据服务商名称证明使用了中转站额度。
 
-### 研究范围
-- **Quick** (5-10 分钟): 快速概览
-- **Comprehensive** (10-20 分钟): 全面调查 [默认]
-- **Deep** (20-40 分钟): 深度分析
-- **Academic** (40+ 分钟): 学术研究
+初步调研与规划期间显示不确定进度。计划确认后，同时显示 DAG 和当前计划的
+加权任务完成比例。这个比例不是剩余时间预测，也不是来源数量除以来源预算；
+增加任务或重规划时可以降低，全部完成并交付后才到 100%。
 
-### 实时监控
-- 实时进度跟踪
-- 动画状态指示器
-- 进度条和统计数据
-- Worker 状态可视化
-- 研究维度展示
+默认需要用户确认计划；可在高级设置中选择自动确认。运行期间可暂停、补充要求、
+继续或停止，也可检查具体任务、员工、计划版本、来源、矛盾和报告。
+重规划保留相同任务的结果，归档被替代节点；已开始任务不能用同一 ID 改写。
 
-## 🚀 快速开始
+## 公开接口
 
-### CLI 使用
+生产 UI、CLI 和运行时通过 `ContractClient` 使用现有 `workflow.*`、
+`session.*` 与管理能力，不读取 Infra Store 或数据库。
+接口与输入定义见 [engine.json](engine.json)、[Contract](../../Contract/README.md)
+和 [工作流协议](../../Contract/WORKFLOWS.md)。
 
-```bash
-# 启动新研究
-Engine/deep-research/cli.mjs start \
-  --topic "AI breakthroughs in 2024" \
-  --scope quick \
-  --request-id req-001
-
-# 实时监控研究进度（带动画）
-Engine/deep-research/monitor.mjs <workflow-id>
-
-# 查看研究状态
-Engine/deep-research/cli.mjs get --id <workflow-id>
-
-# 下载研究报告
-Engine/deep-research/cli.mjs download \
-  --id <workflow-id> \
-  --output report.html
-```
-
-### Web UI 使用
-
-```bash
-# 启动 Web 服务器
-Engine/deep-research/web/server.mjs
-
-# 打开浏览器访问
-open http://localhost:3000
-```
-
-Web UI 特性：
-- 🎨 现代化渐变设计
-- 📊 实时进度更新
-- 🎬 流畅动画效果
-- 📱 响应式布局
-- 🔄 自动刷新状态
-
-## 📊 实时监控界面
-
-### CLI 监控器特性
-- ✨ 多种动画 spinner（dots, pulse, arrow, etc）
-- 🎨 颜色编码状态指示
-- 📈 实时进度条
-- ⏱️ 持续时间跟踪
-- 👥 Worker 状态可视化
-- 📋 任务时间线
-
-### Web UI 特性
-- 🌊 平滑淡入动画
-- 💓 脉冲动画（活跃 worker）
-- ✨ 闪烁效果（运行中任务）
-- 📊 实时统计计数器
-- 🎯 研究维度展示
-- 🎭 阶段转换动画
-
-## 🏗️ 架构设计
-
-### Engine 引擎支持
-系统支持多种 AI 引擎：
-- **Codex**: Codex App Server
-- **Cline**: Cline ACP with DeepSeek
-- **Pi**: Pi RPC with DeepSeek
-- **Claude**: Claude Agent SDK (支持 Anthropic API)
-
-### 研究流程
-
-```
-初始化 → 规划 → 研究 → 验证 → 综合 → 撰写 → 审查 → 完成
-   ↓        ↓      ↓      ↓      ↓       ↓      ↓      ↓
-  创建    制定   收集   交叉   构建   撰写   质量   生成
- Workers  计划   来源   验证   图谱   报告   审查   报告
-```
-
-### 数据流
-
-```
-User Input
-    ↓
-Coordinator (规划调查维度)
-    ↓
-Researcher (并行搜索来源)
-    ↓
-Verifier (验证证据强度)
-    ↓
-Synthesizer (整合知识)
-    ↓
-Writer (撰写报告)
-    ↓
-Final Report
-```
-
-## 🎯 JSON 格式规范
-
-### Plan Task（规划任务）
-
-**推荐格式**（最简洁）：
-```json
-{
-  "taskId": "wf_xxx/research-plan",
-  "dimensions": [
-    {
-      "id": "D1",
-      "query": "大语言模型推理能力突破",
-      "rationale": "推理是 2024 年的重要研究方向"
-    }
-  ],
-  "strategy": "重点关注 reasoning, multimodal, efficiency",
-  "estimatedTime": 15
-}
-```
-
-**也支持的格式变体**：
-
-系统会自动规范化以下格式：
-
-1. **使用 questions 数组**（会取第一个问题）：
-```json
-{
-  "taskId": "wf_xxx/research-plan",
-  "dimensions": [
-    {
-      "id": "D1",
-      "questions": [
-        "大语言模型推理能力有哪些突破？",
-        "主要的技术路线是什么？"
-      ],
-      "priority": "high"
-    }
-  ]
-}
-```
-
-2. **使用 keyQuestions 或 key_questions**：
-```json
-{
-  "dimensions": [
-    {
-      "keyQuestions": ["问题1", "问题2"]
-    }
-  ]
-}
-```
-
-3. **questions 数组包含对象**（会提取 text 字段）：
-```json
-{
-  "dimensions": [
-    {
-      "questions": [
-        { "text": "问题1", "priority": "high" },
-        { "question": "问题2" }
-      ]
-    }
-  ]
-}
-```
-
-4. **使用 name 作为 query**：
-```json
-{
-  "dimensions": [
-    { "name": "推理能力研究" }
-  ]
-}
-```
-
-5. **字段名变体**：
-- `researchDimensions` → `dimensions`
-- `research_dimensions` → `dimensions`
-
-### Research Task（研究任务）
-
-```json
-{
-  "taskId": "wf_xxx/search-dim-0",
-  "sources": [
-    {
-      "type": "web",
-      "title": "OpenAI o1: Learning to Reason",
-      "url": "https://openai.com/...",
-      "snippet": "关键内容摘要..."
-    }
-  ]
-}
-```
-
-## 🔧 配置选项
-
-### 研究参数
-- `topic`: 研究主题（必需）
-- `scope`: 研究范围（quick/comprehensive/deep/academic）
-- `maxSources`: 最大来源数量（默认 50）
-- `languages`: 语言列表（默认 ["zh-CN", "en"]）
-- `autoApprove`: 自动批准计划（默认 false）
-
-### 监控参数
-- `refreshInterval`: 刷新间隔（CLI monitor，默认 2000ms）
-- API polling: Web UI 每 2 秒自动更新
-
-## 🎨 动画效果
-
-### CLI 动画
-- **Spinner 类型**:
-  - `dots`: ⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏
-  - `pulse`: ⣾⣽⣻⢿⡿⣟⣯⣷
-  - `arrow`: ←↖↑↗→↘↓↙
-  - `circle`: ◐◓◑◒
-
-### Web UI 动画
-- **fadeIn**: 元素淡入（0.5s ease）
-- **pulse**: 脉冲效果（2s infinite）
-- **shimmer**: 闪烁效果（2s infinite）
-- **spin**: 旋转加载（1s linear infinite）
-
-## 📈 性能优化
-
-### Checkpoint 机制
-- 自动保存研究进度
-- 支持断点恢复
-- 增量更新状态
-
-### 并行处理
-- 多维度并行研究
-- Worker 并发执行
-- 异步任务调度
-
-### 错误处理
-- 自动重试机制
-- 格式修复（format-fix）
-- 超时保护（15 分钟）
-
-## 🛠️ 开发指南
-
-### 添加新的任务类型
-
-在 `agents.mjs` 的 `getTaskInstructions()` 中添加：
-
-```javascript
-myTask: `任务描述
-
-返回 JSON 格式：
-{
-  "taskId": "原样返回",
-  "result": { /* 任务结果 */ }
-}`,
-```
-
-### 添加新的验证函数
-
-在 `runtime.mjs` 中添加：
-
-```javascript
-function validateMyTask(result) {
-  if (!result || !result.someField) {
-    throw Error('验证失败');
-  }
-  return {
-    someField: result.someField,
-    // ... 标准化结构
-  };
-}
-```
-
-### 自定义 Worker 角色
-
-在 `model.mjs` 的 `initialize()` 中修改 `workers` 数组。
-
-## 🐛 问题排查
-
-### 常见问题
-
-1. **Agent 初始化失败**
-   - 检查引擎配置（`engine list`）
-   - 验证 API key 是否设置
-   - 查看 transcript（`session transcript <id>`）
-
-2. **JSON 解析错误**
-   - Agent 返回的 JSON 格式不正确
-   - 查看任务失败日志
-   - 使用 format-fix 自动重试
-
-3. **研究停滞**
-   - 检查 worker 状态（`session status <id>`）
-   - 查看任务超时设置
-   - 重启 Aexus 服务
-
-### 日志查看
-
-```bash
-# 查看 worker transcript
-node Infra/src/cli/agents session transcript <worker-id>
-
-# 查看 worker 状态
-node Infra/src/cli/agents session status <worker-id>
-
-# 查看研究详情
-Engine/deep-research/cli.mjs get --id <workflow-id>
-```
-
-## 🎯 最佳实践
-
-### 研究主题
-- ✅ 清晰具体："2024 年量子计算硬件突破"
-- ❌ 模糊宽泛："科技发展"
-
-### 范围选择
-- **Quick**: 快速了解概况
-- **Comprehensive**: 日常研究需求
-- **Deep**: 重要决策参考
-- **Academic**: 学术论文准备
-
-### 监控策略
-- 使用 CLI monitor 进行深度跟踪
-- 使用 Web UI 进行日常监控
-- 长时间研究建议后台运行
-
-## 📝 API 文档
-
-### HTTP API
-
-```bash
-# 启动研究
-POST /api/research/start
-Content-Type: application/json
-
-{
-  "topic": "研究主题",
-  "scope": "quick"
-}
-
-# 获取状态
-GET /api/research/<workflow-id>
-
-# 列出所有研究
-GET /api/research
-```
-
-### Node.js Client
-
-```javascript
-import { createNodeClient } from './Contract/node-client.mjs';
+```js
+import { createNodeClient } from '../../Contract/node-client.mjs';
 
 const client = createNodeClient();
-
-// 启动研究
-const result = await client.invoke('workflow.start', {
+const job = await client.invoke('workflow.start', {
   engineId: 'deep-research',
-  input: { topic: '...', scope: 'quick' },
-  clientRequestId: 'req-001'
+  clientRequestId: 'research-request-001',
+  input: {
+    topic: '比较家用储能的成本、寿命与安全性，并引用原始资料',
+    scope: 'comprehensive',
+    maxSources: 80,
+    team: { maxWorkers: 12, maxManagers: 4, maxConcurrency: 4 }
+  }
 });
-
-// 获取状态
-const status = await client.invoke('workflow.get', {
-  id: result.id
-});
+const current = await client.invoke('workflow.get', { id: job.id });
 ```
 
-## 🚀 路线图
+创建被接受不等于研究完成。修改请求使用最新 `expectedRevision` 与稳定的
+`clientRequestId`；响应丢失时保留同一请求键。计划确认通过
+`workflow.respond` 的 `answer: { action: 'approve-plan' }` 提交。
+暂停、补充要求和恢复分别使用 `workflow.pause`、`workflow.amend`、
+`workflow.resume`；具体参数遵循工作流协议。
 
-### 已完成
-- ✅ 多 Agent 协作架构
-- ✅ 实时 CLI 监控器
-- ✅ Web UI 界面
-- ✅ 动画效果系统
-- ✅ JSON 格式规范
-- ✅ 错误恢复机制
+CLI 是同一公开接口的可选客户端，从项目根目录运行：
 
-### 计划中
-- 🔄 知识图谱可视化
-- 🔄 来源网络图
-- 🔄 报告导出格式（PDF, Markdown）
-- 🔄 研究历史管理
-- 🔄 协作批注功能
-- 🔄 AI 辅助问答
+```sh
+node Engine/deep-research/cli.mjs --help
+node Engine/deep-research/cli.mjs list
+node Engine/deep-research/cli.mjs get --id WORKFLOW_ID
+node Engine/deep-research/cli.mjs download --id COMPLETED_ID --output report.html
+```
 
-## 📄 License
+`start --input @input.json --request-id KEY` 支持完整输入，执行时会调用配置的模型。
+CLI `download` 当前下载第一个最终文件，按 UTF-8/base64 解码后校验字节数，
+并拒绝覆盖已有文件。其他文件通过 UI 或 `workflow.file` 读取。
 
-MIT
+## 预算与证据
 
-## 🤝 贡献
+| 参数 | 默认值 | 范围 |
+| --- | --- | --- |
+| `maxSources` | 80 | 10-1000 |
+| `team.maxWorkers` | 12 | 2-64，包含 Manager |
+| `team.maxManagers` | 4 | 1-16 |
+| `team.maxConcurrency` | 4 | 1-32 |
+| `maxTasks` | 128 | 4-512 |
+| `maxReplans` | 3 | 0-20 |
 
-欢迎提交 Issue 和 Pull Request！
+这些是上限，不是必须创建的人员或必须搜集的来源数。`scope` 支持
+`quick`、`comprehensive`、`deep`、`academic`，不承诺固定完成时间。
+背景材料为 `materials: [{ name, content }]`，最多 10 份，每份最多 200,000
+字符；当前没有本地 Office/PDF 上传解析接口。
 
----
+Agent 发现来源后，Engine 独立请求公开 HTTP(S) 原文，核对每个证据片段，
+保存内容哈希、获取时间与最终 URL。Agent 自报的读取状态不能代替独立读取证明。
+同一 URL 上无法匹配的片段保留拒绝原因，不能借用其他片段的证明进入引用。
 
-**Deep Research 2.0** — Powered by Multi-Agent Architecture
+支持公开 HTML、纯文本/JSON 和带文本层的 PDF。网页最多 4 MiB；PDF 最多
+8 MiB、80 页、800,000 个提取字符，不支持 OCR 或加密 PDF。
+无法读取、付费墙或未匹配来源保留状态与限制，不伪造成功读取。
+精确片段匹配保证出处可追查；事实是否成立、来源是否可靠仍需要语义核验和审阅。
+
+## 交付与架构
+
+只有通过证据约束并完成最终审查后才发布文件：
+
+- `research-report.html`：完整报告、章节、可跳转引用与原文证据。
+- `research-report.md`：可编辑报告与引用。
+- `sources.csv`：全部来源及读取、核验状态。
+- `evidence.json`：来源、论断、原文、矛盾与读取证明。
+- `research-plan.json`：DAG、团队及计划修订记录。
+
+当前没有原生 Word/PDF 导出、完成后派生研究或协作批注。
+浏览器打印 HTML 不等于已实现原生 PDF 导出。
+
+`Page.tsx`、图与阅读组件负责独立 UI；`model.mjs` 管理状态和控制；
+`schema.mjs`、`graph.mjs` 校验团队/无环依赖并维护计划版本；
+`agents.mjs` 复用原生员工与确切任务身份；`runtime.mjs` 执行就绪节点；
+`source-read.mjs`、`source-pdf.mjs` 独立读取原文；`evidence.mjs` 建立证据约束；
+`reports.mjs` 生成最终文件。checkpoint 与文件发布由 Host 托管，
+新状态不重复保存最终文件正文。旧维度计划保留兼容迁移。
+
+## 验证与边界
+
+研发验证记录见 [独立审核](../../Infra/src/docs/DEEP_RESEARCH_REVIEW.zh-CN.md)
+与 [对标研究](../../Infra/src/docs/DEEP_RESEARCH_BENCHMARK.zh-CN.md)。
+领域、Host 恢复、独立原文、浏览器及实际打包验证各有不同证据范围。
+确定性模型夹具、原文匹配、通过构建或成功安装均不能证明真实模型研究质量，
+也不能证明优于官方网页端产品。
+
+`STATUS.md`、`SUMMARY.md`、`SCHEMA_FIX_SUMMARY.md` 以及旧 `web/`、监控与调试
+脚本记录先前实现，不是当前产品验收标准。项目使用 `GPL-3.0-only`；
+第三方库保留各自许可证与声明。

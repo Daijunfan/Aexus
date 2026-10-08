@@ -1,5 +1,9 @@
 # Deep Research 2.0 - 当前状态和改进报告
 
+> 历史实现记录（2026-10-09 标记）：本文固定五角色、线性流程和质量评分描述旧版实现，
+> 不适用于当前动态团队/DAG，也不构成生产质量保证。当前行为见
+> [README](README.md) 与 [独立审核](../../Infra/src/docs/DEEP_RESEARCH_REVIEW.zh-CN.md)。
+
 ## 📋 执行摘要
 
 Deep Research 2.0 是一个功能完整的多 Agent 研究系统，具备：
