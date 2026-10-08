@@ -134,28 +134,39 @@ export function retry(state){
  }
  syncAttention(state);return state
 }
+const activeTurn=status=>!!(status?.busy||status?.waitingApproval||status?.acknowledging)
+async function ownedMessage(task,ctx){
+ if(task.receipt?.messageId)return task.receipt.messageId
+ const history=await ctx.client.invoke('session.transcript',{employee:task.employeeId})
+ const ids=[...new Set((history.shown??history.items??[]).filter(item=>item.role==='user'&&typeof task.prompt==='string'&&item.text===task.prompt&&item.outbound?.taskId).map(item=>item.outbound.taskId))]
+ if(ids.length>1)throw Error('原生任务回执存在歧义；保留状态，请到 Infra 核对，未中断任何不确定任务')
+ if(ids[0])task.receipt={sent:true,messageId:ids[0]}
+ return ids[0]
+}
 export async function cancel(state,ctx){
  for(const task of Object.values(state.tasks))if(task.status!=='completed'){
-  let messageId=task.receipt?.messageId
-  if(!messageId){const history=await ctx.client.invoke('session.transcript',{employee:task.employeeId});messageId=(history.shown??history.items).find(item=>item.role==='user'&&item.text===task.prompt)?.outbound?.taskId}
-  const status=(await ctx.client.invoke('session.status',{employee:task.employeeId}))[0]
-  if(messageId&&status?.busy&&status.currentTask?.messageId===messageId)await ctx.client.invoke('session.interrupt',{employee:task.employeeId,expectedMessageId:messageId})
+  ctx.signal.throwIfAborted()
+  const messageId=await ownedMessage(task,ctx),status=(await ctx.client.invoke('session.status',{employee:task.employeeId}))[0]
+  if(!activeTurn(status))continue
+  if(!status.currentTask?.messageId){if(messageId||task.transportUncertain)throw Error('原生任务尚未返回可核对编号；请重试停止，未强行中断未知任务');continue}
+  if(messageId&&status.currentTask.messageId===messageId)await ctx.client.invoke('session.interrupt',{employee:task.employeeId,expectedMessageId:messageId})
+  else if(!messageId&&task.transportUncertain)throw Error('尚无法确定丢失回执的任务是否仍在执行；请重试停止，不能直接恢复')
  }
 }
-
 export async function pause(state,ctx){
  await cancel(state,ctx)
- // Wait until the exact owned task has stopped. An unrelated task is never interrupted.
  for(const task of Object.values(state.tasks))if(task.status!=='completed'){
   const messageId=task.receipt?.messageId,deadline=Date.now()+10000
   while(messageId){
+   ctx.signal.throwIfAborted()
    const status=(await ctx.client.invoke('session.status',{employee:task.employeeId}))[0]
-   if(!status?.busy||status.currentTask?.messageId!==messageId)break
+   if(!activeTurn(status))break
+   if(status.currentTask?.messageId&&status.currentTask.messageId!==messageId)break
    if(Date.now()>deadline)throw Error('原生任务尚未确认停止，请再次暂停后重试')
    await delay(150,ctx.signal)
   }
-  // An uncertain send retains its request ID and must be reconciled, never blindly resent.
-  if(task.transportUncertain){task.status='failed'}else{task.status='paused';delete task.timeout}
+  if(task.transportUncertain)task.status='failed'
+  else{task.status='paused';delete task.timeout}
  }
  state.attention=null;state.pausedForOwner=true
 }

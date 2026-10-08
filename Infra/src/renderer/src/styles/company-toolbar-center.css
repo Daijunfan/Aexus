@@ -1,0 +1,2 @@
+/* Individual translation does not override legacy media transforms or menu anchoring. */
+html .infra-surface>.infra-toolbar>.company-navigation{translate:var(--company-center-offset,0px) 0}

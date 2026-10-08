@@ -74,6 +74,104 @@
       "documentation": "Infra/src/docs/API.md"
     },
     {
+      "name": "workflow.prepare",
+      "summary": "Normalize explicitly provided Engine input without creating employees, running models or saving a workflow",
+      "permission": "operator",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "engineId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "engineId",
+          "input"
+        ]
+      },
+      "schemaSource": "registry",
+      "readOnly": true,
+      "effect": "read",
+      "domain": "runtime",
+      "transport": "request",
+      "documentation": "Infra/src/docs/API.md"
+    },
+    {
+      "name": "workflow.fork",
+      "summary": "Create a distinct caller-owned follow-up from a completed workflow; preserve the original report, lineage and idempotent request identity",
+      "permission": "operator",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "input": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "clientRequestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "id",
+          "expectedRevision",
+          "input",
+          "clientRequestId"
+        ]
+      },
+      "schemaSource": "registry",
+      "readOnly": false,
+      "effect": "write",
+      "domain": "runtime",
+      "transport": "request",
+      "documentation": "Infra/src/docs/API.md"
+    },
+    {
+      "name": "workflow.export",
+      "summary": "Render one supported alternate final format from an approved completed workflow; no model call or modification to the original delivery",
+      "permission": "operator",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "format": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,24}$"
+          }
+        },
+        "required": [
+          "id",
+          "format"
+        ]
+      },
+      "schemaSource": "registry",
+      "readOnly": true,
+      "effect": "read",
+      "domain": "runtime",
+      "transport": "request",
+      "documentation": "Infra/src/docs/API.md"
+    },
+    {
       "name": "workflow.start",
       "summary": "Start an installed Engine workflow durably as the authenticated caller; same request ID never creates a second job",
       "permission": "operator",

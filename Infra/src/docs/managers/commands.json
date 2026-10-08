@@ -346,6 +346,98 @@
     "target": "request"
   },
   {
+    "name": "workflow.prepare",
+    "args": "--engine-id ID --input JSON",
+    "summary": "Normalize explicitly provided Engine input without creating employees, running models or saving a workflow",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engineId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "engineId",
+        "input"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": true,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "workflow.fork",
+    "args": "ID --expected-revision N --input JSON --client-request-id ID",
+    "summary": "Create a distinct caller-owned follow-up from a completed workflow; preserve the original report, lineage and idempotent request identity",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "clientRequestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      },
+      "required": [
+        "id",
+        "expectedRevision",
+        "input",
+        "clientRequestId"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "workflow.export",
+    "args": "ID --format FORMAT",
+    "summary": "Render one supported alternate final format from an approved completed workflow; no model call or modification to the original delivery",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,24}$"
+        }
+      },
+      "required": [
+        "id",
+        "format"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": true,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
     "name": "workflow.start",
     "args": "--engine-id ID --input JSON --client-request-id ID",
     "summary": "Start an installed Engine workflow durably as the authenticated caller; same request ID never creates a second job",
@@ -399,8 +491,8 @@
   },
   {
     "name": "workflow.get",
-    "args": "ID",
-    "summary": "Read durable status, clarification questions and final-file manifest; reading does not run a task",
+    "args": "ID [--if-revision N]",
+    "summary": "Read durable status and final files, or unchanged:true at the supplied revision; never runs or acknowledges a task",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -408,6 +500,10 @@
         "id": {
           "type": "string",
           "minLength": 1
+        },
+        "ifRevision": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "required": [

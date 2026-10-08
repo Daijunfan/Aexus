@@ -3,7 +3,7 @@
   "name": "Deep Research",
   "version": "1.3.0",
   "contractVersion": "1.0.0",
-  "description": "多 Agent 并行研究、PDF/网页原文核验、独立审查及实时进度；支持可编辑计划、暂停修订与可追溯报告交付。",
+  "description": "多 Agent 并行研究、逐条证据核验、可控研究进度、文档资料导入、独立审查与 Word/PDF 报告；支持保留原件的后续研究。",
   "ui": "Page.tsx",
   "cli": "cli.mjs",
   "runtime": "runtime.mjs",
@@ -26,7 +26,10 @@
     "session.interrupt",
     "view.open",
     "workflow.pause",
-    "workflow.amend"
+    "workflow.amend",
+    "workflow.prepare",
+    "workflow.fork",
+    "workflow.export"
   ],
   "inputSchema": {
     "type": "object",
@@ -130,6 +133,10 @@
             "text": {
               "type": "string",
               "maxLength": 80000
+            },
+            "provenance": {
+              "type": "object",
+              "additionalProperties": true
             }
           }
         }

@@ -173,6 +173,74 @@
       ]
     ]
   },
+  "workflow.prepare": {
+    "fields": [
+      [
+        "engineId",
+        "engine-id",
+        "text",
+        true,
+        false
+      ],
+      [
+        "input",
+        "input",
+        "json",
+        true,
+        false
+      ]
+    ]
+  },
+  "workflow.fork": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        true,
+        false
+      ],
+      [
+        "input",
+        "input",
+        "json",
+        true,
+        false
+      ],
+      [
+        "clientRequestId",
+        "client-request-id",
+        "text",
+        true,
+        false
+      ]
+    ]
+  },
+  "workflow.export": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "format",
+        "format",
+        "text",
+        true,
+        false
+      ]
+    ]
+  },
   "workflow.start": {
     "fields": [
       [
@@ -215,6 +283,13 @@
         "id",
         0,
         "text",
+        false,
+        false
+      ],
+      [
+        "ifRevision",
+        "if-revision",
+        "number",
         false,
         false
       ]

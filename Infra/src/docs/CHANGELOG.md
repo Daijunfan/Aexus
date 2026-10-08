@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.62.0 — 多 Agent 文档研究、交付与居中视图
+
+增加研究任务逐 Agent 进度、Core 文档准备和 Word/PDF 导出、后续研究与来源关联；修复完整摘录核验漏洞，扩充 Infra/Contract API、CLI 和 Manager 文档。Company 三视图按钮相对窗口中心布局并提供狭窄空间避让。详见 [更新记录](releases/0.62.0.zh-CN.md)。
+
 ## 0.61.0 — Deep Research PDF 与实时多 Agent 工作台
 
 Deep Research 1.3.0：本地 PDF 参考材料、公开 PDF 摘录独立核验、逐 Agent 真实任务轨、事件驱动进度更新；Infra 增补工作流变更订阅桥接及 Web `.mjs` MIME，Company 顶部三个视图按钮等宽居中的多分辨率验收继续通过。详见 [更新记录](releases/0.61.0.zh-CN.md)。

@@ -1,4 +1,5 @@
 import {assertSourceAllowed} from './policy.mjs'
+import {prepare} from './documents.mjs'
 import http from 'node:http'
 import https from 'node:https'
 import dns from 'node:dns'
@@ -48,20 +49,34 @@ function retrieve(value,signal,redirects=0,policy={}){
    response.on('error',reject);response.on('end',()=>{
     const raw=Buffer.concat(chunks),asPdf=isPdf(raw)
     if(!html&&!asPdf){reject(Error('文件缺少可解析的 PDF 结构'));return}
-    resolve({url,body:asPdf?raw:raw.toString('utf8'),bytes:size,mediaType:asPdf?'application/pdf':mediaType})
+    resolve({url,body:asPdf?raw:raw.toString('utf8'),data:raw,bytes:size,mediaType:asPdf?'application/pdf':mediaType.split(';')[0].trim()})
    })
   })
   const deadline=setTimeout(()=>request.destroy(Error('资料核验超过总时限')),20000);deadline.unref?.();request.once('close',()=>clearTimeout(deadline));
   request.on('error',reject);request.setTimeout(15000,()=>request.destroy(Error('资料核验超时')));request.end()
  })
 }
-export function readSource(url,{signal,policy={}}={}){return retrieve(url,signal,0,policy)}
+export async function readSource(url,{signal,policy={}}={}){
+ const fetched=await retrieve(url,signal,0,policy)
+ if(fetched.mediaType!=='application/pdf')return fetched
+ const parsed=await prepare({files:[{name:'source.pdf',encoding:'base64',content:fetched.data.toString('base64')}]},{signal})
+ return {...fetched,body:'',text:parsed.materials[0].text,document:parsed.materials[0].provenance}
+}
 export async function verifySource(candidate,{signal,read,policy={}}={}){
- const url=assertSourceAllowed(publicURL(candidate.url),policy),quote=sourceQuote(candidate.quote)
+ const url=assertSourceAllowed(publicURL(candidate.url),policy),fullQuote=normalize(candidate.quote),quote=sourceQuote(fullQuote)
+ if(!fullQuote||fullQuote.length>350)throw Error('证据摘录缺失或过长')
  if(quote.length<18)throw Error('证据摘录过短，无法可靠核对')
  const fetched=await (read?read(url,signal):retrieve(url,signal,0,policy));assertSourceAllowed(publicURL(fetched.url),policy)
- const pdf=isPdf(fetched.body),body=pdf?await extractPdfText(fetched.body,{signal}):pageText(fetched.body)
- if(!body.toLocaleLowerCase().includes(normalize(quote).toLocaleLowerCase()))throw Error('来源页面未找到所引摘录；该引用不得进入最终报告')
+ const pdf=isPdf(fetched.body)||fetched.mediaType==='application/pdf',body=pdf?(fetched.text?normalize(fetched.text):await extractPdfText(fetched.body,{signal})):pageText(fetched.body)
+ // Verify the complete submitted quotation; checking only a shortened preview
+ // would incorrectly accept a fabricated suffix and contaminate citations.
+ if(!body.toLocaleLowerCase().includes(fullQuote.toLocaleLowerCase()))throw Error('来源页面未找到所引摘录；该引用不得进入最终报告')
  const title=normalize(decode(pdf?candidate.title:(fetched.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]??candidate.title)))
- return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',format:pdf?'pdf':'web',retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}
+ return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',format:pdf?'pdf':'web',...(fetched.document?{document:fetched.document,locator:documentLocator(fetched.text,quote)}:{}),retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.data??fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}
+}
+
+function documentLocator(text,quote){
+ const pages=[...String(text??'').matchAll(/\[Page (\d+)\]\n([\s\S]*?)(?=\n\n\[Page \d+\]|$)/g)]
+ const page=pages.find(([,number,body])=>normalize(body).toLocaleLowerCase().includes(quote.toLocaleLowerCase()))
+ return page?{page:Number(page[1])}:null
 }

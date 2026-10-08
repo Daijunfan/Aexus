@@ -1,4 +1,4 @@
-import {publicURL,normalize,sourceQuote,verifySource,readSource} from './sources.mjs'
+import {publicURL,normalize,verifySource,readSource} from './sources.mjs'
 import {assertSourceAllowed} from './policy.mjs'
 
 const unique=values=>[...new Set(values.filter(Boolean))]
@@ -17,7 +17,7 @@ function mergeSource(state,verified,contributions){
  source.excerpts??=[{quote:source.quote,sha256:source.sha256,retrievedAt:source.retrievedAt,engines:[],workerIds:[],taskIds:[]}]
  let excerpt=source.excerpts.find(item=>stampKey(item)===stampKey(verified))
  if(!excerpt){
-  excerpt={quote:verified.quote,sha256:verified.sha256,retrievedAt:verified.retrievedAt,engines:[],workerIds:[],taskIds:[]}
+  excerpt={quote:verified.quote,sha256:verified.sha256,retrievedAt:verified.retrievedAt,...(verified.locator?{locator:verified.locator}:{}),engines:[],workerIds:[],taskIds:[]}
   source.excerpts.push(excerpt)
  }
  excerpt.engines=unique([...(excerpt.engines??[]),...contributions.map(c=>c.engine)])
@@ -43,7 +43,8 @@ export async function absorb(state,ctx,researches,{read,accumulate=false}={}){
  }
  for(const [index,submission] of researches.entries())for(const candidate of submission.result.sources){
   try{
-   const url=assertSourceAllowed(publicURL(candidate.url),state.sourcePolicy),quote=sourceQuote(candidate.quote)
+   const url=assertSourceAllowed(publicURL(candidate.url),state.sourcePolicy),quote=normalize(candidate.quote)
+   if(!quote||quote.length>350)throw Error('证据摘录缺失或过长')
    const key=url+'\n'+normalize(quote).toLocaleLowerCase()
    if(!candidates.has(key)){candidates.set(key,{candidate:{...candidate,url},contributions:[]});state.verification.total++}
    candidates.get(key).contributions.push({index,engine:submission.engine,workerId:submission.workerId,taskId:submission.taskId})

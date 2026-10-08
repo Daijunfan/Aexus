@@ -23,20 +23,24 @@ try{
   const boxes=await page.evaluate(()=>{
    const surface=document.querySelector('.infra-toolbar'),nav=surface?.querySelector('.company-navigation')
    if(!surface||!nav)throw Error('Company navigation unavailable')
-   const s=surface.getBoundingClientRect(),n=nav.getBoundingClientRect()
-   return {surfaceCenter:s.x+s.width/2,navCenter:n.x+n.width/2,navWidth:n.width,
+   const s=surface.getBoundingClientRect(),n=nav.getBoundingClientRect(),r=surface.closest('.aexus-home').getBoundingClientRect()
+   const actions=surface.querySelector('.company-actions')?.getBoundingClientRect()
+   return {windowCenter:r.x+r.width/2,navCenter:n.x+n.width/2,navLeft:n.left,navRight:n.right,toolbarLeft:s.left,toolbarRight:s.right,navWidth:n.width,alignment:surface.dataset.navigationAlignment,
+    collision:!!actions&&n.right>actions.left&&n.bottom>actions.top&&n.left<actions.right,
     actualWidth:window.innerWidth,buttonCount:nav.querySelectorAll('.app-view-button').length,
     overflow:nav.scrollWidth>nav.clientWidth+1}
   })
   assert.equal(boxes.buttonCount,3,'Company navigation keeps three top actions')
-  assert.ok(Math.abs(boxes.surfaceCenter-boxes.navCenter)<=2,
-   'Company navigation centered at '+width+': '+JSON.stringify(boxes))
-  assert.ok(!boxes.overflow,'no navigation overflow at '+width)
+  assert.ok(boxes.alignment==='available-space'||Math.abs(boxes.windowCenter-boxes.navCenter)<=2,
+   'Company navigation aligned at '+width+': '+JSON.stringify(boxes))
+  assert.ok(boxes.navLeft>=boxes.toolbarLeft-1&&boxes.navRight<=boxes.toolbarRight+1,
+   'Company navigation must remain visible at '+width+': '+JSON.stringify(boxes))
+  assert.ok(!boxes.collision&&!boxes.overflow,'no collisions or navigation overflow at '+width)
   return boxes
  }
  for(const width of [1440,1220,1100,980,820,700,600,480]){
   const result=await check(width)
-  console.log('PASS centered '+width+' (actual '+result.actualWidth+', delta '+Math.round(result.navCenter-result.surfaceCenter)+'px)')
+  console.log('PASS centered '+width+' (actual '+result.actualWidth+', alignment '+result.alignment+', delta '+Math.round(result.navCenter-result.windowCenter)+'px)')
  }
 }finally{
  if(app)await app.close()
