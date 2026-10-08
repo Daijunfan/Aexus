@@ -326,12 +326,36 @@ export async function ask(state, ctx, key, role, kind, payload, validate) {
     // Retry with format correction if it's a format error
     if (state.tasks[key]?.failureKind !== 'format') throw error;
 
-    return execute(state, ctx, key + '-format-fix', worker, kind, {
+    // Build detailed correction instructions
+    const correctionPayload = {
       ...payload,
-      formatCorrection: error.message,
-      previousInstruction: '保留事实，修正结构；不要解释修复过程，只返回完整 JSON。'
-    }, validate);
+      formatCorrection: true,
+      previousError: error.message,
+      correctionInstructions: buildCorrectionInstructions(kind, error.message)
+    };
+
+    return execute(state, ctx, key + '-format-fix', worker, kind, correctionPayload, validate);
   }
+}
+
+/**
+ * Build detailed correction instructions based on error
+ */
+function buildCorrectionInstructions(kind, errorMessage) {
+  let instructions = '你之前的响应格式不正确。请修正以下问题：\n\n';
+  instructions += errorMessage + '\n\n';
+  instructions += '请重新生成完整的响应，严格按照要求的格式。\n';
+  instructions += '**不要解释错误或修复过程，只返回完整正确的 JSON。**\n\n';
+
+  if (kind === 'plan') {
+    instructions += '特别注意：\n';
+    instructions += '1. 字段名必须是 "dimensions"，不要使用 "researchDimensions"\n';
+    instructions += '2. 每个 dimension 必须包含 "query" 字段（字符串类型）\n';
+    instructions += '3. 不要包含 questions 数组、platforms、verifiedSeeds 等额外字段\n';
+    instructions += '4. 保持结构简洁，只包含必需的字段\n';
+  }
+
+  return instructions;
 }
 
 /**
@@ -406,6 +430,15 @@ function buildPrompt(state, taskId, kind, payload) {
     '只使用用户明确提供的材料和你通过工具获得的验证信息。',
     '所有来源必须可验证，引用必须准确，不得编造数据。'
   ];
+
+  // If this is a format correction retry, add correction instructions first
+  if (payload.formatCorrection && payload.correctionInstructions) {
+    base.push('');
+    base.push('⚠️ **格式纠正任务** ⚠️');
+    base.push('');
+    base.push(payload.correctionInstructions);
+    base.push('');
+  }
 
   // Add task-specific instructions based on kind
   const instructions = getTaskInstructions(kind, payload);

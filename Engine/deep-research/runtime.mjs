@@ -1,6 +1,7 @@
 /** Deep Research runtime - orchestrates multi-agent research workflow */
 import { create, describe, respond, retry, ENGINE_ID, parseAnswer } from './model.mjs';
 import { provision, ask, cancel } from './agents.mjs';
+import { validateAndNormalize, buildFormatErrorMessage } from './schema.mjs';
 
 export { create, describe, respond, retry, cancel };
 
@@ -64,8 +65,20 @@ export async function run(state, originalContext) {
         validatePlan
       );
 
+      console.log('[DEBUG runtime] Plan returned from validatePlan:');
+      console.log('[DEBUG runtime]   dimensions count:', plan.dimensions?.length);
+      if (plan.dimensions && plan.dimensions.length > 0) {
+        console.log('[DEBUG runtime]   First dimension:', JSON.stringify(plan.dimensions[0], null, 2));
+      }
+
       state.plan = plan;
       state.dimensions = plan.dimensions || [];
+
+      console.log('[DEBUG runtime] After assigning to state:');
+      console.log('[DEBUG runtime]   state.dimensions count:', state.dimensions.length);
+      if (state.dimensions.length > 0) {
+        console.log('[DEBUG runtime]   First state.dimension:', JSON.stringify(state.dimensions[0], null, 2));
+      }
 
       // Add to visualization timeline
       state.visualization.timeline.push({
@@ -421,136 +434,160 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+/**
+ * Validate plan response using schema normalization
+ */
 function validatePlan(result) {
-  // Support both 'dimensions' and 'researchDimensions' field names
-  const dimensionsArray = result.dimensions || result.researchDimensions;
+  console.log('[DEBUG validatePlan] Input result keys:', Object.keys(result));
+  console.log('[DEBUG validatePlan] Input dimensions type:', typeof result.dimensions);
+  console.log('[DEBUG validatePlan] Input dimensions is array:', Array.isArray(result.dimensions));
 
-  if (!dimensionsArray || !Array.isArray(dimensionsArray)) {
-    throw Error('研究计划必须包含调查维度（dimensions 或 researchDimensions 数组）');
+  if (result.dimensions && result.dimensions.length > 0) {
+    console.log('[DEBUG validatePlan] First dimension:', JSON.stringify(result.dimensions[0], null, 2));
   }
 
-  return {
-    dimensions: dimensionsArray.map((d, i) => {
-      // Handle both simple string queries and complex objects
-      let query;
-      let rationale = '';
+  try {
+    const normalized = validateAndNormalize('plan', result);
 
-      if (typeof d === 'string') {
-        // Simple string format
-        query = d;
-      } else if (d.query) {
-        // Standard format with explicit query field
-        query = String(d.query);
-        rationale = d.rationale || '';
-      } else if (d.questions && Array.isArray(d.questions) && d.questions.length > 0) {
-        // Complex format with questions array - use first question as query
-        query = String(d.questions[0]);
-        rationale = d.name || d.rationale || '';
-      } else if (d.name) {
-        // Fallback to name field if query is missing
-        query = String(d.name);
-        rationale = d.rationale || '';
-      } else {
-        // Last resort: stringify the whole object
-        query = String(d);
-      }
+    console.log('[DEBUG validatePlan] Normalized dimensions count:', normalized.dimensions.length);
+    if (normalized.dimensions.length > 0) {
+      console.log('[DEBUG validatePlan] First normalized dimension:', JSON.stringify(normalized.dimensions[0], null, 2));
+      console.log('[DEBUG validatePlan] First query type:', typeof normalized.dimensions[0].query);
+      console.log('[DEBUG validatePlan] First query value:', normalized.dimensions[0].query);
+    }
 
-      // Additional rationale sources
-      if (!rationale && d.keyQuestions && Array.isArray(d.keyQuestions)) {
-        rationale = d.keyQuestions[0] || '';
-      }
-      if (!rationale && d.approach) {
-        rationale = d.approach;
-      }
-
-      return {
-        id: d.id || 'dim-' + i,
-        query,
-        rationale,
-        status: 'pending'
-      };
-    }),
-    strategy: result.strategy || result.objective || '',
-    estimatedTime: result.estimatedTime || 0
-  };
+    return normalized;
+  } catch (error) {
+    console.log('[DEBUG validatePlan] Validation error:', error.message);
+    const detailedError = new Error(buildFormatErrorMessage('plan', result, error));
+    detailedError.originalError = error;
+    throw detailedError;
+  }
 }
 
 function validateResearchResult(result) {
-  if (!result || !Array.isArray(result.sources)) {
-    throw Error('研究结果必须包含来源列表');
-  }
+  try {
+    if (!result || !Array.isArray(result.sources)) {
+      throw new Error('研究结果必须包含 sources 数组');
+    }
 
-  return {
-    sources: result.sources.map((s, i) => ({
-      id: 'source-' + Date.now() + '-' + i,
-      type: s.type || 'web',
-      title: String(s.title),
-      url: s.url || '',
-      snippet: s.snippet || '',
-      addedBy: 'researcher',
-      addedAt: Date.now()
-    }))
-  };
+    return {
+      sources: result.sources.map((s, i) => ({
+        id: s.id || 'source-' + Date.now() + '-' + i,
+        type: s.type || 'web',
+        title: String(s.title || '未命名来源'),
+        url: s.url || '',
+        snippet: s.snippet || s.summary || s.abstract || '',
+        author: s.author || '',
+        publishedDate: s.publishedDate || s.date || '',
+        addedBy: 'researcher',
+        addedAt: Date.now()
+      }))
+    };
+  } catch (error) {
+    throw new Error(`搜索结果格式错误: ${error.message}`);
+  }
 }
 
 function validateVerificationResult(result) {
-  if (!result || typeof result.credibilityScore !== 'number') {
-    throw Error('验证结果必须包含可信度评分');
-  }
+  try {
+    if (!result || typeof result.credibilityScore !== 'number') {
+      throw new Error('验证结果必须包含 credibilityScore 数值');
+    }
 
-  return {
-    credibilityScore: Math.max(0, Math.min(1, result.credibilityScore)),
-    claims: (result.claims || []).map(c => ({
-      text: String(c.text || c),
-      confidence: c.confidence || 0.5
-    })),
-    contradictions: result.contradictions || [],
-    notes: result.notes || ''
-  };
+    return {
+      credibilityScore: Math.max(0, Math.min(1, result.credibilityScore)),
+      claims: (result.claims || []).map(c => ({
+        text: String(c.text || c),
+        confidence: typeof c.confidence === 'number' ? c.confidence : 0.5
+      })),
+      contradictions: result.contradictions || [],
+      notes: result.notes || result.summary || ''
+    };
+  } catch (error) {
+    throw new Error(`验证结果格式错误: ${error.message}`);
+  }
 }
 
 function validateSynthesisResult(result) {
-  if (!result || !Array.isArray(result.entities)) {
-    throw Error('综合结果必须包含实体列表');
-  }
+  try {
+    if (!result || !Array.isArray(result.entities)) {
+      throw new Error('综合结果必须包含 entities 数组');
+    }
 
-  return {
-    entities: result.entities.map((e, i) => ({
-      id: 'entity-' + i,
-      type: e.type || 'concept',
-      name: String(e.name),
-      description: e.description || '',
-      sourceIds: e.sourceIds || []
-    })),
-    relationships: (result.relationships || []).map((r, i) => ({
-      id: 'rel-' + i,
-      from: r.from,
-      to: r.to,
-      type: r.type || 'related',
-      strength: r.strength || 0.5,
-      evidence: r.evidence || []
-    })),
-    insights: result.insights || [],
-    summary: result.summary || ''
-  };
+    return {
+      entities: result.entities.map((e, i) => ({
+        id: e.id || 'entity-' + i,
+        name: String(e.name || '未命名实体'),
+        type: e.type || 'concept',
+        description: e.description || ''
+      })),
+      relationships: (result.relationships || []).map((r, i) => ({
+        id: r.id || 'rel-' + i,
+        from: String(r.from || r.source),
+        to: String(r.to || r.target),
+        type: r.type || r.relationship || 'related'
+      })),
+      insights: (result.insights || []).map(ins => String(ins))
+    };
+  } catch (error) {
+    throw new Error(`综合结果格式错误: ${error.message}`);
+  }
+}
+function validateReportResult(result) {
+  try {
+    if (!result || !result.report) {
+      throw new Error('响应必须包含 report 对象');
+    }
+
+    const report = result.report;
+
+    if (!Array.isArray(report.sections)) {
+      throw new Error('report 必须包含 sections 数组');
+    }
+
+    return {
+      title: String(report.title || '研究报告'),
+      abstract: report.abstract || report.summary || '',
+      sections: report.sections.map((s, i) => ({
+        id: s.id || `section-${i}`,
+        heading: String(s.heading || s.title || `章节 ${i + 1}`),
+        content: String(s.content || ''),
+        citations: s.citations || []
+      })),
+      citations: report.citations || [],
+      conclusion: report.conclusion || ''
+    };
+  } catch (error) {
+    throw new Error(`报告格式错误: ${error.message}`);
+  }
 }
 
-function validateReportResult(result) {
-  if (!result || !Array.isArray(result.sections)) {
-    throw Error('报告必须包含章节');
-  }
+function validateReviewResult(result) {
+  try {
+    if (!result || !result.verdict) {
+      throw new Error('审查结果必须包含 verdict 字段');
+    }
 
-  return {
-    title: String(result.title),
-    abstract: result.abstract || '',
-    sections: result.sections.map(s => ({
-      title: String(s.title),
-      content: String(s.content),
-      citations: s.citations || []
-    })),
-    citations: result.citations || [],
-    conclusion: result.conclusion || ''
-  };
+    const verdict = result.verdict.toLowerCase();
+    if (!['pass', 'revise'].includes(verdict)) {
+      throw new Error(`verdict 必须是 'pass' 或 'revise'，收到: ${result.verdict}`);
+    }
+
+    return {
+      verdict,
+      issues: (result.issues || []).map((issue, i) => ({
+        id: issue.id || `issue-${i}`,
+        severity: issue.severity || 'note',
+        description: String(issue.description || ''),
+        suggestion: issue.suggestion || issue.recommendation || ''
+      })),
+      summary: result.summary || '',
+      approved: verdict === 'pass'
+    };
+  } catch (error) {
+    throw new Error(`审查结果格式错误: ${error.message}`);
+  }
 }
 
 function validateReviewResult(result) {
