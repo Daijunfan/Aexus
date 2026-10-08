@@ -22,12 +22,16 @@ export function ResearchAtlas({job,onInspect}:{job:WorkflowView;onInspect:(query
    <section className="a-dr-flow-map" aria-label="多 Agent 研究协作图">
     <div className="a-dr-flow-lead"><span className="a-dr-atlas-symbol"><Glyph kind="network"/></span><div><small>01 · 规划与协调</small><strong>{lead?.label??'研究主编'}</strong><p>{lead?lead.engine+(lead.model?' · '+lead.model:''):'确认目标后创建独立原生会话'}</p></div><span className="a-dr-flow-role">LEAD</span></div>
     <div className="a-dr-flow-branches" style={{'--route-count':Math.max(1,routes.length)} as React.CSSProperties}>
-     {routes.length?routes.map((route,i)=><article className="a-dr-flow-route" key={route.workerId} data-status={route.status}>
+     {routes.length?routes.map((route,i)=>{const total=Math.max(0,route.totalTasks||0),done=Math.max(0,Math.min(total,route.completedTasks||0)),percent=total?Math.round(100*done/total):0;return <article className="a-dr-flow-route" key={route.workerId} data-status={route.status}>
       <header><span className="a-dr-route-number">{String(i+1).padStart(2,'0')}</span><span className="a-dr-route-state"><i/>{statuses[route.status]??route.status}</span></header>
       <strong>{route.label}</strong><small className="a-dr-route-engine" title={route.engine+(route.model?' · '+route.model:'')}>{route.engine}{route.model?' · '+route.model:''}</small>
       <p title={route.tracks.join('；')}>{route.tracks.join('；')||'方案确认后分配独立研究路线'}</p>
+      <div className="a-dr-route-progress">
+       <div className="a-dr-route-progress-label"><span>任务进度</span><strong>{total?done+' / '+total+' 步':'等待分派'}</strong></div>
+       <div className="a-dr-route-progress-track" role="progressbar" aria-label={route.label+' 已完成步骤'} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={total?done+' / '+total+' 步完成':'尚未分配步骤'}><span style={{width:percent+'%'}}/></div>
+      </div>
       <footer><span><b>{route.sourceIds.length}</b> 核验来源</span><span><b>{route.findings}</b> 引证发现</span></footer>
-     </article>):<div className="a-dr-flow-await">确认目标 → 制定方案 → 并行分派</div>}
+     </article>}):<div className="a-dr-flow-await">确认目标 → 制定方案 → 并行分派</div>}
     </div>
     <div className="a-dr-flow-hub" data-ready={ready}><span className="a-dr-atlas-symbol"><Glyph kind="evidence"/></span><div><small>02 · 汇集与独立核验</small><strong>共享证据池</strong><p>逐条匹配摘录 · 保留贡献者 · 绑定页面指纹</p></div><b>{s.sourceCount??0}<small>来源</small></b></div>
     <div className="a-dr-flow-review"><span className="a-dr-atlas-symbol"><Glyph kind="review"/></span><div><small>03 · 审查与交付</small><strong>独立复核，再生成报告</strong><div className="a-dr-review-checks"><span data-passed={review.evidence==='pass'}>{review.evidence==='pass'?'✓':'○'} 证据审查</span><span data-passed={review.report==='pass'}>{review.report==='pass'?'✓':'○'} 报告审查</span><span data-passed={complete}>{complete?'✓':'○'} 最终交付</span></div></div></div>
