@@ -1,132 +1,130 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import type { ContractClient } from '../../Contract/protocol';
-import type { WorkflowView } from '../../Contract/workflow';
-import './style.css';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { ContractClient } from "../../Contract/protocol";
+import type { WorkflowView } from "../../Contract/workflow";
+import { ResearchGraph } from "./ResearchGraph";
+import { SourcePanel } from "./SourcePanel";
+import { ReportView } from "./ReportView";
+import {
+  activityLabel,
+  labelFor,
+  safeUrl,
+  sourceHost,
+  type ResearchNode,
+} from "./ui";
+import "./style.css";
 
-const STATUS_LABELS: Record<string, string> = {
-  running: '研究进行中',
-  waiting: '等待确认',
-  completed: '研究完成',
-  failed: '需要处理',
-  cancelled: '已停止'
-};
-
-const PHASE_LABELS: Record<string, string> = {
-  init: '初始化',
-  planning: '规划路线',
-  research: '深度研究',
-  verification: '验证来源',
-  synthesis: '整合知识',
-  writing: '撰写报告',
-  review: '质量审查',
-  complete: '完成'
-};
-
-const SCOPE_OPTIONS = [
-  { value: 'quick', label: '快速概览', time: '5-10 分钟' },
-  { value: 'comprehensive', label: '全面调查', time: '10-20 分钟' },
-  { value: 'deep', label: '深度分析', time: '20-40 分钟' },
-  { value: 'academic', label: '学术研究', time: '40+ 分钟' }
+const ENGINE = "deep-research";
+const SCOPES = [
+  { value: "quick", label: "快速" },
+  { value: "comprehensive", label: "全面" },
+  { value: "deep", label: "深入" },
+  { value: "academic", label: "学术" },
 ];
-
-const ENGINE = 'deep-research';
+const PHASES: Record<string, string> = {
+  init: "准备研究",
+  scouting: "初步调研",
+  planning: "制定计划",
+  research: "研究执行",
+  verification: "核验证据",
+  synthesis: "综合发现",
+  writing: "撰写报告",
+  review: "审阅报告",
+  complete: "研究完成",
+};
+const STATUS: Record<string, string> = {
+  running: "进行中",
+  waiting: "待确认",
+  paused: "已暂停",
+  completed: "已完成",
+  failed: "需处理",
+  cancelled: "已停止",
+};
+const TABS = [
+  { id: "graph", label: "研究地图", icon: "type-hierarchy" },
+  { id: "sources", label: "来源", icon: "globe" },
+  { id: "findings", label: "发现", icon: "lightbulb" },
+  { id: "report", label: "报告", icon: "file-text" },
+];
+function Icon({ name }: { name: string }) {
+  return <span className={"codicon codicon-" + name} aria-hidden="true" />;
+}
+function Empty({ icon, children }: { icon: string; children: ReactNode }) {
+  return (
+    <div className="dr-empty">
+      <Icon name={icon} />
+      <p>{children}</p>
+    </div>
+  );
+}
 
 export default function Page({ client }: { client: ContractClient }) {
-  const [job, setJob] = useState<WorkflowView | null>(null);
-  const [history, setHistory] = useState<WorkflowView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-
-  // Form state
-  const [topic, setTopic] = useState('');
-  const [scope, setScope] = useState('comprehensive');
-  const [maxSources, setMaxSources] = useState(50);
-  const [languages, setLanguages] = useState(['zh-CN', 'en']);
-  const [materials, setMaterials] = useState<{ name: string; content: string }[]>([]);
-  const [autoApprove, setAutoApprove] = useState(false);
-
-  const alive = useRef(true);
-  const jobRef = useRef<WorkflowView | null>(null);
-  const selectedId = useRef<string | null>(null);
+  const [job, setJob] = useState<WorkflowView | null>(null),
+    [history, setHistory] = useState<WorkflowView[]>([]);
+  const [loading, setLoading] = useState(true),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const [topic, setTopic] = useState(""),
+    [scope, setScope] = useState("comprehensive"),
+    [maxSources, setMaxSources] = useState(100);
+  const [materials, setMaterials] = useState<
+      { name: string; content: string }[]
+    >([]),
+    [autoApprove, setAutoApprove] = useState(true);
+  const [tab, setTab] = useState("graph"),
+    [nodeId, setNodeId] = useState<string | null>(null),
+    [sourceId, setSourceId] = useState<{ id: string; locator?: string } | null>(
+      null,
+    );
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [graphDirection, setGraphDirection] = useState<
+    "horizontal" | "vertical"
+  >();
+  const [liveActivities, setLiveActivities] = useState<
+    {
+      nodeId: string;
+      messageId: string;
+      preview: { kind: string; text: string; detail?: string; tool?: string };
+    }[]
+  >([]);
+  const [revisionOpen, setRevisionOpen] = useState(false),
+    [instructions, setInstructions] = useState("");
+  const alive = useRef(true),
+    current = useRef<WorkflowView | null>(null),
+    selected = useRef<string | null>(null);
+  const taskDetail = useRef<HTMLDivElement>(null);
+  const reportReturn = useRef<{
+    section: string;
+    outer: number;
+    main: number;
+    window: number;
+  } | null>(null);
   const request = useRef<{ payload: string; key: string } | null>(null);
-
-  // Load workflow list
-  useEffect(() => {
-    alive.current = true;
-    void client
-      .invoke<{ jobs: WorkflowView[] }>('workflow.list', { engineId: ENGINE })
-      .then(({ jobs }) => {
-        if (alive.current) setHistory(jobs);
-      })
-      .catch(e => {
-        if (alive.current) setError(e.message);
-      })
-      .finally(() => {
-        if (alive.current) setLoading(false);
-      });
-
-    return () => {
-      alive.current = false;
-    };
-  }, [client]);
-
-  // Poll for updates
-  useEffect(() => {
-    if (!job || !['running', 'waiting'].includes(job.status)) return;
-
-    let active = true;
-    let timer: ReturnType<typeof setTimeout>;
-
-    const poll = async () => {
-      try {
-        const next = await client.invoke<WorkflowView>('workflow.get', { id: job.id });
-        if (active && selectedId.current === job.id) {
-          if (next.revision !== jobRef.current?.revision) {
-            applyJob(next);
-          }
-        }
-      } catch (e) {
-        if (active) setError((e as Error).message);
-      } finally {
-        if (active) timer = setTimeout(poll, 1500);
-      }
-    };
-
-    timer = setTimeout(poll, 1000);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [job?.id, job?.status, client]);
-
-  const applyJob = (next: WorkflowView) => {
-    jobRef.current = next;
+  const apply = (next: WorkflowView) => {
+    current.current = next;
     setJob(next);
-    setHistory(old => [next, ...old.filter(j => j.id !== next.id)].sort((a, b) => b.createdAt - a.createdAt));
+    setHistory((old) =>
+      [next, ...old.filter((item) => item.id !== next.id)].sort(
+        (a, b) => b.createdAt - a.createdAt,
+      ),
+    );
   };
-
-  const loadJob = async (id: string) => {
-    selectedId.current = id;
-    setError('');
-    setNotice('');
-    const next = await client.invoke<WorkflowView>('workflow.get', { id });
-    if (!alive.current || selectedId.current !== id) return;
-    applyJob(next);
-  };
-
   const keyFor = (value: unknown) => {
     const payload = JSON.stringify(value);
-    if (request.current?.payload !== payload) {
+    if (request.current?.payload !== payload)
       request.current = { payload, key: crypto.randomUUID() };
-    }
     return request.current.key;
   };
-
   const operate = async (fn: () => Promise<void>) => {
     setBusy(true);
-    setError('');
+    setError("");
     try {
       await fn();
     } catch (e) {
@@ -135,509 +133,1417 @@ export default function Page({ client }: { client: ContractClient }) {
       if (alive.current) setBusy(false);
     }
   };
-
+  useEffect(() => {
+    alive.current = true;
+    void client
+      .invoke<{ jobs: WorkflowView[] }>("workflow.list", { engineId: ENGINE })
+      .then(({ jobs }) => {
+        if (alive.current) setHistory(jobs);
+      })
+      .catch((e) => {
+        if (alive.current) setError(e.message);
+      })
+      .finally(() => {
+        if (alive.current) setLoading(false);
+      });
+    return () => {
+      alive.current = false;
+    };
+  }, [client]);
+  useEffect(() => {
+    if (!job || !["running", "waiting", "paused"].includes(job.status)) return;
+    let active = true,
+      activityAt = 0,
+      timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const next = await client.invoke<
+          WorkflowView & { unchanged?: boolean }
+        >("workflow.get", {
+          id: job.id,
+          ifRevision: current.current?.revision,
+        });
+        if (active && selected.current === job.id && !next.unchanged)
+          apply(next);
+        if (
+          active &&
+          job.status === "running" &&
+          tab === "graph" &&
+          !document.hidden &&
+          Date.now() - activityAt >= 3000
+        ) {
+          activityAt = Date.now();
+          const graphRunning: ResearchNode[] = (
+            current.current?.summary.graph?.nodes ?? []
+          )
+            .filter(
+              (node: ResearchNode) =>
+                node.status === "running" && node.employeeId && node.messageId,
+            )
+            .sort(
+              (a: ResearchNode, b: ResearchNode) =>
+                Number(b.id === nodeId) - Number(a.id === nodeId),
+            );
+          const running: ResearchNode[] = graphRunning.length
+            ? graphRunning
+            : (current.current?.summary.tasks ?? []).filter(
+                (task: any) =>
+                  ["running", "approval"].includes(task.status) &&
+                  task.employeeId &&
+                  task.messageId,
+              );
+          const readings = await Promise.allSettled(
+            running.slice(0, 2).map(async (node) => {
+              const [status] = await client.invoke<any[]>("session.status", {
+                employee: node.employeeId,
+              });
+              return status?.currentTask?.messageId === node.messageId &&
+                status.activityPreview &&
+                status.activityPreview.kind !== "thinking"
+                ? {
+                    nodeId: node.id,
+                    messageId: node.messageId!,
+                    preview: status.activityPreview,
+                  }
+                : null;
+            }),
+          );
+          if (active)
+            setLiveActivities(
+              readings.flatMap((result) =>
+                result.status === "fulfilled" && result.value
+                  ? [result.value]
+                  : [],
+              ),
+            );
+        }
+      } catch (e) {
+        if (active) setError((e as Error).message);
+      } finally {
+        if (active) timer = setTimeout(poll, 1500);
+      }
+    };
+    timer = setTimeout(poll, 750);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [job?.id, job?.status, client, tab, nodeId]);
+  const load = async (id: string) => {
+    selected.current = id;
+    setNodeId(null);
+    setSourceId(null);
+    reportReturn.current = null;
+    setTab("graph");
+    setRevisionOpen(false);
+    const next = await client.invoke<WorkflowView>("workflow.get", { id });
+    if (alive.current && selected.current === id) apply(next);
+  };
+  const newResearch = () => {
+    selected.current = null;
+    current.current = null;
+    setJob(null);
+    setError("");
+    setRevisionOpen(false);
+    request.current = null;
+    reportReturn.current = null;
+  };
   const start = (event: FormEvent) => {
     event.preventDefault();
     void operate(async () => {
-      const input = {
-        topic: topic.trim(),
-        scope,
-        maxSources,
-        languages,
-        autoApprove,
-        ...(materials.length ? { materials } : {})
+      const body = {
+        engineId: ENGINE,
+        input: {
+          topic: topic.trim(),
+          scope,
+          maxSources,
+          languages: ["zh-CN", "en"],
+          autoApprove,
+          ...(materials.length ? { materials } : {}),
+        },
       };
-
-      const body = { engineId: ENGINE, input };
-      const next = await client.invoke<WorkflowView>('workflow.start', {
+      const next = await client.invoke<WorkflowView>("workflow.start", {
         ...body,
-        clientRequestId: keyFor(body)
+        clientRequestId: keyFor(body),
       });
-
-      selectedId.current = next.id;
-      applyJob(next);
+      selected.current = next.id;
+      apply(next);
+      setTab("graph");
+      setNodeId(null);
+      setSourceId(null);
+      reportReturn.current = null;
       request.current = null;
-      setNotice('研究已启动');
     });
   };
-
-  const answer = async (action: string, extra: Record<string, unknown> = {}) => {
-    const current = jobRef.current;
-    if (!current) throw Error('尚未选择研究');
-
+  const mutate = async (
+    command: string,
+    extra: Record<string, unknown> = {},
+  ) => {
+    const activeJob = current.current;
+    if (!activeJob) return;
     const body = {
-      id: current.id,
-      expectedRevision: current.revision,
-      answer: { action, ...extra }
+      id: activeJob.id,
+      expectedRevision: activeJob.revision,
+      ...extra,
     };
-
-    const next = await client.invoke<WorkflowView>('workflow.respond', {
+    const next = await client.invoke<WorkflowView>(command, {
       ...body,
-      clientRequestId: keyFor(body)
+      clientRequestId: keyFor(body),
     });
-
-    applyJob(next);
-  };
-
-  const retry = () =>
-    void operate(async () => {
-      if (!job) return;
-      const body = { id: job.id, expectedRevision: job.revision };
-      const next = await client.invoke<WorkflowView>('workflow.resume', {
-        ...body,
-        clientRequestId: keyFor(body)
-      });
-      applyJob(next);
-    });
-
-  const cancel = () =>
-    void operate(async () => {
-      if (!job) return;
-      const next = await client.invoke<WorkflowView>('workflow.cancel', { id: job.id });
-      applyJob(next);
-    });
-
-  const download = async (fileName: string) => {
-    if (!job || job.status !== 'completed' || !job.files || job.files.length === 0) {
-      throw Error('报告尚未完成');
-    }
-
-    const fileInfo = job.files.find(f => f.name === fileName) || job.files[0];
-    const file = await client.invoke<any>('workflow.file', {
-      id: job.id,
-      name: fileInfo.name
-    });
-
-    let content: Blob;
-    if (file.encoding === 'base64') {
-      const bytes = Uint8Array.from(atob(file.content), c => c.charCodeAt(0));
-      content = new Blob([bytes], { type: file.mediaType });
-    } else {
-      content = new Blob([file.content], { type: file.mediaType });
-    }
-
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileInfo.name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-  };
-
-  const newResearch = () => {
-    selectedId.current = null;
-    jobRef.current = null;
-    setJob(null);
-    setError('');
-    setNotice('');
+    if (alive.current && selected.current === activeJob.id) apply(next);
     request.current = null;
   };
-
-  const uploadMaterials = async (files: File[]) => {
+  const answer = (action: string, extra: Record<string, unknown> = {}) =>
+    mutate("workflow.respond", { answer: { action, ...extra } });
+  const pause = async () => {
+    if (current.current) {
+      const next = await client.invoke<WorkflowView>("workflow.pause", {
+        id: current.current.id,
+      });
+      apply(next);
+      if (next.controlPending)
+        throw Error(next.error || "任务暂停尚未完成，请重试暂停后再调整研究");
+    }
+  };
+  const revise = async () => {
+    if (current.current?.status === "waiting")
+      await answer("revise", { instructions: instructions.trim() });
+    else {
+      if (current.current?.status !== "paused") await pause();
+      await mutate("workflow.amend", {
+        update: { instructions: instructions.trim() },
+      });
+      await mutate("workflow.resume");
+    }
+    setRevisionOpen(false);
+    setInstructions("");
+  };
+  const stop = async () => {
+    if (current.current)
+      apply(
+        await client.invoke<WorkflowView>("workflow.cancel", {
+          id: current.current.id,
+        }),
+      );
+  };
+  const download = async (name: string) => {
+    if (!current.current) return;
+    const file = await client.invoke<{
+      content: string;
+      encoding?: string;
+      mediaType: string;
+    }>("workflow.file", { id: current.current.id, name });
+    const content =
+      file.encoding === "base64"
+        ? Uint8Array.from(atob(file.content), (c) => c.charCodeAt(0))
+        : file.content;
+    const url = URL.createObjectURL(
+      new Blob([content], { type: file.mediaType }),
+    );
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = name;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  };
+  const upload = async (files: File[]) => {
     const next = [...materials];
     for (const file of files) {
-      if (!/\.(txt|md|csv|json)$/i.test(file.name) || file.size > 200000) {
-        throw Error('材料支持 TXT、Markdown、CSV、JSON，每份不超过 200KB');
-      }
-      const content = await file.text();
-      next.push({ name: file.name, content });
+      if (!/\.(txt|md|csv|json)$/i.test(file.name) || file.size > 200000)
+        throw Error("支持 TXT、Markdown、CSV、JSON，每份不超过 200KB");
+      next.push({ name: file.name, content: await file.text() });
     }
-    if (next.length > 10) throw Error('最多 10 份材料');
+    if (next.length > 10) throw Error("最多 10 份背景材料");
     setMaterials(next);
   };
-
-  const summary = job?.summary ?? {};
-  const progress = summary.progress || {};
+  const summary = job?.summary ?? {},
+    progress = summary.progress ?? {};
+  const nodes: ResearchNode[] =
+      summary.graph?.nodes ?? summary.plan?.nodes ?? [],
+    sources: any[] = summary.sources ?? [],
+    workers: any[] = (summary.workers ?? []).filter(
+      (worker: any) => worker.active !== false,
+    );
+  const findings: any[] = summary.findingsDetails ?? [],
+    report = summary.deliverable ?? summary.report?.content,
+    revisions: any[] = summary.planRevisions ?? summary.planHistory ?? [];
+  const runningNodes = nodes.filter(
+    (node) => node.active !== false && node.status === "running",
+  );
+  const stageTask = (summary.tasks ?? []).find((task: any) =>
+    ["running", "approval", "prepared"].includes(task.status),
+  );
+  const showInspector = inspectorOpen && nodes.length > 0;
+  const timeline: any[] = summary.timeline ?? [];
+  const activities =
+    job?.status === "running"
+      ? liveActivities.filter((activity) =>
+          [
+            ...runningNodes,
+            ...(summary.tasks ?? []).filter((task: any) =>
+              ["running", "approval"].includes(task.status),
+            ),
+          ].some(
+            (node) =>
+              node.id === activity.nodeId &&
+              node.messageId === activity.messageId,
+          ),
+        )
+      : [];
+  const activeNode =
+    nodes.find((node) => node.id === nodeId && node.active !== false) ??
+    nodes.find((node) => node.status === "running") ??
+    nodes.find((node) => node.active !== false);
+  const dependencies = (node: ResearchNode) =>
+    node.dependencies ?? node.dependsOn ?? [];
+  useEffect(() => {
+    taskDetail.current?.scrollTo(0, 0);
+  }, [activeNode?.id]);
+  const predecessors = activeNode
+    ? dependencies(activeNode)
+        .map((id) =>
+          nodes.find((node) => node.id === id && node.active !== false),
+        )
+        .filter((node): node is ResearchNode => !!node)
+    : [];
+  const successors = activeNode
+    ? nodes.filter(
+        (node) =>
+          node.active !== false && dependencies(node).includes(activeNode.id),
+      )
+    : [];
+  const timeLabel = (value?: number) =>
+    value
+      ? new Date(value).toLocaleString("zh-CN", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "尚未开始";
+  const percent =
+    progress.mode === "determinate" && typeof progress.percent === "number"
+      ? Math.max(0, Math.min(100, progress.percent))
+      : null;
+  const completedTasks =
+      progress.completedTasks ??
+      progress.completed ??
+      nodes.filter((node) => node.status === "completed").length,
+    totalTasks = progress.totalTasks ?? progress.total ?? nodes.length;
+  const sourceCount = progress.sources?.collected ?? sources.length,
+    readCount =
+      progress.sources?.read ??
+      sources.filter((source) => source.acquisition?.status === "read").length,
+    verifiedCount =
+      progress.sources?.verified ??
+      sources.filter((source) => source.verified).length;
+  const domains = new Set(
+    sources.map((source) => sourceHost(source.url)).filter(Boolean),
+  ).size;
+  const approval =
+    job?.status === "waiting"
+      ? (
+          {
+            planning: ["确认研究计划", "approve-plan", "开始执行"],
+            synthesis: ["确认综合结果", "approve-synthesis", "继续撰写"],
+            review: ["审阅研究报告", "approve-report", "确认交付"],
+          } as Record<string, string[]>
+        )[summary.phase]
+      : null;
+  const openSource = (id: string, locator?: string) => {
+    setSourceId({ id, locator });
+    setTab("sources");
+  };
+  const openReportSource = (id: string, section: string, locator?: string) => {
+    reportReturn.current = {
+      section,
+      outer: document.querySelector(".engine-surface")?.scrollTop ?? 0,
+      main: document.querySelector(".dr-main")?.scrollTop ?? 0,
+      window: window.scrollY,
+    };
+    openSource(id, locator);
+  };
+  const returnToReport = () => {
+    const place = reportReturn.current;
+    setTab("report");
+    requestAnimationFrame(() => {
+      const outer = document.querySelector(".engine-surface"),
+        main = document.querySelector(".dr-main");
+      if (outer) outer.scrollTop = place?.outer ?? 0;
+      if (main) main.scrollTop = place?.main ?? 0;
+      window.scrollTo(0, place?.window ?? 0);
+      document
+        .getElementById(place?.section ?? "")
+        ?.focus({ preventScroll: true });
+    });
+  };
+  const citations = (ids: any[], section?: string, locator?: string) => (
+    <div className="dr-citations">
+      {ids.map((citation, index) => {
+        const id =
+          typeof citation === "string"
+            ? citation
+            : (citation.sourceId ?? citation.id);
+        return (
+          <button
+            key={String(id) + index}
+            onClick={() =>
+              section
+                ? openReportSource(id, section, locator)
+                : openSource(id, locator)
+            }
+          >
+            <Icon name="link" />
+            {sources.find((source) => source.id === id)?.title ?? String(id)}
+          </button>
+        );
+      })}
+    </div>
+  );
+  const evidence = (
+    items: { excerpt: string; locator?: string; sourceId?: string }[],
+    section?: string,
+  ) =>
+    items.map((item, index) => (
+      <blockquote className="dr-evidence" key={index}>
+        <p>{item.excerpt}</p>
+        {item.locator && <small>{item.locator}</small>}
+        {item.sourceId && citations([item.sourceId], section, item.locator)}
+      </blockquote>
+    ));
+  const taskLinks = (items: ResearchNode[], title: string) => (
+    <div className="dr-task-links">
+      <h4>{title}</h4>
+      {items.length ? (
+        items.map((node) => (
+          <button key={node.id} onClick={() => setNodeId(node.id)}>
+            <span className={"dr-state-dot " + node.status} />
+            {node.label}
+            <Icon name="arrow-right" />
+          </button>
+        ))
+      ) : (
+        <p className="dr-muted">无</p>
+      )}
+    </div>
+  );
+  const markdown = (content: string, section?: string) => (
+    <Markdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a: ({ href, children }) => {
+          const id =
+            href?.startsWith("#") &&
+            sources.some((source) => source.id === href.slice(1))
+              ? href.slice(1)
+              : href?.startsWith("source:")
+                ? href.slice(7)
+                : null;
+          return id ? (
+            <button
+              className="dr-inline-citation"
+              onClick={() =>
+                section ? openReportSource(id, section) : openSource(id)
+              }
+            >
+              {children}
+            </button>
+          ) : (
+            <a href={safeUrl(href)} target="_blank" rel="noreferrer">
+              {children}
+            </a>
+          );
+        },
+      }}
+    >
+      {content}
+    </Markdown>
+  );
 
   return (
-    <div className="dr-container" data-status={job?.status ?? 'new'}>
-      {/* Header */}
-      <header className="dr-header">
-        <button className="dr-brand" onClick={newResearch} aria-label="Deep Research 首页">
-          <span className="dr-icon">◈</span>
-          <div>
-            <strong>DEEP RESEARCH</strong>
-            <small>AEXUS / RESEARCH ENGINE 2.0</small>
-          </div>
+    <div
+      className="dr-app"
+      data-status={job?.status ?? "new"}
+      data-view={job ? tab : "intake"}
+      data-revision={job?.revision}
+    >
+      <aside className="dr-sidebar">
+        <button
+          className="dr-brand"
+          onClick={newResearch}
+          aria-label="Deep Research 首页"
+        >
+          <Icon name="telescope" />
+          <span>
+            Deep Research<small>AEXUS</small>
+          </span>
         </button>
-        <div className="dr-header-right">
-          {job && (
-            <>
-              <span className={'dr-status ' + job.status}>{STATUS_LABELS[job.status]}</span>
-              <button className="dr-quiet" disabled={busy} onClick={newResearch}>
-                新研究
-              </button>
-              {job.status === 'completed' ? (
+        <button className="dr-new" onClick={newResearch}>
+          <Icon name="add" />
+          新研究
+        </button>
+        <div className="dr-history-heading">
+          研究记录<span>{history.length}</span>
+        </div>
+        <nav className="dr-history" aria-label="研究记录">
+          {history.map((item) => (
+            <button
+              key={item.id}
+              aria-current={job?.id === item.id ? "page" : undefined}
+              onClick={() => void operate(() => load(item.id))}
+            >
+              <i className={"dr-state-dot " + item.status} />
+              <span>
+                <strong>{item.summary.topic || "研究"}</strong>
+                <small>
+                  {STATUS[item.status]} ·{" "}
+                  {new Date(item.createdAt).toLocaleDateString("zh-CN", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </small>
+              </span>
+            </button>
+          ))}
+          {!history.length && (
+            <p className="dr-muted">
+              {loading ? "读取研究记录…" : "暂无研究记录"}
+            </p>
+          )}
+        </nav>
+        <footer>
+          <Icon name="shield" />
+          <span>研究与证据持续保存</span>
+        </footer>
+      </aside>
+      <main className="dr-main">
+        {error && (
+          <div className="dr-alert error" role="alert">
+            <Icon name="warning" />
+            <span>{error}</span>
+            <button
+              title="关闭提示"
+              aria-label="关闭提示"
+              onClick={() => setError("")}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+        )}
+        {!job ? (
+          <div className="dr-intake-page">
+            <div className="dr-intake-heading">
+              <Icon name="telescope" />
+              <h1>Deep Research</h1>
+            </div>
+            <form className="dr-intake" onSubmit={start}>
+              <label htmlFor="dr-topic">研究目标</label>
+              <textarea
+                id="dr-topic"
+                aria-label="研究目标"
+                placeholder="例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本"
+                value={topic}
+                onChange={(event) => setTopic(event.target.value)}
+                minLength={10}
+                maxLength={2000}
+                required
+                rows={4}
+              />
+              <div className="dr-intake-controls">
+                <div
+                  className="dr-segment"
+                  role="radiogroup"
+                  aria-label="研究深度"
+                >
+                  {SCOPES.map((option) => (
+                    <label
+                      className={scope === option.value ? "active" : ""}
+                      key={option.value}
+                    >
+                      <input
+                        type="radio"
+                        name="depth"
+                        checked={scope === option.value}
+                        onChange={() => setScope(option.value)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
                 <button
                   className="dr-primary"
-                  disabled={busy}
-                  onClick={() => void operate(() => download('research-report.html'))}
+                  type="submit"
+                  disabled={busy || topic.trim().length < 10}
                 >
-                  <span className="dr-icon">↓</span>下载报告
+                  <Icon name={busy ? "loading" : "arrow-right"} />
+                  开始研究
                 </button>
-              ) : null}
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* Error & Notice */}
-      {error && (
-        <div className="dr-error" role="alert">
-          <span className="dr-icon">⚠</span>
-          <span>{error}</span>
-          <button onClick={() => setError('')} aria-label="关闭">
-            ×
-          </button>
-        </div>
-      )}
-      {notice && (
-        <div className="dr-notice" role="status">
-          {notice}
-          <button onClick={() => setNotice('')}>×</button>
-        </div>
-      )}
-
-      {/* Main Content */}
-      {!job ? (
-        <main className="dr-home">
-          <div className="dr-hero">
-            <div className="dr-eyebrow">MULTI-AGENT RESEARCH POWERED BY AEXUS</div>
-            <h1>
-              说出问题。
-              <br />
-              <em>让 AI 深度研究。</em>
-            </h1>
-            <p>
-              5 个专业角色协作：规划路线，并行搜索，验证来源，整合知识，撰写报告。
-              <br />
-              超越 Perplexity、ChatGPT、Gemini 所有竞品。
-            </p>
-          </div>
-
-          <form className="dr-intake" onSubmit={start}>
-            <label htmlFor="dr-topic">你想深入研究什么？</label>
-            <textarea
-              id="dr-topic"
-              value={topic}
-              onChange={e => setTopic(e.target.value)}
-              maxLength={2000}
-              rows={3}
-              placeholder="例如：AI 在医疗诊断中的最新应用和挑战"
-              aria-label="研究主题"
-            />
-
-            <div className="dr-scope-selector">
-              {SCOPE_OPTIONS.map(opt => (
-                <label key={opt.value} className={scope === opt.value ? 'active' : ''}>
-                  <input
-                    type="radio"
-                    name="scope"
-                    value={opt.value}
-                    checked={scope === opt.value}
-                    onChange={e => setScope(e.target.value)}
-                  />
-                  <div>
-                    <strong>{opt.label}</strong>
-                    <small>{opt.time}</small>
-                  </div>
-                </label>
-              ))}
-            </div>
-
-            <div className="dr-upload-row">
-              <label className="dr-upload">
-                <span className="dr-icon">📄</span>
-                <div>
-                  <strong>上传背景材料</strong>
-                  <small>TXT / MD / CSV / JSON · 可多选</small>
-                </div>
-                <input
-                  type="file"
-                  multiple
-                  accept=".txt,.md,.csv,.json"
-                  onChange={e => {
-                    const files = [...(e.target.files ?? [])];
-                    e.target.value = '';
-                    if (files.length) void operate(() => uploadMaterials(files));
-                  }}
-                />
-              </label>
-            </div>
-
-            {materials.length > 0 && (
-              <div className="dr-materials">
-                {materials.map((m, i) => (
-                  <span key={i}>
-                    <span className="dr-icon">📄</span>
-                    {m.name}
-                    <button
-                      type="button"
-                      onClick={() => setMaterials(old => old.filter((_, j) => i !== j))}
-                      aria-label={'移除 ' + m.name}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
               </div>
-            )}
-
-            <details className="dr-advanced">
-              <summary>
-                高级设置 <small>默认使用已配置引擎，5 个角色协作</small>
-              </summary>
-              <label className="dr-field">
-                最大来源数量
-                <input
-                  type="number"
-                  min="10"
-                  max="200"
-                  value={maxSources}
-                  onChange={e => setMaxSources(Number(e.target.value))}
-                />
-              </label>
-              <label className="dr-checkbox">
-                <input
-                  type="checkbox"
-                  checked={languages.includes('zh-CN')}
-                  onChange={e =>
-                    setLanguages(old =>
-                      e.target.checked ? [...old, 'zh-CN'] : old.filter(l => l !== 'zh-CN')
-                    )
-                  }
-                />
-                中文来源
-              </label>
-              <label className="dr-checkbox">
-                <input
-                  type="checkbox"
-                  checked={languages.includes('en')}
-                  onChange={e =>
-                    setLanguages(old =>
-                      e.target.checked ? [...old, 'en'] : old.filter(l => l !== 'en')
-                    )
-                  }
-                />
-                英文来源
-              </label>
-              <label className="dr-checkbox">
-                <input type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)} />
-                自动批准中间步骤（快速模式）
-              </label>
-            </details>
-
-            <button className="dr-primary dr-start-button" type="submit" disabled={busy || !topic.trim()}>
-              {busy ? '正在启动…' : '开始深度研究'}
-              <span className="dr-icon">→</span>
-            </button>
-          </form>
-
-          <div className="dr-features">
-            <article>
-              <span className="dr-badge">01</span>
-              <h3>零幻觉引用</h3>
-              <p>每个声明实时验证来源，追踪证据链，解决 ChatGPT 90% 幻觉问题。</p>
-            </article>
-            <article>
-              <span className="dr-badge">02</span>
-              <h3>5 角色协作</h3>
-              <p>协调员、研究员、核验员、综合员、撰写员，并行工作，高效深入。</p>
-            </article>
-            <article>
-              <span className="dr-badge">03</span>
-              <h3>知识图谱</h3>
-              <p>自动构建实体关系网络，可视化联系，发现隐藏洞察。</p>
-            </article>
-          </div>
-
-          <section className="dr-recent">
-            <header>
-              <h2>最近的研究</h2>
-              <small>{loading ? '正在读取…' : history.length + ' 项研究'}</small>
-            </header>
-            {history.length ? (
-              <div className="dr-recent-list">
-                {history.slice(0, 12).map(h => (
-                  <button key={h.id} onClick={() => void operate(() => loadJob(h.id))}>
-                    <span className="dr-icon">◈</span>
-                    <div>
-                      <strong>{h.summary.topic || '研究'}</strong>
-                      <small>
-                        {new Date(h.createdAt).toLocaleDateString()} · {h.summary.scope || 'comprehensive'}
-                      </small>
-                    </div>
-                    <span className={'dr-status ' + h.status}>{STATUS_LABELS[h.status]}</span>
+              <details className="dr-settings">
+                <summary>
+                  研究选项
+                  <Icon name="chevron-down" />
+                </summary>
+                <div className="dr-settings-grid">
+                  <label>
+                    来源预算
+                    <input
+                      aria-label="来源预算"
+                      type="number"
+                      min={10}
+                      max={1000}
+                      value={maxSources}
+                      onChange={(event) =>
+                        setMaxSources(Number(event.target.value))
+                      }
+                    />
+                  </label>
+                  <label className="dr-check">
+                    <input
+                      type="checkbox"
+                      checked={!autoApprove}
+                      onChange={(event) =>
+                        setAutoApprove(!event.target.checked)
+                      }
+                    />
+                    关键节点由我确认
+                  </label>
+                  <label className="dr-upload">
+                    <Icon name="attach" />
+                    添加背景材料
+                    <input
+                      aria-label="添加背景材料"
+                      type="file"
+                      multiple
+                      accept=".txt,.md,.csv,.json"
+                      onChange={(event) => {
+                        const files = [...(event.target.files ?? [])];
+                        event.target.value = "";
+                        if (files.length) void operate(() => upload(files));
+                      }}
+                    />
+                  </label>
+                </div>
+              </details>
+              {materials.length > 0 && (
+                <div className="dr-materials">
+                  {materials.map((material, index) => (
+                    <span key={index}>
+                      <Icon name="file-text" />
+                      {material.name}
+                      <button
+                        type="button"
+                        aria-label={"移除 " + material.name}
+                        title={"移除 " + material.name}
+                        onClick={() =>
+                          setMaterials((old) =>
+                            old.filter((_, i) => i !== index),
+                          )
+                        }
+                      >
+                        <Icon name="close" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </form>
+            {history.length > 0 && (
+              <section className="dr-recent">
+                <h2>最近的研究</h2>
+                {history.slice(0, 4).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => void operate(() => load(item.id))}
+                  >
+                    <i className={"dr-state-dot " + item.status} />
+                    <strong>{item.summary.topic}</strong>
+                    <small>{STATUS[item.status]}</small>
+                    <Icon name="arrow-right" />
                   </button>
                 ))}
-              </div>
-            ) : !loading ? (
-              <p>开始一次研究，进度和结果会保存在工作流中。</p>
-            ) : null}
-          </section>
-        </main>
-      ) : (
-        <>
-          {/* Research Progress */}
-          <div className="dr-progress-strip">
-            <div className="dr-topic-info">
-              <strong>{summary.topic}</strong>
-              <span>
-                {summary.scope} · {progress.sources?.collected || 0} 来源
-              </span>
-            </div>
-            <div className="dr-phase-progress">
-              {['planning', 'research', 'verification', 'synthesis', 'writing', 'review', 'complete'].map(
-                (phase, i) => {
-                  const current = summary.phase === phase;
-                  const done = i < ['planning', 'research', 'verification', 'synthesis', 'writing', 'review', 'complete'].indexOf(summary.phase);
-                  return (
-                    <span key={phase} className={current ? 'active' : done ? 'done' : ''}>
-                      <b>{done ? '✓' : i + 1}</b>
-                      {PHASE_LABELS[phase]}
-                    </span>
-                  );
-                }
-              )}
-            </div>
+              </section>
+            )}
           </div>
-
-          {/* Running State */}
-          {job.status === 'running' && (
-            <section className="dr-running" aria-live="polite">
-              <div className="dr-spinner" />
+        ) : (
+          <>
+            <header className="dr-job-header">
               <div>
-                <h2>{summary.phaseLabel || '研究进行中'}</h2>
-                <p>多个 Agent 并行工作，任务由 Core 执行并保存检查点。</p>
+                <span className="dr-eyebrow">
+                  {PHASES[summary.phase] ?? summary.phaseLabel ?? "研究"}
+                </span>
+                <h1>{summary.topic}</h1>
               </div>
-              {summary.attention && (
+              <div className="dr-job-actions">
+                <span className={"dr-status " + job.status}>
+                  {STATUS[job.status]}
+                </span>
+                {["running", "waiting", "paused", "failed"].includes(
+                  job.status,
+                ) && (
+                  <button
+                    className="dr-icon-button"
+                    title="调整研究方向"
+                    aria-label="调整研究方向"
+                    disabled={busy || job.controlPending}
+                    onClick={() => setRevisionOpen((value) => !value)}
+                  >
+                    <Icon name="edit" />
+                  </button>
+                )}
+                {job.status === "running" && (
+                  <button
+                    className="dr-icon-button"
+                    title="暂停研究"
+                    aria-label="暂停研究"
+                    disabled={busy}
+                    onClick={() => void operate(pause)}
+                  >
+                    <Icon name="debug-pause" />
+                  </button>
+                )}
+                {["paused", "failed"].includes(job.status) && (
+                  <button
+                    className="dr-icon-button"
+                    title="恢复研究"
+                    aria-label="恢复研究"
+                    disabled={busy || job.controlPending}
+                    onClick={() =>
+                      void operate(() => mutate("workflow.resume"))
+                    }
+                  >
+                    <Icon name="debug-start" />
+                  </button>
+                )}
+                {(!["completed", "cancelled"].includes(job.status) ||
+                  (job.status === "cancelled" && job.controlPending)) && (
+                  <button
+                    className="dr-icon-button"
+                    title={job.status === "cancelled" ? "重试停止" : "停止研究"}
+                    aria-label={
+                      job.status === "cancelled" ? "重试停止" : "停止研究"
+                    }
+                    disabled={busy}
+                    onClick={() => void operate(stop)}
+                  >
+                    <Icon name="debug-stop" />
+                  </button>
+                )}
+              </div>
+            </header>
+            <section className="dr-progress-band" aria-label="研究进度">
+              <div className="dr-progress-label">
+                <span>
+                  {percent === null
+                    ? (PHASES[summary.phase] ?? "探索研究范围")
+                    : `当前计划 · 第 ${summary.graph?.version ?? progress.planVersion ?? 1} 版`}
+                  {revisions.length > 1 && (
+                    <span
+                      className="dr-plan-context"
+                      title="计划会随证据调整；当前进度按本版计划的任务范围计算。"
+                    >
+                      <Icon name="info" />
+                    </span>
+                  )}
+                </span>
+                <strong>
+                  {percent === null
+                    ? "进度尚未确定"
+                    : `${Math.round(percent)}%`}
+                </strong>
+              </div>
+              <div
+                className={
+                  "dr-progress-track " +
+                  (percent === null ? "indeterminate" : "")
+                }
+                role="progressbar"
+                aria-label="当前计划进度"
+                aria-valuemin={percent === null ? undefined : 0}
+                aria-valuemax={percent === null ? undefined : 100}
+                aria-valuenow={percent ?? undefined}
+                aria-valuetext={
+                  percent === null
+                    ? "初步调研与规划中，尚未确定总工作量"
+                    : `当前计划完成 ${completedTasks} / ${totalTasks} 项任务`
+                }
+              >
+                <span
+                  style={
+                    percent === null ? undefined : { width: `${percent}%` }
+                  }
+                />
+              </div>
+              <div className="dr-progress-metrics">
+                <span>
+                  <Icon name="checklist" />
+                  {percent === null
+                    ? "工作量待规划"
+                    : `${completedTasks} / ${totalTasks} 任务`}
+                </span>
+                <span>
+                  <Icon name="organization" />
+                  {workers.length} 位协作者
+                </span>
+                <span
+                  title={`${sourceCount} 个已发现来源，${readCount} 个已读取正文，${verifiedCount} 个已核验；${domains} 个网站域名`}
+                >
+                  <Icon name="globe" />
+                  {sourceCount} 来源 · {domains} 网站
+                </span>
+                <span>
+                  <Icon name="verified" />
+                  {verifiedCount} 已核验 · {findings.length} 项论断
+                </span>
+                {progress.failed > 0 && (
+                  <span className="dr-error-text">
+                    {progress.failed} 项需处理
+                  </span>
+                )}
+              </div>
+              <div className="dr-current-activity" aria-label="当前研究活动">
+                <span className={"dr-activity-indicator " + job.status} />
+                <div>
+                  <small>
+                    {job.status === "running" ? "当前执行" : STATUS[job.status]}
+                  </small>
+                  {runningNodes.length && job.status === "running" ? (
+                    runningNodes.map((node) => (
+                      <button
+                        key={node.id}
+                        onClick={() => {
+                          setTab("graph");
+                          setNodeId(node.id);
+                          setInspectorOpen(true);
+                        }}
+                      >
+                        <span className="dr-state-dot running" />
+                        {node.label}
+                      </button>
+                    ))
+                  ) : (
+                    <strong>
+                      {job.status === "paused"
+                        ? "保留当前进度，等待恢复研究"
+                        : job.status === "failed"
+                          ? "执行遇到问题，已保存完成的研究"
+                          : job.status === "waiting"
+                            ? "等待审阅后继续"
+                            : job.status === "completed"
+                              ? "研究与证据已交付"
+                              : stageTask
+                                ? labelFor(stageTask.label)
+                                : (PHASES[summary.phase] ?? "正在组织研究")}
+                    </strong>
+                  )}
+                </div>
+                <time>
+                  {new Date(job.updatedAt).toLocaleTimeString("zh-CN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                  更新
+                </time>
+              </div>
+              {activities.length > 0 && (
+                <div className="dr-live-activity" aria-label="实时工作活动">
+                  {activities.map((activity) => {
+                    const task = [...nodes, ...(summary.tasks ?? [])].find(
+                      (task) => task.id === activity.nodeId,
+                    );
+                    return (
+                      <div key={activity.nodeId}>
+                        <Icon
+                          name={
+                            activity.preview.kind === "thinking"
+                              ? "lightbulb"
+                              : "pulse"
+                          }
+                        />
+                        <small>
+                          {workers.find(
+                            (worker) => worker.id === task?.employeeId,
+                          )?.label ?? "研究团队"}
+                        </small>
+                        <span>{activityLabel(activity.preview)}</span>
+                        <span className="dr-live-context">
+                          {task ? labelFor(task.label) : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+            {job.status === "failed" && (
+              <div className="dr-alert error">
+                <Icon name="warning" />
+                <span>{job.error || "研究执行需要处理"}</span>
+              </div>
+            )}
+            {job.status === "paused" && (
+              <div className="dr-alert">
+                <Icon name="debug-pause" />
+                <span>
+                  {job.controlPending
+                    ? job.error || "正在确认任务暂停"
+                    : "研究已暂停"}
+                </span>
+                {job.controlPending && (
+                  <button
+                    className="dr-secondary"
+                    disabled={busy}
+                    onClick={() => void operate(pause)}
+                  >
+                    重试暂停
+                  </button>
+                )}
+              </div>
+            )}
+            {job.status === "cancelled" && job.controlPending && (
+              <div className="dr-alert error" role="alert">
+                <Icon name="warning" />
+                <span>
+                  {job.error || "部分研究任务尚未确认停止，请重试停止。"}
+                </span>
                 <button
+                  className="dr-secondary"
+                  disabled={busy}
+                  onClick={() => void operate(stop)}
+                >
+                  重试停止
+                </button>
+              </div>
+            )}
+            {summary.attention && (
+              <div className="dr-alert">
+                <Icon name="shield" />
+                <span>
+                  {summary.tasks?.some(
+                    (task: any) => task.status === "approval",
+                  )
+                    ? "协作者正在等待授权"
+                    : summary.attention.message}
+                </span>
+                <button
+                  className="dr-secondary"
                   onClick={() =>
                     void operate(async () => {
-                      await client.invoke('view.open', {
-                        kind: 'conversation',
-                        employee: summary.attention.employeeId
+                      await client.invoke("view.open", {
+                        kind: "conversation",
+                        employee: summary.attention.employeeId,
                       });
                     })
                   }
                 >
-                  前往 Infra 审批
+                  查看研究会话
                 </button>
-              )}
-            </section>
-          )}
-
-          {/* Waiting for Approval */}
-          {job.status === 'waiting' && summary.phase === 'planning' && summary.plan && (
-            <section className="dr-approval">
-              <h2>研究计划已生成</h2>
-              <p>
-                规划了 {summary.plan.dimensions?.length || 0} 个调查维度。确认后将并行搜索 {maxSources} 个来源。
-              </p>
-              <div className="dr-dimensions">
-                {(summary.plan.dimensions || []).map((dim: any, i: number) => (
-                  <div key={i}>
-                    <strong>维度 {i + 1}</strong>
-                    <p>{dim.query || dim}</p>
-                  </div>
-                ))}
               </div>
-              <button
-                className="dr-primary"
-                disabled={busy}
-                onClick={() => void operate(() => answer('approve-plan'))}
+            )}
+            {revisionOpen && (
+              <form
+                className="dr-revision"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void operate(revise);
+                }}
               >
-                批准计划，开始研究
-              </button>
-            </section>
-          )}
-
-          {/* Failed State */}
-          {job.status === 'failed' && (
-            <section className="dr-failure">
-              <span className="dr-icon">⚠</span>
-              <div>
-                <h2>研究停在需要处理的步骤</h2>
-                <p role="alert">{job.error}</p>
-                <p>已完成的工作保留。恢复不会重建或盲目重试。</p>
-              </div>
-              <button className="dr-primary" disabled={busy} onClick={retry}>
-                从检查点恢复
-              </button>
-            </section>
-          )}
-
-          {/* Completed State */}
-          {job.status === 'completed' && (
-            <section className="dr-completed">
-              <div className="dr-summary-stats">
+                <label htmlFor="dr-revision">调整研究方向</label>
+                <textarea
+                  id="dr-revision"
+                  value={instructions}
+                  onChange={(event) => setInstructions(event.target.value)}
+                  placeholder="补充研究问题、限定范围或指出需要重新核验的结论"
+                  required
+                  rows={3}
+                />
                 <div>
-                  <strong>{progress.sources?.verified || 0}</strong>
-                  <small>已验证来源</small>
-                </div>
-                <div>
-                  <strong>{progress.findings || 0}</strong>
-                  <small>关键发现</small>
-                </div>
-                <div>
-                  <strong>{progress.entities || 0}</strong>
-                  <small>知识实体</small>
-                </div>
-                <div>
-                  <strong>{progress.contradictions || 0}</strong>
-                  <small>矛盾检测</small>
-                </div>
-              </div>
-
-              <div className="dr-files">
-                <h3>研究报告</h3>
-                {job.files?.map(file => (
                   <button
-                    key={file.name}
-                    onClick={() => void operate(() => download(file.name))}
-                    className="dr-file-download"
+                    type="button"
+                    className="dr-secondary"
+                    onClick={() => setRevisionOpen(false)}
                   >
-                    <span className="dr-icon">📄</span>
-                    <div>
-                      <strong>{file.name}</strong>
-                      <small>{(file.bytes / 1024).toFixed(1)} KB</small>
-                    </div>
-                    <span className="dr-icon">↓</span>
+                    取消
                   </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Workers Status */}
-          {summary.workers && summary.workers.length > 0 && (
-            <section className="dr-workers">
-              <h3>协作团队</h3>
-              <div className="dr-workers-grid">
-                {summary.workers.map((w: any) => (
-                  <div key={w.id} className={'dr-worker ' + (w.status || 'idle')}>
-                    <span className="dr-worker-icon">{w.status === 'working' ? '⚡' : w.status === 'completed' ? '✓' : '💤'}</span>
-                    <div>
-                      <strong>{w.label}</strong>
-                      <small>{w.engine}</small>
-                    </div>
+                  <button
+                    className="dr-primary"
+                    type="submit"
+                    disabled={
+                      busy || job.controlPending || !instructions.trim()
+                    }
+                  >
+                    <Icon name="refresh" />
+                    重新规划
+                  </button>
+                </div>
+              </form>
+            )}
+            {approval && (
+              <section className="dr-approval" aria-label={approval[0]}>
+                <div>
+                  <Icon name="checklist" />
+                  <h2>{approval[0]}</h2>
+                  <p>
+                    {summary.phase === "review"
+                      ? summary.review?.summary
+                      : (summary.plan?.strategy ?? "")}
+                  </p>
+                  {(summary.managerReviews ?? [])
+                    .filter(
+                      (review: any) =>
+                        review.planVersion === summary.graph?.version &&
+                        (summary.phase === "planning"
+                          ? review.stage !== "final"
+                          : review.stage === "final"),
+                    )
+                    .map((review: any, index: number) => (
+                      <details
+                        className={"dr-manager-review " + review.verdict}
+                        key={index}
+                      >
+                        <summary>
+                          <Icon
+                            name={
+                              review.verdict === "revise" ? "warning" : "check"
+                            }
+                          />
+                          {workers.find(
+                            (worker) => worker.id === review.managerId,
+                          )?.label ?? "研究负责人"}
+                          <span>
+                            {review.verdict === "revise"
+                              ? "建议修订"
+                              : "通过审阅"}
+                          </span>
+                        </summary>
+                        <p>{review.summary}</p>
+                        {review.issues?.map((issue: any, index: number) => (
+                          <p key={index}>
+                            {issue.description} {issue.suggestion}
+                          </p>
+                        ))}
+                      </details>
+                    ))}
+                </div>
+                <button
+                  className="dr-secondary"
+                  disabled={busy || job.controlPending}
+                  onClick={() => setRevisionOpen(true)}
+                >
+                  提出调整
+                </button>
+                <button
+                  className="dr-primary"
+                  disabled={busy || job.controlPending}
+                  onClick={() => void operate(() => answer(approval[1]))}
+                >
+                  <Icon name="check" />
+                  {approval[2]}
+                </button>
+              </section>
+            )}
+            <nav className="dr-tabs" role="tablist" aria-label="研究视图">
+              {TABS.map((item) => (
+                <button
+                  key={item.id}
+                  role="tab"
+                  aria-selected={tab === item.id}
+                  onClick={() => setTab(item.id)}
+                >
+                  <Icon name={item.icon} />
+                  {item.label}
+                  {item.id === "sources" && <span>{sourceCount}</span>}
+                  {item.id === "findings" && <span>{findings.length}</span>}
+                </button>
+              ))}
+            </nav>
+            {tab === "graph" && (
+              <div className="dr-map-layout" data-inspector={showInspector}>
+                <section className="dr-map-section" aria-label="研究任务图">
+                  <ResearchGraph
+                    nodes={nodes}
+                    edges={summary.graph?.edges}
+                    selectedId={activeNode?.id}
+                    onSelect={(id) => {
+                      setNodeId(id);
+                      setInspectorOpen(true);
+                    }}
+                    workers={workers}
+                    direction={graphDirection}
+                    onDirection={setGraphDirection}
+                    inspectorOpen={inspectorOpen}
+                    onToggleInspector={() =>
+                      setInspectorOpen((value) => !value)
+                    }
+                    discovery={
+                      <div className="dr-discovery-workspace">
+                        <span className="dr-discovery-icon">
+                          <Icon
+                            name={
+                              summary.phase === "planning"
+                                ? "list-tree"
+                                : "search"
+                            }
+                          />
+                        </span>
+                        <small>{PHASES[summary.phase] ?? "研究准备"}</small>
+                        <h2>
+                          {summary.phase === "planning"
+                            ? "根据证据规划调查路线"
+                            : "建立研究的来源地图"}
+                        </h2>
+                        <p>{summary.topic}</p>
+                        {stageTask && (
+                          <span className="dr-discovery-owner">
+                            <Icon name="person" />
+                            {workers.find(
+                              (worker) => worker.id === stageTask.employeeId,
+                            )?.label ?? labelFor(stageTask.role)}
+                            <span className="dr-state-dot running" />
+                            {labelFor(stageTask.status)}
+                          </span>
+                        )}
+                        {sources.length > 0 && (
+                          <div className="dr-discovered-sources">
+                            <h4>
+                              已发现来源 <span>{sources.length}</span>
+                            </h4>
+                            {sources.slice(-4).map((source) => (
+                              <button
+                                key={source.id}
+                                onClick={() => openSource(source.id)}
+                              >
+                                <Icon name="globe" />
+                                <span>
+                                  {source.title}
+                                  <small>
+                                    {sourceHost(source.url)} ·{" "}
+                                    {source.acquisition?.status === "read"
+                                      ? "已读取"
+                                      : "待获取正文"}
+                                  </small>
+                                </span>
+                                <Icon name="arrow-up-right" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    }
+                  />
+                  {revisions.length > 0 && (
+                    <details className="dr-plan-history">
+                      <summary>
+                        <Icon name="history" />
+                        计划变更<span>{revisions.length} 版</span>
+                      </summary>
+                      {revisions.map((revision, index) => (
+                        <article key={revision.version ?? index}>
+                          <b>第 {revision.version ?? index + 1} 版</b>
+                          <p>{revision.reason || "根据研究结果更新计划"}</p>
+                          <small>
+                            {revision.addedNodeIds?.length ?? 0} 新增 ·{" "}
+                            {revision.retainedNodeIds?.length ?? 0} 保留 ·{" "}
+                            {revision.removedNodeIds?.length ?? 0} 调整
+                          </small>
+                        </article>
+                      ))}
+                    </details>
+                  )}
+                  {timeline.length > 0 && (
+                    <details className="dr-activity-log">
+                      <summary>
+                        <Icon name="pulse" />
+                        研究动态<span>{timeline.length} 条记录</span>
+                      </summary>
+                      {timeline
+                        .slice(-8)
+                        .reverse()
+                        .map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              if (item.data?.nodeId) {
+                                setNodeId(item.data.nodeId);
+                                setInspectorOpen(true);
+                              }
+                            }}
+                          >
+                            <time>
+                              {new Date(item.timestamp).toLocaleTimeString(
+                                "zh-CN",
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </time>
+                            <span>{item.description}</span>
+                            <small>{labelFor(item.type)}</small>
+                          </button>
+                        ))}
+                    </details>
+                  )}
+                </section>
+                <aside
+                  className="dr-inspector"
+                  aria-label="任务与协作者"
+                  hidden={!showInspector}
+                >
+                  <div className="dr-section-heading">
+                    <h2>任务详情</h2>
+                    {activeNode && (
+                      <span className={"dr-node-state " + activeNode.status}>
+                        {labelFor(activeNode.status)}
+                      </span>
+                    )}
                   </div>
-                ))}
+                  {activeNode ? (
+                    <div ref={taskDetail} className="dr-task-detail">
+                      <span className="dr-eyebrow">
+                        {labelFor(activeNode.kind)}
+                      </span>
+                      <h3>{activeNode.label}</h3>
+                      {(activeNode.objective || activeNode.description) && (
+                        <section className="dr-task-objective">
+                          <h4>研究目标</h4>
+                          <p>
+                            {activeNode.objective || activeNode.description}
+                          </p>
+                        </section>
+                      )}
+                      {activeNode.error && (
+                        <p className="dr-error-text">{activeNode.error}</p>
+                      )}
+                      <dl>
+                        <dt>执行者</dt>
+                        <dd>
+                          {workers.find(
+                            (worker) =>
+                              worker.id ===
+                              (activeNode.employeeId ?? activeNode.ownerId),
+                          )?.label ?? "待分配"}
+                        </dd>
+                        <dt>负责人</dt>
+                        <dd>
+                          {activeNode.managerIds
+                            ?.map(
+                              (id) =>
+                                workers.find(
+                                  (worker) =>
+                                    worker.id === id || worker.specId === id,
+                                )?.label ?? id,
+                            )
+                            .join("、") || "研究团队"}
+                        </dd>
+                        <dt>开始时间</dt>
+                        <dd>{timeLabel(activeNode.startedAt)}</dd>
+                        <dt>结束时间</dt>
+                        <dd>
+                          {activeNode.finishedAt
+                            ? timeLabel(activeNode.finishedAt)
+                            : activeNode.startedAt
+                              ? "尚未结束"
+                              : "尚未开始"}
+                        </dd>
+                        <dt>计划版本</dt>
+                        <dd>
+                          第{" "}
+                          {activeNode.planVersion ??
+                            summary.graph?.version ??
+                            1}{" "}
+                          版
+                        </dd>
+                      </dl>
+                      {taskLinks(predecessors, "前置任务")}
+                      {(activeNode.inputSourceIds?.length ?? 0) > 0 && (
+                        <section className="dr-task-input">
+                          <h4>输入证据</h4>
+                          {citations(activeNode.inputSourceIds ?? [])}
+                        </section>
+                      )}
+                      {activeNode.payload?.query &&
+                        activeNode.payload.query !== activeNode.objective && (
+                          <section className="dr-task-input">
+                            <h4>调查问题</h4>
+                            <p>{activeNode.payload.query}</p>
+                          </section>
+                        )}
+                      {taskLinks(successors, "后继任务")}
+                      {activeNode.resultSummary && (
+                        <section className="dr-task-result">
+                          <h4>结果摘要</h4>
+                          <p>{activeNode.resultSummary}</p>
+                          {activeNode.result?.insights?.map(
+                            (insight: string, index: number) => (
+                              <p key={index}>{insight}</p>
+                            ),
+                          )}
+                          {activeNode.result?.issues?.map(
+                            (issue: any, index: number) => (
+                              <p key={index}>
+                                {issue.description} {issue.suggestion}
+                              </p>
+                            ),
+                          )}
+                          {activeNode.result?.sections?.map(
+                            (section: any, index: number) => (
+                              <details key={index}>
+                                <summary>{section.heading}</summary>
+                                <div className="dr-markdown">
+                                  {markdown(section.content)}
+                                </div>
+                              </details>
+                            ),
+                          )}
+                        </section>
+                      )}
+                      {activities
+                        .filter((activity) => activity.nodeId === activeNode.id)
+                        .map((activity) => (
+                          <section
+                            className="dr-task-result"
+                            key={activity.nodeId}
+                          >
+                            <h4>{activityLabel(activity.preview)}</h4>
+                            <details>
+                              <summary>查看工作摘要</summary>
+                              <p>{activity.preview.text}</p>
+                              {activity.preview.detail && (
+                                <p className="dr-tool-detail">
+                                  {activity.preview.detail}
+                                </p>
+                              )}
+                            </details>
+                          </section>
+                        ))}
+                      {(activeNode.sourceIds?.length ?? 0) > 0 && (
+                        <h4 className="dr-evidence-heading">证据来源</h4>
+                      )}
+                      {citations(activeNode.sourceIds ?? [])}
+                      {sources
+                        .filter((source) =>
+                          activeNode.sourceIds?.includes(source.id),
+                        )
+                        .map((source) => (
+                          <details className="dr-task-evidence" key={source.id}>
+                            <summary>{source.title}</summary>
+                            {source.acquisition?.excerpt &&
+                              evidence([source.acquisition])}
+                          </details>
+                        ))}
+                    </div>
+                  ) : (
+                    <Empty icon="search">
+                      {summary.phase === "scouting"
+                        ? "初步调研正在进行"
+                        : "正在形成研究计划"}
+                    </Empty>
+                  )}
+                  <details className="dr-team">
+                    <summary>
+                      <Icon name="organization" />
+                      <strong>协作团队</strong>
+                      <span>
+                        {
+                          workers.filter(
+                            (worker) => worker.status === "working",
+                          ).length
+                        }{" "}
+                        工作中 / {workers.length}
+                      </span>
+                      <Icon name="chevron-down" />
+                    </summary>
+                    <div className="dr-team-list">
+                      {workers.map((worker) => (
+                        <button
+                          key={worker.id}
+                          className="dr-person"
+                          onClick={() =>
+                            void operate(async () => {
+                              await client.invoke("view.open", {
+                                kind: "conversation",
+                                employee: worker.id,
+                              });
+                            })
+                          }
+                          title={"查看 " + worker.label + " 的研究会话"}
+                        >
+                          <span className={"dr-person-icon " + worker.status}>
+                            <Icon
+                              name={
+                                worker.managementRole === "manager"
+                                  ? "organization"
+                                  : "person"
+                              }
+                            />
+                          </span>
+                          <span>
+                            <strong>{worker.label}</strong>
+                            <small>
+                              {worker.managementRole === "manager"
+                                ? "Manager · "
+                                : ""}
+                              {labelFor(worker.status)}
+                            </small>
+                          </span>
+                          <Icon name="arrow-up-right" />
+                        </button>
+                      ))}
+                      {!workers.length && (
+                        <p className="dr-muted">正在组织研究团队</p>
+                      )}
+                    </div>
+                  </details>
+                </aside>
               </div>
-            </section>
-          )}
-
-          {/* Cancel Button */}
-          {!['completed', 'cancelled'].includes(job.status) && (
-            <footer className="dr-job-footer">
-              <span>研究 {job.id.slice(-12)} · 多 Agent 协作</span>
-              <button disabled={busy} onClick={cancel}>
-                停止研究
-              </button>
-            </footer>
-          )}
-        </>
-      )}
+            )}
+            {tab === "sources" && (
+              <SourcePanel
+                sources={sources}
+                selection={sourceId}
+                onSelect={setSourceId}
+                onReturn={reportReturn.current ? returnToReport : undefined}
+                renderEvidence={evidence}
+              />
+            )}
+            {tab === "findings" && (
+              <section className="dr-findings" aria-label="研究发现">
+                <div className="dr-section-heading">
+                  <h2>研究发现</h2>
+                  <span>{findings.length} 条</span>
+                </div>
+                {findings.map((finding, index) => (
+                  <article key={finding.id ?? index}>
+                    <span className="dr-finding-number">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <h3>{finding.claim ?? finding.text ?? finding.title}</h3>
+                      {finding.detail && (
+                        <div className="dr-markdown">
+                          {markdown(finding.detail)}
+                        </div>
+                      )}
+                      {evidence(finding.evidence ?? [])}
+                    </div>
+                  </article>
+                ))}
+                {!findings.length && (
+                  <Empty icon="lightbulb">尚未形成研究发现</Empty>
+                )}
+              </section>
+            )}
+            {tab === "report" && (
+              <ReportView
+                report={report}
+                job={job}
+                onDownload={(name) => void operate(() => download(name))}
+                renderMarkdown={markdown}
+                renderEvidence={evidence}
+                renderCitations={citations}
+              />
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }
