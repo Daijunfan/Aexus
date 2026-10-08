@@ -16,6 +16,8 @@ const running=(status:any)=>!!(status?.busy||status?.acknowledging||status?.wait
 const pause=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms))
 const safeEmployee=(id:unknown):id is string=>typeof id==='string'&&/^[\w-]{3,120}$/.test(id)
 
+export const isRetiredResearch=(job:{engineId:string;engineVersion:string},installed:{id:string;runtime?:string}[])=>job.engineId==='deep-research'&&(/^1\./.test(job.engineVersion)||!installed.some(engine=>engine.id===job.engineId&&engine.runtime))
+
 export async function stopRetiredResearch(state:RetiredState,call:Call){
  if(!state||typeof state!=='object'||Array.isArray(state))throw Error('Saved research state is invalid; original record preserved')
  const workers=new Set((state.workers??[]).map(item=>item.id).filter(safeEmployee))

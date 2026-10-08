@@ -284,6 +284,9 @@ export function normalizePlanResponse(rawResponse) {
   if (!dimensionsArray && rawResponse.plan) {
     dimensionsArray = rawResponse.plan.dimensions;
   }
+  if (!dimensionsArray && Array.isArray(rawResponse.nodes)) {
+    dimensionsArray = rawResponse.nodes.filter(n => n.kind === 'search').map(n => ({ id: n.dimensionId || n.id, query: n.payload?.query || n.query || n.label }));
+  }
 
   if (!dimensionsArray || !Array.isArray(dimensionsArray)) {
     throw new Error(
@@ -399,10 +402,15 @@ export function normalizePlanResponse(rawResponse) {
     || (rawResponse.researchPlan && rawResponse.researchPlan.estimatedTime)
     || 0;
 
+  const team = rawResponse.team || rawResponse.plan?.team || [];
+  if (!Array.isArray(team)) throw Error('team 必须是员工配置数组');
+  const nodes = rawResponse.nodes || rawResponse.plan?.nodes;
   return {
     dimensions: normalizedDimensions,
     strategy: strategy ? String(strategy) : '',
-    estimatedTime: typeof estimatedTime === 'number' ? estimatedTime : 0
+    estimatedTime: typeof estimatedTime === 'number' ? estimatedTime : 0,
+    ...(nodes ? { nodes } : {}),
+    team
   };
 }
 

@@ -11,7 +11,7 @@ import {atomicJson,readJson} from './atomic-file'
 import {authorize,requestContext,withCaller} from './authorization'
 import {applicationRoot} from './resources'
 import {installedEngines,contractRequest} from './contract'
-import {stopRetiredResearch} from './retired-research'
+import {stopRetiredResearch,isRetiredResearch} from './retired-research'
 
 type WorkflowEvent={revision:number;at:number;status:WorkflowView['status'];phase?:string;progress?:number;completedTasks?:number;sourceCount?:number}
 type RecordEntry=WorkflowView&{owner:RequestContext;state:any;startKey:string;inputHash:string;answers:Record<string,{hash:string;operation:string}>;events?:WorkflowEvent[]}
@@ -131,7 +131,10 @@ function launch(job:RecordEntry){
 }
 async function stopLegacyResearch(job:RecordEntry){
  try{
-  await stopRetiredResearch(job.state,async(command,args)=>withCaller({...job.owner,engineScope:job.engineId},async()=>{
+  if(!isRetiredResearch(job,installedEngines().engines)){
+   const {runtime,commands}=await moduleFor(job)
+   await runtime.cancel?.(job.state,contextFor(job,new AbortController(),runtime,commands))
+  }else await stopRetiredResearch(job.state,async(command,args)=>withCaller({...job.owner,engineScope:job.engineId},async()=>{
    const result=await contractRequest('contract.call',{version:CONTRACT_VERSION,command,args},(name,input)=>invoke!(name,input)) as {data:any}
    return result.data
   }))
@@ -143,7 +146,7 @@ export function startWorkflows(dispatch:NonNullable<typeof invoke>,publishEvent:
  invoke=dispatch;emit=publishEvent;load();ready=true
  for(const job of entries.values()){
   adoptWorkflowResources(job.engineId,job.state)
-  if(job.engineId==='deep-research'&&job.status==='running'){
+  if(isRetiredResearch(job,installedEngines().engines)&&job.status==='running'){
    // The retired Engine must never resume an old paid inference turn.
    job.status='cancelled';job.controlPending=true;save(job)
    const timer=setTimeout(()=>{if(ready)void stopLegacyResearch(job)},1200);timer.unref?.()

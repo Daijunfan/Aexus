@@ -14,6 +14,8 @@
     "workflow.respond",
     "workflow.resume",
     "workflow.cancel",
+    "workflow.pause",
+    "workflow.amend",
     "workflow.file",
     "engine.check",
     "group.list",
@@ -25,6 +27,8 @@
     "session.transcript",
     "session.interrupt",
     "session.dequeue",
+    "management.bind",
+    "management.unbind",
     "view.open"
   ],
   "inputSchema": {
@@ -47,8 +51,8 @@
       "maxSources": {
         "type": "integer",
         "minimum": 10,
-        "maximum": 200,
-        "default": 50,
+        "maximum": 1000,
+        "default": 80,
         "description": "最大来源数量"
       },
       "languages": {
@@ -103,7 +107,18 @@
         "type": "boolean",
         "default": false,
         "description": "自动批准中间步骤（快速模式）"
-      }
+      },
+      "team": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "maxWorkers": { "type": "integer", "minimum": 2, "maximum": 64, "default": 12 },
+          "maxManagers": { "type": "integer", "minimum": 1, "maximum": 16, "default": 4 },
+          "maxConcurrency": { "type": "integer", "minimum": 1, "maximum": 32, "default": 4 }
+        }
+      },
+      "maxTasks": { "type": "integer", "minimum": 4, "maximum": 512, "default": 128 },
+      "maxReplans": { "type": "integer", "minimum": 0, "maximum": 20, "default": 3 }
     }
   },
   "outputSchema": {
