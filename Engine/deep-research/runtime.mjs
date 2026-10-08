@@ -132,7 +132,7 @@ async function executeNode(state, ctx, node) {
   const payload = {
     ...node.payload,
     topic: state.input.topic, scope: state.input.scope, languages: state.input.languages,
-    query: node.payload.query || dimension?.query || node.label,
+    objective: node.objective, query: node.payload.query || node.objective || dimension?.query || node.label,
     maxSources: Math.max(0, state.input.maxSources - state.sources.length),
     existingSources: state.sources.map(s => ({ id: s.id, url: s.url })),
     sources: relevant, findings: state.findings.filter(f => f.sourceIds.some(id => node.inputSourceIds.includes(id))), contradictions: state.contradictions.filter(c => c.sources.every(id => node.inputSourceIds.includes(id))),

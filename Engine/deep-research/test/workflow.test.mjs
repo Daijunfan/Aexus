@@ -181,6 +181,31 @@ test('revision retains completed work and evidence while replacing only pending 
   assert.throws(() => applyPlan(state, next, 'illegal'), /不能改写/);
 });
 
+test('a completed node may update its label but cannot silently change its research objective', () => {
+  const state = create({ topic: 'Completed research identity includes the actual question' });
+  const initial = plan(); initial.nodes[0].objective = 'Determine the original policy scope';
+  applyPlan(state, initial, 'Initial objective'); state.graph.nodes.find(n => n.id === 's1').status = 'completed';
+  const renamed = structuredClone(initial); renamed.nodes[0].label = 'Policy scope evidence';
+  applyPlan(state, renamed, 'Clarify display name');
+  assert.equal(state.graph.nodes.find(n => n.id === 's1').status, 'completed');
+  assert.equal(state.graph.nodes.find(n => n.id === 's1').label, 'Policy scope evidence');
+  const changed = structuredClone(renamed); changed.nodes[0].objective = 'Determine a different policy question';
+  assert.throws(() => applyPlan(state, changed, 'New research goal needs a new node'), /不能改写/);
+});
+
+test('a node objective and its query are delivered to the assigned employee', async () => {
+  const f = fixture({ respond: task => {
+    if (task.kind === 'plan') {
+      const next = plan(); Object.assign(next.nodes[0], { objective: 'Check the current policy scope using primary evidence', label: 'Policy investigation', payload: {} }); return next;
+    }
+    if (task.kind === 'search') return { sources: [source(task.taskId.endsWith('/s1-v1') ? 'first' : 'second')] };
+  } });
+  const done = await run(create({ topic: 'The visible research objective governs actual employee work', autoApprove: true }), f.ctx);
+  assert.equal(done.status, 'completed');
+  const sent = f.calls.find(c => c.task?.kind === 'search' && c.task.taskId.endsWith('/s1-v1')).task.payload;
+  assert.equal(sent.objective, 'Check the current policy scope using primary evidence'); assert.equal(sent.query, sent.objective);
+});
+
 test('review-driven replanning archives the first draft and delivers a new reviewed report without repeated research', async () => {
   let drafts = 0, reviews = 0, plans = 0;
   const f = fixture({ respond: task => {

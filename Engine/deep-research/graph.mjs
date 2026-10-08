@@ -1,7 +1,7 @@
 /** Pure plan validation, revision history and DAG scheduling. */
 export const TASK_KINDS = ['search', 'verify', 'synthesize', 'write', 'review'];
 
-const sameWork = (a, b) => JSON.stringify([a.kind, a.role, a.dependencies, a.payload]) === JSON.stringify([b.kind, b.role, b.dependencies, b.payload]);
+const sameWork = (a, b) => JSON.stringify([a.kind, a.role, a.objective, a.dependencies, a.payload]) === JSON.stringify([b.kind, b.role, b.objective, b.dependencies, b.payload]);
 
 export function normalizeNodes(nodes, maxTasks = 128) {
   if (!Array.isArray(nodes) || !nodes.length || nodes.length > maxTasks) throw Error('计划必须包含 1-' + maxTasks + ' 个任务');
@@ -72,7 +72,7 @@ export function applyPlan(state, plan, reason) {
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i], old = oldById.get(node.id);
     if (old && sameWork(old, node)) {
-      nodes[i] = { ...old, active: true };
+      nodes[i] = { ...old, label: node.label, active: true };
       retained.push(node.id);
     } else {
       if (old && ['running', 'completed'].includes(old.status)) throw Error('已开始的任务不能改写，请使用新 ID: ' + node.id);
