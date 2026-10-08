@@ -239,16 +239,25 @@ export function normalizePlanResponse(rawResponse) {
     throw new Error('响应必须是 JSON 对象');
   }
 
-  // Extract dimensions from various possible field names
+  // Extract dimensions from various possible field names and nesting levels
   let dimensionsArray = rawResponse.dimensions
     || rawResponse.researchDimensions
     || rawResponse.investigationDimensions;
+
+  // Check nested structures
+  if (!dimensionsArray && rawResponse.researchPlan) {
+    dimensionsArray = rawResponse.researchPlan.dimensions;
+  }
+  if (!dimensionsArray && rawResponse.plan) {
+    dimensionsArray = rawResponse.plan.dimensions;
+  }
 
   if (!dimensionsArray || !Array.isArray(dimensionsArray)) {
     throw new Error(
       `响应缺少 'dimensions' 字段。` +
       `\n收到的字段: ${Object.keys(rawResponse).join(', ')}` +
-      `\n请确保返回包含 'dimensions' 数组的 JSON 对象。`
+      `\n请确保返回包含 'dimensions' 数组的 JSON 对象。` +
+      `\n如果 dimensions 嵌套在其他对象中，请将其提升到顶层。`
     );
   }
 
@@ -274,6 +283,9 @@ export function normalizePlanResponse(rawResponse) {
       // Extract query from various sources
       if (dim.query && typeof dim.query === 'string') {
         query = dim.query;
+      } else if (dim.keyQuestions && Array.isArray(dim.keyQuestions) && dim.keyQuestions.length > 0) {
+        // Use first question from keyQuestions array
+        query = String(dim.keyQuestions[0]);
       } else if (dim.questions && Array.isArray(dim.questions) && dim.questions.length > 0) {
         // Use first question from questions array
         query = String(dim.questions[0]);
@@ -286,7 +298,7 @@ export function normalizePlanResponse(rawResponse) {
         throw new Error(
           `维度 ${index} 缺少有效的查询字符串。` +
           `\n收到的字段: ${Object.keys(dim).join(', ')}` +
-          `\n请提供 'query' 字段（字符串），或 'questions' 数组，或 'name' 字段。`
+          `\n请提供 'query' 字段（字符串），或 'keyQuestions' 数组，或 'questions' 数组，或 'name' 字段。`
         );
       }
 
@@ -337,12 +349,15 @@ export function normalizePlanResponse(rawResponse) {
     || rawResponse.objective
     || rawResponse.approach
     || rawResponse.methodology
+    || (rawResponse.researchPlan && rawResponse.researchPlan.objective)
+    || (rawResponse.plan && rawResponse.plan.objective)
     || '';
 
   // Extract estimated time
   const estimatedTime = rawResponse.estimatedTime
     || rawResponse.estimatedDuration
     || rawResponse.expectedTime
+    || (rawResponse.researchPlan && rawResponse.researchPlan.estimatedTime)
     || 0;
 
   return {

@@ -342,18 +342,44 @@ export async function ask(state, ctx, key, role, kind, payload, validate) {
  * Build detailed correction instructions based on error
  */
 function buildCorrectionInstructions(kind, errorMessage) {
-  let instructions = '你之前的响应格式不正确。请修正以下问题：\n\n';
+  let instructions = '⚠️ **格式纠正任务** ⚠️\n\n';
+  instructions += '你之前的响应格式不正确。错误信息：\n\n';
   instructions += errorMessage + '\n\n';
-  instructions += '请重新生成完整的响应，严格按照要求的格式。\n';
-  instructions += '**不要解释错误或修复过程，只返回完整正确的 JSON。**\n\n';
 
   if (kind === 'plan') {
-    instructions += '特别注意：\n';
-    instructions += '1. 字段名必须是 "dimensions"，不要使用 "researchDimensions"\n';
-    instructions += '2. 每个 dimension 必须包含 "query" 字段（字符串类型）\n';
-    instructions += '3. 不要包含 questions 数组、platforms、verifiedSeeds 等额外字段\n';
-    instructions += '4. 保持结构简洁，只包含必需的字段\n';
+    instructions += '**常见错误及修复方法：**\n\n';
+    instructions += '❌ 错误1：dimensions 嵌套在其他对象中\n';
+    instructions += '如果你写了 `"researchPlan": { "dimensions": [...] }`\n';
+    instructions += '修正：将 dimensions 移到顶层 `"dimensions": [...]`\n\n';
+
+    instructions += '❌ 错误2：使用 questions 数组而不是 query 字符串\n';
+    instructions += '如果你写了 `"questions": ["Q1", "Q2"]`\n';
+    instructions += '修正：改为 `"query": "Q1"`（取第一个问题）\n\n';
+
+    instructions += '❌ 错误3：添加了额外的字段\n';
+    instructions += '删除：targets, keyQuestions, sourceIds, verifiedSeeds, methodology 等\n';
+    instructions += '只保留：id（可选）, query, rationale（可选）\n\n';
+
+    instructions += '**必须的 JSON 结构：**\n\n';
+    instructions += '```json\n';
+    instructions += '{\n';
+    instructions += '  "taskId": "原样返回",\n';
+    instructions += '  "dimensions": [\n';
+    instructions += '    {\n';
+    instructions += '      "query": "调查问题（字符串）",\n';
+    instructions += '      "rationale": "重要性（字符串，可选）"\n';
+    instructions += '    }\n';
+    instructions += '  ],\n';
+    instructions += '  "strategy": "整体策略（可选）"\n';
+    instructions += '}\n';
+    instructions += '```\n\n';
   }
+
+  instructions += '**重要：**\n';
+  instructions += '- 不要解释错误或修复过程\n';
+  instructions += '- 不要添加任何说明文字\n';
+  instructions += '- 只返回完整正确的 JSON\n';
+  instructions += '- 确保 JSON 格式完整可解析\n';
 
   return instructions;
 }
@@ -448,72 +474,103 @@ function buildPrompt(state, taskId, kind, payload) {
 
 function getTaskInstructions(kind, payload) {
   const templates = {
-    plan: `分析研究主题，规划调查维度和关键问题。返回结构化研究计划。
+    plan: `分析研究主题，规划调查维度和关键问题。
 
-你的任务是生成一个研究计划，包含多个调查维度。每个维度代表研究的一个重要方面。
+**严格输出要求：**
 
-**输出格式要求：**
+你必须返回一个 JSON 对象，且只能返回 JSON，不要有任何其他文字。
 
-返回一个 JSON 对象，包含以下字段：
+JSON 结构必须完全匹配以下格式：
 
 \`\`\`json
 {
   "taskId": "原样返回接收到的 taskId",
   "dimensions": [
     {
-      "query": "具体的调查问题或主题",
-      "rationale": "为什么这个维度重要"
+      "query": "具体的调查问题（字符串）",
+      "rationale": "重要性说明（字符串，可选）"
     }
   ],
-  "strategy": "整体研究策略",
+  "strategy": "整体研究策略（字符串，可选）",
   "estimatedTime": 15
 }
 \`\`\`
 
-**字段说明：**
+**关键约束（违反将导致任务失败）：**
 
-1. **taskId** - 必须原样返回接收到的 taskId
-2. **dimensions** - 调查维度数组，每个维度包含：
-   - **query**: 一个清晰的调查问题或主题（纯文本字符串）
-     例如："量子纠错实验进展"、"大语言模型推理能力突破"、"可再生能源储能技术"
-   - **rationale**: 简短说明这个维度的重要性（可选）
-3. **strategy** - 整体研究策略说明（可选）
-4. **estimatedTime** - 预计完成时间（分钟）
+1. ✅ dimensions 必须在顶层，不能嵌套在 researchPlan、plan 或其他对象中
+2. ✅ 每个 dimension 的 query 必须是简单字符串，不能是对象或数组
+3. ✅ 不要添加 questions、keyQuestions、targets、sourceIds 等额外字段
+4. ✅ 不要返回 researchPlan、methodology、deliverables 等嵌套结构
+5. ✅ taskId 必须原样返回，一个字符都不能改
 
 **范围指导：**
 - quick scope: 4-6 个维度
 - comprehensive scope: 8-12 个维度
 - deep scope: 12-18 个维度
 
-**完整示例：**
+**正确示例：**
 
 \`\`\`json
 {
   "taskId": "wf_abc123/research-plan",
   "dimensions": [
     {
-      "query": "2024年大语言模型推理能力突破",
-      "rationale": "推理是通往 AGI 的关键能力"
+      "query": "2024年量子纠错码的实验验证进展",
+      "rationale": "量子纠错是实用量子计算的关键"
     },
     {
-      "query": "多模态模型在视觉理解方面的进展",
-      "rationale": "视觉是人类智能的重要组成部分"
+      "query": "超导量子比特相干时间提升技术",
+      "rationale": "相干时间直接影响算法执行能力"
     },
     {
-      "query": "AI 对齐和安全性研究新方法",
-      "rationale": "确保 AI 系统的可控性和安全性"
+      "query": "量子算法在化学模拟中的应用突破"
     }
   ],
-  "strategy": "先调查核心技术突破，再评估实际应用影响",
+  "strategy": "先调查硬件突破，再评估算法应用",
   "estimatedTime": 20
 }
 \`\`\`
 
-**重要提醒：**
-- 每个 dimension 的 query 必须是简单的字符串，不要使用嵌套对象或数组
-- 不要添加额外的字段如 questions、keyQuestions、verifiedSeeds、searchStrategy 等
-- 如果你想提供多个相关问题，将它们合并到一个 query 字符串中，用分号分隔
-- 保持 JSON 结构简洁，便于后续处理`,
+**错误示例（不要模仿）：**
+
+❌ 错误1：嵌套在 researchPlan 中
+\`\`\`json
+{
+  "taskId": "...",
+  "researchPlan": {
+    "dimensions": [...]  ← 错误！dimensions 必须在顶层
+  }
+}
+\`\`\`
+
+❌ 错误2：query 不是字符串
+\`\`\`json
+{
+  "dimensions": [
+    {
+      "query": {  ← 错误！query 必须是字符串
+        "main": "...",
+        "sub": "..."
+      }
+    }
+  ]
+}
+\`\`\`
+
+❌ 错误3：使用 questions 数组
+\`\`\`json
+{
+  "dimensions": [
+    {
+      "name": "...",
+      "questions": ["Q1", "Q2"]  ← 错误！使用 query 字符串
+    }
+  ]
+}
+\`\`\`
+
+记住：只返回符合格式的 JSON，不要有任何解释文字。`,
 
     search: `搜索相关来源，评估可信度，提取关键信息。
 

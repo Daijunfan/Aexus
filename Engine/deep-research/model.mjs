@@ -290,15 +290,36 @@ export function parseAnswer(text, taskId) {
   }
 
   let raw = text.trim();
-  if (raw.startsWith('```')) {
-    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+
+  // Try to extract JSON from markdown code blocks
+  if (raw.includes('```')) {
+    const codeBlockMatch = raw.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/i);
+    if (codeBlockMatch) {
+      raw = codeBlockMatch[1].trim();
+    }
   }
+
+  // Try to find JSON object in the text (starts with { and ends with })
+  if (!raw.startsWith('{')) {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      raw = jsonMatch[0];
+    }
+  }
+
+  // Clean up common issues
+  raw = raw
+    .replace(/^[^{]*/, '')  // Remove text before first {
+    .replace(/[^}]*$/, '')  // Remove text after last }
+    .trim();
 
   let value;
   try {
     value = JSON.parse(raw);
-  } catch {
-    throw Error('Agent 没有返回完整 JSON');
+  } catch (error) {
+    // Try to provide more helpful error messages
+    const preview = raw.substring(0, 200);
+    throw Error(`Agent 没有返回完整 JSON。响应预览: ${preview}...`);
   }
 
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -306,7 +327,7 @@ export function parseAnswer(text, taskId) {
   }
 
   if (value.taskId !== taskId) {
-    throw Error('Agent 回复任务 ID 不匹配');
+    throw Error(`Agent 回复任务 ID 不匹配。期望: ${taskId}，收到: ${value.taskId}`);
   }
 
   return value;
