@@ -4,7 +4,7 @@ import {absorb} from './evidence.mjs'
 import {researchInsights} from './insights.mjs'
 import {renderReport} from './report.mjs'
 export {create,describe,respond,retry,cancel,pause,amend}
-export const compatibleVersions=['1.0.0','1.1.0']
+export const compatibleVersions=['1.0.0','1.1.0','1.2.0']
 import {depthConfig} from './policy.mjs'
 const brief=state=>({topic:state.topic,agreedScope:state.answers,plan:state.plan,asOf:new Date().toISOString(),language:state.language,depth:depthConfig(state.depth),sourcePolicy:state.sourcePolicy??{},materials:state.materials??[],amendments:state.amendments??[]})
 const pool=state=>({sources:state.sources,findings:state.findings,gaps:state.gaps??[]})

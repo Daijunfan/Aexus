@@ -21,8 +21,11 @@ export default function Page({client}:{client:ContractClient}){
  const revisionRef=useRef(0);revisionRef.current=job?.revision??0
  useEffect(()=>{
   if(!job||['completed','cancelled'].includes(job.status))return
-  let current=true,timer:ReturnType<typeof setTimeout>,failures=0
+  let current=true,timer:ReturnType<typeof setTimeout>,failures=0,inFlight=false,queued=false
+  const schedule=(ms:number)=>{if(!current)return;clearTimeout(timer);timer=setTimeout(()=>void poll(),ms)}
   const poll=async()=>{
+   if(inFlight){queued=true;return}
+   inFlight=true
    try{
     const next=await client.invoke<WorkflowRead>('workflow.get',{id:job.id,ifRevision:revisionRef.current})
     if(current){failures=0;setSyncError('');if(!('unchanged' in next)){
@@ -30,9 +33,12 @@ export default function Page({client}:{client:ContractClient}){
      setHistory(old=>old.map(item=>item.id===next.id&&next.revision>=item.revision?next:item))
     }}
    }catch(e){if(current){failures++;setSyncError((e as Error).message)}}
-   finally{if(current)timer=setTimeout(poll,Math.min(10000,900*2**Math.min(failures,4)))}
+   finally{inFlight=false;if(current){const soon=queued;queued=false;schedule(soon?120:Math.min(15000,5000*2**Math.min(failures,2)))}}
   }
-  timer=setTimeout(poll,600);return()=>{current=false;clearTimeout(timer)}
+  // Core checkpoints emit scoped workflow:changed events. The slower conditional
+  // read is a fallback for disconnected transports, missed events and old clients.
+  const unsubscribe=client.watchWorkflow?.(job.id,()=>{if(inFlight)queued=true;else schedule(120)})
+  schedule(250);return()=>{current=false;clearTimeout(timer);unsubscribe?.()}
  },[job?.id,job?.status,client])
  useEffect(()=>{
   if(job?.status!=='paused')return

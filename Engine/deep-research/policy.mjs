@@ -37,7 +37,7 @@ export function materials(input=[]){
  let total=0
  return array(input,'参考材料',6).map(item=>{
   if(!item||typeof item.name!=='string'||!item.name.trim()||item.name.length>160||typeof item.text!=='string'||!item.text.trim()||item.text.length>80000)throw Error('参考材料需要文件名和正文，单份最多 80,000 字符')
-  if(!/\.(txt|md|csv|json)$/i.test(item.name)||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(item.text))throw Error('仅支持 UTF-8 TXT、Markdown、CSV、JSON 文本材料')
+  if(!/\.(txt|md|csv|json|pdf)$/i.test(item.name)||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(item.text))throw Error('仅支持 UTF-8 文本或已提取文本的 PDF 参考材料')
   total+=item.text.length;if(total>200000)throw Error('参考材料总计不能超过 200,000 字符')
   return {name:item.name.trim().replace(/[\\/]/g,'_'),text:item.text}
  })

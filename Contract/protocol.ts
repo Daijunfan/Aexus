@@ -9,12 +9,16 @@ export interface ContractClient{
  invoke<T=unknown>(command:string,args?:Arguments):Promise<T>
  describe(command?:string):Promise<unknown>
  info():Promise<unknown>
+ /** Optional, scoped invalidation hint for an owned workflow. Always re-read with workflow.get. */
+ watchWorkflow?(id:string,onChanged:()=>void):()=>void
 }
 export function contractError(code:string,message:string):Error&{code:string}{return Object.assign(new Error(message),{code})}
 export function requireVersion(version:unknown){
  if(version!==CONTRACT_VERSION)throw contractError('CONTRACT_VERSION_UNSUPPORTED',`Unsupported Contract version ${String(version)}; expected ${CONTRACT_VERSION}`)
 }
-export function createContractClient(rpc:Rpc):ContractClient{
+export type ContractEvent={channel:string;payload?:unknown}
+export type ContractSubscribe=(handler:(event:ContractEvent)=>void)=>()=>void
+export function createContractClient(rpc:Rpc,subscribe?:ContractSubscribe):ContractClient{
  return {
   async invoke<T>(command:string,args:Arguments={}){
    const value=await rpc('contract.call',{version:CONTRACT_VERSION,command,args}) as ContractResult<T>
@@ -22,6 +26,11 @@ export function createContractClient(rpc:Rpc):ContractClient{
    return value.data
   },
   describe:command=>rpc('contract.describe',{version:CONTRACT_VERSION,...(command?{command}:{})}),
-  info:()=>rpc('contract.info',{})
+  info:()=>rpc('contract.info',{}),
+  ...(subscribe?{watchWorkflow:(id:string,onChanged:()=>void)=>subscribe(event=>{
+   if(event.channel!=='workflow:changed'||!event.payload||typeof event.payload!=='object')return
+   const payload=event.payload as {id?:unknown;engineId?:unknown;revision?:unknown}
+   if(payload.id===id&&typeof payload.engineId==='string'&&Number.isSafeInteger(payload.revision))onChanged()
+  })}:{})
  }
 }

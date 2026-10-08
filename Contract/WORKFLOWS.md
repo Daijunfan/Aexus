@@ -84,6 +84,8 @@ The final directory has only the artifacts selected by the Engine. Runtime journ
 
 ## Conditional status reads
 
+The optional renderer-only `ContractClient.watchWorkflow(id,onChanged)` listens to the existing, presentation-scoped `workflow:changed` event, coalescing live progress without introducing a new business command or permitting Engine runtimes to subscribe to private data. The callback is only an invalidation hint: clients must call the authorized `workflow.get({id,ifRevision})` and retain revision ordering. Consumers must unsubscribe when leaving a job; a slower conditional poll remains necessary for reconnects, missed events and older Contract clients. The event carries only workflow identity, engine scope, status and revision, never Agent transcripts or raw task results. `ContractClient.invoke` and CLI commands retain their v1 signatures.
+
 `workflow.get({id, ifRevision})` returns `{id, engineId, revision, unchanged: true}` when the current revision equals `ifRevision`. Otherwise it returns the normal `WorkflowView`. Omit `ifRevision` to always receive the full public view. `WorkflowRead` is the union of `WorkflowView` and `WorkflowUnchanged`; consumers must narrow with `unchanged` before reading `summary` or `files`.
 
 Authentication, Engine ownership and parameter validation run before conditional responses. No material text, prompts, transcript or result cache is included in the unchanged tuple. Reading never increments the revision or starts model work. Clients retain the previous view on an unchanged response and guard against stale reads arriving after navigation.

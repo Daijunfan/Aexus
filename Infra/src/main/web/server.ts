@@ -24,7 +24,7 @@ import {APP_HOME,SOCKET_PATH,type Request} from '../../shared/protocol'
 import type {RequestContext} from '../../shared/management'
 
 type Options={host?:string;port?:number;publicUrl?:string;allowInsecure?:boolean;renderer?:string}
-const mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.ico':'image/x-icon'}
+const mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.ico':'image/x-icon'}
 const failure=(message:string,status=400,code='BAD_REQUEST')=>Object.assign(Error(message),{status,code})
 async function body(req:http.IncomingMessage,limit=16*1024*1024){
   if(!req.headers['content-type']?.startsWith('application/json'))throw failure('Content-Type must be application/json',415)

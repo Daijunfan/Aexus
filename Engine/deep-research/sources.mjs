@@ -4,6 +4,7 @@ import https from 'node:https'
 import dns from 'node:dns'
 import net from 'node:net'
 import {createHash} from 'node:crypto'
+import {extractPdfText,isPdf} from './document.mjs'
 
 const blocked=new net.BlockList()
 for(const [address,prefix] of [['0.0.0.0',8],['10.0.0.0',8],['127.0.0.0',8],['169.254.0.0',16],['172.16.0.0',12],['192.168.0.0',16],['100.64.0.0',10],['192.0.0.0',24],['192.0.2.0',24],['198.18.0.0',15],['198.51.100.0',24],['203.0.113.0',24],['224.0.0.0',4],['240.0.0.0',4]])blocked.addSubnet(address,prefix,'ipv4')
@@ -25,7 +26,7 @@ function retrieve(value,signal,redirects=0,policy={}){
  const url=assertSourceAllowed(publicURL(value),policy)
  return new Promise((resolve,reject)=>{
   signal?.throwIfAborted()
-  const request=(url.startsWith('https:')?https:http).request(url,{method:'GET',signal,headers:{'user-agent':'Aexus-DeepResearch/1.0 (+source-verification)','accept':'text/html,text/plain,application/json','accept-encoding':'identity'},lookup:(hostname,options,callback)=>{
+  const request=(url.startsWith('https:')?https:http).request(url,{method:'GET',signal,headers:{'user-agent':'Aexus-DeepResearch/1.0 (+source-verification)','accept':'text/html,text/plain,application/json,application/pdf','accept-encoding':'identity'},lookup:(hostname,options,callback)=>{
    dns.lookup(hostname,{all:true},(error,addresses)=>{
     if(error)return callback(error)
     if(!addresses.length||addresses.some(a=>!publicAddress(a.address)))return callback(Error('资料主机解析到私网地址'))
@@ -37,10 +38,18 @@ function retrieve(value,signal,redirects=0,policy={}){
     resolve(retrieve(new URL(response.headers.location,url).href,signal,redirects+1,policy));return
    }
    if(response.statusCode!==200){response.resume();reject(Error('资料请求返回 HTTP '+response.statusCode));return}
-   if(!/text\/(html|plain)|application\/(json|xhtml\+xml)/i.test(String(response.headers['content-type']??''))){response.resume();reject(Error('暂不能独立核验此格式，请提供可阅读的 HTML 原始资料'));return}
+   const mediaType=String(response.headers['content-type']??'').toLowerCase()
+   const html=/text\/(html|plain)|application\/(json|xhtml\+xml)/i.test(mediaType)
+   const pdf=/application\/pdf|application\/octet-stream|binary\/octet-stream/i.test(mediaType)||/\.pdf$/i.test(new URL(url).pathname)
+   if(!html&&!pdf){response.resume();reject(Error('来源格式暂不支持独立核验；可使用公开 HTML 或可提取文字的 PDF'));return}
+   const limit=pdf?8*1024*1024:2*1024*1024
    let size=0;const chunks=[]
-   response.on('data',chunk=>{size+=chunk.length;if(size>2*1024*1024){request.destroy(Error('资料页面超过 2 MiB'));return}chunks.push(chunk)})
-   response.on('error',reject);response.on('end',()=>resolve({url,body:Buffer.concat(chunks).toString('utf8'),bytes:size}))
+   response.on('data',chunk=>{size+=chunk.length;if(size>limit){request.destroy(Error(pdf?'PDF 超过 8 MiB':'资料页面超过 2 MiB'));return}chunks.push(chunk)})
+   response.on('error',reject);response.on('end',()=>{
+    const raw=Buffer.concat(chunks),asPdf=isPdf(raw)
+    if(!html&&!asPdf){reject(Error('文件缺少可解析的 PDF 结构'));return}
+    resolve({url,body:asPdf?raw:raw.toString('utf8'),bytes:size,mediaType:asPdf?'application/pdf':mediaType})
+   })
   })
   const deadline=setTimeout(()=>request.destroy(Error('资料核验超过总时限')),20000);deadline.unref?.();request.once('close',()=>clearTimeout(deadline));
   request.on('error',reject);request.setTimeout(15000,()=>request.destroy(Error('资料核验超时')));request.end()
@@ -50,8 +59,9 @@ export function readSource(url,{signal,policy={}}={}){return retrieve(url,signal
 export async function verifySource(candidate,{signal,read,policy={}}={}){
  const url=assertSourceAllowed(publicURL(candidate.url),policy),quote=sourceQuote(candidate.quote)
  if(quote.length<18)throw Error('证据摘录过短，无法可靠核对')
- const fetched=await (read?read(url,signal):retrieve(url,signal,0,policy));assertSourceAllowed(publicURL(fetched.url),policy);const body=pageText(fetched.body)
+ const fetched=await (read?read(url,signal):retrieve(url,signal,0,policy));assertSourceAllowed(publicURL(fetched.url),policy)
+ const pdf=isPdf(fetched.body),body=pdf?await extractPdfText(fetched.body,{signal}):pageText(fetched.body)
  if(!body.toLocaleLowerCase().includes(normalize(quote).toLocaleLowerCase()))throw Error('来源页面未找到所引摘录；该引用不得进入最终报告')
- const title=normalize(decode(fetched.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]??candidate.title))
- return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}
+ const title=normalize(decode(pdf?candidate.title:(fetched.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]??candidate.title)))
+ return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',format:pdf?'pdf':'web',retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}
 }

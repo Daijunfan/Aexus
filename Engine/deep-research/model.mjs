@@ -31,7 +31,7 @@ export function describe(state){
   ...(waiting?{questions:state.questions}:{}),...(state.plan?{plan:state.plan}:{}),findings:state.findings,gaps:state.gaps??[],
   depth:state.depth??'standard',budget,sourcePolicy:state.sourcePolicy??sourcePolicy(),startedAt:state.startedAt,finishedAt:state.finishedAt,
   materials:(state.materials??[]).map(m=>({name:m.name,characters:m.text.length})),amendments:state.amendments??[],
-  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt,excerpts,workerIds})=>({id,url:finalUrl??url,title,quote,sourceType,retrievedAt,sha256,engines,workerIds:workerIds??[],reportedPublishedAt,excerpts:excerpts??[]})),
+  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,format,retrievedAt,sha256,engines,reportedPublishedAt,excerpts,workerIds})=>({id,url:finalUrl??url,title,quote,sourceType,format:format??'web',retrievedAt,sha256,engines,workerIds:workerIds??[],reportedPublishedAt,excerpts:excerpts??[]})),
   rejectedSources:state.rejectedSources.slice(-40),rejectedFindings:(state.rejectedFindings??[]).slice(-40),review:state.review??null,reportReview:state.reportReview??null,
   verification:state.verification??null,insights:researchInsights(state),metrics:{completedTasks:done,totalTasks:tasks.length,activeTasks:tasks.filter(t=>['running','approval'].includes(t.status)).length,findings:state.findings.length,primarySources:state.sources.filter(s=>s.sourceType==='primary').length},
   workers:state.workers.map(w=>({id:w.id,title:w.title,engine:w.engine,role:w.role,label:w.label,model:w.model??null,status:[...tasks].reverse().find(t=>t.employeeId===w.id)?.status??'ready'})),

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.61.0 — Deep Research PDF 与实时多 Agent 工作台
+
+Deep Research 1.3.0：本地 PDF 参考材料、公开 PDF 摘录独立核验、逐 Agent 真实任务轨、事件驱动进度更新；Infra 增补工作流变更订阅桥接及 Web `.mjs` MIME，Company 顶部三个视图按钮等宽居中的多分辨率验收继续通过。详见 [更新记录](releases/0.61.0.zh-CN.md)。
+
 ## 0.60.1 — 可追溯的研究协作图
 
 Deep Research 1.2.0：逐摘录核验和贡献归属、逐研究员增量入库、协作路线与质量门槛图、准确重试、完整摘录导出。Infra 增加带鉴权的条件状态读取，Company 三按钮等宽居中并通过窄屏检查。详见 [更新记录](releases/0.60.1.zh-CN.md)。
