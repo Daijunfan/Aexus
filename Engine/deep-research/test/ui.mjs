@@ -645,6 +645,72 @@ try {
   checks.push(
     "backend describe finding object arrays render excerpt, locator and source navigation without React crash",
   );
+  assert.equal(await page.locator(".dr-contradictions").count(), 0);
+  const disagreement = create({ topic: "两份测试资料中的并发上限存在分歧" });
+  const conflictingText = [
+    "The concurrent research limit is 4.",
+    "The concurrent research limit is 8.",
+  ];
+  disagreement.sources = await acquireSources(
+    { sources: [] },
+    conflictingText.map((excerpt, index) => ({
+      id: "conflict-source-" + index,
+      title: "并发上限测试资料 " + (index + 1),
+      url: "https://fixture.invalid/limit-" + index,
+      acquisition: { excerpt },
+    })),
+    {
+      read: async (url) => ({
+        url,
+        data: Buffer.from(conflictingText[Number(url.at(-1))]),
+        mediaType: "text/plain",
+      }),
+    },
+  );
+  mergeVerification(
+    disagreement,
+    normalizeVerification({
+      verifications: disagreement.sources.map((source, index) => ({
+        sourceId: source.id,
+        credibilityScore: 0.8,
+        claims: [{ text: conflictingText[index], excerpt: conflictingText[index] }],
+        contradictions: index === 0 ? [{
+          sourceIds: disagreement.sources.map(source => source.id),
+          description: "资料一将并发上限记为 4，资料二将并发上限记为 8；尚未确认适用版本。",
+          severity: "warning",
+        }] : [],
+      })),
+    }, disagreement.sources),
+  );
+  update("running", "research", {
+    sources: disagreement.sources,
+    findings: disagreement.findings,
+    contradictions: disagreement.contradictions,
+  });
+  await page.getByRole("heading", { name: "来源存在分歧", exact: true }).waitFor();
+  assert.deepEqual(job.summary.contradictions[0].sources, disagreement.sources.map(source => source.id));
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const conflicting = page.locator(".dr-contradictions");
+    assert.ok(
+      (await conflicting.boundingBox()).y < 900,
+      "source disagreement is shown before findings in the initial view",
+    );
+    await fits();
+    await screen("02c-source-disagreement-" + width);
+    for (const [index, source] of disagreement.sources.entries()) {
+      await conflicting.getByRole("button", { name: source.title, exact: true }).click();
+      await page.locator(".dr-source-detail > h3").filter({ hasText: source.title }).waitFor();
+      await page.locator(".dr-source-detail").getByText(conflictingText[index], { exact: true }).first().waitFor();
+      await page.getByRole("tab", { name: /^发现/ }).click();
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  update("running", "research", { sources, findings, contradictions: [] });
+  await page.locator(".dr-contradictions").waitFor({ state: "hidden" });
+  checks.push(
+    "backend-normalized disagreement between two independently matched fixture sources is visible before claims, links each source to its original quote, and renders no empty section across three widths",
+  );
   await page.getByRole("tab", { name: "研究地图", exact: true }).click();
   assert.equal(await page.locator("[data-node-id]").count(), 48);
   await page.locator('[data-node-id="node-0"]').click();

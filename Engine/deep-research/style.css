@@ -1662,6 +1662,22 @@
   line-height: 1.8;
   font-weight: 550;
 }
+.dr-contradictions {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--dr-border);
+}
+.dr-contradictions > h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--dr-amber);
+}
+.dr-contradictions > article {
+  margin-top: 14px;
+  padding-left: 12px;
+  border-left: 2px solid var(--dr-amber);
+  line-height: 1.8;
+}
 .dr-citations {
   display: flex;
   gap: 6px;

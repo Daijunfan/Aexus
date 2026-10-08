@@ -368,6 +368,12 @@ export default function Page({ client }: { client: ContractClient }) {
       (worker: any) => worker.active !== false,
     );
   const findings: any[] = summary.findingsDetails ?? [],
+    contradictions: {
+      id: string;
+      sources: string[];
+      description: string;
+      severity: string;
+    }[] = summary.contradictions ?? [],
     report = summary.deliverable ?? summary.report?.content,
     revisions: any[] = summary.planRevisions ?? summary.planHistory ?? [];
   const runningNodes = nodes.filter(
@@ -1558,8 +1564,23 @@ export default function Page({ client }: { client: ContractClient }) {
               <section className="dr-findings" aria-label="研究发现">
                 <div className="dr-section-heading">
                   <h2>研究发现</h2>
-                  <span>{findings.length} 条</span>
+                  <span>
+                    {findings.length} 条
+                    {contradictions.length > 0 &&
+                      ` · ${contradictions.length} 项分歧待解释`}
+                  </span>
                 </div>
+                {contradictions.length > 0 && (
+                  <div className="dr-contradictions">
+                    <h3><Icon name="warning" />来源存在分歧</h3>
+                    {contradictions.map((contradiction) => (
+                      <article key={contradiction.id}>
+                        <p>{contradiction.description}</p>
+                        {citations(contradiction.sources)}
+                      </article>
+                    ))}
+                  </div>
+                )}
                 {findings.map((finding, index) => (
                   <article key={finding.id ?? index}>
                     <span className="dr-finding-number">
