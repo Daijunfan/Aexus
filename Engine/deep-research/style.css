@@ -2237,3 +2237,6 @@
     opacity: 0.35;
   }
 }
+.engine-surface > .dr-app {
+  min-height: calc(100% - 60px);
+}

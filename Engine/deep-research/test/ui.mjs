@@ -478,6 +478,33 @@ const fits = async () =>
 async function waitPhase(text) {
   await page.getByText(text, { exact: true }).first().waitFor();
 }
+async function embedHost(width = 1440, height = 900) {
+  await page.setViewportSize({ width, height });
+  await page.evaluate(
+    ({ width, height }) => {
+      const root = document.getElementById("root");
+      const top = width === 1440 ? 72 : 116;
+      root.classList.add("engine-surface");
+      root.style.cssText = `height:${height - top}px;min-height:0;margin:${top}px 0 0 64px;width:${width - 64}px;overflow:auto`;
+      if (root.querySelector(".engine-context")) return;
+      const chrome = document.createElement("header");
+      chrome.className = "engine-context";
+      chrome.style.cssText =
+        "height:60px;box-sizing:border-box;border-bottom:1px solid #dfe5e7";
+      root.prepend(chrome);
+    },
+    { width, height },
+  );
+}
+async function resetHost() {
+  await page.evaluate(() => {
+    const root = document.getElementById("root");
+    root.classList.remove("engine-surface");
+    root.removeAttribute("style");
+    root.querySelector(".engine-context")?.remove();
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
 try {
   await page.goto("http://127.0.0.1:" + server.address().port);
   await page.evaluate(() => document.fonts.ready);
@@ -491,6 +518,26 @@ try {
   await page.getByText("全面调查：覆盖主要问题", { exact: false }).waitFor();
   await fits();
   await screen("01-intake");
+  for (const width of [1440, 768, 390]) {
+    const height = width === 390 ? 844 : 900;
+    await embedHost(width, height);
+    const intake = await page.locator(".dr-app").boundingBox();
+    await screen("01a-embedded-intake-" + width);
+    assert.ok(
+      intake.y + intake.height <= height + 1,
+      "embedded intake subtracts the context bar from host height",
+    );
+    assert.ok(
+      await page.locator(".engine-surface").evaluate(
+        (root) => root.scrollHeight <= root.clientHeight + 1,
+      ),
+      "embedded intake has no empty extra scroll range",
+    );
+  }
+  await resetHost();
+  checks.push(
+    "actual block-scrolling host intake fits 1440, 768 and 390 viewports without an extra context-bar scroll range",
+  );
   assert.equal(await page.getByText(/超越|90%|5 个专业/).count(), 0);
   await page.getByRole("button", { name: "开始研究", exact: true }).click();
   await waitPhase("进度尚未确定");
@@ -673,17 +720,7 @@ try {
   checks.push(
     "user chooses horizontal or vertical DAG direction; selection and readable focus retained across direction change and checkpoint",
   );
-  await page.evaluate(() => {
-    const root = document.getElementById("root");
-    root.classList.add("engine-surface");
-    root.style.cssText =
-      "height:828px;min-height:0;margin:72px 0 0 64px;width:1376px;overflow:hidden";
-    const chrome = document.createElement("header");
-    chrome.className = "engine-context";
-    chrome.style.cssText =
-      "height:60px;box-sizing:border-box;border-bottom:1px solid #dfe5e7";
-    root.prepend(chrome);
-  });
+  await embedHost();
   const embedded = await page.locator(".dr-app").boundingBox();
   assert.ok(
     embedded.y + embedded.height <= 901,
@@ -702,12 +739,7 @@ try {
   await page.waitForTimeout(250);
   await screen("03i-embedded-dark-theme");
   await page.evaluate(() => document.documentElement.removeAttribute("style"));
-  await page.evaluate(() => {
-    const root = document.getElementById("root");
-    root.classList.remove("engine-surface");
-    root.removeAttribute("style");
-    root.querySelector(".engine-context").remove();
-  });
+  await resetHost();
   assert.ok(
     await page.evaluate(
       () => document.documentElement.scrollHeight <= innerHeight + 1,
@@ -820,6 +852,44 @@ try {
   );
   await page.getByRole("tab", { name: "报告", exact: true }).click();
   await screen("04-report");
+  for (const width of [1440, 768, 390]) {
+    const height = width === 390 ? 844 : 900;
+    await embedHost(width, height);
+    const chapter = page.locator(".dr-report-document > section h2").last();
+    await chapter.scrollIntoViewIfNeeded();
+    const chapterBox = await chapter.boundingBox();
+    const hostBox = await page.locator(".engine-surface").boundingBox();
+    assert.ok(
+      chapterBox.y >= hostBox.y && chapterBox.y + chapterBox.height <= height,
+      "embedded report remains scrollable to its final chapter",
+    );
+    await fits();
+    await screen("04a-embedded-report-" + width);
+    await page.getByRole("tab", { name: /^来源/ }).click();
+    await page.locator(".dr-evidence-layout").waitFor();
+    await page.locator(".dr-source-row").first().click();
+    const sourceTitle = page.locator(".dr-source-detail > h3");
+    await sourceTitle.scrollIntoViewIfNeeded();
+    const sourceBox = await sourceTitle.boundingBox();
+    assert.ok(
+      sourceBox.y >= hostBox.y && sourceBox.y + sourceBox.height <= height,
+      "embedded source details are readable inside the host viewport",
+    );
+    if (width === 1440) {
+      const evidence = await page.locator(".dr-app").boundingBox();
+      assert.ok(
+        evidence.y + evidence.height <= 901,
+        "embedded source workspace retains its fixed viewport height",
+      );
+    }
+    await fits();
+    await screen("04b-embedded-sources-" + width);
+    await page.getByRole("tab", { name: "报告", exact: true }).click();
+  }
+  await resetHost();
+  checks.push(
+    "embedded report final chapter and source workspace remain reachable in the actual host at desktop, tablet and mobile widths",
+  );
   await page
     .locator(".dr-report-document")
     .getByRole("button", { name: "1", exact: true })
