@@ -122,11 +122,13 @@ Final Report
 
 ### Plan Task（规划任务）
 
+**推荐格式**（最简洁）：
 ```json
 {
   "taskId": "wf_xxx/research-plan",
   "dimensions": [
     {
+      "id": "D1",
       "query": "大语言模型推理能力突破",
       "rationale": "推理是 2024 年的重要研究方向"
     }
@@ -135,6 +137,65 @@ Final Report
   "estimatedTime": 15
 }
 ```
+
+**也支持的格式变体**：
+
+系统会自动规范化以下格式：
+
+1. **使用 questions 数组**（会取第一个问题）：
+```json
+{
+  "taskId": "wf_xxx/research-plan",
+  "dimensions": [
+    {
+      "id": "D1",
+      "questions": [
+        "大语言模型推理能力有哪些突破？",
+        "主要的技术路线是什么？"
+      ],
+      "priority": "high"
+    }
+  ]
+}
+```
+
+2. **使用 keyQuestions 或 key_questions**：
+```json
+{
+  "dimensions": [
+    {
+      "keyQuestions": ["问题1", "问题2"]
+    }
+  ]
+}
+```
+
+3. **questions 数组包含对象**（会提取 text 字段）：
+```json
+{
+  "dimensions": [
+    {
+      "questions": [
+        { "text": "问题1", "priority": "high" },
+        { "question": "问题2" }
+      ]
+    }
+  ]
+}
+```
+
+4. **使用 name 作为 query**：
+```json
+{
+  "dimensions": [
+    { "name": "推理能力研究" }
+  ]
+}
+```
+
+5. **字段名变体**：
+- `researchDimensions` → `dimensions`
+- `research_dimensions` → `dimensions`
 
 ### Research Task（研究任务）
 

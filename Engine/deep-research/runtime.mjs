@@ -454,7 +454,13 @@ function validatePlan(result) {
       console.log('[DEBUG validatePlan] First normalized dimension:', JSON.stringify(normalized.dimensions[0], null, 2));
       console.log('[DEBUG validatePlan] First query type:', typeof normalized.dimensions[0].query);
       console.log('[DEBUG validatePlan] First query value:', normalized.dimensions[0].query);
+      console.log('[DEBUG validatePlan] First query is string:', typeof normalized.dimensions[0].query === 'string');
+      console.log('[DEBUG validatePlan] First query length:', normalized.dimensions[0].query.length);
     }
+
+    console.log('[DEBUG validatePlan] About to return normalized result');
+    console.log('[DEBUG validatePlan] Return value dimensions count:', normalized.dimensions.length);
+    console.log('[DEBUG validatePlan] Return value first query:', normalized.dimensions[0]?.query);
 
     return normalized;
   } catch (error) {

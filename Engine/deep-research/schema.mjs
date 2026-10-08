@@ -229,6 +229,38 @@ export function getSchema(kind) {
 }
 
 /**
+ * Extract question text from a question element that could be a string or object
+ */
+function extractQuestionText(question) {
+  if (typeof question === 'string') {
+    return question;
+  }
+
+  if (typeof question === 'object' && question !== null) {
+    // Try common field names for question text, but only if they're strings
+    const candidates = [
+      question.text,
+      question.question,
+      question.query,
+      question.content,
+      question.description
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string') {
+        return candidate;
+      }
+    }
+
+    // If no valid string field found, convert the whole object to string
+    return String(question);
+  }
+
+  // For numbers, null, undefined, etc., convert to string
+  return String(question);
+}
+
+/**
  * Normalize plan response - handle various formats agents might return
  *
  * This is the compatibility layer that allows us to accept multiple formats
@@ -286,13 +318,16 @@ export function normalizePlanResponse(rawResponse) {
         query = dim.query;
       } else if (dim.keyQuestions && Array.isArray(dim.keyQuestions) && dim.keyQuestions.length > 0) {
         // Use first question from keyQuestions array (camelCase)
-        query = String(dim.keyQuestions[0]);
+        const firstQuestion = dim.keyQuestions[0];
+        query = extractQuestionText(firstQuestion);
       } else if (dim.key_questions && Array.isArray(dim.key_questions) && dim.key_questions.length > 0) {
         // Use first question from key_questions array (snake_case)
-        query = String(dim.key_questions[0]);
+        const firstQuestion = dim.key_questions[0];
+        query = extractQuestionText(firstQuestion);
       } else if (dim.questions && Array.isArray(dim.questions) && dim.questions.length > 0) {
         // Use first question from questions array
-        query = String(dim.questions[0]);
+        const firstQuestion = dim.questions[0];
+        query = extractQuestionText(firstQuestion);
       } else if (dim.name && typeof dim.name === 'string') {
         // Use name as query
         query = dim.name;
@@ -428,7 +463,7 @@ export function buildFormatErrorMessage(kind, rawResponse, error) {
     message += `常见错误:\n`;
     message += `1. 字段名错误: 使用了 'researchDimensions' 而非 'dimensions'\n`;
     message += `2. query 类型错误: query 必须是字符串，不能是对象或数组\n`;
-    message += `3. 结构过于复杂: 不要包含 questions、platforms、verifiedSeeds 等额外字段\n`;
+    message += `3. 缺少查询内容: 至少提供 'query'、'questions'、'keyQuestions' 或 'name' 之一\n`;
   }
 
   return message;

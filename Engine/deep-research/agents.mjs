@@ -352,27 +352,32 @@ function buildCorrectionInstructions(kind, errorMessage) {
     instructions += '如果你写了 `"researchPlan": { "dimensions": [...] }`\n';
     instructions += '修正：将 dimensions 移到顶层 `"dimensions": [...]`\n\n';
 
-    instructions += '❌ 错误2：使用 questions 数组而不是 query 字符串\n';
-    instructions += '如果你写了 `"questions": ["Q1", "Q2"]`\n';
-    instructions += '修正：改为 `"query": "Q1"`（取第一个问题）\n\n';
+    instructions += '❌ 错误2：query 不是有效的字符串\n';
+    instructions += '如果你写了 `"query": { "text": "..." }` 或其他非字符串值\n';
+    instructions += '修正：确保 query 是纯字符串 `"query": "调查问题"`\n\n';
 
-    instructions += '❌ 错误3：添加了额外的字段\n';
-    instructions += '删除：targets, keyQuestions, sourceIds, verifiedSeeds, methodology 等\n';
-    instructions += '只保留：id（可选）, query, rationale（可选）\n\n';
+    instructions += '❌ 错误3：dimensions 数组为空\n';
+    instructions += '修正：至少提供一个有效的研究维度\n\n';
 
-    instructions += '**必须的 JSON 结构：**\n\n';
+    instructions += '**支持的 JSON 结构：**\n\n';
+    instructions += '推荐格式（最简洁）：\n';
     instructions += '```json\n';
     instructions += '{\n';
     instructions += '  "taskId": "原样返回",\n';
     instructions += '  "dimensions": [\n';
     instructions += '    {\n';
+    instructions += '      "id": "D1",\n';
     instructions += '      "query": "调查问题（字符串）",\n';
-    instructions += '      "rationale": "重要性（字符串，可选）"\n';
+    instructions += '      "rationale": "重要性（可选）"\n';
     instructions += '    }\n';
     instructions += '  ],\n';
     instructions += '  "strategy": "整体策略（可选）"\n';
     instructions += '}\n';
     instructions += '```\n\n';
+    instructions += '也支持的格式（会自动转换）：\n';
+    instructions += '- `"questions": ["问题1", "问题2"]` - 会使用第一个问题作为 query\n';
+    instructions += '- `"keyQuestions": [...]` 或 `"key_questions": [...]` - 同上\n';
+    instructions += '- `"name": "维度名称"` - 如果没有 query/questions，会使用 name\n\n';
   }
 
   instructions += '**重要：**\n';
