@@ -287,6 +287,7 @@
 }
 .dr-segment {
   display: flex;
+  position: relative;
   gap: 2px;
   min-width: 0;
   padding: 3px;
@@ -295,7 +296,6 @@
   background: var(--dr-surface);
 }
 .dr-segment label {
-  position: relative;
   padding: 6px 15px;
   color: var(--dr-muted);
   cursor: pointer;
@@ -304,11 +304,13 @@
   white-space: nowrap;
 }
 .dr-scope-help {
+  display: none;
   position: absolute;
   left: 50%;
   bottom: calc(100% + 8px);
   transform: translateX(-50%);
-  width: 210px;
+  width: min(210px, calc(100% - 8px));
+  white-space: normal;
   padding: 8px 10px;
   border: 1px solid var(--dr-border);
   border-radius: 5px;
@@ -316,21 +318,19 @@
   color: var(--dr-muted);
   font-size: 10px;
   line-height: 1.55;
-  opacity: 0;
   pointer-events: none;
   box-shadow: 0 5px 18px #192b3212;
   z-index: 2;
 }
 .dr-segment label:hover .dr-scope-help,
 .dr-segment label:focus-within .dr-scope-help {
-  opacity: 1;
+  display: block;
 }
 .dr-segment input {
   position: absolute;
   opacity: 0;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 1px;
+  height: 1px;
   cursor: pointer;
   margin: 0;
 }

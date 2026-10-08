@@ -515,7 +515,9 @@ try {
   await page
     .getByLabel("研究目标")
     .fill("比较当前多智能体研究引擎的动态规划与证据质量");
+  await page.locator(".dr-segment label.active").hover();
   await page.getByText("全面调查：覆盖主要问题", { exact: false }).waitFor();
+  await page.mouse.move(0, 0);
   await fits();
   await screen("01-intake");
   for (const width of [1440, 768, 390]) {
@@ -533,6 +535,53 @@ try {
       ),
       "embedded intake has no empty extra scroll range",
     );
+    assert.deepEqual(
+      await page
+        .locator(".dr-main,.dr-intake-page,.dr-intake,.dr-intake-controls,.dr-segment")
+        .evaluateAll((elements) =>
+          elements
+            .filter(element => element.scrollWidth > element.clientWidth + 1)
+            .map(element => element.className),
+        ),
+      [],
+      "hidden scope tooltips cannot enlarge intake scroll widths",
+    );
+    const options = page.locator(".dr-segment label");
+    for (let index = 0; index < await options.count(); index++) {
+      const selectedScope = await page
+        .locator(".dr-segment input:checked")
+        .evaluate(element => element.parentElement.textContent);
+      const option = options.nth(index);
+      await option.hover();
+      const tooltip = option.locator(".dr-scope-help");
+      const tipBox = await tooltip.boundingBox();
+      const segmentBox = await page.locator(".dr-segment").boundingBox();
+      assert.ok(
+        tipBox.x >= segmentBox.x &&
+          tipBox.x + tipBox.width <= segmentBox.x + segmentBox.width,
+        "visible scope tooltip stays inside the segmented control width",
+      );
+      assert.ok(
+        await tooltip.evaluate(element => element.scrollWidth <= element.clientWidth + 1),
+        "scope tooltip wraps its text without clipping",
+      );
+      assert.equal(
+        await page.locator(".dr-segment input:checked").evaluate(element => element.parentElement.textContent),
+        selectedScope,
+        "hovering a scope does not change the selection",
+      );
+      await option.click();
+      assert.equal(await option.locator("input").isChecked(), true);
+    }
+    await options.last().locator("input").focus();
+    await page.locator(".dr-scope-help").last().waitFor({ state: "visible" });
+    await page.keyboard.press("ArrowLeft");
+    assert.equal(await options.nth(2).locator("input").isChecked(), true);
+    await options.nth(2).locator(".dr-scope-help").waitFor({ state: "visible" });
+    await options.nth(1).click();
+    await screen("01b-embedded-scope-help-" + width);
+    await page.getByLabel("研究目标").focus();
+    await page.mouse.move(0, 0);
   }
   await resetHost();
   checks.push(
