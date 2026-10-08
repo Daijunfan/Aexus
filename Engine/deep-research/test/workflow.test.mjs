@@ -483,3 +483,20 @@ test('JSON report bodies retain inner code fences and complete JSON wrappers rem
   assert.deepEqual(parseAnswer('```json\n' + raw + '\n```', 'code-report'), result);
   assert.deepEqual(parseAnswer('Result:\n```json\n' + raw + '\n```\nEnd.', 'code-report'), result);
 });
+
+test('different verifier scopes retain both claims for one source without a second claim store', async () => {
+  const f = fixture({ respond: task => {
+    if (task.kind === 'plan') {
+      const next = plan(); next.nodes.find(n => n.id === 'v1').payload = { query: 'policy-scope' };
+      next.nodes.splice(3, 0, { id: 'v2', kind: 'verify', role: 'researcher', dependencies: ['s1', 's2'], payload: { query: 'price-scope' } });
+      next.nodes.find(n => n.id === 'w1').dependencies.push('v2'); return next;
+    }
+    if (task.kind === 'verify') return { verifications: task.payload.sources.map(s => ({ sourceId: s.id, credibilityScore: 1, claims: [{ text: task.payload.query + ' finding for ' + s.title, excerpt: s.acquisition.excerpt, locator: task.payload.query, confidence: 1 }] })) };
+  } });
+  const done = await run(create({ topic: 'Two verifier scopes share one source and preserve both claims', autoApprove: true, team: { maxConcurrency: 2 } }), f.ctx);
+  assert.equal(done.status, 'completed');
+  const view = describe(done.state), seed = view.sources.find(s => s.title === 'seed');
+  const claims = view.findingsDetails.filter(f => f.sourceIds.includes(seed.id));
+  assert.equal(claims.length, 2); assert.ok(claims.some(f => f.claim.startsWith('policy-scope'))); assert.ok(claims.some(f => f.claim.startsWith('price-scope')));
+  assert.equal('extractedClaims' in seed, false);
+});

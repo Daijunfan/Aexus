@@ -6,11 +6,6 @@ export const ENGINE_ID = 'deep-research';
 export const ENGINE_VERSION = '2.0.0';
 export const ENGINE_IDS = ['codex', 'claude', 'cline', 'pi'];
 export const PHASES = { init: '初始化研究', scouting: '初步调研', planning: '规划调查路线', research: '执行研究计划', verification: '证据核验', synthesis: '知识整合', writing: '报告撰写', review: '质量审查', complete: '完成交付' };
-export const RESEARCH_ROLES = [
-  { role: 'coordinator', label: '研究协调员', managementRole: 'manager' },
-  { role: 'researcher', label: '研究员' }, { role: 'verifier', label: '证据核验员' },
-  { role: 'synthesizer', label: '知识综合员' }, { role: 'writer', label: '报告撰写员' }
-];
 const limit = (value, fallback, min, max, label) => {
   const number = value ?? fallback;
   if (!Number.isInteger(number) || number < min || number > max) throw Error(label + '限制 ' + min + '-' + max);

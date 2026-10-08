@@ -71,7 +71,7 @@ export function normalizeVerification(result, sources) {
 export function mergeVerification(state, entries) {
   for (const entry of entries) {
     const source = state.sources.find(s => s.id === entry.sourceId);
-    Object.assign(source, { verified: source.acquisition?.status === 'read', credibilityScore: entry.credibilityScore, verificationNotes: entry.notes, extractedClaims: entry.claims });
+    Object.assign(source, { verified: source.acquisition?.status === 'read', credibilityScore: entry.credibilityScore, verificationNotes: entry.notes });
     for (const claim of entry.claims) {
       const id = 'finding-' + createHash('sha256').update(claim.text).digest('hex').slice(0, 16);
       let finding = state.findings.find(f => f.id === id);
