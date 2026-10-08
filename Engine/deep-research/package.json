@@ -11,7 +11,8 @@
   "dependencies": {
     "micromark": "4.0.2",
     "micromark-extension-gfm": "3.0.0",
-    "parse5": "8.0.1"
+    "parse5": "8.0.1",
+    "pdfjs-dist": "6.4.299"
   },
   "keywords": [
     "research",

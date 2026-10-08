@@ -3,7 +3,7 @@ import { create, describe, respond, retry, upgradeState } from './model.mjs';
 import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
-import { normalizeSources, mergeSources, normalizeVerification, mergeVerification, validateReport, sourceView, isIndependentSource } from './evidence.mjs';
+import { normalizeSources, mergeSources, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
 import { acquireSources } from './source-read.mjs';
 import { generateArtifacts } from './reports.mjs';
 
@@ -156,7 +156,7 @@ async function executeNode(state, ctx, node) {
       node.inputSourceIds = state.sources.filter(s => available.has(s.id) && (!node.payload.sourceIds || node.payload.sourceIds.includes(s.id)) && (node.kind !== 'verify' || !s.verified)).map(s => s.id);
     }
   }
-  const relevant = state.sources.filter(s => node.inputSourceIds.includes(s.id) && (node.kind !== 'verify' || isIndependentSource(s))).map(sourceView);
+  const relevant = state.sources.filter(s => node.inputSourceIds.includes(s.id) && (node.kind !== 'verify' || isIndependentSource(s)));
   await ctx.checkpoint(state);
   const payload = {
     ...node.payload,

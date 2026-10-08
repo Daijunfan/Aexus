@@ -80,7 +80,7 @@ export function normalizeVerification(result, sources) {
       if (!claim || typeof claim.text !== 'string' || !claim.text.trim() || typeof claim.excerpt !== 'string' || !claim.excerpt.trim()) throw Error('论断必须包含 text 和对应的原文 excerpt');
       const proof = proofFor(source, claim.excerpt);
       if (!proof) throw Error('论断引用的片段不在独立获取正文中: ' + source.id);
-      return { text: claim.text.trim(), excerpt: claim.excerpt, locator: String(claim.locator || proof.locator || ''), confidence: typeof claim.confidence === 'number' ? Math.max(0, Math.min(1, claim.confidence)) : 0.5 };
+      return { text: claim.text.trim(), excerpt: claim.excerpt, locator: String(proof.locator || ''), confidence: typeof claim.confidence === 'number' ? Math.max(0, Math.min(1, claim.confidence)) : 0.5 };
     });
     return { sourceId: source.id, credibilityScore: Math.max(0, Math.min(1, entry.credibilityScore)), claims, notes: String(entry.notes || ''), contradictions: entry.contradictions || [] };
   });

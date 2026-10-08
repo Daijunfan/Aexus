@@ -6,6 +6,7 @@ import net from 'node:net';
 import {createHash} from 'node:crypto';
 import {parse} from 'parse5';
 import {isIndependentSource} from './evidence.mjs';
+import {isPdf, pdfPages} from './source-pdf.mjs';
 
 const blocked = new net.BlockList();
 for (const [address, prefix] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.168.0.0', 16], ['100.64.0.0', 10], ['192.0.0.0', 24], ['192.0.2.0', 24], ['198.18.0.0', 15], ['198.51.100.0', 24], ['203.0.113.0', 24], ['224.0.0.0', 4], ['240.0.0.0', 4]]) blocked.addSubnet(address, prefix, 'ipv4');
@@ -35,7 +36,7 @@ export function readSource(value, {signal} = {}, redirects = 0) {
     signal?.throwIfAborted();
     const request = (url.startsWith('https:') ? https : http).request(url, {
       method: 'GET', signal,
-      headers: {'user-agent': 'Aexus-DeepResearch/2.0 (+source-verification)', accept: 'text/html,text/plain,application/json', 'accept-encoding': 'identity'},
+      headers: {'user-agent': 'Aexus-DeepResearch/2.0 (+source-verification)', accept: 'text/html,text/plain,application/json,application/pdf', 'accept-encoding': 'identity'},
       lookup: (hostname, options, callback) => dns.lookup(hostname, {all: true}, (error, addresses) => {
         if (error) return callback(error);
         if (!addresses.length || addresses.some(item => !publicAddress(item.address))) return callback(Error('资料主机解析到私网地址'));
@@ -52,17 +53,18 @@ export function readSource(value, {signal} = {}, redirects = 0) {
       }
       if (response.statusCode !== 200) { response.destroy(); reject(Error('资料请求返回 HTTP ' + response.statusCode)); return; }
       const mediaType = String(response.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
-      if (!/^(text\/(html|plain)|application\/(json|xhtml\+xml))$/.test(mediaType)) { response.destroy(); reject(Error('暂不能独立读取此格式，请提供 HTML 或文本来源')); return; }
+      const pdf = ['application/pdf', 'application/octet-stream', 'binary/octet-stream'].includes(mediaType);
+      if (!pdf && !/^(text\/(html|plain)|application\/(json|xhtml\+xml))$/.test(mediaType)) { response.destroy(); reject(Error('暂不能独立读取此格式，请提供 HTML、文本或带文本层的 PDF')); return; }
       let size = 0; const chunks = [];
       response.on('data', chunk => {
         size += chunk.length;
-        if (size > 4 * 1024 * 1024) { request.destroy(Error('资料页面超过 4 MiB')); return; }
+        if (size > (pdf ? 8 : 4) * 1024 * 1024) { request.destroy(Error(pdf ? 'PDF 超过 8 MiB' : '资料页面超过 4 MiB')); return; }
         chunks.push(chunk);
       });
       response.on('error', reject);
       response.on('end', () => {
         const data = Buffer.concat(chunks), body = data.toString('utf8');
-        resolve({url, body, data, mediaType, bytes: data.length, sha256: createHash('sha256').update(data).digest('hex'), accessedAt: Date.now(), text: /html/.test(mediaType) ? pageText(body) : normalize(body)});
+        resolve({url, body: pdf ? '' : body, data, mediaType, bytes: data.length, sha256: createHash('sha256').update(data).digest('hex'), accessedAt: Date.now(), text: pdf ? undefined : /html/.test(mediaType) ? pageText(body) : normalize(body)});
       });
     });
     const deadline = setTimeout(() => request.destroy(Error('资料读取超过 20 秒')), 20000);
@@ -75,7 +77,7 @@ export function readSource(value, {signal} = {}, redirects = 0) {
 export async function acquireSources(state, candidates, {signal, read = readSource} = {}) {
   const cache = new Map(), results = new Array(candidates.length);
   let index = 0;
-  await Promise.all(Array.from({length: Math.min(4, candidates.length)}, async () => {
+  const workers = await Promise.allSettled(Array.from({length: Math.min(4, candidates.length)}, async () => {
     while (index < candidates.length) {
       signal?.throwIfAborted();
       const at = index++, candidate = candidates[at], submitted = candidate.acquisition?.excerpt || '';
@@ -85,13 +87,18 @@ export async function acquireSources(state, candidates, {signal, read = readSour
       if (!submitted) { results[at] = {...candidate, acquisition: {status: 'discovered', method: 'agent-reported', reason: '尚未提供需独立核对的原文片段'}}; continue; }
       try {
         const url = publicURL(candidate.url);
-        if (!cache.has(url)) cache.set(url, Promise.resolve().then(() => read(url, {signal})));
+        if (!cache.has(url)) cache.set(url, Promise.resolve().then(() => read(url, {signal})).then(async response => {
+          const data = response.data || Buffer.from(response.body || '', 'utf8'), body = data.toString('utf8');
+          const pdf = isPdf(data) || ['application/pdf', 'application/octet-stream', 'binary/octet-stream'].includes(response.mediaType);
+          return {data, finalUrl: publicURL(response.url || url), accessedAt: response.accessedAt || Date.now(), mediaType: pdf ? 'application/pdf' : response.mediaType,
+            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : /html/.test(response.mediaType || '') ? pageText(body) : normalize(body)};
+        }));
         const response = await cache.get(url);
         signal?.throwIfAborted();
-        const finalUrl = publicURL(response.url || url), data = response.data || Buffer.from(response.body || '', 'utf8'), body = data.toString('utf8');
-        const text = /html/.test(response.mediaType || '') ? pageText(body) : normalize(body);
-        if (!text.includes(normalize(submitted))) throw Error('独立取得的原文未找到完整提交片段，该来源不得核验或引用');
-        const proof = {excerpt: submitted, locator: candidate.acquisition.locator || '', sha256: createHash('sha256').update(data).digest('hex'), accessedAt: response.accessedAt || Date.now(), finalUrl, match: 'normalized-text'};
+        const page = response.pages?.find(page => page.text.includes(normalize(submitted)));
+        if (response.pages ? !page : !response.text.includes(normalize(submitted))) throw Error('独立取得的原文未找到完整提交片段，该片段不能作为证据或引用');
+        const proof = {excerpt: submitted, locator: page ? 'Page ' + page.number : candidate.acquisition.locator || '', sha256: createHash('sha256').update(response.data).digest('hex'), accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
+          ...(page ? {pages: [page.number]} : {})};
         results[at] = {...candidate, acquisition: {status: 'read', method: 'independent-http', excerpts: [proof]}};
       } catch (error) {
         signal?.throwIfAborted();
@@ -99,5 +106,7 @@ export async function acquireSources(state, candidates, {signal, read = readSour
       }
     }
   }));
+  const failure = workers.find(worker => worker.status === 'rejected');
+  if (failure) throw failure.reason;
   return results;
 }

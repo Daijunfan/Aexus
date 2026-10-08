@@ -49,7 +49,7 @@ function fixture(options = {}) {
         if (task.kind === 'scout') result = { sources: [source()] };
         else if (task.kind === 'plan') result = plan();
         else if (task.kind === 'search') result = { sources: [source(task.payload.query)] };
-        else if (task.kind === 'verify') result = { verifications: task.payload.sources.filter(s => !s.verified).map(s => ({ sourceId: s.id, credibilityScore: 0.9, claims: [{ text: s.title + ' finding', excerpt: s.acquisition.excerpt, confidence: 0.8 }], notes: 'Read and compared original body' })) };
+        else if (task.kind === 'verify') result = { verifications: task.payload.sources.filter(s => !s.verified).map(s => ({ sourceId: s.id, credibilityScore: 0.9, claims: [{ text: s.title + ' finding', excerpt: s.acquisition.excerpts[0].excerpt, confidence: 0.8 }], notes: 'Read and compared original body' })) };
         else if (task.kind === 'write') result = { report: { title: 'Evidence-backed detailed report', abstract: 'Summary based on independent evidence', sections: [{ heading: 'Detailed findings', content: task.payload.findings.map(f => f.claim).join('\n\n'), citations: task.payload.sources.filter(s => s.verified).map(s => s.id) }], conclusion: 'Action follows evidence', limitations: ['Fixture evidence only'] } };
         else result = { verdict: 'pass', summary: 'Independent review passed', issues: [] };
       }
@@ -493,7 +493,7 @@ test('different verifier scopes retain both claims for one source without a seco
       next.nodes.splice(3, 0, { id: 'v2', kind: 'verify', role: 'researcher', dependencies: ['s1', 's2'], payload: { query: 'price-scope' } });
       next.nodes.find(n => n.id === 'w1').dependencies.push('v2'); return next;
     }
-    if (task.kind === 'verify') return { verifications: task.payload.sources.map(s => ({ sourceId: s.id, credibilityScore: 1, claims: [{ text: task.payload.query + ' finding for ' + s.title, excerpt: s.acquisition.excerpt, locator: task.payload.query, confidence: 1 }] })) };
+    if (task.kind === 'verify') return { verifications: task.payload.sources.map(s => ({ sourceId: s.id, credibilityScore: 1, claims: [{ text: task.payload.query + ' finding for ' + s.title, excerpt: s.acquisition.excerpts[0].excerpt, locator: task.payload.query, confidence: 1 }] })) };
   } });
   const done = await run(create({ topic: 'Two verifier scopes share one source and preserve both claims', autoApprove: true, team: { maxConcurrency: 2 } }), f.ctx);
   assert.equal(done.status, 'completed');
@@ -530,6 +530,8 @@ test('public projection retains canonical detail without repeating plan nodes, r
   assert.equal('nodes' in view.plan, false);
   assert.equal('content' in view.report, false);
   assert.equal('planHistory' in view, false);
+  assert.equal('excerpt' in view.sources[0].acquisition, false);
+  assert.equal('excerpt' in f.calls.find(call => call.task?.kind === 'verify').task.payload.sources[0].acquisition, false);
 });
 
 test('unfinished older checkpoints reacquire saved search excerpts without repeating native research or deleting history', async () => {

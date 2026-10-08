@@ -13,6 +13,23 @@ const candidate = (excerpt, locator = 'Results', url = 'https://evidence.example
 });
 const state = () => ({sources: []});
 
+function pdfFixture(texts, width = 600) {
+  const objects = ['<< /Type /Catalog /Pages 2 0 R >>', ''];
+  const kids = [];
+  for (const text of texts) {
+    const pageId = objects.length + 1, stream = `BT /F1 10 Tf 20 700 Td (${text}) Tj ET`;
+    kids.push(`${pageId} 0 R`);
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} 800] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents ${pageId + 1} 0 R >>`, `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+  }
+  objects[1] = `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${texts.length} >>`;
+  let body = '%PDF-1.4\n'; const offsets = [0];
+  for (let i = 0; i < objects.length; i++) { offsets.push(body.length); body += `${i + 1} 0 obj\n${objects[i]}\nendobj\n`; }
+  const start = body.length;
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n` + offsets.slice(1).map(offset => String(offset).padStart(10, '0') + ' 00000 n \n').join('');
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${start}\n%%EOF`;
+  return Buffer.from(body);
+}
+
 function transport(t, responses, address = '93.184.216.34') {
   const requests = [];
   t.mock.method(dns, 'lookup', (_host, _options, callback) => callback(null, [{address, family: address.includes(':') ? 6 : 4}]));
@@ -150,4 +167,67 @@ test('verification requires one independently read proof and cannot join separat
   assert.throws(() => normalizeVerification(verify('First bounded statement.\n\nSecond bounded statement.'), [source]), /片段/);
   source.acquisition.status = 'unavailable';
   assert.throws(() => normalizeVerification(verify('First bounded statement.'), [source]), /独立|阅读/);
+});
+
+test('PDF HTTP bytes are independently parsed and locate a full excerpt on its real page', async t => {
+  const data = pdfFixture(['First page contains a bounded evidence passage.', 'Second page establishes the actual policy.']);
+  transport(t, [{body: data, type: 'application/pdf'}]);
+  const [source] = await acquireSources(state(), [candidate('Second page establishes the actual policy.', 'Page 999')]);
+  assert.equal(source.acquisition.status, 'read');
+  const proof = source.acquisition.excerpts[0];
+  assert.equal(proof.locator, 'Page 2'); assert.deepEqual(proof.pages, [2]);
+  assert.equal(proof.mediaType, 'application/pdf'); assert.equal(proof.sha256, createHash('sha256').update(data).digest('hex'));
+  const [verified] = normalizeVerification({verifications: [{sourceId: source.id, credibilityScore: 1, claims: [{text: 'Policy finding', excerpt: proof.excerpt, locator: 'Page 999'}]}]}, [source]);
+  assert.equal(verified.claims[0].locator, 'Page 2');
+});
+
+test('PDF fabricated excerpts, absent text layers, invalid headers and excessive pages fail without trust elevation', async () => {
+  const actual = 'The actual PDF source contains this bounded evidence.';
+  for (const [data, excerpt, reason] of [
+    [pdfFixture([actual]), actual + ' Fabricated suffix.', /片段/],
+    [pdfFixture(['']), actual, /文字|OCR/],
+    [Buffer.from('An HTML response masquerading as a PDF.'), actual, /PDF/],
+    [pdfFixture(Array(81).fill(actual)), actual, /80 页/],
+    [pdfFixture(['First half of the excerpt.', 'Second half of the excerpt.']), 'First half of the excerpt. Second half of the excerpt.', /片段/]
+  ]) {
+    const [source] = await acquireSources(state(), [candidate(excerpt)], {read: async url => ({url, data, mediaType: 'application/pdf'})});
+    assert.equal(source.acquisition.status, 'unavailable'); assert.match(source.acquisition.rejections[0].reason, reason);
+  }
+});
+
+test('PDF size and owner cancellation remain bounded through the same HTTP reader', async t => {
+  transport(t, [{body: Buffer.alloc(8 * 1024 * 1024 + 1), type: 'application/pdf'}]);
+  await assert.rejects(readSource('https://evidence.example/article.pdf'), /8 MiB/);
+  const controller = new AbortController(), data = pdfFixture(['Only original source text is available.']);
+  await assert.rejects(acquireSources(state(), [candidate('Only original source text is available.')], {signal: controller.signal, read: async url => {
+    controller.abort(Error('Owner cancelled PDF acquisition')); return {url, data, mediaType: 'application/pdf'};
+  }}), /Owner cancelled PDF/);
+});
+
+test('PDF text extraction enforces its character budget', {timeout: 10_000}, async () => {
+  const oversized = pdfFixture(Array(20).fill('text '.repeat(10_000)), 1_000_000);
+  const [source] = await acquireSources(state(), [candidate('text')], {read: async url => ({url, data: oversized, mediaType: 'application/pdf'})});
+  assert.equal(source.acquisition.status, 'unavailable'); assert.match(source.acquisition.rejections[0].reason, /800,000/);
+});
+
+test('owner cancellation rejects a running PDF parser after cleanup', {timeout: 2_000}, async () => {
+  const controller = new AbortController(), data = pdfFixture(Array(80).fill('A bounded PDF source passage. '.repeat(50)));
+  const pending = acquireSources(state(), [candidate('A bounded PDF source passage.')], {signal: controller.signal, read: async url => ({url, data, mediaType: 'application/pdf'})});
+  setTimeout(() => controller.abort(Error('Owner cancelled running PDF parser')), 1);
+  await assert.rejects(pending, /Owner cancelled running PDF/);
+});
+
+test('cancelled candidate batches wait for every already started source reader to finish cleanup', async () => {
+  const controller = new AbortController(), first = Promise.withResolvers(), second = Promise.withResolvers();
+  const candidates = [candidate('First quote.', '', 'https://first.example/article'), candidate('Second quote.', '', 'https://second.example/article')];
+  let settled = false;
+  const pending = acquireSources(state(), candidates, {signal: controller.signal, read: url => url.includes('first') ? first.promise : second.promise});
+  const observed = pending.then(() => {settled = true;}, () => {settled = true;});
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort(Error('Owner cancelled source batch')); first.reject(controller.signal.reason);
+  await new Promise(resolve => setImmediate(resolve));
+  const beforeCleanup = settled;
+  second.reject(controller.signal.reason); await observed;
+  assert.equal(beforeCleanup, false, 'Cancellation must drain every started source reader');
+  await assert.rejects(pending, /Owner cancelled source batch/);
 });
