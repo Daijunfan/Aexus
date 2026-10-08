@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.60.0 — 可控的多 Agent 深度研究
+
+Deep Research 1.1.0：来源范围与深度预算、可编辑方案、可恢复暂停与修订、真实步骤进度、证据与审查工作台。Infra 新增通用工作流控制协议，Company 顶部三个视图按钮居中。详见 [更新记录](releases/0.60.0.zh-CN.md)。
+
 ## 0.59.0 — Aexus
 
 Engine / Contract / Infra 分层、四个业务 Engine、资源作用域与流隔离、统一 Aexus 名称及 Codex 默认模型/强度。详见 [更新记录](releases/0.59.0.zh-CN.md)。

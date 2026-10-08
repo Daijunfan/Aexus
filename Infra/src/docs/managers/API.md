@@ -3122,7 +3122,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 341 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 343 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3141,7 +3141,9 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents workflow list</code> | <code>[--engine-id ID]</code> | Read the caller-owned workflow summaries without exposing private runtime checkpoints | Engine workflows | operator |
 | <code>agents workflow get</code> | <code>ID</code> | Read durable status, clarification questions and final-file manifest; reading does not run a task | Engine workflows | operator |
 | <code>agents workflow respond</code> | <code>ID --expected-revision N --answer JSON --client-request-id ID</code> | Answer the current clarification checkpoint exactly once; stale answers cannot change a later round | Engine workflows | operator |
-| <code>agents workflow resume</code> | <code>ID --expected-revision N --client-request-id ID</code> | Explicitly resume a failed Engine from its saved checkpoint, preserving completed steps and identities | Engine workflows | operator |
+| <code>agents workflow resume</code> | <code>ID --expected-revision N --client-request-id ID</code> | Explicitly resume a failed or paused Engine from its saved checkpoint, preserving completed steps and identities | Engine workflows | operator |
+| <code>agents workflow pause</code> | <code>ID</code> | Pause a supported Engine and stop only its owned native tasks; preserve evidence and wait for explicit resume | Engine workflows | operator |
+| <code>agents workflow amend</code> | <code>ID --expected-revision N --update JSON --client-request-id ID</code> | Apply an Engine-validated revision to a fully paused workflow; never starts work or overwrites completed deliverables | Engine workflows | operator |
 | <code>agents workflow cancel</code> | <code>ID</code> | Cancel this workflow and its exact owned pending tasks; never interrupts unrelated employee work | Engine workflows | operator |
 | <code>agents workflow file</code> | <code>ID --name FILE</code> | Read one hash-verified final deliverable from a completed workflow; intermediate files are not downloadable | Engine workflows | operator |
 | <code>agents plan schema</code> | <code>—</code> | Discover all ten layouts, fields, policies, authorized targets and mutation APIs | Plan database | schedule |

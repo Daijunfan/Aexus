@@ -1,3 +1,5 @@
+import {publicURL} from './sources.mjs'
+import {depthConfig,sourcePolicy,materials,assertSourceAllowed} from './policy.mjs'
 export const ENGINE_IDS=['codex','claude','cline','pi']
 export const PHASES=[['scope','确认目标'],['plan','制定方案'],['direction','确认方案'],['research','并行调研'],['focus','确认重点'],['review','交叉审查'],['write','撰写与校验'],['complete','最终交付']]
 const text=(value,label,max=16000)=>{if(typeof value!=='string'||!value.trim()||value.length>max)throw Error(label+' 缺失或过长');return value.trim()}
@@ -8,25 +10,41 @@ const questions=[
  {id:'priority',prompt:'最关心哪些问题，或者需要比较哪些方案？',recommended:'现状、主要方案、差异、风险与下一步行动；用中文交付。'}
 ]
 export function create(input){
+ if(!input||typeof input!=='object'||Object.keys(input).some(k=>!['topic','engines','depth','sourcePolicy','materials','language'].includes(k)))throw Error('调研输入包含不支持的字段')
+ const depth=input.depth??'standard';depthConfig(depth)
+ const policy=sourcePolicy(input.sourcePolicy),references=materials(input.materials);policy.seedUrls.forEach(publicURL)
+ if(input.language!==undefined&&!['zh-CN','en'].includes(input.language))throw Error('报告语言无效')
  const topic=text(input.topic,'调研任务',4000),engines=input.engines??null
  if(engines!==null){list(engines,'Coding Agent',2,4);for(const e of engines){if(!ENGINE_IDS.includes(e.engine))throw Error('不支持的 Coding Agent');if(e.model!==undefined)text(e.model,'模型',160)}if(new Set(engines.map(e=>e.engine)).size<2)throw Error('深度调研需要至少两种不同 Coding Agent，不能用同一个引擎冒充多引擎协作。')}
- return {version:1,topic,phase:'scope',engines,answers:[],questions,workers:[],tasks:{},sources:[],findings:[],rejectedSources:[],reviewRound:0,repairRound:0,startedAt:new Date().toISOString()}
+ return {version:2,topic,depth,sourcePolicy:policy,materials:references,language:input.language??'zh-CN',amendments:[],phase:'scope',engines,answers:[],questions,workers:[],tasks:{},sources:[],findings:[],rejectedSources:[],reviewRound:0,repairRound:0,startedAt:new Date().toISOString()}
 }
 export function describe(state){
  const waiting=['scope','direction','focus'].includes(state.phase),phaseIndex=PHASES.findIndex(([id])=>id===state.phase)
- return {title:state.plan?.title??state.topic,topic:state.topic,phase:state.phase,phaseLabel:PHASES[phaseIndex]?.[1]??state.phase,progress:state.phase==='complete'?100:Math.max(0,Math.round(phaseIndex/8*100)),round:state.phase==='scope'?1:state.phase==='direction'?2:state.phase==='focus'?3:undefined,
-  ...(waiting?{questions:state.questions}:{}),...(state.phase==='direction'?{plan:state.plan}:{}),...(state.phase==='focus'?{findings:state.findings.slice(0,5),gaps:state.gaps??[]}:{}),
-  workers:state.workers.map(w=>({id:w.id,title:w.title,engine:w.engine,role:w.role})),
-  tasks:Object.entries(state.tasks).map(([id,t])=>({id,title:t.title,employeeId:t.employeeId,engine:t.engine,status:t.status,startedAt:t.startedAt,finishedAt:t.finishedAt,error:t.error})),
+ const budget=depthConfig(state.depth),tasks=Object.values(state.tasks),done=tasks.filter(t=>t.status==='completed').length
+ const range=[0,5,16,20,58,64,80,100],base=range[Math.max(0,phaseIndex)],next=range[phaseIndex+1]??100
+ const phaseTasks=Object.entries(state.tasks).filter(([key])=>state.phase==='plan'?key.startsWith('plan'):state.phase==='research'?/research|source-repair/.test(key):state.phase==='review'?/review/.test(key):state.phase==='write'?/report|final-review/.test(key):false).map(([,t])=>t)
+ const fraction=phaseTasks.length?phaseTasks.filter(t=>t.status==='completed').length/phaseTasks.length:0
+ const evidenceFraction=Math.min(1,state.sources.length/budget.minSources)
+ const progress=state.phase==='complete'?100:Math.min(next-1,Math.floor(base+(next-base)*.8*(state.phase==='research'?(fraction+evidenceFraction)/2:fraction)))
+ return {title:state.plan?.title??state.topic,topic:state.topic,phase:state.phase,phaseLabel:PHASES[phaseIndex]?.[1]??state.phase,progress,round:state.phase==='scope'?1:state.phase==='direction'?2:state.phase==='focus'?3:undefined,
+  ...(waiting?{questions:state.questions}:{}),...(state.plan?{plan:state.plan}:{}),findings:state.findings,gaps:state.gaps??[],
+  depth:state.depth??'standard',budget,sourcePolicy:state.sourcePolicy??sourcePolicy(),startedAt:state.startedAt,finishedAt:state.finishedAt,
+  materials:(state.materials??[]).map(m=>({name:m.name,characters:m.text.length})),amendments:state.amendments??[],
+  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt})=>({id,url:finalUrl??url,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt})),
+  rejectedSources:state.rejectedSources.slice(-40),review:state.review??null,reportReview:state.reportReview??null,
+  verification:state.verification??null,metrics:{completedTasks:done,totalTasks:tasks.length,activeTasks:tasks.filter(t=>['running','approval'].includes(t.status)).length,findings:state.findings.length,primarySources:state.sources.filter(s=>s.sourceType==='primary').length},
+  workers:state.workers.map(w=>({id:w.id,title:w.title,engine:w.engine,role:w.role,label:w.label,model:w.model??null,status:[...tasks].reverse().find(t=>t.employeeId===w.id)?.status??'ready'})),
+  tasks:Object.entries(state.tasks).map(([id,t])=>({id,title:t.title,employeeId:t.employeeId,engine:t.engine,status:t.status,startedAt:t.startedAt,finishedAt:t.finishedAt,error:t.error,kind:t.kind,activity:t.activity??null})),
   sourceCount:state.sources.length,domainCount:new Set(state.sources.map(s=>new URL(s.url).hostname)).size,rejectedCount:state.rejectedSources.length,
   attention:state.attention??null,team:state.team,language:state.language??'zh-CN',...(state.phase==='complete'?{headline:state.report.title,highlights:state.report.executiveSummary.map(p=>p.text)}:{})}
 }
 export function respond(state,answer){
+ if(state.phase==='direction'&&answer.plan){state.plan=validatePlan({plan:{...state.plan,...answer.plan,questions:state.questions}})}
  const values=answer.values??{},note=typeof answer.note==='string'?answer.note.trim():''
  if(typeof values!=='object'||Array.isArray(values)||note.length>8000)throw Error('请输入有效的回答')
  const answers=state.questions.map(q=>({question:q.prompt,answer:text(values[q.id]||q.recommended,'回答',6000)}))
  state.answers.push({round:state.phase,answers,note,at:new Date().toISOString()})
- if(state.phase==='scope'){state.language=/\benglish\b|英文/i.test(answers.map(a=>a.answer).join(' '))?'en':'zh-CN';state.phase='plan'}
+ if(state.phase==='scope'){state.language=/\benglish\b|英文/i.test(answers.map(a=>a.answer).join(' '))?'en':state.language??'zh-CN';state.phase='plan'}
  else if(state.phase==='direction')state.phase='research'
  else if(state.phase==='focus')state.phase='review'
  else throw Error('当前阶段不接受新的调研意见')
@@ -67,4 +85,22 @@ export function validateReport(report,sources){
  if(used.size<3)throw Error('报告必须实际使用至少三个已核验来源')
  if(report.sections.flatMap(s=>s.paragraphs.map(p=>p.text)).join('').length<1000)throw Error('正文过短，尚不足以作为深度调研报告')
  return report
+}
+
+/** Revisions are accepted only by Infra while fully paused. Never mutate a completed delivery. */
+export function amend(state,update){
+ if(!update||Object.keys(update).some(k=>!['note','sourcePolicy','depth'].includes(k)))throw Error('研究修订包含不支持的字段')
+ const note=text(update.note,'研究修订',6000),policy=sourcePolicy(update.sourcePolicy??state.sourcePolicy),depth=update.depth??state.depth??'standard';depthConfig(depth);policy.seedUrls.forEach(publicURL)
+ if((state.amendments??[]).length>=12)throw Error('单项研究最多接受 12 次方向修订，请新建研究保留清晰版本')
+ state.amendments??=[];state.amendments.push({note,at:new Date().toISOString(),depth,sourcePolicy:policy})
+ state.sourcePolicy=policy;state.depth=depth
+ state.sources=state.sources.filter(s=>{try{assertSourceAllowed(s.url,policy);assertSourceAllowed(s.finalUrl??s.url,policy);return true}catch{return false}})
+ const ids=new Set(state.sources.map(s=>s.id));state.findings=state.findings.filter(f=>f.sourceIds.every(id=>ids.has(id)))
+ state.previousTasks=[...(state.previousTasks??[]),...Object.values(state.tasks).map(({prompt,result,...task})=>task)].slice(-100)
+ state.tasks={};state.generation=(state.generation??0)+1;state.repairRound=0;state.reviewRound=0
+ delete state.report;delete state.reportDraft;delete state.review;delete state.reportReview;delete state.verification
+ state.gaps=[];state.attention=null
+ // Re-plan against the new owner instructions; retain the verified source ledger for reuse.
+ if(state.phase!=='scope'){state.phase='plan';state.questions=[]}
+ return state
 }

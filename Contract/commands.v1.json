@@ -195,7 +195,7 @@
     },
     {
       "name": "workflow.resume",
-      "summary": "Explicitly resume a failed Engine from its saved checkpoint, preserving completed steps and identities",
+      "summary": "Explicitly resume a failed or paused Engine from its saved checkpoint, preserving completed steps and identities",
       "permission": "operator",
       "inputSchema": {
         "type": "object",
@@ -218,6 +218,70 @@
         "required": [
           "id",
           "expectedRevision",
+          "clientRequestId"
+        ]
+      },
+      "schemaSource": "registry",
+      "readOnly": false,
+      "effect": "write",
+      "domain": "runtime",
+      "transport": "request",
+      "documentation": "Infra/src/docs/API.md"
+    },
+    {
+      "name": "workflow.pause",
+      "summary": "Pause a supported Engine and stop only its owned native tasks; preserve evidence and wait for explicit resume",
+      "permission": "operator",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "schemaSource": "registry",
+      "readOnly": false,
+      "effect": "write",
+      "domain": "runtime",
+      "transport": "request",
+      "documentation": "Infra/src/docs/API.md"
+    },
+    {
+      "name": "workflow.amend",
+      "summary": "Apply an Engine-validated revision to a fully paused workflow; never starts work or overwrites completed deliverables",
+      "permission": "operator",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "update": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "clientRequestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "id",
+          "expectedRevision",
+          "update",
           "clientRequestId"
         ]
       },

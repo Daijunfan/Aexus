@@ -38,6 +38,6 @@ https.request=function(value,options,callback){const url=new URL(value);if(!fake
   const invoke=async(command,args={})=>(await rpc('contract.call',{version:'1.0.0',command,args})).data
   const wait=async(check,label,timeout=45000)=>{const deadline=Date.now()+timeout;while(Date.now()<deadline){const value=await check();if(value)return value;await new Promise(r=>setTimeout(r,100))}throw Error('Timeout '+label)}
   const stage=async(id,phase)=>wait(async()=>{const job=await invoke('workflow.get',{id});if(job.status==='failed')throw Error(job.error);return job.summary.phase===phase&&['waiting','completed'].includes(job.status)?job:false},phase)
-  return {f,control,temp,invoke,rpc,wait,stage,close:async()=>{await f.close();fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}}
+  return {f,control,temp,preload,invoke,rpc,wait,stage,close:async()=>{await f.close();fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}}
  }catch(error){await f?.close();fs.rmSync(temp,{recursive:true,force:true});throw error}
 }

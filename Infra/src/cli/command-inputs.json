@@ -277,6 +277,49 @@
       ]
     ]
   },
+  "workflow.pause": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "workflow.amend": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "expectedRevision",
+        "expected-revision",
+        "number",
+        true,
+        false
+      ],
+      [
+        "update",
+        "update",
+        "json",
+        true,
+        false
+      ],
+      [
+        "clientRequestId",
+        "client-request-id",
+        "text",
+        true,
+        false
+      ]
+    ]
+  },
   "workflow.cancel": {
     "fields": [
       [

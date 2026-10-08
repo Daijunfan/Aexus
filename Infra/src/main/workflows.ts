@@ -28,20 +28,20 @@ function load(){
  for(const entry of fs.readdirSync(directory(),{withFileTypes:true}))if(entry.isDirectory()&&/^wf_[a-f0-9-]{36}$/.test(entry.name)){
   try{
    const value=readJson<RecordEntry>(file(entry.name),()=>{throw Error('Missing workflow state')})
-   if(value.id!==entry.name||!value.owner?.principal||!Number.isSafeInteger(value.revision)||!['running','waiting','completed','failed','cancelled'].includes(value.status))throw Error('Invalid persisted workflow '+entry.name)
+   if(value.id!==entry.name||!value.owner?.principal||!Number.isSafeInteger(value.revision)||!['running','waiting','paused','completed','failed','cancelled'].includes(value.status))throw Error('Invalid persisted workflow '+entry.name)
    entries.set(entry.name,value)
   }catch(error){loadErrors.set(entry.name,(error as Error).message)}
  }
 }
-const project=(job:RecordEntry):WorkflowView=>({id:job.id,engineId:job.engineId,engineVersion:job.engineVersion,status:job.status,revision:job.revision,createdAt:job.createdAt,updatedAt:job.updatedAt,summary:job.summary,files:job.status==='completed'?job.files:[],...(job.error?{error:job.error}:{})})
+const project=(job:RecordEntry):WorkflowView=>({id:job.id,engineId:job.engineId,engineVersion:job.engineVersion,status:job.status,revision:job.revision,createdAt:job.createdAt,updatedAt:job.updatedAt,summary:job.summary,files:job.status==='completed'?job.files:[],controlPending:!!job.controlPending,...(job.error?{error:job.error}:{})})
 function save(job:RecordEntry){job.revision++;job.updatedAt=Date.now();atomicJson(file(job.id),job,true);entries.set(job.id,job);emit('workflow:changed',{id:job.id,engineId:job.engineId,status:job.status,revision:job.revision})}
 function own(id:unknown){const key=validId(id);if(loadErrors.has(key)&&requestContext().principal.kind==='operator')throw Error('Workflow state needs repair; original data retained: '+loadErrors.get(key));const job=entries.get(key);if(!job||currentEngineScope()!==undefined&&currentEngineScope()!==job.engineId||!sameOwner(job.owner,requestContext()))throw Error('Workflow not found for this caller');return job}
 async function moduleFor(job:Pick<RecordEntry,'engineId'|'engineVersion'>):Promise<{runtime:WorkflowRuntime;commands:Set<string>}>{
  const manifest=installedEngines().engines.find(engine=>engine.id===job.engineId)
  if(!manifest?.runtime)throw Error('This Engine has no background workflow runtime')
- if(manifest.version!==job.engineVersion)throw Error('Engine version changed; restore '+job.engineVersion+' before resuming this workflow')
  const url=pathToFileURL(path.join(applicationRoot(),'Engine',manifest.directory,manifest.runtime)).href
  const runtime=await import(/* @vite-ignore */ url) as WorkflowRuntime
+ if(manifest.version!==job.engineVersion&&!runtime.compatibleVersions?.includes(job.engineVersion))throw Error('Engine version changed; restore '+job.engineVersion+' before resuming this workflow')
  for(const method of ['create','describe','respond','run'] as const)if(typeof runtime[method]!=='function')throw Error('Engine runtime is missing '+method)
  return {runtime,commands:new Set(manifest.requiredCommands)}
 }
@@ -83,6 +83,14 @@ function publish(job:RecordEntry,artifacts:WorkflowArtifact[]){
  }else fs.renameSync(stage,final)
  job.files=manifest
 }
+async function pauseCleanup(job:RecordEntry,loaded:Awaited<ReturnType<typeof moduleFor>>){
+ try{
+  if(!loaded.runtime.pause)throw Error('This Engine does not support safe pause')
+  await loaded.runtime.pause(job.state,contextFor(job,new AbortController(),loaded.runtime,loaded.commands))
+  job.summary=jsonObject(loaded.runtime.describe(job.state),'Workflow summary');job.controlPending=false;delete job.error
+ }catch(error){job.controlPending=true;job.error='Pause cleanup incomplete; retry pause before resuming: '+(error as Error).message}
+ save(job)
+}
 function launch(job:RecordEntry){
  if(!ready||active.has(job.id)||job.status!=='running')return
  const controller=new AbortController()
@@ -97,7 +105,9 @@ function launch(job:RecordEntry){
    if(result.status==='completed')publish(job,result.artifacts??[])
    job.status=result.status;delete job.error;save(job)
   }catch(error){
-   if(job.status==='cancelled'){
+   if(job.status==='paused'){
+    if(loaded)await pauseCleanup(job,loaded)
+   }else if(job.status==='cancelled'){
     if(loaded?.runtime.cancel)try{await loaded.runtime.cancel(job.state,contextFor(job,new AbortController(),loaded.runtime,loaded.commands))}catch(cause){job.error='Cancelled; some owned tasks could not be interrupted: '+(cause as Error).message;save(job)}
    }else if(!controller.signal.aborted){job.status='failed';job.error=(error as Error).message||String(error);save(job)}
    // Shutdown retains the last checkpoint. Native work is reconciled, never assumed completed.
@@ -111,9 +121,9 @@ export function startWorkflows(dispatch:NonNullable<typeof invoke>,publishEvent:
 }
 export async function stopWorkflows(){ready=false;for(const run of active.values())run.controller.abort(Error('Core is shutting down'));await Promise.all([...active.values()].map(run=>run.done));entries.clear();loadErrors.clear();emit=()=>{}}
 
-export async function workflowRequest(command:string,args:Record<string,any>){
+async function workflowRequestInternal(command:string,args:Record<string,any>){
  if(!ready)throw Error('Workflow service is not ready')
- const schemas:Record<string,string[]>={start:['engineId','input','clientRequestId'],list:['engineId'],get:['id'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],cancel:['id'],file:['id','name']}
+ const schemas:Record<string,string[]>={start:['engineId','input','clientRequestId'],list:['engineId'],get:['id'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
  const op=command.slice('workflow.'.length);if(!schemas[op]||Object.keys(args).some(key=>!schemas[op].includes(key)))throw Error('Unknown workflow request field')
  if(op==='list')return {jobs:[...entries.values()].filter(job=>(currentEngineScope()===undefined||currentEngineScope()===job.engineId)&&sameOwner(job.owner,requestContext())&&(!args.engineId||job.engineId===args.engineId)).sort((a,b)=>b.createdAt-a.createdAt).slice(0,100).map(project),errors:currentEngineScope()===undefined&&requestContext().principal.kind==='operator'?[...loadErrors].map(([id,error])=>({id,error})):[]}
  if(op==='start'){
@@ -138,20 +148,46 @@ export async function workflowRequest(command:string,args:Record<string,any>){
   if(digest(bytes)!==artifact.sha256)throw Error('Final file hash changed; refusing an unverified download')
   return {...artifact,content:bytes.toString(artifact.encoding==='base64'?'base64':'utf8')}
  }
+ if(op==='pause'){
+  if(['completed','cancelled'].includes(job.status))throw fault('Terminal workflows cannot be paused')
+  if(job.status==='paused'&&!job.controlPending)return project(job)
+  const loaded=await moduleFor(job)
+  if(!loaded.runtime.pause)throw Error('This Engine does not support safe pause')
+  if(['completed','cancelled'].includes(job.status))throw fault('Workflow finished before pause')
+  job.status='paused';job.controlPending=true;save(job)
+  const running=active.get(job.id)
+  if(running){running.controller.abort(Error('Workflow paused by its owner'));await running.done}
+  else await pauseCleanup(job,loaded)
+  return project(job)
+ }
  if(op==='cancel'){
   if(['cancelled','completed'].includes(job.status))return project(job)
-  job.status='cancelled';save(job);const running=active.get(job.id)
+  job.controlPending=false;job.status='cancelled';save(job);const running=active.get(job.id)
   if(running)running.controller.abort(Error('Workflow cancelled by its owner'))
   else try{const {runtime,commands}=await moduleFor(job);await runtime.cancel?.(job.state,contextFor(job,new AbortController(),runtime,commands))}catch(error){job.error='Cancelled; some owned tasks could not be interrupted: '+(error as Error).message;save(job)}
   return project(job)
  }
- const key=requestKey(args.clientRequestId),answer=op==='respond'?jsonObject(args.answer,'answer'):{},hash=digest(JSON.stringify({op,answer})),prior=job.answers[key]
+ const key=requestKey(args.clientRequestId),answer=op==='respond'?jsonObject(args.answer,'answer'):op==='amend'?jsonObject(args.update,'update'):{},hash=digest(JSON.stringify({op,answer})),prior=job.answers[key]
  if(prior){if(prior.hash!==hash)throw fault('This answer key was already used with different content');return project(job)}
  if(args.expectedRevision!==job.revision)throw fault('Workflow changed; reload before responding')
- if(op==='respond'&&job.status!=='waiting'||op==='resume'&&job.status!=='failed')throw fault(op==='respond'?'Workflow is not waiting for input':'Only a failed workflow can be resumed')
+ if(job.controlPending||active.has(job.id))throw fault('Workflow is still stopping; read its status before changing it')
+ if(op==='respond'&&job.status!=='waiting'||op==='resume'&&!['failed','paused'].includes(job.status)||op==='amend'&&job.status!=='paused')throw fault('Workflow is not in a state that accepts '+op)
  const {runtime}=await moduleFor(job)
  if(args.expectedRevision!==job.revision)throw fault('Workflow changed while loading its Engine')
+ if(op==='amend'){
+  if(!runtime.amend)throw Error('This Engine does not support research revisions')
+  job.state=runtime.amend(structuredClone(job.state),answer);job.answers[key]={hash,operation:op};job.summary=jsonObject(runtime.describe(job.state),'Workflow summary');delete job.error;save(job);return project(job)
+ }
  if(op==='respond')job.state=runtime.respond(structuredClone(job.state),answer)
  else if(runtime.retry)job.state=runtime.retry(structuredClone(job.state))
  job.answers[key]={hash,operation:op};job.summary=jsonObject(runtime.describe(job.state),'Workflow summary');job.status='running';delete job.error;save(job);launch(job);return project(job)
+}
+
+/** Serialize owner mutations across asynchronous Engine hooks. Reads remain non-blocking. */
+const mutations=new Map<string,Promise<unknown>>()
+export async function workflowRequest(command:string,args:Record<string,any>){
+ if(!['workflow.pause','workflow.amend','workflow.respond','workflow.resume','workflow.cancel'].includes(command))return workflowRequestInternal(command,args)
+ const id=validId(args.id),previous=mutations.get(id)??Promise.resolve()
+ const next=previous.catch(()=>{}).then(()=>workflowRequestInternal(command,args));mutations.set(id,next)
+ try{return await next}finally{if(mutations.get(id)===next)mutations.delete(id)}
 }

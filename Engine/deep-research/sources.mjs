@@ -1,3 +1,4 @@
+import {assertSourceAllowed} from './policy.mjs'
 import http from 'node:http'
 import https from 'node:https'
 import dns from 'node:dns'
@@ -20,8 +21,8 @@ const decode=value=>value.replace(/&#(x[0-9a-f]+|[0-9]+);/gi,(_,n)=>{const code=
 export const pageText=html=>normalize(decode(html.replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,' ').replace(/<!--[\s\S]*?-->/g,' ').replace(/<[^>]+>/g,' ')))
 const quoteOf=value=>Array.from(normalize(value).split(' ').slice(0,25).join(' ')).slice(0,180).join('')
 /** DNS is validated at the actual socket lookup, including every redirect. */
-function retrieve(value,signal,redirects=0){
- const url=publicURL(value)
+function retrieve(value,signal,redirects=0,policy={}){
+ const url=assertSourceAllowed(publicURL(value),policy)
  return new Promise((resolve,reject)=>{
   signal?.throwIfAborted()
   const request=(url.startsWith('https:')?https:http).request(url,{method:'GET',signal,headers:{'user-agent':'Aexus-DeepResearch/1.0 (+source-verification)','accept':'text/html,text/plain,application/json','accept-encoding':'identity'},lookup:(hostname,options,callback)=>{
@@ -33,7 +34,7 @@ function retrieve(value,signal,redirects=0){
   }},response=>{
    if([301,302,303,307,308].includes(response.statusCode)){
     response.resume();if(redirects>=3||!response.headers.location){reject(Error('资料重定向过多'));return}
-    resolve(retrieve(new URL(response.headers.location,url).href,signal,redirects+1));return
+    resolve(retrieve(new URL(response.headers.location,url).href,signal,redirects+1,policy));return
    }
    if(response.statusCode!==200){response.resume();reject(Error('资料请求返回 HTTP '+response.statusCode));return}
    if(!/text\/(html|plain)|application\/(json|xhtml\+xml)/i.test(String(response.headers['content-type']??''))){response.resume();reject(Error('暂不能独立核验此格式，请提供可阅读的 HTML 原始资料'));return}
@@ -41,13 +42,14 @@ function retrieve(value,signal,redirects=0){
    response.on('data',chunk=>{size+=chunk.length;if(size>2*1024*1024){request.destroy(Error('资料页面超过 2 MiB'));return}chunks.push(chunk)})
    response.on('error',reject);response.on('end',()=>resolve({url,body:Buffer.concat(chunks).toString('utf8'),bytes:size}))
   })
+  const deadline=setTimeout(()=>request.destroy(Error('资料核验超过总时限')),20000);deadline.unref?.();request.once('close',()=>clearTimeout(deadline));
   request.on('error',reject);request.setTimeout(15000,()=>request.destroy(Error('资料核验超时')));request.end()
  })
 }
-export async function verifySource(candidate,{signal,read=retrieve}={}){
- const url=publicURL(candidate.url),quote=quoteOf(candidate.quote)
+export async function verifySource(candidate,{signal,read,policy={}}={}){
+ const url=assertSourceAllowed(publicURL(candidate.url),policy),quote=quoteOf(candidate.quote)
  if(quote.length<18)throw Error('证据摘录过短，无法可靠核对')
- const fetched=await read(url,signal),body=pageText(fetched.body)
+ const fetched=await (read?read(url,signal):retrieve(url,signal,0,policy));assertSourceAllowed(publicURL(fetched.url),policy);const body=pageText(fetched.body)
  if(!body.toLocaleLowerCase().includes(normalize(quote).toLocaleLowerCase()))throw Error('来源页面未找到所引摘录；该引用不得进入最终报告')
  const title=normalize(decode(fetched.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]??candidate.title))
  return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}

@@ -460,7 +460,7 @@
   {
     "name": "workflow.resume",
     "args": "ID --expected-revision N --client-request-id ID",
-    "summary": "Explicitly resume a failed Engine from its saved checkpoint, preserving completed steps and identities",
+    "summary": "Explicitly resume a failed or paused Engine from its saved checkpoint, preserving completed steps and identities",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -482,6 +482,66 @@
       "required": [
         "id",
         "expectedRevision",
+        "clientRequestId"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "workflow.pause",
+    "args": "ID",
+    "summary": "Pause a supported Engine and stop only its owned native tasks; preserve evidence and wait for explicit resume",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "workflow.amend",
+    "args": "ID --expected-revision N --update JSON --client-request-id ID",
+    "summary": "Apply an Engine-validated revision to a fully paused workflow; never starts work or overwrites completed deliverables",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "update": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "clientRequestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      },
+      "required": [
+        "id",
+        "expectedRevision",
+        "update",
         "clientRequestId"
       ]
     },

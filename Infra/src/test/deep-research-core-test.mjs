@@ -6,7 +6,7 @@ import {execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import {profileApplication} from './fixtures/profile-application.mjs'
 import {researchFixture} from './fixtures/deep-research-fixture.mjs'
-const root=path.resolve(import.meta.dirname,'../../..'),out=path.join(root,'.aexus/artifacts/deep-research/core');fs.mkdirSync(out,{recursive:true})
+const root=path.resolve(import.meta.dirname,'../../..'),out=path.join(root,process.env.AEXUS_RESEARCH_ARTIFACTS??'.aexus/artifacts/deep-research','core');fs.mkdirSync(out,{recursive:true})
 const app=await profileApplication();let test;const checks=[]
 const pass=text=>{checks.push(text);console.log('PASS '+text)}
 try{

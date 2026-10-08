@@ -1,4 +1,4 @@
-# Deep Research
+# Deep Research 1.1.0
 
 一句话立项，三轮意见确认，多 Coding Agent 独立搜证与交叉审查。仅在证据和最终报告通过检查后发布交付文件。
 
@@ -10,6 +10,18 @@
 
 Core 在后台执行任务，页面关闭、刷新、切换 Engine/Infra 不影响任务运行。Core 重启会恢复持久检查点；被中断且没有完整结果的原生任务显示失败，用户明确重试后继续，不把已发送消息当作研究完成。
 
+## 研究控制与工作台
+
+入口提供三档预算：标准（至少 4 来源 / 2 网站 / 3 发现）、深入（8 / 3 / 6）、广泛（12 / 4 / 8）。每档仍要求至少两类引擎贡献，补证轮次和每任务时限有界。数量只控制覆盖要求，不保证报告正确，也不等同于固定完成时间。
+
+可限制允许的网站、设置优先/排除域名、添加最多 12 个起始链接。核验过程对请求与每次重定向硬性执行允许/排除规则；优先域名属于搜索偏好。原生模型浏览遵循任务指令，独立核验的访问限制不能替代第三方模型的网络沙箱。域名过窄导致证据不足时不会自动放开限制。
+
+最多上传六份 TXT、Markdown、CSV、JSON 参考材料，单份最多 80,000 字符、总计 200,000 字符。确认第一轮目标后才把背景发送给所选模型。它们不计为已独立核验来源，公共工作流投影只展示文件名与字符数。此入口不支持 PDF 解析或云端连接器。
+
+工作台显示阶段/实际步骤进度、来源核验计数和各 Agent 的原生任务状态，可搜索来源、筛选一手/二手材料、查看摘录、引用、指纹与时间戳，追踪审查分歧、证据缺口和用户修订。百分比不表示置信度或预计剩余时间。
+
+研究中可「暂停并调整」；保存修订后点击「继续研究」。暂停只中断属于本研究的确切原生消息，保留已完成步骤和员工身份。新要求会重新制定方案并审查，旧草稿不沿用。暂停在 Core 重启后仍保持暂停；清理未完成时需重试暂停，不能直接恢复。CLI 的 `amend` 另支持 `sourcePolicy` 和 `depth` 修订。
+
 ## 最终交付
 
 | 文件 | 内容 |
@@ -18,13 +30,13 @@ Core 在后台执行任务，页面关闭、刷新、切换 Engine/Infra 不影�
 | `research-report.md` | 完整可编辑报告，保留引用、建议和限制。 |
 | `evidence.csv` | 最终证据表，包含网址、短摘录、访问时间、页面 SHA-256 及引用章节。 |
 
-下载全部时，ZIP 内仅有上述三个文件，没有 README、执行日志、任务 JSON、草稿、抓取缓存或零散图片。失败、取消、等待确认期间没有可下载的中间报告。CLI 不覆盖已有输出目录。PDF 不作为自动生成的交付文件；HTML 可通过打印另存 PDF。
+下载全部时，ZIP 内仅有上述三个文件，没有 README、执行日志、任务 JSON、草稿、抓取缓存或零散图片。失败、暂停、取消、等待确认期间没有可下载的中间报告。CLI 不覆盖已有输出目录。PDF 不作为自动生成的交付文件；HTML 可通过打印另存 PDF。
 
 ## 协作与检查
 
 研究主编负责方案与审查，证据研究员和反证研究员使用不同 Coding Agent 并行研究。选择四种引擎时增加一位专题研究员。各阶段通过原员工会话、真实任务 ID 和原生接收回执关联，不创建第二套聊天或员工数据库。
 
-研究员必须实际访问来源；引擎会独立重新读取公开页面，核对短摘录并记录指纹。至少需要四个有效来源、两个网站、两类引擎的来源贡献和三条有引用的发现。数量门槛只代表基础覆盖，不能证明结论正确。来源类型由研究员分类；发布日期未独立核验。当前独立摘录核验支持公开 HTML、纯文本和 JSON，PDF、登录墙或无法访问的页面需要提供可读的对应原始网页。
+研究员必须实际访问来源；引擎会独立重新读取公开页面，核对短摘录并记录指纹。标准档至少需要四个有效来源、两个网站、两类引擎的来源贡献和三条有引用的发现，深入与广泛档使用更高预算。数量门槛只代表基础覆盖，不能证明结论正确。来源类型由研究员分类；发布日期未独立核验。当前独立摘录核验支持公开 HTML、纯文本和 JSON，PDF、登录墙或无法访问的页面需要提供可读的对应原始网页。
 
 独立主编检查证据与结论、反例和适用范围；阻断问题触发补证，最终报告再单独审查。结构错误可进行一次针对性修正。所有报告段落必须绑定已核验的来源 ID；不存在的引用、空结果、未通过审查的内容会阻止交付。模型审查仍可能出错，报告保留限定条件，不能把这套机制视为事实绝对正确的保证。
 
@@ -42,8 +54,11 @@ node Engine/deep-research/cli.mjs start --topic "调研任务" --out ./research-
 
 ```sh
 node Engine/deep-research/cli.mjs start --topic "调研任务" --engines codex,claude --json
+node Engine/deep-research/cli.mjs start --topic "调研任务" --depth deep --source-policy '{"preferredDomains":["arxiv.org"],"excludedDomains":[],"seedUrls":[]}' --materials @references.json --json
 node Engine/deep-research/cli.mjs status WORKFLOW_ID --json
 node Engine/deep-research/cli.mjs answer WORKFLOW_ID --answer '{"values":{"decision":"研究目的"},"note":"补充要求"}' --json
+node Engine/deep-research/cli.mjs pause WORKFLOW_ID --json
+node Engine/deep-research/cli.mjs amend WORKFLOW_ID --update '{"note":"聚焦复现和失败边界"}' --request-id revision-001 --json
 node Engine/deep-research/cli.mjs resume WORKFLOW_ID --wait --json
 node Engine/deep-research/cli.mjs export WORKFLOW_ID --out ./research-final --json
 node Engine/deep-research/cli.mjs cancel WORKFLOW_ID --json
@@ -53,15 +68,16 @@ node Engine/deep-research/cli.mjs cancel WORKFLOW_ID --json
 
 ## 代码边界
 
-`model.mjs` 定义研究状态和检查规则；`agents.mjs` 管理基于 Contract 的原生任务；`sources.mjs` 独立核对来源；`runtime.mjs` 组织各阶段；`report.mjs` 生成最终报告；`delivery.mjs` 打包最终文件；`Page.tsx` 和 `cli.mjs` 提供两种入口。
+`policy.mjs` 定义研究深度、来源范围和参考材料约束；`model.mjs` 定义研究状态和检查规则；`agents.mjs` 管理基于 Contract 的原生任务；`sources.mjs` 独立核对来源；`runtime.mjs` 组织各阶段；`report.mjs` 生成最终报告；`delivery.mjs` 打包最终文件；`Page.tsx` 和 `cli.mjs` 提供两种入口。
+
+1.1.0 明确支持持久化 1.0.0 检查点；其他版本需要单独验证和兼容声明。`references.json` 为 `[{"name":"brief.md","text":"用户背景"}]`，没有隐式读取整个目录的能力。
 
 所有领域逻辑留在本目录。后台运行、检查点、确认、恢复、取消、原子交付和文件读取由通用 `workflow.*` 提供。详见 [Workflow Contract](../../Contract/WORKFLOWS.md)。
 
 ## 验证
 
 ```sh
-node Infra/src/test/deep-research-unit-test.mjs
-node Infra/src/test/deep-research-core-test.mjs
+npm run test:deep-research
 node Infra/src/test/deep-research-ui-test.mjs
 node Infra/src/test/deep-research-ui-test.mjs --desktop
 ```

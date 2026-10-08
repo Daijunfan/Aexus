@@ -7,7 +7,7 @@ import {publicURL,publicAddress,pageText,verifySource} from '../../../Engine/dee
 import {renderReport} from '../../../Engine/deep-research/report.mjs'
 import {deliveryZip} from '../../../Engine/deep-research/delivery.mjs'
 import {documents,material,reply} from './fixtures/deep-research-answer.mjs'
-const root=path.resolve(import.meta.dirname,'../../..'),out=path.join(root,'.aexus/artifacts/deep-research/unit');fs.mkdirSync(out,{recursive:true});const checks=[]
+const root=path.resolve(import.meta.dirname,'../../..'),out=path.join(root,process.env.AEXUS_RESEARCH_ARTIFACTS??'.aexus/artifacts/deep-research','unit');fs.mkdirSync(out,{recursive:true});const checks=[]
 const pass=text=>{checks.push(text);console.log('PASS '+text)}
 assert.throws(()=>create({topic:''}));assert.throws(()=>create({topic:'test',engines:[{engine:'codex'},{engine:'codex'}]}))
 let state=create({topic:'调研一个明确问题',engines:[{engine:'codex'},{engine:'claude'}]});assert.equal(state.questions.length,3);assert.equal(respond(state,{values:{},note:'保持证据范围'}).phase,'plan')

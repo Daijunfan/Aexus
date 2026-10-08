@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.59.0",
+  "version": "0.60.0",
   "description": "Aexus: domain-specific engines on a CLI-first multi-Agent infrastructure",
   "main": "./.aexus/out/main/index.js",
   "author": {
@@ -132,7 +132,10 @@
     "test:contract": "node Infra/src/test/aexus-contract-core-test.mjs",
     "test:layers": "node Infra/src/test/aexus-layers-ui-test.mjs",
     "test:boundaries": "node Infra/src/test/aexus-boundaries-test.mjs",
-    "test:engine-scope": "node Infra/src/tooling/run-tests.mjs scope"
+    "test:engine-scope": "node Infra/src/tooling/run-tests.mjs scope",
+    "test:deep-research": "node Infra/src/test/deep-research-unit-test.mjs && node --test Infra/src/test/deep-research-controls-unit-test.mjs && node Infra/src/test/deep-research-core-test.mjs && node Infra/src/test/deep-research-controls-core-test.mjs",
+    "test:deep-research-ui": "node Infra/src/test/deep-research-ui-test.mjs",
+    "test:deep-research-desktop": "node Infra/src/test/deep-research-ui-test.mjs --desktop"
   },
   "build": {
     "appId": "com.agentscompany.app",
@@ -181,7 +184,8 @@
       "Infra/src/docs/INFRA_API.md",
       "Infra/src/docs/ENGINE_WORKSPACES.md",
       "Infra/src/docs/releases/0.59.0.zh-CN.md",
-      "Infra/src/docs/README.en.md"
+      "Infra/src/docs/README.en.md",
+      "Infra/src/docs/releases/0.60.0.zh-CN.md"
     ],
     "mac": {
       "target": [

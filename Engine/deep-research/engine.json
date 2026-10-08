@@ -1,29 +1,185 @@
 {
   "id": "deep-research",
   "name": "Deep Research",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "contractVersion": "1.0.0",
-  "description": "一句话开始，三轮确认研究目标与重点，多 Coding Agent 独立搜证、交叉审查，只交付最终报告与证据表。",
+  "description": "多 Agent 并行研究、证据核验与独立审查；可控制来源、暂停修订，实时追踪研究并交付可追溯报告。",
   "ui": "Page.tsx",
   "cli": "cli.mjs",
   "runtime": "runtime.mjs",
-  "requiredCommands": ["workflow.start", "workflow.list", "workflow.get", "workflow.respond", "workflow.resume", "workflow.cancel", "workflow.file", "engine.check", "group.list", "group.add", "card.create", "session.list", "session.status", "session.send", "session.transcript", "session.interrupt", "view.open"],
+  "requiredCommands": [
+    "workflow.start",
+    "workflow.list",
+    "workflow.get",
+    "workflow.respond",
+    "workflow.resume",
+    "workflow.cancel",
+    "workflow.file",
+    "engine.check",
+    "group.list",
+    "group.add",
+    "card.create",
+    "session.list",
+    "session.status",
+    "session.send",
+    "session.transcript",
+    "session.interrupt",
+    "view.open",
+    "workflow.pause",
+    "workflow.amend"
+  ],
   "inputSchema": {
     "type": "object",
-    "required": ["topic"],
+    "required": [
+      "topic"
+    ],
     "additionalProperties": false,
     "properties": {
-      "topic": {"type": "string", "minLength": 1, "maxLength": 4000},
-      "engines": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"type": "object", "required": ["engine"], "additionalProperties": false, "properties": {"engine": {"enum": ["codex", "claude", "cline", "pi"]}, "model": {"type": "string"}}}}
+      "topic": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      },
+      "engines": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 4,
+        "items": {
+          "type": "object",
+          "required": [
+            "engine"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "engine": {
+              "enum": [
+                "codex",
+                "claude",
+                "cline",
+                "pi"
+              ]
+            },
+            "model": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "depth": {
+        "enum": [
+          "standard",
+          "deep",
+          "exhaustive"
+        ]
+      },
+      "language": {
+        "enum": [
+          "zh-CN",
+          "en"
+        ]
+      },
+      "sourcePolicy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allowedDomains": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferredDomains": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludedDomains": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string"
+            }
+          },
+          "seedUrls": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "materials": {
+        "type": "array",
+        "maxItems": 6,
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "text"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 160
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 80000
+            }
+          }
+        }
+      }
     }
   },
   "outputSchema": {
     "type": "object",
-    "required": ["id", "status", "files"],
+    "required": [
+      "id",
+      "status",
+      "files"
+    ],
     "properties": {
-      "id": {"type": "string"},
-      "status": {"const": "completed"},
-      "files": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "required": ["name", "sha256", "bytes"], "properties": {"name": {"enum": ["research-report.html", "research-report.md", "evidence.csv"]}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 1}}}}
+      "id": {
+        "type": "string"
+      },
+      "status": {
+        "const": "completed"
+      },
+      "files": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "name": {
+              "enum": [
+                "research-report.html",
+                "research-report.md",
+                "evidence.csv"
+              ]
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
     }
   }
 }
