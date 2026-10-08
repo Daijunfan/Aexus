@@ -5,6 +5,7 @@ import { isIndependentSource } from './evidence.mjs';
 
 export const ENGINE_ID = 'deep-research';
 export const ENGINE_VERSION = '2.0.0';
+export const MAX_AGENT_REPLY_CHARS = 500_000;
 export const ENGINE_IDS = ['codex', 'claude', 'cline', 'pi'];
 export const PHASES = { init: '初始化研究', scouting: '初步调研', planning: '规划调查路线', research: '执行研究计划', verification: '证据核验', synthesis: '知识整合', writing: '报告撰写', review: '质量审查', complete: '完成交付' };
 const limit = (value, fallback, min, max, label) => {
@@ -138,7 +139,11 @@ export function retry(state) {
 }
 
 export function parseAnswer(text, taskId) {
-  if (typeof text !== 'string' || text.length > 500000) throw Error('Agent 回复大小无效');
+  if (typeof text !== 'string') throw Error('Agent 回复格式无效');
+  if (text.length > MAX_AGENT_REPLY_CHARS) {
+    const error = Error('该任务资料过多，请拆分核验任务，并仅引用必要的原文短片段');
+    error.code = 'AGENT_REPLY_TOO_LARGE'; throw error;
+  }
   const block = text.trim().startsWith('{') ? null : text.match(/```(?:json)?\s*\n?([\s\S]*)\n?```/i);
   const raw = (block?.[1] || text).trim();
   let value;

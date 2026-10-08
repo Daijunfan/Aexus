@@ -587,3 +587,38 @@ test('describing an older waiting plan preserves its approval action and resumes
   assert.equal(resumed.calls.filter(call => call.task?.kind === 'plan' || call.task?.kind === 'scout').length, 0);
   assert.ok(done.state.sources.every(source => source.acquisition.method === 'independent-http'));
 });
+
+test('planners see the actual reply budget and oversized verification fails without repeating the same huge task', async () => {
+  const f = fixture({respond: task => task.kind === 'verify' ? {verifications: [], padding: 'x'.repeat(500_001)} : undefined});
+  const state = create({topic: 'An evidence-heavy plan must respect the native reply size limit', autoApprove: true});
+  const outcome = await run(state, f.ctx).catch(error => error);
+  assert.equal(f.calls.find(call => call.task?.kind === 'plan').task.payload.budget.maxAgentReplyChars, 500_000);
+  assert.match(outcome.message, /拆分核验任务/);
+  assert.equal(f.calls.filter(call => call.task?.kind === 'verify').length, 1);
+  assert.equal(Object.values(state.tasks).find(task => task.label === 'verify').failureKind, 'size');
+});
+
+test('accepted receipts checkpoint their frozen inputs without retaining a second copy of the task prompt', async () => {
+  const f = fixture(), done = await run(create({topic: 'Native receipt identities replace redundant persisted task prompts', autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  for (const snapshot of f.checkpoints) for (const task of Object.values(snapshot.tasks)) {
+    if (task.receipt) assert.equal('prompt' in task, false);
+    else assert.equal(typeof task.prompt, 'string');
+  }
+  const verifier = Object.values(done.state.tasks).find(task => task.label === 'verify');
+  assert.deepEqual(verifier.inputSourceIds, f.calls.find(call => call.task?.kind === 'verify').task.payload.sources.map(source => source.id));
+});
+
+test('a failed receipt checkpoint retains accepted ownership and resumes without another native send', async () => {
+  const f = fixture(), state = create({topic: 'An accepted native receipt survives a local checkpoint write failure'});
+  state.workers = [{id: 'employee-owned', role: 'researcher', engine: 'pi', managerIds: [], active: true}];
+  let failed = false;
+  const checkpoint = async () => {if (state.tasks.search?.receipt && !failed) {failed = true; throw Error('Simulated receipt checkpoint failure');}};
+  await assert.rejects(ask(state, {...f.ctx, checkpoint}, 'search', 'researcher', 'search', {}, normalizeSources), /checkpoint failure/);
+  const receipt = structuredClone(state.tasks.search.receipt);
+  const saved = structuredClone(state);
+  const result = await ask(retry(saved), {...f.ctx, workerLeases: new Set(), checkpoint: async () => {}}, 'search', 'researcher', 'search', {}, normalizeSources);
+  assert.equal(result.sources.length, 1); assert.deepEqual(saved.tasks.search.receipt, receipt);
+  assert.equal(f.calls.filter(call => call.command === 'session.send').length, 1);
+  assert.equal('prompt' in saved.tasks.search, false);
+});

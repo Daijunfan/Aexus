@@ -21,11 +21,12 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
 console.log(JSON.stringify({ benchmark: 'describe + JSON serialization, synthetic 2 KB excerpts', records }, null, 2));
 
 const checkpointRecords = [];
-for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
+for (const [nodeCount, sourceCount, verifyBranches] of [[48, 80, 1], [128, 1000, 1], [128, 1000, 8]]) {
   const state = create({ topic: 'Measure real task prompt and result checkpoint cost', maxSources: sourceCount, maxTasks: nodeCount, autoApprove: true });
   const initial = Array.from({ length: 8 }, (_, i) => ({ id: 'initial-' + i, kind: 'search', role: 'researcher', dependencies: [], payload: { query: 'Initial evidence ' + i } }));
-  const followups = Array.from({ length: nodeCount - 11 }, (_, i) => ({ id: 'followup-' + i, kind: 'search', role: 'researcher', dependencies: initial.map(n => n.id), payload: { query: 'Evidence followup ' + i } }));
-  const nodes = [...initial, ...followups, { id: 'verify', kind: 'verify', role: 'researcher', dependencies: [...initial, ...followups].map(n => n.id) }, { id: 'report', kind: 'write', role: 'writer', dependencies: ['verify'] }, { id: 'review', kind: 'review', role: 'coordinator', dependencies: ['report'] }];
+  const followups = Array.from({ length: nodeCount - 10 - verifyBranches }, (_, i) => ({ id: 'followup-' + i, kind: 'search', role: 'researcher', dependencies: initial.map(n => n.id), payload: { query: 'Evidence followup ' + i } }));
+  const verifiers = Array.from({length: verifyBranches}, (_, i) => ({id: 'verify-' + i, kind: 'verify', role: 'researcher', dependencies: verifyBranches === 1 ? [...initial, ...followups].map(n => n.id) : [initial[i].id]}));
+  const nodes = [...initial, ...followups, ...verifiers, { id: 'report', kind: 'write', role: 'writer', dependencies: [...verifiers, ...followups].map(n => n.id) }, { id: 'review', kind: 'review', role: 'coordinator', dependencies: ['report'] }];
   const evidence = Array.from({ length: sourceCount }, (_, i) => ({ title: 'Synthetic evidence ' + i, url: 'https://source-' + i + '.example/evidence', acquisition: { status: 'read', excerpt: 'Measured original evidence passage. '.repeat(60), locator: 'Paragraph 1' } }));
   const cards = [], transcripts = new Map(), controller = new AbortController();
   const counts = [], measurements = [];
@@ -37,7 +38,7 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
     const summary = describe(snapshot);
     const bytes = Buffer.byteLength(JSON.stringify({ state: snapshot, summary }));
     measurements.push({ bytes, ms: performance.now() - start });
-    if (bytes > 20 * 1024 * 1024) controller.abort(Error('Synthetic checkpoint measurement reached 20 MiB'));
+    if (bytes > 64 * 1024 * 1024) controller.abort(Error('Synthetic checkpoint measurement reached 64 MiB'));
   }, client: { invoke: async (command, args) => {
     if (command === 'engine.check') return { ready: args.engine === 'pi' };
     if (command === 'group.list') return [];
@@ -53,7 +54,7 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
       else if (task.kind === 'search') {
         const index = Number(task.taskId.match(/initial-(\d+)/)?.[1]);
         result = { sources: Number.isInteger(index) ? evidence.slice(1 + index * Math.ceil((sourceCount - 1) / 8), 1 + (index + 1) * Math.ceil((sourceCount - 1) / 8)) : [] };
-      } else if (task.kind === 'verify') result = { verifications: task.payload.sources.map(s => ({ sourceId: s.id, credibilityScore: 1, claims: [{ text: 'Synthetic finding from ' + s.title, excerpt: s.acquisition.excerpt, confidence: 1 }] })) };
+      } else if (task.kind === 'verify') result = { verifications: task.payload.sources.map(s => ({ sourceId: s.id, credibilityScore: 1, claims: [{ text: 'Synthetic finding from ' + s.title, excerpt: s.acquisition.excerpts[0].excerpt, confidence: 1 }] })) };
       else if (task.kind === 'write') result = { report: { title: 'Synthetic benchmark report', sections: [{ heading: 'Measured evidence', content: 'Synthetic benchmark findings only.', citations: task.payload.sources.map(s => s.id) }] } };
       else result = { verdict: 'pass', summary: 'Synthetic review passed', issues: [] };
       counts.push({ kind: task.kind, sources: task.payload.sources?.length ?? 0 });
@@ -65,6 +66,6 @@ for (const [nodeCount, sourceCount] of [[48, 80], [128, 1000]]) {
   } } };
   try { await run(state, ctx); } catch (error) { failure = error.message; }
   measurements.sort((a, b) => a.ms - b.ms);
-  checkpointRecords.push({ nodes: nodeCount, sources: sourceCount, taskRecords: Object.keys(latest.tasks).length, maxCheckpointBytes: Math.max(...measurements.map(m => m.bytes)), taskPromptBytes: Object.values(latest.tasks).reduce((n, t) => n + Buffer.byteLength(t.prompt), 0), medianMs: Number(measurements[Math.floor(measurements.length / 2)].ms.toFixed(2)), p95Ms: Number(measurements[Math.floor(measurements.length * 0.95)].ms.toFixed(2)), failure: failure || null, searchRequests: counts.filter(c => c.kind === 'search').length, searchSourceBodies: counts.filter(c => c.kind === 'search').reduce((sum, c) => sum + c.sources, 0) });
+  checkpointRecords.push({ nodes: nodeCount, sources: sourceCount, verifyBranches, completed: latest.phase === 'complete', taskRecords: Object.keys(latest.tasks).length, maxCheckpointBytes: Math.max(...measurements.map(m => m.bytes)), taskPromptBytes: Object.values(latest.tasks).reduce((n, t) => n + Buffer.byteLength(t.prompt || ''), 0), medianMs: Number(measurements[Math.floor(measurements.length / 2)].ms.toFixed(2)), p95Ms: Number(measurements[Math.floor(measurements.length * 0.95)].ms.toFixed(2)), failure: failure || null, searchRequests: counts.filter(c => c.kind === 'search').length, searchSourceBodies: counts.filter(c => c.kind === 'search').reduce((sum, c) => sum + c.sources, 0) });
 }
 console.log(JSON.stringify({ benchmark: 'Native task records + checkpoint clone, describe and JSON serialization; synthetic 2 KB excerpts', records: checkpointRecords }, null, 2));

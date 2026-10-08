@@ -1,5 +1,5 @@
 /** Native-agent research execution, driven by the current plan's DAG. */
-import { create, describe, respond, retry, upgradeState } from './model.mjs';
+import { create, describe, respond, retry, upgradeState, MAX_AGENT_REPLY_CHARS } from './model.mjs';
 import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
@@ -29,6 +29,10 @@ export async function run(originalState, originalContext) {
     return chain;
   } };
   ctx.signal.throwIfAborted();
+  for (const task of Object.values(state.tasks)) if (task.receipt && task.prompt) {
+    task.inputSourceIds ??= (JSON.parse(task.prompt.split('\n\n')[1]).payload.sources || []).map(source => source.id);
+    delete task.prompt;
+  }
   if (state.phase !== 'complete' && !state.independentEvidence && state.sources.some(s => !isIndependentSource(s))) {
     state.historicalReport ??= state.report; state.historicalFindings ??= state.findings;
     state.report = null; state.review = null; state.findings = [];
@@ -77,7 +81,7 @@ export async function run(originalState, originalContext) {
         const reason = state.revisionRequest?.instructions || '根据初步调研制定研究计划';
         const plan = await ask(state, ctx, 'research-plan-v' + ((state.graph?.version ?? 0) + 1), 'coordinator', 'plan', {
           topic: state.input.topic, scope: state.input.scope, materials: state.input.materials,
-          languages: state.input.languages, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks },
+          languages: state.input.languages, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks, maxAgentReplyChars: MAX_AGENT_REPLY_CHARS },
           sources: state.sources, gaps: state.scouting?.gaps || [], currentPlan: state.plan,
           completedNodes: state.graph?.nodes.filter(n => n.status === 'completed'), reason
         }, normalizePlanResponse);
@@ -150,7 +154,7 @@ async function executeNode(state, ctx, node) {
     const key = node.taskKey || node.id;
     const currentKey = key + (state.taskAttempts?.[key] ? '-retry-' + state.taskAttempts[key] : '');
     const saved = state.tasks[currentKey + '-format-fix'] || state.tasks[currentKey];
-    if (saved) node.inputSourceIds = JSON.parse(saved.prompt.split('\n\n')[1]).payload.sources.map(s => s.id);
+    if (saved) node.inputSourceIds = saved.inputSourceIds || (JSON.parse(saved.prompt.split('\n\n')[1]).payload.sources || []).map(s => s.id);
     else {
       const available = new Set([...(state.scouting?.sourceIds || []), ...state.graph.nodes.filter(n => ancestors.has(n.id)).flatMap(n => n.sourceIds || [])]);
       node.inputSourceIds = state.sources.filter(s => available.has(s.id) && (!node.payload.sourceIds || node.payload.sourceIds.includes(s.id)) && (node.kind !== 'verify' || !s.verified)).map(s => s.id);

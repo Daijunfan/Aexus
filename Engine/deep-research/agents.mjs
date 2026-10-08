@@ -84,7 +84,7 @@ const textOf = item => item?.role === 'assistant' ? (item.blocks || []).filter(b
 async function transcriptTask(client, task) {
   const record = await client.invoke('session.transcript', { employee: task.employeeId, thinking: false });
   const items = record.shown || record.items || [];
-  const index = items.findIndex(i => i.role === 'user' && (task.receipt?.messageId && i.outbound?.taskId === task.receipt.messageId || i.text === task.prompt));
+  const index = items.findIndex(i => i.role === 'user' && (task.receipt?.messageId ? i.outbound?.taskId === task.receipt.messageId : typeof task.prompt === 'string' && i.text === task.prompt));
   if (index < 0) return null;
   const next = items.findIndex((i, n) => n > index && i.role === 'user');
   return { messageId: items[index].outbound?.taskId, text: items.slice(index + 1, next < 0 ? undefined : next).map(textOf).filter(Boolean).at(-1) || null };
@@ -92,10 +92,11 @@ async function transcriptTask(client, task) {
 
 async function execute(state, ctx, key, worker, kind, payload, validate, logicalKey = key) {
   let task = state.tasks[key];
+  if (task?.receipt) delete task.prompt;
   if (task?.status === 'completed') return task.result;
   if (!task) {
     const taskId = ctx.id + '/' + key;
-    task = state.tasks[key] = { taskId, logicalKey, role: worker.role, label: kind, employeeId: worker.id, engine: worker.engine, status: 'prepared', startedAt: Date.now(), deadline: Date.now() + 15 * 60 * 1000, prompt: buildPrompt(state, taskId, kind, payload) };
+    task = state.tasks[key] = { taskId, logicalKey, role: worker.role, label: kind, employeeId: worker.id, engine: worker.engine, status: 'prepared', startedAt: Date.now(), deadline: Date.now() + 15 * 60 * 1000, inputSourceIds: (payload.sources || []).map(source => source.id), prompt: buildPrompt(state, taskId, kind, payload) };
     await ctx.checkpoint(state);
   }
   const call = (name, args) => ctx.client.invoke(name, args);
@@ -109,6 +110,7 @@ async function execute(state, ctx, key, worker, kind, payload, validate, logical
         else throw Error('员工正在执行另一项工作，请稍后恢复');
       }
       if (!task.receipt) task.receipt = await call('session.send', { employee: worker.id, text: task.prompt, clientMessageId: task.taskId });
+      if (task.receipt?.messageId) delete task.prompt;
       ctx.signal.throwIfAborted();
       if (!task.receipt?.messageId) throw Error('消息接收结果不完整');
       task.status = 'running'; delete task.error; await ctx.checkpoint(state);
@@ -127,7 +129,7 @@ async function execute(state, ctx, key, worker, kind, payload, validate, logical
         ctx.signal.throwIfAborted();
         if (transcript?.text) {
           let result;
-          try { result = validate(parseAnswer(transcript.text, task.taskId)); } catch (error) { task.failureKind = 'format'; throw error; }
+          try { result = validate(parseAnswer(transcript.text, task.taskId)); } catch (error) { task.failureKind = error.code === 'AGENT_REPLY_TOO_LARGE' ? 'size' : 'format'; throw error; }
           task.status = 'completed'; task.result = result; task.finishedAt = Date.now(); state.attention = null;
           await ctx.checkpoint(state); return result;
         }
@@ -202,7 +204,7 @@ export async function cancel(state, ctx) {
         }
       }
       else if (task.receipt?.queued) await ctx.client.invoke('session.dequeue', { employee: task.employeeId, messageId });
-      task.status = 'cancelled';
+      task.status = 'cancelled'; if (task.receipt?.messageId) delete task.prompt;
     } catch (error) { failures.push(error.message); }
   }
   if (failures.length) throw Error('研究已停止，但部分原生任务取消未确认: ' + failures.join('；'));
@@ -221,9 +223,9 @@ const FORMATS = {
 function buildPrompt(state, taskId, kind, payload) {
   const instructions = {
     scout: '先浏览关键一手资料确认术语、边界、争议和可用证据，再指出研究缺口；此阶段不估计总进度或完成时间。',
-    plan: '根据初步证据选择员工数量、Manager 数量、研究问题和 DAG 拓扑；预算均为上限，任务数量由需要决定。每个 node 使用唯一 ID、kind、role、dependencies、payload。kind 仅 search/verify/synthesize/write/review；每版计划只有一个最终 write 和一个独立 review，全部研究任务必须沿依赖汇入 write，write 依赖相关证据核验，review 依赖 write。其他任务可自由分支、合并、增补研究，不能固定套用流程。team 覆盖各任务 role 并满足预算；Manager 审核分工并由计划选择最终审核责任。重规划原样保留可复用的已完成调查与在途节点及 ID；新增工作用新 ID。需要新稿时将旧 write/review 从当前 nodes 中移除（引擎会完整归档历史成果），增加新的 write/review ID，不把旧稿当新稿重复交付。',
+    plan: '根据初步证据选择员工数量、Manager 数量、研究问题和 DAG 拓扑；预算均为上限，任务数量由需要决定。每个 node 使用唯一 ID、kind、role、dependencies、payload。kind 仅 search/verify/synthesize/write/review；每版计划只有一个最终 write 和一个独立 review，全部研究任务必须沿依赖汇入 write，write 依赖相关证据核验，review 依赖 write。按资料体量和预计输出长度安排核验分支，使每个任务的 JSON 回复低于 budget.maxAgentReplyChars；不要让一项核验复制全部长正文，只引用支持论断的必要短片段。其他任务可自由分支、合并、增补研究，不能固定套用流程。team 覆盖各任务 role 并满足预算；Manager 审核分工并由计划选择最终审核责任。重规划原样保留可复用的已完成调查与在途节点及 ID；新增工作用新 ID。需要新稿时将旧 write/review 从当前 nodes 中移除（引擎会完整归档历史成果），增加新的 write/review ID，不把旧稿当新稿重复交付。',
     search: '围绕具体问题检索多个查询变体，优先一手/官方/学术资料，并用独立发布机构交叉核查。来源广度按问题覆盖和不同域证据判断，不机械凑数。实际打开并阅读正文后保留原文 excerpt 与 locator，引擎会独立获取并核对完整片段；仅搜索摘要用 discovered，不假装完整阅读。',
-    verify: '逐项核验给定来源，判断发布方、方法、时效、与其他证据一致性。claims 必须逐字引用 acquisition.excerpts 中单个已独立获取片段，不拼接不同片段；未独立获取正文来源不能提取已确认论断。所有 sourceId 使用给定稳定 ID。',
+    verify: '逐项核验给定来源，判断发布方、方法、时效、与其他证据一致性。claims 必须逐字引用 acquisition.excerpts 中单个已独立获取片段，只选支持论断的必要短片段，不复制完整长正文、不拼接不同片段；未独立获取正文来源不能提取已确认论断。所有 sourceId 使用给定稳定 ID。',
     synthesize: '整合已有论断，区分事实、推断、冲突和未知；引用支持的概念构成 entities/relationships，禁止编造未提供事实。',
     write: '交付详实、可读的研究报告。按真实问题组织章节，包含背景、方法、证据分析、反证、比较、影响、建议和研究局限（仅在适用时）。正文内容优先深度和具体性，不能泛泛总结。事实段落列出支持的已读取核验来源 ID；引用与原文论断对应，不把搜索摘要当证据。',
     review: '作为独立审查者核查引用对应原文、事实准确性、研究问题覆盖、反证、内容深度、局限和可操作结论。存在阻断问题用 revise，只有证据充分且报告可交付才 pass。',
