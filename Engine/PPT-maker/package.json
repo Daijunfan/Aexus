@@ -21,5 +21,10 @@
   },
   "engines": {
     "node": ">=22.18.0"
+  },
+  "overrides": {
+    "pptxgenjs": {
+      "image-size": "2.0.3"
+    }
   }
 }
