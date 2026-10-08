@@ -1,6 +1,6 @@
 /** Deep Research runtime - orchestrates multi-agent research workflow */
-import { create, describe, respond, ENGINE_ID, parseAnswer } from './model.mjs';
-import { provision, ask, retry, cancel } from './agents.mjs';
+import { create, describe, respond, retry, ENGINE_ID, parseAnswer } from './model.mjs';
+import { provision, ask, cancel } from './agents.mjs';
 
 export { create, describe, respond, retry, cancel };
 
