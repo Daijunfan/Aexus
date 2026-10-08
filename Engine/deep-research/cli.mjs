@@ -19,10 +19,12 @@ Workflow commands (保留 request key 重试时使用):
   download --id ID --output report.html
 
 Research scope:
-  quick         — 快速概览 (5-10 分钟)
-  comprehensive — 全面调查 (10-20 分钟，默认)
-  deep          — 深度分析 (20-40 分钟)
-  academic      — 学术研究 (40+ 分钟)
+  quick         — 快速概览
+  comprehensive — 全面调查（默认）
+  deep          — 深度分析
+  academic      — 学术研究
+
+任务规模与耗时由初步调研和动态计划确定；范围不代表固定完成时间。
 
 Examples:
   # 开始新研究
@@ -43,7 +45,8 @@ Examples:
   # 下载报告
   node cli.mjs download --id WORKFLOW_ID --output final-report.html
 
-Full protocol: docs/API.md
+Engine guide: README.md
+Workflow protocol: ../../Contract/WORKFLOWS.md
 `;
 
 function flags(argv) {

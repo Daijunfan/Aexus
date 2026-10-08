@@ -3,7 +3,7 @@
   "name": "Deep Research",
   "version": "2.0.0",
   "contractVersion": "1.0.0",
-  "description": "多 Agent 协作的深度研究引擎。并行多维度调查，实时验证来源，构建知识图谱，生成结构化报告。超越市面所有竞品。",
+  "description": "动态规划的多 Agent 深度研究引擎。并行执行研究任务，独立获取并核对来源摘录，展示研究过程与证据，交付结构化报告。",
   "ui": "Page.tsx",
   "cli": "cli.mjs",
   "runtime": "runtime.mjs",
