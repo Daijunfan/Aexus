@@ -158,6 +158,7 @@ export async function ask(state, ctx, key, role, kind, payload, validate, option
   if (previous?.status === 'completed') return previous.result;
   const candidates = state.workers.filter(w => w.active !== false && (options.workerId ? w.id === options.workerId : w.role === role) && !(options.excludeWorkerIds || []).includes(w.id));
   if (!candidates.length) throw Error('没有独立可用的研究角色: ' + role);
+  if (previous && !candidates.some(w => w.id === previous.employeeId)) throw Error('恢复任务的所属员工已退出当前团队，请保留原员工或使用新任务 ID: ' + previous.employeeId);
   let worker;
   while (!worker) {
     ctx.signal.throwIfAborted();
