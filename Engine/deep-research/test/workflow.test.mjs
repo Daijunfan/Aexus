@@ -4,7 +4,7 @@ import { create, describe, respond, run, retry, cancel, pause, amend } from '../
 import { upgradeState, parseAnswer } from '../model.mjs';
 import { normalizeSources } from '../evidence.mjs';
 import { applyPlan, normalizeNodes, planProgress } from '../graph.mjs';
-import { ask } from '../agents.mjs';
+import { ask, provision } from '../agents.mjs';
 import { generateArtifacts } from '../reports.mjs';
 
 const source = (name = 'seed') => ({ title: name, url: 'https://' + name + '.example/research', acquisition: { status: 'read', excerpt: name + ' actual retrieved body demonstrates the result.', locator: 'Results' } });
@@ -499,4 +499,33 @@ test('different verifier scopes retain both claims for one source without a seco
   const claims = view.findingsDetails.filter(f => f.sourceIds.includes(seed.id));
   assert.equal(claims.length, 2); assert.ok(claims.some(f => f.claim.startsWith('policy-scope'))); assert.ok(claims.some(f => f.claim.startsWith('price-scope')));
   assert.equal('extractedClaims' in seed, false);
+});
+
+test('a revised team cannot leave a retained native task waiting forever for its former owner', async () => {
+  const state = create({ topic: 'A revised team keeps an accepted task attached to its real owner' });
+  const initial = plan(); applyPlan(state, initial, 'Initial team');
+  state.workers = team.map(spec => ({ ...spec, specId: spec.id, id: 'employee-' + spec.id, engine: 'pi', managerIds: [], active: true }));
+  state.tasks['s1-v1'] = { logicalKey: 's1-v1', status: 'failed', failureKind: 'transport', employeeId: 'employee-r1', receipt: { messageId: 'original-request' } };
+  const next = plan(); next.team = team.filter(spec => spec.id !== 'r1');
+  applyPlan(retry(state), next, 'Remove one researcher while retaining the same question');
+  const f = fixture(), ctx = { ...f.ctx, signal: AbortSignal.timeout(100) };
+  await provision(state, ctx, next.team);
+  assert.equal(state.workers.find(worker => worker.specId === 'r1').active, false);
+  assert.ok(state.workers.some(worker => worker.role === 'researcher' && worker.active));
+  await assert.rejects(ask(state, ctx, 's1-v1', 'researcher', 'search', {}, normalizeSources), /原员工|所属员工/);
+  assert.equal(f.calls.filter(call => call.command === 'session.send').length, 0);
+  assert.equal(state.tasks['s1-v1'].receipt.messageId, 'original-request');
+});
+
+test('public projection retains canonical detail without repeating plan nodes, report bodies and revision history', async () => {
+  const f = fixture(), done = await run(create({ topic: 'One public copy of each large research result', autoApprove: true }), f.ctx);
+  const view = describe(done.state);
+  assert.equal(view.plan.strategy, done.state.plan.strategy);
+  assert.equal(view.graph.nodes.length, done.state.graph.nodes.length);
+  assert.equal(view.deliverable.sections[0].content, done.state.report.sections[0].content);
+  assert.deepEqual(view.planRevisions, done.state.planRevisions);
+  assert.equal(view.report.sections, done.state.report.sections.length);
+  assert.equal('nodes' in view.plan, false);
+  assert.equal('content' in view.report, false);
+  assert.equal('planHistory' in view, false);
 });
