@@ -40,7 +40,12 @@ try{
  await invoke('workflow.respond',{id,expectedRevision:job.revision,answer:{values:{focus:'突出可验证的取舍，明确证据缺口。'}},clientRequestId:randomUUID()});job=await stage(id,'complete')
  assert.equal(job.status,'completed');assert.equal(job.files.length,3);assert.deepEqual(job.files.map(f=>f.name).sort(),['evidence.csv','research-report.html','research-report.md'])
  assert.ok(wire().filter(t=>t.kind==='research').length>=4,'blocking review causes targeted extra research')
- assert.ok(wire().filter(t=>t.kind==='review').length>=3,'evidence and final-report reviews both run')
+ assert.ok(wire().filter(t=>t.kind==='review').length>=4,'evidence, lead and independent peer reviews all run')
+ assert.equal(job.summary.reportReview?.verdict,'pass')
+ assert.equal(job.summary.peerReview?.verdict,'pass')
+ const leadReview=job.summary.tasks.find(t=>t.id.startsWith('final-review-'))
+ const peerReview=job.summary.tasks.find(t=>t.id.startsWith('peer-review-'))
+ assert.ok(leadReview&&peerReview&&leadReview.employeeId!==peerReview.employeeId,'final report is independently reviewed by two native employees')
  const deliverables=[]
  for(const entry of job.files){const file=await invoke('workflow.file',{id,name:entry.name});assert.equal(Buffer.byteLength(file.content),entry.bytes);assert.equal(createHash('sha256').update(file.content).digest('hex'),entry.sha256);assert.ok(!file.content.includes('[AEXUS_DEEP_RESEARCH_TASK]'));deliverables.push(file);fs.writeFileSync(path.join(out,entry.name),file.content)}
  assert.ok(deliverables.find(f=>f.name.endsWith('.html')).content.includes('source-filter'))

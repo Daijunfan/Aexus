@@ -17,13 +17,13 @@ html .company-header.aexus-header>.layer-indicator{grid-column:3;grid-row:1;just
    three views; a narrow Infra panel moves actions to their own row. */
 .infra-surface{container-type:inline-size;container-name:infra}
 html .infra-surface>.infra-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px) minmax(0,1fr);min-width:0;align-items:center;gap:12px;padding:8px 18px;border-bottom:1px solid var(--border-soft);background:var(--bg);flex:none;min-height:60px;position:relative;z-index:22}
-html .infra-surface>.infra-toolbar>.company-navigation{grid-column:2;grid-row:1;justify-self:center;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));box-sizing:border-box;width:100%;max-width:560px;position:relative;left:auto;top:auto;transform:none;margin:0;min-width:0;box-shadow:none;padding:3px;background:var(--bg-elev)}
+html .infra-surface>.infra-toolbar>.company-navigation{grid-column:2;grid-row:1;justify-self:center;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));box-sizing:border-box;width:min(100%,560px);max-width:560px;position:relative;left:auto;top:auto;transform:none;margin-inline:auto;min-width:0;box-shadow:none;padding:3px;background:var(--bg-elev)}
 html .infra-surface>.infra-toolbar>.company-navigation>.company-view-picker{min-width:0}
-html .infra-surface>.infra-toolbar .company-navigation .app-view-button{width:100%;min-width:0;height:40px;min-height:40px;font-size:12px;padding-inline:12px}
+html .infra-surface>.infra-toolbar .company-navigation .app-view-button{width:100%;min-width:0;height:40px;min-height:40px;font-size:12px;padding-inline:12px;display:flex;align-items:center;justify-content:center;text-align:center}
 html .infra-surface>.infra-toolbar .company-navigation .company-view-trigger{padding-right:25px}
 html .infra-surface>.infra-toolbar>.company-actions{grid-column:3;grid-row:1;justify-self:end;justify-content:flex-end;flex-wrap:wrap;max-width:100%;min-width:0;margin:0;white-space:nowrap;gap:8px}
 html .infra-surface>.infra-toolbar>.company-actions button{padding:8px 12px;font-size:11px}
-@container infra (max-width:1100px){html .infra-surface>.infra-toolbar{grid-template-columns:minmax(0,1fr);gap:8px}html .infra-surface>.infra-toolbar>.company-navigation{grid-column:1;grid-row:1;width:min(100%,530px)}html .infra-surface>.infra-toolbar>.company-actions{grid-column:1;grid-row:2}}
+@container infra (max-width:1100px){html .infra-surface>.infra-toolbar{grid-template-columns:minmax(0,1fr);gap:8px}html .infra-surface>.infra-toolbar>.company-navigation{grid-column:1;grid-row:1;justify-self:center;margin-inline:auto;width:min(100%,530px)}html .infra-surface>.infra-toolbar>.company-actions{grid-column:1;grid-row:2}}
 @container infra (max-width:500px){html .infra-surface>.infra-toolbar{padding-inline:10px}html .infra-surface>.infra-toolbar>.company-actions{justify-self:center;justify-content:center}html .infra-surface>.infra-toolbar .company-navigation .app-view-button{font-size:11px;gap:6px}}
 .infra-content{display:flex;flex:1;min-width:0;min-height:0;position:relative;overflow:hidden}.infra-content>.message-view,.infra-content>.plan-view{flex:1;min-width:0}
 .engine-surface{flex:1;min-width:0;min-height:0;overflow:auto;background:var(--bg);color:var(--fg)}

@@ -3104,7 +3104,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 343 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 344 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3122,6 +3122,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents workflow start</code> | <code>--engine-id ID --input JSON --client-request-id ID</code> | Start an installed Engine workflow durably as the authenticated caller; same request ID never creates a second job | Engine workflows | operator |
 | <code>agents workflow list</code> | <code>[--engine-id ID]</code> | Read the caller-owned workflow summaries without exposing private runtime checkpoints | Engine workflows | operator |
 | <code>agents workflow get</code> | <code>ID [--if-revision N]</code> | Read durable status and final files, or unchanged:true at the supplied revision; never runs or acknowledges a task | Engine workflows | operator |
+| <code>agents workflow events</code> | <code>ID [--after-revision N] [--limit N]</code> | Read a bounded, owner-authorized history of public workflow status, phase, progress and source counts without exposing prompts or evidence | Engine workflows | operator |
 | <code>agents workflow respond</code> | <code>ID --expected-revision N --answer JSON --client-request-id ID</code> | Answer the current clarification checkpoint exactly once; stale answers cannot change a later round | Engine workflows | operator |
 | <code>agents workflow resume</code> | <code>ID --expected-revision N --client-request-id ID</code> | Explicitly resume a failed or paused Engine from its saved checkpoint, preserving completed steps and identities | Engine workflows | operator |
 | <code>agents workflow pause</code> | <code>ID</code> | Pause a supported Engine and stop only its owned native tasks; preserve evidence and wait for explicit resume | Engine workflows | operator |

@@ -35,6 +35,7 @@ The runtime is trusted, installed Node code, not a sandbox for arbitrary third-p
 | `workflow.start` | `engineId`, `input`, `clientRequestId` | Durable job ID and public projection. Same request ID and input return the original job. |
 | `workflow.list` | Optional `engineId` | Up to 100 latest caller-owned jobs; unreadable persisted records are reported separately in `errors` to the user. |
 | `workflow.get` | `id`, optional non-negative integer `ifRevision` | Status, revision, Engine-defined public summary and approved final-file manifest; unchanged revisions return only an identity/revision tuple. |
+| `workflow.events` | `id`, optional `afterRevision` and `limit` (1–100) | Owner-scoped, bounded history of persisted status, phase, progress and source/step counts. Never contains task prompts, full sources or native transcripts. Historical workflows return an empty array until their next checkpoint. |
 | `workflow.respond` | `id`, `expectedRevision`, `answer`, `clientRequestId` | Applies an answer only to the current waiting checkpoint and resumes execution. |
 | `workflow.resume` | `id`, `expectedRevision`, `clientRequestId` | Explicitly resumes a failed or fully paused job using its saved state. |
 | `workflow.pause` | `id` | Pauses a supporting Engine, stops only its owned native tasks and preserves its checkpoint. |

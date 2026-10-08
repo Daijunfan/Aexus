@@ -217,6 +217,38 @@
         "text",
         false,
         false
+      ],
+      [
+        "ifRevision",
+        "if-revision",
+        "number",
+        false,
+        false
+      ]
+    ]
+  },
+  "workflow.events": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ],
+      [
+        "afterRevision",
+        "after-revision",
+        "number",
+        false,
+        false
+      ],
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
       ]
     ]
   },

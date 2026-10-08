@@ -6,7 +6,10 @@ const stampKey=source=>normalize(source.quote).toLocaleLowerCase()+'\n'+source.s
 
 /** A contribution belongs to a checked excerpt, never just to a shared URL. */
 function mergeSource(state,verified,contributions){
- let source=state.sources.find(s=>s.url===verified.url||s.finalUrl===verified.finalUrl||(s.aliases??[]).includes(verified.url))
+ // A changed page is a new, independently verifiable snapshot. Never merge
+ // different SHA-256 bodies under one source ID, or silently credit historical
+ // quotations against the currently served version of a webpage.
+ let source=state.sources.find(s=>s.sha256===verified.sha256&&(s.url===verified.url||s.finalUrl===verified.finalUrl||(s.aliases??[]).includes(verified.url)))
  if(!source){
   const id='S'+(Math.max(0,...state.sources.map(s=>Number(s.id.slice(1))||0))+1)
   source={...verified,id,aliases:[],engines:[],excerpts:[]}

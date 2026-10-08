@@ -30,7 +30,7 @@ export function ResearchAtlas({job,onInspect}:{job:WorkflowView;onInspect:(query
      </article>):<div className="a-dr-flow-await">确认目标 → 制定方案 → 并行分派</div>}
     </div>
     <div className="a-dr-flow-hub" data-ready={ready}><span className="a-dr-atlas-symbol"><Glyph kind="evidence"/></span><div><small>02 · 汇集与独立核验</small><strong>共享证据池</strong><p>逐条匹配摘录 · 保留贡献者 · 绑定页面指纹</p></div><b>{s.sourceCount??0}<small>来源</small></b></div>
-    <div className="a-dr-flow-review"><span className="a-dr-atlas-symbol"><Glyph kind="review"/></span><div><small>03 · 审查与交付</small><strong>独立复核，再生成报告</strong><div className="a-dr-review-checks"><span data-passed={review.evidence==='pass'}>{review.evidence==='pass'?'✓':'○'} 证据审查</span><span data-passed={review.report==='pass'}>{review.report==='pass'?'✓':'○'} 报告审查</span><span data-passed={complete}>{complete?'✓':'○'} 最终交付</span></div></div></div>
+    <div className="a-dr-flow-review"><span className="a-dr-atlas-symbol"><Glyph kind="review"/></span><div><small>03 · 审查与交付</small><strong>独立复核，再生成报告</strong><div className="a-dr-review-checks"><span data-passed={review.evidence==='pass'}>{review.evidence==='pass'?'✓':'○'} 证据审查</span><span data-passed={review.report==='pass'}>{review.report==='pass'?'✓':'○'} 主编审查</span><span data-passed={review.peer==='pass'}>{review.peer==='pass'?'✓':'○'} 独立复审</span><span data-passed={complete}>{complete?'✓':'○'} 最终交付</span></div></div></div>
     <p className="a-dr-atlas-caption">连线表示工作流依赖；状态来自已保存的原生任务记录，不展示内部推理，也不模拟实时消息。</p>
    </section>
    <aside className="a-dr-quality-panel" aria-label="研究质量门槛">
@@ -40,6 +40,7 @@ export function ResearchAtlas({job,onInspect}:{job:WorkflowView;onInspect:(query
     <p className="a-dr-atlas-caption">数量达标仍须通过结论支持检查与最终报告审查。以上数值不表示正确率。</p>
    </aside>
   </div>
+  {!!insights.revisedSources?.length&&<div className="a-dr-source-revisions" role="note"><strong>网页内容版本提醒</strong><p>检测到 {insights.revisedSources.length} 个 URL 在研究期间出现不同页面指纹。各版本保留独立来源编号，旧摘录不会被冒充为新版证据。</p>{insights.revisedSources.map((source:{url:string;versions:number})=><div key={source.url}>{source.url} · {source.versions} 个版本</div>)}</div>}
   {!!domains.length&&<section className="a-dr-domain-map" aria-label="来源网站分布"><header><div><span className="a-dr-eyebrow">SOURCE DIVERSITY</span><h4>检查证据来自哪里</h4></div><span>{domains.length} 个网站 · {citations.citedSources??0} 个来源已被发现引用</span></header><div className="a-dr-domain-grid">{domains.map(domain=><button type="button" key={domain.domain} onClick={()=>onInspect(domain.domain)} aria-label={'查看 '+domain.domain+' 的来源'}><span><strong>{domain.domain}</strong><b>{domain.count}</b></span><span className="a-dr-domain-bar"><i style={{width:(domain.count/Math.max(s.sourceCount??1,1)*100)+'%'}}/></span><small>{domain.sourceIds.slice(0,6).join(' · ')}{domain.sourceIds.length>6?' · …':''}<span>查看证据 ↗</span></small></button>)}</div><p className="a-dr-atlas-caption">网站按域名统计；不同网站可能引用同一原始材料，不能据此认定来源相互独立。</p></section>}
  </div>
 }

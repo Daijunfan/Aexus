@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.61.0",
+  "version": "0.61.1",
   "description": "Aexus: domain-specific engines on a CLI-first multi-Agent infrastructure",
   "main": "./.aexus/out/main/index.js",
   "author": {
