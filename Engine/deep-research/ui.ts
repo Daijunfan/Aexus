@@ -23,8 +23,8 @@ export type ResearchNode = {
   result?: Record<string, any>;
   messageId?: string;
 };
-export const NODE_WIDTH = 244;
-export const NODE_HEIGHT = 136;
+export const NODE_WIDTH = 156;
+export const NODE_HEIGHT = 156;
 export type GraphEdge = { from: string; to: string };
 export type EvidenceExcerpt = {
   excerpt: string;
@@ -176,26 +176,26 @@ export function layoutGraph(
     ...[...levels.values()].map((group) => group.length),
   );
   const vertical = direction ? direction === "vertical" : levels.size > breadth;
-  const width = vertical ? breadth * 280 + 30 : (levels.size - 1) * 310 + 300;
-  const height = vertical ? (levels.size - 1) * 190 + 196 : breadth * 176 + 30;
+  const width = vertical ? breadth * 224 + 30 : (levels.size - 1) * 246 + 212;
+  const height = vertical ? (levels.size - 1) * 188 + 212 : breadth * 188 + 30;
   const positioned = active.map((node) => {
     const column = columns.get(node.id) ?? 0,
       group = levels.get(column)!;
     return {
       ...node,
       x: vertical
-        ? 28 + order.get(node.id)! * 280 + (breadth - group.length) * 140
-        : 28 + column * 310,
+        ? 28 + order.get(node.id)! * 224 + (breadth - group.length) * 112
+        : 28 + column * 246,
       y: vertical
-        ? 30 + column * 190
-        : 30 + order.get(node.id)! * 176 + (breadth - group.length) * 88,
+        ? 30 + column * 188
+        : 30 + order.get(node.id)! * 188 + (breadth - group.length) * 94,
     };
   });
   return {
     nodes: positioned,
     edges,
-    width: Math.max(300, width),
-    height: Math.max(196, height),
+    width: Math.max(212, width),
+    height: Math.max(212, height),
     vertical,
   };
 }

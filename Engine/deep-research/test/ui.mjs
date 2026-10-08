@@ -519,11 +519,13 @@ try {
     .click();
   await screen("03b-dag-fit");
   await page.locator('[data-node-id="node-6"]').click();
-  assert.equal(
-    await page
-      .getByRole("button", { name: "重置研究地图缩放", exact: true })
-      .innerText(),
-    "100%",
+  assert.ok(
+    parseInt(
+      await page
+        .getByRole("button", { name: "重置研究地图缩放", exact: true })
+        .innerText(),
+    ) >= 85,
+    "selected neighborhood retains readable zoom",
   );
   assert.equal(await page.locator(".dr-graph-lines>path.selected").count(), 5);
   assert.equal(await page.locator(".dr-task-links").count(), 2);
@@ -560,11 +562,13 @@ try {
     .click();
   await screen("03d-arbitrary-dag-core-overview");
   await page.locator('[data-node-id="node-6"]').click();
-  assert.equal(
-    await page
-      .getByRole("button", { name: "重置研究地图缩放", exact: true })
-      .innerText(),
-    "100%",
+  assert.ok(
+    parseInt(
+      await page
+        .getByRole("button", { name: "重置研究地图缩放", exact: true })
+        .innerText(),
+    ) >= 85,
+    "selected neighborhood retains readable zoom",
   );
   const selectedBox = await page
     .locator('[data-node-id="node-6"]')
@@ -576,6 +580,18 @@ try {
     "selected task is visible at readable zoom",
   );
   await screen("03d-arbitrary-dag-core");
+  for (const id of ["node-4", "node-5", "node-7", "node-8"]) {
+    const nodeBox = await page.locator(`[data-node-id="${id}"]`).boundingBox();
+    assert.ok(
+      Math.abs(nodeBox.width - nodeBox.height) < 1,
+      "research node is a circle",
+    );
+    assert.ok(
+      nodeBox.y >= viewportBox.y &&
+        nodeBox.y + nodeBox.height <= viewportBox.y + viewportBox.height,
+      "selected task's immediate fork and join context is visible",
+    );
+  }
   await page.getByRole("button", { name: "从左到右排列", exact: true }).click();
   assert.equal(
     await page
@@ -715,11 +731,13 @@ try {
     await fits();
     await screen("03e-" + name + "-overview");
     await page.locator(`[data-node-id="${shape.at(-2).id}"]`).click();
-    assert.equal(
-      await page
-        .getByRole("button", { name: "重置研究地图缩放", exact: true })
-        .innerText(),
-      "100%",
+    assert.ok(
+      parseInt(
+        await page
+          .getByRole("button", { name: "重置研究地图缩放", exact: true })
+          .innerText(),
+      ) >= 85,
+      "extreme graph selection retains readable zoom",
     );
     await screen("03f-" + name + "-focused");
   }
@@ -741,6 +759,14 @@ try {
   await page
     .getByRole("heading", { name: report.title, exact: true })
     .waitFor();
+  await page.getByRole("tab", { name: "研究地图", exact: true }).click();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "从上到下排列", exact: true })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByRole("tab", { name: "报告", exact: true }).click();
   await screen("04-report");
   await page
     .locator(".dr-report-document")

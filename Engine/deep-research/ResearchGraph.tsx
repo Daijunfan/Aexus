@@ -38,10 +38,39 @@ export function ResearchGraph({
     [nodes, edges, direction],
   );
   const selectedNode = graph.nodes.find((node) => node.id === selectedId);
+  const nearby = graph.nodes.filter(
+    (node) =>
+      node.id === selectedId ||
+      graph.edges.some(
+        (edge) =>
+          (edge.from === selectedId && edge.to === node.id) ||
+          (edge.to === selectedId && edge.from === node.id),
+      ),
+  );
+  const focusZoom = () => {
+    const area = viewport.current;
+    if (!area || !nearby.length) return 1;
+    const width =
+      Math.max(...nearby.map((node) => node.x)) -
+      Math.min(...nearby.map((node) => node.x)) +
+      NODE_WIDTH;
+    const height =
+      Math.max(...nearby.map((node) => node.y)) -
+      Math.min(...nearby.map((node) => node.y)) +
+      NODE_HEIGHT;
+    return Math.max(
+      0.85,
+      Math.min(
+        1,
+        (area.clientWidth - 32) / width,
+        (area.clientHeight - 32) / height,
+      ),
+    );
+  };
   useEffect(() => {
     if (!selectedId) return;
-    setZoom((value) => Math.max(1, value));
-  }, [selectedId]);
+    setZoom(focusZoom());
+  }, [selectedId, direction]);
   useEffect(() => {
     const area = viewport.current;
     if (selectedNode && area)
@@ -252,10 +281,11 @@ export function ResearchGraph({
                     height: NODE_HEIGHT,
                   }}
                   onClick={() => {
-                    setZoom((value) => Math.max(1, value));
+                    setZoom(focusZoom());
                     onSelect(node.id);
                   }}
                   aria-pressed={selectedId === node.id}
+                  aria-label={node.label + " · " + labelFor(node.status)}
                   title={node.label}
                 >
                   <span className="dr-graph-node-meta">
@@ -274,11 +304,17 @@ export function ResearchGraph({
                       />
                       {labelFor(node.kind)}
                     </span>
-                    <span className={"dr-node-state " + node.status}>
-                      {labelFor(node.status)}
-                    </span>
                   </span>
                   <strong>{node.label}</strong>
+                  <span className={"dr-node-state " + node.status}>
+                    {node.status === "completed" && (
+                      <span
+                        aria-hidden="true"
+                        className="codicon codicon-check"
+                      />
+                    )}
+                    {labelFor(node.status)}
+                  </span>
                   <span className="dr-graph-node-footer">
                     <span>
                       <span className="codicon codicon-person" />

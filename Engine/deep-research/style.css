@@ -1108,40 +1108,54 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: 13px 14px;
-  text-align: left;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 18px 20px;
+  text-align: center;
   border: 1px solid var(--dr-border);
-  border-radius: 7px;
+  border-radius: 50%;
   background: var(--dr-bg);
   box-shadow:
     0 2px 4px #192b3205,
     0 7px 16px #192b3205;
-  overflow: hidden;
+  overflow: visible;
 }
 .dr-app .dr-graph-node.selected {
   border-color: var(--dr-blue);
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--dr-blue) 12%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--dr-blue) 12%, transparent),
     0 6px 18px #192b320a;
 }
 .dr-app .dr-graph-node:hover {
   border-color: var(--dr-blue);
 }
 .dr-app .dr-graph-node.running {
-  border-left: 3px solid var(--dr-blue);
+  border-color: var(--dr-blue);
   background: color-mix(in srgb, var(--dr-blue) 3%, var(--dr-bg));
+  animation: dr-researching 3s ease-in-out infinite;
 }
 .dr-app .dr-graph-node.completed {
-  border-left: 3px solid var(--dr-green);
+  border-color: color-mix(in srgb, var(--dr-green) 55%, var(--dr-border));
 }
 .dr-app .dr-graph-node.failed {
-  border-left: 3px solid var(--dr-red);
+  border-color: var(--dr-red);
+}
+.dr-app .dr-graph-node.selected {
+  border-color: var(--dr-blue);
+}
+@keyframes dr-researching {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--dr-blue) 8%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--dr-blue) 13%, transparent);
+  }
 }
 .dr-graph-node-meta {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
   color: var(--dr-muted);
   font-size: 10px;
 }
@@ -1168,25 +1182,31 @@
 }
 .dr-graph-node > strong {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.5;
   font-weight: 600;
-  margin-top: 11px;
-  min-height: 40px;
+  width: 100%;
+  max-height: 59px;
+  text-wrap: balance;
+}
+.dr-graph-node > .dr-node-state {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dr-graph-node > .dr-node-state .codicon {
+  font-size: 11px;
 }
 .dr-graph-node-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
   color: var(--dr-muted);
-  font-size: 10px;
-  margin-top: auto;
-  border-top: 1px solid var(--dr-border);
-  padding-top: 8px;
+  font-size: 9px;
 }
 .dr-graph-node-footer > span {
   display: flex;
@@ -1194,7 +1214,7 @@
   gap: 5px;
 }
 .dr-graph-node-footer .codicon {
-  font-size: 12px;
+  font-size: 10px;
 }
 .dr-task-detail {
   padding: 2px 22px 24px;
