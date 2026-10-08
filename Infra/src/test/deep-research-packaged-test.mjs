@@ -20,6 +20,12 @@ const before = hash(packageFile)
 const options = {...baseline.build, directories: {output: artifacts}, electronDist: path.join(root, 'node_modules/electron/dist'), electronVersion: JSON.parse(fs.readFileSync(path.join(root, 'node_modules/electron/package.json'), 'utf8')).version, npmRebuild: false, mac: {...baseline.build.mac, identity: '-'}}
 fs.writeFileSync(path.join(output, 'candidate-config.json'), JSON.stringify(options, null, 2))
 if (!process.argv.includes('--verify-only')) {
+  const priorProof = path.join(output, 'verification.json')
+  if (fs.existsSync(priorProof)) {
+    const previous = JSON.parse(fs.readFileSync(priorProof, 'utf8')), snapshot = path.join(output, 'snapshots', previous.buildEvidence.head.slice(0, 7))
+    fs.mkdirSync(snapshot, {recursive: true})
+    for (const file of ['verification.json', 'source-build.json', 'chrome-layout.json', 'packaged-deep-research.png']) if (fs.existsSync(path.join(output, file))) fs.copyFileSync(path.join(output, file), path.join(snapshot, file))
+  }
   const startedAt = new Date().toISOString()
   execFileSync(path.join(root, 'node_modules/.bin/electron-vite'), ['build'], {cwd: root, env: {...process.env, AGENTS_COMPANY_RELEASE: '1'}, stdio: 'inherit'})
   fs.writeFileSync(path.join(output, 'source-build.json'), JSON.stringify({startedAt, finishedAt: new Date().toISOString(), exitCode: 0, head: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), packageSha256: before, rendererHtmlSha256: hash(path.join(root, '.aexus/out/renderer/index.html'))}, null, 2))
@@ -128,7 +134,14 @@ try {
   for (const size of [{width: 1440, height: 900}, {width: 768, height: 900}, {width: 390, height: 844}]) {
     await app.evaluate(({BrowserWindow}, size) => {const win = BrowserWindow.getAllWindows()[0]; win.setMinimumSize(1, 1); win.setContentSize(size.width, size.height)}, size)
     await expect.poll(() => page.evaluate(() => innerWidth)).toBe(size.width)
-    chromeLayout.push(await page.evaluate(() => ({viewport: {width: innerWidth, height: innerHeight}, elements: Object.fromEntries(['.application-layers', '.engine-surface', '.engine-context', '.dr-app', '.dr-intake'].map(selector => {const r = document.querySelector(selector)?.getBoundingClientRect(); return [selector, r ? {x: r.x, y: r.y, width: r.width, height: r.height} : null]}))})))
+    const layout = await page.evaluate(() => ({viewport: {width: innerWidth, height: innerHeight}, surface: {clientHeight: document.querySelector('.engine-surface').clientHeight, scrollHeight: document.querySelector('.engine-surface').scrollHeight, clientWidth: document.querySelector('.engine-surface').clientWidth, scrollWidth: document.querySelector('.engine-surface').scrollWidth}, overflows: [...document.querySelectorAll('.engine-surface *')].filter(element => element.scrollWidth > element.clientWidth + 1).map(element => ({className: element.className, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth})), elements: Object.fromEntries(['.application-layers', '.engine-surface', '.engine-context', '.dr-app', '.dr-intake'].map(selector => {const r = document.querySelector(selector)?.getBoundingClientRect(); return [selector, r ? {x: r.x, y: r.y, width: r.width, height: r.height} : null]}))}))
+    assert.ok(layout.surface.scrollHeight <= layout.surface.clientHeight + 1, 'Empty research intake must not add a second viewport scroll')
+    assert.ok(layout.elements['.dr-app'].y + layout.elements['.dr-app'].height <= size.height + 1, 'Research app must account for the real host context height')
+    const horizontal = await page.locator('.dr-main,.dr-intake-page,.dr-intake,.dr-intake-controls,.dr-segment').evaluateAll(elements => elements.map(element => ({className: element.className, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth})))
+    assert.ok(horizontal.every(element => element.scrollWidth <= element.clientWidth + 1), 'Intake controls and hidden tips must stay within their actual host width')
+    layout.horizontal = horizontal
+    chromeLayout.push(layout)
+    await page.screenshot({path: path.join(output, 'packaged-intake-' + size.width + '.png'), animations: 'disabled'})
   }
   fs.writeFileSync(path.join(output, 'chrome-layout.json'), JSON.stringify({snapshot: 'fresh source-built candidate renderer, no research generation', layouts: chromeLayout}, null, 2))
   assert.deepEqual(errors, [])

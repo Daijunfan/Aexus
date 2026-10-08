@@ -106,13 +106,26 @@ test('Current persisted research restarts, pauses, amends, resumes and exports t
     await host.workflowRequest('workflow.respond', {id, expectedRevision: job.revision, clientRequestId: 'approve', answer: {action: 'approve-plan'}})
     job = await waitFor(async () => {const j = await host.workflowRequest('workflow.get', {id}); if (j.status === 'failed') throw Error(j.error); return j.status === 'completed' && j})
     assert.equal(job.files.length, 5)
+    assert.equal(JSON.parse(fs.readFileSync(path.join(directory, 'state.json'), 'utf8')).state.artifacts, undefined, 'Host owns published files; Engine checkpoint must not duplicate their complete bodies')
     const file = await host.workflowRequest('workflow.file', {id, name: 'research-report.html'})
     assert.match(file.content, /Synthetic approved report/)
     assert.match(file.content, /example.org\/host-fixture/)
     assert.equal(new Set(fixture.sent.map(s => s.taskId)).size, fixture.sent.length)
+    const delivered = job.files, dispatchCount = fixture.sent.length
+    const originalFiles = Object.fromEntries(delivered.map(artifact => [artifact.name, fs.readFileSync(path.join(directory, 'delivery', artifact.name))]))
+    await host.stopWorkflows()
+    const checkpoint = JSON.parse(fs.readFileSync(path.join(directory, 'state.json'), 'utf8'))
+    checkpoint.status = 'running'; delete checkpoint.state.artifacts
+    fs.writeFileSync(path.join(directory, 'state.json'), JSON.stringify(checkpoint))
+    host.startWorkflows(fixture.dispatch, () => {})
+    job = await waitFor(async () => {const j = await host.workflowRequest('workflow.get', {id}); if (j.status === 'failed') throw Error(j.error); return j.status === 'completed' && j})
+    assert.deepEqual(job.files, delivered, 'Completed checkpoint recovery must reproduce the exact existing delivery manifest')
+    assert.equal(fixture.sent.length, dispatchCount, 'Publication recovery must not rerun any native research task')
+    for (const artifact of delivered) assert.deepEqual(fs.readFileSync(path.join(directory, 'delivery', artifact.name)), originalFiles[artifact.name])
+    assert.equal((await host.workflowRequest('workflow.file', {id, name: 'research-report.html'})).sha256, file.sha256)
     const out = path.join(root, '.aexus/artifacts/deep-research-independent')
     fs.mkdirSync(out, {recursive: true})
-    fs.writeFileSync(path.join(out, 'host.json'), JSON.stringify({passed: true, realModules: ['workflows.ts', 'deep-research/runtime.mjs'], fixtures: ['authorization', 'resource discovery', 'Contract/native transport'], checks: ['current checkpoint restart', 'pause-amend-resume', 'persist waiting plan across restart', 'approve revised DAG', 'five published files and hashed file read'], modelCalls: 0, agentProcesses: 0, productionDataUsed: false}, null, 2))
+    fs.writeFileSync(path.join(out, 'host.json'), JSON.stringify({passed: true, realModules: ['workflows.ts', 'deep-research/runtime.mjs'], fixtures: ['authorization', 'resource discovery', 'Contract/native transport', 'raw source reader'], checks: ['current checkpoint restart', 'pause-amend-resume', 'persist waiting plan across restart', 'approve revised DAG', 'five published files and hashed file read', 'completed checkpoint republication keeps manifest, bytes and hashes without new research'], modelCalls: 0, agentProcesses: 0, productionDataUsed: false}, null, 2))
   } finally {await host.stopWorkflows(); fs.rmSync(home, {recursive: true, force: true})}
 })
 
