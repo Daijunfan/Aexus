@@ -67,7 +67,7 @@ Preserve a request ID while retrying an uncertain transport response. A differen
 
 Core persists the original authenticated principal and, for Agent callers, the credential identity used for authorization. Runtime calls are forwarded through the versioned Contract and the existing Core dispatcher as that original caller. They cannot substitute a user identity, request undeclared runtime capabilities, invoke recursive workflows or bypass native approvals. Credential revocation and role boundaries are rechecked on each delegated request.
 
-Deep Research 2.0 is an inert Engine shell. Existing historical Deep Research workflows can be read, stopped and archived through Infra even without the retired domain runtime. On restart, a previously `running` legacy record is marked stopped and its exact owned turns reconciled; no model inference is resumed. Archived records are retained under `workflow-deleted` for recovery; users must explicitly request a deletion. Other Engines keep their existing background behavior.
+Deep Research 2.x runs an evidence-driven, dynamically planned DAG through the current runtime. Running current-version jobs resume from their persisted checkpoints and reconcile accepted native receipts; waiting and paused jobs remain idle. Retired 1.x records, or records whose research runtime is no longer installed, can still be read, stopped and archived through Infra. A running retired record is stopped on restart and its exact owned turns reconciled without restarting inference. Archived records remain under `workflow-deleted`; deletion is explicit.
 
 State is stored separately from source under the configured Core data directory. The UI may close or switch layers while Core continues. Waiting, paused and terminal jobs remain idle on restart; running jobs resume from their checkpoints. A changed Engine version refuses continuation unless the installed runtime explicitly lists the stored version in `compatibleVersions`. Compatibility is an Engine-maintained, tested allowlist, not an inferred migration. An unreadable individual workflow is quarantined from execution and reported without overwriting its file or preventing other Core features from starting.
 
@@ -103,16 +103,16 @@ An optional `prepare` hook receives only the caller-provided JSON input and an a
 
 An optional `export` hook receives a clone of a completed job's private state, the requested format and an abort signal. It renders an alternate representation from approved content without further research. The original status, revision, directory and file manifest remain unchanged. Core validates the returned artifact name, description, MIME, encoding and decoded size (1 byte–8 MiB), then returns a content hash. The result is not saved as a new authoritative report. Browser/CLI clients must decode binary output before checking size and SHA-256.
 
-Core permits at most two simultaneous explicit data operations and aborts them after 30 seconds. Trusted Engine hooks must honor aborts and bound parsing work. Deep Research uses disposable resource-limited workers with shorter deadlines; untrusted document contents are never executed. Worker resource limits are defense in depth, not an operating-system sandbox for installed third-party Engine code.
+Core permits at most two simultaneous explicit data operations and aborts them after 30 seconds. Trusted Engine hooks must honor aborts and bound parsing work. These limits govern optional data hooks, not the Deep Research native employee lifecycle. The current Deep Research runtime does not implement `prepare` or alternate `export` hooks; its approved report is delivered through manifest-listed HTML, Markdown, CSV and JSON files.
 
 ## Immutable follow-ups
 
 `workflow.fork` accepts only a completed, caller-owned parent at its current revision. It is serialized with parent controls. Core binds the request key to operation, parent ID/revision and exact input; retries return the original child, while a different payload under the same key is rejected. Core creates the new ID and stamps `parent:{id,revision,engineVersion}`. The Engine cannot forge this field through its input.
 
-The optional synchronous `fork` hook receives a clone and produces fresh initial state, without Infra calls. Deep Research starts at scope confirmation with no workers, no accepted sources and no final files. Historical findings become explicitly labelled context; public links are only seeds requiring new verification. Private material reuse is opt-in. Creation does not itself approve a new research scope or bypass native tool approval. Parent and child IDs survive restart.
+The optional synchronous `fork` hook receives a clone and produces fresh initial state, without Infra calls. Parent and child IDs survive restart. Each supporting Engine defines context reuse and initial approval behavior; creation cannot bypass native tool approval. The current Deep Research runtime does not implement `fork`; start a new research job for a follow-up and explicitly provide its background material.
 
 ```sh
-node Infra/src/cli/aexus workflow prepare --engine-id deep-research --input '{"files":[{"name":"brief.txt","encoding":"base64","content":"SGVsbG8="}]}' --json
+node Infra/src/cli/aexus workflow prepare --engine-id SUPPORTING_ENGINE --input '{"files":[{"name":"brief.txt","encoding":"base64","content":"SGVsbG8="}]}' --json
 node Infra/src/cli/aexus workflow export WORKFLOW_ID --format docx --json
 node Infra/src/cli/aexus workflow fork WORKFLOW_ID --expected-revision 12 --input '{"topic":"Investigate new counterevidence"}' --client-request-id follow-up-001 --json
 ```
