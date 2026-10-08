@@ -4,6 +4,7 @@ import {
   labelFor,
   NODE_WIDTH,
   NODE_HEIGHT,
+  displayStatus,
   type ResearchNode,
   type GraphEdge,
 } from "./ui";
@@ -19,6 +20,7 @@ export function ResearchGraph({
   discovery,
   direction,
   onDirection,
+  workflow,
 }: {
   nodes: ResearchNode[];
   edges?: GraphEdge[];
@@ -30,6 +32,7 @@ export function ResearchGraph({
   discovery: ReactNode;
   direction?: "horizontal" | "vertical";
   onDirection: (direction: "horizontal" | "vertical") => void;
+  workflow: { status: string; controlPending?: boolean };
 }) {
   const [zoom, setZoom] = useState(1);
   const viewport = useRef<HTMLDivElement>(null);
@@ -267,75 +270,81 @@ export function ResearchGraph({
                   );
                 })}
               </svg>
-              {graph.nodes.map((node) => (
-                <button
-                  key={node.id}
-                  data-node-id={node.id}
-                  className={
-                    "dr-graph-node " +
-                    node.status +
-                    (selectedId === node.id
-                      ? " selected"
-                      : related.has(node.id)
-                        ? " related"
-                        : "")
-                  }
-                  style={{
-                    left: node.x,
-                    top: node.y,
-                    width: NODE_WIDTH,
-                    height: NODE_HEIGHT,
-                  }}
-                  onClick={() => {
-                    setZoom(focusZoom());
-                    onSelect(node.id);
-                  }}
-                  aria-pressed={selectedId === node.id}
-                  aria-label={node.label + " · " + labelFor(node.status)}
-                  title={node.label}
-                >
-                  <span className="dr-graph-node-meta">
-                    <span>
-                      <span
-                        className={
-                          "codicon codicon-" +
-                          ({
-                            search: "search",
-                            verify: "verified",
-                            synthesize: "symbol-misc",
-                            write: "file-text",
-                            review: "checklist",
-                          }[node.kind] ?? "circle-small")
-                        }
-                      />
-                      {labelFor(node.kind)}
-                    </span>
-                  </span>
-                  <strong>{node.label}</strong>
-                  <span className={"dr-node-state " + node.status}>
-                    {node.status === "completed" && (
-                      <span
-                        aria-hidden="true"
-                        className="codicon codicon-check"
-                      />
-                    )}
-                    {labelFor(node.status)}
-                  </span>
-                  <span className="dr-graph-node-footer">
-                    <span>
-                      <span className="codicon codicon-person" />
-                      {workers.find((worker) => worker.id === node.employeeId)
-                        ?.label ?? "待分配"}
-                    </span>
-                    {!!node.sourceIds?.length && (
-                      <span title="已产出证据来源">
-                        <span className="codicon codicon-link" />
-                        {node.sourceIds.length}
+              {graph.nodes.map((original) => {
+                const node = {
+                  ...original,
+                  status: displayStatus(original.status, workflow),
+                };
+                return (
+                  <button
+                    key={node.id}
+                    data-node-id={node.id}
+                    className={
+                      "dr-graph-node " +
+                      node.status +
+                      (selectedId === node.id
+                        ? " selected"
+                        : related.has(node.id)
+                          ? " related"
+                          : "")
+                    }
+                    style={{
+                      left: node.x,
+                      top: node.y,
+                      width: NODE_WIDTH,
+                      height: NODE_HEIGHT,
+                    }}
+                    onClick={() => {
+                      setZoom(focusZoom());
+                      onSelect(node.id);
+                    }}
+                    aria-pressed={selectedId === node.id}
+                    aria-label={node.label + " · " + labelFor(node.status)}
+                    title={node.label}
+                  >
+                    <span className="dr-graph-node-meta">
+                      <span>
+                        <span
+                          className={
+                            "codicon codicon-" +
+                            ({
+                              search: "search",
+                              verify: "verified",
+                              synthesize: "symbol-misc",
+                              write: "file-text",
+                              review: "checklist",
+                            }[node.kind] ?? "circle-small")
+                          }
+                        />
+                        {labelFor(node.kind)}
                       </span>
-                    )}
-                  </span>
-                </button>
-              ))}
+                    </span>
+                    <strong>{node.label}</strong>
+                    <span className={"dr-node-state " + node.status}>
+                      {node.status === "completed" && (
+                        <span
+                          aria-hidden="true"
+                          className="codicon codicon-check"
+                        />
+                      )}
+                      {labelFor(node.status)}
+                    </span>
+                    <span className="dr-graph-node-footer">
+                      <span>
+                        <span className="codicon codicon-person" />
+                        {workers.find((worker) => worker.id === node.employeeId)
+                          ?.label ?? "待分配"}
+                      </span>
+                      {!!node.sourceIds?.length && (
+                        <span title="已产出证据来源">
+                          <span className="codicon codicon-link" />
+                          {node.sourceIds.length}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

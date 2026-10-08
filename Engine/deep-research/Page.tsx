@@ -14,6 +14,7 @@ import { SourcePanel } from "./SourcePanel";
 import { ReportView } from "./ReportView";
 import {
   activityLabel,
+  displayStatus,
   labelFor,
   safeUrl,
   sourceHost,
@@ -361,7 +362,8 @@ export default function Page({ client }: { client: ContractClient }) {
   const nodes: ResearchNode[] =
       summary.graph?.nodes ?? summary.plan?.nodes ?? [],
     sources: any[] = summary.sources ?? [],
-    workers: any[] = (summary.workers ?? []).filter(
+    allWorkers: any[] = summary.workers ?? [],
+    workers: any[] = allWorkers.filter(
       (worker: any) => worker.active !== false,
     );
   const findings: any[] = summary.findingsDetails ?? [],
@@ -391,7 +393,7 @@ export default function Page({ client }: { client: ContractClient }) {
         )
       : [];
   const activeNode =
-    nodes.find((node) => node.id === nodeId && node.active !== false) ??
+    nodes.find((node) => node.id === nodeId) ??
     nodes.find((node) => node.status === "running") ??
     nodes.find((node) => node.active !== false);
   const dependencies = (node: ResearchNode) =>
@@ -401,15 +403,14 @@ export default function Page({ client }: { client: ContractClient }) {
   }, [activeNode?.id]);
   const predecessors = activeNode
     ? dependencies(activeNode)
-        .map((id) =>
-          nodes.find((node) => node.id === id && node.active !== false),
-        )
+        .map((id) => nodes.find((node) => node.id === id))
         .filter((node): node is ResearchNode => !!node)
     : [];
   const successors = activeNode
     ? nodes.filter(
         (node) =>
-          node.active !== false && dependencies(node).includes(activeNode.id),
+          (activeNode.active === false || node.active !== false) &&
+          dependencies(node).includes(activeNode.id),
       )
     : [];
   const timeLabel = (value?: number) =>
@@ -524,7 +525,11 @@ export default function Page({ client }: { client: ContractClient }) {
       {items.length ? (
         items.map((node) => (
           <button key={node.id} onClick={() => setNodeId(node.id)}>
-            <span className={"dr-state-dot " + node.status} />
+            <span
+              className={
+                "dr-state-dot " + displayStatus(node.status, job ?? undefined)
+              }
+            />
             {node.label}
             <Icon name="arrow-right" />
           </button>
@@ -786,7 +791,9 @@ export default function Page({ client }: { client: ContractClient }) {
               </div>
               <div className="dr-job-actions">
                 <span className={"dr-status " + job.status}>
-                  {STATUS[job.status]}
+                  {job.status === "cancelled" && job.controlPending
+                    ? labelFor("stopping")
+                    : STATUS[job.status]}
                 </span>
                 {["running", "waiting", "paused", "failed"].includes(
                   job.status,
@@ -944,9 +951,13 @@ export default function Page({ client }: { client: ContractClient }) {
                               ? "等待审阅后继续"
                               : job.status === "completed"
                                 ? "研究与证据已交付"
-                                : stageTask
-                                  ? labelFor(stageTask.label)
-                                  : (PHASES[summary.phase] ?? "正在组织研究")}
+                                : job.status === "cancelled"
+                                  ? job.controlPending
+                                    ? "正在确认剩余任务停止"
+                                    : "研究已停止，已保存完成的研究"
+                                  : stageTask
+                                    ? labelFor(stageTask.label)
+                                    : (PHASES[summary.phase] ?? "正在组织研究")}
                       </strong>
                     )}
                   </div>
@@ -1183,6 +1194,7 @@ export default function Page({ client }: { client: ContractClient }) {
                       setInspectorOpen(true);
                     }}
                     workers={workers}
+                    workflow={job}
                     direction={graphDirection}
                     onDirection={setGraphDirection}
                     inspectorOpen={inspectorOpen}
@@ -1301,10 +1313,18 @@ export default function Page({ client }: { client: ContractClient }) {
                   hidden={!showInspector}
                 >
                   <div className="dr-section-heading">
-                    <h2>任务详情</h2>
+                    <h2>
+                      {activeNode?.active === false ? "历史任务" : "任务详情"}
+                    </h2>
                     {activeNode && (
-                      <span className={"dr-node-state " + activeNode.status}>
-                        {labelFor(activeNode.status)}
+                      <span
+                        className={
+                          "dr-node-state " +
+                          displayStatus(activeNode.status, job)
+                        }
+                      >
+                        {activeNode.active === false && "已归档 · "}
+                        {labelFor(displayStatus(activeNode.status, job))}
                       </span>
                     )}
                   </div>
@@ -1326,9 +1346,16 @@ export default function Page({ client }: { client: ContractClient }) {
                         <p className="dr-error-text">{activeNode.error}</p>
                       )}
                       <dl>
+                        {displayStatus(activeNode.status, job) !==
+                          activeNode.status && (
+                          <>
+                            <dt>最后执行状态</dt>
+                            <dd>{labelFor(activeNode.status)}</dd>
+                          </>
+                        )}
                         <dt>执行者</dt>
                         <dd>
-                          {workers.find(
+                          {allWorkers.find(
                             (worker) =>
                               worker.id ===
                               (activeNode.employeeId ?? activeNode.ownerId),
@@ -1339,7 +1366,7 @@ export default function Page({ client }: { client: ContractClient }) {
                           {activeNode.managerIds
                             ?.map(
                               (id) =>
-                                workers.find(
+                                allWorkers.find(
                                   (worker) =>
                                     worker.id === id || worker.specId === id,
                                 )?.label ?? id,
@@ -1457,7 +1484,8 @@ export default function Page({ client }: { client: ContractClient }) {
                       <span>
                         {
                           workers.filter(
-                            (worker) => worker.status === "working",
+                            (worker) =>
+                              displayStatus(worker.status, job) === "working",
                           ).length
                         }{" "}
                         工作中 / {workers.length}
@@ -1479,7 +1507,12 @@ export default function Page({ client }: { client: ContractClient }) {
                           }
                           title={"查看 " + worker.label + " 的研究会话"}
                         >
-                          <span className={"dr-person-icon " + worker.status}>
+                          <span
+                            className={
+                              "dr-person-icon " +
+                              displayStatus(worker.status, job)
+                            }
+                          >
                             <Icon
                               name={
                                 worker.managementRole === "manager"
@@ -1494,7 +1527,7 @@ export default function Page({ client }: { client: ContractClient }) {
                               {worker.managementRole === "manager"
                                 ? "Manager · "
                                 : ""}
-                              {labelFor(worker.status)}
+                              {labelFor(displayStatus(worker.status, job))}
                             </small>
                           </span>
                           <Icon name="arrow-up-right" />

@@ -589,6 +589,11 @@
   width: 30%;
   animation: dr-explore 1.8s ease-in-out infinite;
 }
+.dr-app:is([data-status="paused"], [data-status="cancelled"])
+  .dr-progress-track.indeterminate
+  > span {
+  animation: none;
+}
 .dr-progress-metrics {
   display: flex;
   align-items: center;

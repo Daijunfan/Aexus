@@ -1018,6 +1018,66 @@ try {
   checks.push(
     "failed task does not show completion; 390px and 768px pages fit with graph scrolling",
   );
+  const archivedNode = { ...graph.nodes[3], active: false };
+  update("running", "research", {
+    graph: {
+      ...graph,
+      nodes: graph.nodes.map((node) =>
+        node.id === archivedNode.id ? archivedNode : node,
+      ),
+    },
+    visualization: {
+      timeline: [
+        {
+          timestamp: Date.now(),
+          type: "search",
+          description: archivedNode.label,
+          data: { nodeId: archivedNode.id },
+        },
+      ],
+    },
+  });
+  await page
+    .getByRole("button", { name: "Deep Research 首页", exact: true })
+    .click();
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (width === 1440) await page.locator(".dr-recent button").first().click();
+    await page.getByRole("tab", { name: "研究地图", exact: true }).click();
+    const log = page.locator(".dr-activity-log");
+    if ((await log.getAttribute("open")) === null)
+      await log.locator("summary").click();
+    await log
+      .getByRole("button", { name: new RegExp(archivedNode.label) })
+      .click();
+    await page
+      .getByRole("heading", { name: "历史任务", exact: true })
+      .waitFor();
+    assert.equal(
+      await page.locator(".dr-task-detail h3").innerText(),
+      archivedNode.label,
+    );
+    assert.equal(
+      await page.locator(`[data-node-id="${archivedNode.id}"]`).count(),
+      0,
+    );
+    await screen("09-history-" + width);
+  }
+  checks.push(
+    "archived research activity selects its original result and version while current DAG excludes archived node across 1440, 768 and 390 views",
+  );
+  await page.getByRole("button", { name: "停止研究", exact: true }).click();
+  await page.locator('.dr-app[data-status="cancelled"]').waitFor();
+  assert.equal(await page.locator(".dr-graph-node.running").count(), 0);
+  assert.equal(await page.locator(".dr-graph-node.cancelled").count(), 2);
+  assert.equal(
+    job.summary.graph.nodes.filter((node) => node.status === "running").length,
+    2,
+    "display must preserve the last execution checkpoint",
+  );
+  checks.push(
+    "confirmed stopped workflow displays stopped nodes and no running animation while preserving the original execution checkpoint",
+  );
   assert.deepEqual(errors, []);
   await fs.writeFile(
     path.join(out, "verification.json"),

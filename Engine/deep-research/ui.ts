@@ -93,8 +93,23 @@ const LABELS: Record<string, string> = {
   verifier: "证据核验员",
   synthesizer: "综合分析员",
   writer: "报告撰写员",
+  cancelled: "已停止",
+  paused: "已暂停",
+  stopping: "停止确认中",
 };
 export const labelFor = (value: string) => LABELS[value] ?? value;
+export function displayStatus(
+  value: string,
+  workflow?: { status: string; controlPending?: boolean },
+) {
+  return ["running", "working"].includes(value) &&
+    workflow &&
+    ["paused", "cancelled"].includes(workflow.status)
+    ? workflow.controlPending
+      ? "stopping"
+      : workflow.status
+    : value;
+}
 export function activityLabel(preview: { kind: string; tool?: string }) {
   if (preview.kind === "thinking") return "分析证据";
   if (preview.kind !== "tool") return "整理研究进展";
