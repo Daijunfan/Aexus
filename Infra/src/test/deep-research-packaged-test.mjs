@@ -10,8 +10,10 @@ import {build, Platform, Arch} from 'electron-builder'
 import {_electron as electron, expect} from '@playwright/test'
 
 const root = path.resolve(import.meta.dirname, '../../..'), require = createRequire(import.meta.url)
-const output = path.join(root, '.aexus/artifacts/deep-research-independent/package')
-const stage = path.join(output, 'source'), artifacts = path.join(output, 'candidate')
+const packageOutput = path.join(root, '.aexus/artifacts/deep-research-independent/package')
+const installedTarget = process.env.AGENTS_COMPANY_TEST_APP
+const output = installedTarget ? path.join(packageOutput, 'installed') : packageOutput
+const stage = path.join(packageOutput, 'source'), artifacts = path.join(packageOutput, 'candidate')
 const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex')
 fs.mkdirSync(output, {recursive: true})
 const packageFile = path.join(root, 'package.json'), current = JSON.parse(fs.readFileSync(packageFile, 'utf8'))
@@ -20,6 +22,7 @@ const before = hash(packageFile)
 const options = {...baseline.build, directories: {output: artifacts}, electronDist: path.join(root, 'node_modules/electron/dist'), electronVersion: JSON.parse(fs.readFileSync(path.join(root, 'node_modules/electron/package.json'), 'utf8')).version, npmRebuild: false, mac: {...baseline.build.mac, identity: '-'}}
 fs.writeFileSync(path.join(output, 'candidate-config.json'), JSON.stringify(options, null, 2))
 if (!process.argv.includes('--verify-only')) {
+  assert.ok(!installedTarget, 'Installed-app verification cannot build or install')
   const priorProof = path.join(output, 'verification.json')
   if (fs.existsSync(priorProof)) {
     const previous = JSON.parse(fs.readFileSync(priorProof, 'utf8')), snapshot = path.join(output, 'snapshots', previous.buildEvidence.head.slice(0, 7))
@@ -39,7 +42,7 @@ if (!process.argv.includes('--verify-only')) {
   fs.symlinkSync(path.join(root, 'node_modules'), path.join(stage, 'node_modules'), 'dir')
   await build({projectDir: stage, config: options, targets: Platform.MAC.createTarget('dir', Arch.arm64), publish: 'never'})
 }
-const appPath = path.join(artifacts, 'mac-arm64/Aexus.app'), executable = path.join(appPath, 'Contents/MacOS/Aexus')
+const appPath = installedTarget || path.join(artifacts, 'mac-arm64/Aexus.app'), executable = path.join(appPath, 'Contents/MacOS/Aexus')
 assert.ok(fs.existsSync(executable), 'Candidate executable is missing')
 const archive = path.join(appPath, 'Contents/Resources/app.asar'), asar = require('@electron/asar')
 const packaged = JSON.parse(asar.extractFile(archive, 'package.json').toString())
@@ -65,7 +68,7 @@ const coreFingerprint = Object.fromEntries(fs.readdirSync(candidateEngine).filte
 const rendererHtml = asar.extractFile(archive, '.aexus/out/renderer/index.html').toString()
 const rendererFiles = ['index.html', ...[...rendererHtml.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g)].map(match => match[1])]
 for (const file of rendererFiles) assert.equal(createHash('sha256').update(asar.extractFile(archive, '.aexus/out/renderer/' + file)).digest('hex'), hash(path.join(stage, '.aexus/out/renderer', file)), 'Packaged renderer entry assets must match the fresh build')
-const buildEvidence = JSON.parse(fs.readFileSync(path.join(output, 'source-build.json'), 'utf8'))
+const buildEvidence = JSON.parse(fs.readFileSync(path.join(packageOutput, 'source-build.json'), 'utf8'))
 assert.equal(buildEvidence.exitCode, 0)
 assert.equal(buildEvidence.rendererHtmlSha256, createHash('sha256').update(asar.extractFile(archive, '.aexus/out/renderer/index.html')).digest('hex'), 'ASAR renderer must match the recorded fresh build')
 const changedEngineSnapshot = Object.entries(coreFingerprint).flatMap(([file, sha256]) => {
@@ -148,7 +151,7 @@ try {
   assert.ok(await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows().every(w => !w.isVisible())))
   assert.ok(!fs.existsSync(marker), 'No engine executable may run during this candidate smoke test')
   assert.equal(hash(packageFile), before, 'User package.json must remain unchanged')
-  const proof = {passed: true, version: packaged.version, engineVersion: manifest.version, candidate: appPath, asarSha256: hash(archive), asarBytes: fs.statSync(archive).size, installed: false, buildConfig: 'HEAD package.json build field, explicit private output; current package metadata copied unchanged', sourcePackageSha256: before, engineFingerprint: coreFingerprint, changedEngineSnapshot, candidateEngineLockSha256: hash(candidateLock), privateDependencies, pdf: imported.pdf, rendererInput: 'Fresh electron-vite release build before candidate staging; verify-only preserves the already-built candidate', buildEvidence, rendererFiles, checkedAgainstHead: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), checks: ['real ASAR runtime dynamic import', 'locked dependencies in private Engine directory', 'actual packaged GFM table and list export', 'actual packaged PDF page text and public raw fingerprint', 'physically unpacked private PDF worker/resources', 'safe create/describe without workers', 'hidden packaged launcher loads Deep Research', 'empty isolated sessions/workflows', 'no engine executable invoked'], errors, modelCalls: 0, agentProcesses: 0, productionDataUsed: false}
+  const proof = {passed: true, version: packaged.version, engineVersion: manifest.version, application: appPath, asarSha256: hash(archive), asarBytes: fs.statSync(archive).size, installed: !!installedTarget, buildConfig: 'HEAD package.json build field, explicit private output; current package metadata copied unchanged', sourcePackageSha256: before, engineFingerprint: coreFingerprint, changedEngineSnapshot, candidateEngineLockSha256: hash(candidateLock), privateDependencies, pdf: imported.pdf, rendererInput: 'Fresh electron-vite release build before candidate staging; verify-only preserves the already-built candidate', buildEvidence, rendererFiles, checkedAgainstHead: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), checks: ['real ASAR runtime dynamic import', 'locked dependencies in private Engine directory', 'actual packaged GFM table and list export', 'actual packaged PDF page text and public raw fingerprint', 'physically unpacked private PDF worker/resources', 'safe create/describe without workers', 'hidden packaged launcher loads Deep Research', 'empty isolated sessions/workflows', 'no engine executable invoked'], errors, modelCalls: 0, agentProcesses: 0, productionDataUsed: false}
   fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify(proof, null, 2) + '\n')
   console.log(JSON.stringify(proof, null, 2))
 } finally {await app?.close(); fs.rmSync(temp, {recursive: true, force: true})}

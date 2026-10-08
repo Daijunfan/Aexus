@@ -24,7 +24,8 @@
 - 目标语义修改后：引擎、独立领域和 Host 生命周期 39 项通过，退出码 0。
 - 所有提交前 `git diff --check` 均退出 0。
 - 独立 HTML/文本取证阶段，source-read 与 workflow 共 46 项通过；`812cfe3` 后 source-read 与 workflow 共 52 项通过，包括 PDF 原文页码、伪造片段、页数/字符限制、取消与整批清理。独立领域测试 13 项与实际 Host 生命周期 2 项通过。
-- 当前功能快照 `6146bc9`（包含 `90c0b66`、`ddb3ad4`）已从源码重新构建，实际隐藏 Electron/ASAR 验收通过：四个锁定依赖从 Engine 私有目录解析，GFM 表格/列表正常导出，W3C 公开 PDF 的第 1 页文本和原文哈希正确，worker/字体/CMap/WASM 物理资源存在。1440/768/390 的真实宿主高度与内部横向滚动检查通过，模型与员工执行均为零。候选未安装，源码与锁文件指纹保存于独立验收产物。
+- 当前功能快照 `6146bc9`（包含 `90c0b66`、`ddb3ad4`）已从源码重新构建，候选和实际已安装 `/Applications/Aexus.app` 均通过隐藏 Electron/ASAR 验收：四个锁定依赖从 Engine 私有目录解析，GFM 表格/列表正常导出，W3C 公开 PDF 的第 1 页文本和原文哈希正确，worker/字体/CMap/WASM 物理资源存在。1440/768/390 的真实宿主高度与内部横向滚动检查通过，隔离验收模型与员工执行均为零。
+- 安装前实际活动、审批、初始化、运行 workflow、自动计划、传输和插件窗口均为零；主进程仅收到一次正常 SIGTERM，项目安装器备份原 bundle 并保留全部根 JSON 状态哈希。生产数据隐藏重开后仍有 80 名员工、17 个原状态 workflow，无忙碌、审批、计划或新增 provider 进程；CoreGraphics 确认主窗口不在屏幕上。没有提交模型研究任务。详细记录在独立验收 `installation.json`、`package/installed/verification.json` 和 `production-restart.json`。
 - 完整 `aexus-boundaries-test.mjs` 在根目录既有额外 Markdown 的检查处失败，尚未运行到静态依赖阶段；保留这些用户文件，未删除或移动。
 - 隔离副本运行未修改的原边界脚本，7 项通过，扫描 93 个 Engine/Contract 源文件没有跨层实现依赖；Contract 同步为 302 能力、243 注册 schema。副本排除三份既有 tracked 根 Markdown，并仅给当前用户 package 元数据补 HEAD 的 build 字段。这证明源码检查阶段，不证明原工作区物理布局或用户 package 元数据通过。两次结果及差异哈希记录在 `isolated-boundaries.json` 与首次失败记录。
 
