@@ -443,6 +443,7 @@ try {
   await page
     .getByLabel("研究目标")
     .fill("比较当前多智能体研究引擎的动态规划与证据质量");
+  await page.getByText("全面调查：覆盖主要问题", { exact: false }).waitFor();
   await fits();
   await screen("01-intake");
   assert.equal(await page.getByText(/超越|90%|5 个专业/).count(), 0);
@@ -453,6 +454,12 @@ try {
     null,
   );
   await screen("02-scouting");
+  assert.equal(
+    await page
+      .getByRole("button", { name: "从左到右排列", exact: true })
+      .count(),
+    0,
+  );
   await page.locator(".dr-live-activity").waitFor();
   await screen("02a-scouting-owned-activity");
   checks.push("scouting has no invented percentage or ETA");

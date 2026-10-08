@@ -57,6 +57,12 @@ export type ResearchReport = {
   conclusion?: string;
   limitations?: string[];
 };
+export type ResearchFinding = {
+  id: string;
+  claim: string;
+  sourceIds: string[];
+  evidence?: EvidenceExcerpt[];
+};
 const LABELS: Record<string, string> = {
   pending: "待执行",
   prepared: "待执行",

@@ -303,6 +303,28 @@
   font-size: 12px;
   white-space: nowrap;
 }
+.dr-scope-help {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: 210px;
+  padding: 8px 10px;
+  border: 1px solid var(--dr-border);
+  border-radius: 5px;
+  background: var(--dr-bg);
+  color: var(--dr-muted);
+  font-size: 10px;
+  line-height: 1.55;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 5px 18px #192b3212;
+  z-index: 2;
+}
+.dr-segment label:hover .dr-scope-help,
+.dr-segment label:focus-within .dr-scope-help {
+  opacity: 1;
+}
 .dr-segment input {
   position: absolute;
   opacity: 0;
@@ -1669,6 +1691,38 @@
 .dr-report-document {
   width: min(820px, 100%);
   padding: 35px 40px 65px;
+  margin-inline: auto;
+}
+.dr-app[data-status="completed"][data-view="report"] .dr-job-header {
+  padding-block: 12px;
+  border-bottom: 1px solid var(--dr-border);
+}
+.dr-app[data-status="completed"][data-view="report"]
+  .dr-job-header
+  .dr-eyebrow {
+  display: none;
+}
+.dr-app[data-status="completed"][data-view="report"] .dr-job-header h1 {
+  font-size: 14px;
+  margin: 0;
+  color: var(--dr-muted);
+}
+.dr-report-document > .dr-markdown,
+.dr-report-document > section > .dr-markdown,
+.dr-report-document > section > ul {
+  font-size: 16px;
+  line-height: 1.8;
+  max-width: 780px;
+}
+.dr-report-document > section .dr-markdown table {
+  font-size: 13px;
+}
+.dr-report-document > .dr-report-abstract {
+  font-size: 15px;
+}
+.dr-report-document .dr-evidence {
+  font-size: 14px;
+  line-height: 1.75;
 }
 .dr-report-document > h1 {
   font-size: 27px;

@@ -440,6 +440,13 @@ export default function Page({ client }: { client: ContractClient }) {
   const domains = new Set(
     sources.map((source) => sourceHost(source.url)).filter(Boolean),
   ).size;
+  const scopeHelp: Record<string, string> = {
+    quick: "快速概览：先确认术语、边界和关键一手资料，保持研究范围紧凑。",
+    comprehensive:
+      "全面调查：覆盖主要问题、证据来源和交叉核验，适合作为默认起点。",
+    deep: "深度分析：为复杂问题展开更多证据、反证和影响分析。",
+    academic: "学术研究：强调方法、学术来源、局限和可复核引用。",
+  };
   const approval =
     job?.status === "waiting"
       ? (
@@ -641,7 +648,7 @@ export default function Page({ client }: { client: ContractClient }) {
               <textarea
                 id="dr-topic"
                 aria-label="研究目标"
-                placeholder="例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本"
+                placeholder="例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本；请给出可定位引用和研究局限"
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
                 minLength={10}
@@ -667,6 +674,9 @@ export default function Page({ client }: { client: ContractClient }) {
                         onChange={() => setScope(option.value)}
                       />
                       {option.label}
+                      <span className="dr-scope-help">
+                        {scopeHelp[option.value]}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -831,150 +841,154 @@ export default function Page({ client }: { client: ContractClient }) {
                 )}
               </div>
             </header>
-            <section className="dr-progress-band" aria-label="研究进度">
-              <div className="dr-progress-label">
-                <span>
-                  {percent === null
-                    ? (PHASES[summary.phase] ?? "探索研究范围")
-                    : `当前计划 · 第 ${summary.graph?.version ?? progress.planVersion ?? 1} 版`}
-                  {revisions.length > 1 && (
-                    <span
-                      className="dr-plan-context"
-                      title="计划会随证据调整；当前进度按本版计划的任务范围计算。"
-                    >
-                      <Icon name="info" />
+            {!(job.status === "completed" && tab === "report") && (
+              <section className="dr-progress-band" aria-label="研究进度">
+                <div className="dr-progress-label">
+                  <span>
+                    {percent === null
+                      ? (PHASES[summary.phase] ?? "探索研究范围")
+                      : `当前计划 · 第 ${summary.graph?.version ?? progress.planVersion ?? 1} 版`}
+                    {revisions.length > 1 && (
+                      <span
+                        className="dr-plan-context"
+                        title="计划会随证据调整；当前进度按本版计划的任务范围计算。"
+                      >
+                        <Icon name="info" />
+                      </span>
+                    )}
+                  </span>
+                  <strong>
+                    {percent === null
+                      ? "进度尚未确定"
+                      : `${Math.round(percent)}%`}
+                  </strong>
+                </div>
+                <div
+                  className={
+                    "dr-progress-track " +
+                    (percent === null ? "indeterminate" : "")
+                  }
+                  role="progressbar"
+                  aria-label="当前计划进度"
+                  aria-valuemin={percent === null ? undefined : 0}
+                  aria-valuemax={percent === null ? undefined : 100}
+                  aria-valuenow={percent ?? undefined}
+                  aria-valuetext={
+                    percent === null
+                      ? "初步调研与规划中，尚未确定总工作量"
+                      : `当前计划完成 ${completedTasks} / ${totalTasks} 项任务`
+                  }
+                >
+                  <span
+                    style={
+                      percent === null ? undefined : { width: `${percent}%` }
+                    }
+                  />
+                </div>
+                <div className="dr-progress-metrics">
+                  <span>
+                    <Icon name="checklist" />
+                    {percent === null
+                      ? "工作量待规划"
+                      : `${completedTasks} / ${totalTasks} 任务`}
+                  </span>
+                  <span>
+                    <Icon name="organization" />
+                    {workers.length} 位协作者
+                  </span>
+                  <span
+                    title={`${sourceCount} 个已发现来源，${readCount} 个已读取正文，${verifiedCount} 个已核验；${domains} 个网站域名`}
+                  >
+                    <Icon name="globe" />
+                    {sourceCount} 来源 · {domains} 网站
+                  </span>
+                  <span>
+                    <Icon name="verified" />
+                    {verifiedCount} 已核验 · {findings.length} 项论断
+                  </span>
+                  {progress.failed > 0 && (
+                    <span className="dr-error-text">
+                      {progress.failed} 项需处理
                     </span>
                   )}
-                </span>
-                <strong>
-                  {percent === null
-                    ? "进度尚未确定"
-                    : `${Math.round(percent)}%`}
-                </strong>
-              </div>
-              <div
-                className={
-                  "dr-progress-track " +
-                  (percent === null ? "indeterminate" : "")
-                }
-                role="progressbar"
-                aria-label="当前计划进度"
-                aria-valuemin={percent === null ? undefined : 0}
-                aria-valuemax={percent === null ? undefined : 100}
-                aria-valuenow={percent ?? undefined}
-                aria-valuetext={
-                  percent === null
-                    ? "初步调研与规划中，尚未确定总工作量"
-                    : `当前计划完成 ${completedTasks} / ${totalTasks} 项任务`
-                }
-              >
-                <span
-                  style={
-                    percent === null ? undefined : { width: `${percent}%` }
-                  }
-                />
-              </div>
-              <div className="dr-progress-metrics">
-                <span>
-                  <Icon name="checklist" />
-                  {percent === null
-                    ? "工作量待规划"
-                    : `${completedTasks} / ${totalTasks} 任务`}
-                </span>
-                <span>
-                  <Icon name="organization" />
-                  {workers.length} 位协作者
-                </span>
-                <span
-                  title={`${sourceCount} 个已发现来源，${readCount} 个已读取正文，${verifiedCount} 个已核验；${domains} 个网站域名`}
-                >
-                  <Icon name="globe" />
-                  {sourceCount} 来源 · {domains} 网站
-                </span>
-                <span>
-                  <Icon name="verified" />
-                  {verifiedCount} 已核验 · {findings.length} 项论断
-                </span>
-                {progress.failed > 0 && (
-                  <span className="dr-error-text">
-                    {progress.failed} 项需处理
-                  </span>
+                </div>
+                <div className="dr-current-activity" aria-label="当前研究活动">
+                  <span className={"dr-activity-indicator " + job.status} />
+                  <div>
+                    <small>
+                      {job.status === "running"
+                        ? "当前执行"
+                        : STATUS[job.status]}
+                    </small>
+                    {runningNodes.length && job.status === "running" ? (
+                      runningNodes.map((node) => (
+                        <button
+                          key={node.id}
+                          onClick={() => {
+                            setTab("graph");
+                            setNodeId(node.id);
+                            setInspectorOpen(true);
+                          }}
+                        >
+                          <span className="dr-state-dot running" />
+                          {node.label}
+                        </button>
+                      ))
+                    ) : (
+                      <strong>
+                        {job.status === "paused"
+                          ? "保留当前进度，等待恢复研究"
+                          : job.status === "failed"
+                            ? "执行遇到问题，已保存完成的研究"
+                            : job.status === "waiting"
+                              ? "等待审阅后继续"
+                              : job.status === "completed"
+                                ? "研究与证据已交付"
+                                : stageTask
+                                  ? labelFor(stageTask.label)
+                                  : (PHASES[summary.phase] ?? "正在组织研究")}
+                      </strong>
+                    )}
+                  </div>
+                  <time>
+                    {new Date(job.updatedAt).toLocaleTimeString("zh-CN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    更新
+                  </time>
+                </div>
+                {activities.length > 0 && (
+                  <div className="dr-live-activity" aria-label="实时工作活动">
+                    {activities.map((activity) => {
+                      const task = [...nodes, ...(summary.tasks ?? [])].find(
+                        (task) => task.id === activity.nodeId,
+                      );
+                      return (
+                        <div key={activity.nodeId}>
+                          <Icon
+                            name={
+                              activity.preview.kind === "thinking"
+                                ? "lightbulb"
+                                : "pulse"
+                            }
+                          />
+                          <small>
+                            {workers.find(
+                              (worker) => worker.id === task?.employeeId,
+                            )?.label ?? "研究团队"}
+                          </small>
+                          <span>{activityLabel(activity.preview)}</span>
+                          <span className="dr-live-context">
+                            {task ? labelFor(task.label) : ""}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-              </div>
-              <div className="dr-current-activity" aria-label="当前研究活动">
-                <span className={"dr-activity-indicator " + job.status} />
-                <div>
-                  <small>
-                    {job.status === "running" ? "当前执行" : STATUS[job.status]}
-                  </small>
-                  {runningNodes.length && job.status === "running" ? (
-                    runningNodes.map((node) => (
-                      <button
-                        key={node.id}
-                        onClick={() => {
-                          setTab("graph");
-                          setNodeId(node.id);
-                          setInspectorOpen(true);
-                        }}
-                      >
-                        <span className="dr-state-dot running" />
-                        {node.label}
-                      </button>
-                    ))
-                  ) : (
-                    <strong>
-                      {job.status === "paused"
-                        ? "保留当前进度，等待恢复研究"
-                        : job.status === "failed"
-                          ? "执行遇到问题，已保存完成的研究"
-                          : job.status === "waiting"
-                            ? "等待审阅后继续"
-                            : job.status === "completed"
-                              ? "研究与证据已交付"
-                              : stageTask
-                                ? labelFor(stageTask.label)
-                                : (PHASES[summary.phase] ?? "正在组织研究")}
-                    </strong>
-                  )}
-                </div>
-                <time>
-                  {new Date(job.updatedAt).toLocaleTimeString("zh-CN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  更新
-                </time>
-              </div>
-              {activities.length > 0 && (
-                <div className="dr-live-activity" aria-label="实时工作活动">
-                  {activities.map((activity) => {
-                    const task = [...nodes, ...(summary.tasks ?? [])].find(
-                      (task) => task.id === activity.nodeId,
-                    );
-                    return (
-                      <div key={activity.nodeId}>
-                        <Icon
-                          name={
-                            activity.preview.kind === "thinking"
-                              ? "lightbulb"
-                              : "pulse"
-                          }
-                        />
-                        <small>
-                          {workers.find(
-                            (worker) => worker.id === task?.employeeId,
-                          )?.label ?? "研究团队"}
-                        </small>
-                        <span>{activityLabel(activity.preview)}</span>
-                        <span className="dr-live-context">
-                          {task ? labelFor(task.label) : ""}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+              </section>
+            )}
             {job.status === "failed" && (
               <div className="dr-alert error">
                 <Icon name="warning" />
@@ -1186,7 +1200,6 @@ export default function Page({ client }: { client: ContractClient }) {
                             }
                           />
                         </span>
-                        <small>{PHASES[summary.phase] ?? "研究准备"}</small>
                         <h2>
                           {summary.phase === "planning"
                             ? "根据证据规划调查路线"
@@ -1498,6 +1511,7 @@ export default function Page({ client }: { client: ContractClient }) {
             {tab === "sources" && (
               <SourcePanel
                 sources={sources}
+                findings={findings}
                 selection={sourceId}
                 onSelect={setSourceId}
                 onReturn={reportReturn.current ? returnToReport : undefined}

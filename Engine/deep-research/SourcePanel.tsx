@@ -5,16 +5,19 @@ import {
   type EvidenceExcerpt,
   type ResearchSource,
   type SourceSelection,
+  type ResearchFinding,
 } from "./ui";
 
 export function SourcePanel({
   sources,
+  findings,
   selection,
   onSelect,
   onReturn,
   renderEvidence,
 }: {
   sources: ResearchSource[];
+  findings: ResearchFinding[];
   selection: SourceSelection | null;
   onSelect: (selection: SourceSelection | null) => void;
   onReturn?: () => void;
@@ -23,6 +26,9 @@ export function SourcePanel({
   const [query, setQuery] = useState("");
   const detail = useRef<HTMLElement>(null);
   const selected = sources.find((source) => source.id === selection?.id);
+  const claims = findings.filter((finding) =>
+    finding.sourceIds.includes(selected?.id ?? ""),
+  );
   useLayoutEffect(() => {
     const area = detail.current;
     const claim = area?.querySelector<HTMLElement>(".dr-linked-claim");
@@ -143,8 +149,12 @@ export function SourcePanel({
               </section>
             )}
             {selected.acquisition?.excerpt &&
-              !selected.extractedClaims?.some(
-                (claim) => claim.excerpt === selected.acquisition?.excerpt,
+              !claims.some((finding) =>
+                finding.evidence?.some(
+                  (item) =>
+                    item.sourceId === selected.id &&
+                    item.excerpt === selected.acquisition?.excerpt,
+                ),
               ) && (
                 <details>
                   <summary>
@@ -155,20 +165,28 @@ export function SourcePanel({
                   {renderEvidence([selected.acquisition])}
                 </details>
               )}
-            {!!selected.extractedClaims?.length && (
+            {claims.length > 0 && (
               <section>
                 <h4>已提取论断</h4>
-                {selected.extractedClaims.map((claim, index) => (
+                {claims.map((claim, index) => (
                   <div
                     key={index}
                     className={
-                      selection?.locator === claim.locator
+                      claim.evidence?.some(
+                        (item) =>
+                          item.sourceId === selected.id &&
+                          selection?.locator === item.locator,
+                      )
                         ? "dr-linked-claim"
                         : ""
                     }
                   >
-                    <p>{claim.text}</p>
-                    {renderEvidence([claim])}
+                    <p>{claim.claim}</p>
+                    {renderEvidence(
+                      (claim.evidence ?? []).filter(
+                        (item) => item.sourceId === selected.id,
+                      ),
+                    )}
                   </div>
                 ))}
               </section>

@@ -104,92 +104,98 @@ export function ResearchGraph({
   };
   return (
     <div className="dr-graph">
-      <div className="dr-graph-toolbar">
-        <strong>
-          研究地图 <small>{graph.nodes.length || "探索中"}</small>
-        </strong>
-        <div className="dr-graph-legend">
-          <span>
-            <i className="running" />
-            进行中
-          </span>
-          <span>
-            <i className="completed" />
-            完成
-          </span>
-          <span>
-            <i className="pending" />
-            待执行
-          </span>
-          <span>
-            <i className="failed" />
-            需处理
-          </span>
-        </div>
-        <div>
-          <div
-            className="dr-direction-toggle"
-            role="group"
-            aria-label="研究地图方向"
-          >
-            <button
-              aria-label="从左到右排列"
-              title="从左到右排列"
-              aria-pressed={!graph.vertical}
-              onClick={() => {
-                onDirection("horizontal");
-                setZoom(1);
-              }}
-            >
-              <span className="codicon codicon-arrow-right" />
-            </button>
-            <button
-              aria-label="从上到下排列"
-              title="从上到下排列"
-              aria-pressed={graph.vertical}
-              onClick={() => {
-                onDirection("vertical");
-                setZoom(1);
-              }}
-            >
-              <span className="codicon codicon-arrow-down" />
-            </button>
+      {graph.nodes.length > 0 && (
+        <div className="dr-graph-toolbar">
+          <strong>
+            研究地图 <small>{graph.nodes.length || "探索中"}</small>
+          </strong>
+          <div className="dr-graph-legend">
+            <span>
+              <i className="running" />
+              进行中
+            </span>
+            <span>
+              <i className="completed" />
+              完成
+            </span>
+            <span>
+              <i className="pending" />
+              待执行
+            </span>
+            <span>
+              <i className="failed" />
+              需处理
+            </span>
           </div>
-          <button aria-label="适应研究地图画布" title="适应画布" onClick={fit}>
-            <span className="codicon codicon-screen-full" />
-          </button>
-          <button
-            aria-label="缩小研究地图"
-            title="缩小"
-            onClick={() => setZoom((value) => Math.max(0.15, value - 0.1))}
-          >
-            <span className="codicon codicon-remove" />
-          </button>
-          <button
-            aria-label="重置研究地图缩放"
-            title="重置缩放"
-            onClick={() => setZoom(1)}
-          >
-            {Math.round(zoom * 100)}%
-          </button>
-          <button
-            aria-label="放大研究地图"
-            title="放大"
-            onClick={() => setZoom((value) => Math.min(1.5, value + 0.1))}
-          >
-            <span className="codicon codicon-add" />
-          </button>
-          {graph.nodes.length > 0 && (
-            <button
-              aria-label={inspectorOpen ? "收起任务详情" : "展开任务详情"}
-              title={inspectorOpen ? "收起任务详情" : "展开任务详情"}
-              onClick={onToggleInspector}
+          <div>
+            <div
+              className="dr-direction-toggle"
+              role="group"
+              aria-label="研究地图方向"
             >
-              <span className="codicon codicon-layout-sidebar-right" />
+              <button
+                aria-label="从左到右排列"
+                title="从左到右排列"
+                aria-pressed={!graph.vertical}
+                onClick={() => {
+                  onDirection("horizontal");
+                  setZoom(1);
+                }}
+              >
+                <span className="codicon codicon-arrow-right" />
+              </button>
+              <button
+                aria-label="从上到下排列"
+                title="从上到下排列"
+                aria-pressed={graph.vertical}
+                onClick={() => {
+                  onDirection("vertical");
+                  setZoom(1);
+                }}
+              >
+                <span className="codicon codicon-arrow-down" />
+              </button>
+            </div>
+            <button
+              aria-label="适应研究地图画布"
+              title="适应画布"
+              onClick={fit}
+            >
+              <span className="codicon codicon-screen-full" />
             </button>
-          )}
+            <button
+              aria-label="缩小研究地图"
+              title="缩小"
+              onClick={() => setZoom((value) => Math.max(0.15, value - 0.1))}
+            >
+              <span className="codicon codicon-remove" />
+            </button>
+            <button
+              aria-label="重置研究地图缩放"
+              title="重置缩放"
+              onClick={() => setZoom(1)}
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <button
+              aria-label="放大研究地图"
+              title="放大"
+              onClick={() => setZoom((value) => Math.min(1.5, value + 0.1))}
+            >
+              <span className="codicon codicon-add" />
+            </button>
+            {graph.nodes.length > 0 && (
+              <button
+                aria-label={inspectorOpen ? "收起任务详情" : "展开任务详情"}
+                title={inspectorOpen ? "收起任务详情" : "展开任务详情"}
+                onClick={onToggleInspector}
+              >
+                <span className="codicon codicon-layout-sidebar-right" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <div
         ref={viewport}
         className="dr-graph-viewport"
