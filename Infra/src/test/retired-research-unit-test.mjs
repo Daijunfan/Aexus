@@ -1,6 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {stopRetiredResearch} from '../main/retired-research.ts'
+import {stopRetiredResearch,isRetiredResearch} from '../main/retired-research.ts'
+
+test('legacy host cleanup is limited to 1.x or missing engines',()=>{
+ const installed=[{id:'deep-research',runtime:'runtime.mjs'}]
+ assert.equal(isRetiredResearch({engineId:'deep-research',engineVersion:'1.5.0'},installed),true)
+ assert.equal(isRetiredResearch({engineId:'deep-research',engineVersion:'2.0.0'},installed),false)
+ assert.equal(isRetiredResearch({engineId:'deep-research',engineVersion:'2.0.0'},[]),true)
+})
 
 test('matching native receipt is the only condition that permits stopping an Agent',async()=>{
  const calls=[],state={workers:[{id:'employee-a'}],tasks:{research:{status:'running',employeeId:'employee-a',receipt:{messageId:'turn-ours'}}}}

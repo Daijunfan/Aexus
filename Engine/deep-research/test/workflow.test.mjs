@@ -5,7 +5,6 @@ import { upgradeState } from '../model.mjs';
 import { normalizeSources } from '../evidence.mjs';
 import { applyPlan, normalizeNodes, planProgress } from '../graph.mjs';
 import { ask } from '../agents.mjs';
-import { isRetiredResearch } from '../../../Infra/src/main/retired-research.ts';
 
 const source = (name = 'seed') => ({ title: name, url: 'https://' + name + '.example/research', acquisition: { status: 'read', excerpt: name + ' actual retrieved body demonstrates the result.', locator: 'Results' } });
 const team = [
@@ -237,13 +236,6 @@ test('persisted in-flight task recovers the same receipt and avoids duplicate se
   const resumedCtx = { ...f.ctx, signal: new AbortController().signal, workerLeases: new Set(), checkpoint: async () => {} };
   const done = await run(retry(persisted), resumedCtx);
   assert.equal(done.status, 'completed'); assert.equal(s1Sends(), 1);
-});
-
-test('legacy host cleanup is limited to 1.x or missing engines', () => {
-  const installed = [{ id: 'deep-research', runtime: 'runtime.mjs' }];
-  assert.equal(isRetiredResearch({ engineId: 'deep-research', engineVersion: '1.5.0' }, installed), true);
-  assert.equal(isRetiredResearch({ engineId: 'deep-research', engineVersion: '2.0.0' }, installed), false);
-  assert.equal(isRetiredResearch({ engineId: 'deep-research', engineVersion: '2.0.0' }, []), true);
 });
 
 test('cancel identifies only owned native receipts', async () => {
