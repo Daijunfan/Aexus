@@ -417,20 +417,38 @@ function getTaskInstructions(kind, payload) {
   const templates = {
     plan: `分析研究主题，规划调查维度和关键问题。
 
-返回 JSON 格式：
+**必须严格遵循以下 JSON 格式：**
+
 {
   "taskId": "原样返回接收到的 taskId",
   "dimensions": [
     {
-      "query": "具体的调查问题（字符串）",
-      "rationale": "为什么这个维度重要"
+      "query": "具体的调查问题（必须是纯文本字符串）",
+      "rationale": "为什么这个维度重要（可选）"
     }
   ],
-  "strategy": "研究策略说明",
-  "estimatedTime": 预计时间（分钟数）
+  "strategy": "研究策略说明（可选）",
+  "estimatedTime": 15
 }
 
-注意：dimensions 必须是数组，每个元素的 query 必须是字符串，不能是对象。`,
+**关键要求：**
+1. taskId 必须原样返回
+2. dimensions 必须是数组
+3. 每个 dimension 的 query 必须是**简单的字符串**，不能是对象或嵌套结构
+4. query 应该是一个清晰的调查问题或关键词，例如："量子计算硬件突破"、"AI 在医疗诊断中的应用"
+5. 不要返回复杂的嵌套对象、不要包含 questions 数组、不要包含 verifiedSeeds
+6. 保持简洁，quick scope 建议 4-6 个维度
+
+**错误示例（不要这样做）：**
+{
+  "query": { "name": "...", "questions": [...] }  // ❌ query 不能是对象
+}
+
+**正确示例：**
+{
+  "query": "大语言模型推理能力突破",  // ✓ query 是简单字符串
+  "rationale": "推理是 2024 年的重要研究方向"
+}`,
 
     search: `搜索相关来源，评估可信度，提取关键信息。
 
