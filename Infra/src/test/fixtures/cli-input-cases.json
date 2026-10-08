@@ -5694,5 +5694,108 @@
         "name": "research-report.html"
       }
     }
+  },
+  {
+    "args": [
+      "workflow",
+      "prepare",
+      "--engine-id",
+      "deep-research",
+      "--input",
+      "{\"files\":[{\"name\":\"brief.md\",\"encoding\":\"base64\",\"content\":\"aGVsbG8=\"}]}"
+    ],
+    "expected": {
+      "cmd": "workflow.prepare",
+      "args": {
+        "engineId": "deep-research",
+        "input": {
+          "files": [
+            {
+              "name": "brief.md",
+              "encoding": "base64",
+              "content": "aGVsbG8="
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "fork",
+      "wf_11111111-1111-4111-8111-111111111111",
+      "--expected-revision",
+      "8",
+      "--input",
+      "{\"topic\":\"New follow-up\",\"reuseMaterials\":false}",
+      "--client-request-id",
+      "fork-once"
+    ],
+    "expected": {
+      "cmd": "workflow.fork",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111",
+        "expectedRevision": 8,
+        "input": {
+          "topic": "New follow-up",
+          "reuseMaterials": false
+        },
+        "clientRequestId": "fork-once"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "export",
+      "wf_11111111-1111-4111-8111-111111111111",
+      "--format",
+      "pdf"
+    ],
+    "expected": {
+      "cmd": "workflow.export",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111",
+        "format": "pdf"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "pause",
+      "wf_11111111-1111-4111-8111-111111111111"
+    ],
+    "expected": {
+      "cmd": "workflow.pause",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111"
+      }
+    }
+  },
+  {
+    "args": [
+      "workflow",
+      "amend",
+      "wf_11111111-1111-4111-8111-111111111111",
+      "--expected-revision",
+      "3",
+      "--update",
+      "{\"depth\":\"deep\"}",
+      "--client-request-id",
+      "amend-once"
+    ],
+    "expected": {
+      "cmd": "workflow.amend",
+      "args": {
+        "id": "wf_11111111-1111-4111-8111-111111111111",
+        "expectedRevision": 3,
+        "update": {
+          "depth": "deep"
+        },
+        "clientRequestId": "amend-once"
+      }
+    }
   }
 ]
