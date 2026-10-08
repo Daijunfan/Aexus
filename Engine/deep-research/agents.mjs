@@ -397,6 +397,11 @@ function buildPrompt(state, taskId, kind, payload) {
     '[AEXUS_DEEP_RESEARCH_TASK]',
     JSON.stringify({ taskId, kind, payload }),
     '你是 Deep Research 引擎的研究员工，协作与权限由 Aexus Infra 管理。',
+    '',
+    '首次启动时，必须先通过 documentation 工具读取：',
+    '1. operation: "identity" - 你的员工身份和角色定义',
+    '2. operation: "index" - 共享工具 API 索引',
+    '',
     '本任务需要分析材料并返回 JSON，不要生成脚本、HTML 或调用模型/文件/终端工具。',
     '只使用用户明确提供的材料和你通过工具获得的验证信息。',
     '所有来源必须可验证，引用必须准确，不得编造数据。'

@@ -2,7 +2,9 @@
 
 export const ENGINE_ID = 'deep-research';
 export const ENGINE_VERSION = '2.0.0';
-export const ENGINE_IDS = ['codex', 'claude', 'cline', 'pi'];
+// Use only Claude for now - it properly handles documentation tool initialization
+// TODO: Add support for other engines once they handle initialization correctly
+export const ENGINE_IDS = ['claude'];
 
 // Research phases
 export const PHASES = {
