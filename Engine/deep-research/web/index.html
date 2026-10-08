@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Research - Multi-Agent Research Engine</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 1200px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .research-form {
+      margin-bottom: 40px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .progress-container {
+      display: none;
+      margin-top: 40px;
+    }
+
+    .progress-container.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .phase-indicator {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .phase-indicator h2 {
+      color: #667eea;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+
+    .phase-indicator .duration {
+      color: #666;
+      font-size: 1em;
+    }
+
+    .progress-bar {
+      background: #f0f0f0;
+      border-radius: 10px;
+      height: 30px;
+      overflow: hidden;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .workers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .worker-card {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .worker-card.working {
+      border-color: #667eea;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+    }
+
+    .worker-card.completed {
+      border-color: #10b981;
+    }
+
+    .worker-card.failed {
+      border-color: #ef4444;
+    }
+
+    .worker-icon {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .worker-label {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .worker-engine {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .dimensions {
+      margin-top: 30px;
+    }
+
+    .dimensions h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .dimension-item {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px 20px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .dimension-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .dimension-item.completed {
+      border-left-color: #10b981;
+      opacity: 0.7;
+    }
+
+    .dimension-item.running {
+      border-left-color: #f59e0b;
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .success {
+      background: #efe;
+      border: 1px solid #cfc;
+      color: #3c3;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔬 Deep Research</h1>
+      <p>Multi-Agent Research Engine</p>
+    </div>
+
+    <div class="content">
+      <div class="research-form">
+        <div class="form-group">
+          <label for="topic">Research Topic</label>
+          <input type="text" id="topic" placeholder="Enter your research question...">
+        </div>
+
+        <div class="form-group">
+          <label for="scope">Research Scope</label>
+          <select id="scope">
+            <option value="quick">Quick (5-10 minutes)</option>
+            <option value="comprehensive" selected>Comprehensive (10-20 minutes)</option>
+            <option value="deep">Deep (20-40 minutes)</option>
+            <option value="academic">Academic (40+ minutes)</option>
+          </select>
+        </div>
+
+        <button class="btn" id="startBtn" onclick="startResearch()">
+          Start Research
+        </button>
+      </div>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="phase-indicator">
+          <h2 id="phaseLabel">Initializing...</h2>
+          <div class="duration" id="duration">0s</div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="sourcesCount">0</div>
+            <div class="stat-label">Sources Collected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="findingsCount">0</div>
+            <div class="stat-label">Findings</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="entitiesCount">0</div>
+            <div class="stat-label">Entities</div>
+          </div>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+        </div>
+
+        <div class="workers" id="workers"></div>
+
+        <div class="dimensions" id="dimensionsContainer" style="display: none;">
+          <h3>Research Dimensions</h3>
+          <div id="dimensions"></div>
+        </div>
+      </div>
+
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentJobId = null;
+    let updateInterval = null;
+
+    async function startResearch() {
+      const topic = document.getElementById('topic').value.trim();
+      const scope = document.getElementById('scope').value;
+
+      if (!topic) {
+        showMessage('Please enter a research topic', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('startBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Starting...';
+
+      try {
+        const response = await fetch('/api/research/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, scope })
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          currentJobId = result.data.id;
+          document.getElementById('progressContainer').classList.add('active');
+          startPolling();
+          showMessage('Research started successfully!', 'success');
+        } else {
+          throw new Error(result.error || 'Failed to start research');
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Start Research';
+      }
+    }
+
+    function startPolling() {
+      if (updateInterval) clearInterval(updateInterval);
+      updateInterval = setInterval(updateProgress, 2000);
+      updateProgress();
+    }
+
+    async function updateProgress() {
+      if (!currentJobId) return;
+
+      try {
+        const response = await fetch(`/api/research/${currentJobId}`);
+        const result = await response.json();
+
+        if (result.ok) {
+          renderProgress(result.data);
+
+          if (result.data.status === 'completed' || result.data.status === 'failed') {
+            clearInterval(updateInterval);
+            const btn = document.getElementById('startBtn');
+            btn.disabled = false;
+            btn.innerHTML = 'Start New Research';
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update progress:', error);
+      }
+    }
+
+    function renderProgress(data) {
+      const summary = data.summary;
+
+      // Update phase
+      document.getElementById('phaseLabel').textContent = summary.phaseLabel;
+      document.getElementById('duration').textContent = formatDuration(summary.duration);
+
+      // Update stats
+      document.getElementById('sourcesCount').textContent = summary.progress.sources.collected;
+      document.getElementById('findingsCount').textContent = summary.progress.findings;
+      document.getElementById('entitiesCount').textContent = summary.progress.entities;
+
+      // Update progress bar
+      const progress = Math.floor((summary.progress.sources.collected / summary.progress.sources.max) * 100);
+      const progressFill = document.getElementById('progressFill');
+      progressFill.style.width = progress + '%';
+      progressFill.textContent = progress + '%';
+
+      // Render workers
+      renderWorkers(summary.workers);
+
+      // Render dimensions
+      if (summary.dimensions && summary.dimensions.length > 0) {
+        document.getElementById('dimensionsContainer').style.display = 'block';
+        renderDimensions(summary.dimensions);
+      }
+    }
+
+    function renderWorkers(workers) {
+      const container = document.getElementById('workers');
+      container.innerHTML = workers.map(worker => `
+        <div class="worker-card ${worker.status}">
+          <div class="worker-icon">${getWorkerIcon(worker.status)}</div>
+          <div class="worker-label">${worker.label}</div>
+          <div class="worker-engine">${worker.engine}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderDimensions(dimensions) {
+      const container = document.getElementById('dimensions');
+      container.innerHTML = dimensions.map(dim => `
+        <div class="dimension-item ${dim.status}">
+          ${getStatusIcon(dim.status)} ${dim.query}
+        </div>
+      `).join('');
+    }
+
+    function getWorkerIcon(status) {
+      switch (status) {
+        case 'working': return '⚙️';
+        case 'completed': return '✅';
+        case 'failed': return '❌';
+        default: return '⏸️';
+      }
+    }
+
+    function getStatusIcon(status) {
+      switch (status) {
+        case 'running': return '🔄';
+        case 'completed': return '✓';
+        case 'pending': return '○';
+        default: return '•';
+      }
+    }
+
+    function formatDuration(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+
+      if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+      } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+      } else {
+        return `${seconds}s`;
+      }
+    }
+
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = type;
+      messageDiv.textContent = text;
+      messageDiv.style.display = 'block';
+
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
