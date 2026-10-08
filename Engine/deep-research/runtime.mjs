@@ -422,18 +422,36 @@ function clone(obj) {
 }
 
 function validatePlan(result) {
-  if (!result || !Array.isArray(result.dimensions)) {
-    throw Error('研究计划必须包含调查维度');
+  // Support both 'dimensions' and 'researchDimensions' field names
+  const dimensionsArray = result.dimensions || result.researchDimensions;
+
+  if (!dimensionsArray || !Array.isArray(dimensionsArray)) {
+    throw Error('研究计划必须包含调查维度（dimensions 或 researchDimensions 数组）');
   }
 
   return {
-    dimensions: result.dimensions.map((d, i) => ({
-      id: 'dim-' + i,
-      query: String(d.query || d),
-      rationale: d.rationale || '',
-      status: 'pending'
-    })),
-    strategy: result.strategy || '',
+    dimensions: dimensionsArray.map((d, i) => {
+      // Handle both simple string queries and complex objects
+      let query;
+      if (typeof d === 'string') {
+        query = d;
+      } else if (d.query) {
+        query = String(d.query);
+      } else if (d.name) {
+        // Fallback to name field if query is missing
+        query = String(d.name);
+      } else {
+        query = String(d);
+      }
+
+      return {
+        id: d.id || 'dim-' + i,
+        query,
+        rationale: d.rationale || d.keyQuestions?.[0] || '',
+        status: 'pending'
+      };
+    }),
+    strategy: result.strategy || result.objective || '',
     estimatedTime: result.estimatedTime || 0
   };
 }
