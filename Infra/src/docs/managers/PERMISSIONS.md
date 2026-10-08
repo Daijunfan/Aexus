@@ -260,3 +260,7 @@ fixed roots or published attachments grants no write or rename permission;
 existing read-only and member workspace boundaries remain unchanged. Downloads
 continue through the existing authenticated transfer/channel operations.
 `assetDrawerWidth` uses existing `settings.set` authority and only affects display.
+
+## Research Studio data operations
+
+`workflow.prepare` extracts only explicitly supplied Engine input and returns bounded text metadata; it creates no workflow/employee and receives no Infra client. `workflow.export` renders a supported alternate format from the caller's completed report without model calls or changes to the original revision/manifest. Neither data operation grants Agents access to a user's materials or report. `workflow.fork` requires an owned completed parent, current expectedRevision and stable clientRequestId; Core stamps lineage and creates a separate workflow. Parent content remains immutable and private material reuse follows the Engine's explicit input policy. See `Contract/WORKFLOWS.md` for schemas, limits and CLI.

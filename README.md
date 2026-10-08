@@ -1,6 +1,6 @@
 # Aexus
 
-[GitHub](https://github.com/Daijunfan/Aexus) · [English](Infra/src/docs/README.en.md) · [0.59.0 更新记录](Infra/src/docs/releases/0.59.0.zh-CN.md)
+[GitHub](https://github.com/Daijunfan/Aexus) · [English](Infra/src/docs/README.en.md) · [0.63.0 更新记录](Infra/src/docs/releases/0.63.0.zh-CN.md)
 
 **面向明确目标的业务 Engine，建立在同一套多 Agent 协作 Infra 上。**
 
@@ -61,6 +61,7 @@ node Engine/workspace-audit/cli.mjs --input '{"team":"Research"}' --output audit
 
 ```sh
 npm ci
+npm run build:engines
 npm run build:plugins
 npm run contract:check
 npm run build

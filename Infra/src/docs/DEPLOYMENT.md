@@ -160,3 +160,9 @@ Build Team projects are deliberately outside the private Core state directory; t
 See [News channels](CHANNELS.md) for the dedicated collector capability, authoritative
 subscriptions, cross-host transport and Xhs managed-service configuration. The collector
 listener is separate from the full company API.
+
+## Engine runtime dependencies
+
+Run `npm run build:engines` after a clean checkout; `npm run setup` also prepares them. Each Engine keeps its own package and lock. Production installs use `npm ci --omit=dev --ignore-scripts`; a linked dependency directory is rejected before mutation. `npm run check:engine-deps` validates direct locked runtime versions. Desktop packaging prepares these dependencies and explicitly includes them; native libraries and research worker entrypoints use unpacked physical paths. This prevents a packaged app from relying on a developer's global modules or source checkout. Revalidate the installed app in an isolated hidden-window test after upgrading.
+
+Deep Research PDF export uses installed host fonts; no OS font is redistributed by the application. Where required glyphs are unavailable, configure a legal host font via `AEXUS_REPORT_FONT` and optional `AEXUS_REPORT_FONT_FAMILY`, or export Word/HTML. Input PDF text extraction does not need a display, a cloud OCR service or a provider API key.

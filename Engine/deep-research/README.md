@@ -1,89 +1,69 @@
-# Deep Research 1.2.0
+# Deep Research 1.5.0
 
-一句话立项，三轮意见确认，多 Coding Agent 独立搜证与交叉审查。仅在证据和最终报告通过检查后发布交付文件。
+多 Coding Agent 独立搜证、反证与交叉审查。用户控制研究目标、方案、来源范围和最终重点；通过核验后交付可追溯报告。
 
-## 使用
+## 工作流
 
-在 Aexus 顶部选择 Engine，再打开 Deep Research。输入调研任务，点击开始。没有额外配置时，自动检测并选择两种已经就绪的 Coding Agent；也可展开引擎选择，指定 Codex、Claude、Cline、Pi 中的两至四种。模型沿用对应配置，不自动安装软件、注册服务或提高权限。
+输入问题后先确认目标，再选择已经配置且就绪的 Codex、Claude、Cline、Pi 中至少两种引擎。默认自动匹配两种；不安装原生引擎、不切换未授权服务、不提高权限。研究主编负责方案及独立审查，证据研究员和反证研究员并行研究，第四种引擎可承担专题路线。员工、团队、任务编号及原生会话均复用 Infra。不同适配器不必然等于不同模型提供商，模型配置和来源贡献分别显示。
 
-第一轮确认目标、范围和优先级；第二轮确认研究主编针对任务制定的方案；第三轮根据初步证据确认最终重点。每轮都可直接采用建议。确认第一轮后会启动原生研究员工，正常模型使用可能产生对应服务的费用。需要原生工具权限时，界面提供进入 Infra 审批的入口。
+三轮确认分别控制目标、方案和报告重点。方案可编辑；研究中可暂停并调整要求、网站或深度，再明确继续。暂停只处理本研究持有回执的确切任务，等待审批回合结束；丢失回执需先恢复编号。未完成清理时不能直接继续。成功步骤与身份保留，修订使旧报告失效。
 
-Core 在后台执行任务，页面关闭、刷新、切换 Engine/Infra 不影响任务运行。Core 重启会恢复持久检查点；被中断且没有完整结果的原生任务显示失败，用户明确重试后继续，不把已发送消息当作研究完成。
+Core 持久保存进度；刷新、离开页面、切换 Engine/Infra 不取消研究。阶段进度、真实完成步骤、来源核验、各 Agent 的贡献、路线覆盖、缺口和分歧均可查看。百分比不代表置信度或预计剩余时间。原生调用仍可能需要用户在 Infra 审批；确认目标后使用已配置模型可能产生对应费用。
 
-## 研究控制与工作台
+## 研究范围与材料
 
-入口提供三档预算：标准（至少 4 来源 / 2 网站 / 3 发现）、深入（8 / 3 / 6）、广泛（12 / 4 / 8）。每档仍要求至少两类引擎贡献，补证轮次和每任务时限有界。数量只控制覆盖要求，不保证报告正确，也不等同于固定完成时间。
+标准、深入、广泛三档分别要求至少 4/8/12 个核验来源、2/3/4 个网站、3/6/8 条有引证发现，并要求两类引擎的有效贡献。门槛只代表基础覆盖，不能证明结论正确。补证轮次与每任务时限有上限。
 
-可限制允许的网站、设置优先/排除域名、添加最多 12 个起始链接。核验过程对请求与每次重定向硬性执行允许/排除规则；优先域名属于搜索偏好。原生模型浏览遵循任务指令，独立核验的访问限制不能替代第三方模型的网络沙箱。域名过窄导致证据不足时不会自动放开限制。
+支持允许、优先、排除域名及最多十二个起始链接。独立核验会在请求、DNS 和每次重定向检查公开地址及域名范围。原生模型浏览还须遵循任务指令，不能把此核验规则说成第三方工具的网络沙箱。证据不足时不会自动放宽来源限制。
 
-最多上传六份 TXT、Markdown、CSV、JSON 参考材料，单份最多 80,000 字符、总计 200,000 字符。确认第一轮目标后才把背景发送给所选模型。它们不计为已独立核验来源，公共工作流投影只展示文件名与字符数。此入口不支持 PDF 解析或云端连接器。
+可明确选择 TXT、Markdown、CSV、JSON、PDF、DOCX、XLSX、PPTX；文档字节在 Core 主机提取。单次上传原始文件合计最多 4 MiB、最多六份；单份提取文字最多 80,000 字符，总量最多 200,000 字符。较长材料明确显示截断标记。PDF 最多 200 页、XLSX 最多 30 个工作表/12,000 行、PPTX 最多 200 页；ZIP 解压、解析线程资源和执行时间均有上限。
 
-工作台显示阶段/实际步骤进度、来源核验计数和各 Agent 的原生任务状态，可搜索来源、筛选一手/二手材料、查看摘录、引用、指纹与时间戳，追踪审查分歧、证据缺口和用户修订。百分比不表示置信度或预计剩余时间。
+PDF 仅提取文本层，不做 OCR；Office 提取文字、表格和已有单元格结果，不运行宏、公式或外部连接。图片、复杂图表和版面未被理解时保留明确限制。背景材料不计入独立核验来源，只有确认目标后才发送给已选研究模型；公共状态不暴露正文。入口尚未实现云盘/Gmail/Notion 的授权检索。
 
-研究中可「暂停并调整」；保存修订后点击「继续研究」。暂停只中断属于本研究的确切原生消息，保留已完成步骤和员工身份。新要求会重新制定方案并审查，旧草稿不沿用。暂停在 Core 重启后仍保持暂停；清理未完成时需重试暂停，不能直接恢复。CLI 的 `amend` 另支持 `sourcePolicy` 和 `depth` 修订。
+## 来源核验
 
-协作图以已持久化任务展示主编、并行研究路线、共享证据池、证据审查和报告审查。每位研究员完成后立即入库已核验摘录，不必等待最慢的研究员；质量门槛与后台交付检查共用同一计算。域名卡片可回查来源，网站数量不等于相互独立的原始证据。
+每个 URL/摘录组合单独重新读取并核对完整提交内容，再保存短展示摘录、原始页面 SHA-256、时间和真实 Agent 贡献。找到一个有效前缀不能使虚构尾句通过，也不能把另一研究员仅提交同一 URL 算为贡献。发现只可引用其本次提交中实际通过的证据。
 
-同一网页的不同摘录逐条重新核验，贡献仅记给提交该条有效摘录的引擎和研究员。引用未通过该研究员本次核验的发现会被拦截。失败重试只重发失败步骤；已完成并行步骤保留。发送结果不确定时保留原请求编号核对，避免重复派发。
+独立读取支持公开 HTML、文本、JSON 和带文本层的 PDF（最多 4 MiB）。PDF 可记录匹配页码；没有文本层、受限页面或访问失败不冒充已读取。私网、回环、带凭据网址、受限端口和重定向绕过均拒绝。来源类型由研究员分类，报告日期未独立核实；网页匹配与模型审查不等于事实正确性保证。
 
-## 最终交付
+外部网页、文档和引用始终作为资料，不能通过其中的指令改变权限或派发任务。HTML 转义模型内容，CSV 防止公式执行。最终报告的段落必须绑定已核验来源，区分事实与分析；独立证据审查与最终报告审查均通过后才出现下载区。
 
-| 文件 | 内容 |
-| --- | --- |
-| `research-report.html` | 无外部资源依赖的交互报告：摘要、研究正文、对照矩阵、反证、证据分布、结论与来源对应、来源检索；支持浏览器打印。 |
-| `research-report.md` | 完整可编辑报告，保留引用、建议和限制。 |
-| `evidence.csv` | 最终证据表，每条已核验摘录一行，包含网址、访问时间、对应页面 SHA-256、引用章节、摘录编号和贡献引擎/研究员。 |
+## 交付与后续研究
 
-下载全部时，ZIP 内仅有上述三个文件，没有 README、执行日志、任务 JSON、草稿、抓取缓存或零散图片。失败、暂停、取消、等待确认期间没有可下载的中间报告。CLI 不覆盖已有输出目录。PDF 不作为自动生成的交付文件；HTML 可通过打印另存 PDF。
+原交付保持三件：`research-report.html`（自包含可视化报告）、`research-report.md`（可编辑正文）、`evidence.csv`（摘录、网址、指纹和引用章节）。默认 ZIP 仅包含这三件，不夹带日志、草稿、抓取缓存或任务 JSON。
 
-## 协作与检查
+审查通过后可另存 `research-report.docx`、`research-report.pdf`，无需再次调用模型。Word 保留目录、正文、对照表、可点击引用与来源；PDF 提供分页、页码、证据分布和链接。客户端及 CLI 解码后核对字节数与 SHA-256，原报告修订号及三件套保持不变。PDF 使用运行主机已有字体；缺字则明确失败，不输出乱码；可设置主机环境 `AEXUS_REPORT_FONT`/`AEXUS_REPORT_FONT_FAMILY` 指定合法可用字体，字体不随源码分发。
 
-研究主编负责方案与审查，证据研究员和反证研究员使用不同 Coding Agent 并行研究。选择四种引擎时增加一位专题研究员。各阶段通过原员工会话、真实任务 ID 和原生接收回执关联，不创建第二套聊天或员工数据库。
-
-研究员必须实际访问来源；引擎会独立重新读取公开页面，核对短摘录并记录指纹。标准档至少需要四个有效来源、两个网站、两类引擎的来源贡献和三条有引用的发现，深入与广泛档使用更高预算。数量门槛只代表基础覆盖，不能证明结论正确。来源类型由研究员分类；发布日期未独立核验。当前独立摘录核验支持公开 HTML、纯文本和 JSON，PDF、登录墙或无法访问的页面需要提供可读的对应原始网页。
-
-独立主编检查证据与结论、反例和适用范围；阻断问题触发补证，最终报告再单独审查。结构错误可进行一次针对性修正。所有报告段落必须绑定已核验的来源 ID；不存在的引用、空结果、未通过审查的内容会阻止交付。模型审查仍可能出错，报告保留限定条件，不能把这套机制视为事实绝对正确的保证。
-
-来源访问拒绝私网、回环、受限端口、带凭据的网址，并在实际 DNS 查询和每次重定向后检查目标。外部材料始终作为数据；不得按其中的指令改变任务或权限。HTML 对模型内容进行转义，CSV 防止单元格公式执行。
+报告底部可建立后续研究。新工作流由 Core 记录父报告 ID 和版本，创建新的原生研究员工并重新核对来源，不覆盖原件。历史摘要仅作待检验背景；私人材料仅在明确勾选后复用。
 
 ## CLI
 
-交互使用会逐轮询问意见：
-
 ```sh
-node Engine/deep-research/cli.mjs start --topic "调研任务" --out ./research-final
-```
-
-自动化客户端使用同一 Contract；`--defaults` 明确授权采用每轮建议，普通 `--wait` 在需要意见时返回问题：
-
-```sh
-node Engine/deep-research/cli.mjs start --topic "调研任务" --engines codex,claude --json
-node Engine/deep-research/cli.mjs start --topic "调研任务" --depth deep --source-policy '{"preferredDomains":["arxiv.org"],"excludedDomains":[],"seedUrls":[]}' --materials @references.json --json
+npm --prefix Engine/deep-research ci --omit=dev --ignore-scripts
+node Engine/deep-research/cli.mjs start --topic "调研任务" --depth deep --engines codex,claude --json
+node Engine/deep-research/cli.mjs prepare --attachments '["/explicit/path/brief.pdf"]' --json
+node Engine/deep-research/cli.mjs start --topic "调研任务" --attachments '["/explicit/path/brief.docx"]' --json
 node Engine/deep-research/cli.mjs status WORKFLOW_ID --json
-node Engine/deep-research/cli.mjs answer WORKFLOW_ID --answer '{"values":{"decision":"研究目的"},"note":"补充要求"}' --json
+node Engine/deep-research/cli.mjs answer WORKFLOW_ID --answer '{"values":{},"note":"补充要求"}' --json
 node Engine/deep-research/cli.mjs pause WORKFLOW_ID --json
-node Engine/deep-research/cli.mjs amend WORKFLOW_ID --update '{"note":"聚焦复现和失败边界"}' --request-id revision-001 --json
+node Engine/deep-research/cli.mjs amend WORKFLOW_ID --update '{"note":"重点核对反例"}' --request-id revision-001 --json
 node Engine/deep-research/cli.mjs resume WORKFLOW_ID --wait --json
-node Engine/deep-research/cli.mjs export WORKFLOW_ID --out ./research-final --json
-node Engine/deep-research/cli.mjs cancel WORKFLOW_ID --json
+node Engine/deep-research/cli.mjs export WORKFLOW_ID --out ./final-originals --json
+node Engine/deep-research/cli.mjs export WORKFLOW_ID --format all --out ./final-formats --json
+node Engine/deep-research/cli.mjs fork WORKFLOW_ID --topic "继续核对成本与最新反例" --request-id follow-up-001 --json
 ```
 
-执行脚本应保存返回的 workflow ID；发送创建/回答/恢复请求时可通过 `--request-id` 保留幂等标识。超时或响应丢失时应先查同一个任务，不能盲目创建另一份研究。
+输出目录必须不存在。`--format pdf|docx|all` 选择额外格式，省略时保留原三件套。`--attachments` 只读取明确给出的文件，不能递归扫描目录。`--defaults` 明确授权逐轮采用建议；普通 `--wait` 在非交互场景等待用户回答。自动化客户端保留任务 ID 与 `--request-id`，响应丢失先查询原请求，不能盲目重建。
 
-## 代码边界
+## 开发与验收
 
-`policy.mjs` 定义研究深度、来源范围和参考材料约束；`model.mjs` 定义研究状态和检查规则；`agents.mjs` 管理基于 Contract 的原生任务；`sources.mjs` 安全读取公开来源，`evidence.mjs` 逐摘录核验与归属，`insights.mjs` 共享质量门槛与协作投影；`runtime.mjs` 组织各阶段；`report.mjs` 生成最终报告；`delivery.mjs` 打包最终文件；`Page.tsx` 和 `cli.mjs` 提供两种入口。
-
-1.2.0 明确支持持久化 1.0.0、1.1.0 检查点；其他版本需要单独验证和兼容声明。`references.json` 为 `[{"name":"brief.md","text":"用户背景"}]`，没有隐式读取整个目录的能力。
-
-所有领域逻辑留在本目录。后台运行、检查点、确认、恢复、取消、原子交付和文件读取由通用 `workflow.*` 提供。详见 [Workflow Contract](../../Contract/WORKFLOWS.md)。
-
-## 验证
+领域逻辑留在本 Engine；持久工作流、身份、权限、控制、原子交付、文档钩子与父子关系由通用 [Workflow Contract](../../Contract/WORKFLOWS.md) 提供。1.5.0 显式兼容 1.0.0、1.1.0、1.2.0、1.3.0 的检查点，不隐式迁移其他版本。
 
 ```sh
+npm run build:engines
 npm run test:deep-research
-node Infra/src/test/deep-research-ui-test.mjs
-node Infra/src/test/deep-research-ui-test.mjs --desktop
+npm run test:deep-research-ui
+npm run test:deep-research-desktop
 ```
 
-测试使用临时 Core、独立构建、隐藏 Electron/无头 Chrome、确定性原生协议与合成资料，不读取生产工作区或调用收费模型。报告位于 `.aexus/artifacts/deep-research/`，与最终用户交付目录分离。确定性验收证明协议、流程和界面行为，不代替真实主题的研究质量评估。
+测试使用独立数据目录、确定性原生协议、隐藏桌面/无头浏览器和真实文档二进制。验收产物在 `.aexus/artifacts/`。通过流程与格式测试不代表已评估真实主题质量、商业连接器或所有操作系统。

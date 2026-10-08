@@ -11,6 +11,7 @@ const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'))
 const review=JSON.parse(fs.readFileSync(path.join(root,'Infra/src/licenses/release-review.json'),'utf8'))
 fs.mkdirSync(path.join(root,'Infra/src/resources'),{recursive:true})
 fs.writeFileSync(path.join(root,'Infra/src/resources/DISTRIBUTION.json'),JSON.stringify({version:pkg.version,platform:process.platform,arch:process.arch,candidate:development,plugins:JSON.parse(fs.readFileSync(path.join(root,'Infra/src/resources/plugins.lock.json'),'utf8')).plugins,pendingReviews:review.reviews.filter(item=>item.status!=='approved').map(item=>item.id)},null,2)+'\n')
+run(process.execPath,['Infra/src/tooling/build-engines.mjs'])
 run(process.execPath,['Infra/src/tooling/build-icon.mjs'])
 run(process.execPath,['Infra/src/tooling/build-pet-previews.mjs'])
 // A private candidate bypasses only pending redistribution reviews, not portability.

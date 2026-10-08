@@ -37,8 +37,17 @@ export function materials(input=[]){
  let total=0
  return array(input,'参考材料',6).map(item=>{
   if(!item||typeof item.name!=='string'||!item.name.trim()||item.name.length>160||typeof item.text!=='string'||!item.text.trim()||item.text.length>80000)throw Error('参考材料需要文件名和正文，单份最多 80,000 字符')
-  if(!/\.(txt|md|csv|json)$/i.test(item.name)||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(item.text))throw Error('仅支持 UTF-8 TXT、Markdown、CSV、JSON 文本材料')
+  if(!/\.(txt|md|csv|json|pdf|docx|xlsx|pptx)$/i.test(item.name)||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(item.text))throw Error('参考材料必须是提取后的 UTF-8 文字，不接受二进制内容')
   total+=item.text.length;if(total>200000)throw Error('参考材料总计不能超过 200,000 字符')
-  return {name:item.name.trim().replace(/[\\/]/g,'_'),text:item.text}
+  const metadata=item.provenance
+  if(/\.(pdf|docx|xlsx|pptx)$/i.test(item.name)&&!metadata)throw Error('Office/PDF 参考材料须先通过 workflow.prepare 提取文字')
+  let provenance
+  if(metadata!==undefined){
+   if(metadata?.format!==item.name.split('.').at(-1).toLowerCase())throw Error('材料格式与文件扩展名不一致')
+   if(!metadata||typeof metadata!=='object'||Array.isArray(metadata)||Object.keys(metadata).some(k=>!['format','sha256','bytes','pages','sheets','characters','truncated','warnings'].includes(k))||typeof metadata.format!=='string'||!['txt','md','csv','json','pdf','docx','xlsx','pptx'].includes(metadata.format)||typeof metadata.sha256!=='string'||!/^[a-f0-9]{64}$/.test(metadata.sha256)||!Number.isSafeInteger(metadata.bytes)||metadata.bytes<1||metadata.bytes>4*1024*1024||!Number.isSafeInteger(metadata.characters)||metadata.characters<1||typeof metadata.truncated!=='boolean'||!Array.isArray(metadata.warnings)||metadata.warnings.length>10||metadata.warnings.some(w=>typeof w!=='string'||w.length>1000))throw Error('材料提取元数据无效')
+   for(const key of ['pages','sheets'])if(metadata[key]!==undefined&&(!Number.isSafeInteger(metadata[key])||metadata[key]<1||metadata[key]>200))throw Error('材料页数或工作表数无效')
+   provenance=structuredClone(metadata)
+  }
+  return {name:item.name.trim().replace(/[\\/]/g,'_'),text:item.text,...(provenance?{provenance}:{})}
  })
 }

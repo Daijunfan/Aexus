@@ -20,4 +20,7 @@ for(const item of lock.plugins){
   if(result.error)throw result.error
   if(result.status!==0)process.exit(result.status??1)
 }
-console.log('All bundled plugin sources and locked dependencies are ready.')
+const engines=spawn.sync(process.execPath,[path.join(root,'Infra/src/tooling/build-engines.mjs')],{stdio:'inherit'})
+if(engines.error)throw engines.error
+if(engines.status!==0)process.exit(engines.status??1)
+console.log('All bundled plugin and Engine sources and locked dependencies are ready.')

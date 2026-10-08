@@ -370,7 +370,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'auth.whoami': return callerIdentity()
     case 'auth.agent-token': return agentCredential(s(a.id))
     case 'auth.revoke': {const result=revokeAgentCredential(s(a.id));clearManagementInteraction(s(a.id));pruneManagementActivity();revokeInvalidDelegations();reconcileSchedules();reconcileConversationNotices();publishEvent('access:changed',{});return result}
-    case 'workflow.start':case 'workflow.list':case 'workflow.get':case 'workflow.respond':case 'workflow.resume':case 'workflow.pause':case 'workflow.amend':case 'workflow.cancel':case 'workflow.file':return workflowRequest(req.cmd,a)
+    case 'workflow.prepare':case 'workflow.fork':case 'workflow.export':case 'workflow.start':case 'workflow.list':case 'workflow.get':case 'workflow.respond':case 'workflow.resume':case 'workflow.pause':case 'workflow.amend':case 'workflow.cancel':case 'workflow.file':return workflowRequest(req.cmd,a)
     case 'contract.info':case 'contract.describe':case 'contract.call':case 'contract.engines':case 'infra.api':
       return contractRequest(req.cmd,a,(cmd,args)=>handleRequest({cmd,args}))
     case 'api.list': {

@@ -33,7 +33,7 @@ function load(){
   }catch(error){loadErrors.set(entry.name,(error as Error).message)}
  }
 }
-const project=(job:RecordEntry):WorkflowView=>({id:job.id,engineId:job.engineId,engineVersion:job.engineVersion,status:job.status,revision:job.revision,createdAt:job.createdAt,updatedAt:job.updatedAt,summary:job.summary,files:job.status==='completed'?job.files:[],controlPending:!!job.controlPending,...(job.error?{error:job.error}:{})})
+const project=(job:RecordEntry):WorkflowView=>({id:job.id,engineId:job.engineId,engineVersion:job.engineVersion,status:job.status,revision:job.revision,createdAt:job.createdAt,updatedAt:job.updatedAt,summary:job.summary,files:job.status==='completed'?job.files:[],...(job.parent?{parent:job.parent}:{}),controlPending:!!job.controlPending,...(job.error?{error:job.error}:{})})
 function save(job:RecordEntry){job.revision++;job.updatedAt=Date.now();atomicJson(file(job.id),job,true);entries.set(job.id,job);emit('workflow:changed',{id:job.id,engineId:job.engineId,status:job.status,revision:job.revision})}
 function own(id:unknown){const key=validId(id);if(loadErrors.has(key)&&requestContext().principal.kind==='operator')throw Error('Workflow state needs repair; original data retained: '+loadErrors.get(key));const job=entries.get(key);if(!job||currentEngineScope()!==undefined&&currentEngineScope()!==job.engineId||!sameOwner(job.owner,requestContext()))throw Error('Workflow not found for this caller');return job}
 async function moduleFor(job:Pick<RecordEntry,'engineId'|'engineVersion'>):Promise<{runtime:WorkflowRuntime;commands:Set<string>}>{
@@ -121,11 +121,29 @@ export function startWorkflows(dispatch:NonNullable<typeof invoke>,publishEvent:
 }
 export async function stopWorkflows(){ready=false;for(const run of active.values())run.controller.abort(Error('Core is shutting down'));await Promise.all([...active.values()].map(run=>run.done));entries.clear();loadErrors.clear();emit=()=>{}}
 
+// User-initiated data transforms never receive an Infra client.
+let dataOperations=0
+async function dataOperation<T>(work:(signal:AbortSignal)=>Promise<T>):Promise<T>{
+ if(dataOperations>=2)throw Error('Two document operations are already running; retry after one completes')
+ const controller=new AbortController();dataOperations++
+ let timer:ReturnType<typeof setTimeout>|undefined
+ try{
+  return await Promise.race([work(controller.signal),new Promise<never>((_,reject)=>{timer=setTimeout(()=>{const error=Error('Document operation exceeded 30 seconds');controller.abort(error);reject(error)},30000);timer.unref?.()})])
+ }finally{if(timer)clearTimeout(timer);controller.abort(Error('Document operation finished'));dataOperations--}
+}
+
 async function workflowRequestInternal(command:string,args:Record<string,any>){
  if(!ready)throw Error('Workflow service is not ready')
- const schemas:Record<string,string[]>={start:['engineId','input','clientRequestId'],list:['engineId'],get:['id','ifRevision'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
+ const schemas:Record<string,string[]>={prepare:['engineId','input'],fork:['id','expectedRevision','input','clientRequestId'],export:['id','format'],start:['engineId','input','clientRequestId'],list:['engineId'],get:['id','ifRevision'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
  const op=command.slice('workflow.'.length);if(!schemas[op]||Object.keys(args).some(key=>!schemas[op].includes(key)))throw Error('Unknown workflow request field')
  if(op==='list')return {jobs:[...entries.values()].filter(job=>(currentEngineScope()===undefined||currentEngineScope()===job.engineId)&&sameOwner(job.owner,requestContext())&&(!args.engineId||job.engineId===args.engineId)).sort((a,b)=>b.createdAt-a.createdAt).slice(0,100).map(project),errors:currentEngineScope()===undefined&&requestContext().principal.kind==='operator'?[...loadErrors].map(([id,error])=>({id,error})):[]}
+ if(op==='prepare'){
+  const input=jsonObject(args.input,'input'),manifest=installedEngines().engines.find(engine=>engine.id===args.engineId)
+  if(!manifest)throw Error('Engine is not installed')
+  const {runtime}=await moduleFor({engineId:manifest.id,engineVersion:manifest.version})
+  if(!runtime.prepare)throw Error('This Engine does not support input preparation')
+  return dataOperation(async signal=>jsonObject(await runtime.prepare!(structuredClone(input),{signal}),'Prepared input'))
+ }
  if(op==='start'){
   const input=jsonObject(args.input,'input'),key=requestKey(args.clientRequestId),owner=requestContext(),hash=digest(JSON.stringify({engineId:args.engineId,input}))
   const previous=[...entries.values()].find(job=>sameOwner(job.owner,owner)&&job.startKey===key)
@@ -140,6 +158,40 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
   fs.mkdirSync(home(job.id),{recursive:true});save(job);launch(job);return project(job)
  }
  const job=own(args.id)
+ if(op==='fork'){
+  const input=jsonObject(args.input,'input'),key=requestKey(args.clientRequestId),owner=requestContext()
+  const hash=digest(JSON.stringify({op,parentId:job.id,parentRevision:args.expectedRevision,input}))
+  const previous=[...entries.values()].find(entry=>sameOwner(entry.owner,owner)&&entry.startKey===key)
+  if(previous){if(previous.inputHash!==hash)throw fault('clientRequestId already belongs to different input');return project(previous)}
+  if(job.status!=='completed'||job.controlPending)throw fault('Only completed workflows can be used as a follow-up parent')
+  if(args.expectedRevision!==job.revision)throw fault('Workflow changed; reload before creating a follow-up')
+  const {runtime}=await moduleFor(job)
+  if(!runtime.fork)throw Error('This Engine does not support follow-up workflows')
+  const current=own(args.id)
+  if(current.status!=='completed'||current.revision!==args.expectedRevision)throw fault('Workflow changed while loading its Engine')
+  const raced=[...entries.values()].find(entry=>sameOwner(entry.owner,owner)&&entry.startKey===key)
+  if(raced){if(raced.inputHash!==hash)throw fault('clientRequestId already belongs to different input');return project(raced)}
+  const state=runtime.fork(structuredClone(current.state),structuredClone(input)),now=Date.now()
+  const manifest=installedEngines().engines.find(engine=>engine.id===current.engineId)!
+  const child:RecordEntry={id:'wf_'+randomUUID(),engineId:current.engineId,engineVersion:manifest.version,owner:{principal:owner.principal,requestId:owner.requestId,...(owner.credentialHash?{credentialHash:owner.credentialHash}:{})},parent:{id:current.id,revision:current.revision,engineVersion:current.engineVersion},state,summary:jsonObject(runtime.describe(state),'Workflow summary'),status:'running',revision:0,createdAt:now,updatedAt:now,files:[],startKey:key,inputHash:hash,answers:{}}
+  fs.mkdirSync(home(child.id),{recursive:true});save(child);launch(child);return project(child)
+ }
+ if(op==='export'){
+  if(job.status!=='completed')throw fault('Only an approved completed workflow can be exported')
+  if(typeof args.format!=='string'||!/^[a-z][a-z0-9-]{0,24}$/.test(args.format))throw Error('Invalid export format')
+  const {runtime}=await moduleFor(job)
+  if(!runtime.export)throw Error('This Engine does not support alternate exports')
+  const current=own(args.id)
+  if(current.status!=='completed')throw fault('Workflow is no longer completed')
+  return dataOperation(async signal=>{
+   const artifact=await runtime.export!(structuredClone(current.state),args.format,{signal})
+   signal.throwIfAborted()
+   if(!artifact||typeof artifact.name!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/.test(artifact.name)||typeof artifact.content!=='string'||typeof artifact.description!=='string'||!artifact.description.trim()||artifact.description.length>2000||typeof artifact.mediaType!=='string'||!/^[\w.+-]+\/[\w.+-]+$/.test(artifact.mediaType))throw Error('Invalid alternate artifact')
+   const bytes=artifactBytes(artifact)
+   if(!bytes.length||bytes.length>8*1024*1024)throw Error('Alternate artifact must contain 1 byte to 8 MiB')
+   return {...artifact,bytes:bytes.length,sha256:digest(bytes)}
+  })
+ }
  if(op==='get'){
   if(args.ifRevision!==undefined&&(!Number.isSafeInteger(args.ifRevision)||args.ifRevision<0))throw Error('ifRevision must be a non-negative integer')
   if(args.ifRevision===job.revision)return {id:job.id,engineId:job.engineId,revision:job.revision,unchanged:true}
@@ -190,7 +242,7 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
 /** Serialize owner mutations across asynchronous Engine hooks. Reads remain non-blocking. */
 const mutations=new Map<string,Promise<unknown>>()
 export async function workflowRequest(command:string,args:Record<string,any>){
- if(!['workflow.pause','workflow.amend','workflow.respond','workflow.resume','workflow.cancel'].includes(command))return workflowRequestInternal(command,args)
+ if(!['workflow.pause','workflow.amend','workflow.respond','workflow.resume','workflow.cancel','workflow.fork'].includes(command))return workflowRequestInternal(command,args)
  const id=validId(args.id),previous=mutations.get(id)??Promise.resolve()
  const next=previous.catch(()=>{}).then(()=>workflowRequestInternal(command,args));mutations.set(id,next)
  try{return await next}finally{if(mutations.get(id)===next)mutations.delete(id)}

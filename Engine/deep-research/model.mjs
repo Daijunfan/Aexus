@@ -17,7 +17,7 @@ export function create(input){
  if(input.language!==undefined&&!['zh-CN','en'].includes(input.language))throw Error('报告语言无效')
  const topic=text(input.topic,'调研任务',4000),engines=input.engines??null
  if(engines!==null){list(engines,'Coding Agent',2,4);for(const e of engines){if(!ENGINE_IDS.includes(e.engine))throw Error('不支持的 Coding Agent');if(e.model!==undefined)text(e.model,'模型',160)}if(new Set(engines.map(e=>e.engine)).size<2)throw Error('深度调研需要至少两种不同 Coding Agent，不能用同一个引擎冒充多引擎协作。')}
- return {version:2,topic,depth,sourcePolicy:policy,materials:references,language:input.language??'zh-CN',amendments:[],phase:'scope',engines,answers:[],questions,workers:[],tasks:{},sources:[],findings:[],rejectedSources:[],reviewRound:0,repairRound:0,startedAt:new Date().toISOString()}
+ return {version:2,topic,depth,sourcePolicy:policy,materials:references,language:input.language??'zh-CN',amendments:[],phase:'scope',engines:engines?structuredClone(engines):null,answers:[],questions:structuredClone(questions),workers:[],tasks:{},sources:[],findings:[],rejectedSources:[],reviewRound:0,repairRound:0,startedAt:new Date().toISOString()}
 }
 export function describe(state){
  const waiting=['scope','direction','focus'].includes(state.phase),phaseIndex=PHASES.findIndex(([id])=>id===state.phase)
@@ -30,15 +30,15 @@ export function describe(state){
  return {title:state.plan?.title??state.topic,topic:state.topic,phase:state.phase,phaseLabel:PHASES[phaseIndex]?.[1]??state.phase,progress,round:state.phase==='scope'?1:state.phase==='direction'?2:state.phase==='focus'?3:undefined,
   ...(waiting?{questions:state.questions}:{}),...(state.plan?{plan:state.plan}:{}),findings:state.findings,gaps:state.gaps??[],
   depth:state.depth??'standard',budget,sourcePolicy:state.sourcePolicy??sourcePolicy(),startedAt:state.startedAt,finishedAt:state.finishedAt,
-  materials:(state.materials??[]).map(m=>({name:m.name,characters:m.text.length})),amendments:state.amendments??[],
-  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt,excerpts,workerIds})=>({id,url:finalUrl??url,title,quote,sourceType,retrievedAt,sha256,engines,workerIds:workerIds??[],reportedPublishedAt,excerpts:excerpts??[]})),
+  materials:(state.materials??[]).map(m=>({name:m.name,characters:m.text.length,...(m.provenance?{provenance:m.provenance}:{})})),amendments:state.amendments??[],
+  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt,excerpts,workerIds,document,locator})=>({id,url:finalUrl??url,title,quote,sourceType,retrievedAt,sha256,engines,workerIds:workerIds??[],reportedPublishedAt,document,locator,excerpts:excerpts??[]})),
   rejectedSources:state.rejectedSources.slice(-40),rejectedFindings:(state.rejectedFindings??[]).slice(-40),review:state.review??null,reportReview:state.reportReview??null,
   verification:state.verification??null,insights:researchInsights(state),metrics:{completedTasks:done,totalTasks:tasks.length,activeTasks:tasks.filter(t=>['running','approval'].includes(t.status)).length,findings:state.findings.length,primarySources:state.sources.filter(s=>s.sourceType==='primary').length},
   workers:state.workers.map(w=>({id:w.id,title:w.title,engine:w.engine,role:w.role,label:w.label,model:w.model??null,status:[...tasks].reverse().find(t=>t.employeeId===w.id)?.status??'ready'})),
   tasks:Object.entries(state.tasks).map(([id,t])=>({id,title:t.title,employeeId:t.employeeId,engine:t.engine,status:t.status,startedAt:t.startedAt,finishedAt:t.finishedAt,error:t.error,kind:t.kind,tracks:t.tracks??[],approvalStartedAt:t.approvalStartedAt??null,approvalWaitMs:t.approvalWaitMs??0,activity:t.activity??null})),
   sourceCount:state.sources.length,domainCount:new Set(state.sources.map(s=>new URL(s.finalUrl??s.url).hostname)).size,rejectedCount:state.rejectedSources.length,
   approvals:tasks.filter(t=>t.status==='approval').map(t=>({employeeId:t.employeeId,title:state.workers.find(w=>w.id===t.employeeId)?.label??t.title,startedAt:t.approvalStartedAt??null})),
-  attention:state.attention??null,team:state.team,language:state.language??'zh-CN',...(state.phase==='complete'?{headline:state.report.title,highlights:state.report.executiveSummary.map(p=>p.text)}:{})}
+  priorResearch:state.parentContext?{title:state.parentContext.title,asOf:state.parentContext.asOf}:null,exportFormats:state.phase==='complete'?['docx','pdf']:[],attention:state.attention??null,team:state.team,language:state.language??'zh-CN',...(state.phase==='complete'?{headline:state.report.title,highlights:state.report.executiveSummary.map(p=>p.text)}:{})}
 }
 export function respond(state,answer){
  if(state.phase==='direction'&&answer.plan){state.plan=validatePlan({plan:{...state.plan,...answer.plan,questions:state.questions}})}

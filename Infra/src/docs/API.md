@@ -3104,7 +3104,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 343 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 346 项来自共享协议 `Infra/src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3119,6 +3119,9 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents contract engines</code> | <code>—</code> | List installed source Engine manifests without executing them | Engine catalog | identity |
 | <code>agents view layer</code> | <code>engine&#124;infra [--engine ID]</code> | Select the application layer while retaining the Infra view and client-owned state | Engine / Infra | operator |
 | <code>agents infra api</code> | <code>[--domain company&#124;messages&#124;plan&#124;files&#124;runtime] [--command NAME]</code> | Read employee collaboration and visualization APIs for Infra only, excluding plugin APIs | Infra API reference | identity |
+| <code>agents workflow prepare</code> | <code>--engine-id ID --input JSON</code> | Normalize explicitly provided Engine input without creating employees, running models or saving a workflow | Engine workflows | operator |
+| <code>agents workflow fork</code> | <code>ID --expected-revision N --input JSON --client-request-id ID</code> | Create a distinct caller-owned follow-up from a completed workflow; preserve the original report, lineage and idempotent request identity | Engine workflows | operator |
+| <code>agents workflow export</code> | <code>ID --format FORMAT</code> | Render one supported alternate final format from an approved completed workflow; no model call or modification to the original delivery | Engine workflows | operator |
 | <code>agents workflow start</code> | <code>--engine-id ID --input JSON --client-request-id ID</code> | Start an installed Engine workflow durably as the authenticated caller; same request ID never creates a second job | Engine workflows | operator |
 | <code>agents workflow list</code> | <code>[--engine-id ID]</code> | Read the caller-owned workflow summaries without exposing private runtime checkpoints | Engine workflows | operator |
 | <code>agents workflow get</code> | <code>ID [--if-revision N]</code> | Read durable status and final files, or unchanged:true at the supplied revision; never runs or acknowledges a task | Engine workflows | operator |

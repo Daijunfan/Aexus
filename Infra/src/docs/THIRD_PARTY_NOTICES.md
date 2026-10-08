@@ -136,3 +136,7 @@ SOFTWARE.
 
 ### tiny-pinyin 1.3.2
 MIT-licensed directory-name romanization library by creeperyang. License: `Infra/src/licenses/tiny-pinyin-1.3.2-MIT.txt`. Source: https://github.com/creeperyang/pinyin.
+
+## Deep Research document runtime (1.5.0)
+
+Locked direct production libraries: PDFKit 0.20.2 (MIT), fontkit 2.0.4 (MIT), PDF.js / pdfjs-dist 6.4.299 (Apache-2.0), docx 9.9.0 (MIT), fflate 0.8.3 (MIT), @xmldom/xmldom 0.9.12 (MIT). The Engine package-lock records exact transitive packages and registry integrity hashes; original package licenses remain in bundled runtime directories. PDF.js text parsing may use its optional platform canvas dependency; preserve its upstream license files. These library notices do not authorize redistributing proprietary provider assets or host fonts. Existing unresolved release reviews remain unchanged.

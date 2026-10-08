@@ -1,6 +1,6 @@
 /** Native approval classification only. Unknown commands require write approval; Core authorization is independent. */
 export const READ_ONLY_APIS=new Set(`
-contract.info contract.describe contract.engines infra.api infra.scope workflow.list workflow.get workflow.file
+contract.info contract.describe contract.engines infra.api infra.scope workflow.list workflow.get workflow.file workflow.prepare workflow.export
 workspace.catalog conversation.entry conversation.download-status channel.post-trigger-list channel.post-trigger-history channel.post-trigger-batch
 conversation.policy conversation.audit conversation.notice-list conversation.notice-get conversation.notice-preview conversation.notice-history
 assets.browse assets.info assets.preview assets.tree assets.children assets.locate assets.search

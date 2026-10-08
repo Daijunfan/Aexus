@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.60.1",
+  "version": "0.63.0",
   "description": "Aexus: domain-specific engines on a CLI-first multi-Agent infrastructure",
   "main": "./.aexus/out/main/index.js",
   "author": {
@@ -133,9 +133,12 @@
     "test:layers": "node Infra/src/test/aexus-layers-ui-test.mjs",
     "test:boundaries": "node Infra/src/test/aexus-boundaries-test.mjs",
     "test:engine-scope": "node Infra/src/tooling/run-tests.mjs scope",
-    "test:deep-research": "node Infra/src/test/deep-research-unit-test.mjs && node --test Infra/src/test/deep-research-controls-unit-test.mjs Infra/src/test/deep-research-evidence-test.mjs && node Infra/src/test/deep-research-core-test.mjs && node Infra/src/test/deep-research-controls-core-test.mjs",
+    "test:deep-research": "node Infra/src/test/deep-research-unit-test.mjs && node --test Infra/src/test/deep-research-controls-unit-test.mjs Infra/src/test/deep-research-evidence-test.mjs && node Infra/src/test/deep-research-core-test.mjs && node Infra/src/test/deep-research-controls-core-test.mjs && npm run test:deep-research-studio",
     "test:deep-research-ui": "node Infra/src/test/deep-research-ui-test.mjs",
-    "test:deep-research-desktop": "node Infra/src/test/deep-research-ui-test.mjs --desktop"
+    "test:deep-research-desktop": "node Infra/src/test/deep-research-ui-test.mjs --desktop",
+    "build:engines": "node Infra/src/tooling/build-engines.mjs",
+    "check:engine-deps": "node Infra/src/tooling/build-engines.mjs --check",
+    "test:deep-research-studio": "node --test Infra/src/test/deep-research-studio-test.mjs && node Infra/src/test/deep-research-studio-core-test.mjs"
   },
   "build": {
     "appId": "com.agentscompany.app",
@@ -186,7 +189,12 @@
       "Infra/src/docs/releases/0.59.0.zh-CN.md",
       "Infra/src/docs/README.en.md",
       "Infra/src/docs/releases/0.60.0.zh-CN.md",
-      "Infra/src/docs/releases/0.60.1.zh-CN.md"
+      "Infra/src/docs/releases/0.60.1.zh-CN.md",
+      "Engine/*/node_modules/**/*",
+      "!Engine/**/node_modules/**/{test,tests,__tests__,examples,example,benchmark,benchmarks}/**",
+      "!Engine/**/node_modules/.bin/**",
+      "!Engine/**/node_modules/**/*.map",
+      "Infra/src/docs/releases/0.63.0.zh-CN.md"
     ],
     "mac": {
       "target": [
@@ -244,7 +252,10 @@
     "electronDist": "node_modules/electron/dist",
     "asarUnpack": [
       "node_modules/@anthropic-ai/claude-agent-sdk-*/**/*",
-      "node_modules/node-pty/**/*"
+      "node_modules/node-pty/**/*",
+      "Engine/*/node_modules/**/*",
+      "Engine/deep-research/document-worker.mjs",
+      "Engine/deep-research/export-worker.mjs"
     ],
     "win": {
       "target": [

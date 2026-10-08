@@ -21,6 +21,9 @@ retry?(state): State
 cancel?(state, context): Promise<void>
 pause?(state, context): Promise<void>
 amend?(state, update): State
+prepare?(input, {signal}): Promise<PreparedInput>
+fork?(completedParentState, input): FreshState
+export?(completedState, format, {signal}): Promise<WorkflowArtifact>
 compatibleVersions?: string[]
 ```
 
@@ -32,6 +35,9 @@ The runtime is trusted, installed Node code, not a sandbox for arbitrary third-p
 
 | Command | Input | Result |
 | --- | --- | --- |
+| `workflow.prepare` | `engineId`, `input` | Normalize explicitly supplied document bytes through an Engine hook. No job, employee or model call. |
+| `workflow.fork` | `id`, `expectedRevision`, `input`, `clientRequestId` | Create a distinct follow-up from a completed caller-owned parent. Core stamps parent identity/revision; original is unchanged. |
+| `workflow.export` | `id`, `format` | Render a supported alternate final artifact from an approved completed job, returning verified bytes, encoding and SHA-256 without mutating its original delivery. |
 | `workflow.start` | `engineId`, `input`, `clientRequestId` | Durable job ID and public projection. Same request ID and input return the original job. |
 | `workflow.list` | Optional `engineId` | Up to 100 latest caller-owned jobs; unreadable persisted records are reported separately in `errors` to the user. |
 | `workflow.get` | `id`, optional non-negative integer `ifRevision` | Status, revision, Engine-defined public summary and approved final-file manifest; unchanged revisions return only an identity/revision tuple. |
@@ -42,7 +48,7 @@ The runtime is trusted, installed Node code, not a sandbox for arbitrary third-p
 | `workflow.cancel` | `id` | Cancels this job and invokes its exact-task cleanup. |
 | `workflow.file` | `id`, `name` | One manifest-listed final file with content, encoding, MIME type, byte length and SHA-256. |
 
-All are available through `ContractClient.invoke` and the existing CLI. `get`, `list` and `file` are read operations; the rest are writes. Schemas and native CLI spellings are generated from `Infra/src/shared/workflow-schema.ts`.
+All are available through `ContractClient.invoke` and the existing CLI. `get`, `list`, `file`, `prepare` and `export` are read/data operations; the rest are writes. Data transforms retain existing user-workflow authorization; a read effect does not make them public or grant Agent access. Schemas and native CLI spellings are generated from `Infra/src/shared/workflow-schema.ts`.
 
 Example:
 
@@ -87,3 +93,23 @@ The final directory has only the artifacts selected by the Engine. Runtime journ
 `workflow.get({id, ifRevision})` returns `{id, engineId, revision, unchanged: true}` when the current revision equals `ifRevision`. Otherwise it returns the normal `WorkflowView`. Omit `ifRevision` to always receive the full public view. `WorkflowRead` is the union of `WorkflowView` and `WorkflowUnchanged`; consumers must narrow with `unchanged` before reading `summary` or `files`.
 
 Authentication, Engine ownership and parameter validation run before conditional responses. No material text, prompts, transcript or result cache is included in the unchanged tuple. Reading never increments the revision or starts model work. Clients retain the previous view on an unchanged response and guard against stale reads arriving after navigation.
+
+## Explicit document preparation and alternate formats
+
+An optional `prepare` hook receives only the caller-provided JSON input and an abort signal. It may decode and extract supplied bytes, but does not receive an Infra client, create a job, discover arbitrary local files, call models or change permissions. Browser clients send selected file bytes; a client-local path is never a Core path. Engine-specific parsing limits and provenance are part of its own documented contract. Preparation metadata supplied later by a caller remains untrusted input, not a cryptographic attestation or independently verified evidence.
+
+An optional `export` hook receives a clone of a completed job's private state, the requested format and an abort signal. It renders an alternate representation from approved content without further research. The original status, revision, directory and file manifest remain unchanged. Core validates the returned artifact name, description, MIME, encoding and decoded size (1 byte–8 MiB), then returns a content hash. The result is not saved as a new authoritative report. Browser/CLI clients must decode binary output before checking size and SHA-256.
+
+Core permits at most two simultaneous explicit data operations and aborts them after 30 seconds. Trusted Engine hooks must honor aborts and bound parsing work. Deep Research uses disposable resource-limited workers with shorter deadlines; untrusted document contents are never executed. Worker resource limits are defense in depth, not an operating-system sandbox for installed third-party Engine code.
+
+## Immutable follow-ups
+
+`workflow.fork` accepts only a completed, caller-owned parent at its current revision. It is serialized with parent controls. Core binds the request key to operation, parent ID/revision and exact input; retries return the original child, while a different payload under the same key is rejected. Core creates the new ID and stamps `parent:{id,revision,engineVersion}`. The Engine cannot forge this field through its input.
+
+The optional synchronous `fork` hook receives a clone and produces fresh initial state, without Infra calls. Deep Research starts at scope confirmation with no workers, no accepted sources and no final files. Historical findings become explicitly labelled context; public links are only seeds requiring new verification. Private material reuse is opt-in. Creation does not itself approve a new research scope or bypass native tool approval. Parent and child IDs survive restart.
+
+```sh
+node Infra/src/cli/aexus workflow prepare --engine-id deep-research --input '{"files":[{"name":"brief.txt","encoding":"base64","content":"SGVsbG8="}]}' --json
+node Infra/src/cli/aexus workflow export WORKFLOW_ID --format docx --json
+node Infra/src/cli/aexus workflow fork WORKFLOW_ID --expected-revision 12 --input '{"topic":"Investigate new counterevidence"}' --client-request-id follow-up-001 --json
+```
