@@ -1,7 +1,7 @@
 {
   "id": "deep-research",
   "name": "Deep Research",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "contractVersion": "1.0.0",
   "description": "多 Agent 并行研究、证据核验与独立审查；可控制来源、暂停修订，实时追踪研究并交付可追溯报告。",
   "ui": "Page.tsx",

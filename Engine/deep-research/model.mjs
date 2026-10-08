@@ -1,4 +1,5 @@
 import {publicURL} from './sources.mjs'
+import {researchInsights} from './insights.mjs'
 import {depthConfig,sourcePolicy,materials,assertSourceAllowed} from './policy.mjs'
 export const ENGINE_IDS=['codex','claude','cline','pi']
 export const PHASES=[['scope','确认目标'],['plan','制定方案'],['direction','确认方案'],['research','并行调研'],['focus','确认重点'],['review','交叉审查'],['write','撰写与校验'],['complete','最终交付']]
@@ -30,12 +31,13 @@ export function describe(state){
   ...(waiting?{questions:state.questions}:{}),...(state.plan?{plan:state.plan}:{}),findings:state.findings,gaps:state.gaps??[],
   depth:state.depth??'standard',budget,sourcePolicy:state.sourcePolicy??sourcePolicy(),startedAt:state.startedAt,finishedAt:state.finishedAt,
   materials:(state.materials??[]).map(m=>({name:m.name,characters:m.text.length})),amendments:state.amendments??[],
-  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt})=>({id,url:finalUrl??url,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt})),
-  rejectedSources:state.rejectedSources.slice(-40),review:state.review??null,reportReview:state.reportReview??null,
-  verification:state.verification??null,metrics:{completedTasks:done,totalTasks:tasks.length,activeTasks:tasks.filter(t=>['running','approval'].includes(t.status)).length,findings:state.findings.length,primarySources:state.sources.filter(s=>s.sourceType==='primary').length},
+  evidence:state.sources.map(({id,url,finalUrl,title,quote,sourceType,retrievedAt,sha256,engines,reportedPublishedAt,excerpts,workerIds})=>({id,url:finalUrl??url,title,quote,sourceType,retrievedAt,sha256,engines,workerIds:workerIds??[],reportedPublishedAt,excerpts:excerpts??[]})),
+  rejectedSources:state.rejectedSources.slice(-40),rejectedFindings:(state.rejectedFindings??[]).slice(-40),review:state.review??null,reportReview:state.reportReview??null,
+  verification:state.verification??null,insights:researchInsights(state),metrics:{completedTasks:done,totalTasks:tasks.length,activeTasks:tasks.filter(t=>['running','approval'].includes(t.status)).length,findings:state.findings.length,primarySources:state.sources.filter(s=>s.sourceType==='primary').length},
   workers:state.workers.map(w=>({id:w.id,title:w.title,engine:w.engine,role:w.role,label:w.label,model:w.model??null,status:[...tasks].reverse().find(t=>t.employeeId===w.id)?.status??'ready'})),
-  tasks:Object.entries(state.tasks).map(([id,t])=>({id,title:t.title,employeeId:t.employeeId,engine:t.engine,status:t.status,startedAt:t.startedAt,finishedAt:t.finishedAt,error:t.error,kind:t.kind,activity:t.activity??null})),
-  sourceCount:state.sources.length,domainCount:new Set(state.sources.map(s=>new URL(s.url).hostname)).size,rejectedCount:state.rejectedSources.length,
+  tasks:Object.entries(state.tasks).map(([id,t])=>({id,title:t.title,employeeId:t.employeeId,engine:t.engine,status:t.status,startedAt:t.startedAt,finishedAt:t.finishedAt,error:t.error,kind:t.kind,tracks:t.tracks??[],approvalStartedAt:t.approvalStartedAt??null,approvalWaitMs:t.approvalWaitMs??0,activity:t.activity??null})),
+  sourceCount:state.sources.length,domainCount:new Set(state.sources.map(s=>new URL(s.finalUrl??s.url).hostname)).size,rejectedCount:state.rejectedSources.length,
+  approvals:tasks.filter(t=>t.status==='approval').map(t=>({employeeId:t.employeeId,title:state.workers.find(w=>w.id===t.employeeId)?.label??t.title,startedAt:t.approvalStartedAt??null})),
   attention:state.attention??null,team:state.team,language:state.language??'zh-CN',...(state.phase==='complete'?{headline:state.report.title,highlights:state.report.executiveSummary.map(p=>p.text)}:{})}
 }
 export function respond(state,answer){
@@ -74,16 +76,21 @@ export function validateReview(value,sources){
  if(value.verdict==='pass'&&value.issues.some(i=>i.severity==='blocking'))throw Error('存在阻断问题，不能通过审查')
  if(!sources.length)throw Error('没有可审查的来源');return value
 }
-export function validateReport(report,sources){
+export function validateReport(report,sources,{language}={}){
+ if(!report||typeof report!=='object'||Array.isArray(report))throw Error('报告缺失或格式无效')
  text(report.title,'报告标题',200);const ids=new Set(sources.map(s=>s.id)),used=new Set()
  const paragraph=p=>{text(p.text,'报告段落',6000);if(!['fact','analysis'].includes(p.kind))throw Error('段落必须区分事实与分析');list(p.sourceIds,'段落引用',1,12).forEach(id=>{if(!ids.has(id))throw Error('报告引用了未通过核验的来源 '+id);used.add(id)})}
  list(report.executiveSummary,'摘要',2,8).forEach(paragraph)
- list(report.sections,'报告章节',3,12).forEach(s=>{text(s.title,'章节标题',200);list(s.paragraphs,'章节正文',1,12).forEach(paragraph)})
+ list(report.sections,'报告章节',4,12).forEach(s=>{text(s.title,'章节标题',200);list(s.paragraphs,'章节正文',1,12).forEach(paragraph)})
  list(report.recommendations,'行动建议',1,10).forEach(p=>{paragraph(p);if(p.kind!=='analysis')throw Error('行动建议必须标为分析判断')})
  list(report.limitations,'报告限制',1,12).forEach(l=>text(l,'限制',1600))
- list(report.comparisons??[],'比较条目',0,12).forEach(row=>{text(row.option,'比较对象',200);text(row.advantages,'优势',1600);text(row.tradeoffs,'取舍',1600);paragraph({text:row.option,kind:'analysis',sourceIds:row.sourceIds})})
+ list(report.comparisons??[],'比较条目',2,12).forEach(row=>{text(row.option,'比较对象',200);text(row.advantages,'优势',1600);text(row.tradeoffs,'取舍',1600);paragraph({text:row.option,kind:'analysis',sourceIds:row.sourceIds})})
  if(used.size<3)throw Error('报告必须实际使用至少三个已核验来源')
- if(report.sections.flatMap(s=>s.paragraphs.map(p=>p.text)).join('').length<1000)throw Error('正文过短，尚不足以作为深度调研报告')
+ const body=report.sections.flatMap(s=>s.paragraphs.map(p=>p.text)).join(' ')
+ const han=(body.match(/\p{Script=Han}/gu)??[]).length,words=(body.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g)??[]).length
+ const chinese=language==='zh-CN'||language!=='en'&&han>words
+ if(chinese?han<1500:words<1000)throw Error('正文过短：中文正文至少1500个汉字，英文正文至少1000词；摘要和建议不计入正文')
+ if(new Set(report.sections.map(s=>s.title.trim().toLowerCase())).size!==report.sections.length)throw Error('报告必须使用不同的章节标题')
  return report
 }
 
@@ -99,7 +106,7 @@ export function amend(state,update){
  state.previousTasks=[...(state.previousTasks??[]),...Object.values(state.tasks).map(({prompt,result,...task})=>task)].slice(-100)
  state.tasks={};state.generation=(state.generation??0)+1;state.repairRound=0;state.reviewRound=0
  delete state.report;delete state.reportDraft;delete state.review;delete state.reportReview;delete state.verification
- state.gaps=[];state.attention=null
+ state.gaps=[];state.rejectedFindings=[];state.absorbedTasks=[];state.attemptCounts={};state.attention=null
  // Re-plan against the new owner instructions; retain the verified source ledger for reuse.
  if(state.phase!=='scope'){state.phase='plan';state.questions=[]}
  return state

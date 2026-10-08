@@ -131,7 +131,7 @@
     },
     {
       "name": "workflow.get",
-      "summary": "Read durable status, clarification questions and final-file manifest; reading does not run a task",
+      "summary": "Read durable status and final files, or unchanged:true at the supplied revision; never runs or acknowledges a task",
       "permission": "operator",
       "inputSchema": {
         "type": "object",
@@ -140,6 +140,10 @@
           "id": {
             "type": "string",
             "minLength": 1
+          },
+          "ifRevision": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [

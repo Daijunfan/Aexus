@@ -1,53 +1,41 @@
 import {create,describe,respond,amend,validatePlan,validateResearch,validateReview,validateReport} from './model.mjs'
 import {ask,provision,retry,cancel,pause} from './agents.mjs'
-import {verifySource,publicURL,normalize} from './sources.mjs'
+import {absorb} from './evidence.mjs'
+import {researchInsights} from './insights.mjs'
 import {renderReport} from './report.mjs'
 export {create,describe,respond,retry,cancel,pause,amend}
-export const compatibleVersions=['1.0.0']
-import {depthConfig,assertSourceAllowed} from './policy.mjs'
+export const compatibleVersions=['1.0.0','1.1.0']
+import {depthConfig} from './policy.mjs'
 const brief=state=>({topic:state.topic,agreedScope:state.answers,plan:state.plan,asOf:new Date().toISOString(),language:state.language,depth:depthConfig(state.depth),sourcePolicy:state.sourcePolicy??{},materials:state.materials??[],amendments:state.amendments??[]})
 const pool=state=>({sources:state.sources,findings:state.findings,gaps:state.gaps??[]})
-async function absorb(state,ctx,researches){
- const candidates=new Map()
- for(const {result,engine} of researches)for(const s of result.sources){try{const key=assertSourceAllowed(publicURL(s.url),state.sourcePolicy);if(!candidates.has(key))candidates.set(key,{...s,url:key,engines:[]});candidates.get(key).engines.push(engine)}catch(error){state.rejectedSources.push({url:String(s.url).slice(0,2000),reason:error.message})}}
- state.verification={total:candidates.size,checked:0,accepted:0,rejected:0};await ctx.checkpoint(state)
- const queue=[...candidates.values()],verified=[]
- await Promise.all(Array.from({length:Math.min(4,queue.length)},async()=>{while(queue.length){
-  ctx.signal.throwIfAborted();const candidate=queue.shift();let accepted=false
-  try{
-  const previous=state.sources.find(s=>s.url===candidate.url||s.finalUrl===candidate.url)
-  if(previous){assertSourceAllowed(previous.finalUrl??previous.url,state.sourcePolicy);verified.push({...previous,engines:[...new Set([...(previous.engines??[]),...candidate.engines])]})}
-  else verified.push({...await verifySource(candidate,{signal:ctx.signal,policy:state.sourcePolicy}),engines:[...new Set(candidate.engines)]})
-  accepted=true
-  }catch(error){ctx.signal.throwIfAborted();state.rejectedSources.push({url:candidate.url,reason:error.message})}
-  state.verification.checked++;state.verification[accepted?'accepted':'rejected']++;await ctx.checkpoint(state)
- }}))
- for(const source of verified.filter(Boolean)){
-  const prior=state.sources.find(s=>s.url===source.url||s.finalUrl===source.finalUrl)
-  if(prior){prior.engines=[...new Set([...(prior.engines??[]),...source.engines])];prior.aliases=[...new Set([...(prior.aliases??[]),source.url])]}
-  else state.sources.push({...source,id:'S'+(Math.max(0,...state.sources.map(s=>Number(s.id.slice(1))||0))+1),aliases:[]})
- }
- const byURL=new Map(state.sources.flatMap(s=>[s.url,s.finalUrl,...(s.aliases??[])].map(url=>[url,s.id])))
- for(const {result,engine} of researches){
-  for(const finding of result.findings){
-   const refs=finding.urls.map(url=>{try{return byURL.get(publicURL(url))}catch{return undefined}})
-   if(refs.some(id=>!id))continue
-   if(!state.findings.some(f=>normalize(f.statement)===normalize(finding.statement)))state.findings.push({statement:finding.statement,kind:finding.kind,sourceIds:[...new Set(refs)],limitation:finding.limitation??'',engine})
-  }
-  state.gaps=[...new Set([...(state.gaps??[]),...(result.gaps??[])])]
- }
- await ctx.checkpoint(state)
-}
-function quality(state){
- const domains=new Set(state.sources.map(s=>new URL(s.finalUrl??s.url).hostname)),engines=new Set(state.sources.flatMap(s=>s.engines??[]))
- const budget=depthConfig(state.depth);return state.sources.length>=budget.minSources&&domains.size>=budget.minDomains&&engines.size>=2&&state.findings.length>=budget.minFindings
-}
+const quality=state=>researchInsights(state).evidenceReady
 async function collect(state,ctx,key,extra={}){
  const researchers=state.workers.filter(w=>w.role!=='lead')
- const outcomes=await Promise.allSettled(researchers.map((worker,index)=>ask(state,ctx,key+'-'+worker.role,worker,'research',{...brief(state),role:worker.label,tracks:state.plan.tracks.filter((_,i)=>i%researchers.length===index),...extra},validateResearch).then(result=>({result,engine:worker.engine}))))
+ state.verification={total:0,checked:0,accepted:0,rejected:0,pendingAgents:researchers.length}
+ state.absorbedTasks??=[]
+ await ctx.checkpoint(state)
+ // Native searches run concurrently; evidence commits are serialized so one
+ // completed researcher can become visible while another is still working.
+ let ingestion=Promise.resolve()
+ const commit=(work)=>{const next=ingestion.then(work);ingestion=next.catch(()=>{});return next}
+ const outcomes=await Promise.allSettled(researchers.map(async(worker,index)=>{
+  const taskKey=key+'-'+worker.role,tracks=state.plan.tracks.filter((_,i)=>i%researchers.length===index)
+  const assignment=tracks.length?tracks:[worker.role==='challenge'?'独立检查反证、失效边界与替代解释':'独立核对证据缺口与跨来源一致性']
+  try{
+   const result=await ask(state,ctx,taskKey,worker,'research',{...brief(state),role:worker.label,tracks:assignment,...extra},validateResearch)
+   const task=state.tasks[taskKey+'-format-repair']?.status==='completed'?state.tasks[taskKey+'-format-repair']:state.tasks[taskKey]
+   await commit(async()=>{
+    ctx.signal.throwIfAborted()
+    if(!state.absorbedTasks.includes(task.taskId)){
+     await absorb(state,ctx,[{result,engine:worker.engine,workerId:worker.id,taskId:task.taskId}],{accumulate:true})
+     state.absorbedTasks.push(task.taskId)
+    }
+   })
+  }finally{
+   await commit(async()=>{ctx.signal.throwIfAborted();state.verification.pendingAgents=Math.max(0,state.verification.pendingAgents-1);await ctx.checkpoint(state)})
+  }
+ }))
  ctx.signal.throwIfAborted()
- const results=outcomes.filter(result=>result.status==='fulfilled').map(result=>result.value)
- if(results.length)await absorb(state,ctx,results)
  const failed=outcomes.find(result=>result.status==='rejected');if(failed)throw failed.reason
 }
 export async function run(state,ctx){
@@ -83,8 +71,8 @@ export async function run(state,ctx){
  }
  if(state.phase==='write'){
   for(let revision=0;revision<2;revision++){
-   const report=await ask(state,ctx,'report-'+revision+'-g'+generation,writer,'report',{...brief(state),...pool(state),independentReview:state.review,revisionFeedback:state.reportReview??null,instruction:'交付内容围绕用户决策。引用仅用给定S编号；每个段落都要提供依据，建议标为分析。正文至少4章并有实质比较与反证。不输出文件路径、内部任务日志或工作草稿。'},value=>validateReport(value.report,state.sources))
-   state.reportDraft=report;await ctx.checkpoint(state)
+   const report=await ask(state,ctx,'report-'+revision+'-g'+generation,writer,'report',{...brief(state),...pool(state),independentReview:state.review,revisionFeedback:state.reportReview??null,instruction:'交付内容围绕用户决策。引用仅用给定S编号；每个段落都要提供依据，建议标为分析。正文至少4章并有实质比较与反证。不输出文件路径、内部任务日志或工作草稿。'},value=>validateReport(value.report,state.sources,{language:state.language}))
+   validateReport(report,state.sources,{language:state.language});state.reportDraft=report;await ctx.checkpoint(state)
    state.reportReview=await ask(state,ctx,'final-review-'+revision+'-g'+generation,lead,'review',{...brief(state),sources:state.sources,report,instruction:'对最终报告逐段核对引用支持、事实/分析区分、遗漏分歧和用户需求。发现虚构事实或不受摘录支持的关键结论必须revise。'},value=>validateReview(value,state.sources))
    await ctx.checkpoint(state)
    if(state.reportReview.verdict==='pass'){

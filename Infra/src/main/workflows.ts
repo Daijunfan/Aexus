@@ -123,7 +123,7 @@ export async function stopWorkflows(){ready=false;for(const run of active.values
 
 async function workflowRequestInternal(command:string,args:Record<string,any>){
  if(!ready)throw Error('Workflow service is not ready')
- const schemas:Record<string,string[]>={start:['engineId','input','clientRequestId'],list:['engineId'],get:['id'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
+ const schemas:Record<string,string[]>={start:['engineId','input','clientRequestId'],list:['engineId'],get:['id','ifRevision'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
  const op=command.slice('workflow.'.length);if(!schemas[op]||Object.keys(args).some(key=>!schemas[op].includes(key)))throw Error('Unknown workflow request field')
  if(op==='list')return {jobs:[...entries.values()].filter(job=>(currentEngineScope()===undefined||currentEngineScope()===job.engineId)&&sameOwner(job.owner,requestContext())&&(!args.engineId||job.engineId===args.engineId)).sort((a,b)=>b.createdAt-a.createdAt).slice(0,100).map(project),errors:currentEngineScope()===undefined&&requestContext().principal.kind==='operator'?[...loadErrors].map(([id,error])=>({id,error})):[]}
  if(op==='start'){
@@ -140,7 +140,11 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
   fs.mkdirSync(home(job.id),{recursive:true});save(job);launch(job);return project(job)
  }
  const job=own(args.id)
- if(op==='get')return project(job)
+ if(op==='get'){
+  if(args.ifRevision!==undefined&&(!Number.isSafeInteger(args.ifRevision)||args.ifRevision<0))throw Error('ifRevision must be a non-negative integer')
+  if(args.ifRevision===job.revision)return {id:job.id,engineId:job.engineId,revision:job.revision,unchanged:true}
+  return project(job)
+ }
  if(op==='file'){
   const artifact=job.status==='completed'&&job.files.find(item=>item.name===args.name)
   if(!artifact)throw Error('Only manifest-listed final files from a completed workflow are available')

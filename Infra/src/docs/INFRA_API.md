@@ -62,3 +62,7 @@ schedule.preview 的准确参数以 api.describe 返回为准。修改使用当�
 启动页不挂载业务内容；view.load-engine 选择一个 Engine，view.launcher 返回首页。view.layer 切换 Engine/Infra，view.select 选择 Company/Messages/Plan，view.open/close 保留原会话返回关系。每个客户端一次查看一个 Engine，多引擎后台任务并行且不随查看切换。显式资源关联与请求作用域见 [ENGINE_WORKSPACES.md](ENGINE_WORKSPACES.md)；现有职位授权独立检查。
 
 所有命令详细定义见 [API.md](API.md)，权限见 [PERMISSIONS.md](PERMISSIONS.md)。本轮补充的 schema 是既有输入的文档化，业务校验仍留在各领域实现；没有增加第二套员工 CRUD 或通用万能事务。
+
+## 工作流状态与低开销读取
+
+Engine 后台任务继续通过公共 `workflow.*` 调用。`workflow.get` 可传入非负整数 `ifRevision`；版本相同时仅返回 `{id, engineId, revision, unchanged: true}`，客户端保留上一次公开视图。版本变化或不传该参数时返回完整公开视图。鉴权与 Engine 归属检查先于缓存判断；读取不启动模型、不修改任务，也不返回私有材料和提示词。调用类型与生命周期见 [Workflow Contract](../../../Contract/WORKFLOWS.md)。

@@ -34,7 +34,7 @@ The runtime is trusted, installed Node code, not a sandbox for arbitrary third-p
 | --- | --- | --- |
 | `workflow.start` | `engineId`, `input`, `clientRequestId` | Durable job ID and public projection. Same request ID and input return the original job. |
 | `workflow.list` | Optional `engineId` | Up to 100 latest caller-owned jobs; unreadable persisted records are reported separately in `errors` to the user. |
-| `workflow.get` | `id` | Status, revision, Engine-defined public summary and approved final-file manifest. |
+| `workflow.get` | `id`, optional non-negative integer `ifRevision` | Status, revision, Engine-defined public summary and approved final-file manifest; unchanged revisions return only an identity/revision tuple. |
 | `workflow.respond` | `id`, `expectedRevision`, `answer`, `clientRequestId` | Applies an answer only to the current waiting checkpoint and resumes execution. |
 | `workflow.resume` | `id`, `expectedRevision`, `clientRequestId` | Explicitly resumes a failed or fully paused job using its saved state. |
 | `workflow.pause` | `id` | Pauses a supporting Engine, stops only its owned native tasks and preserves its checkpoint. |
@@ -81,3 +81,9 @@ Current limits are 8 MiB of JSON input, 1–12 final files, at most 8 MiB per de
 Files are first written into a private staging directory and then atomically exposed as one final delivery. Only a completed job's manifest entries can be read; intermediate state, draft directories and arbitrary paths are never downloadable. Every read verifies the stored SHA-256. A pre-existing different final delivery is rejected rather than overwritten.
 
 The final directory has only the artifacts selected by the Engine. Runtime journals and metadata are outside it. Each Engine is responsible for avoiding redundant exports and for verifying that every delivered file serves the user's task.
+
+## Conditional status reads
+
+`workflow.get({id, ifRevision})` returns `{id, engineId, revision, unchanged: true}` when the current revision equals `ifRevision`. Otherwise it returns the normal `WorkflowView`. Omit `ifRevision` to always receive the full public view. `WorkflowRead` is the union of `WorkflowView` and `WorkflowUnchanged`; consumers must narrow with `unchanged` before reading `summary` or `files`.
+
+Authentication, Engine ownership and parameter validation run before conditional responses. No material text, prompts, transcript or result cache is included in the unchanged tuple. Reading never increments the revision or starts model work. Clients retain the previous view on an unchanged response and guard against stale reads arriving after navigation.

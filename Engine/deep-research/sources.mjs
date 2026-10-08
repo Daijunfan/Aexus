@@ -19,7 +19,7 @@ export function publicURL(value){
 export const normalize=value=>String(value).normalize('NFKC').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/\s+/g,' ').trim()
 const decode=value=>value.replace(/&#(x[0-9a-f]+|[0-9]+);/gi,(_,n)=>{const code=n[0].toLowerCase()==='x'?parseInt(n.slice(1),16):Number(n);return code>0&&code<=0x10ffff?String.fromCodePoint(code):' '}).replace(/&(amp|lt|gt|quot|apos|nbsp|ndash|mdash);/g,(_,name)=>({amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",nbsp:' ',ndash:'–',mdash:'—'}[name]))
 export const pageText=html=>normalize(decode(html.replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,' ').replace(/<!--[\s\S]*?-->/g,' ').replace(/<[^>]+>/g,' ')))
-const quoteOf=value=>Array.from(normalize(value).split(' ').slice(0,25).join(' ')).slice(0,180).join('')
+export const sourceQuote=value=>Array.from(normalize(value).split(' ').slice(0,25).join(' ')).slice(0,180).join('')
 /** DNS is validated at the actual socket lookup, including every redirect. */
 function retrieve(value,signal,redirects=0,policy={}){
  const url=assertSourceAllowed(publicURL(value),policy)
@@ -46,8 +46,9 @@ function retrieve(value,signal,redirects=0,policy={}){
   request.on('error',reject);request.setTimeout(15000,()=>request.destroy(Error('资料核验超时')));request.end()
  })
 }
+export function readSource(url,{signal,policy={}}={}){return retrieve(url,signal,0,policy)}
 export async function verifySource(candidate,{signal,read,policy={}}={}){
- const url=assertSourceAllowed(publicURL(candidate.url),policy),quote=quoteOf(candidate.quote)
+ const url=assertSourceAllowed(publicURL(candidate.url),policy),quote=sourceQuote(candidate.quote)
  if(quote.length<18)throw Error('证据摘录过短，无法可靠核对')
  const fetched=await (read?read(url,signal):retrieve(url,signal,0,policy));assertSourceAllowed(publicURL(fetched.url),policy);const body=pageText(fetched.body)
  if(!body.toLocaleLowerCase().includes(normalize(quote).toLocaleLowerCase()))throw Error('来源页面未找到所引摘录；该引用不得进入最终报告')
