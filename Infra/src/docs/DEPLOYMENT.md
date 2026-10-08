@@ -171,7 +171,7 @@ dependencies. Public HTML/text input now requires independent Engine retrieval
 and excerpt matching. Public PDF input uses the Engine's locked PDF.js text-layer
 parser, bounded to 8 MiB, 80 pages and 800,000 extracted characters. Password
 protection, absent text layers and oversized input fail explicitly; OCR is not
-implemented. The `6146bc9` source snapshot passed actual packaged PDF parsing in
+implemented. The `09cb020` runtime source snapshot passed actual packaged PDF parsing in
 the private macOS candidate and installed app, both using isolated hidden-window
 verification. This does not establish other-platform or model-research acceptance.
 PDF/Word export is not implemented by the

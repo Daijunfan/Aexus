@@ -99,10 +99,10 @@
 | 公开竞品页面与上述关键源码 | 已核验 | 使用公开网页搜索与实际打开页面；未运行竞品。 |
 | Aexus 域模型与调度 | 独立 fixture 13/13 通过（2026-10-09） | `Infra/src/test/deep-research-independent-test.mjs` 覆盖真 fork/join、多父、共享节点、跨层依赖、慢分支隔离、单最终稿、取消迟到和格式重试；不代表真实模型研究质量。 |
 | 持久恢复与用户调整 | 独立 Host fixture 2/2 通过（2026-10-09） | `deep-research-host-test.mjs` 使用真实 workflows/runtime 与临时存储，传输及授权为 stub；覆盖恢复、pause/amend/resume、review revise 后重新规划和交付文件校验。 |
-| 真实公开资料与引用 | 三源取证链通过 | `.aexus/artifacts/deep-research-independent/real-sources/` 保存实际 GET 正文、时间、SHA-256、片段、论断、HTML/Markdown/CSV/JSON；不是应用自动研究输出。 |
-| 来源与报告阅读 | 浏览器独立路径通过 | `deep-research-reading-ui-test.mjs` 使用实际 Page/describe 与三源，验证键盘引用、原文定位和返回报告；精确论断定位与原滚动恢复继续打磨。 |
-| 真实多 Agent 应用研究 | 未验证 | 已有 DeepSeek 只读 `/models` 返回 200，证明配置认证与发现；未调用真实生成，未使用官方账户 CLI 代理。 |
-| macOS 候选包 | 基础验收通过，未安装 | 独立 candidate 的 ASAR import、create/describe、隐藏界面加载通过；零员工、零工作流、引擎启动 trap 未触发。候选采用当时 renderer snapshot，后续 UI 源码验收独立记录。 |
-| HTML 导出 Markdown 排版 | 修复后独立私有依赖验收通过 | 原红截图保留于 real-sources/report-format-{desktop,mobile}.png；最新 Engine 在临时 ASAR 中使用锁定 GFM 依赖，表格、列表和原生 HTML 转义通过。完整候选仍为先前 snapshot，未据此声称已安装。 |
-| 原生 Agent 真实长研究语料 | 已产出并抽审 | research-corpus/ 保存26个被引用URL、14主机、12归一发布组织、43论断与10章报告；18完整GET与8工具摘录分开，actual validateReport/describe结构通过，不能冒充应用自动生成或全句语义评分。 |
+| 真实公开资料与引用 | 当前独立取证门槛通过 | HTML/文本/PDF 独立取得原文、逐片段匹配并保存 locator、时间、最终 URL 与 SHA256；虚构片段不可进入核验或报告。原生研究语料经当前门槛保留 17 来源、28 论断、10 章，不是应用自动研究输出。 |
+| 来源、DAG 与报告阅读 | 当前浏览器路径通过 | UI 19 项检查覆盖 48 节点、36 同层/36 深层、3 尺寸、来源矛盾及双方定位、精确论断和报告滚动返回；独立长语料使用实际 Page/describe 验证键盘引用和嵌入阅读。 |
+| 真实多 Agent 应用研究 | 未验证 | 提供商只读发现不证明计费路由；应用原生适配仍承载于官方可执行程序。用户禁止 CLI 的范围与中转配置标识尚待明确，本轮没有提交应用内模型任务。 |
+| macOS 构建、安装与隐藏恢复 | 最新运行快照通过并已安装 | `09cb020` 源码构建，实际 `/Applications/Aexus.app` ASAR `2864de6755f90097be6b032185cfea9b40a7827caca3a6763f28704bf70291be`；候选与已安装路径私有依赖/GFM/PDF/3 尺寸验收通过。正常退出、项目安装器和隐藏恢复保留原 80 员工、17 workflow 与状态哈希，模型执行为零。 |
+| HTML 导出 Markdown 排版 | 实际安装路径通过 | 私有锁定 micromark/GFM 在实际 Electron/ASAR 内输出表格和列表；不受信 HTML 转义、危险链接限制已有领域回归。没有 PDF/Word 导出或 Mermaid 渲染的完成声明。 |
+| 全库阅读与隔离回归 | 阅读审计闭合，84/84 通过 | 2202 tracked 文件：1985 文本完整实读、19 生成文件核源、198 图像音视频/上游归档核清单；无缺项或过期 SHA。测试传输与权限明确使用 fixture，不代表真实研究质量。 |
 | Windows / Linux 原生运行 | 未测试 | 本机 macOS 结果不能外推。 |

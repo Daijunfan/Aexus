@@ -1,98 +1,56 @@
-# Deep Research 审查记录
+# Deep Research 审查结果
 
-日期：2026-10-09。本文记录实际阅读、代码验证和剩余约束，不代表全项目已通读，也不代表真实收费模型研究已验收。UI 验收记录由 UI 负责人补充。
+检查日期：2026-10-09（Asia/Shanghai）。动态研究引擎、证据链、界面和本机安装已分别验证；应用内真实模型研究与竞品配对质量评测尚未完成，不能宣称“绝对完美”或“超越全部竞品”。所有实现、阅读和操作由平台原生子 Agent 完成，没有通过 CLI 启动收费模型任务。
 
-## 后端实现与验证
+## 用户要求与当前证据
 
-本地分支 `codex/deep-research-dag-ui`，未推送。稳定提交：
+| 要求 | 当前实现与实际验证 | 尚未建立的结论 |
+| --- | --- | --- |
+| 员工与 Manager 数量动态 | 初调研后由计划产生团队、分支责任及管理关系；并发上限独立于团队人数。真实 runtime fixture 验证多个 Manager、意见冲突和变更后重新审核。 | 真实模型对不同复杂度主题的扩编决策质量。 |
+| 先调研再规划，不虚构初始进度 | scout/plan 没有固定百分比或 ETA；计划形成后，DAG、任务状态与进度来自同一持久状态。失败与停止不计作成功。 | 开放式真实任务的时间预测，本轮不提供此承诺。 |
+| 任意 DAG 与中途重规划 | 支持分叉汇合、多父、跨层、共享综合结果和 ready 节点并行；慢独立分支不阻塞无关工作。修订保留已完成任务、证据、旧计划及原因，目标变化使用新节点 ID。 | 所有可能拓扑和真实提供商恢复情形均已覆盖。 |
+| 丰富且简单的可视化 | 圆形节点、LR/TB 方向、适配、缩放、邻域聚焦、详情与历史；支持审批、调整方向、暂停、继续、取消与必要重试。19 项 Chromium 检查覆盖 48 节点、36 同层/36 深层、1440/768/390、长报告、暗主题和停止状态。 | 主观“最佳视觉”；48 节点验收不冒充全部规模无性能限制。 |
+| 广泛来源与可信引用 | 引擎独立读取公开 HTML/文本/PDF，逐片段匹配原文，保存真实 URL、时间、原文 SHA256 和 locator；拒绝虚构片段、未知来源和仅搜索摘要。冲突论断在来源页优先展示，可分别定位双方原文。 | 原文匹配不自动证明语义蕴涵；未运行真实应用研究，不能承诺每个主题的来源广度。 |
+| 内容详实与真实交付 | 报告、来源和论断互相定位；Host 发布 HTML、Markdown、来源 CSV、证据 JSON、计划 JSON 五份真实文件。独立研究语料通过当前证据门槛，含 17 来源、28 论断、10 章；键盘引用、定位及返回报告通过。 | 该语料是原生 Agent 成果经引擎验证，非应用自动研究输出；当前没有 PDF/Word 导出、OCR 或报告 Mermaid 渲染。 |
+| 清晰边界、精简与性能 | Host 负责权限、身份、生命周期、持久化与发布；Engine 经公开 Contract 调用 Host，UI 消费 canonical 投影。删除固定模板、重复 claim 存储、完整提示和产物正文副本；完成检查点可重新发布相同字节及哈希而不重做研究。 | 不以模拟数据或不含 fsync 的计时宣称生产性能已“极致”。 |
+| 全项目阅读、竞品、构建与安装 | 2,202 个 tracked 文件逐路径审计：1,985 份文本完整实读，19 份生成文件核生成源，198 份图像/音视频/上游归档核清单；当前哈希全部匹配。公开厂商与开源方案已对标；最新源码已构建、安装和隐藏重开。 | 未登录竞品实跑、未做同任务盲评；macOS 结果不外推 Windows/Linux。 |
 
-- `c97798d`：动态研究团队、任意 DAG 执行、版本化重规划、证据与报告产物；修复暂停恢复、格式修复恢复、并发终止和核验输入范围。
-- `0942193`：将退休引擎判别测试移回 Infra，消除 Engine 测试对 Infra 实现的导入。
-- `7c738cf`：节点研究目标正式传给执行员工；已完成节点换目标必须使用新 ID，纯显示名称可更新。
-- `fe58e82`：使用 Engine 私有锁定的 micromark/GFM 依赖生成安全 HTML 表格、列表与引用。
-- `4e7a1cc`：删除未使用的固定 schema 模板与重复 source claim 状态；发现和来源视图使用统一论断数据。
-- `b00c144`：最终 UI 阅读、圆形图聚焦和来源定位状态；`3b87553`、`383dad2` 为独立 QA 与文档提交。
-- `fe21344`：引擎独立取得公开 HTML/文本，保存逐片段原文哈希、读取时间和最终 URL；假片段与不可读来源不能进入核验、综合或报告引用。旧运行态重新取证，已完成历史报告保留归档。
-- `812cfe3`：恢复公开 PDF 文本层输入，真实页码和哈希进入同一证据链；取消后等待已开始的来源读取清理。公开投影使用逐片段数据，删除连接全文的重复别名。
-- `ddb3ad4`：完成任务移除持久化 prompt，统一单回答体量限制，规划提示按回答体量分支核验；过大回答直接报告大小限制，不重复格式修复。
-- `90c0b66`：报告产物仅由 Host 发布，不再将五份完整正文重复保存在 Engine checkpoint；完成检查点可重新生成相同产物，无原生重新派发。
+UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。自动批准仍先初调研、规划和 Manager 审核，不跳过这些职责。多个 Manager 中任一要求修订都会阻止计划自动批准。
 
-验证使用实际 `runtime.mjs`、`workflows.ts` 和公开 Contract 数据形状，原生传输、权限与资源发现按测试明确模拟。没有启动模型代理进程，没有使用用户生产数据：
+## 可复核验收
 
-- 稳定提交前：引擎、独立领域、Host 生命周期和退休清理共 48 项通过，命令退出码 0。
-- 边界测试迁移后：引擎与退休清理 33 项通过，退出码 0。
-- 目标语义修改后：引擎、独立领域和 Host 生命周期 39 项通过，退出码 0。
-- 所有提交前 `git diff --check` 均退出 0。
-- 独立 HTML/文本取证阶段，source-read 与 workflow 共 46 项通过；`812cfe3` 后 source-read 与 workflow 共 52 项通过，包括 PDF 原文页码、伪造片段、页数/字符限制、取消与整批清理。独立领域测试 13 项与实际 Host 生命周期 2 项通过。
-- 当前功能快照 `6146bc9`（包含 `90c0b66`、`ddb3ad4`）已从源码重新构建，候选和实际已安装 `/Applications/Aexus.app` 均通过隐藏 Electron/ASAR 验收：四个锁定依赖从 Engine 私有目录解析，GFM 表格/列表正常导出，W3C 公开 PDF 的第 1 页文本和原文哈希正确，worker/字体/CMap/WASM 物理资源存在。1440/768/390 的真实宿主高度与内部横向滚动检查通过，隔离验收模型与员工执行均为零。
-- 安装前实际活动、审批、初始化、运行 workflow、自动计划、传输和插件窗口均为零；主进程仅收到一次正常 SIGTERM，项目安装器备份原 bundle 并保留全部根 JSON 状态哈希。生产数据隐藏重开后仍有 80 名员工、17 个原状态 workflow，无忙碌、审批、计划或新增 provider 进程；CoreGraphics 确认主窗口不在屏幕上。没有提交模型研究任务。详细记录在独立验收 `installation.json`、`package/installed/verification.json` 和 `production-restart.json`。
-- 完整 `aexus-boundaries-test.mjs` 在根目录既有额外 Markdown 的检查处失败，尚未运行到静态依赖阶段；保留这些用户文件，未删除或移动。
-- 隔离副本运行未修改的原边界脚本，7 项通过，扫描 93 个 Engine/Contract 源文件没有跨层实现依赖；Contract 同步为 302 能力、243 注册 schema。副本排除三份既有 tracked 根 Markdown，并仅给当前用户 package 元数据补 HEAD 的 build 字段。这证明源码检查阶段，不证明原工作区物理布局或用户 package 元数据通过。两次结果及差异哈希记录在 `isolated-boundaries.json` 与首次失败记录。
+[最终审计](../../../.aexus/artifacts/deep-research-independent/final-audit.json)核对全部 tracked 路径与 SHA256：无重复、遗漏、孤立、过期或未完成项。[阅读账本](../../../.aexus/artifacts/deep-research-independent/reading-coverage.json)保存逐文件证据，其他 Agent 记录只在当前哈希匹配时计入。曾发生的动态批次误登记已对原 20 文件补齐实际全文；资源目录和生成目录的误分类也已补读并纠正，说明见[阅读审计记录](../../../.aexus/artifacts/deep-research-independent/reading-notes.md)。SVG、手写 Manager 文档、资源来源清单及 MiniNotion 数据目录均已实读。
 
-覆盖的关键行为包括多父依赖、分叉汇合、跨层边、共享综合结果、短分支即时推进、报告重新生成、已完成调查复用、同 receipt 恢复、取消后新 attempt、迟到结果拒绝、多个 Manager 意见冲突和来源隔离。
+生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-## 实际阅读范围
+最新[隔离测试记录](../../../.aexus/artifacts/deep-research-independent/final-tests.json)为 84/84，通过命令：
 
-以下文件已按段完整阅读；自动生成文件和持续编辑的 UI 另列，未用检索命中代替通读。
+```sh
+node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs
+```
 
-### Engine
+测试使用真实领域/runtime/Host 模块，原生传输、授权和测试原文读取明确使用 fixture，无模型与生产数据。[Host 恢复证据](../../../.aexus/artifacts/deep-research-independent/host.json)包含 pause/amend/resume、重启保留审批、review 驱动重规划，以及最终文件重放不重复派发。退休 Web Demo 直接退出，不再监听或触发研究；诊断工具显示实际 DAG 和失败/暂停/取消状态。
 
-- `Engine/deep-research/agents.mjs`、`model.mjs`、`runtime.mjs`、`schema.mjs`、`graph.mjs`、`evidence.mjs`、`reports.mjs`、`engine.json`、`cli.mjs`。
-- `Engine/deep-research/test/workflow.test.mjs`、`test/projection-benchmark.mjs`。
-- `Engine/workspace-audit/Page.tsx`、`cli.mjs`、`engine.json`、`workflow.mjs`。
-- `Engine/profile-improvement/Page.tsx`、`cli.mjs`、`engine.json`、`runtime.mjs`、`workflow.mjs`、`Preview.tsx`、`layout.mjs`。
-- `Engine/PPT-maker/Page.tsx`、`cli.mjs`、`engine.json`、`runtime.mjs`、`workflow.mjs`、`render.mjs`。
+[UI 19 项记录](../../../.aexus/artifacts/deep-research-ui/verification.json)和[独立长报告阅读](../../../.aexus/artifacts/deep-research-independent/reading-ui/corpus-verification.json)保留截图与交互证据；[独立语料验证](../../../.aexus/artifacts/deep-research-independent/research-corpus/independent-proof/validation.json)明确区分实际 GET 原文、匹配论断及历史工具摘录，不能把后者算成独立 HTTP 取证。
 
-Deep Research 的 `Page.tsx`、`ResearchGraph.tsx`、`ui.ts` 持续迭代，已核对具体字段流和操作状态；新增 `SourcePanel.tsx`、`ReportView.tsx` 已阅读。其最终版本、CSS 和浏览器验收由 UI 负责人维护记录。未通读各 Engine 的所有文档、旧调试脚本与测试，未通读大插件目录。
+原工作区 `aexus-boundaries-test.mjs` 因既有三份 tracked 根 Markdown 不符合目录白名单失败；用户文件与 package 修改已保留。在隔离副本只补 HEAD 的 build 元数据、排除这三份文档后，原脚本 7 项通过并扫描 93 个 Engine/Contract 源文件无跨层依赖。两种结果见[边界证据](../../../.aexus/artifacts/deep-research-independent/isolated-boundaries.json)；隔离通过不代表原工作区布局检查通过。
 
-### Contract
+## 当前安装
 
-- `Contract/protocol.ts`、`workflow.ts`、`engine.ts`、`policy.ts`、`node-client.mjs`。
-- `Contract/engine.schema.json`、`request.schema.json`。
-- `Contract/README.md`、`PROTOCOL.md`、`WORKFLOWS.md`、`ENGINE_GUIDE.md`。
+实际 `/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`，运行源码构建快照 `09cb020`，ASAR SHA256：
 
-`Contract/commands.v1.json` 只读取相关 session/workflow 能力段。已确认 `Infra/src/tooling/sync-contract.mjs` 从 `api-registry.ts`、`api-effects.ts` 和 `Contract/policy.ts` 生成该目录，并由 `--check` 校验逐字一致；审查以这些源定义为主，不声称通读 12,965 行生成 JSON。
+```text
+2864de6755f90097be6b032185cfea9b40a7827caca3a6763f28704bf70291be
+```
 
-### Infra
+[候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[实际安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)均通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。构建后仅更新审查文档，运行源码指纹保持相同，不为文字变更反复打包。
 
-- `Infra/src/main/server.ts`、`workflows.ts`、`retired-research.ts`、`contract.ts`。
-- `Infra/src/main/engine-scope.ts`、`engine-scope-api.ts`、`authorization.ts`、`request-context.ts`、`core-events.ts`。
-- `Infra/src/main/atomic-file.ts`、`resources.ts`、`store.ts`、`client-state.ts`。
-- `Infra/src/main/native-sessions.ts`、`codex-native.ts`、`claude-provider.ts`。
-- `Infra/src/shared/activity.ts`、`api-effects.ts`、`infra-contracts.ts`、`workflow-schema.ts`、`presentation-events.ts`、`api-registry.ts`。
-- `Infra/src/tooling/sync-contract.mjs`。
+[安装记录](../../../.aexus/artifacts/deep-research-independent/installation.json)验证员工活动、审批、队列、初始化、全部运行 workflow、自动计划、传输、插件窗口、news/post 触发均为零后，单次正常 SIGTERM 退出，使用项目安装器备份并替换。根 JSON 哈希未改变。[生产隐藏恢复](../../../.aexus/artifacts/deep-research-independent/production-restart.json)验证原 80 个员工 ID、17 个 workflow ID/状态完整保留、无忙碌或新 provider 进程；CoreGraphics 观察到真实主窗口 `onScreen=false`。第一次启动因调用环境继承 `ELECTRON_RUN_AS_NODE=1` 退出，清除此进程环境后恢复；失败证据保留，用户配置未改。
 
-另核对 `Infra/src/shared/types.ts` 的消息、任务和活动预览类型，以及独立研究测试的测试边界。有效路由检查仅输出配置分类、认证模式和键是否存在，不输出凭据值；没有运行 provider 或收费探针。Infra renderer 的全面阅读归 UI 负责人。
+## 剩余验收
 
-## 边界与删减判断
+当前应用 Codex 原生适配仍由安装的官方可执行程序承载；平台原生子 Agent 工具与应用自身传输不是同一个接口。只读配置认证分类、provider 标签或 `/models` 成功都不能证明使用用户的中转额度。本轮没有提交应用内真实模型任务。
 
-生产 Deep Research 通过 `context.client.invoke` 使用 Infra，未直接导入 Infra 实现或写入 Infra 数据库。Host 负责身份、权限、版本、持久化、生命周期和最终文件发布；Engine 负责领域任务、证据、审查和报告。并发节点的串行 checkpoint 队列用于保留快照顺序，有明确用途。
+下一步必须先明确用户禁止 CLI 的范围，以及允许使用的中转 provider/模型配置标识；不需要提供密钥或密码。只有执行方式与计费路由明确后，才能进行隔离真实研究、来源语义抽审及与竞品的同题配对评测。不得凭空增加平台桥或把 fixture、原生 Agent 语料、包启动当成这项验收。
 
-搜索任务已删去重复来源正文、完整报告和计划，仅保留问题、目标、URL 去重、依赖摘要和必要发现。实际 run 生成的 48 节点、80 来源、50 任务基准中，最大检查点从 18,594,753 字节降至 8,136,162 字节，提示词从 12,505,693 字节降至 2,488,785 字节。该基准不计磁盘 fsync；1000 来源样例在 20 MiB 处停止测量，不能作不同执行进度的性能同比。
-
-重复公开投影已在 `b8324ea` 收敛：图节点只由 canonical `graph` 返回，完整报告由 `deliverable` 返回，历史由 `planRevisions` 返回，`plan` 和 `report` 保留必要元数据。`812cfe3` 又移除连接原文的别名，新 UI 直接读取逐片段 proof。未使用的固定 schema 常量已在 `4e7a1cc` 删除；不能继续把它们列为当前未解决问题。
-
-`ddb3ad4` 后，真实 run 的模拟 128 节点、1000 来源、8 核验分支样例完成：最大 checkpoint 64,629,618 字节，clone/describe/JSON 测量中位 32.22 ms、p95 54.49 ms；已完成任务的持久化 prompt 为 0 字节。这不等于调用提示或结果正文为零，也不计磁盘 fsync。48 节点/80 来源样例最大 checkpoint 约 4.597 MB。1000 来源单分支聚合回答仍超过 500 KB 限制，失败保留；通过的是明确分支结构，不能宣称全部拓扑或生产性能已达到极致。
-
-`90c0b66` 去除重复产物后，同一 8 分支样例完成，峰值降为 50,806,944 字节，比前次少 21.4%；中位 34.34 ms、p95 56.92 ms，不据此宣称提速。实际 Host 完成检查点重放保留原文件清单、全部内容和 SHA-256，未派发新研究任务；persisted Engine state 不含重复 artifacts 正文。
-
-## 剩余约束
-
-- `fe21344` 后，来源必须通过引擎独立公开 HTTP(S) 读取及完整片段匹配。员工提交的摘要、时间或哈希不能建立取证证明；同 URL 的虚假片段保留拒绝原因，不污染已取得的真实片段。这是原文匹配门槛，不等于自动证明所有论断语义。
-- PDF 输入限带文本层的公开资料，8 MiB、80 页、800,000 字符；扫描件需先 OCR，密码文件须提供无密码版本，当前不实现 OCR。真实公开 W3C PDF 的 GET、解析和伪造片段拒绝，以及 `812cfe3` 完整包内解析和资源路径已验证。
-- HTML 表格、列表的源码显示已在 `fe58e82` 修复；新候选已解决过期 renderer 和 Engine 私有依赖缺失。`6146bc9` 候选 ASAR SHA-256 为 `78b68e64bacd217d9bd774bc5c18dde40084ad994a57f96530772e48dc142826`；构建和逐文件证据在 `package/verification.json`，之前两轮候选记录保留在 `package/snapshots/`。多出 60 px 的高度和隐藏说明浮层导致的横向滚动已通过实际包内 3 尺寸验收。报告 Mermaid 代码仍按代码展示，未引入额外图解框架。
-- `workflow.events` 的通用统计字段与本引擎嵌套 `progress` 结构不同，事件统计会缺失；当前 UI 读取 `workflow.get`，不依赖该统计。
-- Deep Research CLI 的 UTF-8 字符数与文件字节数问题已由 `71e1574` 修复，并用中文导出 fixture 验证真实字节计数。
-- 2026-10-09 只读有效配置检查不能证明 Aexus 的模型调用使用中转额度：运行应用及可信 Codex 员工继承用户配置，未发现显式请求地址覆盖。认证模式与自定义提供商标签不能代替真实路由证据；未启动模型执行。
-
-完整阅读进度记录在 `.aexus/artifacts/deep-research-independent/reading-coverage.json`，逐文件保存实际阅读状态和当前 SHA256；改写后的文件单列待复核，其他 Agent 阅读只在哈希匹配时计入。部分历史测试虽标注“无模型调用”，仍会初始化真实原生引擎；本轮只按实际执行路径选择隔离验收，不盲跑全套脚本。
-
-运行态样例存于 `.aexus/artifacts/deep-research-runtime-fixtures/`，全部由 `create/run/describe` 生成并标注模拟数据，覆盖工具授权、部分失败和重规划。节点形状原型存于 `.aexus/artifacts/deep-research-node-shapes/`，只用于外观评审；其中固定时间、进度与详情是示例，不用于生产状态验收。
-
-## UI 阅读与验收索引
-
-UI 负责人实际阅读并持续复核了 `Engine/deep-research/Page.tsx`、`ResearchGraph.tsx`、`ui.ts`、`SourcePanel.tsx`、`ReportView.tsx`、`style.css` 及 `test/ui.mjs`；此外已全文阅读 250 个 renderer、插件 UI 和 Host 桥接文件，共约 1.39 MB，逐路径及哈希记录在 `ui-reading-coverage.json`。该数字不代表项目已全部读完，未读目录和改写版本继续按阅读台账推进。
-
-UI 生产提交 `9617b4b`（运行页、证据报告职责拆分）和 `d489bde`（圆形 DAG、方向选择、邻域聚焦）以及后续 `b00c144`、`f2e58e0`（历史节点与停止状态可观察）、`be1e818`（独立获取记录和拒绝片段）均只包含 Deep Research UI/test。实际 Chromium fixture 回归覆盖真实 `create/describe` 资料链、3 个独立公开来源、20 条定位论断、6 章长报告、48 节点 DAG、36 同层/36 深层压力、390/768/1440 viewport、暗主题、来源定位返回、Manager 意见、暂停/取消 cleanup 重试、LR/TB 方向、历史节点和原生 `session.status` receipt 匹配；`be1e818` 阶段 `Engine/deep-research/test/ui.mjs` 16 项检查、TypeScript、`git diff --check` 均通过。独立 `Infra/src/test/deep-research-reading-ui-test.mjs --corpus --independent` 已用当前门槛的 17 来源、28 陈述、10 章语料验证键盘引用、真实 URL/locator 和 1440/768/390 嵌入阅读；原始 26 来源研究保留为独立注明 provenance 的历史原生 Agent 成果。截图与验证 JSON 在 `.aexus/artifacts/deep-research-ui/` 和 `.aexus/artifacts/deep-research-independent/reading-ui/`。
-
-这些浏览器与独立阅读验证使用 deterministic Contract fixtures 和已保存公开资料，不启动模型代理、不使用收费模型或用户生产数据，因此不能宣称原生模型研究端到端已验收。圆形节点是可逆的当前设计假设；节点形状原型与生产数据分开保存，用户后续明确偏好时再调整。
+PDF 输入限定公开带文本层资料，8 MiB、80 页、800,000 字符，扫描件需外部 OCR。单回答预算为 500 KB，1000 来源单一核验分支曾明确超限，分成八个核验分支的样例完成；最新 `projection-benchmark.mjs --branch-only` 模拟 128 节点/1000 来源完成，峰值检查点 50,806,944 字节，clone/describe/JSON 中位 34.26 ms、p95 57.65 ms，不含磁盘 fsync。这说明需合理分支，不能承诺任意聚合规模。`workflow.events` 通用统计与嵌套研究 progress 不同，当前 UI 读取 `workflow.get`；模型路由、跨平台和竞品实际质量均仍未验收。
