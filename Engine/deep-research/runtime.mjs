@@ -433,21 +433,40 @@ function validatePlan(result) {
     dimensions: dimensionsArray.map((d, i) => {
       // Handle both simple string queries and complex objects
       let query;
+      let rationale = '';
+
       if (typeof d === 'string') {
+        // Simple string format
         query = d;
       } else if (d.query) {
+        // Standard format with explicit query field
         query = String(d.query);
+        rationale = d.rationale || '';
+      } else if (d.questions && Array.isArray(d.questions) && d.questions.length > 0) {
+        // Complex format with questions array - use first question as query
+        query = String(d.questions[0]);
+        rationale = d.name || d.rationale || '';
       } else if (d.name) {
         // Fallback to name field if query is missing
         query = String(d.name);
+        rationale = d.rationale || '';
       } else {
+        // Last resort: stringify the whole object
         query = String(d);
+      }
+
+      // Additional rationale sources
+      if (!rationale && d.keyQuestions && Array.isArray(d.keyQuestions)) {
+        rationale = d.keyQuestions[0] || '';
+      }
+      if (!rationale && d.approach) {
+        rationale = d.approach;
       }
 
       return {
         id: d.id || 'dim-' + i,
         query,
-        rationale: d.rationale || d.keyQuestions?.[0] || '',
+        rationale,
         status: 'pending'
       };
     }),
