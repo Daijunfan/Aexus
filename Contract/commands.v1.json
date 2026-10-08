@@ -256,6 +256,39 @@
       "documentation": "Infra/src/docs/API.md"
     },
     {
+      "name": "workflow.events",
+      "summary": "Read a bounded, owner-authorized history of public workflow status, phase, progress and source counts without exposing prompts or evidence",
+      "permission": "operator",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "afterRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "schemaSource": "registry",
+      "readOnly": true,
+      "effect": "read",
+      "domain": "runtime",
+      "transport": "request",
+      "documentation": "Infra/src/docs/API.md"
+    },
+    {
       "name": "workflow.respond",
       "summary": "Answer the current clarification checkpoint exactly once; stale answers cannot change a later round",
       "permission": "operator",

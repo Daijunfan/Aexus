@@ -41,6 +41,7 @@ The runtime is trusted, installed Node code, not a sandbox for arbitrary third-p
 | `workflow.start` | `engineId`, `input`, `clientRequestId` | Durable job ID and public projection. Same request ID and input return the original job. |
 | `workflow.list` | Optional `engineId` | Up to 100 latest caller-owned jobs; unreadable persisted records are reported separately in `errors` to the user. |
 | `workflow.get` | `id`, optional non-negative integer `ifRevision` | Status, revision, Engine-defined public summary and approved final-file manifest; unchanged revisions return only an identity/revision tuple. |
+| `workflow.events` | `id`, optional `afterRevision` and `limit` (1–100) | Owner-scoped, bounded history of persisted status, phase, progress and source/step counts. Never contains task prompts, full sources or native transcripts. Historical workflows return an empty array until their next checkpoint. |
 | `workflow.respond` | `id`, `expectedRevision`, `answer`, `clientRequestId` | Applies an answer only to the current waiting checkpoint and resumes execution. |
 | `workflow.resume` | `id`, `expectedRevision`, `clientRequestId` | Explicitly resumes a failed or fully paused job using its saved state. |
 | `workflow.pause` | `id` | Pauses a supporting Engine, stops only its owned native tasks and preserves its checkpoint. |
@@ -89,6 +90,8 @@ Files are first written into a private staging directory and then atomically exp
 The final directory has only the artifacts selected by the Engine. Runtime journals and metadata are outside it. Each Engine is responsible for avoiding redundant exports and for verifying that every delivered file serves the user's task.
 
 ## Conditional status reads
+
+The optional renderer-only `ContractClient.watchWorkflow(id,onChanged)` listens to the existing, presentation-scoped `workflow:changed` event, coalescing live progress without introducing a new business command or permitting Engine runtimes to subscribe to private data. The callback is only an invalidation hint: clients must call the authorized `workflow.get({id,ifRevision})` and retain revision ordering. Consumers must unsubscribe when leaving a job; a slower conditional poll remains necessary for reconnects, missed events and older Contract clients. The event carries only workflow identity, engine scope, status and revision, never Agent transcripts or raw task results. `ContractClient.invoke` and CLI commands retain their v1 signatures.
 
 `workflow.get({id, ifRevision})` returns `{id, engineId, revision, unchanged: true}` when the current revision equals `ifRevision`. Otherwise it returns the normal `WorkflowView`. Omit `ifRevision` to always receive the full public view. `WorkflowRead` is the union of `WorkflowView` and `WorkflowUnchanged`; consumers must narrow with `unchanged` before reading `summary` or `files`.
 

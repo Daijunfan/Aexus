@@ -12,7 +12,8 @@ import {authorize,requestContext,withCaller} from './authorization'
 import {applicationRoot} from './resources'
 import {installedEngines,contractRequest} from './contract'
 
-type RecordEntry=WorkflowView&{owner:RequestContext;state:any;startKey:string;inputHash:string;answers:Record<string,{hash:string;operation:string}>}
+type WorkflowEvent={revision:number;at:number;status:WorkflowView['status'];phase?:string;progress?:number;completedTasks?:number;sourceCount?:number}
+type RecordEntry=WorkflowView&{owner:RequestContext;state:any;startKey:string;inputHash:string;answers:Record<string,{hash:string;operation:string}>;events?:WorkflowEvent[]}
 const directory=()=>path.join(APP_HOME,'workflows'),entries=new Map<string,RecordEntry>(),loadErrors=new Map<string,string>(),active=new Map<string,{controller:AbortController;done:Promise<void>}>()
 let ready=false,invoke:((name:string,args:Record<string,any>)=>Promise<any>)|undefined,emit:((channel:string,payload:any)=>void)=()=>{}
 const digest=(text:string|Buffer)=>createHash('sha256').update(text).digest('hex')
@@ -34,7 +35,19 @@ function load(){
  }
 }
 const project=(job:RecordEntry):WorkflowView=>({id:job.id,engineId:job.engineId,engineVersion:job.engineVersion,status:job.status,revision:job.revision,createdAt:job.createdAt,updatedAt:job.updatedAt,summary:job.summary,files:job.status==='completed'?job.files:[],...(job.parent?{parent:job.parent}:{}),controlPending:!!job.controlPending,...(job.error?{error:job.error}:{})})
-function save(job:RecordEntry){job.revision++;job.updatedAt=Date.now();atomicJson(file(job.id),job,true);entries.set(job.id,job);emit('workflow:changed',{id:job.id,engineId:job.engineId,status:job.status,revision:job.revision})}
+function save(job:RecordEntry){
+ job.revision++;job.updatedAt=Date.now()
+ // Store a bounded timeline of public checkpoint numbers only; never copy
+ // native transcripts, prompts, source passages or private uploaded content.
+ const summary=job.summary??{},event:WorkflowEvent={revision:job.revision,at:job.updatedAt,status:job.status}
+ if(typeof summary.phase==='string')event.phase=summary.phase.slice(0,60)
+ if(Number.isFinite(summary.progress))event.progress=Math.max(0,Math.min(100,Math.round(summary.progress)))
+ if(Number.isSafeInteger(summary.metrics?.completedTasks))event.completedTasks=summary.metrics.completedTasks
+ if(Number.isSafeInteger(summary.sourceCount))event.sourceCount=summary.sourceCount
+ const last=job.events?.at(-1)
+ if(!last||last.status!==event.status||last.phase!==event.phase||last.progress!==event.progress||last.completedTasks!==event.completedTasks||last.sourceCount!==event.sourceCount)job.events=[...(job.events??[]),event].slice(-128)
+ atomicJson(file(job.id),job,true);entries.set(job.id,job);emit('workflow:changed',{id:job.id,engineId:job.engineId,status:job.status,revision:job.revision})
+}
 function own(id:unknown){const key=validId(id);if(loadErrors.has(key)&&requestContext().principal.kind==='operator')throw Error('Workflow state needs repair; original data retained: '+loadErrors.get(key));const job=entries.get(key);if(!job||currentEngineScope()!==undefined&&currentEngineScope()!==job.engineId||!sameOwner(job.owner,requestContext()))throw Error('Workflow not found for this caller');return job}
 async function moduleFor(job:Pick<RecordEntry,'engineId'|'engineVersion'>):Promise<{runtime:WorkflowRuntime;commands:Set<string>}>{
  const manifest=installedEngines().engines.find(engine=>engine.id===job.engineId)
@@ -134,7 +147,7 @@ async function dataOperation<T>(work:(signal:AbortSignal)=>Promise<T>):Promise<T
 
 async function workflowRequestInternal(command:string,args:Record<string,any>){
  if(!ready)throw Error('Workflow service is not ready')
- const schemas:Record<string,string[]>={prepare:['engineId','input'],fork:['id','expectedRevision','input','clientRequestId'],export:['id','format'],start:['engineId','input','clientRequestId'],list:['engineId'],get:['id','ifRevision'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
+ const schemas:Record<string,string[]>={prepare:['engineId','input'],fork:['id','expectedRevision','input','clientRequestId'],export:['id','format'],start:['engineId','input','clientRequestId'],list:['engineId'],get:['id','ifRevision'],events:['id','afterRevision','limit'],respond:['id','expectedRevision','answer','clientRequestId'],resume:['id','expectedRevision','clientRequestId'],pause:['id'],amend:['id','expectedRevision','update','clientRequestId'],cancel:['id'],file:['id','name']}
  const op=command.slice('workflow.'.length);if(!schemas[op]||Object.keys(args).some(key=>!schemas[op].includes(key)))throw Error('Unknown workflow request field')
  if(op==='list')return {jobs:[...entries.values()].filter(job=>(currentEngineScope()===undefined||currentEngineScope()===job.engineId)&&sameOwner(job.owner,requestContext())&&(!args.engineId||job.engineId===args.engineId)).sort((a,b)=>b.createdAt-a.createdAt).slice(0,100).map(project),errors:currentEngineScope()===undefined&&requestContext().principal.kind==='operator'?[...loadErrors].map(([id,error])=>({id,error})):[]}
  if(op==='prepare'){
@@ -191,6 +204,11 @@ async function workflowRequestInternal(command:string,args:Record<string,any>){
    if(!bytes.length||bytes.length>8*1024*1024)throw Error('Alternate artifact must contain 1 byte to 8 MiB')
    return {...artifact,bytes:bytes.length,sha256:digest(bytes)}
   })
+ }
+ if(op==='events'){
+  if(args.afterRevision!==undefined&&(!Number.isSafeInteger(args.afterRevision)||args.afterRevision<0))throw Error('afterRevision must be a non-negative integer')
+  if(args.limit!==undefined&&(!Number.isSafeInteger(args.limit)||args.limit<1||args.limit>100))throw Error('limit must be an integer from 1 to 100')
+  return {id:job.id,revision:job.revision,events:(job.events??[]).filter(event=>event.revision>(args.afterRevision??0)).slice(-(args.limit??100))}
  }
  if(op==='get'){
   if(args.ifRevision!==undefined&&(!Number.isSafeInteger(args.ifRevision)||args.ifRevision<0))throw Error('ifRevision must be a non-negative integer')

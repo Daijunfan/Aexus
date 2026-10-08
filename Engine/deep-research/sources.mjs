@@ -1,10 +1,11 @@
 import {assertSourceAllowed} from './policy.mjs'
-import {prepare} from './documents.mjs'
+import {prepare,DOCUMENT_LIMITS} from './documents.mjs'
 import http from 'node:http'
 import https from 'node:https'
 import dns from 'node:dns'
 import net from 'node:net'
 import {createHash} from 'node:crypto'
+import {extractPdfText,isPdf} from './document.mjs'
 
 const blocked=new net.BlockList()
 for(const [address,prefix] of [['0.0.0.0',8],['10.0.0.0',8],['127.0.0.0',8],['169.254.0.0',16],['172.16.0.0',12],['192.168.0.0',16],['100.64.0.0',10],['192.0.0.0',24],['192.0.2.0',24],['198.18.0.0',15],['198.51.100.0',24],['203.0.113.0',24],['224.0.0.0',4],['240.0.0.0',4]])blocked.addSubnet(address,prefix,'ipv4')
@@ -38,29 +39,49 @@ function retrieve(value,signal,redirects=0,policy={}){
     resolve(retrieve(new URL(response.headers.location,url).href,signal,redirects+1,policy));return
    }
    if(response.statusCode!==200){response.resume();reject(Error('资料请求返回 HTTP '+response.statusCode));return}
-   if(!/text\/(html|plain)|application\/(json|xhtml\+xml|pdf)/i.test(String(response.headers['content-type']??''))){response.resume();reject(Error('暂不能独立核验此格式，请提供 HTML、文本或带文本层的 PDF'));return}
+   const mediaType=String(response.headers['content-type']??'').split(';')[0].trim().toLowerCase()
+   const html=/^(?:text\/(?:html|plain)|application\/(?:json|xhtml\+xml))$/.test(mediaType)
+   const pdf=/^(?:application\/pdf|application\/octet-stream|binary\/octet-stream)$/.test(mediaType)||/\.pdf$/i.test(new URL(url).pathname)
+   if(!html&&!pdf){response.resume();reject(Error('暂不能独立核验此格式，请提供 HTML、文本或带文本层的 PDF'));return}
+   const limit=pdf?8*1024*1024:4*1024*1024
    let size=0;const chunks=[]
-   response.on('data',chunk=>{size+=chunk.length;if(size>4*1024*1024){request.destroy(Error('资料页面超过 4 MiB'));return}chunks.push(chunk)})
-   response.on('error',reject);response.on('end',()=>{const data=Buffer.concat(chunks);resolve({url,body:data.toString('utf8'),data,mediaType:String(response.headers['content-type']??'').split(';')[0].trim().toLowerCase(),bytes:size})})
+   response.on('data',chunk=>{size+=chunk.length;if(size>limit){request.destroy(Error(pdf?'PDF 超过 8 MiB':'资料页面超过 4 MiB'));return}chunks.push(chunk)})
+   response.on('error',reject);response.on('end',()=>{
+    const data=Buffer.concat(chunks),asPdf=isPdf(data)
+    if(!html&&!asPdf){reject(Error('文件缺少可解析的 PDF 结构'));return}
+    resolve({url,body:asPdf?'':data.toString('utf8'),data,mediaType:asPdf?'application/pdf':mediaType,bytes:size})
+   })
   })
   const deadline=setTimeout(()=>request.destroy(Error('资料核验超过总时限')),20000);deadline.unref?.();request.once('close',()=>clearTimeout(deadline));
   request.on('error',reject);request.setTimeout(15000,()=>request.destroy(Error('资料核验超时')));request.end()
  })
 }
-export async function readSource(url,{signal,policy={}}={}){
- const fetched=await retrieve(url,signal,0,policy)
- if(fetched.mediaType!=='application/pdf')return fetched
- const parsed=await prepare({files:[{name:'source.pdf',encoding:'base64',content:fetched.data.toString('base64')}]},{signal})
- return {...fetched,body:'',text:parsed.materials[0].text,document:parsed.materials[0].provenance}
+async function parsedSource(fetched,signal){
+ if(fetched.text)return fetched
+ const raw=fetched.data??fetched.body
+ const pdf=isPdf(raw)
+ if(!pdf){if(fetched.mediaType==='application/pdf')throw Error('PDF 文件头无效');return fetched}
+ const bytes=Buffer.isBuffer(raw)?raw:Buffer.from(raw)
+ if(bytes.length>8*1024*1024)throw Error('PDF 超过 8 MiB')
+ let text,document
+ if(bytes.length<=DOCUMENT_LIMITS.fileBytes){
+  const parsed=await prepare({files:[{name:'source.pdf',encoding:'base64',content:bytes.toString('base64')}]},{signal})
+  text=parsed.materials[0].text;document=parsed.materials[0].provenance
+ }else{text=await extractPdfText(bytes,{signal})}
+ return {...fetched,body:'',data:bytes,mediaType:'application/pdf',text,document}
 }
+export async function readSource(url,{signal,policy={}}={}){return parsedSource(await retrieve(url,signal,0,policy),signal)}
 export async function verifySource(candidate,{signal,read,policy={}}={}){
  const url=assertSourceAllowed(publicURL(candidate.url),policy),fullQuote=normalize(candidate.quote),quote=sourceQuote(fullQuote)
  if(!fullQuote||fullQuote.length>350)throw Error('证据摘录缺失或过长')
  if(quote.length<18)throw Error('证据摘录过短，无法可靠核对')
- const fetched=await (read?read(url,signal):readSource(url,{signal,policy}));assertSourceAllowed(publicURL(fetched.url),policy);const body=fetched.text?normalize(fetched.text):/^(?:text\/plain|application\/json)$/.test(fetched.mediaType??'')?normalize(fetched.body):pageText(fetched.body)
+ const response=await (read?read(url,signal):readSource(url,{signal,policy}))
+ assertSourceAllowed(publicURL(response.url),policy)
+ const fetched=await parsedSource(response,signal),pdf=fetched.mediaType==='application/pdf'
+ const body=fetched.text?normalize(fetched.text):/^(?:text\/plain|application\/json)$/.test(fetched.mediaType??'')?normalize(fetched.body):pageText(fetched.body)
  if(!body.toLocaleLowerCase().includes(fullQuote.toLocaleLowerCase()))throw Error('来源页面未找到所引摘录；该引用不得进入最终报告')
- const title=normalize(decode(fetched.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]??candidate.title))
- return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.data??fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(fetched.document?{document:fetched.document,locator:documentLocator(fetched.text,fullQuote)}:{}),...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}
+ const title=normalize(decode(pdf?candidate.title:(String(fetched.body).match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]??candidate.title)))
+ return {url,finalUrl:publicURL(fetched.url),title:title.slice(0,300),quote,sourceType:candidate.sourceType==='primary'?'primary':'secondary',format:pdf?'pdf':'web',retrievedAt:new Date().toISOString(),sha256:createHash('sha256').update(fetched.data??fetched.body).digest('hex'),bytes:fetched.bytes,verification:'excerpt-found',...(fetched.document?{document:fetched.document,locator:documentLocator(fetched.text,fullQuote)}:{}),...(candidate.publishedAt?{reportedPublishedAt:String(candidate.publishedAt).slice(0,80)}:{})}
 }
 
 function documentLocator(text,quote){

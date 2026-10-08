@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.63.1 — Deep Research 1.6.0 的持久进度与独立复审
+
+完整保留 Research Studio 的文档工作台、Word/PDF 和关联后续研究，增加带历史时间线的进度事件、网页版本指纹、主编加独立研究员双重最终审查与 Company 按钮居中增强；Contract/Infra 同步新增 `workflow.events`。详见 [更新记录](releases/0.63.1.zh-CN.md)。
+
+## 0.61.0 — Deep Research PDF 与实时多 Agent 工作台
+
+Deep Research 1.3.0：本地 PDF 参考材料、公开 PDF 摘录独立核验、逐 Agent 真实任务轨、事件驱动进度更新；Infra 增补工作流变更订阅桥接及 Web `.mjs` MIME，Company 顶部三个视图按钮等宽居中的多分辨率验收继续通过。详见 [更新记录](releases/0.61.0.zh-CN.md)。
+
 ## 0.60.1 — 可追溯的研究协作图
 
 Deep Research 1.2.0：逐摘录核验和贡献归属、逐研究员增量入库、协作路线与质量门槛图、准确重试、完整摘录导出。Infra 增加带鉴权的条件状态读取，Company 三按钮等宽居中并通过窄屏检查。详见 [更新记录](releases/0.60.1.zh-CN.md)。

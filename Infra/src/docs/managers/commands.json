@@ -516,6 +516,37 @@
     "target": "request"
   },
   {
+    "name": "workflow.events",
+    "args": "ID [--after-revision N] [--limit N]",
+    "summary": "Read a bounded, owner-authorized history of public workflow status, phase, progress and source counts without exposing prompts or evidence",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "afterRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "gui": "Engine workflows",
+    "readOnly": true,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
     "name": "workflow.respond",
     "args": "ID --expected-revision N --answer JSON --client-request-id ID",
     "summary": "Answer the current clarification checkpoint exactly once; stale answers cannot change a later round",

@@ -5,6 +5,9 @@ export type WorkflowFile={name:string;mediaType:string;description:string;bytes:
 export type WorkflowView={id:string;engineId:string;engineVersion:string;status:WorkflowStatus;revision:number;createdAt:number;updatedAt:number;summary:Record<string,any>;files:WorkflowFile[];parent?:{id:string;revision:number;engineVersion:string};error?:string;controlPending?:boolean}
 /** Returned only by an explicit workflow.get({id,ifRevision}) cache validation. */
 export type WorkflowUnchanged={id:string;engineId:string;revision:number;unchanged:true}
+/** Bounded public checkpoint feed (never includes private prompts, transcripts or excerpts). */
+export type WorkflowEvent={revision:number;at:number;status:WorkflowStatus;phase?:string;progress?:number;completedTasks?:number;sourceCount?:number}
+export type WorkflowEvents={id:string;revision:number;events:WorkflowEvent[]}
 export type WorkflowRead=WorkflowView|WorkflowUnchanged
 export type WorkflowArtifact={name:string;mediaType:string;description:string;content:string;encoding?:'utf8'|'base64'}
 export type WorkflowContext={id:string;client:ContractClient;signal:AbortSignal;checkpoint:(state:any)=>Promise<void>}

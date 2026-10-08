@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.63.0",
+  "version": "0.63.1",
   "description": "Aexus: domain-specific engines on a CLI-first multi-Agent infrastructure",
   "main": "./.aexus/out/main/index.js",
   "author": {
@@ -287,6 +287,7 @@
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "cross-spawn": "7.0.6",
+    "pdfjs-dist": "^6.4.299",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "remark-parse": "11.0.0",

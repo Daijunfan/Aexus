@@ -5,6 +5,9 @@ import {sourcePolicy,assertSourceAllowed,depthConfig,materials} from '../../../E
 import {verifySource} from '../../../Engine/deep-research/sources.mjs'
 import {pause,retry} from '../../../Engine/deep-research/agents.mjs'
 import {compatibleVersions} from '../../../Engine/deep-research/runtime.mjs'
+import {extractPdfText} from '../../../Engine/deep-research/document.mjs'
+import {researchPdfFixture} from './fixtures/deep-research-pdf.mjs'
+import {createHash} from 'node:crypto'
 
 const topic='Compare recoverability using independently verified sources'
 test('research budgets and source policies are validated before side effects',()=>{
@@ -21,7 +24,8 @@ test('research budgets and source policies are validated before side effects',()
 test('uploaded materials are bounded context, not independently verified evidence',()=>{
  const reference={name:'brief.md',text:'# User context\nUser-provided text\twith a tab'}
  assert.equal(materials([reference])[0].text,reference.text)
- for(const bad of [{name:'binary.pdf',text:'not a PDF parser'},{name:'brief.txt',text:'\u0000binary'},{name:'brief.txt',text:'a'.repeat(80001)}])assert.throws(()=>materials([bad]))
+ assert.throws(()=>materials([{name:'paper.pdf',text:'Extracted PDF text with independently checkable context.'}]),/workflow.prepare/); // Office/PDF must be prepared and provenance-recorded by the document worker
+ for(const bad of [{name:'binary.pdf',text:'%PDF-1.7\u0000binary'},{name:'brief.txt',text:'\u0000binary'},{name:'brief.txt',text:'a'.repeat(80001)}])assert.throws(()=>materials([bad]))
  const state=create({topic,materials:[reference]});assert.equal(state.sources.length,0);assert.equal(describe(state).sourceCount,0)
  assert.deepEqual(describe(state).materials,[{name:'brief.md',characters:reference.text.length}]);assert.ok(!JSON.stringify(describe(state)).includes(reference.text))
 })
@@ -31,6 +35,23 @@ test('disallowed URLs never reach the reader; redirected destinations are checke
  const read=async()=>{reads++;return {url:'https://blocked.test/final',body:'<p>'+candidate.quote+'</p>',bytes:100}}
  await assert.rejects(verifySource(candidate,{read,policy:sourcePolicy({excludedDomains:['example.org']})}),/排除/);assert.equal(reads,0)
  await assert.rejects(verifySource(candidate,{read,policy:sourcePolicy({allowedDomains:['example.org']})}),/范围/);assert.equal(reads,1)
+})
+test('published PDF sources are independently text-matched, fingerprinted and safely projected',async()=>{
+ const quote='Independent research findings are checked against the exact source text.'
+ const bytes=researchPdfFixture(quote),url='https://example.org/whitepaper.pdf'
+ assert.ok(bytes.length<2000)
+ assert.equal(await extractPdfText(bytes),quote)
+ const candidate={url,title:'Original whitepaper',quote,sourceType:'primary'}
+ const read=async()=>({url,body:bytes,bytes:bytes.length,mediaType:'application/pdf'})
+ const source=await verifySource(candidate,{read})
+ assert.equal(source.format,'pdf');assert.equal(source.quote,quote)
+ assert.equal(source.sha256,createHash('sha256').update(bytes).digest('hex'))
+ const state=create({topic});state.sources=[{...source,id:'S1',engines:['claude']}]
+ assert.equal(describe(state).evidence[0].format,'pdf')
+ await assert.rejects(verifySource({...candidate,quote:'This sentence does not exist in the independent research PDF.'},{read}),/未找到/)
+ await assert.rejects(extractPdfText(Buffer.from('not a PDF')),/PDF 文件头/)
+ await assert.rejects(extractPdfText(Buffer.alloc(8*1024*1024+1)),/8 MiB/)
+ await assert.rejects(extractPdfText(researchPdfFixture('')),/可提取文字/)
 })
 test('public progress exposes real counts and no private prompts, results or user material',()=>{
  const state=create({topic});state.phase='research';state.tasks={one:{status:'completed',title:'Source search',employeeId:'worker',engine:'codex',prompt:'SECRET_TASK_PROMPT',result:{internal:'PRIVATE_RAW_RESULT'}},two:{status:'running',employeeId:'other',engine:'claude'}}
