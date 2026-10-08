@@ -15,7 +15,7 @@ Engine 定义用户输入、领域流程、界面和可验证的交付结果；I
 ```text
 Aexus/
 ├── Engine/                   每个一级子目录对应一个业务应用
-│   ├── deep-research/        可拖拽加载的空白引擎外壳（历史任务由 Infra Plan 管理）
+│   ├── deep-research/        动态团队与 DAG 研究、独立原文核验和引用报告
 │   ├── profile-improvement/  简历与岗位匹配、Word 模板修改
 │   ├── PPT-maker/            演示文稿制作、编辑与 PPTX 导出
 │   └── workspace-audit/      可运行的只读参考 Engine
@@ -28,6 +28,8 @@ Aexus/
 ```
 
 `Infra/src/main` 是唯一的核心业务实现；`shared` 是 Infra 内部类型和命令定义；`renderer`、`preload` 是展示与桌面接入；`cli` 是终端入口；`test`、`tooling`、`docs`、`resources`、`tunnel` 分别放测试、构建工具、内部文档、资源和远端协议。生成输出统一到 `.aexus/out`，不把第二份实现放回项目根目录。
+
+Deep Research 的当前用法、证据与交付边界见 [引擎说明](Engine/deep-research/README.md)；旧发布记录保留对应版本的历史行为。
 
 **业务 Engine 与 Coding Agent 适配器不同。** Codex、Claude Code、Cline、Pi 留在 `Infra/src/main/engines`，继续执行员工的原生会话。`Engine/*` 是面向最终用户的领域软件。
 
