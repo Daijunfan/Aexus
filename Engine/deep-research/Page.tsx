@@ -15,6 +15,7 @@ import { ReportView } from "./ReportView";
 import {
   activityLabel,
   displayStatus,
+  independentlyRead,
   labelFor,
   safeUrl,
   sourceHost,
@@ -432,12 +433,10 @@ export default function Page({ client }: { client: ContractClient }) {
       nodes.filter((node) => node.status === "completed").length,
     totalTasks = progress.totalTasks ?? progress.total ?? nodes.length;
   const sourceCount = progress.sources?.collected ?? sources.length,
-    readCount =
-      progress.sources?.read ??
-      sources.filter((source) => source.acquisition?.status === "read").length,
-    verifiedCount =
-      progress.sources?.verified ??
-      sources.filter((source) => source.verified).length;
+    readCount = sources.filter(independentlyRead).length,
+    verifiedCount = sources.filter(
+      (source) => independentlyRead(source) && source.verified,
+    ).length;
   const domains = new Set(
     sources.map((source) => sourceHost(source.url)).filter(Boolean),
   ).size;
@@ -1243,7 +1242,7 @@ export default function Page({ client }: { client: ContractClient }) {
                                   {source.title}
                                   <small>
                                     {sourceHost(source.url)} ·{" "}
-                                    {source.acquisition?.status === "read"
+                                    {independentlyRead(source)
                                       ? "已读取"
                                       : "待获取正文"}
                                   </small>
@@ -1465,8 +1464,12 @@ export default function Page({ client }: { client: ContractClient }) {
                         .map((source) => (
                           <details className="dr-task-evidence" key={source.id}>
                             <summary>{source.title}</summary>
-                            {source.acquisition?.excerpt &&
-                              evidence([source.acquisition])}
+                            {evidence(
+                              source.acquisition?.excerpts ??
+                                (source.acquisition?.excerpt
+                                  ? [source.acquisition]
+                                  : []),
+                            )}
                           </details>
                         ))}
                     </div>

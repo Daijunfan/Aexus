@@ -41,8 +41,20 @@ export type ResearchSource = {
   summary?: string;
   verified: boolean;
   verificationNotes?: string;
-  acquisition?: EvidenceExcerpt & { status: string };
-  extractedClaims?: (EvidenceExcerpt & { text: string })[];
+  acquisition?: {
+    status: string;
+    method?: string;
+    excerpt?: string;
+    locator?: string;
+    reason?: string;
+    excerpts?: (EvidenceExcerpt & {
+      sha256: string;
+      accessedAt: number;
+      finalUrl: string;
+      mediaType?: string;
+    })[];
+    rejections?: (EvidenceExcerpt & { reason: string; nodeId?: string })[];
+  };
 };
 export type ResearchReport = {
   title: string;
@@ -63,6 +75,22 @@ export type ResearchFinding = {
   sourceIds: string[];
   evidence?: EvidenceExcerpt[];
 };
+export const independentlyRead = (source: ResearchSource) =>
+  source.acquisition?.status === "read" &&
+  source.acquisition.method === "independent-http" &&
+  !!source.acquisition.excerpts?.length;
+export function acquisitionLabel(source: ResearchSource) {
+  if (independentlyRead(source))
+    return source.acquisition?.rejections?.length
+      ? `已独立读取 · ${source.acquisition.rejections.length} 片段未通过`
+      : source.verified
+        ? "已核验"
+        : "已读取 · 待核验";
+  if (source.acquisition?.status === "unavailable") return "无法读取";
+  if (source.acquisition?.status === "read" || source.verified)
+    return "历史来源 · 未独立验证";
+  return "已发现 · 待读取";
+}
 const LABELS: Record<string, string> = {
   pending: "待执行",
   prepared: "待执行",

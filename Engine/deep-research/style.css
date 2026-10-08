@@ -896,6 +896,26 @@
   padding: 12px;
   margin: 12px -12px;
 }
+.dr-acquisition-status {
+  border-top: 1px solid var(--dr-border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+.dr-acquisition-status details {
+  margin-top: 10px;
+  font-size: 11px;
+}
+.dr-acquisition-status summary {
+  cursor: pointer;
+  color: var(--dr-muted);
+}
+.dr-acquisition-metadata dl {
+  font-size: 10px;
+  grid-template-columns: 58px minmax(0, 1fr);
+}
+.dr-acquisition-metadata dd {
+  overflow-wrap: anywhere;
+}
 .dr-approval .codicon {
   color: var(--dr-green);
 }

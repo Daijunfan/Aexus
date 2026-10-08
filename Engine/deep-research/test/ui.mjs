@@ -8,6 +8,7 @@ import { build } from "esbuild";
 import { chromium } from "playwright";
 import { create, describe, respond } from "../model.mjs";
 import { amend } from "../runtime.mjs";
+import { acquireSources } from "../source-read.mjs";
 import { normalizeNodes } from "../graph.mjs";
 import {
   normalizeVerification,
@@ -73,6 +74,32 @@ const acquisition = JSON.parse(
   ),
 );
 const { sources, findings, report } = acquisition.reportState;
+const historicalSource = structuredClone(sources[0]);
+for (const source of sources) {
+  const record = acquisition.sources.find(
+    (record) => record.sourceId === source.id,
+  );
+  const data = await fs.readFile(
+    path.resolve(
+      out,
+      "../deep-research-independent/real-sources",
+      record.name + ".txt",
+    ),
+  );
+  const [checked] = await acquireSources({ sources: [] }, [source], {
+    read: async (url) => ({
+      url,
+      data,
+      body: data.toString("utf8"),
+      mediaType: "text/plain",
+      accessedAt: Date.parse(record.accessedAt),
+    }),
+  });
+  source.acquisition = {
+    ...checked.acquisition,
+    provenance: source.acquisition.provenance,
+  };
+}
 report.sections[0].content += `\n\n| 维度 | 直接证据 |\n| --- | --- |\n| 调度 | asyncio.gather 等待研究任务 |\n\n[1](#${sources[0].id})`;
 const longState = create({
   topic: "公开研究引擎源码与文档：20 项直接证据",
@@ -98,14 +125,32 @@ for (const [index, source] of longState.sources.entries()) {
   );
   const text = bytes.toString("utf8"),
     lines = text.split("\n");
-  source.acquisition.excerpt = text;
-  source.acquisition.locator = `Raw source lines 1-${lines.length}`;
   const claims = lineNumbers[index].map((number) => ({
     text: `${source.title} 第 ${number} 行直接记载：${lines[number - 1].trim()}`,
     excerpt: lines[number - 1].trim(),
     locator: `Raw source line ${number}`,
     confidence: 1,
   }));
+  const fragments = await acquireSources(
+    { sources: [] },
+    claims.map((claim) => ({
+      ...source,
+      acquisition: { excerpt: claim.excerpt, locator: claim.locator },
+    })),
+    {
+      read: async (url) => ({
+        url,
+        data: bytes,
+        body: text,
+        mediaType: "text/plain",
+      }),
+    },
+  );
+  source.acquisition = {
+    status: "read",
+    method: "independent-http",
+    excerpts: fragments.flatMap((fragment) => fragment.acquisition.excerpts),
+  };
   mergeVerification(
     longState,
     normalizeVerification(
@@ -784,12 +829,106 @@ try {
     .getByRole("heading", { name: sources[0].title })
     .waitFor();
   await page
-    .getByText(sources[0].acquisition.excerpt, { exact: true })
+    .getByText(sources[0].acquisition.excerpts[0].excerpt, { exact: true })
     .first()
     .waitFor();
   await screen("05-citation-evidence");
   checks.push(
     "report Markdown table and citation navigate to supporting quote with locator",
+  );
+  const sourceBeforeProofAudit = structuredClone(sources[0]);
+  const firstProof = sources[0].acquisition.excerpts[0];
+  const record = acquisition.sources[0];
+  const data = await fs.readFile(
+    path.resolve(
+      out,
+      "../deep-research-independent/real-sources",
+      record.name + ".txt",
+    ),
+  );
+  const secondExcerpt =
+    "allowed_conduct_research_calls = conduct_research_calls[:configurable.max_concurrent_research_units]";
+  const [second] = await acquireSources(
+    { sources: [] },
+    [
+      {
+        ...sources[0],
+        acquisition: { excerpt: secondExcerpt, locator: "Raw source line 291" },
+      },
+    ],
+    { read: async (url) => ({ url, data, mediaType: "text/plain" }) },
+  );
+  const [rejected] = await acquireSources(
+    { sources: [] },
+    [
+      {
+        ...sources[0],
+        acquisition: {
+          excerpt:
+            "This fabricated passage is absent from the acquired document.",
+          locator: "Fabricated location",
+        },
+      },
+    ],
+    { read: async (url) => ({ url, data, mediaType: "text/plain" }) },
+  );
+  sources[0].acquisition.excerpts.push(...second.acquisition.excerpts);
+  sources[0].acquisition.rejections = rejected.acquisition.rejections;
+  update("running", "research", { sources: structuredClone(sources) });
+  await page.waitForFunction(
+    (revision) =>
+      document.querySelector(".dr-app")?.dataset.revision === String(revision),
+    job.revision,
+  );
+  const sourceDetail = page.getByRole("complementary", {
+    name: "来源详情",
+    exact: true,
+  });
+  await sourceDetail
+    .getByText("已独立获取原文并匹配引用片段", { exact: true })
+    .waitFor();
+  await sourceDetail.getByText("已读取原文", { exact: true }).click();
+  await sourceDetail.getByText(secondExcerpt, { exact: true }).waitFor();
+  await sourceDetail
+    .getByText("片段未通过核对 · 提交位置：Fabricated location", {
+      exact: true,
+    })
+    .click();
+  await sourceDetail
+    .getByText(rejected.acquisition.rejections[0].reason, { exact: true })
+    .waitFor();
+  await screen("05i-independent-proof-and-rejection");
+  await sourceDetail.getByText("获取记录", { exact: true }).click();
+  assert.equal(
+    await sourceDetail.locator(".dr-acquisition-metadata code").count(),
+    2,
+  );
+  update("running", "research", {
+    sources: [historicalSource, sources[1], sources[2]],
+  });
+  await sourceDetail
+    .getByText("历史来源 · 未独立验证", { exact: true })
+    .waitFor();
+  assert.equal(
+    await sourceDetail.locator(".dr-acquisition-metadata").count(),
+    0,
+  );
+  await screen("05j-historical-source");
+  update("running", "research", {
+    sources: [{ ...rejected, verified: false }, sources[1], sources[2]],
+  });
+  await sourceDetail.getByText("无法读取", { exact: true }).waitFor();
+  assert.equal(
+    await sourceDetail
+      .getByText("已独立获取原文并匹配引用片段", { exact: true })
+      .count(),
+    0,
+  );
+  await screen("05k-unavailable-source");
+  sources[0] = sourceBeforeProofAudit;
+  update("running", "research", { sources, findings, report });
+  checks.push(
+    "canonical independently matched fragments retain separate locators and hashes; rejected fragment reason remains visible, and historical flags cannot claim independent reading",
   );
   update("running", "research", {
     sources: longState.sources,
@@ -823,6 +962,7 @@ try {
     .waitFor();
   await page
     .getByText(longState.findings.at(-1).evidence[0].locator, { exact: true })
+    .last()
     .waitFor();
   assert.equal(
     await page.locator(".dr-source-detail details[open]").count(),
@@ -1091,6 +1231,8 @@ try {
         modelCalls: 0,
         independentSources: acquisition.sources.length,
         acquiredContentUsed: true,
+        sourceReadTransport:
+          "HTTP fixture using independently GET-acquired archival bytes; actual acquireSources matching and hashing",
         findings: longState.findings.length,
         productionDataUsed: false,
       },

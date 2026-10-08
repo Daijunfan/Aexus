@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   safeUrl,
+  independentlyRead,
+  acquisitionLabel,
   sourceHost,
   type EvidenceExcerpt,
   type ResearchSource,
@@ -29,6 +31,16 @@ export function SourcePanel({
   const claims = findings.filter((finding) =>
     finding.sourceIds.includes(selected?.id ?? ""),
   );
+  const excerpts =
+    selected?.acquisition?.excerpts ??
+    (selected?.acquisition?.excerpt
+      ? [
+          {
+            excerpt: selected.acquisition.excerpt,
+            locator: selected.acquisition.locator,
+          },
+        ]
+      : []);
   useLayoutEffect(() => {
     const area = detail.current;
     const claim = area?.querySelector<HTMLElement>(".dr-linked-claim");
@@ -75,13 +87,16 @@ export function SourcePanel({
                 <small>
                   {sourceHost(source.url) || source.type}
                   <span
-                    className={"dr-verified " + (source.verified ? "yes" : "")}
+                    className={
+                      "dr-verified " +
+                      (source.verified &&
+                      independentlyRead(source) &&
+                      !source.acquisition?.rejections?.length
+                        ? "yes"
+                        : "")
+                    }
                   >
-                    {source.verified
-                      ? "已核验"
-                      : source.acquisition?.status === "read"
-                        ? "已读取 · 待核验"
-                        : "已发现 · 待读取"}
+                    {acquisitionLabel(source)}
                   </span>
                 </small>
                 <strong>{source.title}</strong>
@@ -127,6 +142,56 @@ export function SourcePanel({
               {sourceHost(selected.url) || selected.type}
             </small>
             <h3>{selected.title}</h3>
+            <section className="dr-acquisition-status">
+              <h4>{acquisitionLabel(selected)}</h4>
+              <p>
+                {independentlyRead(selected)
+                  ? "已独立获取原文并匹配引用片段"
+                  : "尚未取得可独立验证的原文"}
+              </p>
+              {selected.acquisition?.reason && (
+                <p>{selected.acquisition.reason}</p>
+              )}
+              {selected.acquisition?.rejections?.map((item, index) => (
+                <details key={index}>
+                  <summary>
+                    片段未通过核对
+                    {item.locator ? " · 提交位置：" + item.locator : ""}
+                  </summary>
+                  <p>{item.reason}</p>
+                  {renderEvidence([{ excerpt: item.excerpt }])}
+                </details>
+              ))}
+              {independentlyRead(selected) && (
+                <details className="dr-acquisition-metadata">
+                  <summary>获取记录</summary>
+                  {selected.acquisition!.excerpts!.map((item, index) => (
+                    <dl key={index}>
+                      <dt>原文位置</dt>
+                      <dd>{item.locator || "未标注"}</dd>
+                      <dt>获取时间</dt>
+                      <dd>
+                        {new Date(item.accessedAt).toLocaleString("zh-CN")}
+                      </dd>
+                      <dt>最终链接</dt>
+                      <dd>
+                        <a
+                          href={safeUrl(item.finalUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {item.finalUrl}
+                        </a>
+                      </dd>
+                      <dt>内容指纹</dt>
+                      <dd>
+                        <code>{item.sha256}</code>
+                      </dd>
+                    </dl>
+                  ))}
+                </details>
+              )}
+            </section>
             {safeUrl(selected.url) && (
               <a
                 className="dr-source-link"
@@ -148,21 +213,22 @@ export function SourcePanel({
                 <p>{selected.verificationNotes}</p>
               </section>
             )}
-            {selected.acquisition?.excerpt &&
+            {excerpts.length > 0 &&
               !claims.some((finding) =>
                 finding.evidence?.some(
                   (item) =>
                     item.sourceId === selected.id &&
-                    item.excerpt === selected.acquisition?.excerpt,
+                    excerpts.length === 1 &&
+                    item.excerpt === excerpts[0].excerpt,
                 ),
               ) && (
                 <details>
                   <summary>
-                    {selected.acquisition.status === "read"
+                    {independentlyRead(selected)
                       ? "已读取原文"
-                      : "已发现片段 · 尚未读取"}
+                      : "历史片段 · 未独立验证"}
                   </summary>
-                  {renderEvidence([selected.acquisition])}
+                  {renderEvidence(excerpts)}
                 </details>
               )}
             {claims.length > 0 && (
