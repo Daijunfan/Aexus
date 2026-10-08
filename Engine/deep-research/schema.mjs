@@ -242,6 +242,7 @@ export function normalizePlanResponse(rawResponse) {
   // Extract dimensions from various possible field names and nesting levels
   let dimensionsArray = rawResponse.dimensions
     || rawResponse.researchDimensions
+    || rawResponse.research_dimensions
     || rawResponse.investigationDimensions;
 
   // Check nested structures
@@ -284,8 +285,11 @@ export function normalizePlanResponse(rawResponse) {
       if (dim.query && typeof dim.query === 'string') {
         query = dim.query;
       } else if (dim.keyQuestions && Array.isArray(dim.keyQuestions) && dim.keyQuestions.length > 0) {
-        // Use first question from keyQuestions array
+        // Use first question from keyQuestions array (camelCase)
         query = String(dim.keyQuestions[0]);
+      } else if (dim.key_questions && Array.isArray(dim.key_questions) && dim.key_questions.length > 0) {
+        // Use first question from key_questions array (snake_case)
+        query = String(dim.key_questions[0]);
       } else if (dim.questions && Array.isArray(dim.questions) && dim.questions.length > 0) {
         // Use first question from questions array
         query = String(dim.questions[0]);
@@ -298,7 +302,7 @@ export function normalizePlanResponse(rawResponse) {
         throw new Error(
           `维度 ${index} 缺少有效的查询字符串。` +
           `\n收到的字段: ${Object.keys(dim).join(', ')}` +
-          `\n请提供 'query' 字段（字符串），或 'keyQuestions' 数组，或 'questions' 数组，或 'name' 字段。`
+          `\n请提供 'query' 字段（字符串），或 'keyQuestions'/'key_questions' 数组，或 'questions' 数组，或 'name' 字段。`
         );
       }
 
