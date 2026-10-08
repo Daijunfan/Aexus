@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { create, describe, respond, run, retry, cancel, pause, amend } from '../runtime.mjs';
-import { upgradeState } from '../model.mjs';
+import { upgradeState, parseAnswer } from '../model.mjs';
 import { normalizeSources } from '../evidence.mjs';
 import { applyPlan, normalizeNodes, planProgress } from '../graph.mjs';
 import { ask } from '../agents.mjs';
+import { generateArtifacts } from '../reports.mjs';
 
 const source = (name = 'seed') => ({ title: name, url: 'https://' + name + '.example/research', acquisition: { status: 'read', excerpt: name + ' actual retrieved body demonstrates the result.', locator: 'Results' } });
 const team = [
@@ -462,4 +463,23 @@ test('one Manager revision blocks auto-approval even when another passes, and a 
   assert.equal(done.status, 'completed'); assert.equal(done.state.graph.version, 2);
   assert.equal(f.calls.filter(c => c.task?.kind === 'plan-review').length, 4);
   assert.equal(done.state.managerReviews.filter(r => r.planVersion === 2 && !r.stage).length, 2);
+});
+
+test('HTML exports render GFM structure while keeping untrusted HTML and unsafe links inert', async () => {
+  const content = '| Evidence | State |\n| --- | --- |\n| Original source | Read |\n\n- First finding\n- Second finding\n\n1. Check source\n2. Verify quote\n\n```js\nconst source = "read";\n```\n\n> A quoted conclusion\n\n<script>alert(1)</script>\n\n[unsafe](javascript:alert(1))';
+  const f = fixture({ respond: task => task.kind === 'write' ? { report: { title: 'Structured Markdown report', sections: [{ heading: 'Evidence formats', content, citations: task.payload.sources.filter(s => s.verified).map(s => s.id) }] } } : undefined });
+  const done = await run(create({ topic: 'Final HTML preserves report Markdown structure safely', autoApprove: true }), f.ctx);
+  const html = generateArtifacts(done.state).find(a => a.name === 'research-report.html').content;
+  for (const element of ['<table>', '<th>Evidence</th>', '<td>Original source</td>', '<ul>', '<ol>', '<pre><code', '<blockquote>']) assert.ok(html.includes(element), element + ' must render as structure');
+  assert.ok(!html.includes('<script>')); assert.ok(!html.includes('href="javascript:'));
+  assert.ok(html.includes('&lt;script&gt;'));
+  assert.equal(generateArtifacts(done.state).find(a => a.name === 'research-report.md').content.includes(content), true);
+});
+
+test('JSON report bodies retain inner code fences and complete JSON wrappers remain supported', () => {
+  const result = { taskId: 'code-report', report: { sections: [{ content: '```mermaid\ngraph LR\nA-->B\n```' }] } };
+  const raw = JSON.stringify(result);
+  assert.deepEqual(parseAnswer(raw, 'code-report'), result);
+  assert.deepEqual(parseAnswer('```json\n' + raw + '\n```', 'code-report'), result);
+  assert.deepEqual(parseAnswer('Result:\n```json\n' + raw + '\n```\nEnd.', 'code-report'), result);
 });

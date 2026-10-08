@@ -142,7 +142,7 @@ export function retry(state) {
 
 export function parseAnswer(text, taskId) {
   if (typeof text !== 'string' || text.length > 500000) throw Error('Agent 回复大小无效');
-  const block = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/i);
+  const block = text.trim().startsWith('{') ? null : text.match(/```(?:json)?\s*\n?([\s\S]*)\n?```/i);
   const raw = (block?.[1] || text).trim();
   let value;
   try { value = JSON.parse(raw); } catch { throw Error('Agent 没有返回完整 JSON'); }
