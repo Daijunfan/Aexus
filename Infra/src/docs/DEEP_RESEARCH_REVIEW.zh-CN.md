@@ -4,7 +4,7 @@
 
 ## 2026-10-09 输入与历史布局修复
 
-- 删除左侧历史栏及其样式；全部研究记录统一放在输入区下方，研究页提供返回首页入口。
+- 删除左侧历史栏及其样式；研究记录统一放在输入区下方并按需分页，研究页提供返回首页入口。
 - 研究主题不再要求至少十个字符；非空短问题即可提交，来源预算允许降到 1。快速模式未手动改预算时，最多 6 个来源、4 名员工、2 项并发、16 个计划节点和 1 次重规划；手动输入优先。
 - CLI 启动隔离 Core，使用实际 Codex 模型，只研究 `https://example.com/` 一页，限制最多 2 名员工、1 个来源、4 个计划任务、0 次重规划、200 字报告。真实 scout → plan → verify → write → review 完成并交付五个文件。
 - 重启 CLI Core 后，任务仍为 completed；CLI 下载 HTML 的 SHA256 与原交付一致，没有重复模型请求。真实证据记录：[verification.json](../../../.aexus/artifacts/deep-research-fix/live-1791509850839/verification.json)、[CLI 下载与恢复](../../../.aexus/artifacts/deep-research-fix/live-1791509850839/cli-delivery.json)。
@@ -37,7 +37,7 @@
 | 员工与 Manager 数量动态 | 初调研后由计划产生团队、分支责任及管理关系；并发上限独立于团队人数。真实 runtime fixture 验证多个 Manager、意见冲突和变更后重新审核。 | 真实模型对不同复杂度主题的扩编决策质量。 |
 | 先调研再规划，不虚构初始进度 | scout/plan 没有固定百分比或 ETA；计划形成后，DAG、任务状态与进度来自同一持久状态。失败与停止不计作成功。 | 开放式真实任务的时间预测，本轮不提供此承诺。 |
 | 任意 DAG 与中途重规划 | 支持分叉汇合、多父、跨层、共享综合结果和 ready 节点并行；慢独立分支不阻塞无关工作。修订保留已完成任务、证据、旧计划及原因，目标变化使用新节点 ID。 | 所有可能拓扑和真实提供商恢复情形均已覆盖。 |
-| 丰富且简单的可视化 | 云形节点、LR/TB 方向、适配、缩放、邻域聚焦、详情与历史；连线接到云轮廓，运行、完成和失败状态仍可辨。支持审批、调整方向、暂停、继续、取消与必要重试。19 项 Chromium 检查覆盖 48 节点、36 同层/36 深层、1440/768/390、长报告、暗主题和停止状态。 | 主观“最佳视觉”；48 节点验收不冒充全部规模无性能限制。 |
+| 丰富且简单的可视化 | 云形节点、LR/TB 方向、适配、缩放、邻域聚焦、详情与分页历史；连线接到云轮廓，运行、完成和失败状态仍可辨。支持审批、调整方向、暂停、继续、取消与必要重试。21 项 Chromium 检查覆盖 48 节点、36 同层/36 深层、1440/768/390、65 条历史、长报告、暗主题和停止状态。 | 主观“最佳视觉”；48 节点验收不冒充全部规模无性能限制。 |
 | 广泛来源与可信引用 | 引擎独立读取公开 HTML/文本/PDF，逐片段匹配原文，保存真实 URL、时间、原文 SHA256 和 locator；拒绝虚构片段、未知来源和仅搜索摘要。冲突论断在发现页优先展示，可分别定位双方原文。 | 原文匹配不自动证明语义蕴涵；单来源真实任务已完成，不能据此承诺每个主题的来源广度。 |
 | 内容详实与真实交付 | 报告、来源和论断互相定位；Host 发布 HTML、Markdown、来源 CSV、证据 JSON、计划 JSON 五份真实文件。独立研究语料通过当前证据门槛，含 17 来源、28 论断、10 章；键盘引用、定位及返回报告通过。 | 该语料是原生 Agent 成果经引擎验证，非应用自动研究输出；当前没有 PDF/Word 导出、OCR 或报告 Mermaid 渲染。 |
 | 清晰边界、精简与性能 | Host 负责权限、身份、生命周期、持久化与发布；Engine 经公开 Contract 调用 Host，UI 消费 canonical 投影。删除固定模板、重复 claim 存储、完整提示和产物正文副本；完成检查点可重新发布相同字节及哈希而不重做研究。 | 不以模拟数据或不含 fsync 的计时宣称生产性能已“极致”。 |
@@ -59,7 +59,7 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 测试使用真实领域/runtime/Host 模块，原生传输、授权和测试原文读取明确使用 fixture，无模型与生产数据。[Host 恢复证据](../../../.aexus/artifacts/deep-research-independent/host.json)包含 pause/amend/resume、重启保留审批、review 驱动重规划，以及最终文件重放不重复派发。退休 Web Demo 直接退出，不再监听或触发研究；诊断工具显示实际 DAG 和失败/暂停/取消状态。
 
-[UI 19 项记录](../../../.aexus/artifacts/deep-research-ui/verification.json)和[独立长报告阅读](../../../.aexus/artifacts/deep-research-independent/reading-ui/corpus-verification.json)保留截图与交互证据；[独立语料验证](../../../.aexus/artifacts/deep-research-independent/research-corpus/independent-proof/validation.json)明确区分实际 GET 原文、匹配论断及历史工具摘录，不能把后者算成独立 HTTP 取证。
+[UI 21 项记录](../../../.aexus/artifacts/deep-research-ui/verification.json)和[独立长报告阅读](../../../.aexus/artifacts/deep-research-independent/reading-ui/corpus-verification.json)保留截图与交互证据；[独立语料验证](../../../.aexus/artifacts/deep-research-independent/research-corpus/independent-proof/validation.json)明确区分实际 GET 原文、匹配论断及历史工具摘录，不能把后者算成独立 HTTP 取证。
 
 原工作区 `aexus-boundaries-test.mjs` 因既有三份 tracked 根 Markdown 不符合目录白名单失败；用户文件与 package 修改已保留。在隔离副本只补 HEAD 的 build 元数据、排除这三份文档后，原脚本 7 项通过并扫描 93 个 Engine/Contract 源文件无跨层依赖。两种结果见[边界证据](../../../.aexus/artifacts/deep-research-independent/isolated-boundaries.json)；隔离通过不代表原工作区布局检查通过。
 
