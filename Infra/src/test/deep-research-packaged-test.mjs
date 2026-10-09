@@ -115,7 +115,7 @@ try {
     const [checked] = await source.acquireSources({sources: []}, [{id: 'w3c', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', acquisition: {excerpt: 'Dummy PDF file', locator: 'Agent claimed page 999'}}], {read: async url => ({url, data, mediaType: 'application/pdf'})})
     const pdfRoot = archive + '.unpacked/Engine/deep-research/node_modules/pdfjs-dist/'
     const pdfResources = ['legacy/build/pdf.worker.mjs', 'standard_fonts', 'cmaps', 'wasm'].map(name => ({name, exists: fs.existsSync(pdfRoot + name)}))
-    return {methods: ['create', 'describe', 'respond', 'run', 'pause', 'cancel'].every(key => typeof module[key] === 'function'), phase: summary.phase, progress: summary.progress, employeeCount: state.workers.length, gfmTable: html.includes('<table>'), gfmList: html.includes('<ul>'), dependencyPaths,
+    return {methods: ['create', 'describe', 'respond', 'run', 'fork', 'pause', 'cancel'].every(key => typeof module[key] === 'function'), phase: summary.phase, progress: summary.progress, employeeCount: state.workers.length, gfmTable: html.includes('<table>'), gfmList: html.includes('<ul>'), dependencyPaths,
       pdf: {status: checked.acquisition.status, proof: checked.acquisition.excerpts?.[0], resources: pdfResources}}
   }, {archive, dependencies: privateDependencies.map(d => d.name), pdfFixture})
   assert.equal(imported.methods, true); assert.equal(imported.phase, 'init'); assert.equal(imported.progress.percent, null); assert.equal(imported.employeeCount, 0)
@@ -133,6 +133,10 @@ try {
   await question.click()
   await page.keyboard.type('301')
   await expect(question).toHaveValue('301')
+  await expect(page.getByLabel('执行引擎')).toHaveValue('')
+  await expect(page.getByRole('button', {name: '开始研究', exact: true})).toBeDisabled()
+  await page.getByLabel('执行引擎').selectOption('codex')
+  await expect(page.getByText('使用 Codex 当前登录账号的模型额度。', {exact: true})).toBeVisible()
   await expect(page.getByRole('button', {name: '开始研究', exact: true})).toBeEnabled()
   const questionBox = await question.boundingBox(), historyBox = await page.getByRole('region', {name: '研究记录'}).boundingBox()
   assert.ok(historyBox.y > questionBox.y + questionBox.height, 'Research history belongs below the input')
@@ -160,7 +164,7 @@ try {
   assert.ok(await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows().every(w => !w.isVisible())))
   assert.ok(!fs.existsSync(marker), 'No engine executable may run during this candidate smoke test')
   assert.equal(hash(packageFile), before, 'User package.json must remain unchanged')
-  const proof = {passed: true, version: packaged.version, engineVersion: manifest.version, application: appPath, asarSha256: hash(archive), asarBytes: fs.statSync(archive).size, installed: !!installedTarget, buildConfig: 'HEAD package.json build field, explicit private output; current package metadata copied unchanged', sourcePackageSha256: before, engineFingerprint: coreFingerprint, changedEngineSnapshot, candidateEngineLockSha256: hash(candidateLock), privateDependencies, pdf: imported.pdf, rendererInput: 'Fresh electron-vite release build before candidate staging; verify-only preserves the already-built candidate', buildEvidence, rendererFiles, checkedAgainstHead: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), checks: ['real ASAR runtime dynamic import', 'locked dependencies in private Engine directory', 'actual packaged GFM table and list export', 'actual packaged PDF page text and public raw fingerprint', 'physically unpacked private PDF worker/resources', 'safe create/describe without workers', 'hidden packaged launcher loads Deep Research', 'empty isolated sessions/workflows', 'no engine executable invoked'], errors, modelCalls: 0, agentProcesses: 0, productionDataUsed: false}
+  const proof = {passed: true, version: packaged.version, engineVersion: manifest.version, application: appPath, asarSha256: hash(archive), asarBytes: fs.statSync(archive).size, installed: !!installedTarget, buildConfig: 'HEAD package.json build field, explicit private output; current package metadata copied unchanged', sourcePackageSha256: before, engineFingerprint: coreFingerprint, changedEngineSnapshot, candidateEngineLockSha256: hash(candidateLock), privateDependencies, pdf: imported.pdf, rendererInput: 'Fresh electron-vite release build before candidate staging; verify-only preserves the already-built candidate', buildEvidence, rendererFiles, checkedAgainstHead: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(), checks: ['real ASAR runtime dynamic import and fork hook', 'locked dependencies in private Engine directory', 'actual packaged GFM table and list export', 'actual packaged PDF page text and public raw fingerprint', 'physically unpacked private PDF worker/resources', 'safe create/describe without workers', 'hidden packaged launcher loads Deep Research', 'explicit engine choice before account-backed generation', 'empty isolated sessions/workflows', 'no engine executable invoked'], errors, modelCalls: 0, agentProcesses: 0, productionDataUsed: false}
   fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify(proof, null, 2) + '\n')
   console.log(JSON.stringify(proof, null, 2))
 } finally {await app?.close(); fs.rmSync(temp, {recursive: true, force: true})}
