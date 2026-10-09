@@ -141,6 +141,16 @@ test('native tools are reserved for discovery while evidence and report stages u
   }
 });
 
+test('unverified scout summaries never enter evidence analysis prompts', async () => {
+  const f = fixture({respond: task => task.kind === 'scout' ? {sources: [{...source(), snippet: 'Unverified claim about the page'}]} : undefined});
+  const done = await run(create({topic: 'Separate scout context from verified evidence', autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.equal(done.state.sources[0].snippet, 'Unverified claim about the page');
+  for (const call of f.calls.filter(item => ['verify', 'synthesize', 'write', 'review'].includes(item.task?.kind))) {
+    assert.ok(call.task.payload.sources.every(source => !('snippet' in source) && !('summary' in source)), call.task.kind + ' must use the independent proof and verified findings');
+  }
+});
+
 test('oversized teams receive the exact headcount and role-reuse correction', () => {
   const oversized = plan();
   oversized.team = team.filter(member => ['coordinator', 'r1', 'writer'].includes(member.id));

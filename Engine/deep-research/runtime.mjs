@@ -173,7 +173,7 @@ async function executeNode(state, ctx, node) {
       node.inputSourceIds = state.sources.filter(s => available.has(s.id) && (!node.payload.sourceIds || node.payload.sourceIds.includes(s.id)) && (node.kind !== 'verify' || !s.verified)).map(s => s.id);
     }
   }
-  const relevant = state.sources.filter(s => node.inputSourceIds.includes(s.id) && (node.kind !== 'verify' || isIndependentSource(s)));
+  const relevant = state.sources.filter(s => node.inputSourceIds.includes(s.id) && (node.kind !== 'verify' || isIndependentSource(s))).map(({snippet, summary, ...source}) => source);
   await ctx.checkpoint(state);
   const payload = {
     ...node.payload,
