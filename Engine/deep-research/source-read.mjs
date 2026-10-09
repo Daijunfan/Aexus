@@ -45,6 +45,15 @@ export function pageDocument(body) {
 }
 export const pageText = body => pageDocument(body).text;
 
+async function readWithRetry(read, url, signal) {
+  try { return await read(url, {signal}); }
+  catch (error) {
+    signal?.throwIfAborted();
+    if (!/超时|超过 20 秒|timed?\s*out/i.test(error.message)) throw error;
+    return read(url, {signal});
+  }
+}
+
 /** DNS is checked in the actual socket lookup, including each redirect. */
 export function readSource(value, {signal} = {}, redirects = 0) {
   const url = publicURL(value);
@@ -91,7 +100,7 @@ export function readSource(value, {signal} = {}, redirects = 0) {
 
 /** Give a scoped scout readable page text; citations still require acquireSources. */
 export async function previewSource(url, {signal, read = readSource, limit = 6000} = {}) {
-  const response = await read(publicURL(url), {signal});
+  const response = await readWithRetry(read, publicURL(url), signal);
   const data = response.data || Buffer.from(response.body || '', 'utf8');
   const pdf = isPdf(data) || response.mediaType === 'application/pdf';
   const document = !pdf && /html/.test(response.mediaType || '') ? pageDocument(data.toString('utf8')) : null;
@@ -116,7 +125,7 @@ export async function acquireSources(state, candidates, {signal, read = readSour
       if (!submitted) { results[at] = {...candidate, acquisition: {status: 'discovered', method: 'agent-reported', reason: '尚未提供需独立核对的原文片段'}}; continue; }
       try {
         const url = publicURL(candidate.url);
-        if (!cache.has(url)) cache.set(url, Promise.resolve().then(() => read(url, {signal})).then(async response => {
+        if (!cache.has(url)) cache.set(url, Promise.resolve().then(() => readWithRetry(read, url, signal)).then(async response => {
           const data = response.data || Buffer.from(response.body || '', 'utf8');
           const pdf = isPdf(data) || ['application/pdf', 'application/octet-stream', 'binary/octet-stream'].includes(response.mediaType);
           const body = pdf ? '' : data.toString('utf8');

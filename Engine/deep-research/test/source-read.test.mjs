@@ -30,6 +30,31 @@ test('bounded page previews expose readable text while source budgets reject oth
   assert.deepEqual(withinSourceBudget({sources: [], input: {maxSources: 1, sourceUrls: ['https://allowed.example/a']}}, candidates).map(source => source.url), ['https://allowed.example/a']);
 });
 
+test('preview and independent proof each retry one transient timeout, but not a permanent rejection', async () => {
+  let previews = 0;
+  const preview = await previewSource('https://evidence.example/article', {read: async url => {
+    if (++previews === 1) throw Error('资料读取超时');
+    return {url, mediaType: 'text/plain', body: 'One bounded original statement.'};
+  }});
+  assert.equal(previews, 2);
+  assert.match(preview.text, /bounded original/);
+  let reads = 0;
+  const sources = await acquireSources(state(), [candidate('One bounded original statement.'), candidate('bounded original')], {read: async url => {
+    if (++reads === 1) throw Error('资料读取超过 20 秒');
+    return {url, mediaType: 'text/plain', body: 'One bounded original statement.'};
+  }});
+  assert.equal(reads, 2, 'same-page excerpts share the bounded retry');
+  assert.ok(sources.every(source => source.acquisition.status === 'read'));
+  let rejected = 0;
+  await assert.rejects(previewSource('https://evidence.example/article', {read: async () => {rejected++; throw Error('资料请求返回 HTTP 403');}}), /403/);
+  assert.equal(rejected, 1);
+  const controller = new AbortController(); let cancelled = 0;
+  await assert.rejects(previewSource('https://evidence.example/article', {signal: controller.signal, read: async () => {
+    cancelled++; controller.abort(Error('owner stopped')); throw Error('资料读取超时');
+  }}), /owner stopped/);
+  assert.equal(cancelled, 1);
+});
+
 function pdfFixture(texts, width = 600) {
   const objects = ['<< /Type /Catalog /Pages 2 0 R >>', ''];
   const kids = [];
