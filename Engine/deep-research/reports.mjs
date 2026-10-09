@@ -5,7 +5,7 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { sourceView, isIndependentSource } from './evidence.mjs';
 
 const html = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const httpUrl = value => { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch { return ''; } };
+const httpUrl = value => { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : ''; } catch { return ''; } };
 const csv = value => '"' + String(value ?? '').replace(/^([\s]*[=+@-])/, "'$1").replace(/"/g, '""') + '"';
 const markdown = text => micromark(String(text ?? ''), { extensions: [gfm()], htmlExtensions: [gfmHtml()] });
 
@@ -21,7 +21,7 @@ export function generateArtifacts(state) {
   const references = report.citations.map((id, i) => ({ ...byId.get(id), number: i + 1 }));
   const numbered = new Map(references.map(s => [s.id, s.number]));
   const referenceHtml = references.map(s => {
-    const proof = s.acquisition?.excerpts?.[0], link = httpUrl(s.url), finalUrl = proof && httpUrl(proof.finalUrl);
+    const proof = isIndependentSource(s) ? s.acquisition.excerpts[0] : null, link = httpUrl(s.url), finalUrl = proof && httpUrl(proof.finalUrl);
     return `
 <li id="${html(s.id)}">
   <div class="reference-title">${link ? `<a href="${html(link)}" rel="noreferrer">${html(s.title)}</a>` : html(s.title)}</div>

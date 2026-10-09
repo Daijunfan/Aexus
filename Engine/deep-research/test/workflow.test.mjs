@@ -569,6 +569,13 @@ test('HTML exports render GFM structure while keeping untrusted HTML and unsafe 
   tampered.sources[0].url = 'javascript:alert(1)';
   tampered.sources[0].acquisition.excerpts[0].finalUrl = 'javascript:alert(2)';
   assert.ok(!generateArtifacts(tampered).find(a => a.name === 'research-report.html').content.includes('href="javascript:'));
+  tampered.sources[0].url = 'https://user:secret@example.org/original';
+  assert.ok(!generateArtifacts(tampered).find(a => a.name === 'research-report.html').content.includes('user:secret'));
+  const historical = structuredClone(done.state);
+  const downgraded = historical.sources.find(source => source.id === done.state.sources.find(source => source.verified).id);
+  downgraded.acquisition.method = 'agent-reported';
+  downgraded.verified = false;
+  assert.ok(!generateArtifacts(historical).find(a => a.name === 'research-report.html').content.includes(proof.sha256));
   assert.equal(generateArtifacts(done.state).find(a => a.name === 'research-report.md').content.includes(content), true);
 });
 
