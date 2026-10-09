@@ -25,6 +25,7 @@
 - 报告章节的每个来源 ID 都必须有该来源的已核验论断和独立取得的原文片段；一条有效引用不能让同章节另一条空引用通过。来源预算在网络读取前筛除超额新候选，已占名额的来源仍可追加已核对片段；单来源预算的初调研只下载一页。两项修复由先失败后通过的回归用例覆盖。
 - 来源 CSV 将可能被电子表格解释为公式的网页标题、原文等单元格转为文本；证据 JSON 仍保存精确原文。先失败后通过的导出回归用例覆盖此行为。
 - 重规划对已完成节点按实际任务内容与依赖集合比较；JSON 字段顺序或依赖书写顺序变化不再误判为改写。研究目标改变仍必须使用新节点 ID。
+- 来源名额已满时，预算筛选也按现有的规范化 URL 识别旧任务来源；旧 ID 与新 ID 不同的同一网页仍可更新证据，避免前置读取优化破坏历史任务恢复。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -49,7 +50,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/full-regression.log)为 98/98，通过命令：
+当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-4ca61bb/full-regression.log)为 99/99，通过命令：
 
 ```sh
 node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs

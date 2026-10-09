@@ -97,12 +97,12 @@
 | 范围 | 当前状态 | 说明 |
 | --- | --- | --- |
 | 公开竞品页面与上述关键源码 | 已核验 | 使用公开网页搜索与实际打开页面；未运行竞品。 |
-| Aexus 域模型与调度 | 独立 fixture 15/15 通过（2026-10-09） | `Infra/src/test/deep-research-independent-test.mjs` 覆盖真 fork/join、多父、共享节点、跨层依赖、慢分支隔离、单最终稿、取消迟到、格式重试、逐来源引用和预算内来源更新；不代表真实模型研究质量。 |
+| Aexus 域模型与调度 | 独立 fixture 16/16 通过（2026-10-09） | `Infra/src/test/deep-research-independent-test.mjs` 覆盖真 fork/join、多父、共享节点、跨层依赖、慢分支隔离、单最终稿、取消迟到、格式重试、逐来源引用，以及预算内的旧 URL 来源更新；不代表真实模型研究质量。 |
 | 持久恢复与用户调整 | 独立 Host fixture 3/3 通过（2026-10-09） | `deep-research-host-test.mjs` 使用真实 workflows/runtime 与临时存储，传输及授权为 stub；覆盖恢复、pause/amend/resume、review revise 后重新规划、停止状态和交付文件校验。 |
 | 真实公开资料与引用 | 当前独立取证门槛通过 | HTML/文本/PDF 独立取得原文、逐片段匹配并保存 locator、时间、最终 URL 与 SHA256；虚构片段不可进入核验或报告。原生研究语料经当前门槛保留 17 来源、28 论断、10 章，不是应用自动研究输出。 |
 | 来源、DAG 与报告阅读 | 当前浏览器路径通过 | UI 19 项检查覆盖 48 节点、36 同层/36 深层、3 尺寸、来源矛盾及双方定位、精确论断和报告滚动返回；独立长语料使用实际 Page/describe 验证键盘引用和嵌入阅读。 |
 | 真实多 Agent 应用研究 | 一个限定题目已完成 | 隔离 Core 经应用原生 Codex 传输完成 `example.com` 单页面研究：2 名员工、1 个来源、五份交付文件，重启后下载哈希一致；[原始验证](../../../.aexus/artifacts/deep-research-fix/live-1791509850839/verification.json)。随后两来源尝试遇提供商断流并主动取消，不计成功。尚无复杂主题、多站点及竞品同题实测，计费路由未独立核账。 |
 | macOS 构建、安装与隐藏恢复 | 当前源码构建并已安装 | [最新安装记录](../../../.aexus/artifacts/deep-research-fix/latest-installed.json)的 `buildHead` 指明运行时代码版本及安装证据路径；候选与实际安装包私有依赖/GFM/PDF/3 尺寸验收通过。正常退出、项目安装器和隐藏恢复保留原 80 员工、17 workflow 与根状态哈希，窗口隐藏，安装验收没有发送模型任务。 |
 | HTML 导出 Markdown 排版 | 实际安装路径通过 | 私有锁定 micromark/GFM 在实际 Electron/ASAR 内输出表格和列表；不受信 HTML 转义、危险链接限制已有领域回归。没有 PDF/Word 导出或 Mermaid 渲染的完成声明。 |
-| 全库阅读与隔离回归 | 前序阅读审计闭合，当前相关回归 98/98 通过 | 前序基线共 2202 tracked 文件：1985 文本完整实读、19 生成文件核源、198 图像音视频/上游归档核清单；基线 SHA 不冒充后续改动的当前 SHA。最新[测试日志](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/full-regression.log)仍使用 fixture 传输与权限，不代表真实研究质量。 |
+| 全库阅读与隔离回归 | 前序阅读审计闭合，当前相关回归 99/99 通过 | 前序基线共 2202 tracked 文件：1985 文本完整实读、19 生成文件核源、198 图像音视频/上游归档核清单；基线 SHA 不冒充后续改动的当前 SHA。最新[测试日志](../../../.aexus/artifacts/deep-research-fix/release-4ca61bb/full-regression.log)仍使用 fixture 传输与权限，不代表真实研究质量。 |
 | Windows / Linux 原生运行 | 未测试 | 本机 macOS 结果不能外推。 |
