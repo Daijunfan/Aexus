@@ -584,55 +584,6 @@ export default function Page({ client }: { client: ContractClient }) {
       data-view={job ? tab : "intake"}
       data-revision={job?.revision}
     >
-      <aside className="dr-sidebar">
-        <button
-          className="dr-brand"
-          onClick={newResearch}
-          aria-label="Deep Research 首页"
-        >
-          <Icon name="telescope" />
-          <span>
-            Deep Research<small>AEXUS</small>
-          </span>
-        </button>
-        <button className="dr-new" onClick={newResearch}>
-          <Icon name="add" />
-          新研究
-        </button>
-        <div className="dr-history-heading">
-          研究记录<span>{history.length}</span>
-        </div>
-        <nav className="dr-history" aria-label="研究记录">
-          {history.map((item) => (
-            <button
-              key={item.id}
-              aria-current={job?.id === item.id ? "page" : undefined}
-              onClick={() => void operate(() => load(item.id))}
-            >
-              <i className={"dr-state-dot " + item.status} />
-              <span>
-                <strong>{item.summary.topic || "研究"}</strong>
-                <small>
-                  {STATUS[item.status]} ·{" "}
-                  {new Date(item.createdAt).toLocaleDateString("zh-CN", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </small>
-              </span>
-            </button>
-          ))}
-          {!history.length && (
-            <p className="dr-muted">
-              {loading ? "读取研究记录…" : "暂无研究记录"}
-            </p>
-          )}
-        </nav>
-        <footer>
-          <Icon name="shield" />
-          <span>研究与证据持续保存</span>
-        </footer>
-      </aside>
       <main className="dr-main">
         {error && (
           <div className="dr-alert error" role="alert">
@@ -661,7 +612,7 @@ export default function Page({ client }: { client: ContractClient }) {
                 placeholder="例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本；请给出可定位引用和研究局限"
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
-                minLength={10}
+                minLength={1}
                 maxLength={2000}
                 required
                 rows={4}
@@ -693,7 +644,7 @@ export default function Page({ client }: { client: ContractClient }) {
                 <button
                   className="dr-primary"
                   type="submit"
-                  disabled={busy || topic.trim().length < 10}
+                  disabled={busy || !topic.trim()}
                 >
                   <Icon name={busy ? "loading" : "arrow-right"} />
                   开始研究
@@ -710,7 +661,7 @@ export default function Page({ client }: { client: ContractClient }) {
                     <input
                       aria-label="来源预算"
                       type="number"
-                      min={10}
+                      min={1}
                       max={1000}
                       value={maxSources}
                       onChange={(event) =>
@@ -768,27 +719,43 @@ export default function Page({ client }: { client: ContractClient }) {
                 </div>
               )}
             </form>
-            {history.length > 0 && (
-              <section className="dr-recent">
-                <h2>最近的研究</h2>
-                {history.slice(0, 4).map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => void operate(() => load(item.id))}
-                  >
-                    <i className={"dr-state-dot " + item.status} />
-                    <strong>{item.summary.topic}</strong>
-                    <small>{STATUS[item.status]}</small>
-                    <Icon name="arrow-right" />
-                  </button>
-                ))}
-              </section>
-            )}
+            <section className="dr-recent" aria-label="研究记录">
+              <h2>研究记录 <span>{history.length || ""}</span></h2>
+              {!history.length && (
+                <p className="dr-muted">
+                  {loading ? "读取研究记录…" : "完成的研究与正在进行的任务会显示在这里"}
+                </p>
+              )}
+              {history.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => void operate(() => load(item.id))}
+                >
+                  <i className={"dr-state-dot " + item.status} />
+                  <strong>{item.summary.topic || item.summary.title || "研究"}</strong>
+                  <small>
+                    {STATUS[item.status]} ·{" "}
+                    {new Date(item.createdAt).toLocaleDateString("zh-CN", {
+                      month: "short", day: "numeric",
+                    })}
+                  </small>
+                  <Icon name="arrow-right" />
+                </button>
+              ))}
+            </section>
           </div>
         ) : (
           <>
             <header className="dr-job-header">
-              <div>
+              <button
+                className="dr-icon-button"
+                title="返回研究首页"
+                aria-label="返回研究首页"
+                onClick={newResearch}
+              >
+                <Icon name="arrow-left" />
+              </button>
+              <div className="dr-job-title">
                 <span className="dr-eyebrow">
                   {PHASES[summary.phase] ?? summary.phaseLabel ?? "研究"}
                 </span>

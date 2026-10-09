@@ -67,7 +67,7 @@ CLI `download` 当前下载第一个最终文件，按 UTF-8/base64 解码后校
 
 | 参数 | 默认值 | 范围 |
 | --- | --- | --- |
-| `maxSources` | 80 | 10-1000 |
+| `maxSources` | 80 | 1-1000 |
 | `team.maxWorkers` | 12 | 2-64，包含 Manager |
 | `team.maxManagers` | 4 | 1-16 |
 | `team.maxConcurrency` | 4 | 1-32 |

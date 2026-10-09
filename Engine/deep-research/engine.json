@@ -38,7 +38,7 @@
     "properties": {
       "topic": {
         "type": "string",
-        "minLength": 10,
+        "minLength": 1,
         "maxLength": 2000,
         "description": "研究主题或问题"
       },
@@ -50,7 +50,7 @@
       },
       "maxSources": {
         "type": "integer",
-        "minimum": 10,
+        "minimum": 1,
         "maximum": 1000,
         "default": 80,
         "description": "最大来源数量"

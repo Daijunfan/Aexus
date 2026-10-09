@@ -512,9 +512,16 @@ try {
     await page.evaluate(() => document.fonts.check("16px codicon")),
     "icon font rendered",
   );
-  await page
-    .getByLabel("研究目标")
-    .fill("比较当前多智能体研究引擎的动态规划与证据质量");
+  assert.equal(await page.locator('.dr-sidebar').count(), 0, 'Research history has no left sidebar');
+  const topicInput = page.getByLabel("研究目标");
+  await topicInput.click();
+  await page.keyboard.type("301");
+  assert.equal(await topicInput.inputValue(), "301");
+  assert.equal(await page.getByRole("button", {name: "开始研究", exact: true}).isEnabled(), true);
+  const topicBox = await topicInput.boundingBox();
+  const historyBox = await page.getByRole("region", {name: "研究记录"}).boundingBox();
+  assert.ok(historyBox.y > topicBox.y + topicBox.height, 'History is below the research input');
+  await topicInput.fill("比较当前多智能体研究引擎的动态规划与证据质量");
   await page.locator(".dr-segment label.active").hover();
   await page.getByText("全面调查：覆盖主要问题", { exact: false }).waitFor();
   await page.mouse.move(0, 0);
@@ -1270,7 +1277,7 @@ try {
   }
   checks.push("all three approval states have functional actions");
   await page
-    .getByRole("button", { name: "Deep Research 首页", exact: true })
+    .getByRole("button", { name: "返回研究首页", exact: true })
     .click();
   await page.getByRole("button", { name: "开始研究", exact: true }).click();
   pauseIncomplete = true;
@@ -1316,7 +1323,7 @@ try {
     "real Host state restrictions: pending pause blocks resume/amend, retry pause releases controls; cancelled pending cleanup shows error and retry Stop",
   );
   await page
-    .getByRole("button", { name: "Deep Research 首页", exact: true })
+    .getByRole("button", { name: "返回研究首页", exact: true })
     .click();
   await page.getByRole("button", { name: "开始研究", exact: true }).click();
   graph.nodes[20].status = "failed";
@@ -1363,7 +1370,7 @@ try {
     },
   });
   await page
-    .getByRole("button", { name: "Deep Research 首页", exact: true })
+    .getByRole("button", { name: "返回研究首页", exact: true })
     .click();
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });

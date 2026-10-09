@@ -17,7 +17,7 @@ const limit = (value, fallback, min, max, label) => {
 export function create(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('研究输入必须是对象');
   const topic = String(input.topic || '').trim();
-  if (topic.length < 10 || topic.length > 2000) throw Error('研究主题需要 10-2000 个字符');
+  if (topic.length < 1 || topic.length > 2000) throw Error('请输入研究主题（最多 2000 个字符）');
   const scope = input.scope || 'comprehensive';
   if (!['quick', 'comprehensive', 'deep', 'academic'].includes(scope)) throw Error('研究范围无效');
   const languages = input.languages || ['zh-CN', 'en'];
@@ -37,7 +37,7 @@ export function create(input) {
   const team = input.team || {};
   return {
     version: 2, phase: 'init',
-    input: { topic, scope, maxSources: limit(input.maxSources, 80, 10, 1000, '来源预算'), languages, materials: materials.map(m => ({ ...m })), engines,
+    input: { topic, scope, maxSources: limit(input.maxSources, 80, 1, 1000, '来源预算'), languages, materials: materials.map(m => ({ ...m })), engines,
       autoApprove: input.autoApprove === true,
       team: { maxWorkers: limit(team.maxWorkers, 12, 2, 64, '员工预算'), maxManagers: limit(team.maxManagers, 4, 1, 16, 'Manager 预算'), maxConcurrency: limit(team.maxConcurrency, 4, 1, 32, '并发预算') },
       maxTasks: limit(input.maxTasks, 128, 4, 512, '任务预算'), maxReplans: limit(input.maxReplans, 3, 0, 20, '重规划预算') },

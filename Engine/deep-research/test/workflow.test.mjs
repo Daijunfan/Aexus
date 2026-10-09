@@ -65,6 +65,14 @@ function fixture(options = {}) {
   return { ctx: { id: 'wf_test', client, signal: signal.signal, sourceReader: async url => { const name = new URL(url).hostname.split('.')[0]; return {url, mediaType: 'text/plain', body: source(name).acquisition.excerpt}; }, checkpoint: async state => { checkpoints.push(structuredClone(state)); await options.checkpoint?.(state); } }, calls, cards, checkpoints, signal, maxActive: () => maxActive };
 }
 
+test('short questions and a single-source budget are valid research requests', () => {
+  const state = create({ topic: '301', scope: 'quick', maxSources: 1 });
+  assert.equal(state.input.topic, '301');
+  assert.equal(state.input.maxSources, 1);
+  assert.equal(describe(state).progress.percent, null);
+  assert.throws(() => create({ topic: '   ' }), /请输入研究主题/);
+});
+
 test('first scouting has unknown progress and autoApprove is retained', () => {
   const state = create({ topic: 'Detailed independent research question', autoApprove: true });
   assert.equal(state.input.autoApprove, true);
