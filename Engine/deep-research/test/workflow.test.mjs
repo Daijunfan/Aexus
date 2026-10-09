@@ -124,6 +124,8 @@ test('bounded scout uses independently previewed page text and keeps research wi
   assert.deepEqual(planned.task.payload.sourceUrls, ['https://seed.example/research']);
   assert.match(planned.task.payload.sourcePreviews[0].text, /seed actual retrieved body/);
   assert.match(planned.args.text, /不能把“未摘录”说成“网页没有”/);
+  assert.equal(planned.task.payload.budget.targetAgentReplyChars, 10000);
+  assert.match(f.calls.find(call => call.task?.kind === 'write').args.text, /完整回复 JSON 控制在 10000 字符内/);
   const search = f.calls.find(call => call.task?.kind === 'search');
   assert.equal(search.task.payload.sourcePreviews[0].truncated, false);
   assert.match(search.args.text, /完整可见正文已在 sourcePreviews 中/);
