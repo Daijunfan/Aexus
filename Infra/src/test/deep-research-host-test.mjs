@@ -152,12 +152,14 @@ test('a completed Host research forks once, keeps its parent intact and survives
   const host = await fixtureHost(home), fixture = transport()
   try {
     host.startWorkflows(fixture.dispatch, () => {})
-    const started = await host.workflowRequest('workflow.start', {engineId: 'deep-research', input: {topic: 'Original bounded question', autoApprove: true, engines: ['codex']}, clientRequestId: 'parent-start'})
+    const started = await host.workflowRequest('workflow.start', {engineId: 'deep-research', input: {topic: 'Original bounded question', sourceUrls: ['https://example.org/host-fixture'], autoApprove: true, engines: ['codex']}, clientRequestId: 'parent-start'})
     const parent = await waitFor(async () => {const job = await host.workflowRequest('workflow.get', {id: started.id}); if (job.status === 'failed') throw Error(job.error); return job.status === 'completed' && job})
+    assert.deepEqual(parent.summary.sourceUrls, ['https://example.org/host-fixture'])
     const parentReport = await host.workflowRequest('workflow.file', {id: parent.id, name: 'research-report.html'})
     const request = {id: parent.id, expectedRevision: parent.revision, input: {topic: 'Which assumption changed?'}, clientRequestId: 'follow-up-once'}
     const child = await host.workflowRequest('workflow.fork', request)
     assert.notEqual(child.id, parent.id)
+    assert.deepEqual(child.summary.sourceUrls, [], 'a follow-up starts without the old URL restriction')
     assert.deepEqual(child.parent, {id: parent.id, revision: parent.revision, engineVersion: parent.engineVersion})
     assert.equal((await host.workflowRequest('workflow.fork', request)).id, child.id, 'same key must not create a second follow-up')
     const waiting = await waitFor(async () => {const job = await host.workflowRequest('workflow.get', {id: child.id}); if (job.status === 'failed') throw Error(job.error); return job.status === 'waiting' && job})

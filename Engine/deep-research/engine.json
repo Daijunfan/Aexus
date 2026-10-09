@@ -57,6 +57,13 @@
         "default": 80,
         "description": "最大来源数量；快速模式未填写时默认 6，其他模式默认 80"
       },
+      "sourceUrls": {
+        "type": "array",
+        "maxItems": 10,
+        "uniqueItems": true,
+        "items": {"type": "string", "format": "uri", "maxLength": 2048},
+        "description": "限定报告引用来源；留空则开放检索。初调研先预读页面，引用仍需独立复核"
+      },
       "languages": {
         "type": "array",
         "items": {

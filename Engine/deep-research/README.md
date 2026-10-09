@@ -84,6 +84,10 @@ CLI `download` 当前下载第一个最终文件，按 UTF-8/base64 解码后校
 `quick`、`comprehensive`、`deep`、`academic`，不承诺固定完成时间。
 背景材料为 `materials: [{ name, content }]`，最多 10 份，每份最多 200,000
 字符；当前没有本地 Office/PDF 上传解析接口。
+可选的 `sourceUrls` 最多列 10 个公开页面，且不能超过来源预算。Engine 先预读
+可见正文供初调研选择片段，随后重新独立读取并核对引用；指定网址之外的来源不会
+进入证据和报告。预读不是引用证明，也不是原生员工网络工具的权限隔离。后续研究
+只有再次填写 `sourceUrls` 才继续限定网址。
 
 Agent 发现来源后，Engine 独立请求公开 HTTP(S) 原文，核对每个证据片段，
 保存内容哈希、获取时间与最终 URL；HTML 页面的标题也取自实际正文。

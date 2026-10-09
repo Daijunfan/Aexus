@@ -384,6 +384,19 @@
   gap: 7px;
   font-size: 12px;
 }
+.dr-source-urls-field {
+  grid-column: 1 / -1;
+}
+.dr-source-urls-field textarea {
+  min-height: 75px;
+  padding: 9px 11px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.dr-source-urls-field small {
+  color: var(--dr-muted);
+  font-size: 10px;
+}
 .dr-settings input[type="number"] {
   width: 110px;
   border: 1px solid var(--dr-border);
@@ -512,6 +525,14 @@
   font-weight: 600;
   margin-top: 5px;
   max-width: 900px;
+}
+.dr-bounded-sites {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--dr-muted);
+  font-size: 10px;
 }
 .dr-parent-link {
   display: inline-flex;
@@ -2123,6 +2144,9 @@
     padding: 13px;
     font-size: 13px;
     min-height: 150px;
+  }
+  .dr-source-urls-field textarea {
+    min-height: 80px;
   }
   .dr-intake-controls {
     gap: 12px;

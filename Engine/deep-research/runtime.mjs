@@ -4,7 +4,7 @@ import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
 import { normalizeSources, mergeSources, withinSourceBudget, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
-import { acquireSources } from './source-read.mjs';
+import { acquireSources, previewSource } from './source-read.mjs';
 import { generateArtifacts } from './reports.mjs';
 
 export { create, describe, respond, retry, fork, cancel };
@@ -67,12 +67,19 @@ export async function run(originalState, originalContext) {
     await provision(state, ctx); state.phase = 'scouting'; await ctx.checkpoint(state);
   }
   if (state.phase === 'scouting') {
+    if (state.input.sourceUrls?.length && !state.scouting?.previews) {
+      const loaded = await Promise.allSettled(state.input.sourceUrls.map(url => previewSource(url, {signal: ctx.signal, read: ctx.sourceReader})));
+      ctx.signal.throwIfAborted();
+      const previews = loaded.map((result, index) => result.status === 'fulfilled' ? result.value : {url: state.input.sourceUrls[index], error: result.reason.message});
+      state.scouting = {previews}; await ctx.checkpoint(state);
+    }
     const result = await ask(state, ctx, 'initial-scout', 'coordinator', 'scout', {
       topic: state.input.topic, scope: state.input.scope, languages: state.input.languages,
-      materials: state.input.materials, maxSources: Math.min(state.input.maxSources, 12)
+      materials: state.input.materials, maxSources: Math.min(state.input.maxSources, 12),
+      sourcePreviews: state.scouting?.previews
     }, normalizeSources);
     const sourceIds = mergeSources(state, await acquireSources(state, withinSourceBudget(state, result.sources), {signal: ctx.signal, read: ctx.sourceReader}), { id: 'initial-scout' });
-    state.scouting = { gaps: result.gaps, sourceIds };
+    state.scouting = { gaps: result.gaps, sourceIds, ...(state.scouting?.previews ? {previews: state.scouting.previews} : {}) };
     state.phase = 'planning'; await ctx.checkpoint(state);
   }
   while (true) {
@@ -82,7 +89,7 @@ export async function run(originalState, originalContext) {
         const reason = state.revisionRequest?.instructions || '根据初步调研制定研究计划';
         const plan = await ask(state, ctx, 'research-plan-v' + ((state.graph?.version ?? 0) + 1), 'coordinator', 'plan', {
           topic: state.input.topic, scope: state.input.scope, materials: state.input.materials,
-          languages: state.input.languages, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks, maxAgentReplyChars: MAX_AGENT_REPLY_CHARS },
+          languages: state.input.languages, sourceUrls: state.input.sourceUrls, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks, maxAgentReplyChars: MAX_AGENT_REPLY_CHARS },
           sources: state.sources, gaps: state.scouting?.gaps || [], currentPlan: state.plan,
           completedNodes: state.graph?.nodes.filter(n => n.status === 'completed'), reason
         }, result => {
@@ -180,6 +187,7 @@ async function executeNode(state, ctx, node) {
     revisionInstructions: state.revisionInstructions || ''
   };
   if (node.kind === 'search') {
+    if (state.scouting?.previews) payload.sourcePreviews = state.scouting.previews;
     delete payload.sources; delete payload.report; delete payload.plan;
     payload.findings = payload.findings.map(({ claim, sourceIds, confidence }) => ({ claim, sourceIds, confidence }));
   }
@@ -231,6 +239,7 @@ function validateReview(result) {
   return { verdict: result.verdict, summary: String(result.summary || ''), issues: (result.issues || []).map(i => ({ severity: i.severity || 'warning', description: String(i.description || ''), suggestion: String(i.suggestion || '') })) };
 }
 async function finish(state, ctx) {
+  if (state.scouting) delete state.scouting.previews;
   const artifacts = generateArtifacts(state); state.phase = 'complete'; state.finishedAt ||= Date.now();
   await ctx.checkpoint(state); return { status: 'completed', state, artifacts };
 }

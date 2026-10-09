@@ -97,7 +97,8 @@ export default function Page({ client }: { client: ContractClient }) {
     [error, setError] = useState("");
   const [topic, setTopic] = useState(""),
     [scope, setScope] = useState("comprehensive"),
-    [maxSources, setMaxSources] = useState<number | null>(null);
+    [maxSources, setMaxSources] = useState<number | null>(null),
+    [sourceUrlsText, setSourceUrlsText] = useState("");
   const sourceBudget = maxSources ?? (scope === "quick" ? 6 : 80);
   const [materials, setMaterials] = useState<
       { name: string; content: string }[]
@@ -307,6 +308,7 @@ export default function Page({ client }: { client: ContractClient }) {
     setJob(null);
     setForkParent(null);
     setSelectedEngine(preferredEngine(engineOptions));
+    setSourceUrlsText("");
     setError("");
     setRevisionOpen(false);
     request.current = null;
@@ -325,6 +327,7 @@ export default function Page({ client }: { client: ContractClient }) {
     const previousBudget = parent.summary.progress?.sources?.max;
     const defaultBudget = parent.summary.scope === "quick" ? 6 : 80;
     setMaxSources(previousBudget === defaultBudget ? null : previousBudget ?? null);
+    setSourceUrlsText("");
     setMaterials([]);
     setAutoApprove(false);
     setError("");
@@ -340,6 +343,7 @@ export default function Page({ client }: { client: ContractClient }) {
         maxSources: sourceBudget,
         ...(!forkParent ? { languages: ["zh-CN", "en"] } : {}),
         autoApprove,
+        ...(sourceUrlsText.trim() ? { sourceUrls: sourceUrlsText.split(/\r?\n/).map(url => url.trim()).filter(Boolean) } : {}),
         ...(!["automatic", "inherit"].includes(selectedEngine)
           ? { engines: [{ engine: selectedEngine }] }
           : {}),
@@ -796,6 +800,17 @@ export default function Page({ client }: { client: ContractClient }) {
                   <Icon name="chevron-down" />
                 </summary>
                 <div className="dr-settings-grid">
+                  <label className="dr-source-urls-field">
+                    限定网址（每行一个，可选）
+                    <textarea
+                      aria-label="限定网址"
+                      rows={3}
+                      placeholder={"https://example.com/\nhttps://www.iana.org/help/example-domains"}
+                      value={sourceUrlsText}
+                      onChange={event => setSourceUrlsText(event.target.value)}
+                    />
+                    <small>报告只引用这些页面；原文仍由引擎独立复核。</small>
+                  </label>
                   <label>
                     来源预算
                     <input
@@ -911,6 +926,11 @@ export default function Page({ client }: { client: ContractClient }) {
                   {PHASES[summary.phase] ?? summary.phaseLabel ?? "研究"}
                 </span>
                 <h1>{summary.topic}</h1>
+                {!!summary.sourceUrls?.length && (
+                  <span className="dr-bounded-sites" title={summary.sourceUrls.join("\n")}>
+                    <Icon name="link" /> 限定 {summary.sourceUrls.length} 个页面
+                  </span>
+                )}
                 {job.parent && (
                   <button className="dr-parent-link" onClick={() => void operate(() => load(job.parent!.id, "report"))}>
                     <Icon name="arrow-left" /> 查看上次报告

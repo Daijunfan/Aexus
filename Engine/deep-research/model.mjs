@@ -1,7 +1,8 @@
 /** Research state and pure UI/control hooks. */
 import { graphView, planProgress, applyPlan, nodesFromDimensions } from './graph.mjs';
 import { wordCount } from './reports.mjs';
-import { isIndependentSource } from './evidence.mjs';
+import { canonicalUrl, isIndependentSource } from './evidence.mjs';
+import { publicURL } from './source-read.mjs';
 
 export const ENGINE_ID = 'deep-research';
 export const ENGINE_VERSION = '2.0.0';
@@ -25,6 +26,9 @@ export function create(input) {
   const materials = input.materials || [];
   if (!Array.isArray(materials) || materials.length > 10) throw Error('背景材料最多 10 份');
   for (const m of materials) if (!m || typeof m.name !== 'string' || typeof m.content !== 'string' || m.content.length > 200000) throw Error('材料需要 name 和 content，单份不超过 200,000 字符');
+  const suppliedUrls = input.sourceUrls || [];
+  if (!Array.isArray(suppliedUrls) || suppliedUrls.length > 10 || suppliedUrls.some(url => typeof url !== 'string' || url.length > 2048)) throw Error('限定网址最多 10 个，每个不超过 2048 字符');
+  const sourceUrls = [...new Set(suppliedUrls.map(url => canonicalUrl(publicURL(url))))];
   let engines = input.engines;
   if (engines !== undefined) {
     if (!Array.isArray(engines) || !engines.length || engines.length > 5) throw Error('请选择 1-5 种已配置的原生 Agent');
@@ -36,9 +40,11 @@ export function create(input) {
   }
   const team = input.team || {};
   const quick = scope === 'quick';
+  const maxSources = limit(input.maxSources, quick ? 6 : 80, 1, 1000, '来源预算');
+  if (sourceUrls.length > maxSources) throw Error('限定网址数量不能超过来源预算');
   return {
     version: 2, phase: 'init',
-    input: { topic, scope, maxSources: limit(input.maxSources, quick ? 6 : 80, 1, 1000, '来源预算'), languages, materials: materials.map(m => ({ ...m })), engines,
+    input: { topic, scope, maxSources, sourceUrls, languages, materials: materials.map(m => ({ ...m })), engines,
       autoApprove: input.autoApprove === true,
       team: { maxWorkers: limit(team.maxWorkers, quick ? 4 : 12, 2, 64, '员工预算'), maxManagers: limit(team.maxManagers, quick ? 1 : 4, 1, 16, 'Manager 预算'), maxConcurrency: limit(team.maxConcurrency, quick ? 2 : 4, 1, 32, '并发预算') },
       maxTasks: limit(input.maxTasks, quick ? 16 : 128, 4, 512, '任务预算'), maxReplans: limit(input.maxReplans, quick ? 1 : 3, 0, 20, '重规划预算') },
@@ -59,7 +65,7 @@ export function fork(parent, input) {
   let context = [heading, ...report.sections.map(section => `## ${section.heading}\n${section.content}`), '## 历史引用来源', ...sources].join('\n\n');
   if (context.length > 190000) context = [heading, '原报告正文超出背景预算，以下只保留章节目录与来源线索。', ...report.sections.map(section => `- ${section.heading}`), '## 历史引用来源', ...sources].join('\n\n');
   if (context.length > 200000) throw Error('前次报告超出单份背景材料预算，请新建研究并提供较短摘要');
-  return create({...parent.input, ...input, materials: [...(input.materials || []), {name: 'previous-research.md', content: context}], autoApprove: input.autoApprove === true});
+  return create({...parent.input, ...input, sourceUrls: input.sourceUrls, materials: [...(input.materials || []), {name: 'previous-research.md', content: context}], autoApprove: input.autoApprove === true});
 }
 
 /** Additive migration preserves native worker/task identities and previously obtained evidence. */
@@ -106,7 +112,7 @@ export function describe(originalState) {
   const domains = new Set(state.sources.filter(isIndependentSource).map(s => { try { return new URL(s.url).hostname; } catch { return ''; } }).filter(Boolean));
   const plan = state.plan ? Object.fromEntries(Object.entries(state.plan).filter(([key]) => key !== 'nodes')) : null;
   return {
-    topic: state.input.topic, phase: state.phase, phaseLabel: PHASES[state.phase] || state.phase, scope: state.input.scope,
+    topic: state.input.topic, phase: state.phase, phaseLabel: PHASES[state.phase] || state.phase, scope: state.input.scope, sourceUrls: state.input.sourceUrls || [],
     progress: { ...planProgress(state), sources: { collected: state.sources.length, max: state.input.maxSources, verified: state.sources.filter(s => s.verified && isIndependentSource(s)).length, read: state.sources.filter(isIndependentSource).length, domains: domains.size }, findings: state.findings.length, contradictions: state.contradictions.length, entities: state.knowledgeGraph.entities.length },
     workers: state.workers.map(w => ({ ...w, status: Object.values(state.tasks).some(t => t.employeeId === w.id && ['running', 'approval'].includes(t.status)) ? 'working' : 'idle' })),
     tasks: Object.entries(state.tasks).map(([id, t]) => ({ id, role: t.role, label: t.label, status: t.status, employeeId: t.employeeId, messageId: t.receipt?.messageId, error: t.error, startedAt: t.startedAt, finishedAt: t.finishedAt })),

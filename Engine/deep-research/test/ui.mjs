@@ -651,10 +651,17 @@ try {
   await page.locator(".dr-segment label").nth(1).click();
   assert.equal(await page.getByLabel("来源预算").inputValue(), "2");
   await page.getByLabel("来源预算").fill("80");
+  await page.getByLabel("限定网址").fill("https://example.com/\nhttps://www.iana.org/help/example-domains");
+  await page.setViewportSize({width: 390, height: 844});
+  await fits();
+  await screen("01c-bounded-sites-390");
+  await page.setViewportSize({width: 1440, height: 900});
   checks.push("quick scope defaults to six sources while a custom limit persists across scope changes");
   await page.getByRole("button", { name: "开始研究", exact: true }).click();
   assert.deepEqual(calls.find(item => item.command === "workflow.start").args.input.engines, [{engine: "pi"}]);
+  assert.deepEqual(calls.find(item => item.command === "workflow.start").args.input.sourceUrls, ["https://example.com/", "https://www.iana.org/help/example-domains"]);
   await waitPhase("进度尚未确定");
+  await page.getByText("限定 2 个页面", {exact: true}).waitFor();
   assert.equal(
     await page.getByRole("progressbar").getAttribute("aria-valuenow"),
     null,
@@ -1552,6 +1559,7 @@ try {
   assert.equal(forkCall.args.expectedRevision, parentJobForFork.revision);
   assert.equal(forkCall.args.input.autoApprove, false);
   assert.equal(forkCall.args.input.engines, undefined);
+  assert.equal(forkCall.args.input.sourceUrls, undefined);
   assert.equal(forkCall.args.input.topic, "上次结论中哪项假设已经变化？");
   await screen("11-follow-up-child");
   await page.getByRole("button", {name: "查看上次报告"}).click();

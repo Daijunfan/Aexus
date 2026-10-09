@@ -87,6 +87,37 @@ test('quick research uses smaller default caps while explicit budgets remain aut
   assert.equal(custom.input.maxReplans, 0);
 });
 
+test('bounded public pages are normalized, budgeted, and not inherited by a follow-up', () => {
+  const parent = create({topic: 'Compare two public pages', maxSources: 2, sourceUrls: ['https://example.com/', 'https://example.com/?utm_source=test', 'https://www.iana.org/help/example-domains']});
+  assert.deepEqual(parent.input.sourceUrls, ['https://example.com', 'https://www.iana.org/help/example-domains']);
+  assert.throws(() => create({topic: 'Local page', sourceUrls: ['http://127.0.0.1/']}), /公开|私网/);
+  assert.throws(() => create({topic: 'Too many bounded pages', maxSources: 1, sourceUrls: ['https://example.com/', 'https://www.iana.org/help/example-domains']}), /来源预算/);
+  parent.phase = 'complete'; parent.report = {title: 'Completed', sections: [{heading: 'Finding', content: 'Evidence', citations: []}], citations: []};
+  assert.deepEqual(fork(parent, {topic: 'A fresh open question'}).input.sourceUrls, []);
+});
+
+test('bounded scout uses independently previewed page text and keeps research within selected URLs', async () => {
+  const f = fixture({respond: task => {
+    if (task.kind === 'scout') return {sources: [source('seed'), source('outside')]};
+    if (task.kind === 'plan') return {dimensions: [{id: 'd1', query: 'Evidence question'}], strategy: 'Use the bounded page', team: [
+      {id: 'coordinator', role: 'coordinator', managementRole: 'manager'},
+      {id: 'researcher', role: 'researcher', managerIds: ['coordinator']}
+    ], nodes: [
+      {id: 'v1', kind: 'verify', role: 'researcher', dependencies: []},
+      {id: 'w1', kind: 'write', role: 'researcher', dependencies: ['v1']},
+      {id: 'r1', kind: 'review', role: 'coordinator', dependencies: ['w1']}
+    ]};
+  }});
+  const done = await run(create({topic: 'Read one bounded public page', scope: 'quick', maxSources: 1, sourceUrls: ['https://seed.example/research'], team: {maxWorkers: 2, maxManagers: 1, maxConcurrency: 1}, maxTasks: 4, autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.deepEqual(done.state.sources.map(item => item.url), ['https://seed.example/research']);
+  assert.equal(done.state.scouting.previews, undefined);
+  const scout = f.calls.find(call => call.task?.kind === 'scout');
+  assert.match(scout.args.text, /seed actual retrieved body demonstrates the result/);
+  assert.match(scout.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
+  assert.deepEqual(f.calls.find(call => call.task?.kind === 'plan').task.payload.sourceUrls, ['https://seed.example/research']);
+});
+
 test('native tools are reserved for discovery while evidence and report stages use saved proofs', async () => {
   const f = fixture();
   const done = await run(create({topic: 'Phase-specific native research tools', autoApprove: true}), f.ctx);

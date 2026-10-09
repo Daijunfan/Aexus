@@ -5,13 +5,23 @@ import dns from 'node:dns';
 import {EventEmitter} from 'node:events';
 import {PassThrough} from 'node:stream';
 import {createHash} from 'node:crypto';
-import {publicURL, publicAddress, pageText, readSource, acquireSources} from '../source-read.mjs';
-import {normalizeSources, mergeSources, normalizeVerification, mergeVerification, validateReport, sourceExcerpt} from '../evidence.mjs';
+import {publicURL, publicAddress, pageText, readSource, previewSource, acquireSources} from '../source-read.mjs';
+import {normalizeSources, mergeSources, normalizeVerification, mergeVerification, validateReport, sourceExcerpt, withinSourceBudget} from '../evidence.mjs';
 
 const candidate = (excerpt, locator = 'Results', url = 'https://evidence.example/article') => ({
   id: 'source', url, title: 'Fixture source', acquisition: {status: 'read', excerpt, locator}
 });
 const state = () => ({sources: []});
+
+test('bounded page previews expose readable text while source budgets reject other URLs', async () => {
+  const html = await previewSource('https://allowed.example/a', {read: async url => ({url, mediaType: 'text/html', body: '<title>Source &amp; title</title><p>One exact public statement.</p>'})});
+  assert.equal(html.title, 'Source & title');
+  assert.match(html.text, /One exact public statement/);
+  const pdf = await previewSource('https://allowed.example/a.pdf', {read: async url => ({url, mediaType: 'application/pdf', data: pdfFixture(['A bounded PDF statement.'])})});
+  assert.match(pdf.text, /Page 1: A bounded PDF statement/);
+  const candidates = normalizeSources({sources: [candidate('Allowed evidence', 'Body', 'https://allowed.example/a'), candidate('Outside evidence', 'Body', 'https://outside.example/a')]}).sources;
+  assert.deepEqual(withinSourceBudget({sources: [], input: {maxSources: 1, sourceUrls: ['https://allowed.example/a']}}, candidates).map(source => source.url), ['https://allowed.example/a']);
+});
 
 function pdfFixture(texts, width = 600) {
   const objects = ['<< /Type /Catalog /Pages 2 0 R >>', ''];
