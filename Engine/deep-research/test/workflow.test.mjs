@@ -103,7 +103,8 @@ test('bounded scout uses independently previewed page text and keeps research wi
       {id: 'coordinator', role: 'coordinator', managementRole: 'manager'},
       {id: 'researcher', role: 'researcher', managerIds: ['coordinator']}
     ], nodes: [
-      {id: 'v1', kind: 'verify', role: 'researcher', dependencies: []},
+      {id: 's1', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'seed'}},
+      {id: 'v1', kind: 'verify', role: 'researcher', dependencies: ['s1']},
       {id: 'w1', kind: 'write', role: 'researcher', dependencies: ['v1']},
       {id: 'r1', kind: 'review', role: 'coordinator', dependencies: ['w1']}
     ]};
@@ -120,6 +121,10 @@ test('bounded scout uses independently previewed page text and keeps research wi
   assert.deepEqual(planned.task.payload.sourceUrls, ['https://seed.example/research']);
   assert.match(planned.task.payload.sourcePreviews[0].text, /seed actual retrieved body/);
   assert.match(planned.args.text, /不能把“未摘录”说成“网页没有”/);
+  const search = f.calls.find(call => call.task?.kind === 'search');
+  assert.equal(search.task.payload.sourcePreviews[0].truncated, false);
+  assert.match(search.args.text, /完整可见正文已在 sourcePreviews 中/);
+  assert.match(search.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
 });
 
 test('native tools are reserved for discovery while evidence and report stages use saved proofs', async () => {
