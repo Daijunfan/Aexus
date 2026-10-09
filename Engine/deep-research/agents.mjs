@@ -208,6 +208,7 @@ export async function cancel(state, ctx) {
     } catch (error) { failures.push(error.message); }
   }
   if (failures.length) throw Error('研究已停止，但部分原生任务取消未确认: ' + failures.join('；'));
+  for (const node of state.graph?.nodes || []) if (node.active !== false && node.status === 'running') node.status = 'cancelled';
 }
 
 const FORMATS = {

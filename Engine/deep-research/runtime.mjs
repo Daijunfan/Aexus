@@ -10,8 +10,9 @@ import { generateArtifacts } from './reports.mjs';
 export { create, describe, respond, retry, cancel };
 
 export async function pause(state, ctx) {
+  const running = (state.graph?.nodes || []).filter(node => node.status === 'running');
   await cancel(state, ctx);
-  for (const node of state.graph?.nodes || []) if (node.status === 'running') {
+  for (const node of running) {
     node.status = 'pending';
   }
 }

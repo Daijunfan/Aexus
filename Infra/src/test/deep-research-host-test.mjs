@@ -143,3 +143,30 @@ test('A revise verdict creates a new DAG and final draft while retaining complet
   assert.equal(fixture.sent.filter(s => s.kind === 'review').length, 2)
   assert.ok(fixture.sent.some(s => s.taskId.endsWith('/followup-v2')))
 })
+
+test('confirmed Stop publishes cancelled task and DAG status instead of stale running progress', async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aexus-research-stop-'))
+  const id = 'wf_22222222-2222-4222-8222-222222222222', state = prepared()
+  state.phase = 'research'; state.planApproved = true
+  const node = state.graph.nodes.find(node => node.id === 'search')
+  node.status = 'running'
+  state.tasks[node.taskKey] = {taskId: id + '/search', role: 'researcher', label: 'search', employeeId: 'researcher', engine: 'codex', status: 'running', receipt: {messageId: 'accepted-search'}}
+  const directory = path.join(home, 'workflows', id)
+  fs.mkdirSync(directory, {recursive: true})
+  fs.writeFileSync(path.join(directory, 'state.json'), JSON.stringify({id, engineId: 'deep-research', engineVersion: '2.0.0', owner: {principal: {kind: 'operator'}, requestId: 'stop-fixture'}, state, summary: describe(state), status: 'paused', revision: 1, createdAt: Date.now(), updatedAt: Date.now(), files: [], startKey: 'seed', inputHash: 'fixture', answers: {}}))
+  const host = await fixtureHost(home)
+  try {
+    host.startWorkflows(transport().dispatch, () => {})
+    const stopped = await host.workflowRequest('workflow.cancel', {id})
+    assert.equal(stopped.status, 'cancelled')
+    assert.equal(stopped.controlPending, false)
+    assert.equal(stopped.summary.tasks.find(task => task.id === 'search-v1').status, 'cancelled')
+    assert.equal(stopped.summary.graph.nodes.find(node => node.id === 'search').status, 'cancelled')
+    assert.equal(stopped.summary.progress.running, 0)
+    await host.stopWorkflows()
+    host.startWorkflows(transport().dispatch, () => {})
+    const restored = await host.workflowRequest('workflow.get', {id})
+    assert.equal(restored.summary.tasks.find(task => task.id === 'search-v1').status, 'cancelled')
+    assert.equal(restored.summary.progress.running, 0)
+  } finally {await host.stopWorkflows(); fs.rmSync(home, {recursive: true, force: true})}
+})

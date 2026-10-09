@@ -295,6 +295,15 @@ test('cancel identifies only owned native receipts', async () => {
   assert.deepEqual(calls.filter(c => c.command === 'session.interrupt').map(c => c.args.expectedMessageId), ['ours']);
 });
 
+test('pausing a running DAG retains its node as pending for an explicit resume', async () => {
+  const state = create({topic: 'Pause a running research branch'});
+  state.graph.nodes = [{id: 'research', kind: 'search', status: 'running', active: true, dependencies: []}];
+  state.tasks.research = {status: 'running', employeeId: 'researcher', receipt: {messageId: 'accepted'}};
+  await pause(state, {client: {invoke: async command => command === 'session.status' ? [{busy: false}] : {}}});
+  assert.equal(state.tasks.research.status, 'cancelled');
+  assert.equal(state.graph.nodes[0].status, 'pending');
+});
+
 test('legacy verified sources without original body are reopened for honest acquisition', () => {
   const state = create({ topic: 'Resume a prior research checkpoint honestly' });
   state.version = 1; state.phase = 'writing'; state.plan = { dimensions: [{ id: 'd1', query: 'Existing evidence question' }] };

@@ -134,6 +134,7 @@ async function stopLegacyResearch(job:RecordEntry){
   if(!isRetiredResearch(job,installedEngines().engines)){
    const {runtime,commands}=await moduleFor(job)
    await runtime.cancel?.(job.state,contextFor(job,new AbortController(),runtime,commands))
+   job.summary=jsonObject(runtime.describe(job.state),'Workflow summary')
   }else await stopRetiredResearch(job.state,async(command,args)=>withCaller({...job.owner,engineScope:job.engineId},async()=>{
    const result=await contractRequest('contract.call',{version:CONTRACT_VERSION,command,args},(name,input)=>invoke!(name,input)) as {data:any}
    return result.data
