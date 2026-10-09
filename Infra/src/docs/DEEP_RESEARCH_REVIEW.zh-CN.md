@@ -11,6 +11,13 @@
 - 40 项相关领域/CLI 测试、19 项后台浏览器检查、TypeScript 检查通过。实际安装包检查输入点击、键盘输入短问题、按钮启用、无左侧历史栏，以及历史位于输入区下方。
 - 本次小任务证明当前真实执行链可以完成研究与交付；不外推为复杂主题质量或所有提供商均通过，也不推断账单来源。
 
+## 后续失败恢复修复
+
+- 计划回复现在先验证完整 DAG、团队预算和修订规则，再保存为成功结果。不存在的依赖会进入原有一次格式纠错，不会缓存坏计划后在恢复时永久重复失败。
+- 论断核验中的矛盾来源 ID 在写入结果前验证，避免一边报错一边保存部分成功证据。两项故障均由先失败、修复后通过的测试复现。
+- 领域、独立证据、源读取和 Host 回归共 75 项通过；候选与安装路径后台检查均通过。 后台恢复复核见[本轮生产状态验证](../../../.aexus/artifacts/deep-research-fix/validation-production.json)：80 员工、17 工作流 ID/状态及根数据哈希不变，窗口隐藏、无应用所属模型进程。原恢复脚本曾将另一 ChatGPT 进程计入“新增提供商”，已按 Aexus 子进程归属重新核验；没有重新启动或终止无关进程。
+- 第二次真实 CLI 试验仅限定 HTML 与公开 PDF 两个来源、最多 2 名员工、4 个计划任务、250 字报告。提供商在初步调研阶段连续返回流中断，已通过 CLI 主动取消；持久状态为 `cancelled`、`controlPending=false`。这次不计成功，没有继续付费重试。前一次单来源真实研究与下载/恢复成功记录保持有效。
+
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
 ## 用户要求与当前证据
@@ -51,7 +58,7 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 实际 `/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`，运行源码构建快照 `09cb020`，ASAR SHA256：
 
 ```text
-b43740fcc5a46c63c4bad71675d2d58ceea14ebc2cd5edb20b7ca9473567d2a4
+dffd248d846f488d31d5a2320d635e8b9e236aa2c306997ae183cb85ebf9bedc
 ```
 
 [候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[实际安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)均通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。构建后仅更新审查文档，运行源码指纹保持相同，不为文字变更反复打包。
