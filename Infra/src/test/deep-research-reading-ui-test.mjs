@@ -34,7 +34,7 @@ try {
   await page.evaluate(job => {window.readingJob = job}, job)
   await page.addStyleTag({path: path.join(temp, 'bundle.css')})
   await page.addScriptTag({path: path.join(temp, 'bundle.js')})
-  await page.locator('.dr-history button').first().click()
+  await page.getByRole('region', {name: '研究记录'}).getByRole('button').first().click()
   await page.getByRole('tab', {name: '报告', exact: true}).click()
   await expect(page.getByRole('heading', {name: state.report.title, exact: true})).toBeVisible()
   const citation = page.locator('.dr-inline-citation').first()
