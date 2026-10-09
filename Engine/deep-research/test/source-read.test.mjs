@@ -80,7 +80,7 @@ test('a public redirect retains the final URL and raw response fingerprint', asy
   const result = await readSource('https://evidence.example/article');
   assert.equal(result.url, 'https://evidence.example/final');
   assert.equal(result.sha256, createHash('sha256').update(body).digest('hex'));
-  assert.equal(result.text, 'Retrieved original source body.');
+  assert.equal(pageText(result.body), 'Retrieved original source body.');
 });
 
 test('oversized source responses and pre-aborted reads fail explicitly', async t => {
@@ -109,6 +109,25 @@ test('one batch reads each URL once and preserves independent proof for its dist
   assert.ok(result.every(source => source.acquisition.method === 'independent-http'));
   assert.deepEqual(result.map(source => source.acquisition.excerpts[0].locator), ['Policy', 'Price']);
   assert.ok(result.every(source => /^[a-f0-9]{64}$/.test(source.acquisition.excerpts[0].sha256)));
+});
+
+test('the independently retrieved HTML title replaces an agent-supplied title across source merges', async () => {
+  const discovered = candidate('The document contains a bounded fact.');
+  discovered.title = 'Invented title';
+  const research = {sources: [], input: {maxSources: 4}};
+  mergeSources(research, [discovered]);
+  const [checked] = await acquireSources(research, [discovered], {
+    read: async url => ({url, mediaType: 'text/html', body: '<!doctype html><title>Actual &amp; Verified Title</title><p>The document contains a bounded fact.</p>'})
+  });
+  assert.equal(checked.title, 'Actual & Verified Title');
+  assert.equal(checked.acquisition.pageTitle, 'Actual & Verified Title');
+  mergeSources(research, [checked]);
+  assert.equal(research.sources[0].title, 'Actual & Verified Title');
+  assert.equal(research.sources[0].acquisition.pageTitle, 'Actual & Verified Title');
+  const [reused] = await acquireSources(research, [discovered], {
+    read: async () => { throw Error('Previously checked HTML must not be fetched again'); }
+  });
+  assert.equal(reused.title, 'Actual & Verified Title');
 });
 
 test('already independently acquired excerpts survive recovery without another fetch', async () => {

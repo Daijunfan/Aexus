@@ -51,7 +51,9 @@ export function mergeSources(state, sources, node = {}) {
       if (isIndependentSource(source)) {
         const excerpts = [...(old.acquisition?.excerpts || [])];
         for (const item of acquisition.excerpts) if (!excerpts.some(known => known.excerpt === item.excerpt && known.sha256 === item.sha256)) { excerpts.push(item); old.verified = false; }
-        old.acquisition = {status: 'read', method: 'independent-http', excerpts};
+        const pageTitle = acquisition.pageTitle || old.acquisition?.pageTitle;
+        old.acquisition = {status: 'read', method: 'independent-http', excerpts, ...(pageTitle ? {pageTitle} : {})};
+        if (pageTitle) old.title = pageTitle;
       } else if (!isIndependentSource(old)) old.acquisition = acquisition;
       if (rejections.length) old.acquisition.rejections = rejections;
       old.dimensionIds = [...new Set([...(old.dimensionIds || []), ...(node.dimensionId ? [node.dimensionId] : [])])];

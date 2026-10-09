@@ -18,16 +18,19 @@ export function publicURL(value) {
   return url.href;
 }
 const normalize = value => String(value).normalize('NFKC').replace(/\s+/g, ' ').trim();
-export function pageText(body) {
+export function pageDocument(body) {
   const parts = [];
+  let title = '';
   const visit = node => {
     if (['script', 'style', 'noscript', 'template', 'svg'].includes(node.tagName)) return;
+    if (node.tagName === 'title' && !title) title = normalize((node.childNodes || []).map(child => child.value || '').join(' '));
     if (node.nodeName === '#text') parts.push(node.value);
     for (const child of node.childNodes || []) visit(child);
   };
   visit(parse(String(body)));
-  return normalize(parts.join(' '));
+  return {text: normalize(parts.join(' ')), title};
 }
+export const pageText = body => pageDocument(body).text;
 
 /** DNS is checked in the actual socket lookup, including each redirect. */
 export function readSource(value, {signal} = {}, redirects = 0) {
@@ -63,8 +66,8 @@ export function readSource(value, {signal} = {}, redirects = 0) {
       });
       response.on('error', reject);
       response.on('end', () => {
-        const data = Buffer.concat(chunks), body = data.toString('utf8');
-        resolve({url, body: pdf ? '' : body, data, mediaType, bytes: data.length, sha256: createHash('sha256').update(data).digest('hex'), accessedAt: Date.now(), text: pdf ? undefined : /html/.test(mediaType) ? pageText(body) : normalize(body)});
+        const data = Buffer.concat(chunks);
+        resolve({url, body: pdf ? '' : data.toString('utf8'), data, mediaType, bytes: data.length, sha256: createHash('sha256').update(data).digest('hex'), accessedAt: Date.now()});
       });
     });
     const deadline = setTimeout(() => request.destroy(Error('资料读取超过 20 秒')), 20000);
@@ -83,15 +86,17 @@ export async function acquireSources(state, candidates, {signal, read = readSour
       const at = index++, candidate = candidates[at], submitted = candidate.acquisition?.excerpt || '';
       const old = state.sources.find(source => source.id === candidate.id);
       const known = old && isIndependentSource(old) && old.acquisition.excerpts.find(item => item.excerpt === submitted);
-      if (known) { results[at] = {...candidate, acquisition: {status: 'read', method: 'independent-http', excerpts: [known]}}; continue; }
+      if (known) { results[at] = {...candidate, title: old.acquisition.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: [known], ...(old.acquisition.pageTitle ? {pageTitle: old.acquisition.pageTitle} : {})}}; continue; }
       if (!submitted) { results[at] = {...candidate, acquisition: {status: 'discovered', method: 'agent-reported', reason: '尚未提供需独立核对的原文片段'}}; continue; }
       try {
         const url = publicURL(candidate.url);
         if (!cache.has(url)) cache.set(url, Promise.resolve().then(() => read(url, {signal})).then(async response => {
-          const data = response.data || Buffer.from(response.body || '', 'utf8'), body = data.toString('utf8');
+          const data = response.data || Buffer.from(response.body || '', 'utf8');
           const pdf = isPdf(data) || ['application/pdf', 'application/octet-stream', 'binary/octet-stream'].includes(response.mediaType);
+          const body = pdf ? '' : data.toString('utf8');
+          const document = !pdf && /html/.test(response.mediaType || '') ? pageDocument(body) : null;
           return {data, finalUrl: publicURL(response.url || url), accessedAt: response.accessedAt || Date.now(), mediaType: pdf ? 'application/pdf' : response.mediaType,
-            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : /html/.test(response.mediaType || '') ? pageText(body) : normalize(body)};
+            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : document?.text ?? normalize(body), pageTitle: document?.title || ''};
         }));
         const response = await cache.get(url);
         signal?.throwIfAborted();
@@ -99,7 +104,7 @@ export async function acquireSources(state, candidates, {signal, read = readSour
         if (response.pages ? !page : !response.text.includes(normalize(submitted))) throw Error('独立取得的原文未找到完整提交片段，该片段不能作为证据或引用');
         const proof = {excerpt: submitted, locator: page ? 'Page ' + page.number : candidate.acquisition.locator || '', sha256: createHash('sha256').update(response.data).digest('hex'), accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
           ...(page ? {pages: [page.number]} : {})};
-        results[at] = {...candidate, acquisition: {status: 'read', method: 'independent-http', excerpts: [proof]}};
+        results[at] = {...candidate, title: response.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: [proof], ...(response.pageTitle ? {pageTitle: response.pageTitle} : {})}};
       } catch (error) {
         signal?.throwIfAborted();
         results[at] = {...candidate, acquisition: {status: 'unavailable', method: 'agent-reported', rejections: [{excerpt: submitted, locator: candidate.acquisition.locator || '', reason: error.message}]}};
