@@ -53,7 +53,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-843c319-integrated/deep-research-tests.log)为 106/106，通过命令：
+当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-843c319-integrated/deep-research-tests-107.log)为 107/107，通过命令：
 
 ```sh
 node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Engine/deep-research/test/report-layout.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs
