@@ -3,7 +3,7 @@ import { create, describe, respond, retry, fork, upgradeState, MAX_AGENT_REPLY_C
 import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
-import { normalizeSources, mergeSources, withinSourceBudget, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
+import { canonicalUrl, normalizeSources, mergeSources, withinSourceBudget, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
 import { acquireSources, previewSource } from './source-read.mjs';
 import { generateArtifacts } from './reports.mjs';
 
@@ -185,7 +185,7 @@ async function executeNode(state, ctx, node) {
   await ctx.checkpoint(state);
   const payload = {
     ...node.payload,
-    topic: state.input.topic, scope: state.input.scope, languages: state.input.languages,
+    topic: state.input.topic, scope: state.input.scope, languages: state.input.languages, sourceUrls: state.input.sourceUrls,
     objective: node.objective, query: node.payload.query || node.objective || dimension?.query || node.label,
     maxSources: Math.max(0, state.input.maxSources - state.sources.length),
     existingSources: state.sources.map(s => ({ id: s.id, url: s.url })),
@@ -195,7 +195,10 @@ async function executeNode(state, ctx, node) {
     revisionInstructions: state.revisionInstructions || ''
   };
   if (node.kind === 'search') {
-    if (state.scouting?.previews) payload.sourcePreviews = state.scouting.previews;
+    if (state.scouting?.previews) {
+      const targets = new Set((node.payload.targetUrls || []).map(canonicalUrl));
+      payload.sourcePreviews = targets.size ? state.scouting.previews.filter(preview => targets.has(preview.url)) : state.scouting.previews;
+    }
     delete payload.sources; delete payload.report; delete payload.plan;
     payload.findings = payload.findings.map(({ claim, sourceIds, confidence }) => ({ claim, sourceIds, confidence }));
   }

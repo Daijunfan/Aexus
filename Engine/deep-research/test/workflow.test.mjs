@@ -92,6 +92,9 @@ test('bounded public pages are normalized, budgeted, and not inherited by a foll
   assert.deepEqual(parent.input.sourceUrls, ['https://example.com', 'https://www.iana.org/help/example-domains']);
   assert.throws(() => create({topic: 'Local page', sourceUrls: ['http://127.0.0.1/']}), /公开|私网/);
   assert.throws(() => create({topic: 'Too many bounded pages', maxSources: 1, sourceUrls: ['https://example.com/', 'https://www.iana.org/help/example-domains']}), /来源预算/);
+  const outOfScopePlan = plan();
+  outOfScopePlan.nodes[0].payload.targetUrls = ['https://outside.example/a'];
+  assert.throws(() => applyPlan(create({topic: 'Keep a scoped plan on its declared pages', sourceUrls: ['https://example.com/']}), outOfScopePlan, 'scoped plan'), /限定网址/);
   parent.phase = 'complete'; parent.report = {title: 'Completed', sections: [{heading: 'Finding', content: 'Evidence', citations: []}], citations: []};
   assert.deepEqual(fork(parent, {topic: 'A fresh open question'}).input.sourceUrls, []);
 });
@@ -125,6 +128,34 @@ test('bounded scout uses independently previewed page text and keeps research wi
   assert.equal(search.task.payload.sourcePreviews[0].truncated, false);
   assert.match(search.args.text, /完整可见正文已在 sourcePreviews 中/);
   assert.match(search.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
+});
+
+test('each scoped search sees only its target page preview and its real truncation status', async () => {
+  const f = fixture({respond: task => {
+    if (task.kind === 'scout') return {sources: [source('short'), source('long')]};
+    if (task.kind === 'plan') return {dimensions: [{id: 'd1', query: 'Two bounded pages'}], strategy: 'Separate source branches', team: [
+      {id: 'coordinator', role: 'coordinator', managementRole: 'manager'},
+      {id: 'researcher', role: 'researcher', managerIds: ['coordinator']}
+    ], nodes: [
+      {id: 'short', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'short', targetUrls: ['https://short.example/research']}},
+      {id: 'long', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'long', targetUrls: ['https://long.example/research']}},
+      {id: 'verify', kind: 'verify', role: 'researcher', dependencies: ['short', 'long']},
+      {id: 'write', kind: 'write', role: 'researcher', dependencies: ['verify']},
+      {id: 'review', kind: 'review', role: 'coordinator', dependencies: ['write']}
+    ]};
+  }});
+  f.ctx.sourceReader = async url => ({url, mediaType: 'text/plain', body: source(new URL(url).hostname.split('.')[0]).acquisition.excerpt + (url.includes('long') ? ' x'.repeat(4000) : '')});
+  const done = await run(create({topic: 'Use page-specific bounded previews', scope: 'quick', maxSources: 2, sourceUrls: ['https://short.example/research', 'https://long.example/research'], team: {maxWorkers: 2, maxManagers: 1, maxConcurrency: 2}, maxTasks: 5, autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  const searches = f.calls.filter(call => call.task?.kind === 'search');
+  const short = searches.find(call => call.task.payload.query === 'short');
+  const long = searches.find(call => call.task.payload.query === 'long');
+  assert.deepEqual(short.task.payload.sourcePreviews.map(item => item.url), ['https://short.example/research']);
+  assert.match(short.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
+  assert.match(short.args.text, /只能访问 sourceUrls 中的页面/);
+  assert.deepEqual(long.task.payload.sourcePreviews.map(item => item.url), ['https://long.example/research']);
+  assert.equal(long.task.payload.sourcePreviews[0].truncated, true);
+  assert.match(long.args.text, /此阶段按需使用已开放的浏览\/搜索工具/);
 });
 
 test('native tools are reserved for discovery while evidence and report stages use saved proofs', async () => {

@@ -1,5 +1,6 @@
 /** Pure plan validation, revision history and DAG scheduling. */
 import {isDeepStrictEqual} from 'node:util';
+import {canonicalUrl} from './evidence.mjs';
 export const TASK_KINDS = ['search', 'verify', 'synthesize', 'write', 'review'];
 
 const sameWork = (a, b) => isDeepStrictEqual([a.kind, a.role, a.objective, [...a.dependencies].sort(), a.payload], [b.kind, b.role, b.objective, [...b.dependencies].sort(), b.payload]);
@@ -66,6 +67,12 @@ export function nodesFromDimensions(dimensions) {
 
 export function applyPlan(state, plan, reason) {
   const nodes = normalizeNodes(plan.nodes || nodesFromDimensions(plan.dimensions), state.input.maxTasks ?? 128);
+  if (state.input.sourceUrls?.length) {
+    const allowed = new Set(state.input.sourceUrls);
+    for (const node of nodes.filter(node => node.kind === 'search' && node.payload.targetUrls !== undefined)) {
+      if (!Array.isArray(node.payload.targetUrls) || node.payload.targetUrls.some(url => !allowed.has(canonicalUrl(url)))) throw Error('搜索任务目标必须属于限定网址: ' + node.id);
+    }
+  }
   const planNodes = structuredClone(nodes);
   const previous = state.graph?.nodes ?? [];
   const oldById = new Map(previous.filter(n => n.active !== false).map(n => [n.id, n]));
