@@ -156,6 +156,15 @@ test('source budget skips surplus reads but still refreshes a known source after
   assert.equal(state.sources[0].title, 'Independently refreshed title')
 })
 
+test('source budget recognizes a rediscovered legacy URL at full capacity', () => {
+  const state = initial(), known = evidenceFixture()
+  state.input.maxSources = 1
+  state.sources.push({...known, id: 'legacy-id', url: known.url + '?utm_source=old'})
+  assert.deepEqual(withinSourceBudget(state, [known]).map(source => source.id), [known.id])
+  assert.deepEqual(mergeSources(state, [known]), ['legacy-id'])
+  assert.equal(state.sources.length, 1)
+})
+
 test('Verification rejects fabricated excerpts, unknown sources and excerpts from discovery-only records', () => {
   const source = evidenceFixture(), wrong = verificationFixture(source)
   wrong.verifications[0].claims[0].excerpt = 'The price is 999 units.'

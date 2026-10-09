@@ -36,11 +36,12 @@ export function normalizeSources(result) {
 
 export function withinSourceBudget(state, candidates) {
   const known = new Set(state.sources.map(source => source.id));
-  let remaining = Math.max(0, state.input.maxSources - known.size);
+  const knownUrls = new Set(state.sources.flatMap(source => { try { return [canonicalUrl(source.url)]; } catch { return []; } }));
+  let remaining = Math.max(0, state.input.maxSources - state.sources.length);
   return candidates.filter(source => {
-    if (known.has(source.id)) return true;
+    if (known.has(source.id) || knownUrls.has(source.url)) return true;
     if (!remaining) return false;
-    known.add(source.id); remaining--; return true;
+    known.add(source.id); knownUrls.add(source.url); remaining--; return true;
   });
 }
 
