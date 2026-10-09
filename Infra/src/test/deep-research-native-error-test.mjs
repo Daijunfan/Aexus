@@ -23,6 +23,12 @@ test('a failed native turn exposes its cause to the research workflow without an
   assert.equal(response.ok,true)
   const status=await core.until(async()=>{const value=await core.status(worker.id);return !value.busy&&value.error?value:false},'native error propagated')
   assert.match(status.error,/fixture provider stream disconnected/)
-  assert.equal((await core.cli('session','transcript','--employee',worker.id)).items.filter(item=>item.role==='user').length,1)
+  const items=(await core.cli('session','transcript','--employee',worker.id)).items
+  assert.equal(items.filter(item=>item.role==='user').length,1)
+  assert.ok(items.some(item=>item.role==='notice'&&item.tone==='error'&&/fixture provider stream disconnected/.test(item.text)))
+  await core.stop()
+  await core.start()
+  const restored=(await core.cli('session','transcript','--employee',worker.id)).items
+  assert.ok(restored.some(item=>item.role==='notice'&&item.tone==='error'&&/fixture provider stream disconnected/.test(item.text)))
  }finally{await core?.close();fs.rmSync(temp,{recursive:true,force:true})}
 })

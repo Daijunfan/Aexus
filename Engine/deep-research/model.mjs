@@ -128,7 +128,7 @@ export function retry(state) {
     const logicalKey = task.logicalKey || key.replace(/-format-fix$/, '');
     const currentKey = logicalKey + (state.taskAttempts?.[logicalKey] ? '-retry-' + state.taskAttempts[logicalKey] : '');
     if (key !== currentKey && key !== currentKey + '-format-fix' || state.tasks[currentKey + '-format-fix']?.status === 'completed') continue;
-    if (task.status === 'cancelled' || ['format', 'no-result'].includes(task.failureKind)) fresh.add(logicalKey);
+    if (task.status === 'cancelled' || ['format', 'no-result', 'native-terminal'].includes(task.failureKind)) fresh.add(logicalKey);
     else { task.status = task.receipt ? 'running' : 'prepared'; task.deadline = Date.now() + 15 * 60 * 1000; delete task.error; delete task.failureKind; }
   }
   state.taskAttempts ??= {};

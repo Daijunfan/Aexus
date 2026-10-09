@@ -720,5 +720,24 @@ test('native provider failure is surfaced without a format-correction model requ
     }}};
   await assert.rejects(ask(state, ctx, 'source-check', 'researcher', 'search', {query: 'bounded'}, value => value), /Provider stream disconnected/);
   assert.equal(sends, 1);
-  assert.equal(state.tasks['source-check'].failureKind, 'transport');
+  assert.equal(state.tasks['source-check'].failureKind, 'native-terminal');
+});
+
+test('a persisted native failure is not mistaken for a malformed JSON answer after restart', async () => {
+  const state = create({topic: 'Recover an interrupted provider without repeating a failed transcript'});
+  state.workers = [{id: 'researcher-1', role: 'researcher', label: '研究员', engine: 'codex', active: true}];
+  state.tasks['source-check'] = {taskId: 'wf/source-check', logicalKey: 'source-check', role: 'researcher', label: 'search', employeeId: 'researcher-1', engine: 'codex', status: 'running', receipt: {messageId: 'native-turn'}};
+  const ctx = {id: 'wf', signal: new AbortController().signal, checkpoint: async () => {}, client: {invoke: async command => {
+    if (command === 'session.status') return [{busy: false}];
+    if (command === 'session.transcript') return {items: [
+      {role: 'user', outbound: {taskId: 'native-turn'}},
+      {role: 'assistant', blocks: [{kind: 'text', text: '{"partial":'}]},
+      {role: 'notice', tone: 'error', text: 'Provider stream disconnected'}
+    ]};
+    throw Error('A failed native turn must not request a format correction');
+  }}};
+  await assert.rejects(ask(state, ctx, 'source-check', 'researcher', 'search', {query: 'bounded'}, value => value), /Provider stream disconnected/);
+  assert.equal(state.tasks['source-check'].failureKind, 'native-terminal');
+  retry(state);
+  assert.equal(state.taskAttempts['source-check'], 1, 'explicit Resume starts a fresh native attempt');
 });

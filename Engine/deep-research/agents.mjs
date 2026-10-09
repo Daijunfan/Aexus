@@ -87,7 +87,9 @@ async function transcriptTask(client, task) {
   const index = items.findIndex(i => i.role === 'user' && (task.receipt?.messageId ? i.outbound?.taskId === task.receipt.messageId : typeof task.prompt === 'string' && i.text === task.prompt));
   if (index < 0) return null;
   const next = items.findIndex((i, n) => n > index && i.role === 'user');
-  return { messageId: items[index].outbound?.taskId, text: items.slice(index + 1, next < 0 ? undefined : next).map(textOf).filter(Boolean).at(-1) || null };
+  const turn = items.slice(index + 1, next < 0 ? undefined : next);
+  return { messageId: items[index].outbound?.taskId, text: turn.map(textOf).filter(Boolean).at(-1) || null,
+    error: turn.find(item => item.role === 'notice' && item.tone === 'error')?.text };
 }
 
 async function execute(state, ctx, key, worker, kind, payload, validate, logicalKey = key) {
@@ -125,9 +127,10 @@ async function execute(state, ctx, key, worker, kind, payload, validate, logical
         task.status = 'approval'; state.attention = { employeeId: worker.id, message: worker.label + ' 需要 Infra 审批' }; await ctx.checkpoint(state);
       } else if (!status.waitingApproval && task.status === 'approval') { task.status = 'running'; state.attention = null; await ctx.checkpoint(state); }
       if (!status.busy && !status.acknowledging && !status.waitingApproval) {
-        if (status.error) throw Error('员工原生执行失败：' + status.error);
+        if (status.error) { task.failureKind = 'native-terminal'; throw Error('员工原生执行失败：' + status.error); }
         const transcript = await transcriptTask(ctx.client, task);
         ctx.signal.throwIfAborted();
+        if (transcript?.error) { task.failureKind = 'native-terminal'; throw Error('员工原生执行失败：' + transcript.error); }
         if (transcript?.text) {
           let result;
           try { result = validate(parseAnswer(transcript.text, task.taskId)); } catch (error) { task.failureKind = error.code === 'AGENT_REPLY_TOO_LARGE' ? 'size' : 'format'; throw error; }
