@@ -658,6 +658,12 @@ try {
   await page.locator(".dr-live-activity").waitFor();
   await screen("02a-scouting-owned-activity");
   checks.push("scouting has no invented percentage or ETA");
+  update("running", "scouting", {
+    sources: [{id: "discovered-only", title: "未读取网页", url: "https://unread.example/original", acquisition: {status: "discovered"}, verified: false}],
+  });
+  await page.getByText("1 来源 · 0 实读网站", { exact: true }).waitFor();
+  update("running", "scouting", {sources: []});
+  checks.push("discovered URLs do not inflate independently read website breadth");
   update("running", "research", {
     workers,
     graph,

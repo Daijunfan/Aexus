@@ -490,7 +490,7 @@ export default function Page({ client }: { client: ContractClient }) {
       (source) => independentlyRead(source) && source.verified,
     ).length;
   const domains = new Set(
-    sources.map((source) => sourceHost(source.url)).filter(Boolean),
+    sources.filter(independentlyRead).map((source) => sourceHost(source.url)).filter(Boolean),
   ).size;
   const scopeHelp: Record<string, string> = {
     quick: "快速概览：默认最多 6 个来源、4 位协作者，聚焦关键原始资料。",
@@ -951,10 +951,10 @@ export default function Page({ client }: { client: ContractClient }) {
                     {workers.length} 位协作者
                   </span>
                   <span
-                    title={`${sourceCount} 个已发现来源，${readCount} 个已读取正文，${verifiedCount} 个已核验；${domains} 个网站域名`}
+                    title={`${sourceCount} 个已发现来源，${readCount} 个已读取正文，${verifiedCount} 个已核验；${domains} 个已独立读取网站域名`}
                   >
                     <Icon name="globe" />
-                    {sourceCount} 来源 · {domains} 网站
+                    {sourceCount} 来源 · {domains} 实读网站
                   </span>
                   <span>
                     <Icon name="verified" />

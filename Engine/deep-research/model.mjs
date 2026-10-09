@@ -103,7 +103,7 @@ export function upgradeState(state) {
 
 export function describe(originalState) {
   const state = upgradeState(structuredClone(originalState));
-  const domains = new Set(state.sources.map(s => { try { return new URL(s.url).hostname; } catch { return ''; } }).filter(Boolean));
+  const domains = new Set(state.sources.filter(isIndependentSource).map(s => { try { return new URL(s.url).hostname; } catch { return ''; } }).filter(Boolean));
   const plan = state.plan ? Object.fromEntries(Object.entries(state.plan).filter(([key]) => key !== 'nodes')) : null;
   return {
     topic: state.input.topic, phase: state.phase, phaseLabel: PHASES[state.phase] || state.phase, scope: state.input.scope,

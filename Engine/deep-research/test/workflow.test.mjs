@@ -126,6 +126,15 @@ test('first scouting has unknown progress and autoApprove is retained', () => {
   assert.equal(describe(state).progress.totalTasks, null);
 });
 
+test('website breadth counts independently read domains, not discovered links', () => {
+  const state = create({topic: 'Distinguish discovered websites from read evidence'});
+  const discovered = normalizeSources({sources: [source('unread-domain')]}).sources[0];
+  state.sources.push(discovered);
+  assert.equal(describe(state).progress.sources.domains, 0);
+  state.sources.push({...discovered, id: 'read-domain', url: 'https://read.example/original', acquisition: {status: 'read', method: 'independent-http', excerpts: [{excerpt: 'Original source passage.'}]}});
+  assert.equal(describe(state).progress.sources.domains, 1);
+});
+
 test('dynamic DAG completes with distinct concurrent workers, real manager turns and cited artifacts', async () => {
   const f = fixture(), state = create({ topic: 'Detailed independent research question', autoApprove: true, team: { maxConcurrency: 2 } });
   const result = await run(state, f.ctx);
