@@ -74,8 +74,8 @@ rl.on('line',line=>{
         if(!hidden&&!ack&&fs.existsSync(path.join(control,employee+'.hold-user')))return
         clearInterval(timer)
         if(ack)note('ack',{...input,response:ackText,finishedAt:Date.now()})
-        const failure=hidden&&fs.existsSync(path.join(control,employee+'.fail'))||ack&&fs.existsSync(path.join(control,employee+'.ack-fail'))
-        if(failure){if(ack)event('item/completed',{threadId:thread,turnId:turn,item:{id:'answer',type:'agentMessage',text:ackText}});event('turn/completed',{threadId:thread,turn:{id:turn,status:'failed',error:{message:ack?'fixture acknowledgment failure':'fixture initialization failure'}}});return}
+        const failure=hidden&&fs.existsSync(path.join(control,employee+'.fail'))||ack&&fs.existsSync(path.join(control,employee+'.ack-fail'))||!hidden&&!ack&&fs.existsSync(path.join(control,employee+'.work-fail'))
+        if(failure){if(ack)event('item/completed',{threadId:thread,turnId:turn,item:{id:'answer',type:'agentMessage',text:ackText}});event('turn/completed',{threadId:thread,turn:{id:turn,status:'failed',error:{message:ack?'fixture acknowledgment failure':hidden?'fixture initialization failure':'fixture provider stream disconnected'}}});return}
         if(hidden){
           event('item/completed',{threadId:thread,turnId:turn,item:{id:'reading-commentary',type:'agentMessage',text:'PRIVATE_INIT_READING_COMMENTARY'}})
         }
