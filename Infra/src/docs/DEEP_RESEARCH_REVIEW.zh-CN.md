@@ -33,6 +33,7 @@
 - [原生 Cline 隔离单步核验](../../../.aexus/artifacts/deep-research-fix/cline-verify-real-6xaPtq/verification.json)用已取证片段的测试输入，在约两分钟内返回 2 个来源、2 条论断，未出现工具审批；临时原生配置和进程已清理。该验证使用测试证明元数据，不是新的独立网页取证，也未跑完整 DAG；没有观察逐项工具调用，不能据此断言模型绝对不使用工具。
 - 改用两个公开 HTML 页（example.com 与 IANA）做更小范围的完整流程：初调研后引擎独立取得两域原文，模型规划了两条核验分支汇入写作、审阅；第一条核验在原生 Cline 提供商流返回 `Response stream ended without a finish reason` 时失败，未核验论断、未交付报告。[终态故障](../../../.aexus/artifacts/deep-research-fix/cline-html-real-0v16TQ/failure.json)、[停止确认](../../../.aexus/artifacts/deep-research-fix/cline-html-real-0v16TQ/stop.json)、[最后 DAG 投影](../../../.aexus/artifacts/deep-research-fix/cline-html-real-0v16TQ/last-public-view.json)保留了范围与失败位置；隔离目录已删除。单步成功与本次失败并存，不据此推断完整双来源质量或自动重试的成本收益。
 - 同题 Pi 隔离试验的测试审批白名单只允许 `fetch_web_content`，而原生 Pi 在 scout 阶段申请 `bash` 与 `agents_company_api`；测试拒绝这些调用并主动取消，0 来源、无计划或报告。[取消记录](../../../.aexus/artifacts/deep-research-fix/pi-html-real-tb9J6E/last-public-view.json)仅证明测试权限策略不适配 Pi，不能当作 Pi 或研究引擎的能力失败。对实际网页读取权限须逐项审查命令后再设计受限试验，不能盲目开启完整命令权限。
+- 对同两页重新运行 Pi 时逐项审核了只读 GET、响应头与测试自建临时 HTML 的解析；初调研取得两页，模型把 IANA 两段真实正文用自加的 ` / ` 拼成一条引文，被独立原文匹配正确拒绝。计划仍把补抓放在 verify 目标中，最终 example.com 有两条核验论断、IANA 未通过，原生 Pi 在综合节点返回 `terminated`，无报告。[失败状态](../../../.aexus/artifacts/deep-research-fix/pi-html-real-dv6RbF/last-public-view.json)与[停止证明](../../../.aexus/artifacts/deep-research-fix/pi-html-real-dv6RbF/stop.json)可核对，隔离目录及该试验创建的 `/tmp/ex.html`、`/tmp/iana.html` 已删除。现在只有在每一段均与独立 GET 原文逐字匹配时才拆成各自的证明；拼接句本身仍不能作为引用。[先失败后通过的测试](../../../.aexus/artifacts/deep-research-fix/joined-proof-before.log)、[IANA 当前网页实读](../../../.aexus/artifacts/deep-research-fix/iana-joined-live-proof.json)分别覆盖拒绝与修复，规划提示也明确把未读来源补抓交给 search。尚无修复后完整付费运行，不能把这次失败改称成功。
 - `approval.list/respond` 公共协议既接受会话 ID 也接受员工 ID；真实隔离运行发现员工 ID 未映射到当前会话，导致审批列表空白。Host 已复用现有员工→会话解析修复，两种写法由[真实 Core 审批回归](../../../.aexus/artifacts/deep-research-fix/approval-employee-alias-test.log)核对。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
@@ -62,7 +63,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-当前[集成副本相关回归](../../../.aexus/artifacts/deep-research-fix/release-72e2869-integrated/deep-research-tests.log)为 109/109，通过命令：
+当前[相关回归](../../../.aexus/artifacts/deep-research-fix/joined-proof-integration.log)为 110/110，通过命令：
 
 ```sh
 node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Engine/deep-research/test/report-layout.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs

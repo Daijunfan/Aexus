@@ -85,8 +85,11 @@ export async function acquireSources(state, candidates, {signal, read = readSour
       signal?.throwIfAborted();
       const at = index++, candidate = candidates[at], submitted = candidate.acquisition?.excerpt || '';
       const old = state.sources.find(source => source.id === candidate.id) || state.sources.find(source => { try { return canonicalUrl(source.url) === candidate.url; } catch { return false; } });
-      const known = old && isIndependentSource(old) && old.acquisition.excerpts.find(item => item.excerpt === submitted);
-      if (known) { results[at] = {...candidate, title: old.acquisition.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: [known], ...(old.acquisition.pageTitle ? {pageTitle: old.acquisition.pageTitle} : {})}}; continue; }
+      const segments = submitted.split(/\s+\/\s+/).filter(Boolean);
+      const saved = old && isIndependentSource(old) ? old.acquisition.excerpts : [];
+      const exact = saved.find(item => item.excerpt === submitted);
+      const known = exact ? [exact] : segments.length > 1 ? segments.map(part => saved.find(item => item.excerpt === part)) : [];
+      if (known.length && known.every(Boolean)) { results[at] = {...candidate, title: old.acquisition.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: known, ...(old.acquisition.pageTitle ? {pageTitle: old.acquisition.pageTitle} : {})}}; continue; }
       if (!submitted) { results[at] = {...candidate, acquisition: {status: 'discovered', method: 'agent-reported', reason: '尚未提供需独立核对的原文片段'}}; continue; }
       try {
         const url = publicURL(candidate.url);
@@ -100,11 +103,17 @@ export async function acquireSources(state, candidates, {signal, read = readSour
         }));
         const response = await cache.get(url);
         signal?.throwIfAborted();
-        const page = response.pages?.find(page => page.text.includes(normalize(submitted)));
-        if (response.pages ? !page : !response.text.includes(normalize(submitted))) throw Error('独立取得的原文未找到完整提交片段，该片段不能作为证据或引用');
-        const proof = {excerpt: submitted, locator: page ? 'Page ' + page.number : candidate.acquisition.locator || '', sha256: createHash('sha256').update(response.data).digest('hex'), accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
-          ...(page ? {pages: [page.number]} : {})};
-        results[at] = {...candidate, title: response.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: [proof], ...(response.pageTitle ? {pageTitle: response.pageTitle} : {})}};
+        const locate = excerpt => response.pages?.find(page => page.text.includes(normalize(excerpt))) || (!response.pages && response.text.includes(normalize(excerpt)) ? {} : null);
+        const excerpts = locate(submitted) ? [submitted] : segments.length > 1 ? segments : [submitted];
+        const locations = excerpts.map(locate);
+        if (locations.some(page => !page)) throw Error('独立取得的原文未找到完整提交片段，该片段不能作为证据或引用');
+        const sha256 = createHash('sha256').update(response.data).digest('hex');
+        const proofs = excerpts.map((excerpt, index) => {
+          const page = locations[index];
+          return {excerpt, locator: page.number ? 'Page ' + page.number : candidate.acquisition.locator || '', sha256, accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
+            ...(page.number ? {pages: [page.number]} : {})};
+        });
+        results[at] = {...candidate, title: response.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: proofs, ...(response.pageTitle ? {pageTitle: response.pageTitle} : {})}};
       } catch (error) {
         signal?.throwIfAborted();
         results[at] = {...candidate, acquisition: {status: 'unavailable', method: 'agent-reported', rejections: [{excerpt: submitted, locator: candidate.acquisition.locator || '', reason: error.message}]}};

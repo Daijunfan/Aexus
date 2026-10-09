@@ -94,6 +94,7 @@ test('native tools are reserved for discovery while evidence and report stages u
   for (const call of f.calls.filter(item => item.command === 'session.send')) {
     if (['scout', 'search'].includes(call.task.kind)) assert.match(call.args.text, /按需使用已开放的浏览\/搜索工具/);
     else assert.match(call.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
+    if (call.task.kind === 'plan') assert.match(call.args.text, /未读取或片段被拒绝的来源须先由 search 节点补做取证/);
     if (call.task.kind === 'verify') assert.match(call.args.text, /不重复 GET、解析 PDF 内部结构/);
   }
 });

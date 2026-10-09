@@ -111,6 +111,30 @@ test('one batch reads each URL once and preserves independent proof for its dist
   assert.ok(result.every(source => /^[a-f0-9]{64}$/.test(source.acquisition.excerpts[0].sha256)));
 });
 
+test('joined page paragraphs become separate exact proofs, never one fabricated quote', async () => {
+  const first = 'Example domains are maintained for documentation purposes.';
+  const second = 'They are not available for registration or transfer.';
+  const joined = first + ' / ' + second;
+  const [checked] = await acquireSources(state(), [candidate(joined)], {
+    read: async url => ({url, mediaType: 'text/html', body: `<p>${first}</p><p>${second}</p>`})
+  });
+  assert.equal(checked.acquisition.status, 'read');
+  assert.deepEqual(checked.acquisition.excerpts.map(item => item.excerpt), [first, second]);
+  assert.throws(() => normalizeVerification({verifications: [{sourceId: checked.id, credibilityScore: 1, claims: [{text: 'Combined claim', excerpt: joined}]}]}, [checked]), /片段/);
+  const [reused] = await acquireSources({sources: [checked]}, [candidate(joined)], {
+    read: async () => { throw Error('Both saved exact excerpts should be reused'); }
+  });
+  assert.equal(reused.acquisition.status, 'read');
+  const [fabricated] = await acquireSources(state(), [candidate(first + ' / ' + second + ' Invented ending.')], {
+    read: async url => ({url, mediaType: 'text/html', body: `<p>${first}</p><p>${second}</p>`})
+  });
+  assert.equal(fabricated.acquisition.status, 'unavailable');
+  const [literal] = await acquireSources(state(), [candidate('Policy A / Policy B')], {
+    read: async url => ({url, mediaType: 'text/plain', body: 'Policy A / Policy B'})
+  });
+  assert.deepEqual(literal.acquisition.excerpts.map(item => item.excerpt), ['Policy A / Policy B']);
+});
+
 test('the independently retrieved HTML title replaces an agent-supplied title across source merges', async () => {
   const discovered = candidate('The document contains a bounded fact.');
   discovered.title = 'Invented title';
