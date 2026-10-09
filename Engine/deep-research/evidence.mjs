@@ -34,6 +34,16 @@ export function normalizeSources(result) {
   return { sources, gaps: Array.isArray(result.gaps) ? result.gaps.map(String).filter(Boolean) : [], replanReason: typeof result.replanReason === 'string' ? result.replanReason : '' };
 }
 
+export function withinSourceBudget(state, candidates) {
+  const known = new Set(state.sources.map(source => source.id));
+  let remaining = Math.max(0, state.input.maxSources - known.size);
+  return candidates.filter(source => {
+    if (known.has(source.id)) return true;
+    if (!remaining) return false;
+    known.add(source.id); remaining--; return true;
+  });
+}
+
 export function mergeSources(state, sources, node = {}) {
   const byId = new Map(state.sources.map(s => [s.id, s]));
   const ids = [];
@@ -41,7 +51,7 @@ export function mergeSources(state, sources, node = {}) {
     const acquisition = {...source.acquisition, ...(source.acquisition?.rejections ? {rejections: source.acquisition.rejections.map(item => ({...item, ...(node.id ? {nodeId: node.id} : {})}))} : {})};
     const old = byId.get(source.id) || state.sources.find(s => { try { return canonicalUrl(s.url) === source.url; } catch { return false; } });
     const sourceId = old?.id || source.id;
-    if (!old && state.sources.length >= state.input.maxSources) break;
+    if (!old && state.sources.length >= state.input.maxSources) continue;
     if (old) {
       const rejections = [...(old.acquisition?.rejections || [])];
       for (const item of acquisition.rejections || []) {

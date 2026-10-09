@@ -3,7 +3,7 @@ import { create, describe, respond, retry, upgradeState, MAX_AGENT_REPLY_CHARS }
 import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
-import { normalizeSources, mergeSources, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
+import { normalizeSources, mergeSources, withinSourceBudget, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
 import { acquireSources } from './source-read.mjs';
 import { generateArtifacts } from './reports.mjs';
 
@@ -52,14 +52,14 @@ export async function run(originalState, originalContext) {
   state.independentEvidence = true;
   if (state.reacquireScout) {
     const candidates = state.tasks['initial-scout']?.result?.sources || state.sources.filter(s => state.scouting.sourceIds.includes(s.id));
-    state.scouting.sourceIds = mergeSources(state, await acquireSources(state, candidates, {signal: ctx.signal, read: ctx.sourceReader}), {id: 'initial-scout'});
+    state.scouting.sourceIds = mergeSources(state, await acquireSources(state, withinSourceBudget(state, candidates), {signal: ctx.signal, read: ctx.sourceReader}), {id: 'initial-scout'});
     delete state.reacquireScout; await ctx.checkpoint(state);
   }
   for (const node of state.graph.nodes.filter(n => n.active !== false && n.reacquire)) {
     const key = node.taskKey || node.id;
     const currentKey = key + (state.taskAttempts?.[key] ? '-retry-' + state.taskAttempts[key] : '');
     const candidates = state.tasks[currentKey]?.result?.sources || state.sources.filter(s => node.sourceIds?.includes(s.id) || node.dimensionId && s.dimensionIds?.includes(node.dimensionId));
-    node.sourceIds = mergeSources(state, await acquireSources(state, candidates, {signal: ctx.signal, read: ctx.sourceReader}), node);
+    node.sourceIds = mergeSources(state, await acquireSources(state, withinSourceBudget(state, candidates), {signal: ctx.signal, read: ctx.sourceReader}), node);
     delete node.reacquire; await ctx.checkpoint(state);
   }
   if (state.phase === 'complete') return state.artifacts?.length ? { status: 'completed', state, artifacts: state.artifacts } : finish(state, ctx);
@@ -71,7 +71,7 @@ export async function run(originalState, originalContext) {
       topic: state.input.topic, scope: state.input.scope, languages: state.input.languages,
       materials: state.input.materials, maxSources: Math.min(state.input.maxSources, 12)
     }, normalizeSources);
-    const sourceIds = mergeSources(state, await acquireSources(state, result.sources, {signal: ctx.signal, read: ctx.sourceReader}), { id: 'initial-scout' });
+    const sourceIds = mergeSources(state, await acquireSources(state, withinSourceBudget(state, result.sources), {signal: ctx.signal, read: ctx.sourceReader}), { id: 'initial-scout' });
     state.scouting = { gaps: result.gaps, sourceIds };
     state.phase = 'planning'; await ctx.checkpoint(state);
   }
@@ -190,7 +190,7 @@ async function executeNode(state, ctx, node) {
     node.employeeId ||= state.tasks[node.taskKey || node.id]?.employeeId;
     const worker = state.workers.find(w => w.id === node.employeeId); node.managerIds = worker?.managerIds || [];
     if (node.kind === 'search') {
-      node.sourceIds = mergeSources(state, await acquireSources(state, result.sources, {signal: ctx.signal, read: ctx.sourceReader}), node); node.resultSummary = `${node.sourceIds.length} 个来源；${result.gaps.length} 项未解问题`;
+      node.sourceIds = mergeSources(state, await acquireSources(state, withinSourceBudget(state, result.sources), {signal: ctx.signal, read: ctx.sourceReader}), node); node.resultSummary = `${node.sourceIds.length} 个来源；${result.gaps.length} 项未解问题`;
       if (dimension) { dimension.status = 'completed'; dimension.sourcesFound = node.sourceIds.length; }
       if (result.replanReason) state.replanReason = result.replanReason;
     } else if (node.kind === 'verify') {

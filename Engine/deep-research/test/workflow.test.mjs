@@ -87,6 +87,16 @@ test('quick research uses smaller default caps while explicit budgets remain aut
   assert.equal(custom.input.maxReplans, 0);
 });
 
+test('scouting does not fetch candidates beyond the source budget', async () => {
+  const f = fixture({respond: task => task.kind === 'scout' ? {sources: [source('seed'), source('surplus'), source('extra')]} : null});
+  const read = f.ctx.sourceReader, fetched = [];
+  f.ctx.sourceReader = url => { fetched.push(url); return read(url); };
+  const result = await run(create({topic: 'Bounded scouting with three candidate sources', maxSources: 1}), f.ctx);
+  assert.equal(result.status, 'waiting');
+  assert.deepEqual(fetched, [source('seed').url]);
+  assert.equal(result.state.sources.length, 1);
+});
+
 test('first scouting has unknown progress and autoApprove is retained', () => {
   const state = create({ topic: 'Detailed independent research question', autoApprove: true });
   assert.equal(state.input.autoApprove, true);

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {normalizeNodes, applyPlan, readyNodes, planProgress} from '../../../Engine/deep-research/graph.mjs'
-import {normalizeSources, mergeSources, normalizeVerification, mergeVerification, validateReport} from '../../../Engine/deep-research/evidence.mjs'
+import {normalizeSources, mergeSources, withinSourceBudget, normalizeVerification, mergeVerification, validateReport} from '../../../Engine/deep-research/evidence.mjs'
 import {create, retry, run} from '../../../Engine/deep-research/runtime.mjs'
 import {ask} from '../../../Engine/deep-research/agents.mjs'
 
@@ -142,6 +142,18 @@ test('Tracking URLs deduplicate; search snippets stay discovered rather than rea
   assert.equal(state.sources[0].verified, false)
   assert.deepEqual(state.sources[0].nodeIds, ['first', 'second'])
   assert.deepEqual(state.sources[0].dimensionIds, ['a', 'b'])
+})
+
+test('source budget skips surplus reads but still refreshes a known source after the cap', () => {
+  const state = initial(), known = evidenceFixture()
+  state.input.maxSources = 1
+  mergeSources(state, [known])
+  const surplus = {...evidenceFixture(), id: 'surplus', url: 'https://example.net/surplus'}
+  const refresh = {...known, acquisition: {...known.acquisition, pageTitle: 'Independently refreshed title'}}
+  assert.deepEqual(withinSourceBudget(state, [surplus, refresh]).map(source => source.id), [known.id])
+  mergeSources(state, [surplus, refresh])
+  assert.equal(state.sources.length, 1)
+  assert.equal(state.sources[0].title, 'Independently refreshed title')
 })
 
 test('Verification rejects fabricated excerpts, unknown sources and excerpts from discovery-only records', () => {
