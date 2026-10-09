@@ -19,6 +19,7 @@ UI 默认自动执行生成的计划；高级设置勾选“关键节点由我�
 API 未传 `autoApprove` 时默认需要确认计划。运行期间可暂停、补充要求、
 继续或停止，也可检查具体任务、员工、计划版本、来源、矛盾和报告。
 重规划保留相同任务的结果，归档被替代节点；已开始任务不能用同一 ID 改写。
+完成后可从报告页选择“继续研究”，输入后续问题；新任务保留父研究链接，把旧报告作为历史背景，重新初调研、规划和独立核验来源。默认先确认新计划，原报告与员工记录保持不变。
 
 ## 公开接口
 
@@ -56,6 +57,7 @@ CLI 是同一公开接口的可选客户端，从项目根目录运行：
 node Engine/deep-research/cli.mjs --help
 node Engine/deep-research/cli.mjs list
 node Engine/deep-research/cli.mjs get --id WORKFLOW_ID
+node Engine/deep-research/cli.mjs fork --id COMPLETED_ID --revision N --topic "哪些假设已经变化？" --request-id follow-up-001
 node Engine/deep-research/cli.mjs download --id COMPLETED_ID --output report.html
 ```
 
@@ -101,7 +103,7 @@ Agent 自报的读取状态或标题不能代替独立读取证明。
 - `evidence.json`：来源、论断、原文、矛盾与读取证明。
 - `research-plan.json`：DAG、团队及计划修订记录。
 
-当前没有原生 Word/PDF 导出、完成后派生研究或协作批注。
+当前没有原生 Word/PDF 导出或协作批注。
 浏览器打印 HTML 不等于已实现原生 PDF 导出。
 
 `Page.tsx`、图与阅读组件负责独立 UI；`model.mjs` 管理状态和控制；

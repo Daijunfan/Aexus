@@ -109,7 +109,7 @@ Core permits at most two simultaneous explicit data operations and aborts them a
 
 `workflow.fork` accepts only a completed, caller-owned parent at its current revision. It is serialized with parent controls. Core binds the request key to operation, parent ID/revision and exact input; retries return the original child, while a different payload under the same key is rejected. Core creates the new ID and stamps `parent:{id,revision,engineVersion}`. The Engine cannot forge this field through its input.
 
-The optional synchronous `fork` hook receives a clone and produces fresh initial state, without Infra calls. Parent and child IDs survive restart. Each supporting Engine defines context reuse and initial approval behavior; creation cannot bypass native tool approval. The current Deep Research runtime does not implement `fork`; start a new research job for a follow-up and explicitly provide its background material.
+The optional synchronous `fork` hook receives a clone and produces fresh initial state, without Infra calls. Parent and child IDs survive restart. Each supporting Engine defines context reuse and initial approval behavior; creation cannot bypass native tool approval. Deep Research carries the prior completed report and cited URLs as historical background only: the child starts with no copied workers, tasks, verified sources or findings, and requires a new plan approval unless its input explicitly sets `autoApprove:true`.
 
 ```sh
 node Infra/src/cli/aexus workflow prepare --engine-id SUPPORTING_ENGINE --input '{"files":[{"name":"brief.txt","encoding":"base64","content":"SGVsbG8="}]}' --json
