@@ -132,24 +132,55 @@
   overflow: auto;
 }
 .dr-intake-page {
-  width: min(840px, 100%);
+  width: min(900px, 100%);
   margin: auto;
   padding: 56px 32px 40px;
 }
 .dr-intake-heading {
   display: flex;
-  gap: 13px;
+  gap: 17px;
   align-items: center;
-  margin-bottom: 35px;
+  margin-bottom: 27px;
 }
-.dr-intake-heading > .codicon {
-  font-size: 30px;
+.dr-intake-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: white;
+  background: linear-gradient(145deg, #114d3b, #278367);
+  box-shadow: 0 8px 22px #15594328;
+}
+.dr-intake-mark .codicon {
+  font-size: 24px;
+}
+.dr-intake-kicker {
   color: var(--dr-green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
 }
 .dr-intake-heading h1 {
-  font-size: 31px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 34px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  margin-top: 3px;
+}
+.dr-intake-heading p {
+  margin-top: 7px;
+  color: var(--dr-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dr-intake {
+  padding: 23px 24px 20px;
+  border: 1px solid var(--dr-border);
+  border-radius: 12px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--dr-green) 3%, var(--dr-bg)), var(--dr-bg) 55%);
+  box-shadow: 0 14px 36px #192b320a;
 }
 .dr-follow-up-context {
   padding: 15px 18px;
@@ -185,12 +216,17 @@
   width: 100%;
   resize: vertical;
   border: 1px solid #cfd7d4;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 16px;
   background: var(--dr-bg);
   color: var(--dr-text);
   line-height: 1.8;
   min-height: 130px;
+}
+.dr-app textarea:focus {
+  outline: none;
+  border-color: var(--dr-green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dr-green) 19%, transparent);
 }
 .dr-app textarea::placeholder {
   color: #929b98;
@@ -2056,6 +2092,11 @@
   .dr-app {
     display: block;
   }
+  .engine-surface > .dr-app {
+    display: grid;
+    height: calc(100% - 60px);
+    min-height: 0;
+  }
   .dr-intake-page {
     padding: 38px 20px;
   }
@@ -2065,8 +2106,13 @@
   .dr-intake-heading h1 {
     font-size: 27px;
   }
-  .dr-intake-heading > .codicon {
-    font-size: 26px;
+  .dr-intake-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+  .dr-intake {
+    padding: 16px;
   }
   .dr-intake textarea {
     padding: 13px;

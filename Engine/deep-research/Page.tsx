@@ -686,8 +686,12 @@ export default function Page({ client }: { client: ContractClient }) {
         {!job ? (
           <div className="dr-intake-page">
             <div className="dr-intake-heading">
-              <Icon name="telescope" />
-              <h1>{forkParent ? "继续研究" : "Deep Research"}</h1>
+              <span className="dr-intake-mark"><Icon name="telescope" /></span>
+              <div>
+                <span className="dr-intake-kicker">AEXUS / RESEARCH STUDIO</span>
+                <h1>{forkParent ? "继续研究" : "Deep Research"}</h1>
+                <p>把问题展开成可审阅的计划、可追溯的证据和完整报告。</p>
+              </div>
             </div>
             {forkParent && (
               <div className="dr-follow-up-context">
