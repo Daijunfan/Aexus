@@ -227,7 +227,7 @@ const FORMATS = {
 
 function buildPrompt(state, taskId, kind, payload) {
   const instructions = {
-    scout: '先浏览关键一手资料确认术语、边界、争议和可用证据，再指出研究缺口；此阶段不估计总进度或完成时间。',
+    scout: '先浏览关键一手资料确认术语、边界、争议和可用证据，再指出研究缺口；此阶段不估计总进度或完成时间。若用户已限定网址并给出候选原文，只核对回答问题所需正文后立即返回 sources/gaps；引擎还会独立读取和复核片段，不重复下载或解析与问题无关的 PDF 字体、对象流和元数据。',
     plan: '根据初步证据选择员工数量、Manager 数量、研究问题和 DAG 拓扑；预算均为上限，任务数量由需要决定。每个 node 使用唯一 ID、kind、role、dependencies、payload。kind 仅 search/verify/synthesize/write/review；每版计划只有一个最终 write 和一个独立 review，全部研究任务必须沿依赖汇入 write，write 依赖相关证据核验，review 依赖 write。按资料体量和预计输出长度安排核验分支，使每个任务的 JSON 回复低于 budget.maxAgentReplyChars；不要让一项核验复制全部长正文，只引用支持论断的必要短片段。其他任务可自由分支、合并、增补研究，不能固定套用流程。team 覆盖各任务 role，coordinator 计入 budget.maxWorkers 且占一个 Manager 名额；预算只有 2 人时仅保留 coordinator 和一名通用研究员，search/verify/write 可复用同一个非管理 role，由 coordinator 执行独立 review；不要为每种 kind 固定增设角色。Manager 审核分工并由计划选择最终审核责任。重规划原样保留可复用的已完成调查与在途节点及 ID；新增工作用新 ID。需要新稿时将旧 write/review 从当前 nodes 中移除（引擎会完整归档历史成果），增加新的 write/review ID，不把旧稿当新稿重复交付。',
     search: '围绕具体问题检索多个查询变体，优先一手/官方/学术资料，并用独立发布机构交叉核查。来源广度按问题覆盖和不同域证据判断，不机械凑数。实际打开并阅读正文后保留原文 excerpt 与 locator，引擎会独立获取并核对完整片段；仅搜索摘要用 discovered，不假装完整阅读。',
     verify: '逐项核验给定来源，判断发布方、方法、时效、与其他证据一致性。claims 必须逐字引用 acquisition.excerpts 中单个已独立获取片段，只选支持论断的必要短片段，不复制完整长正文、不拼接不同片段；未独立获取正文来源不能提取已确认论断。所有 sourceId 使用给定稳定 ID。',
