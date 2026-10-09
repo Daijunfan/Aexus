@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { create, describe, respond, run, retry, cancel, pause, amend } from '../runtime.mjs';
 import { upgradeState, parseAnswer } from '../model.mjs';
 import { normalizeSources } from '../evidence.mjs';
-import { applyPlan, normalizeNodes, planProgress } from '../graph.mjs';
+import { applyPlan, normalizeNodes, planProgress, planTeam } from '../graph.mjs';
 import { ask, provision } from '../agents.mjs';
 import { generateArtifacts } from '../reports.mjs';
 import { acquireSources } from '../source-read.mjs';
@@ -85,6 +85,19 @@ test('quick research uses smaller default caps while explicit budgets remain aut
   assert.deepEqual(custom.input.team, {maxWorkers: 2, maxManagers: 1, maxConcurrency: 1});
   assert.equal(custom.input.maxTasks, 4);
   assert.equal(custom.input.maxReplans, 0);
+});
+
+test('oversized teams receive the exact headcount and role-reuse correction', () => {
+  const oversized = plan();
+  oversized.team = team.filter(member => ['coordinator', 'r1', 'writer'].includes(member.id));
+  assert.throws(
+    () => planTeam(oversized, {maxWorkers: 2, maxManagers: 1, maxConcurrency: 1}),
+    /3\/2 人.*coordinator.*同一非管理角色/,
+  );
+  const reused = plan();
+  reused.team = [team[0], {...team[2], managerIds: ['coordinator']}];
+  reused.nodes.find(node => node.kind === 'write').role = 'researcher';
+  assert.equal(planTeam(reused, {maxWorkers: 2, maxManagers: 1, maxConcurrency: 1}).length, 2);
 });
 
 test('CSV export treats untrusted source titles as text instead of spreadsheet formulas', () => {

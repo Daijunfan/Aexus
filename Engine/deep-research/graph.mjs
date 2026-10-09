@@ -111,7 +111,8 @@ export function planTeam(plan, budget) {
   }
   const normalized = team.map((spec, i) => ({ id: String(spec.id || spec.role + '-' + i), role: String(spec.role || 'researcher'), label: String(spec.label || spec.role || '研究员'), managementRole: spec.managementRole === 'manager' || spec.role === 'coordinator' ? 'manager' : 'employee', managerIds: spec.managerIds || [] }));
   if (!normalized.some(s => s.role === 'coordinator')) normalized.unshift({ id: 'coordinator', role: 'coordinator', label: '研究协调员', managementRole: 'manager', managerIds: [] });
-  if (normalized.length > budget.maxWorkers || normalized.filter(s => s.managementRole === 'manager').length > budget.maxManagers) throw Error('规划团队超过员工或 Manager 预算');
+  const managers = normalized.filter(s => s.managementRole === 'manager').length;
+  if (normalized.length > budget.maxWorkers || managers > budget.maxManagers) throw Error(`规划团队超过员工或 Manager 预算：${normalized.length}/${budget.maxWorkers} 人，${managers}/${budget.maxManagers} Manager。coordinator 也计入人数；预算较小时让同一非管理角色承担多个任务，由 coordinator 独立审阅。`);
   const byId = new Map(normalized.map(s => [s.id, s]));
   if (byId.size !== normalized.length) throw Error('员工配置 ID 不能重复');
   for (const spec of normalized) {
