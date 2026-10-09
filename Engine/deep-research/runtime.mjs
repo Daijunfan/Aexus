@@ -236,7 +236,9 @@ function validateSynthesis(result) {
 }
 function validateReview(result) {
   if (!['pass', 'revise'].includes(result?.verdict)) throw Error('审查必须返回 verdict: pass 或 revise');
-  return { verdict: result.verdict, summary: String(result.summary || ''), issues: (result.issues || []).map(i => ({ severity: i.severity || 'warning', description: String(i.description || ''), suggestion: String(i.suggestion || '') })) };
+  const issues = (result.issues || []).map(i => ({ severity: i.severity || 'warning', description: String(i.description || ''), suggestion: String(i.suggestion || '') }));
+  const blocked = result.verdict === 'pass' && issues.some(issue => issue.severity !== 'note');
+  return { verdict: blocked ? 'revise' : result.verdict, summary: (blocked ? '审阅列出需修订问题，暂不交付。' : '') + String(result.summary || ''), issues };
 }
 async function finish(state, ctx) {
   if (state.scouting) delete state.scouting.previews;

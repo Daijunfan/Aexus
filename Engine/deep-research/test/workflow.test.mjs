@@ -417,6 +417,15 @@ test('replanning budget exhaustion finishes current work and waits for a rejecte
   assert.ok(describe(waiting.state).progress.percent < 100);
 });
 
+test('a pass verdict with an unresolved warning cannot publish the final report', async () => {
+  const f = fixture({respond: task => task.kind === 'review' ? {verdict: 'pass', summary: 'Looks good except the summary overclaims', issues: [{severity: 'warning', description: 'Qualify the summary claim', suggestion: 'Limit it to acquired excerpts'}]} : undefined});
+  const waiting = await run(create({topic: 'Do not ship a report with a fixable reviewer warning', autoApprove: true, maxReplans: 0}), f.ctx);
+  assert.equal(waiting.status, 'waiting');
+  assert.equal(waiting.state.review.verdict, 'revise');
+  assert.match(waiting.state.review.summary, /暂不交付/);
+  assert.equal(waiting.state.phase, 'review');
+});
+
 test('persisted in-flight task recovers the same receipt and avoids duplicate sends', async () => {
   const f = fixture();
   const waiting = await run(create({ topic: 'Resume native task without duplication' }), f.ctx);
