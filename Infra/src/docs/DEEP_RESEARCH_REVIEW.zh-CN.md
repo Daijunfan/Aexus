@@ -5,18 +5,20 @@
 ## 2026-10-09 输入与历史布局修复
 
 - 删除左侧历史栏及其样式；全部研究记录统一放在输入区下方，研究页提供返回首页入口。
-- 研究主题不再要求至少十个字符；非空短问题即可提交，来源预算允许降到 1。
+- 研究主题不再要求至少十个字符；非空短问题即可提交，来源预算允许降到 1。快速模式未手动改预算时，最多 6 个来源、4 名员工、2 项并发、16 个计划节点和 1 次重规划；手动输入优先。
 - CLI 启动隔离 Core，使用实际 Codex 模型，只研究 `https://example.com/` 一页，限制最多 2 名员工、1 个来源、4 个计划任务、0 次重规划、200 字报告。真实 scout → plan → verify → write → review 完成并交付五个文件。
 - 重启 CLI Core 后，任务仍为 completed；CLI 下载 HTML 的 SHA256 与原交付一致，没有重复模型请求。真实证据记录：[verification.json](../../../.aexus/artifacts/deep-research-fix/live-1791509850839/verification.json)、[CLI 下载与恢复](../../../.aexus/artifacts/deep-research-fix/live-1791509850839/cli-delivery.json)。
-- 40 项相关领域/CLI 测试、19 项后台浏览器检查、TypeScript 检查通过。实际安装包检查输入点击、键盘输入短问题、按钮启用、无左侧历史栏，以及历史位于输入区下方。
+- 相关领域/CLI 测试、后台浏览器交互和 TypeScript 检查通过。实际安装包检查输入点击、短问题按钮启用、无左侧历史栏，以及历史位于输入区下方。
 - 本次小任务证明当前真实执行链可以完成研究与交付；不外推为复杂主题质量或所有提供商均通过，也不推断账单来源。
 
 ## 后续失败恢复修复
 
 - 计划回复现在先验证完整 DAG、团队预算和修订规则，再保存为成功结果。不存在的依赖会进入原有一次格式纠错，不会缓存坏计划后在恢复时永久重复失败。
 - 论断核验中的矛盾来源 ID 在写入结果前验证，避免一边报错一边保存部分成功证据。两项故障均由先失败、修复后通过的测试复现。
-- 领域、独立证据、源读取和 Host 回归共 75 项通过；候选与安装路径后台检查均通过。 后台恢复复核见[本轮生产状态验证](../../../.aexus/artifacts/deep-research-fix/validation-production.json)：80 员工、17 工作流 ID/状态及根数据哈希不变，窗口隐藏、无应用所属模型进程。原恢复脚本曾将另一 ChatGPT 进程计入“新增提供商”，已按 Aexus 子进程归属重新核验；没有重新启动或终止无关进程。
+- 领域、独立证据、源读取和 Host 回归共 75 项通过；候选与安装路径后台检查均通过。后台恢复复核见[本轮生产状态验证](../../../.aexus/artifacts/deep-research-fix/validation-production.json)：80 员工、17 工作流 ID/状态及根数据哈希不变，窗口隐藏、无应用所属模型进程。原恢复脚本曾将另一 ChatGPT 进程计入“新增提供商”，已按 Aexus 子进程归属重新核验；没有重新启动或终止无关进程。
 - 第二次真实 CLI 试验仅限定 HTML 与公开 PDF 两个来源、最多 2 名员工、4 个计划任务、250 字报告。提供商在初步调研阶段连续返回流中断，已通过 CLI 主动取消；持久状态为 `cancelled`、`controlPending=false`。这次不计成功，没有继续付费重试。前一次单来源真实研究与下载/恢复成功记录保持有效。
+
+- 只在隔离进程中尝试现有本机代理和 [OpenAI 官方文档](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)支持的 HTTP 传输开关。WebSocket 错误消失，但提供商仍在初步调研阶段断流；任务经 CLI 取消，`controlPending=false`，没有来源或交付。本次没有更改全局 Codex、Clash 配置，也没有把该实验计作完成。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -55,15 +57,15 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 ## 当前安装
 
-实际 `/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`，运行源码构建快照 `09cb020`，ASAR SHA256：
+截至 2026-10-09 的只读核验，`/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`；其 Deep Research 源码与隔离提交 `0332b90` 的候选一致，快速模式界面资源也已包含，ASAR SHA256：
 
 ```text
-dffd248d846f488d31d5a2320d635e8b9e236aa2c306997ae183cb85ebf9bedc
+5a759d1ea15245ebb2f5ff2da08e1f632431b554294a7de9c6842cae1275a248
 ```
 
-[候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[实际安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)均通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。构建后仅更新审查文档，运行源码指纹保持相同，不为文字变更反复打包。
+[隔离候选](../../../.aexus/artifacts/deep-research-fix/quick-release-proof/candidate-verification.json)与[当前安装包源码核对](../../../.aexus/artifacts/deep-research-fix/quick-release-proof/installed-verification.json)通过快速预算改动检查。前一轮[候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)也通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。本轮隔离构建避开同时进行的 Pi 工作区改动；当前安装包的 Deep Research 文件指纹与隔离候选相同，未为本次改动重新替换运行应用。
 
-[安装记录](../../../.aexus/artifacts/deep-research-independent/installation.json)验证员工活动、审批、队列、初始化、全部运行 workflow、自动计划、传输、插件窗口、news/post 触发均为零后，单次正常 SIGTERM 退出，使用项目安装器备份并替换。根 JSON 哈希未改变。[生产隐藏恢复](../../../.aexus/artifacts/deep-research-independent/production-restart.json)验证原 80 个员工 ID、17 个 workflow ID/状态完整保留、无忙碌或新 provider 进程；CoreGraphics 观察到真实主窗口 `onScreen=false`。第一次启动因调用环境继承 `ELECTRON_RUN_AS_NODE=1` 退出，清除此进程环境后恢复；失败证据保留，用户配置未改。
+前一轮[安装记录](../../../.aexus/artifacts/deep-research-independent/installation.json)验证员工活动、审批、队列、初始化、全部运行 workflow、自动计划、传输、插件窗口、news/post 触发均为零后，单次正常 SIGTERM 退出，使用项目安装器备份并替换。根 JSON 哈希未改变。[生产隐藏恢复](../../../.aexus/artifacts/deep-research-independent/production-restart.json)验证原 80 个员工 ID、17 个 workflow ID/状态完整保留、无忙碌或新 provider 进程；CoreGraphics 观察到真实主窗口 `onScreen=false`。第一次启动因调用环境继承 `ELECTRON_RUN_AS_NODE=1` 退出，清除此进程环境后恢复；失败证据保留，用户配置未改。
 
 ## 剩余验收
 
