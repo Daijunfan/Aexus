@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { create, describe, respond, run, retry, cancel, pause, amend } from '../runtime.mjs';
+import { create, describe, respond, run, retry, cancel, pause, amend, fork } from '../runtime.mjs';
 import { upgradeState, parseAnswer } from '../model.mjs';
 import { normalizeSources } from '../evidence.mjs';
 import { applyPlan, normalizeNodes, planProgress, planTeam } from '../graph.mjs';
@@ -145,6 +145,23 @@ test('dynamic DAG completes with distinct concurrent workers, real manager turns
   const firstVerify = f.calls.findIndex(c => c.task?.kind === 'verify');
   const lastSearch = f.calls.findLastIndex(c => c.task?.kind === 'search');
   assert.ok(firstVerify > lastSearch);
+});
+
+test('a completed report forks into fresh research with historical context but no inherited proof', async () => {
+  const parent = await run(create({topic: 'Initial evidence question', scope: 'quick', autoApprove: true, engines: ['pi'], team: {maxWorkers: 5, maxManagers: 2, maxConcurrency: 2}}), fixture().ctx);
+  const snapshot = JSON.stringify(parent.state);
+  const child = fork(parent.state, {topic: 'Which assumptions changed?'});
+  assert.equal(child.phase, 'init');
+  assert.equal(child.input.scope, 'quick');
+  assert.equal(child.input.maxSources, parent.state.input.maxSources);
+  assert.deepEqual(child.input.engines, parent.state.input.engines);
+  assert.equal(child.input.autoApprove, false);
+  assert.match(child.input.materials.at(-1).content, /Initial evidence question/);
+  assert.match(child.input.materials.at(-1).content, /重新独立核验/);
+  assert.match(child.input.materials.at(-1).content, /https:\/\/seed\.example\/research/);
+  assert.deepEqual({workers: child.workers, tasks: child.tasks, sources: child.sources, findings: child.findings, nodes: child.graph.nodes}, {workers: [], tasks: {}, sources: [], findings: [], nodes: []});
+  assert.equal(child.report, null);
+  assert.equal(JSON.stringify(parent.state), snapshot, 'Fork does not mutate the completed parent');
 });
 
 test('plan approval waits, then resumes without another scouting or planning turn', async () => {

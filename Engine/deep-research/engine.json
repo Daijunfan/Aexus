@@ -9,6 +9,7 @@
   "runtime": "runtime.mjs",
   "requiredCommands": [
     "workflow.start",
+    "workflow.fork",
     "workflow.list",
     "workflow.get",
     "workflow.respond",

@@ -1,5 +1,5 @@
 /** Native-agent research execution, driven by the current plan's DAG. */
-import { create, describe, respond, retry, upgradeState, MAX_AGENT_REPLY_CHARS } from './model.mjs';
+import { create, describe, respond, retry, fork, upgradeState, MAX_AGENT_REPLY_CHARS } from './model.mjs';
 import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
@@ -7,7 +7,7 @@ import { normalizeSources, mergeSources, withinSourceBudget, normalizeVerificati
 import { acquireSources } from './source-read.mjs';
 import { generateArtifacts } from './reports.mjs';
 
-export { create, describe, respond, retry, cancel };
+export { create, describe, respond, retry, fork, cancel };
 
 export async function pause(state, ctx) {
   const running = (state.graph?.nodes || []).filter(node => node.status === 'running');

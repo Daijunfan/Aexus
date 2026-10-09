@@ -50,6 +50,18 @@ export function create(input) {
   };
 }
 
+/** A follow-up starts new evidence collection; the prior report is context, not current proof. */
+export function fork(parent, input) {
+  if (parent.phase !== 'complete' || !parent.report?.sections?.length) throw Error('只能基于已完成的研究继续提问');
+  const report = parent.report, cited = new Set(report.citations);
+  const sources = parent.sources.filter(source => cited.has(source.id)).map(source => `- ${source.title}: ${source.url}`);
+  const heading = `# 历史研究线索\n\n原问题：${parent.input.topic}\n标题：${report.title}\n摘要：${report.abstract || ''}\n结论：${report.conclusion || ''}\n\n这份报告只是背景资料；新问题中的事实与引用必须重新独立核验。`;
+  let context = [heading, ...report.sections.map(section => `## ${section.heading}\n${section.content}`), '## 历史引用来源', ...sources].join('\n\n');
+  if (context.length > 190000) context = [heading, '原报告正文超出背景预算，以下只保留章节目录与来源线索。', ...report.sections.map(section => `- ${section.heading}`), '## 历史引用来源', ...sources].join('\n\n');
+  if (context.length > 200000) throw Error('前次报告超出单份背景材料预算，请新建研究并提供较短摘要');
+  return create({...parent.input, ...input, materials: [...(input.materials || []), {name: 'previous-research.md', content: context}], autoApprove: input.autoApprove === true});
+}
+
 /** Additive migration preserves native worker/task identities and previously obtained evidence. */
 export function upgradeState(state) {
   const needsEvidence = state.version !== 2 && state.phase !== 'complete' && state.sources.some(s => !s.acquisition);

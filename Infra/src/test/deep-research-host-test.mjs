@@ -26,10 +26,12 @@ function prepared(autoApprove = false) {
 }
 function transport({reviseOnce = false} = {}) {
   const records = new Map(), sent = []
-  let reviews = 0
+  let reviews = 0, created = 0
   const dispatch = async (name, args = {}) => {
     if (name === 'engine.check') return {ready: true}
     if (name === 'group.list') return ['Synthetic Research']
+    if (name === 'group.add') return {}
+    if (name === 'card.create') return {...args, id: 'followup-worker-' + created++}
     if (name === 'session.list') return {sessions: workers}
     if (name === 'session.status') return [{busy: false, initialization: {status: 'ready'}}]
     if (name === 'management.bind' || name === 'management.unbind') return {}
@@ -37,7 +39,8 @@ function transport({reviseOnce = false} = {}) {
       const request = JSON.parse(args.text.split('\n\n')[1]), messageId = args.clientMessageId
       sent.push(request)
       let value
-      if (request.kind === 'plan') value = proposal(2)
+      if (request.kind === 'scout') value = {sources: [{title: 'Synthetic fixture source', url: 'https://example.org/host-fixture', acquisition: {status: 'read', excerpt: 'Synthetic evidence costs 12 units.', locator: 'Synthetic paragraph 1'}}]}
+      else if (request.kind === 'plan') value = proposal(2)
       else if (request.kind === 'search') value = {sources: [{title: 'Synthetic fixture source', url: 'https://example.org/host-fixture', acquisition: {status: 'read', excerpt: 'Synthetic evidence costs 12 units.', locator: 'Synthetic paragraph 1'}}]}
       else if (request.kind === 'verify') value = {verifications: request.payload.sources.map(s => ({sourceId: s.id, credibilityScore: 1, claims: [{text: 'Synthetic evidence costs 12 units.', excerpt: 'Synthetic evidence costs 12 units.', confidence: 1}]}))}
       else if (request.kind === 'write') value = {report: {title: 'Synthetic approved report', sections: [{heading: 'Evidence', content: 'Synthetic evidence costs 12 units.', citations: request.payload.sources.filter(s => s.verified).map(s => s.id)}]}}
@@ -142,6 +145,37 @@ test('A revise verdict creates a new DAG and final draft while retaining complet
   assert.equal(fixture.sent.filter(s => s.taskId.endsWith('/search-v1')).length, 1)
   assert.equal(fixture.sent.filter(s => s.kind === 'review').length, 2)
   assert.ok(fixture.sent.some(s => s.taskId.endsWith('/followup-v2')))
+})
+
+test('a completed Host research forks once, keeps its parent intact and survives restart', {timeout: 8000}, async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aexus-research-fork-'))
+  const host = await fixtureHost(home), fixture = transport()
+  try {
+    host.startWorkflows(fixture.dispatch, () => {})
+    const started = await host.workflowRequest('workflow.start', {engineId: 'deep-research', input: {topic: 'Original bounded question', autoApprove: true, engines: ['codex']}, clientRequestId: 'parent-start'})
+    const parent = await waitFor(async () => {const job = await host.workflowRequest('workflow.get', {id: started.id}); if (job.status === 'failed') throw Error(job.error); return job.status === 'completed' && job})
+    const parentReport = await host.workflowRequest('workflow.file', {id: parent.id, name: 'research-report.html'})
+    const request = {id: parent.id, expectedRevision: parent.revision, input: {topic: 'Which assumption changed?'}, clientRequestId: 'follow-up-once'}
+    const child = await host.workflowRequest('workflow.fork', request)
+    assert.notEqual(child.id, parent.id)
+    assert.deepEqual(child.parent, {id: parent.id, revision: parent.revision, engineVersion: parent.engineVersion})
+    assert.equal((await host.workflowRequest('workflow.fork', request)).id, child.id, 'same key must not create a second follow-up')
+    const waiting = await waitFor(async () => {const job = await host.workflowRequest('workflow.get', {id: child.id}); if (job.status === 'failed') throw Error(job.error); return job.status === 'waiting' && job})
+    assert.equal(waiting.summary.phase, 'planning', 'follow-up requires a fresh plan approval by default')
+    await host.workflowRequest('workflow.respond', {id: child.id, expectedRevision: waiting.revision, clientRequestId: 'follow-up-plan-approval', answer: {action: 'approve-plan'}})
+    const completed = await waitFor(async () => {const job = await host.workflowRequest('workflow.get', {id: child.id}); if (job.status === 'failed') throw Error(job.error); return job.status === 'completed' && job})
+    assert.equal(completed.files.length, 5)
+    const saved = JSON.parse(fs.readFileSync(path.join(home, 'workflows', child.id, 'state.json'), 'utf8'))
+    assert.match(saved.state.input.materials.at(-1).content, /Original bounded question/)
+    assert.match(saved.state.input.materials.at(-1).content, /重新独立核验/)
+    assert.equal((await host.workflowRequest('workflow.get', {id: parent.id})).revision, parent.revision)
+    assert.equal((await host.workflowRequest('workflow.file', {id: parent.id, name: 'research-report.html'})).sha256, parentReport.sha256)
+    const sends = fixture.sent.length
+    await host.stopWorkflows()
+    host.startWorkflows(fixture.dispatch, () => {})
+    assert.deepEqual((await host.workflowRequest('workflow.get', {id: child.id})).parent, child.parent)
+    assert.equal(fixture.sent.length, sends, 'completed follow-up must not send work again after restart')
+  } finally {await host.stopWorkflows(); fs.rmSync(home, {recursive: true, force: true})}
 })
 
 test('confirmed Stop publishes cancelled task and DAG status instead of stale running progress', async () => {
