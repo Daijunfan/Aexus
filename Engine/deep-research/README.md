@@ -95,9 +95,9 @@ Agent 自报的读取状态或标题不能代替独立读取证明。
 
 只有通过证据约束并完成最终审查后才发布文件：
 
-- `research-report.html`：完整报告、章节、可跳转引用与原文证据。
-- `research-report.md`：可编辑报告与引用。
-- `sources.csv`：全部来源及读取、核验状态。
+- `research-report.html`：适配桌面、窄屏和打印的完整报告；章节引用可跳转到原文，来源附获取时间、最终网址、定位和 SHA-256。
+- `research-report.md`：可编辑报告，保留同一来源的原文定位与读取证明。
+- `sources.csv`：全部来源的读取、核验状态；独立取得的来源附最终网址、获取时间和 SHA-256。
 - `evidence.json`：来源、论断、原文、矛盾与读取证明。
 - `research-plan.json`：DAG、团队及计划修订记录。
 

@@ -163,8 +163,11 @@ export function generateArtifacts(state) {
     + (report.limitations.length ? '\n## 研究局限\n\n' + report.limitations.map(s => '- ' + s).join('\n') + '\n' : '')
     + '\n## 来源与引用\n\n' + referencesMarkdown;
   const sourceCsv = [
-    ['ID', 'Type', 'Title', 'URL', 'Author', 'Published', 'Acquisition', 'Credibility', 'Verified', 'Excerpt', 'Locator'],
-    ...state.sources.map(sourceView).map(s => [s.id, s.type, s.title, s.url, s.author, s.publishedDate, s.acquisition.status, s.credibilityScore, s.verified && isIndependentSource(s), s.acquisition.excerpt, s.acquisition.locator])
+    ['ID', 'Type', 'Title', 'URL', 'Author', 'Published', 'Acquisition', 'Credibility', 'Verified', 'Excerpt', 'Locator', 'Final URL', 'Accessed At', 'SHA-256'],
+    ...state.sources.map(sourceView).map(s => {
+      const read = isIndependentSource(s), proof = read ? s.acquisition.excerpts[0] : null;
+      return [s.id, s.type, s.title, s.url, s.author, s.publishedDate, s.acquisition.status, s.credibilityScore, s.verified && read, s.acquisition.excerpt, s.acquisition.locator, proof?.finalUrl, proof ? new Date(proof.accessedAt).toLocaleString('zh-CN') : '', proof?.sha256];
+    })
   ].map(row => row.map(csv).join(',')).join('\r\n');
   return [
     { name: 'research-report.html', description: '完整研究报告、来源和原文证据', mediaType: 'text/html', content: htmlReport },

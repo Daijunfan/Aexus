@@ -566,6 +566,9 @@ test('HTML exports render GFM structure while keeping untrusted HTML and unsafe 
   const markdownReport = generateArtifacts(done.state).find(a => a.name === 'research-report.md').content;
   assert.ok(markdownReport.includes(proof.sha256), 'The editable report keeps the same source fingerprint');
   assert.ok(markdownReport.includes(proof.finalUrl), 'The editable report keeps the same final URL');
+  const sourcesCsv = generateArtifacts(done.state).find(a => a.name === 'sources.csv').content;
+  assert.ok(sourcesCsv.includes(proof.sha256), 'The source table retains the acquired body fingerprint');
+  assert.ok(sourcesCsv.includes(proof.finalUrl), 'The source table retains the final URL');
   assert.ok(!html.includes('<script>')); assert.ok(!html.includes('href="javascript:'));
   assert.ok(html.includes('&lt;script&gt;'));
   const tampered = structuredClone(done.state);
