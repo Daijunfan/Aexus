@@ -24,6 +24,7 @@
 - 原生执行失败会进入会话状态，研究任务优先显示实际错误，避免将提供商断流误当 JSON 格式错误而自动发送纠错请求。错误通知在 Core 重启后仍可读取；用户显式恢复时使用新任务编号。[真实 Core 与假 Codex 协议测试](../../../Infra/src/test/deep-research-native-error-test.mjs)及 73 项相关回归、TypeScript 检查通过，均未调用收费模型。
 - 报告章节的每个来源 ID 都必须有该来源的已核验论断和独立取得的原文片段；一条有效引用不能让同章节另一条空引用通过。来源预算在网络读取前筛除超额新候选，已占名额的来源仍可追加已核对片段；单来源预算的初调研只下载一页。两项修复由先失败后通过的回归用例覆盖。
 - 来源 CSV 将可能被电子表格解释为公式的网页标题、原文等单元格转为文本；证据 JSON 仍保存精确原文。先失败后通过的导出回归用例覆盖此行为。
+- 重规划对已完成节点按实际任务内容与依赖集合比较；JSON 字段顺序或依赖书写顺序变化不再误判为改写。研究目标改变仍必须使用新节点 ID。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -48,7 +49,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-5d90538/full-regression.log)为 97/97，通过命令：
+当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/full-regression.log)为 98/98，通过命令：
 
 ```sh
 node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs
@@ -64,7 +65,7 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 截至 2026-10-09，[最新安装记录](../../../.aexus/artifacts/deep-research-fix/latest-installed.json)保存实际 `/Applications/Aexus.app` 的构建提交和 ASAR SHA256。Deep Research `2.0.0` 已包含独立核对的 HTML 标题、快速研究预算、逐来源报告引用约束、超额来源读取筛选、停止后的状态同步和持久错误恢复。
 
-[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-5d90538/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-5d90538/installed-verification.json)均通过私有依赖、GFM、公开 PDF 文本层和隐藏界面检查，没有启动测试模型进程。[安装与恢复记录](../../../.aexus/artifacts/deep-research-fix/release-5d90538/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。前一版安装前曾因后台应用进程退出而安全中止；以隐藏模式恢复当前版本并确认空闲后才继续安装，没有强制结束工作。
+[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/installed-verification.json)均通过私有依赖、GFM、公开 PDF 文本层和隐藏界面检查，没有启动测试模型进程。[安装与恢复记录](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。前一版安装前曾因后台应用进程退出而安全中止；以隐藏模式恢复当前版本并确认空闲后才继续安装，没有强制结束工作。
 
 ## 剩余验收
 
