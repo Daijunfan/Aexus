@@ -53,7 +53,7 @@
         "minimum": 1,
         "maximum": 1000,
         "default": 80,
-        "description": "最大来源数量"
+        "description": "最大来源数量；快速模式未填写时默认 6，其他模式默认 80"
       },
       "languages": {
         "type": "array",
@@ -112,13 +112,13 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "maxWorkers": { "type": "integer", "minimum": 2, "maximum": 64, "default": 12 },
-          "maxManagers": { "type": "integer", "minimum": 1, "maximum": 16, "default": 4 },
-          "maxConcurrency": { "type": "integer", "minimum": 1, "maximum": 32, "default": 4 }
+          "maxWorkers": { "type": "integer", "minimum": 2, "maximum": 64, "default": 12, "description": "全面模式默认 12，快速模式默认 4" },
+          "maxManagers": { "type": "integer", "minimum": 1, "maximum": 16, "default": 4, "description": "全面模式默认 4，快速模式默认 1" },
+          "maxConcurrency": { "type": "integer", "minimum": 1, "maximum": 32, "default": 4, "description": "全面模式默认 4，快速模式默认 2" }
         }
       },
-      "maxTasks": { "type": "integer", "minimum": 4, "maximum": 512, "default": 128 },
-      "maxReplans": { "type": "integer", "minimum": 0, "maximum": 20, "default": 3 }
+      "maxTasks": { "type": "integer", "minimum": 4, "maximum": 512, "default": 128, "description": "全面模式默认 128，快速模式默认 16" },
+      "maxReplans": { "type": "integer", "minimum": 0, "maximum": 20, "default": 3, "description": "全面模式默认 3，快速模式默认 1" }
     }
   },
   "outputSchema": {

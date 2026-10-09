@@ -35,12 +35,13 @@ export function create(input) {
     });
   }
   const team = input.team || {};
+  const quick = scope === 'quick';
   return {
     version: 2, phase: 'init',
-    input: { topic, scope, maxSources: limit(input.maxSources, 80, 1, 1000, '来源预算'), languages, materials: materials.map(m => ({ ...m })), engines,
+    input: { topic, scope, maxSources: limit(input.maxSources, quick ? 6 : 80, 1, 1000, '来源预算'), languages, materials: materials.map(m => ({ ...m })), engines,
       autoApprove: input.autoApprove === true,
-      team: { maxWorkers: limit(team.maxWorkers, 12, 2, 64, '员工预算'), maxManagers: limit(team.maxManagers, 4, 1, 16, 'Manager 预算'), maxConcurrency: limit(team.maxConcurrency, 4, 1, 32, '并发预算') },
-      maxTasks: limit(input.maxTasks, 128, 4, 512, '任务预算'), maxReplans: limit(input.maxReplans, 3, 0, 20, '重规划预算') },
+      team: { maxWorkers: limit(team.maxWorkers, quick ? 4 : 12, 2, 64, '员工预算'), maxManagers: limit(team.maxManagers, quick ? 1 : 4, 1, 16, 'Manager 预算'), maxConcurrency: limit(team.maxConcurrency, quick ? 2 : 4, 1, 32, '并发预算') },
+      maxTasks: limit(input.maxTasks, quick ? 16 : 128, 4, 512, '任务预算'), maxReplans: limit(input.maxReplans, quick ? 1 : 3, 0, 20, '重规划预算') },
     engines, team: null, workers: [], tasks: {}, plan: null, planApproved: false, dimensions: [],
     graph: { version: 0, nodes: [] }, planRevisions: [], managerReviews: [], replans: 0,
     sources: [], findings: [], contradictions: [],

@@ -74,6 +74,8 @@ CLI `download` 当前下载第一个最终文件，按 UTF-8/base64 解码后校
 | `maxTasks` | 128 | 4-512 |
 | `maxReplans` | 3 | 0-20 |
 
+`quick` 未手动设置预算时，默认最多 6 个来源、4 名员工（其中 1 名 Manager）、2 项并发任务、16 个计划节点和 1 次重规划；其他范围沿用表中默认值。显式输入的预算始终优先。
+
 这些是上限，不是必须创建的人员或必须搜集的来源数。`scope` 支持
 `quick`、`comprehensive`、`deep`、`academic`，不承诺固定完成时间。
 背景材料为 `materials: [{ name, content }]`，最多 10 份，每份最多 200,000

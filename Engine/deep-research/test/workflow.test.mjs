@@ -73,6 +73,20 @@ test('short questions and a single-source budget are valid research requests', (
   assert.throws(() => create({ topic: '   ' }), /请输入研究主题/);
 });
 
+test('quick research uses smaller default caps while explicit budgets remain authoritative', () => {
+  const quick = create({topic: 'A narrow comparison question', scope: 'quick'});
+  assert.equal(quick.input.maxSources, 6);
+  assert.deepEqual(quick.input.team, {maxWorkers: 4, maxManagers: 1, maxConcurrency: 2});
+  assert.equal(quick.input.maxTasks, 16);
+  assert.equal(quick.input.maxReplans, 1);
+  const custom = create({topic: 'A narrow comparison question', scope: 'quick', maxSources: 2,
+    team: {maxWorkers: 2, maxConcurrency: 1}, maxTasks: 4, maxReplans: 0});
+  assert.equal(custom.input.maxSources, 2);
+  assert.deepEqual(custom.input.team, {maxWorkers: 2, maxManagers: 1, maxConcurrency: 1});
+  assert.equal(custom.input.maxTasks, 4);
+  assert.equal(custom.input.maxReplans, 0);
+});
+
 test('first scouting has unknown progress and autoApprove is retained', () => {
   const state = create({ topic: 'Detailed independent research question', autoApprove: true });
   assert.equal(state.input.autoApprove, true);

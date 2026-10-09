@@ -75,7 +75,8 @@ export default function Page({ client }: { client: ContractClient }) {
     [error, setError] = useState("");
   const [topic, setTopic] = useState(""),
     [scope, setScope] = useState("comprehensive"),
-    [maxSources, setMaxSources] = useState(100);
+    [maxSources, setMaxSources] = useState<number | null>(null);
+  const sourceBudget = maxSources ?? (scope === "quick" ? 6 : 80);
   const [materials, setMaterials] = useState<
       { name: string; content: string }[]
     >([]),
@@ -258,7 +259,7 @@ export default function Page({ client }: { client: ContractClient }) {
         input: {
           topic: topic.trim(),
           scope,
-          maxSources,
+          maxSources: sourceBudget,
           languages: ["zh-CN", "en"],
           autoApprove,
           ...(materials.length ? { materials } : {}),
@@ -447,7 +448,7 @@ export default function Page({ client }: { client: ContractClient }) {
     sources.map((source) => sourceHost(source.url)).filter(Boolean),
   ).size;
   const scopeHelp: Record<string, string> = {
-    quick: "快速概览：先确认术语、边界和关键一手资料，保持研究范围紧凑。",
+    quick: "快速概览：默认最多 6 个来源、4 位协作者，聚焦关键原始资料。",
     comprehensive:
       "全面调查：覆盖主要问题、证据来源和交叉核验，适合作为默认起点。",
     deep: "深度分析：为复杂问题展开更多证据、反证和影响分析。",
@@ -663,7 +664,7 @@ export default function Page({ client }: { client: ContractClient }) {
                       type="number"
                       min={1}
                       max={1000}
-                      value={maxSources}
+                      value={sourceBudget}
                       onChange={(event) =>
                         setMaxSources(Number(event.target.value))
                       }

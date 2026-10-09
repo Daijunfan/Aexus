@@ -595,6 +595,18 @@ try {
     "actual block-scrolling host intake fits 1440, 768 and 390 viewports without an extra context-bar scroll range",
   );
   assert.equal(await page.getByText(/超越|90%|5 个专业/).count(), 0);
+  await page.locator(".dr-segment label").first().click();
+  assert.equal(await page.getByLabel("来源预算").inputValue(), "6");
+  await page.locator(".dr-segment label").nth(1).click();
+  assert.equal(await page.getByLabel("来源预算").inputValue(), "80");
+  await page.locator(".dr-settings summary").click();
+  await page.getByLabel("来源预算").fill("2");
+  await page.locator(".dr-segment label").first().click();
+  assert.equal(await page.getByLabel("来源预算").inputValue(), "2");
+  await page.locator(".dr-segment label").nth(1).click();
+  assert.equal(await page.getByLabel("来源预算").inputValue(), "2");
+  await page.getByLabel("来源预算").fill("80");
+  checks.push("quick scope defaults to six sources while a custom limit persists across scope changes");
   await page.getByRole("button", { name: "开始研究", exact: true }).click();
   await waitPhase("进度尚未确定");
   assert.equal(
