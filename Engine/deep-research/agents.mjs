@@ -125,6 +125,7 @@ async function execute(state, ctx, key, worker, kind, payload, validate, logical
         task.status = 'approval'; state.attention = { employeeId: worker.id, message: worker.label + ' 需要 Infra 审批' }; await ctx.checkpoint(state);
       } else if (!status.waitingApproval && task.status === 'approval') { task.status = 'running'; state.attention = null; await ctx.checkpoint(state); }
       if (!status.busy && !status.acknowledging && !status.waitingApproval) {
+        if (status.error) throw Error('员工原生执行失败：' + status.error);
         const transcript = await transcriptTask(ctx.client, task);
         ctx.signal.throwIfAborted();
         if (transcript?.text) {

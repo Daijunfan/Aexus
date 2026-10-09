@@ -707,3 +707,18 @@ test('invalid contradiction sources are corrected before any evidence mutation',
   assert.equal(done.state.contradictions.length, 0);
   assert.ok(f.checkpoints.every(state => !state.contradictions.some(c => c.sources.includes('invented-source'))));
 });
+
+test('native provider failure is surfaced without a format-correction model request', async () => {
+  const state = create({topic: 'Explain the provider transport failure'});
+  state.workers = [{id: 'researcher-1', role: 'researcher', label: '研究员', engine: 'codex', active: true}];
+  let checks = 0, sends = 0;
+  const ctx = {id: 'provider-failure', signal: new AbortController().signal, checkpoint: async () => {},
+    client: {invoke: async command => {
+      if (command === 'session.status') return [{busy: false, ...(checks++ ? {error: 'Provider stream disconnected'} : {})}];
+      if (command === 'session.send') {sends++; return {messageId: 'native-turn'};}
+      throw Error('Transcript or corrective model calls must not run after a native failure');
+    }}};
+  await assert.rejects(ask(state, ctx, 'source-check', 'researcher', 'search', {query: 'bounded'}, value => value), /Provider stream disconnected/);
+  assert.equal(sends, 1);
+  assert.equal(state.tasks['source-check'].failureKind, 'transport');
+});

@@ -85,6 +85,7 @@ export function startRuntime(notify: (channel: string, payload: any, presentatio
       if (channel === 'session:turn-start') markTurnStart(id)
       if (channel === 'session:turn-end' || channel === 'session:interrupted') markTurnEnd(id)
       if (channel === 'session:error') recordError(id, payload.message)
+      if (channel === 'session:result' && payload.success === false) recordError(id, String(payload.error || '原生任务失败'))
       if (['session:user', 'session:turn-end', 'session:interrupted', 'session:error'].includes(channel)) saveTranscript(id)
       if(channel==='session:turn-end'&&!conversation(id).error){const state=getLive(id);if(state&&!state.privateInitialization&&!state.currentTask?.chat)publishReply(state.cardId,transcriptItems(id),state.currentTask?.messageId)}
     }

@@ -128,7 +128,7 @@ import { callPlugin,openPluginView,closePluginView,releaseWorkspacePlugins } fro
 import { provisionWorkspace,provisionEmployee,ensureEmployeeBootstrap } from './plugins/documents'
 import { readFileSync,writeFileSync } from 'node:fs'
 import { deleteNativeSessions,nativeRefsForRemoval } from './native-sessions'
-import { transcriptItems,deleteTranscript,seedTranscript } from './transcripts'
+import { transcriptItems,deleteTranscript,seedTranscript,conversation } from './transcripts'
 import { renderTranscript } from '../shared/transcript'
 import type { EffortLevel,PermissionMode } from '@anthropic-ai/claude-agent-sdk'
 
@@ -401,7 +401,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'card.management-role': return setManagementRole(s(a.id),a.role)
     case 'card.access-mode': {const card=readStore().sessions.find(c=>c.id===a.id);if(card&&(card.threadId||card.claudeSessionId)&&card.accessMode!==a.mode)throw Error('Execution isolation is fixed once native history exists; create a new employee');if(!['trusted','isolated'].includes(a.mode))throw Error('Use trusted or isolated');await closeForNativeChange(s(a.id));return updateStore(store=>{const card=store.sessions.find(c=>c.id===a.id);if(!card)throw Error('Unknown employee');card.accessMode=a.mode})}
     case 'card.profile': return employeeProfile(a)
-    case 'session.status': {const cards=a.employee?readStore().sessions.filter(c=>c.id===a.employee):visibleEmployees();return cards.map(card=>{const live=listLive().find(item=>sessionInfo(item.id)?.cardId===card.id),state=live?sessionInfo(live.id):undefined;return {...publicEmployee(card),lastReply:card.lastReply,sessionId:live?.id,busy:state?.busy??false,acknowledging:state?.acknowledging??false,currentTask:state?.currentTask,activityPreview:state?.activityPreview,waitingApproval:live?approvalsFor(live.id).length>0:false}})}
+    case 'session.status': {const cards=a.employee?readStore().sessions.filter(c=>c.id===a.employee):visibleEmployees();return cards.map(card=>{const live=listLive().find(item=>sessionInfo(item.id)?.cardId===card.id),state=live?sessionInfo(live.id):undefined;return {...publicEmployee(card),lastReply:card.lastReply,sessionId:live?.id,busy:state?.busy??false,acknowledging:state?.acknowledging??false,currentTask:state?.currentTask,activityPreview:state?.activityPreview,error:live?conversation(live.id).error:undefined,waitingApproval:live?approvalsFor(live.id).length>0:false}})}
     case 'shared.info': return {path:sharedDirectory()}
     case 'transfer.start': return startTransfer(a.from,a.to,fileEndpoint(a.from,false),fileEndpoint(a.to,true))
     case 'transfer.list': return listTransfers()
