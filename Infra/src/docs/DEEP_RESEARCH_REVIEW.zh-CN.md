@@ -19,6 +19,7 @@
 - 第二次真实 CLI 试验仅限定 HTML 与公开 PDF 两个来源、最多 2 名员工、4 个计划任务、250 字报告。提供商在初步调研阶段连续返回流中断，已通过 CLI 主动取消；持久状态为 `cancelled`、`controlPending=false`。这次不计成功，没有继续付费重试。前一次单来源真实研究与下载/恢复成功记录保持有效。
 
 - 只在隔离进程中尝试现有本机代理和 [OpenAI 官方文档](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)支持的 HTTP 传输开关。WebSocket 错误消失，但提供商仍在初步调研阶段断流；任务经 CLI 取消，`controlPending=false`，没有来源或交付。本次没有更改全局 Codex、Clash 配置，也没有把该实验计作完成。
+- HTML 来源标题曾直接沿用员工提交值。现在只在独立取得的页面中提取真实 `<title>`，同 URL 的后续片段沿用核对结果；PDF/纯文本不伪称具有独立标题。一次公开网页实读和 20 项来源测试、77 项领域/Host 相关测试通过。取证时只解析一次 HTML，PDF 原始字节不再做无用的 UTF-8 解码。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -39,7 +40,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 ## 可复核验收
 
-[最终审计](../../../.aexus/artifacts/deep-research-independent/final-audit.json)核对全部 tracked 路径与 SHA256：无重复、遗漏、孤立、过期或未完成项。[阅读账本](../../../.aexus/artifacts/deep-research-independent/reading-coverage.json)保存逐文件证据，其他 Agent 记录只在当前哈希匹配时计入。曾发生的动态批次误登记已对原 20 文件补齐实际全文；资源目录和生成目录的误分类也已补读并纠正，说明见[阅读审计记录](../../../.aexus/artifacts/deep-research-independent/reading-notes.md)。SVG、手写 Manager 文档、资源来源清单及 MiniNotion 数据目录均已实读。
+[基线审计](../../../.aexus/artifacts/deep-research-independent/final-audit.json)核对当时全部 tracked 路径与 SHA256：无重复、遗漏、孤立、过期或未完成项。后续 Deep Research 改动另行复核，基线哈希不代表当前提交。[阅读账本](../../../.aexus/artifacts/deep-research-independent/reading-coverage.json)保存逐文件证据，其他 Agent 记录只在当时哈希匹配时计入。曾发生的动态批次误登记已对原 20 文件补齐实际全文；资源目录和生成目录的误分类也已补读并纠正，说明见[阅读审计记录](../../../.aexus/artifacts/deep-research-independent/reading-notes.md)。SVG、手写 Manager 文档、资源来源清单及 MiniNotion 数据目录均已实读。
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
@@ -57,13 +58,13 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 ## 当前安装
 
-截至 2026-10-09 的只读核验，`/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`；其 Deep Research 源码与隔离提交 `0332b90` 的候选一致，快速模式界面资源也已包含，ASAR SHA256：
+截至 2026-10-09 的只读核验，`/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`；其 Deep Research 源码与隔离提交 `440e67d` 的候选一致，独立核对的 HTML 标题和快速模式界面资源均已包含，ASAR SHA256：
 
 ```text
-5a759d1ea15245ebb2f5ff2da08e1f632431b554294a7de9c6842cae1275a248
+ff751fad3e3d2f2ac68297769e3d7dc5996df10387b5e4a262006f79e57d7150
 ```
 
-[隔离候选](../../../.aexus/artifacts/deep-research-fix/quick-release-proof/candidate-verification.json)与[当前安装包源码核对](../../../.aexus/artifacts/deep-research-fix/quick-release-proof/installed-verification.json)通过快速预算改动检查。前一轮[候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)也通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。本轮隔离构建避开同时进行的 Pi 工作区改动；当前安装包的 Deep Research 文件指纹与隔离候选相同，未为本次改动重新替换运行应用。
+[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-440e67d/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-440e67d/installed-verification.json)通过当前源码、私有依赖、取证和隐藏界面检查。前一轮[候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)也通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。本轮隔离构建避开同时进行的 Pi 工作区改动；项目安装器已静默更新；[恢复记录](../../../.aexus/artifacts/deep-research-fix/release-440e67d/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。
 
 前一轮[安装记录](../../../.aexus/artifacts/deep-research-independent/installation.json)验证员工活动、审批、队列、初始化、全部运行 workflow、自动计划、传输、插件窗口、news/post 触发均为零后，单次正常 SIGTERM 退出，使用项目安装器备份并替换。根 JSON 哈希未改变。[生产隐藏恢复](../../../.aexus/artifacts/deep-research-independent/production-restart.json)验证原 80 个员工 ID、17 个 workflow ID/状态完整保留、无忙碌或新 provider 进程；CoreGraphics 观察到真实主窗口 `onScreen=false`。第一次启动因调用环境继承 `ELECTRON_RUN_AS_NODE=1` 退出，清除此进程环境后恢复；失败证据保留，用户配置未改。
 
