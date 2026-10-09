@@ -31,6 +31,7 @@
 - 再次限定同两来源的试验中，Pi 在已取得 PDF 首页正文与哈希后仍多次请求无关字体/对象流分析；[本次失败记录](../../../.aexus/artifacts/deep-research-fix/pi-real-zIEyar/failure.json)与[停止证明](../../../.aexus/artifacts/deep-research-fix/pi-real-zIEyar/stop.json)显示任务在初调研主动取消、清理确认完成。Engine 的 scout 提示已补充“限定网址和候选片段时只检查必要正文，立即返回结构化结果”，但尚无新付费运行证明模型必然遵守，不能把提示当硬工具预算。
 - 共享 Cline 的两来源、两员工、四任务上限隔离实测中，初调研和计划完成、HTML/PDF 均由引擎独立读取；16 分钟期限到达时仍在第一个核验节点，已确认取消并移除隔离目录。[失败记录](../../../.aexus/artifacts/deep-research-fix/cline-real-Jh8fXZ/failure.json)、[停止证明](../../../.aexus/artifacts/deep-research-fix/cline-real-Jh8fXZ/stop.json)与[最后公开投影](../../../.aexus/artifacts/deep-research-fix/cline-real-Jh8fXZ/last-public-view.json)分别记录期限、控制状态和未交付的 DAG。规划目标要求重复 GET 与 PDF 内部结构检查，暴露了阶段边界问题；现在提示 scout/search 按需使用原生浏览工具，要求 verify/write/review/plan 根据引擎已独立取得的证据作判断，证据不足时提出缺口。`session.send` 公共协议没有逐消息工具开关，因此这是模型指令而非权限隔离；该修改通过协议回归，本次超时试验不计成功，也不能证明 Cline 必然遵从新提示。
 - [原生 Cline 隔离单步核验](../../../.aexus/artifacts/deep-research-fix/cline-verify-real-6xaPtq/verification.json)用已取证片段的测试输入，在约两分钟内返回 2 个来源、2 条论断，未出现工具审批；临时原生配置和进程已清理。该验证使用测试证明元数据，不是新的独立网页取证，也未跑完整 DAG；没有观察逐项工具调用，不能据此断言模型绝对不使用工具。
+- 改用两个公开 HTML 页（example.com 与 IANA）做更小范围的完整流程：初调研后引擎独立取得两域原文，模型规划了两条核验分支汇入写作、审阅；第一条核验在原生 Cline 提供商流返回 `Response stream ended without a finish reason` 时失败，未核验论断、未交付报告。[终态故障](../../../.aexus/artifacts/deep-research-fix/cline-html-real-0v16TQ/failure.json)、[停止确认](../../../.aexus/artifacts/deep-research-fix/cline-html-real-0v16TQ/stop.json)、[最后 DAG 投影](../../../.aexus/artifacts/deep-research-fix/cline-html-real-0v16TQ/last-public-view.json)保留了范围与失败位置；隔离目录已删除。单步成功与本次失败并存，不据此推断完整双来源质量或自动重试的成本收益。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -81,6 +82,6 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 当前应用 Codex 原生适配仍由安装的官方可执行程序承载；平台原生子 Agent 工具与应用自身传输不是同一个接口。只读配置认证分类、provider 标签或 `/models` 成功都不能证明使用用户的中转额度。前序验收没有提交模型任务；用户明确授权后，本次在隔离 Core 运行了上述 2 员工、1 来源的小型真实任务，正式研究数据未被用于测试。
 
-用户已明确允许 CLI，并要求主 Agent 独立在后台测试。Codex 的单来源真实研究与恢复/下载已通过；共享 Pi 双来源试验只到最终审阅，共享 Cline 双来源试验只到首次核验，均未完成交付。更复杂主题及竞品同题质量评测仍未进行。共享 Pi/Cline 的自定义兼容路由配置已核对，实际费用未单独核账，不能凭 provider 名称推断。后续扩展实测应继续约束来源、团队、任务数和输出长度，避免无边界消耗。
+用户已明确允许 CLI，并要求主 Agent 独立在后台测试。Codex 的单来源真实研究与恢复/下载已通过；共享 Pi 双来源试验只到最终审阅，共享 Cline 双来源两次试验分别止于首次核验超时和提供商流失败，均未完成交付。更复杂主题及竞品同题质量评测仍未进行。共享 Pi/Cline 的自定义兼容路由配置已核对，实际费用未单独核账，不能凭 provider 名称推断。后续扩展实测应继续约束来源、团队、任务数和输出长度，避免无边界消耗。
 
 PDF 输入限定公开带文本层资料，8 MiB、80 页、800,000 字符，扫描件需外部 OCR。单次回复上限为 500,000 字符（实现按 JavaScript 字符串长度），1000 来源单一核验分支曾明确超限，分成八个核验分支的样例完成。相同的 128 节点/1000 来源合成压力场景在[修改前](../../../.aexus/artifacts/deep-research-fix/release-09186d9/performance-before.log)与[修改后](../../../.aexus/artifacts/deep-research-fix/release-09186d9/performance-after.log)均完成；计划字段从 5,051,103 降到 42,284 字节，峰值检查点从 50,806,944 降到 40,536,082 字节，clone/describe/JSON 的本次 p95 从 52.57 降到 47.43 ms，不含磁盘 fsync。结果说明仍需合理分支，不能承诺任意聚合规模或生产性能已“极致”。`workflow.events` 通用统计与嵌套研究 progress 不同，当前 UI 读取 `workflow.get`；模型路由、跨平台和竞品实际质量均仍未验收。
