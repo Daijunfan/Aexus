@@ -89,7 +89,7 @@ export async function run(originalState, originalContext) {
         const reason = state.revisionRequest?.instructions || '根据初步调研制定研究计划';
         const plan = await ask(state, ctx, 'research-plan-v' + ((state.graph?.version ?? 0) + 1), 'coordinator', 'plan', {
           topic: state.input.topic, scope: state.input.scope, materials: state.input.materials,
-          languages: state.input.languages, sourceUrls: state.input.sourceUrls, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks, maxAgentReplyChars: MAX_AGENT_REPLY_CHARS },
+          languages: state.input.languages, sourceUrls: state.input.sourceUrls, sourcePreviews: state.scouting?.previews, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks, maxAgentReplyChars: MAX_AGENT_REPLY_CHARS },
           sources: state.sources, gaps: state.scouting?.gaps || [], currentPlan: state.plan,
           completedNodes: state.graph?.nodes.filter(n => n.status === 'completed'), reason
         }, result => {

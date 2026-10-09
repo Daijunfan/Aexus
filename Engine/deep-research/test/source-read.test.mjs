@@ -119,6 +119,10 @@ test('one batch reads each URL once and preserves independent proof for its dist
   assert.ok(result.every(source => source.acquisition.method === 'independent-http'));
   assert.deepEqual(result.map(source => source.acquisition.excerpts[0].locator), ['Policy', 'Price']);
   assert.ok(result.every(source => /^[a-f0-9]{64}$/.test(source.acquisition.excerpts[0].sha256)));
+  const research = {sources: [], input: {maxSources: 1}};
+  mergeSources(research, result);
+  assert.equal(research.sources.length, 1);
+  assert.deepEqual(research.sources[0].acquisition.excerpts.map(item => item.excerpt), ['Policy A applies to new applicants.', 'Price B costs twelve units.']);
 });
 
 test('joined page paragraphs become separate exact proofs, never one fabricated quote', async () => {

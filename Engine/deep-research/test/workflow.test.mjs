@@ -114,8 +114,12 @@ test('bounded scout uses independently previewed page text and keeps research wi
   assert.equal(done.state.scouting.previews, undefined);
   const scout = f.calls.find(call => call.task?.kind === 'scout');
   assert.match(scout.args.text, /seed actual retrieved body demonstrates the result/);
+  assert.match(scout.args.text, /每页按研究问题选取必要的 1–3 条/);
   assert.match(scout.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
-  assert.deepEqual(f.calls.find(call => call.task?.kind === 'plan').task.payload.sourceUrls, ['https://seed.example/research']);
+  const planned = f.calls.find(call => call.task?.kind === 'plan');
+  assert.deepEqual(planned.task.payload.sourceUrls, ['https://seed.example/research']);
+  assert.match(planned.task.payload.sourcePreviews[0].text, /seed actual retrieved body/);
+  assert.match(planned.args.text, /不能把“未摘录”说成“网页没有”/);
 });
 
 test('native tools are reserved for discovery while evidence and report stages use saved proofs', async () => {
@@ -126,7 +130,8 @@ test('native tools are reserved for discovery while evidence and report stages u
     if (['scout', 'search'].includes(call.task.kind)) assert.match(call.args.text, /按需使用已开放的浏览\/搜索工具/);
     else assert.match(call.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
     if (call.task.kind === 'plan') assert.match(call.args.text, /未读取或片段被拒绝的来源须先由 search 节点补做取证/);
-    if (call.task.kind === 'verify') assert.match(call.args.text, /不重复 GET、解析 PDF 内部结构/);
+    if (call.task.kind === 'verify') { assert.match(call.args.text, /不重复 GET、解析 PDF 内部结构/); assert.match(call.args.text, /未经核验的 snippet 是缺口，不是矛盾/); }
+    if (call.task.kind === 'review') assert.match(call.args.text, /snippet 未核验误称为矛盾/);
   }
 });
 
