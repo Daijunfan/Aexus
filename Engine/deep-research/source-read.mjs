@@ -18,17 +18,21 @@ export function publicURL(value) {
   return url.href;
 }
 const normalize = value => String(value).normalize('NFKC').replace(/\s+/g, ' ').trim();
+const blocks = new Set(['body', 'title', 'p', 'div', 'section', 'article', 'li', 'ul', 'ol', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'td', 'th', 'nav', 'header', 'footer', 'main', 'blockquote', 'pre', 'table']);
 export function pageDocument(body) {
   const parts = [];
   let title = '';
   const visit = node => {
     if (['script', 'style', 'noscript', 'template', 'svg'].includes(node.tagName)) return;
     if (node.tagName === 'title' && !title) title = normalize((node.childNodes || []).map(child => child.value || '').join(' '));
+    const block = blocks.has(node.tagName);
+    if (block) parts.push(' ');
     if (node.nodeName === '#text') parts.push(node.value);
     for (const child of node.childNodes || []) visit(child);
+    if (block) parts.push(' ');
   };
   visit(parse(String(body)));
-  return {text: normalize(parts.join(' ')), title};
+  return {text: normalize(parts.join('')), title};
 }
 export const pageText = body => pageDocument(body).text;
 

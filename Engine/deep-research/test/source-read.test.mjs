@@ -75,6 +75,7 @@ test('public source guards reject encoded loopback, credentials and mapped priva
 
 test('HTML extraction uses visible parsed text and decodes entities', () => {
   assert.equal(pageText('<p>A &amp; B&nbsp; &#x4e2d;</p><script>fake source</script><style>fake style</style>'), 'A & B 中');
+  assert.equal(pageText('<div>Last revised <time>2026-09-27</time>.</div><p>Next paragraph.</p>'), 'Last revised 2026-09-27. Next paragraph.');
 });
 
 test('redirects and actual DNS lookup enforce the public source boundary', async t => {
