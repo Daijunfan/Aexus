@@ -174,6 +174,14 @@ test('the independently retrieved HTML title replaces an agent-supplied title ac
   assert.equal(reused.title, 'Actual & Verified Title');
 });
 
+test('HTML proof locator comes from the matching DOM paragraph, not an agent label', async () => {
+  const [checked] = await acquireSources(state(), [candidate('Last revised 2026-09-27.', 'Invented location')], {
+    read: async url => ({url, mediaType: 'text/html', body: '<title>Example Domains</title><p>Other content.</p><p>Last revised <time>2026-09-27</time>.</p>'})
+  });
+  assert.equal(checked.acquisition.status, 'read');
+  assert.equal(checked.acquisition.excerpts[0].locator, 'p[2]');
+});
+
 test('already independently acquired excerpts survive recovery without another fetch', async () => {
   const saved = candidate('Policy A applies to new applicants.');
   const first = await acquireSources(state(), [saved], {signal: new AbortController().signal, read: async url => ({url, body: saved.acquisition.excerpt, mediaType: 'text/plain'})});

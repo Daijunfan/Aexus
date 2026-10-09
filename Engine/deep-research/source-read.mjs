@@ -18,21 +18,30 @@ export function publicURL(value) {
   return url.href;
 }
 const normalize = value => String(value).normalize('NFKC').replace(/\s+/g, ' ').trim();
-const blocks = new Set(['body', 'title', 'p', 'div', 'section', 'article', 'li', 'ul', 'ol', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'td', 'th', 'nav', 'header', 'footer', 'main', 'blockquote', 'pre', 'table']);
+const blockTags = new Set(['body', 'title', 'p', 'div', 'section', 'article', 'li', 'ul', 'ol', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'td', 'th', 'nav', 'header', 'footer', 'main', 'blockquote', 'pre', 'table']);
+const locatedTags = new Set(['p', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'td', 'th', 'blockquote', 'pre', 'time']);
 export function pageDocument(body) {
-  const parts = [];
+  const parts = [], found = [], open = [], counts = new Map();
   let title = '';
+  const append = value => { parts.push(value); for (const item of open) item.parts.push(value); };
   const visit = node => {
     if (['script', 'style', 'noscript', 'template', 'svg'].includes(node.tagName)) return;
     if (node.tagName === 'title' && !title) title = normalize((node.childNodes || []).map(child => child.value || '').join(' '));
-    const block = blocks.has(node.tagName);
-    if (block) parts.push(' ');
-    if (node.nodeName === '#text') parts.push(node.value);
+    const block = blockTags.has(node.tagName);
+    let located;
+    if (locatedTags.has(node.tagName)) {
+      const index = (counts.get(node.tagName) || 0) + 1;
+      counts.set(node.tagName, index);
+      located = {tag: node.tagName, index, parts: []}; found.push(located); open.push(located);
+    }
+    if (block) append(' ');
+    if (node.nodeName === '#text') append(node.value);
     for (const child of node.childNodes || []) visit(child);
-    if (block) parts.push(' ');
+    if (block) append(' ');
+    if (located) open.pop();
   };
   visit(parse(String(body)));
-  return {text: normalize(parts.join('')), title};
+  return {text: normalize(parts.join('')), title, blocks: found.map(item => ({tag: item.tag, index: item.index, text: normalize(item.parts.join(''))})).filter(item => item.text)};
 }
 export const pageText = body => pageDocument(body).text;
 
@@ -113,18 +122,25 @@ export async function acquireSources(state, candidates, {signal, read = readSour
           const body = pdf ? '' : data.toString('utf8');
           const document = !pdf && /html/.test(response.mediaType || '') ? pageDocument(body) : null;
           return {data, finalUrl: publicURL(response.url || url), accessedAt: response.accessedAt || Date.now(), mediaType: pdf ? 'application/pdf' : response.mediaType,
-            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : document?.text ?? normalize(body), pageTitle: document?.title || ''};
+            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : document?.text ?? normalize(body), pageTitle: document?.title || '', blocks: document?.blocks};
         }));
         const response = await cache.get(url);
         signal?.throwIfAborted();
-        const locate = excerpt => response.pages?.find(page => page.text.includes(normalize(excerpt))) || (!response.pages && response.text.includes(normalize(excerpt)) ? {} : null);
+        const locate = excerpt => {
+          const match = normalize(excerpt);
+          if (response.pages) return response.pages.find(page => page.text.includes(match));
+          if (!response.text.includes(match)) return null;
+          let best;
+          for (const block of response.blocks || []) if (block.text.includes(match) && (!best || block.text.length < best.text.length)) best = block;
+          return best || {};
+        };
         const excerpts = locate(submitted) ? [submitted] : segments.length > 1 ? segments : [submitted];
         const locations = excerpts.map(locate);
         if (locations.some(page => !page)) throw Error('独立取得的原文未找到完整提交片段，该片段不能作为证据或引用');
         const sha256 = createHash('sha256').update(response.data).digest('hex');
         const proofs = excerpts.map((excerpt, index) => {
           const page = locations[index];
-          return {excerpt, locator: page.number ? 'Page ' + page.number : candidate.acquisition.locator || '', sha256, accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
+          return {excerpt, locator: page.number ? 'Page ' + page.number : page.tag ? `${page.tag}[${page.index}]` : candidate.acquisition.locator || '', sha256, accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
             ...(page.number ? {pages: [page.number]} : {})};
         });
         results[at] = {...candidate, title: response.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: proofs, ...(response.pageTitle ? {pageTitle: response.pageTitle} : {})}};
