@@ -277,6 +277,11 @@ test('report chapters include only their selected verified findings', async () =
     {heading: 'Second', content: 'Second claim.', citations: [id], findingIds: [secondFinding.id]}
   ]}};
   assert.deepEqual(validateReport(report, research).sections.map(section => section.evidence.map(item => item.claim)), [['First claim'], ['Second claim']]);
+  const compact = {report: {sections: [
+    {heading: 'First', content: 'First claim.', findingIds: [firstFinding.id]},
+    {heading: 'Second', content: 'Second claim.', findingIds: [secondFinding.id]}
+  ]}};
+  assert.deepEqual(validateReport(compact, research).sections.map(section => section.citations), [[id], [id]]);
   report.report.sections[1].findingIds = ['missing-finding'];
   assert.throws(() => validateReport(report, research), /论断|finding/);
 });
