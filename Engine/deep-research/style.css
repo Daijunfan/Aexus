@@ -1101,6 +1101,7 @@
 }
 .dr-graph-viewport {
   position: relative;
+  display: flex;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -1110,6 +1111,10 @@
   );
   background-size: 24px 24px;
   overscroll-behavior: contain;
+}
+.dr-graph-stage {
+  flex: none;
+  margin: auto;
 }
 .dr-graph-canvas {
   position: relative;

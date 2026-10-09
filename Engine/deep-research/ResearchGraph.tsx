@@ -209,6 +209,7 @@ export function ResearchGraph({
           discovery
         ) : (
           <div
+            className="dr-graph-stage"
             style={{ width: graph.width * zoom, height: graph.height * zoom }}
           >
             <div
