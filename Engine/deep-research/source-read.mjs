@@ -130,18 +130,29 @@ export async function acquireSources(state, candidates, {signal, read = readSour
           const pdf = isPdf(data) || ['application/pdf', 'application/octet-stream', 'binary/octet-stream'].includes(response.mediaType);
           const body = pdf ? '' : data.toString('utf8');
           const document = !pdf && /html/.test(response.mediaType || '') ? pageDocument(body) : null;
+          const lineStarts = []; const lines = []; let offset = 0;
+          if (!pdf && !document) body.split(/\r?\n/).forEach((line, index) => {
+            const part = normalize(line);
+            if (!part) return;
+            if (lines.length) offset++;
+            lineStarts.push({offset, line: index + 1}); lines.push(part); offset += part.length;
+          });
           return {data, finalUrl: publicURL(response.url || url), accessedAt: response.accessedAt || Date.now(), mediaType: pdf ? 'application/pdf' : response.mediaType,
-            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : document?.text ?? normalize(body), pageTitle: document?.title || '', blocks: document?.blocks};
+            pages: pdf ? await pdfPages(data, {signal}) : null, text: pdf ? '' : document?.text ?? lines.join(' '), pageTitle: document?.title || '', blocks: document?.blocks, lineStarts};
         }));
         const response = await cache.get(url);
         signal?.throwIfAborted();
         const locate = excerpt => {
           const match = normalize(excerpt);
           if (response.pages) return response.pages.find(page => page.text.includes(match));
-          if (!response.text.includes(match)) return null;
+          const at = response.text.indexOf(match);
+          if (at < 0) return null;
           let best;
           for (const block of response.blocks || []) if (block.text.includes(match) && (!best || block.text.length < best.text.length)) best = block;
-          return best || {};
+          if (best) return best;
+          let line;
+          for (const start of response.lineStarts) { if (start.offset > at) break; line = start.line; }
+          return line ? {line} : {};
         };
         const excerpts = locate(submitted) ? [submitted] : segments.length > 1 ? segments : [submitted];
         const locations = excerpts.map(locate);
@@ -149,7 +160,7 @@ export async function acquireSources(state, candidates, {signal, read = readSour
         const sha256 = createHash('sha256').update(response.data).digest('hex');
         const proofs = excerpts.map((excerpt, index) => {
           const page = locations[index];
-          return {excerpt, locator: page.number ? 'Page ' + page.number : page.tag ? `${page.tag}[${page.index}]` : candidate.acquisition.locator || '', sha256, accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
+          return {excerpt, locator: page.number ? 'Page ' + page.number : page.tag ? `${page.tag}[${page.index}]` : page.line ? 'Line ' + page.line : candidate.acquisition.locator || '', sha256, accessedAt: response.accessedAt, finalUrl: response.finalUrl, match: 'normalized-text', mediaType: response.mediaType,
             ...(page.number ? {pages: [page.number]} : {})};
         });
         results[at] = {...candidate, title: response.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: proofs, ...(response.pageTitle ? {pageTitle: response.pageTitle} : {})}};

@@ -150,7 +150,7 @@ test('one batch reads each URL once and preserves independent proof for its dist
   });
   assert.equal(reads, 1);
   assert.ok(result.every(source => source.acquisition.method === 'independent-http'));
-  assert.deepEqual(result.map(source => source.acquisition.excerpts[0].locator), ['Policy', 'Price']);
+  assert.deepEqual(result.map(source => source.acquisition.excerpts[0].locator), ['Line 1', 'Line 1']);
   assert.ok(result.every(source => /^[a-f0-9]{64}$/.test(source.acquisition.excerpts[0].sha256)));
   const research = {sources: [], input: {maxSources: 1}};
   mergeSources(research, result);
@@ -208,6 +208,14 @@ test('HTML proof locator comes from the matching DOM paragraph, not an agent lab
   });
   assert.equal(checked.acquisition.status, 'read');
   assert.equal(checked.acquisition.excerpts[0].locator, 'p[2]');
+});
+
+test('plain-text proof locator comes from the retrieved line, not an agent label', async () => {
+  const [checked] = await acquireSources(state(), [candidate('Second line. Third line.', 'Line 999')], {
+    read: async url => ({url, mediaType: 'text/plain', body: 'First line.\nSecond line.\nThird line.'})
+  });
+  assert.equal(checked.acquisition.status, 'read');
+  assert.equal(checked.acquisition.excerpts[0].locator, 'Line 2');
 });
 
 test('already independently acquired excerpts survive recovery without another fetch', async () => {
