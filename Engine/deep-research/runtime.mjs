@@ -188,7 +188,7 @@ async function executeNode(state, ctx, node) {
     if (saved) node.inputSourceIds = saved.inputSourceIds || (JSON.parse(saved.prompt.split('\n\n')[1]).payload.sources || []).map(s => s.id);
     else {
       const available = new Set([...(state.scouting?.sourceIds || []), ...state.graph.nodes.filter(n => ancestors.has(n.id)).flatMap(n => n.sourceIds || [])]);
-      node.inputSourceIds = state.sources.filter(s => available.has(s.id) && (!node.payload.sourceIds || node.payload.sourceIds.includes(s.id)) && (node.kind !== 'verify' || !s.verified)).map(s => s.id);
+      node.inputSourceIds = state.sources.filter(s => available.has(s.id) && (!node.payload.sourceIds || node.payload.sourceIds.includes(s.id))).map(s => s.id);
     }
   }
   const relevant = state.sources.filter(s => node.inputSourceIds.includes(s.id) && (node.kind !== 'verify' || isIndependentSource(s))).map(({snippet, summary, ...source}) => source);

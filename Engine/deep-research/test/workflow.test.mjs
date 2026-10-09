@@ -674,6 +674,25 @@ test('parallel verifiers validate their original shared input after another veri
   assert.deepEqual(checks[0].task.payload.sources.map(s => s.id), checks[1].task.payload.sources.map(s => s.id));
 });
 
+test('a later verification dimension still examines a source checked by an earlier dimension', async () => {
+  const f = fixture({respond: task => {
+    if (task.kind === 'plan') {
+      const next = plan();
+      next.nodes.splice(3, 0, {id: 'v2', kind: 'verify', role: 'researcher', dependencies: ['v1'], payload: {query: 'second dimension'}});
+      next.nodes.find(node => node.id === 'w1').dependencies = ['v2'];
+      return next;
+    }
+    if (task.kind === 'verify') return {verifications: task.payload.sources.map(source => ({
+      sourceId: source.id, credibilityScore: 0.9,
+      claims: [{text: task.payload.query + ': ' + source.title, excerpt: source.acquisition.excerpts[0].excerpt}]
+    }))};
+  }});
+  const done = await run(create({topic: 'Two dimensions share one original source', autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.deepEqual(f.calls.filter(call => call.task?.kind === 'verify').map(call => call.task.payload.query), ['verify', 'second dimension']);
+  assert.ok(done.state.findings.some(finding => finding.claim.startsWith('second dimension:')));
+});
+
 test('independent verification branches receive their ancestors plus common scouting evidence', async () => {
   const state = create({ topic: 'Independent evidence branches keep their source inputs isolated', autoApprove: true, team: { maxConcurrency: 2 } });
   let prepared = false;
