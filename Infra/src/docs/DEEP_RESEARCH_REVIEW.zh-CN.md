@@ -21,6 +21,7 @@
 - 只在隔离进程中尝试现有本机代理和 [OpenAI 官方文档](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)支持的 HTTP 传输开关。WebSocket 错误消失，但提供商仍在初步调研阶段断流；任务经 CLI 取消，`controlPending=false`，没有来源或交付。本次没有更改全局 Codex、Clash 配置，也没有把该实验计作完成。
 - HTML 来源标题曾直接沿用员工提交值。现在只在独立取得的页面中提取真实 `<title>`，同 URL 的后续片段沿用核对结果；PDF/纯文本不伪称具有独立标题。一次公开网页实读和 20 项来源测试、77 项领域/Host 相关测试通过。取证时只解析一次 HTML，PDF 原始字节不再做无用的 UTF-8 解码。
 - 确认停止后，Host 刷新任务与 DAG 摘要：已停止任务不再显示“进行中”，进度的运行数归零；暂停仍保留可继续的待执行节点。实际 Host 取消及重启用例、70 项相关回归与 TypeScript 检查通过。
+- 原生执行失败会进入会话状态，研究任务优先显示实际错误，避免将提供商断流误当 JSON 格式错误而再发纠错请求。[真实 Core 与假 Codex 协议测试](../../../Infra/src/test/deep-research-native-error-test.mjs)确认单次失败只派发一次任务；48 项相关回归与 TypeScript 检查通过，均不调用收费模型。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
