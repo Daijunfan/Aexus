@@ -138,6 +138,15 @@ test('already independently acquired excerpts survive recovery without another f
   assert.equal(resumed[0].acquisition.excerpts[0].sha256, first[0].acquisition.excerpts[0].sha256);
 });
 
+test('a legacy source ID reuses its verified excerpt through the canonical URL', async () => {
+  const saved = candidate('Policy A applies to new applicants.');
+  const [checked] = await acquireSources(state(), [saved], {read: async url => ({url, body: saved.acquisition.excerpt, mediaType: 'text/plain'})});
+  const legacy = {...checked, id: 'legacy-id', url: checked.url + '?utm_source=old'};
+  const [reused] = await acquireSources({sources: [legacy]}, [saved], {read: async () => { throw Error('Same verified excerpt should not be refetched'); }});
+  assert.equal(reused.acquisition.status, 'read');
+  assert.equal(reused.acquisition.excerpts[0].sha256, checked.acquisition.excerpts[0].sha256);
+});
+
 test('aborted source acquisition never accepts a late body', async () => {
   const controller = new AbortController();
   await assert.rejects(acquireSources(state(), [candidate('Policy A applies to new applicants.')], {signal: controller.signal, read: async url => {

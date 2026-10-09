@@ -5,7 +5,7 @@ import dns from 'node:dns';
 import net from 'node:net';
 import {createHash} from 'node:crypto';
 import {parse} from 'parse5';
-import {isIndependentSource} from './evidence.mjs';
+import {canonicalUrl, isIndependentSource} from './evidence.mjs';
 import {isPdf, pdfPages} from './source-pdf.mjs';
 
 const blocked = new net.BlockList();
@@ -84,7 +84,7 @@ export async function acquireSources(state, candidates, {signal, read = readSour
     while (index < candidates.length) {
       signal?.throwIfAborted();
       const at = index++, candidate = candidates[at], submitted = candidate.acquisition?.excerpt || '';
-      const old = state.sources.find(source => source.id === candidate.id);
+      const old = state.sources.find(source => source.id === candidate.id) || state.sources.find(source => { try { return canonicalUrl(source.url) === candidate.url; } catch { return false; } });
       const known = old && isIndependentSource(old) && old.acquisition.excerpts.find(item => item.excerpt === submitted);
       if (known) { results[at] = {...candidate, title: old.acquisition.pageTitle || candidate.title, acquisition: {status: 'read', method: 'independent-http', excerpts: [known], ...(old.acquisition.pageTitle ? {pageTitle: old.acquisition.pageTitle} : {})}}; continue; }
       if (!submitted) { results[at] = {...candidate, acquisition: {status: 'discovered', method: 'agent-reported', reason: '尚未提供需独立核对的原文片段'}}; continue; }
