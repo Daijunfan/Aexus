@@ -132,6 +132,16 @@ test('bounded scout uses independently previewed page text and keeps research wi
   assert.match(search.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
 });
 
+test('a bounded preview and later proof use the same independently fetched page', async () => {
+  const f = fixture({respond: task => task.kind === 'scout' ? {sources: [source('seed')]} : undefined});
+  const read = f.ctx.sourceReader; let requests = 0;
+  f.ctx.sourceReader = async (url, options) => { requests++; return read(url, options); };
+  const done = await run(create({topic: 'Verify one bounded page', scope: 'quick', maxSources: 1, sourceUrls: ['https://seed.example/research'], team: {maxWorkers: 5, maxManagers: 2, maxConcurrency: 2}, autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.equal(requests, 1);
+  assert.equal(done.state.sources[0].acquisition.excerpts[0].excerpt, source('seed').acquisition.excerpt);
+});
+
 test('each scoped search sees only its target page preview and its real truncation status', async () => {
   const f = fixture({respond: task => {
     if (task.kind === 'scout') return {sources: [source('short'), source('long')]};

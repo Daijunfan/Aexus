@@ -4,7 +4,7 @@ import { provision, ask, cancel } from './agents.mjs';
 import { normalizePlanResponse } from './schema.mjs';
 import { applyPlan, readyNodes, planTeam } from './graph.mjs';
 import { canonicalUrl, normalizeSources, mergeSources, withinSourceBudget, normalizeVerification, mergeVerification, validateReport, isIndependentSource } from './evidence.mjs';
-import { acquireSources, previewSource } from './source-read.mjs';
+import { acquireSources, previewSource, readSource } from './source-read.mjs';
 import { generateArtifacts } from './reports.mjs';
 
 export { create, describe, respond, retry, fork, cancel };
@@ -23,8 +23,17 @@ export function amend(state, update) {
 
 export async function run(originalState, originalContext) {
   const state = upgradeState(originalState);
+  const sourceReads = new Map();
+  const sourceReader = originalContext.sourceReader || readSource;
   let chain = Promise.resolve();
-  const ctx = { ...originalContext, checkpoint: value => {
+  const ctx = { ...originalContext, sourceReader: (url, options) => {
+    if (!state.input.sourceUrls?.includes(canonicalUrl(url))) return sourceReader(url, options);
+    if (!sourceReads.has(url)) sourceReads.set(url, Promise.resolve().then(() => sourceReader(url, options)).catch(error => {
+      sourceReads.delete(url);
+      throw error;
+    }));
+    return sourceReads.get(url);
+  }, checkpoint: value => {
     const snapshot = structuredClone(value);
     chain = chain.then(() => originalContext.checkpoint(snapshot));
     return chain;
