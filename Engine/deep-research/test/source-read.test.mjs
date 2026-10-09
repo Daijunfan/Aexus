@@ -120,6 +120,7 @@ test('joined page paragraphs become separate exact proofs, never one fabricated 
   });
   assert.equal(checked.acquisition.status, 'read');
   assert.deepEqual(checked.acquisition.excerpts.map(item => item.excerpt), [first, second]);
+  assert.equal(normalizeVerification({verifications: [{sourceId: checked.id, credibilityScore: 1, claims: [first, second].map(excerpt => ({text: 'Exact claim', excerpt}))}]}, [checked])[0].claims.length, 2);
   assert.throws(() => normalizeVerification({verifications: [{sourceId: checked.id, credibilityScore: 1, claims: [{text: 'Combined claim', excerpt: joined}]}]}, [checked]), /片段/);
   const [reused] = await acquireSources({sources: [checked]}, [candidate(joined)], {
     read: async () => { throw Error('Both saved exact excerpts should be reused'); }
