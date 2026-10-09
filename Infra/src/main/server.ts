@@ -262,7 +262,7 @@ export async function handleRequest(req:Request,context?:RequestContext&{signal?
   let target=CONVERSATION_CONTROL_APIS.has(req.cmd)||MESSAGE_COLLABORATION_APIS.has(req.cmd)?undefined:employeeId(a.employee??a.cardId??a.id)
   if(['card.','session.','config.'].some(prefix=>req.cmd.startsWith(prefix))&&new Set([a.employee,a.cardId,a.id].filter(value=>value!==undefined).map(employeeId).filter(Boolean)).size>1)throw Error('Forbidden: conflicting employee identifiers')
   if(req.cmd.startsWith('card.'))target=employeeId(req.cmd==='card.rename'?a.cardId:a.id)
-  if(req.cmd.startsWith('config.')||req.cmd.startsWith('commands.')||req.cmd.startsWith('approval.')||['engine.inspect','engine.skill'].includes(req.cmd))target=employeeId(a.id)
+  if(req.cmd.startsWith('config.')||req.cmd.startsWith('commands.')||req.cmd.startsWith('approval.')||['engine.inspect','engine.skill'].includes(req.cmd))target=employeeId(req.cmd.startsWith('approval.')?a.employee??a.id:a.id)
   if(req.cmd.startsWith('terminal.')&&a.id)target=listTerminals().find(terminal=>terminal.id===a.id)?.employee
   if(['view.tools','view.details'].includes(req.cmd))target=getView().employee
   if(req.cmd==='session.open')target=employeeId(a.cardId??a.employee??a.id)
@@ -305,7 +305,7 @@ async function handleAuthorizedRequest(req:Request,a:Record<string,any>,target:s
   }
   const finishInteraction=beginManagementInteraction(req.cmd,target,caller)
   try{
-  if(a.employee&&req.cmd.startsWith('session.')){
+  if(a.employee&&(req.cmd.startsWith('session.')||req.cmd.startsWith('approval.'))){
     if(req.cmd==='session.open')a.cardId=a.employee
     const live=listLive().find(item=>sessionInfo(item.id)?.cardId===a.employee)
     a.id=live?.id??a.employee
