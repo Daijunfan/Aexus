@@ -84,8 +84,13 @@ export async function run(originalState, originalContext) {
           languages: state.input.languages, budget: { maxSources: state.input.maxSources, ...state.input.team, maxTasks: state.input.maxTasks, maxAgentReplyChars: MAX_AGENT_REPLY_CHARS },
           sources: state.sources, gaps: state.scouting?.gaps || [], currentPlan: state.plan,
           completedNodes: state.graph?.nodes.filter(n => n.status === 'completed'), reason
-        }, normalizePlanResponse);
-        plan.team = planTeam(plan, state.input.team);
+        }, result => {
+          const candidate = normalizePlanResponse(result);
+          candidate.team = planTeam(candidate, state.input.team);
+          // Validate the complete revision before caching a successful planner reply.
+          applyPlan({...state, planRevisions: [], visualization: {timeline: []}}, candidate, reason);
+          return candidate;
+        });
         applyPlan(state, plan, reason); state.revisionRequest = null;
         await provision(state, ctx, plan.team);
         for (const manager of state.workers.filter(w => w.active !== false && w.managementRole === 'manager' && w.role !== 'coordinator')) {

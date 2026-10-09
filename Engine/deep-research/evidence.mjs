@@ -82,7 +82,11 @@ export function normalizeVerification(result, sources) {
       if (!proof) throw Error('论断引用的片段不在独立获取正文中: ' + source.id);
       return { text: claim.text.trim(), excerpt: claim.excerpt, locator: String(proof.locator || ''), confidence: typeof claim.confidence === 'number' ? Math.max(0, Math.min(1, claim.confidence)) : 0.5 };
     });
-    return { sourceId: source.id, credibilityScore: Math.max(0, Math.min(1, entry.credibilityScore)), claims, notes: String(entry.notes || ''), contradictions: entry.contradictions || [] };
+    const contradictions = entry.contradictions || [];
+    for (const contradiction of contradictions) {
+      if (!Array.isArray(contradiction.sourceIds) || contradiction.sourceIds.some(id => !byId.has(id))) throw Error('矛盾引用了未知来源');
+    }
+    return { sourceId: source.id, credibilityScore: Math.max(0, Math.min(1, entry.credibilityScore)), claims, notes: String(entry.notes || ''), contradictions };
   });
 }
 

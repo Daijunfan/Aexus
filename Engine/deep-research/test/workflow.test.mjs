@@ -651,3 +651,36 @@ test('a crash after the final Engine checkpoint regenerates byte-identical files
   assert.deepEqual(done.artifacts, expected); assert.equal(resumed.calls.length, 0);
   assert.equal('artifacts' in done.state, false);
 });
+
+test('invalid DAG is corrected before the planner reply becomes a reusable completed task', async () => {
+  let plans = 0;
+  const f = fixture({respond(task) {
+    if (task.kind !== 'plan') return;
+    const next = plan();
+    if (plans++ === 0) next.nodes[0].dependencies = ['unknown-parent'];
+    return next;
+  }});
+  const done = await run(create({topic:'计划错误应当在保存成功前修正',autoApprove:true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.equal(plans, 2);
+  const correction = f.calls.find(call => call.task?.kind === 'plan' && call.task.payload.formatCorrection);
+  assert.match(correction.task.payload.formatCorrection, /不存在/);
+  assert.ok(!done.state.plan.nodes.some(node => node.dependencies.includes('unknown-parent')));
+});
+
+test('invalid contradiction sources are corrected before any evidence mutation', async () => {
+  let verifications = 0;
+  const f = fixture({respond(task) {
+    if (task.kind !== 'verify') return;
+    const invalid = verifications++ === 0;
+    return {verifications: task.payload.sources.map(source => ({sourceId: source.id, credibilityScore: 0.9,
+      claims: [{text: source.title + ' verified finding', excerpt: source.acquisition.excerpts[0].excerpt}],
+      contradictions: invalid ? [{sourceIds: [source.id, 'invented-source'], description:'Invalid relationship'}] : []
+    }))};
+  }});
+  const done = await run(create({topic:'错误反证来源不可污染已核验状态',autoApprove:true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.equal(verifications, 2);
+  assert.equal(done.state.contradictions.length, 0);
+  assert.ok(f.checkpoints.every(state => !state.contradictions.some(c => c.sources.includes('invented-source'))));
+});
