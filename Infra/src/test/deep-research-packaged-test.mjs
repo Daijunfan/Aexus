@@ -60,7 +60,7 @@ const privateDependencies = Object.keys(JSON.parse(asar.extractFile(archive, 'En
   return {name, version: bundled.version, path: packagedFile}
 })
 const candidateEngine = path.join(stage, 'Engine/deep-research')
-const coreFingerprint = Object.fromEntries(fs.readdirSync(candidateEngine).filter(f => /\.(mjs|tsx|css)$/.test(f)).map(f => {
+const coreFingerprint = Object.fromEntries(fs.readdirSync(candidateEngine).filter(f => /\.(mjs|ts|tsx|css)$/.test(f)).map(f => {
   const bytes = asar.extractFile(archive, 'Engine/deep-research/' + f)
   assert.equal(createHash('sha256').update(bytes).digest('hex'), hash(path.join(candidateEngine, f)), 'Packaged source must match its candidate staging snapshot')
   return [f, createHash('sha256').update(bytes).digest('hex')]
