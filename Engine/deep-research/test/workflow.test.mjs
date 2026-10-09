@@ -849,6 +849,25 @@ test('native provider failure is surfaced without a format-correction model requ
   assert.equal(state.tasks['source-check'].failureKind, 'native-terminal');
 });
 
+test('waiting for a native tool approval does not consume the employee execution deadline', async () => {
+  const state = create({topic: 'Wait for the operator to approve the bounded source read'});
+  state.workers = [{id: 'researcher-1', role: 'researcher', label: '研究员', engine: 'pi', active: true}];
+  state.tasks['source-check'] = {taskId: 'wf/source-check', logicalKey: 'source-check', role: 'researcher', label: 'search', employeeId: 'researcher-1', engine: 'pi', status: 'running', deadline: Date.now() - 1, receipt: {messageId: 'native-turn'}};
+  let checks = 0;
+  const ctx = {id: 'wf', signal: new AbortController().signal, checkpoint: async () => {}, client: {invoke: async command => {
+    if (command === 'session.status') return [{busy: checks++ < 2, waitingApproval: checks === 1}];
+    if (command === 'session.transcript') return {items: [
+      {role: 'user', outbound: {taskId: 'native-turn'}},
+      {role: 'assistant', blocks: [{kind: 'text', text: JSON.stringify({taskId: 'wf/source-check', sources: []})}]}
+    ]};
+    throw Error('A resumed approval must not send another model request');
+  }}};
+  const result = await ask(state, ctx, 'source-check', 'researcher', 'search', {}, value => value);
+  assert.deepEqual(result.sources, []);
+  assert.equal(state.tasks['source-check'].status, 'completed');
+  assert.equal(checks, 3);
+});
+
 test('a persisted native failure is not mistaken for a malformed JSON answer after restart', async () => {
   const state = create({topic: 'Recover an interrupted provider without repeating a failed transcript'});
   state.workers = [{id: 'researcher-1', role: 'researcher', label: '研究员', engine: 'codex', active: true}];

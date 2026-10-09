@@ -123,9 +123,10 @@ async function execute(state, ctx, key, worker, kind, payload, validate, logical
       const status = (await call('session.status', { employee: worker.id }))[0];
       ctx.signal.throwIfAborted();
       if (!status) throw Error('研究员工已删除');
+      if (status.waitingApproval) task.deadline = Date.now() + 15 * 60 * 1000;
       if (status.waitingApproval && task.status !== 'approval') {
         task.status = 'approval'; state.attention = { employeeId: worker.id, message: worker.label + ' 需要 Infra 审批' }; await ctx.checkpoint(state);
-      } else if (!status.waitingApproval && task.status === 'approval') { task.status = 'running'; state.attention = null; await ctx.checkpoint(state); }
+      } else if (!status.waitingApproval && task.status === 'approval') { task.deadline = Date.now() + 15 * 60 * 1000; task.status = 'running'; state.attention = null; await ctx.checkpoint(state); }
       if (!status.busy && !status.acknowledging && !status.waitingApproval) {
         if (status.error) { task.failureKind = 'native-terminal'; throw Error('员工原生执行失败：' + status.error); }
         const transcript = await transcriptTask(ctx.client, task);
