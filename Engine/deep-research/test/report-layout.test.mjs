@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {generateArtifacts} from '../reports.mjs';
 
-test('standalone report keeps wide evidence tables inside the mobile page and exposes source proof', async t => {
+test('standalone report contains wide tables on mobile and print while exposing source proof', async t => {
   const sha256 = 'a'.repeat(64);
   const source = {id: 'src-one', title: 'Independent original', url: 'https://example.org/original', verified: true,
     acquisition: {status: 'read', method: 'independent-http', excerpts: [{excerpt: 'A directly retrieved source passage.', locator: 'Page 1', sha256, accessedAt: 1, finalUrl: 'https://example.org/final'}]}};
@@ -22,4 +22,7 @@ test('standalone report keeps wide evidence tables inside the mobile page and ex
   await page.setViewportSize({width: 1440, height: 600});
   await page.evaluate(() => scrollTo(0, 600));
   assert.equal(await page.locator('nav').evaluate(element => Math.round(element.getBoundingClientRect().top)), 0);
+  await page.emulateMedia({media: 'print'});
+  await page.setViewportSize({width: 794, height: 1123});
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 });
