@@ -6,6 +6,7 @@ import { sourceView, isIndependentSource } from './evidence.mjs';
 
 const html = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const httpUrl = value => { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : ''; } catch { return ''; } };
+const markdownLinkText = text => String(text ?? '').replace(/[\\[\]]/g, '\\$&');
 const csv = value => '"' + String(value ?? '').replace(/^([\s]*[=+@-])/, "'$1").replace(/"/g, '""') + '"';
 const markdown = text => micromark(String(text ?? ''), { extensions: [gfm()], htmlExtensions: [gfmHtml()] });
 
@@ -151,7 +152,12 @@ export function generateArtifacts(state) {
     const evidence = s.evidence.map(e => `> ${e.excerpt.replace(/\n/g, '\n> ')}\n>\n> ${e.claim} [${numbered.get(e.sourceId)}] ${e.locator}\n`).join('\n');
     return `## ${s.heading}\n\n${s.content}\n\n${citations}\n\n` + (evidence ? '<details><summary>证据与原文片段</summary>\n\n' + evidence + '\n</details>\n' : '');
   }).join('\n');
-  const referencesMarkdown = references.map(s => `<a id="${s.id}"></a>\n${s.number}. [${s.title}](${s.url})${s.publishedDate ? ' · ' + s.publishedDate : ''}\n`).join('\n');
+  const referencesMarkdown = references.map(s => {
+    const link = httpUrl(s.url), proof = isIndependentSource(s) ? s.acquisition.excerpts[0] : null;
+    const finalUrl = proof && httpUrl(proof.finalUrl), title = markdownLinkText(s.title);
+    return `<a id="${html(s.id)}"></a>\n${s.number}. ${link ? `[${title}](<${link}>)` : title}${s.publishedDate ? ' · ' + s.publishedDate : ''}\n` +
+      (proof ? `   - 原文获取：${new Date(proof.accessedAt).toLocaleString('zh-CN')}${proof.locator ? ' · ' + proof.locator : ''}\n${finalUrl ? '   - 最终链接：<' + finalUrl + '>\n' : ''}   - SHA-256：\`${proof.sha256}\`\n` : '');
+  }).join('\n');
   const mdReport = `# ${report.title}\n\n${report.abstract}\n\n` + sectionsMarkdown
     + (report.conclusion ? '\n## 结论\n\n' + report.conclusion + '\n' : '')
     + (report.limitations.length ? '\n## 研究局限\n\n' + report.limitations.map(s => '- ' + s).join('\n') + '\n' : '')

@@ -563,6 +563,9 @@ test('HTML exports render GFM structure while keeping untrusted HTML and unsafe 
   const proof = done.state.sources.find(source => source.verified).acquisition.excerpts[0];
   assert.ok(html.includes(proof.sha256), 'The standalone report keeps the acquired body fingerprint beside its citation');
   assert.ok(html.includes(proof.finalUrl), 'The standalone report names the independently retrieved final URL');
+  const markdownReport = generateArtifacts(done.state).find(a => a.name === 'research-report.md').content;
+  assert.ok(markdownReport.includes(proof.sha256), 'The editable report keeps the same source fingerprint');
+  assert.ok(markdownReport.includes(proof.finalUrl), 'The editable report keeps the same final URL');
   assert.ok(!html.includes('<script>')); assert.ok(!html.includes('href="javascript:'));
   assert.ok(html.includes('&lt;script&gt;'));
   const tampered = structuredClone(done.state);
@@ -571,6 +574,7 @@ test('HTML exports render GFM structure while keeping untrusted HTML and unsafe 
   assert.ok(!generateArtifacts(tampered).find(a => a.name === 'research-report.html').content.includes('href="javascript:'));
   tampered.sources[0].url = 'https://user:secret@example.org/original';
   assert.ok(!generateArtifacts(tampered).find(a => a.name === 'research-report.html').content.includes('user:secret'));
+  assert.ok(!generateArtifacts(tampered).find(a => a.name === 'research-report.md').content.includes('user:secret'));
   const historical = structuredClone(done.state);
   const downgraded = historical.sources.find(source => source.id === done.state.sources.find(source => source.verified).id);
   downgraded.acquisition.method = 'agent-reported';
