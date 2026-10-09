@@ -1078,6 +1078,8 @@ try {
     await screen("04a-embedded-report-" + width);
     await page.getByRole("tab", { name: /^来源/ }).click();
     await page.locator(".dr-evidence-layout").waitFor();
+    const verifiedClaim = findings.find(finding => finding.sourceIds.includes(sources[0].id))?.claim;
+    assert.ok((await page.locator(".dr-source-row").first().innerText()).includes(verifiedClaim), "A verified row summarizes a verified finding rather than the scout snippet");
     await page.locator(".dr-source-row").first().click();
     const sourceTitle = page.locator(".dr-source-detail > h3");
     await sourceTitle.scrollIntoViewIfNeeded();

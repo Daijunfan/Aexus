@@ -45,6 +45,13 @@ export function SourcePanel({
     return matches && [source.title, source.url, source.snippet].some(value => String(value ?? "").toLowerCase().includes(search));
   });
   const selected = sources.find((source) => source.id === selection?.id);
+  const firstClaims = new Map<string, string>();
+  for (const finding of findings) for (const id of finding.sourceIds) if (!firstClaims.has(id)) firstClaims.set(id, finding.claim);
+  const sourceSummary = (source: ResearchSource) => {
+    if (independentlyRead(source) && source.verified) return firstClaims.get(source.id) || "暂无已核验论断";
+    const preview = source.snippet || source.summary;
+    return preview ? "候选摘要 · " + preview : "待调查";
+  };
   const claims = findings.filter((finding) =>
     finding.sourceIds.includes(selected?.id ?? ""),
   );
@@ -118,7 +125,7 @@ export function SourcePanel({
                   </span>
                 </small>
                 <strong>{source.title}</strong>
-                <p>{source.snippet || source.summary}</p>
+                <p>{sourceSummary(source)}</p>
               </span>
               <span
                 className="codicon codicon-chevron-right"
@@ -224,7 +231,12 @@ export function SourcePanel({
                 阅读原文
               </a>
             )}
-            <p>{selected.snippet || selected.summary}</p>
+            {(selected.snippet || selected.summary) && (
+              <section>
+                <h4>初调研摘要 · 非引用证据</h4>
+                <p>{selected.snippet || selected.summary}</p>
+              </section>
+            )}
             {selected.verificationNotes && (
               <section>
                 <h4>核验说明</h4>
