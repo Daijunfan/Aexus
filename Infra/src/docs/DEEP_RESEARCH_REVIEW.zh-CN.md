@@ -40,7 +40,7 @@
 | 丰富且简单的可视化 | 云形节点、LR/TB 方向、适配、缩放、邻域聚焦、详情与分页历史；连线接到云轮廓，运行、完成和失败状态仍可辨。支持审批、调整方向、暂停、继续、取消与必要重试。21 项 Chromium 检查覆盖 48 节点、36 同层/36 深层、1440/768/390、65 条历史、长报告、暗主题和停止状态。 | 主观“最佳视觉”；48 节点验收不冒充全部规模无性能限制。 |
 | 广泛来源与可信引用 | 引擎独立读取公开 HTML/文本/PDF，逐片段匹配原文，保存真实 URL、时间、原文 SHA256 和 locator；拒绝虚构片段、未知来源和仅搜索摘要。冲突论断在发现页优先展示，可分别定位双方原文。 | 原文匹配不自动证明语义蕴涵；单来源真实任务已完成，不能据此承诺每个主题的来源广度。 |
 | 内容详实与真实交付 | 报告、来源和论断互相定位；Host 发布 HTML、Markdown、来源 CSV、证据 JSON、计划 JSON 五份真实文件。独立研究语料通过当前证据门槛，含 17 来源、28 论断、10 章；键盘引用、定位及返回报告通过。 | 该语料是原生 Agent 成果经引擎验证，非应用自动研究输出；当前没有 PDF/Word 导出、OCR 或报告 Mermaid 渲染。 |
-| 清晰边界、精简与性能 | Host 负责权限、身份、生命周期、持久化与发布；Engine 经公开 Contract 调用 Host，UI 消费 canonical 投影。删除固定模板、重复 claim 存储、完整提示和产物正文副本；完成检查点可重新发布相同字节及哈希而不重做研究。 | 不以模拟数据或不含 fsync 的计时宣称生产性能已“极致”。 |
+| 清晰边界、精简与性能 | Host 负责权限、身份、生命周期、持久化与发布；Engine 经公开 Contract 调用 Host，UI 消费 canonical 投影。计划只保存静态拓扑，执行结果只保留在 DAG；已删除固定模板、重复 claim 存储、完整提示和产物正文副本。完成检查点可重新发布相同字节及哈希而不重做研究。 | 不以模拟数据或不含 fsync 的计时宣称生产性能已“极致”。 |
 | 全项目阅读、竞品、构建与安装 | 2,202 个 tracked 文件逐路径审计：1,985 份文本完整实读，19 份生成文件核生成源，198 份图像/音视频/上游归档核清单；当前哈希全部匹配。公开厂商与开源方案已对标；最新源码已构建、安装和隐藏重开。 | 未登录竞品实跑、未做同任务盲评；macOS 结果不外推 Windows/Linux。 |
 
 UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。自动批准仍先初调研、规划和 Manager 审核，不跳过这些职责。多个 Manager 中任一要求修订都会阻止计划自动批准。
@@ -51,7 +51,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-bbadb80/full-regression.log)为 100/100，通过命令：
+当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-09186d9/full-regression.log)为 101/101，通过命令：
 
 ```sh
 node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs
@@ -75,4 +75,4 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 用户已明确允许 CLI，并要求主 Agent 独立在后台测试。此次有限范围真实研究与恢复/下载已通过；更复杂主题、多个提供商及竞品同题质量评测仍未进行。模型费用所属路由未单独核账，不能凭 provider 名称推断。后续扩展实测应继续约束来源、团队、任务数和输出长度，避免无边界消耗。
 
-PDF 输入限定公开带文本层资料，8 MiB、80 页、800,000 字符，扫描件需外部 OCR。单次回复上限为 500,000 字符（实现按 JavaScript 字符串长度），1000 来源单一核验分支曾明确超限，分成八个核验分支的样例完成；最新 `projection-benchmark.mjs --branch-only` 模拟 128 节点/1000 来源完成，峰值检查点 50,806,944 字节，clone/describe/JSON 中位 34.26 ms、p95 57.65 ms，不含磁盘 fsync。这说明需合理分支，不能承诺任意聚合规模。`workflow.events` 通用统计与嵌套研究 progress 不同，当前 UI 读取 `workflow.get`；模型路由、跨平台和竞品实际质量均仍未验收。
+PDF 输入限定公开带文本层资料，8 MiB、80 页、800,000 字符，扫描件需外部 OCR。单次回复上限为 500,000 字符（实现按 JavaScript 字符串长度），1000 来源单一核验分支曾明确超限，分成八个核验分支的样例完成。相同的 128 节点/1000 来源合成压力场景在[修改前](../../../.aexus/artifacts/deep-research-fix/release-09186d9/performance-before.log)与[修改后](../../../.aexus/artifacts/deep-research-fix/release-09186d9/performance-after.log)均完成；计划字段从 5,051,103 降到 42,284 字节，峰值检查点从 50,806,944 降到 40,536,082 字节，clone/describe/JSON 的本次 p95 从 52.57 降到 47.43 ms，不含磁盘 fsync。结果说明仍需合理分支，不能承诺任意聚合规模或生产性能已“极致”。`workflow.events` 通用统计与嵌套研究 progress 不同，当前 UI 读取 `workflow.get`；模型路由、跨平台和竞品实际质量均仍未验收。
