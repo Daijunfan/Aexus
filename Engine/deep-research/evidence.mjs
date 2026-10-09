@@ -122,6 +122,8 @@ export function validateReport(result, state) {
     const evidence = state.findings.filter(f => f.sourceIds.some(id => citations.includes(id))).flatMap(f => (f.evidence || []).filter(e => citations.includes(e.sourceId)).map(e => ({ ...e, claim: f.claim })));
     if (evidence.some(e => !proofFor(sources.get(e.sourceId), e.excerpt))) throw Error('报告论断的原文片段没有对应的独立获取证据');
     if (!citations.length || !evidence.length) throw Error('每个报告章节必须引用已核验论断和对应原文片段');
+    const supported = new Set(evidence.map(e => e.sourceId));
+    if (citations.some(id => !supported.has(id))) throw Error('报告章节引用了没有核验论断的来源');
     return { id: section.id || 'section-' + i, heading: String(section.heading || section.title || '章节 ' + (i + 1)), content: section.content.trim(), citations, evidence };
   });
   const citations = [...new Set(sections.flatMap(s => s.citations))];

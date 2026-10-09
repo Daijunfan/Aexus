@@ -170,6 +170,13 @@ test('Reports cite verified read sources and retain the exact evidence locator a
   assert.throws(() => validateReport(input, state), /未核验/)
 })
 
+test('every cited source in a report section must support a verified claim', () => {
+  const state = readyEvidence(), supported = state.sources[0].id
+  state.sources.push({...evidenceFixture(), id: 'src-unclaimed', url: 'https://example.net/other', verified: true})
+  const report = {report: {sections: [{content: 'A supported finding is followed by a bare citation.', citations: [supported, 'src-unclaimed']}]}}
+  assert.throws(() => validateReport(report, state), /核验论断|证据/)
+})
+
 test('Ambiguous concurrent final drafts are rejected before a review can inspect the wrong dependency', () => {
   const concurrent = {nodes: [
     {id: 'write-a', kind: 'write', role: 'writer-a', dependencies: [], payload: {fixtureTitle: 'Draft A'}},
