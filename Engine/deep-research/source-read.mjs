@@ -90,13 +90,13 @@ export function readSource(value, {signal} = {}, redirects = 0) {
 }
 
 /** Give a scoped scout readable page text; citations still require acquireSources. */
-export async function previewSource(url, {signal, read = readSource} = {}) {
+export async function previewSource(url, {signal, read = readSource, limit = 6000} = {}) {
   const response = await read(publicURL(url), {signal});
   const data = response.data || Buffer.from(response.body || '', 'utf8');
   const pdf = isPdf(data) || response.mediaType === 'application/pdf';
   const document = !pdf && /html/.test(response.mediaType || '') ? pageDocument(data.toString('utf8')) : null;
   const text = pdf ? (await pdfPages(data, {signal})).map(page => `Page ${page.number}: ${page.text}`).join('\n') : document?.text ?? normalize(data.toString('utf8'));
-  return {url: canonicalUrl(url), title: document?.title || '', text: text.slice(0, 6000), truncated: text.length > 6000};
+  return {url: canonicalUrl(url), title: document?.title || '', text: text.slice(0, limit), truncated: text.length > limit};
 }
 
 /** Reuse a checked excerpt, or read a URL once within this bounded candidate batch. */

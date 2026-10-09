@@ -144,7 +144,7 @@ test('each scoped search sees only its target page preview and its real truncati
       {id: 'review', kind: 'review', role: 'coordinator', dependencies: ['write']}
     ]};
   }});
-  f.ctx.sourceReader = async url => ({url, mediaType: 'text/plain', body: source(new URL(url).hostname.split('.')[0]).acquisition.excerpt + (url.includes('long') ? ' x'.repeat(4000) : '')});
+  f.ctx.sourceReader = async url => ({url, mediaType: 'text/plain', body: source(new URL(url).hostname.split('.')[0]).acquisition.excerpt + (url.includes('long') ? ' x'.repeat(7000) : '')});
   const done = await run(create({topic: 'Use page-specific bounded previews', scope: 'quick', maxSources: 2, sourceUrls: ['https://short.example/research', 'https://long.example/research'], team: {maxWorkers: 2, maxManagers: 1, maxConcurrency: 2}, maxTasks: 5, autoApprove: true}), f.ctx);
   assert.equal(done.status, 'completed');
   const searches = f.calls.filter(call => call.task?.kind === 'search');
@@ -155,6 +155,7 @@ test('each scoped search sees only its target page preview and its real truncati
   assert.match(short.args.text, /只能访问 sourceUrls 中的页面/);
   assert.deepEqual(long.task.payload.sourcePreviews.map(item => item.url), ['https://long.example/research']);
   assert.equal(long.task.payload.sourcePreviews[0].truncated, true);
+  assert.equal(long.task.payload.sourcePreviews[0].text.length, 12000);
   assert.match(long.args.text, /此阶段按需使用已开放的浏览\/搜索工具/);
 });
 

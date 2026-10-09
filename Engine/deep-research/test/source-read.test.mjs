@@ -21,6 +21,9 @@ test('bounded page previews expose readable text while source budgets reject oth
   const long = await previewSource('https://allowed.example/long', {read: async url => ({url, mediaType: 'text/plain', body: 'x'.repeat(7000)})});
   assert.equal(long.truncated, true);
   assert.equal(long.text.length, 6000);
+  const fullyBudgeted = await previewSource('https://allowed.example/long', {limit: 12000, read: async url => ({url, mediaType: 'text/plain', body: 'x'.repeat(7000)})});
+  assert.equal(fullyBudgeted.truncated, false);
+  assert.equal(fullyBudgeted.text.length, 7000);
   const pdf = await previewSource('https://allowed.example/a.pdf', {read: async url => ({url, mediaType: 'application/pdf', data: pdfFixture(['A bounded PDF statement.'])})});
   assert.match(pdf.text, /Page 1: A bounded PDF statement/);
   const candidates = normalizeSources({sources: [candidate('Allowed evidence', 'Body', 'https://allowed.example/a'), candidate('Outside evidence', 'Body', 'https://outside.example/a')]}).sources;

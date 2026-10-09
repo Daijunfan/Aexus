@@ -68,7 +68,8 @@ export async function run(originalState, originalContext) {
   }
   if (state.phase === 'scouting') {
     if (state.input.sourceUrls?.length && !state.scouting?.previews) {
-      const loaded = await Promise.allSettled(state.input.sourceUrls.map(url => previewSource(url, {signal: ctx.signal, read: ctx.sourceReader})));
+      const limit = Math.min(12000, Math.floor(60000 / state.input.sourceUrls.length));
+      const loaded = await Promise.allSettled(state.input.sourceUrls.map(url => previewSource(url, {signal: ctx.signal, read: ctx.sourceReader, limit})));
       ctx.signal.throwIfAborted();
       const previews = loaded.map((result, index) => result.status === 'fulfilled' ? result.value : {url: state.input.sourceUrls[index], error: result.reason.message});
       state.scouting = {previews}; await ctx.checkpoint(state);
