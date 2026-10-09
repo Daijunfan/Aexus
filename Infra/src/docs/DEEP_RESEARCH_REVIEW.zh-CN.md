@@ -65,7 +65,7 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 截至 2026-10-09，[最新安装记录](../../../.aexus/artifacts/deep-research-fix/latest-installed.json)保存实际 `/Applications/Aexus.app` 的构建提交和 ASAR SHA256。Deep Research `2.0.0` 已包含独立核对的 HTML 标题、快速研究预算、逐来源报告引用约束、超额来源读取筛选、停止后的状态同步和持久错误恢复。
 
-[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/installed-verification.json)均通过私有依赖、GFM、公开 PDF 文本层和隐藏界面检查，没有启动测试模型进程。[安装与恢复记录](../../../.aexus/artifacts/deep-research-fix/release-07fb7f7/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。前一版安装前曾因后台应用进程退出而安全中止；以隐藏模式恢复当前版本并确认空闲后才继续安装，没有强制结束工作。
+最新安装记录的 `installationProof`、`packageProof` 和 `restorationProof` 分别指向当前安装操作、实际安装包检查与隐藏恢复证据。私有依赖、GFM、公开 PDF 文本层和隐藏界面检查均通过，没有启动测试模型进程；原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。此前一次安装前曾因后台应用进程退出而安全中止；以隐藏模式恢复当时版本并确认空闲后才继续安装，没有强制结束工作。
 
 ## 剩余验收
 
