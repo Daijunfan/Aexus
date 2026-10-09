@@ -164,6 +164,17 @@ test('a completed report forks into fresh research with historical context but n
   assert.equal(JSON.stringify(parent.state), snapshot, 'Fork does not mutate the completed parent');
 });
 
+test('large completed reports label omitted bodies instead of copying an oversized prompt', () => {
+  const parent = create({topic: 'Large previous research'});
+  parent.phase = 'complete';
+  parent.report = {title: 'A long report', abstract: 'Bounded summary', conclusion: 'Bounded conclusion', citations: [], sections: [{heading: 'Full investigation', content: 'Evidence-backed paragraph. '.repeat(10000)}]};
+  const child = fork(parent, {topic: 'A narrower follow-up'});
+  const context = child.input.materials.at(-1).content;
+  assert.match(context, /原报告正文超出背景预算/);
+  assert.ok(context.length < 200000);
+  assert.ok(!context.includes('Evidence-backed paragraph.'));
+});
+
 test('plan approval waits, then resumes without another scouting or planning turn', async () => {
   const f = fixture();
   const waiting = await run(create({ topic: 'Interactive independent research question' }), f.ctx);
