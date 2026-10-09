@@ -236,6 +236,20 @@ test('a completed node may update its label but cannot silently change its resea
   assert.throws(() => applyPlan(state, changed, 'New research goal needs a new node'), /不能改写/);
 });
 
+test('replanning retains completed work when payload keys and dependency order change only', () => {
+  const state = create({topic: 'Equivalent research tasks survive replanning'});
+  const first = plan(); first.nodes[0].payload = {query: 'first', language: 'en'};
+  applyPlan(state, first, 'Initial plan');
+  for (const node of state.graph.nodes.filter(node => ['s1', 's2', 'v1'].includes(node.id))) node.status = 'completed';
+  const revised = structuredClone(first);
+  revised.nodes[0].payload = {language: 'en', query: 'first'};
+  revised.nodes.find(node => node.id === 'v1').dependencies.reverse();
+  applyPlan(state, revised, 'Same evidence, expanded later tasks');
+  assert.equal(state.graph.nodes.find(node => node.id === 's1').status, 'completed');
+  assert.equal(state.graph.nodes.find(node => node.id === 'v1').status, 'completed');
+  assert.ok(state.planRevisions[1].retainedNodeIds.includes('v1'));
+});
+
 test('a node objective and its query are delivered to the assigned employee', async () => {
   const f = fixture({ respond: task => {
     if (task.kind === 'plan') {

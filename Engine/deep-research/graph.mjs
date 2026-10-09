@@ -1,7 +1,8 @@
 /** Pure plan validation, revision history and DAG scheduling. */
+import {isDeepStrictEqual} from 'node:util';
 export const TASK_KINDS = ['search', 'verify', 'synthesize', 'write', 'review'];
 
-const sameWork = (a, b) => JSON.stringify([a.kind, a.role, a.objective, a.dependencies, a.payload]) === JSON.stringify([b.kind, b.role, b.objective, b.dependencies, b.payload]);
+const sameWork = (a, b) => isDeepStrictEqual([a.kind, a.role, a.objective, [...a.dependencies].sort(), a.payload], [b.kind, b.role, b.objective, [...b.dependencies].sort(), b.payload]);
 
 export function normalizeNodes(nodes, maxTasks = 128) {
   if (!Array.isArray(nodes) || !nodes.length || nodes.length > maxTasks) throw Error('计划必须包含 1-' + maxTasks + ' 个任务');
