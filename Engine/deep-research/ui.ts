@@ -23,8 +23,8 @@ export type ResearchNode = {
   result?: Record<string, any>;
   messageId?: string;
 };
-export const NODE_WIDTH = 156;
-export const NODE_HEIGHT = 156;
+export const NODE_WIDTH = 184;
+export const NODE_HEIGHT = 160;
 export type GraphEdge = { from: string; to: string };
 export type EvidenceExcerpt = {
   excerpt: string;

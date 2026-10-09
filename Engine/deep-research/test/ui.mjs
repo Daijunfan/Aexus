@@ -815,9 +815,14 @@ try {
   await screen("03d-arbitrary-dag-core");
   for (const id of ["node-4", "node-5", "node-7", "node-8"]) {
     const nodeBox = await page.locator(`[data-node-id="${id}"]`).boundingBox();
+    assert.equal(
+      await page.locator(`[data-node-id="${id}"] .dr-cloud-shape path`).count(),
+      1,
+      "research task has a cloud outline",
+    );
     assert.ok(
-      Math.abs(nodeBox.width - nodeBox.height) < 1,
-      "research node is a circle",
+      nodeBox.width > nodeBox.height,
+      "cloud gives the task label more horizontal room",
     );
     assert.ok(
       nodeBox.y >= viewportBox.y &&

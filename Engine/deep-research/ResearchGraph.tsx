@@ -241,11 +241,11 @@ export function ResearchGraph({
                   const from = byId.get(edge.from)!,
                     to = byId.get(edge.to)!;
                   const x1 =
-                      from.x + (graph.vertical ? NODE_WIDTH / 2 : NODE_WIDTH),
+                      from.x + (graph.vertical ? NODE_WIDTH / 2 : NODE_WIDTH - 7),
                     y1 =
-                      from.y + (graph.vertical ? NODE_HEIGHT : NODE_HEIGHT / 2),
-                    x2 = to.x + (graph.vertical ? NODE_WIDTH / 2 : -3),
-                    y2 = to.y + (graph.vertical ? -3 : NODE_HEIGHT / 2);
+                      from.y + (graph.vertical ? NODE_HEIGHT - 25 : 100),
+                    x2 = to.x + (graph.vertical ? NODE_WIDTH / 2 : 7),
+                    y2 = to.y + (graph.vertical ? 27 : 100);
                   const selected =
                     edge.from === selectedId || edge.to === selectedId;
                   return (
@@ -302,6 +302,13 @@ export function ResearchGraph({
                     aria-label={node.label + " · " + labelFor(node.status)}
                     title={node.label}
                   >
+                    <svg
+                      className="dr-cloud-shape"
+                      viewBox="0 0 184 160"
+                      aria-hidden="true"
+                    >
+                      <path d="M 36 135 C 18 135 7 122 7 105 C 7 89 18 77 34 76 C 36 59 48 48 64 48 C 77 21 111 19 128 40 C 135 48 139 57 139 66 C 161 69 177 84 177 104 C 177 123 163 135 145 135 Z" />
+                    </svg>
                     <span className="dr-graph-node-meta">
                       <span>
                         <span
