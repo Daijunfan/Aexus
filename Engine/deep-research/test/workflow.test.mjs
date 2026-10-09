@@ -87,6 +87,15 @@ test('quick research uses smaller default caps while explicit budgets remain aut
   assert.equal(custom.input.maxReplans, 0);
 });
 
+test('CSV export treats untrusted source titles as text instead of spreadsheet formulas', () => {
+  const state = create({topic: 'CSV source export'}), title = '=HYPERLINK("https://example.org", "open")';
+  state.sources = [{id: 'src-1', type: 'web', title, url: 'https://example.org', acquisition: {status: 'discovered', excerpt: ''}}];
+  state.report = {title: 'CSV export', abstract: '', sections: [{id: 's1', heading: 'Result', content: 'Result', citations: ['src-1'], evidence: []}], citations: ['src-1'], limitations: []};
+  const files = generateArtifacts(state);
+  assert.match(files.find(file => file.name === 'sources.csv').content, /"'=HYPERLINK\(""https:\/\/example\.org""/);
+  assert.equal(JSON.parse(files.find(file => file.name === 'evidence.json').content).sources[0].title, title);
+});
+
 test('scouting does not fetch candidates beyond the source budget', async () => {
   const f = fixture({respond: task => task.kind === 'scout' ? {sources: [source('seed'), source('surplus'), source('extra')]} : null});
   const read = f.ctx.sourceReader, fetched = [];

@@ -5,7 +5,7 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { sourceView, isIndependentSource } from './evidence.mjs';
 
 const html = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const csv = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+const csv = value => '"' + String(value ?? '').replace(/^([\s]*[=+@-])/, "'$1").replace(/"/g, '""') + '"';
 const markdown = text => micromark(String(text ?? ''), { extensions: [gfm()], htmlExtensions: [gfmHtml()] });
 
 export function wordCount(report) {
