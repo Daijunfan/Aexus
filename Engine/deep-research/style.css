@@ -323,6 +323,11 @@
   cursor: pointer;
   width: 100%;
 }
+.dr-upload:focus-within {
+  outline: 2px solid var(--dr-blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
 .dr-materials {
   display: flex;
   flex-wrap: wrap;
