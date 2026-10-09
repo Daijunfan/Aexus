@@ -26,7 +26,24 @@ export function SourcePanel({
   renderEvidence: (items: EvidenceExcerpt[]) => ReactNode;
 }) {
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
   const detail = useRef<HTMLElement>(null);
+  const filters = [
+    {id: "all", label: "全部", count: sources.length},
+    {id: "verified", label: "已核验", count: sources.filter(source => independentlyRead(source) && source.verified).length},
+    {id: "reading", label: "待核验", count: sources.filter(source => independentlyRead(source) && !source.verified).length},
+    {id: "unread", label: "未取得原文", count: sources.filter(source => !independentlyRead(source)).length},
+  ];
+  const search = query.trim().toLowerCase();
+  const visibleSources = sources.filter(source => {
+    const read = independentlyRead(source);
+    const matches =
+      filter === "all" ||
+      (filter === "verified" && read && source.verified) ||
+      (filter === "reading" && read && !source.verified) ||
+      (filter === "unread" && !read);
+    return matches && [source.title, source.url, source.snippet].some(value => String(value ?? "").toLowerCase().includes(search));
+  });
   const selected = sources.find((source) => source.id === selection?.id);
   const claims = findings.filter((finding) =>
     finding.sourceIds.includes(selected?.id ?? ""),
@@ -63,15 +80,16 @@ export function SourcePanel({
             placeholder="搜索标题、网站或摘要"
           />
         </label>
-        {sources
-          .filter((source) =>
-            [source.title, source.url, source.snippet].some((value) =>
-              String(value ?? "")
-                .toLowerCase()
-                .includes(query.toLowerCase()),
-            ),
-          )
-          .map((source) => (
+        {sources.length > 0 && (
+          <div className="dr-source-filters" role="group" aria-label="来源状态">
+            {filters.map(option => (
+              <button key={option.id} aria-pressed={filter === option.id} onClick={() => setFilter(option.id)}>
+                {option.label} <span>{option.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {visibleSources.map((source) => (
             <button
               key={source.id}
               className={
@@ -108,10 +126,10 @@ export function SourcePanel({
               />
             </button>
           ))}
-        {!sources.length && (
+        {!visibleSources.length && (
           <div className="dr-empty">
             <span aria-hidden="true" className="codicon codicon-globe" />
-            <p>尚未收集来源</p>
+            <p>{sources.length ? "没有符合条件的来源" : "尚未收集来源"}</p>
           </div>
         )}
       </div>

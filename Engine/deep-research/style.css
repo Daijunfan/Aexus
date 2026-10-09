@@ -1451,6 +1451,28 @@
   color: var(--dr-text);
   font-size: 11px;
 }
+.dr-source-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--dr-border);
+}
+.dr-source-filters button {
+  flex: none;
+  padding: 5px 9px;
+  border: 1px solid var(--dr-border);
+  border-radius: 5px;
+  background: var(--dr-bg);
+  color: var(--dr-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.dr-source-filters button[aria-pressed="true"] {
+  color: var(--dr-green);
+  border-color: color-mix(in srgb, var(--dr-green) 35%, var(--dr-border));
+  background: color-mix(in srgb, var(--dr-green) 6%, var(--dr-bg));
+}
 .dr-source-row {
   display: flex;
   align-items: flex-start;

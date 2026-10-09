@@ -1159,11 +1159,19 @@ try {
     0,
   );
   await screen("05k-unavailable-source");
+  const sourceFilters = page.getByRole("group", {name: "来源状态"});
+  await sourceFilters.getByRole("button", {name: /未取得原文/}).click();
+  assert.equal(await page.locator(".dr-source-row").count(), 1);
+  await sourceFilters.getByRole("button", {name: /已核验/}).click();
+  assert.equal(await page.locator(".dr-source-row").count(), 2);
+  await sourceFilters.getByRole("button", {name: /全部/}).click();
+  assert.equal(await page.locator(".dr-source-row").count(), 3);
   sources[0] = sourceBeforeProofAudit;
   update("running", "research", { sources, findings, report });
   checks.push(
     "canonical independently matched fragments retain separate locators and hashes; rejected fragment reason remains visible, and historical flags cannot claim independent reading",
   );
+  checks.push("source status filters separate verified evidence from unavailable originals");
   update("running", "research", {
     sources: longState.sources,
     findings: longState.findings,
