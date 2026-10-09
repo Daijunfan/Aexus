@@ -1100,8 +1100,16 @@
 .dr-app .dr-graph-node.failed .dr-cloud-shape path {
   stroke: var(--dr-red);
 }
-.dr-app .dr-graph-node:hover .dr-cloud-shape path,
-.dr-app .dr-graph-node.selected .dr-cloud-shape path {
+.dr-app .dr-graph-node:is(.paused, .stopping) .dr-cloud-shape path {
+  stroke: var(--dr-amber);
+  fill: color-mix(in srgb, var(--dr-amber) 3%, var(--dr-bg));
+}
+.dr-app .dr-graph-node.cancelled .dr-cloud-shape path {
+  stroke: var(--dr-muted);
+  fill: var(--dr-surface);
+}
+.dr-app .dr-graph-node:hover:not(.selected) .dr-cloud-shape path,
+.dr-app .dr-graph-node.selected.pending .dr-cloud-shape path {
   stroke: var(--dr-blue);
   stroke-width: 2;
 }
@@ -1149,6 +1157,13 @@
 }
 .dr-node-state.failed {
   color: var(--dr-red) !important;
+}
+.dr-node-state.paused,
+.dr-node-state.stopping {
+  color: var(--dr-amber) !important;
+}
+.dr-node-state.cancelled {
+  color: var(--dr-muted) !important;
 }
 .dr-graph-node > strong {
   display: -webkit-box;

@@ -868,6 +868,19 @@ try {
   );
   await page.getByRole("button", { name: "从上到下排列", exact: true }).click();
   await screen("03k-vertical-focused");
+  const completionStrokes = await page.evaluate(() =>
+    [
+      document.querySelector('[data-node-id="node-6"] .dr-cloud-shape path'),
+      document.querySelector(
+        ".dr-graph-node.completed:not(.selected) .dr-cloud-shape path",
+      ),
+    ].map((element) => getComputedStyle(element).stroke),
+  );
+  assert.equal(
+    completionStrokes[0],
+    completionStrokes[1],
+    "selection preserves the node's completion color",
+  );
   checks.push(
     "user chooses horizontal or vertical DAG direction; selection and readable focus retained across direction change and checkpoint",
   );
@@ -1436,6 +1449,7 @@ try {
     2,
     "display must preserve the last execution checkpoint",
   );
+  await screen("10-stopped-clouds");
   checks.push(
     "confirmed stopped workflow displays stopped nodes and no running animation while preserving the original execution checkpoint",
   );
