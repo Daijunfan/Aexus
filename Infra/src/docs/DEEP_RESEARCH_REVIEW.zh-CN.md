@@ -20,6 +20,7 @@
 
 - 只在隔离进程中尝试现有本机代理和 [OpenAI 官方文档](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)支持的 HTTP 传输开关。WebSocket 错误消失，但提供商仍在初步调研阶段断流；任务经 CLI 取消，`controlPending=false`，没有来源或交付。本次没有更改全局 Codex、Clash 配置，也没有把该实验计作完成。
 - HTML 来源标题曾直接沿用员工提交值。现在只在独立取得的页面中提取真实 `<title>`，同 URL 的后续片段沿用核对结果；PDF/纯文本不伪称具有独立标题。一次公开网页实读和 20 项来源测试、77 项领域/Host 相关测试通过。取证时只解析一次 HTML，PDF 原始字节不再做无用的 UTF-8 解码。
+- 确认停止后，Host 刷新任务与 DAG 摘要：已停止任务不再显示“进行中”，进度的运行数归零；暂停仍保留可继续的待执行节点。实际 Host 取消及重启用例、70 项相关回归与 TypeScript 检查通过。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -58,15 +59,9 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 ## 当前安装
 
-截至 2026-10-09 的只读核验，`/Applications/Aexus.app` 为 `0.64.0`、Deep Research `2.0.0`；其 Deep Research 源码与隔离提交 `440e67d` 的候选一致，独立核对的 HTML 标题和快速模式界面资源均已包含，ASAR SHA256：
+截至 2026-10-09，[最新安装记录](../../../.aexus/artifacts/deep-research-fix/latest-installed.json)保存实际 `/Applications/Aexus.app` 的构建提交和 ASAR SHA256。Deep Research `2.0.0` 已包含独立核对的 HTML 标题、快速研究预算和停止后的状态同步。
 
-```text
-ff751fad3e3d2f2ac68297769e3d7dc5996df10387b5e4a262006f79e57d7150
-```
-
-[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-440e67d/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-440e67d/installed-verification.json)通过当前源码、私有依赖、取证和隐藏界面检查。前一轮[候选](../../../.aexus/artifacts/deep-research-independent/package/verification.json)与[安装路径](../../../.aexus/artifacts/deep-research-independent/package/installed/verification.json)也通过私有锁定依赖解析、GFM 表格/列表、真实 PDF 文本层页码及原文哈希、物理 worker/字体/CMap/WASM、隐藏加载和三尺寸布局检查；模型执行 trap 未触发。本轮隔离构建避开同时进行的 Pi 工作区改动；项目安装器已静默更新；[恢复记录](../../../.aexus/artifacts/deep-research-fix/release-440e67d/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。
-
-前一轮[安装记录](../../../.aexus/artifacts/deep-research-independent/installation.json)验证员工活动、审批、队列、初始化、全部运行 workflow、自动计划、传输、插件窗口、news/post 触发均为零后，单次正常 SIGTERM 退出，使用项目安装器备份并替换。根 JSON 哈希未改变。[生产隐藏恢复](../../../.aexus/artifacts/deep-research-independent/production-restart.json)验证原 80 个员工 ID、17 个 workflow ID/状态完整保留、无忙碌或新 provider 进程；CoreGraphics 观察到真实主窗口 `onScreen=false`。第一次启动因调用环境继承 `ELECTRON_RUN_AS_NODE=1` 退出，清除此进程环境后恢复；失败证据保留，用户配置未改。
+[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-ae12b49/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-ae12b49/installed-verification.json)均通过私有依赖、GFM、公开 PDF 文本层和隐藏界面检查，没有启动测试模型进程。[安装与恢复记录](../../../.aexus/artifacts/deep-research-fix/release-ae12b49/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。
 
 ## 剩余验收
 
