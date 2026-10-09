@@ -137,7 +137,17 @@ async function executeGraph(state, ctx) {
       ctx.signal.throwIfAborted();
       if (!failure && !state.replanReason) {
         const ready = readyNodes(state).filter(node => !running.has(node.id));
-        for (const node of ready.slice(0, Math.max(0, state.input.team.maxConcurrency - running.size))) {
+        const free = new Map();
+        for (const worker of state.workers.filter(worker => worker.active !== false && !ctx.workerLeases?.has(worker.id))) free.set(worker.role, (free.get(worker.role) || 0) + 1);
+        for (const id of running.keys()) {
+          const node = state.graph.nodes.find(node => node.id === id && node.active !== false);
+          if (node?.status === 'pending') free.set(node.role, Math.max(0, (free.get(node.role) || 0) - 1));
+        }
+        let slots = Math.max(0, state.input.team.maxConcurrency - running.size);
+        for (const node of ready) {
+          if (!slots) break;
+          if (!free.get(node.role)) continue;
+          free.set(node.role, free.get(node.role) - 1); slots--;
           const promise = executeNode(state, ctx, node).then(() => ({ id: node.id }), error => ({ id: node.id, error }));
           running.set(node.id, promise);
         }
@@ -157,9 +167,7 @@ async function executeGraph(state, ctx) {
 }
 
 async function executeNode(state, ctx, node) {
-  node.status = 'running'; node.startedAt ||= Date.now();
   const dimension = state.dimensions.find(d => d.id === node.dimensionId);
-  if (dimension) dimension.status = 'running';
   const ancestors = new Set();
   const visit = id => { const parent = state.graph.nodes.find(n => n.id === id && n.active !== false); if (parent && !ancestors.has(id)) { ancestors.add(id); parent.dependencies.forEach(visit); } };
   node.dependencies.forEach(visit);
@@ -220,7 +228,7 @@ async function executeNode(state, ctx, node) {
       }
     }
     ctx.signal.throwIfAborted();
-    node.status = 'completed'; node.finishedAt = Date.now(); delete node.error;
+    node.startedAt ||= Date.now(); node.status = 'completed'; node.finishedAt = Date.now(); delete node.error;
     state.visualization.timeline.push({ timestamp: Date.now(), type: node.kind, agent: node.role, description: node.label, data: { nodeId: node.id, summary: node.resultSummary } });
     await ctx.checkpoint(state);
   } catch (error) {

@@ -285,6 +285,55 @@ test('a fast branch unlocks its dependent work while another independent branch 
   assert.ok(events.indexOf('search:followup') < events.indexOf('search:second'));
 });
 
+test('nodes waiting for a leased employee are not displayed as concurrently running', async () => {
+  const f = fixture({delay: task => task.kind === 'search' ? 30 : 1, respond: task => task.kind === 'plan' ? {
+    dimensions: [{id: 'd1', query: 'Two independent branches'}], strategy: 'Fan out and join',
+    team: [{id: 'coordinator', role: 'coordinator', managementRole: 'manager'}, {id: 'r1', role: 'researcher', managerIds: ['coordinator']}],
+    nodes: [
+      {id: 's1', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'first'}},
+      {id: 's2', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'second'}},
+      {id: 'v1', kind: 'verify', role: 'researcher', dependencies: ['s1', 's2']},
+      {id: 'w1', kind: 'write', role: 'researcher', dependencies: ['v1']},
+      {id: 'r1', kind: 'review', role: 'coordinator', dependencies: ['w1']}
+    ]
+  } : undefined});
+  const done = await run(create({topic: 'Show real worker contention on a DAG', autoApprove: true, team: {maxWorkers: 2, maxManagers: 1, maxConcurrency: 2}, maxTasks: 5}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.ok(f.checkpoints.every(snapshot => snapshot.graph.nodes.filter(node => node.status === 'running' && node.role === 'researcher').length <= 1));
+  assert.ok(f.checkpoints.some(snapshot => snapshot.graph.nodes.some(node => node.id === 's1' && node.status === 'running') && snapshot.graph.nodes.some(node => node.id === 's2' && node.status === 'pending')));
+  assert.equal(f.maxActive(), 1);
+});
+
+test('a queued same-role branch does not occupy the concurrency slot of an available role', async () => {
+  let slowActive = false, independentStartedDuringSlow = false;
+  const f = fixture({
+    delay: task => {
+      if (task.kind === 'search' && task.payload.query === 'slow') { slowActive = true; return 100; }
+      if (task.kind === 'search' && task.payload.query === 'independent') independentStartedDuringSlow = slowActive;
+      return 1;
+    },
+    respond: task => {
+      if (task.kind === 'search' && task.payload.query === 'slow') slowActive = false;
+      if (task.kind !== 'plan') return;
+      return {dimensions: [{id: 'd1', query: 'Three branches'}], strategy: 'Run ready roles', team: [
+        {id: 'coordinator', role: 'coordinator', managementRole: 'manager'},
+        {id: 'researcher', role: 'researcher', managerIds: ['coordinator']},
+        {id: 'analyst', role: 'analyst', managerIds: ['coordinator']}
+      ], nodes: [
+        {id: 'slow', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'slow'}},
+        {id: 'same-role', kind: 'search', role: 'researcher', dependencies: [], payload: {query: 'same-role'}},
+        {id: 'independent', kind: 'search', role: 'analyst', dependencies: [], payload: {query: 'independent'}},
+        {id: 'verify', kind: 'verify', role: 'researcher', dependencies: ['slow', 'same-role', 'independent']},
+        {id: 'write', kind: 'write', role: 'analyst', dependencies: ['verify']},
+        {id: 'review', kind: 'review', role: 'coordinator', dependencies: ['write']}
+      ]};
+    }
+  });
+  const done = await run(create({topic: 'Do not block an independent DAG branch behind a leased worker', autoApprove: true, team: {maxWorkers: 3, maxManagers: 1, maxConcurrency: 2}, maxTasks: 6}), f.ctx);
+  assert.equal(done.status, 'completed');
+  assert.equal(independentStartedDuringSlow, true);
+});
+
 test('cross-layer DAG joins only its parents and shares one synthesis across multiple descendants', async () => {
   const events = [];
   const f = fixture({
