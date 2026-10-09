@@ -389,6 +389,12 @@
   font-size: 14px;
   color: var(--dr-muted);
 }
+.dr-recent > .dr-history-more {
+  justify-content: center;
+  border-bottom: 0;
+  color: var(--dr-blue);
+  font-size: 12px;
+}
 .dr-job-title { min-width: 0; flex: 1; }
 .dr-job-header {
   display: flex;

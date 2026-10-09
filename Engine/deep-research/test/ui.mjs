@@ -285,6 +285,7 @@ graph.nodes = normalizeNodes(graph.nodes).map((node, index) => ({
   weight: node.weight,
 }));
 let job = null;
+let historyFixtures = null;
 let state;
 let unrelatedActivity = false;
 let pauseIncomplete = false;
@@ -314,7 +315,16 @@ function update(status, phase, extra = {}) {
 }
 async function call(command, args) {
   calls.push({ command, args });
-  if (command === "workflow.list") return { jobs: job ? [job] : [] };
+  if (command === "workflow.list") {
+    const jobs = historyFixtures ?? (job ? [job] : []);
+    const offset = args.offset ?? 0,
+      limit = args.limit ?? 100;
+    return {
+      jobs: jobs.slice(offset, offset + limit),
+      total: jobs.length,
+      hasMore: offset + limit < jobs.length,
+    };
+  }
   if (command === "workflow.start") {
     state = create(args.input);
     state.phase = "scouting";
@@ -342,6 +352,8 @@ async function call(command, args) {
     };
     return job;
   }
+  if (command === "workflow.get" && historyFixtures)
+    return historyFixtures.find((item) => item.id === args.id);
   if (command === "workflow.get")
     return args.ifRevision === job.revision
       ? { id: job.id, revision: job.revision, unchanged: true }
@@ -1426,6 +1438,31 @@ try {
   );
   checks.push(
     "confirmed stopped workflow displays stopped nodes and no running animation while preserving the original execution checkpoint",
+  );
+  historyFixtures = Array.from({ length: 65 }, (_, index) => ({
+    ...job,
+    id: "wf-history-" + index,
+    createdAt: Date.now() - index * 1000,
+    summary: { ...job.summary, topic: "历史研究 " + index },
+  }));
+  await page.reload();
+  const historyRows = page.locator(".dr-recent > button:not(.dr-history-more)");
+  await historyRows.first().waitFor();
+  assert.equal(await historyRows.count(), 30);
+  await page.getByRole("button", { name: "查看更多研究记录" }).click();
+  await historyRows.nth(59).waitFor();
+  assert.equal(await historyRows.count(), 60);
+  await page.getByRole("button", { name: "查看更多研究记录" }).click();
+  await historyRows.nth(64).waitFor();
+  assert.equal(await historyRows.count(), 65);
+  assert.equal(
+    await page.getByRole("button", { name: "查看更多研究记录" }).count(),
+    0,
+  );
+  await historyRows.last().click();
+  await page.getByRole("heading", { name: "历史研究 64" }).waitFor();
+  checks.push(
+    "research history below the input loads every page without duplicate rows",
   );
   assert.deepEqual(errors, []);
   await fs.writeFile(

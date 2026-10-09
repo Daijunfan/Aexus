@@ -70,6 +70,7 @@ function Empty({ icon, children }: { icon: string; children: ReactNode }) {
 export default function Page({ client }: { client: ContractClient }) {
   const [job, setJob] = useState<WorkflowView | null>(null),
     [history, setHistory] = useState<WorkflowView[]>([]);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
   const [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -139,9 +140,16 @@ export default function Page({ client }: { client: ContractClient }) {
   useEffect(() => {
     alive.current = true;
     void client
-      .invoke<{ jobs: WorkflowView[] }>("workflow.list", { engineId: ENGINE })
-      .then(({ jobs }) => {
-        if (alive.current) setHistory(jobs);
+      .invoke<{ jobs: WorkflowView[]; hasMore?: boolean }>("workflow.list", {
+        engineId: ENGINE,
+        offset: 0,
+        limit: 30,
+      })
+      .then(({ jobs, hasMore }) => {
+        if (alive.current) {
+          setHistory(jobs);
+          setHistoryHasMore(!!hasMore);
+        }
       })
       .catch((e) => {
         if (alive.current) setError(e.message);
@@ -241,6 +249,21 @@ export default function Page({ client }: { client: ContractClient }) {
     setRevisionOpen(false);
     const next = await client.invoke<WorkflowView>("workflow.get", { id });
     if (alive.current && selected.current === id) apply(next);
+  };
+  const loadMoreHistory = async () => {
+    const { jobs, hasMore } = await client.invoke<{
+      jobs: WorkflowView[];
+      hasMore: boolean;
+    }>("workflow.list", { engineId: ENGINE, offset: history.length, limit: 30 });
+    if (alive.current) {
+      setHistory((old) => {
+        const known = new Set(old.map((item) => item.id));
+        return [...old, ...jobs.filter((item) => !known.has(item.id))].sort(
+          (a, b) => b.createdAt - a.createdAt,
+        );
+      });
+      setHistoryHasMore(hasMore);
+    }
   };
   const newResearch = () => {
     selected.current = null;
@@ -721,7 +744,9 @@ export default function Page({ client }: { client: ContractClient }) {
               )}
             </form>
             <section className="dr-recent" aria-label="研究记录">
-              <h2>研究记录 <span>{history.length || ""}</span></h2>
+              <h2>
+                研究记录 <span>{history.length || ""}{historyHasMore ? "+" : ""}</span>
+              </h2>
               {!history.length && (
                 <p className="dr-muted">
                   {loading ? "读取研究记录…" : "完成的研究与正在进行的任务会显示在这里"}
@@ -743,6 +768,15 @@ export default function Page({ client }: { client: ContractClient }) {
                   <Icon name="arrow-right" />
                 </button>
               ))}
+              {historyHasMore && (
+                <button
+                  className="dr-history-more"
+                  disabled={busy}
+                  onClick={() => void operate(loadMoreHistory)}
+                >
+                  查看更多研究记录 <Icon name="chevron-down" />
+                </button>
+              )}
             </section>
           </div>
         ) : (
