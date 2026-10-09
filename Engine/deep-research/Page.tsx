@@ -55,6 +55,23 @@ const TABS = [
   { id: "findings", label: "发现", icon: "lightbulb" },
   { id: "report", label: "报告", icon: "file-text" },
 ];
+type EngineOption = {
+  engine: string;
+  label: string;
+  configuration: {
+    hasApiKey?: boolean;
+    sharedPiConfig?: boolean;
+    sharedClineConfig?: boolean;
+  };
+};
+const preferredEngine = (options: EngineOption[]) =>
+  options.find(
+    option => option.engine === "pi" && option.configuration.sharedPiConfig && option.configuration.hasApiKey,
+  )?.engine ??
+  options.find(
+    option => option.engine === "cline" && option.configuration.sharedClineConfig && option.configuration.hasApiKey,
+  )?.engine ??
+  options.find(option => option.configuration.hasApiKey)?.engine ?? "";
 function Icon({ name }: { name: string }) {
   return <span className={"codicon codicon-" + name} aria-hidden="true" />;
 }
@@ -71,6 +88,9 @@ export default function Page({ client }: { client: ContractClient }) {
   const [job, setJob] = useState<WorkflowView | null>(null),
     [history, setHistory] = useState<WorkflowView[]>([]);
   const [forkParent, setForkParent] = useState<WorkflowView | null>(null);
+  const [engineOptions, setEngineOptions] = useState<EngineOption[]>([]),
+    [selectedEngine, setSelectedEngine] = useState(""),
+    [engineLoading, setEngineLoading] = useState(true);
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
@@ -161,6 +181,20 @@ export default function Page({ client }: { client: ContractClient }) {
     return () => {
       alive.current = false;
     };
+  }, [client]);
+  useEffect(() => {
+    let active = true;
+    void client
+      .invoke<EngineOption[]>("engine.list", {})
+      .then(options => {
+        if (active) {
+          setEngineOptions(options);
+          setSelectedEngine(current => current || preferredEngine(options));
+        }
+      })
+      .catch(e => { if (active) setError((e as Error).message); })
+      .finally(() => { if (active) setEngineLoading(false); });
+    return () => { active = false; };
   }, [client]);
   useEffect(() => {
     if (!job || !["running", "waiting", "paused"].includes(job.status)) return;
@@ -272,6 +306,7 @@ export default function Page({ client }: { client: ContractClient }) {
     current.current = null;
     setJob(null);
     setForkParent(null);
+    setSelectedEngine(preferredEngine(engineOptions));
     setError("");
     setRevisionOpen(false);
     request.current = null;
@@ -284,6 +319,7 @@ export default function Page({ client }: { client: ContractClient }) {
     current.current = null;
     setJob(null);
     setForkParent(parent);
+    setSelectedEngine("inherit");
     setTopic("");
     setScope(parent.summary.scope ?? "comprehensive");
     const previousBudget = parent.summary.progress?.sources?.max;
@@ -304,6 +340,9 @@ export default function Page({ client }: { client: ContractClient }) {
         maxSources: sourceBudget,
         ...(!forkParent ? { languages: ["zh-CN", "en"] } : {}),
         autoApprove,
+        ...(!["automatic", "inherit"].includes(selectedEngine)
+          ? { engines: [{ engine: selectedEngine }] }
+          : {}),
         ...(materials.length ? { materials } : {}),
       };
       const body = forkParent
@@ -655,7 +694,16 @@ export default function Page({ client }: { client: ContractClient }) {
                 <span className="dr-eyebrow">基于已完成研究</span>
                 <strong>{forkParent.summary.deliverable?.title ?? forkParent.summary.topic}</strong>
                 <p>上次报告作为历史线索；新问题的来源与引用会重新独立核验，并先确认新计划。</p>
-                <button type="button" disabled={busy} onClick={() => setForkParent(null)}>取消追问</button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setForkParent(null);
+                    setSelectedEngine(preferredEngine(engineOptions));
+                  }}
+                >
+                  取消追问
+                </button>
               </div>
             )}
             <form className="dr-intake" onSubmit={start}>
@@ -671,6 +719,40 @@ export default function Page({ client }: { client: ContractClient }) {
                 required
                 rows={4}
               />
+              <div className="dr-engine-choice">
+                <Icon name="organization" />
+                <label htmlFor="dr-engine">执行引擎</label>
+                <select
+                  id="dr-engine"
+                  value={selectedEngine}
+                  onChange={event => setSelectedEngine(event.target.value)}
+                >
+                  <option value="">选择已配置的引擎</option>
+                  {forkParent && <option value="inherit">沿用上次引擎组合</option>}
+                  {engineOptions.map(option => (
+                    <option key={option.engine} value={option.engine}>
+                      {option.label}
+                      {option.configuration.sharedPiConfig || option.configuration.sharedClineConfig
+                        ? " · 原生共享配置"
+                        : option.engine === "codex" ? " · 当前登录账号" : ""}
+                    </option>
+                  ))}
+                  <option value="automatic">自动组合所有已就绪引擎</option>
+                </select>
+              </div>
+              <p className="dr-engine-note">
+                {engineLoading
+                  ? "正在读取已配置引擎…"
+                  : selectedEngine === "automatic"
+                    ? "可能调用多个提供商；额度由各自配置决定。"
+                    : selectedEngine === "inherit"
+                      ? "沿用上次研究的引擎组合，可在这里改选。"
+                      : selectedEngine === "codex"
+                        ? "使用 Codex 当前登录账号的模型额度。"
+                        : selectedEngine
+                          ? "使用所选原生引擎当前配置的默认模型与凭据。"
+                          : "请选择执行引擎后开始研究。"}
+              </p>
               <div className="dr-intake-controls">
                 <div
                   className="dr-segment"
@@ -698,7 +780,7 @@ export default function Page({ client }: { client: ContractClient }) {
                 <button
                   className="dr-primary"
                   type="submit"
-                  disabled={busy || !topic.trim()}
+                  disabled={busy || !topic.trim() || !selectedEngine || engineLoading}
                 >
                   <Icon name={busy ? "loading" : "arrow-right"} />
                   {forkParent ? "开始后续研究" : "开始研究"}

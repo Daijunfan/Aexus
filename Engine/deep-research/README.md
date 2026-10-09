@@ -10,6 +10,7 @@ Aexus 的独立研究 Engine，版本 `2.0.0`，公开 Contract `1.0.0`。
 在 Aexus 的 Engine library 选择并加载 Deep Research，填写研究问题即可开始。
 原生 Agent 必须已经在 Infra 配置并就绪；研究任务使用该配置，可能产生模型费用。
 Engine 不自行安装模型或配置服务商，也不能根据服务商名称证明使用了中转站额度。
+首页明确显示执行引擎。已配置密钥的共享 Pi、共享 Cline 优先作为默认项；只有账号型引擎时需显式选择，自动组合多个引擎也需显式选择。实际模型和计费由所选引擎当前配置决定。
 
 初步调研与规划期间显示不确定进度。计划确认后，同时显示 DAG 和当前计划的
 加权任务完成比例。这个比例不是剩余时间预测，也不是来源数量除以来源预算；
@@ -38,6 +39,7 @@ const job = await client.invoke('workflow.start', {
   input: {
     topic: '比较家用储能的成本、寿命与安全性，并引用原始资料',
     scope: 'comprehensive',
+    engines: [{ engine: 'pi' }], // 使用已配置的原生 Pi 凭据与默认模型
     maxSources: 80,
     team: { maxWorkers: 12, maxManagers: 4, maxConcurrency: 4 }
   }

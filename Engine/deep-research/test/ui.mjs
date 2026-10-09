@@ -287,6 +287,11 @@ graph.nodes = normalizeNodes(graph.nodes).map((node, index) => ({
 let job = null;
 let historyFixtures = null;
 let parentJobForFork = null;
+let availableEngines = [
+  {engine: "pi", label: "Pi", configuration: {hasApiKey: true, sharedPiConfig: true}},
+  {engine: "cline", label: "Cline", configuration: {hasApiKey: true, sharedClineConfig: true}},
+  {engine: "codex", label: "Codex", configuration: {hasApiKey: false}},
+];
 let state;
 let unrelatedActivity = false;
 let pauseIncomplete = false;
@@ -316,6 +321,7 @@ function update(status, phase, extra = {}) {
 }
 async function call(command, args) {
   calls.push({ command, args });
+  if (command === "engine.list") return availableEngines;
   if (command === "workflow.list") {
     const jobs = historyFixtures ?? (job ? [job] : []);
     const offset = args.offset ?? 0,
@@ -548,6 +554,10 @@ try {
     "icon font rendered",
   );
   assert.equal(await page.locator('.dr-sidebar').count(), 0, 'Research history has no left sidebar');
+  await page.waitForFunction(() => document.querySelector("#dr-engine")?.value === "pi");
+  await page.getByLabel("执行引擎").selectOption("codex");
+  await page.getByText("使用 Codex 当前登录账号的模型额度。", {exact: true}).waitFor();
+  await page.getByLabel("执行引擎").selectOption("pi");
   const topicInput = page.getByLabel("研究目标");
   await topicInput.click();
   await page.keyboard.type("301");
@@ -643,6 +653,7 @@ try {
   await page.getByLabel("来源预算").fill("80");
   checks.push("quick scope defaults to six sources while a custom limit persists across scope changes");
   await page.getByRole("button", { name: "开始研究", exact: true }).click();
+  assert.deepEqual(calls.find(item => item.command === "workflow.start").args.input.engines, [{engine: "pi"}]);
   await waitPhase("进度尚未确定");
   assert.equal(
     await page.getByRole("progressbar").getAttribute("aria-valuenow"),
@@ -1527,6 +1538,7 @@ try {
   await page.getByRole("button", {name: "继续研究", exact: true}).click();
   assert.equal(await page.getByText("基于已完成研究", {exact: true}).count(), 1);
   assert.equal(await page.getByLabel("关键节点由我确认").isChecked(), true);
+  assert.equal(await page.getByLabel("执行引擎").inputValue(), "inherit");
   await page.locator(".dr-segment label").first().click();
   assert.equal(await page.getByLabel("来源预算").inputValue(), "6");
   await page.locator(".dr-segment label").nth(1).click();
@@ -1539,12 +1551,23 @@ try {
   assert.equal(forkCall.args.id, parentJobForFork.id);
   assert.equal(forkCall.args.expectedRevision, parentJobForFork.revision);
   assert.equal(forkCall.args.input.autoApprove, false);
+  assert.equal(forkCall.args.input.engines, undefined);
   assert.equal(forkCall.args.input.topic, "上次结论中哪项假设已经变化？");
   await screen("11-follow-up-child");
   await page.getByRole("button", {name: "查看上次报告"}).click();
   await page.locator(".dr-job-header h1").getByText("已完成的原研究").waitFor();
   assert.equal(await page.getByRole("tab", {name: "报告", exact: true}).getAttribute("aria-selected"), "true");
   checks.push("completed research starts a linked follow-up with a fresh approval and a return path to the prior report");
+  availableEngines = [{engine: "codex", label: "Codex", configuration: {hasApiKey: false}}];
+  await page.reload();
+  await page.getByLabel("研究目标").fill("仅有 Codex 时显式选择");
+  await page.waitForFunction(() => document.querySelector("#dr-engine")?.options.length === 3);
+  assert.equal(await page.getByLabel("执行引擎").inputValue(), "");
+  assert.equal(await page.getByRole("button", {name: "开始研究"}).isDisabled(), true);
+  await page.getByLabel("执行引擎").selectOption("codex");
+  await page.getByText("使用 Codex 当前登录账号的模型额度。", {exact: true}).waitFor();
+  assert.equal(await page.getByRole("button", {name: "开始研究"}).isEnabled(), true);
+  checks.push("an account-backed Codex engine is never selected silently when no API-key engine is configured");
   assert.deepEqual(errors, []);
   await fs.writeFile(
     path.join(out, "verification.json"),

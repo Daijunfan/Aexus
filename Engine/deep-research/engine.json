@@ -19,6 +19,7 @@
     "workflow.amend",
     "workflow.file",
     "engine.check",
+    "engine.list",
     "group.list",
     "group.add",
     "card.create",

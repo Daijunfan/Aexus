@@ -195,6 +195,43 @@
 .dr-app textarea::placeholder {
   color: #929b98;
 }
+.dr-engine-choice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 13px;
+  padding: 8px 11px;
+  border: 1px solid var(--dr-border);
+  border-radius: 6px;
+  background: var(--dr-bg);
+}
+.dr-engine-choice .codicon {
+  font-size: 14px;
+  color: var(--dr-green);
+}
+.dr-engine-choice label {
+  flex: none;
+  color: var(--dr-muted);
+  font-size: 11px;
+}
+.dr-engine-choice select {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dr-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+.dr-engine-choice:focus-within {
+  outline: 2px solid var(--dr-blue);
+  outline-offset: 2px;
+}
+.dr-engine-note {
+  margin-top: 5px !important;
+  color: var(--dr-muted);
+  font-size: 10px;
+}
 .dr-intake-controls {
   display: flex;
   align-items: center;
