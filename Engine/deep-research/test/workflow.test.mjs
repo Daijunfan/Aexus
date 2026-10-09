@@ -560,8 +560,15 @@ test('HTML exports render GFM structure while keeping untrusted HTML and unsafe 
   const done = await run(create({ topic: 'Final HTML preserves report Markdown structure safely', autoApprove: true }), f.ctx);
   const html = generateArtifacts(done.state).find(a => a.name === 'research-report.html').content;
   for (const element of ['<table>', '<th>Evidence</th>', '<td>Original source</td>', '<ul>', '<ol>', '<pre><code', '<blockquote>']) assert.ok(html.includes(element), element + ' must render as structure');
+  const proof = done.state.sources.find(source => source.verified).acquisition.excerpts[0];
+  assert.ok(html.includes(proof.sha256), 'The standalone report keeps the acquired body fingerprint beside its citation');
+  assert.ok(html.includes(proof.finalUrl), 'The standalone report names the independently retrieved final URL');
   assert.ok(!html.includes('<script>')); assert.ok(!html.includes('href="javascript:'));
   assert.ok(html.includes('&lt;script&gt;'));
+  const tampered = structuredClone(done.state);
+  tampered.sources[0].url = 'javascript:alert(1)';
+  tampered.sources[0].acquisition.excerpts[0].finalUrl = 'javascript:alert(2)';
+  assert.ok(!generateArtifacts(tampered).find(a => a.name === 'research-report.html').content.includes('href="javascript:'));
   assert.equal(generateArtifacts(done.state).find(a => a.name === 'research-report.md').content.includes(content), true);
 });
 
