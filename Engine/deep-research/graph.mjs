@@ -66,6 +66,7 @@ export function nodesFromDimensions(dimensions) {
 
 export function applyPlan(state, plan, reason) {
   const nodes = normalizeNodes(plan.nodes || nodesFromDimensions(plan.dimensions), state.input.maxTasks ?? 128);
+  const planNodes = structuredClone(nodes);
   const previous = state.graph?.nodes ?? [];
   const oldById = new Map(previous.filter(n => n.active !== false).map(n => [n.id, n]));
   const version = (state.graph?.version ?? 0) + 1;
@@ -87,7 +88,7 @@ export function applyPlan(state, plan, reason) {
   if (removed.some(n => n.status === 'running')) throw Error('重规划必须保留在途任务');
   const archived = previous.filter(n => n.active === false || !nextIds.has(n.id)).map(n => ({ ...n, active: false, status: n.status === 'completed' ? 'completed' : 'superseded' }));
   state.graph = { version, nodes: [...nodes, ...archived] };
-  state.plan = { ...plan, version, nodes };
+  state.plan = { ...plan, version, nodes: planNodes };
   state.dimensions = plan.dimensions || [];
   state.planRevisions ??= [];
   state.planRevisions.push({ version, at: Date.now(), reason: String(reason || '初始研究计划'), addedNodeIds: added, retainedNodeIds: retained, removedNodeIds: removed.map(n => n.id) });

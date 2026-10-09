@@ -224,6 +224,16 @@ test('revision retains completed work and evidence while replacing only pending 
   assert.throws(() => applyPlan(state, next, 'illegal'), /不能改写/);
 });
 
+test('planned topology does not duplicate execution results in persisted state', () => {
+  const state = create({topic: 'Keep execution results in the graph once'});
+  applyPlan(state, plan(), 'Initial plan');
+  const executed = state.graph.nodes.find(node => node.id === 's1');
+  executed.resultSummary = 'Measured research finding';
+  executed.result = {body: 'Evidence payload '.repeat(1000)};
+  assert.equal('result' in state.plan.nodes.find(node => node.id === 's1'), false);
+  assert.equal(JSON.stringify(state.plan).includes('Evidence payload'), false);
+});
+
 test('a completed node may update its label but cannot silently change its research objective', () => {
   const state = create({ topic: 'Completed research identity includes the actual question' });
   const initial = plan(); initial.nodes[0].objective = 'Determine the original policy scope';
