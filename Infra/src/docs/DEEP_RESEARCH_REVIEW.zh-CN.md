@@ -22,6 +22,7 @@
 - HTML 来源标题曾直接沿用员工提交值。现在只在独立取得的页面中提取真实 `<title>`，同 URL 的后续片段沿用核对结果；PDF/纯文本不伪称具有独立标题。一次公开网页实读和 20 项来源测试、77 项领域/Host 相关测试通过。取证时只解析一次 HTML，PDF 原始字节不再做无用的 UTF-8 解码。
 - 确认停止后，Host 刷新任务与 DAG 摘要：已停止任务不再显示“进行中”，进度的运行数归零；暂停仍保留可继续的待执行节点。实际 Host 取消及重启用例、70 项相关回归与 TypeScript 检查通过。
 - 原生执行失败会进入会话状态，研究任务优先显示实际错误，避免将提供商断流误当 JSON 格式错误而自动发送纠错请求。错误通知在 Core 重启后仍可读取；用户显式恢复时使用新任务编号。[真实 Core 与假 Codex 协议测试](../../../Infra/src/test/deep-research-native-error-test.mjs)及 73 项相关回归、TypeScript 检查通过，均未调用收费模型。
+- 报告章节的每个来源 ID 都必须有该来源的已核验论断和独立取得的原文片段；一条有效引用不能让同章节另一条空引用通过。来源预算在网络读取前筛除超额新候选，已占名额的来源仍可追加已核对片段；单来源预算的初调研只下载一页。两项修复由先失败后通过的回归用例覆盖。
 
 以下矩阵区分已完成的基础验收与尚未覆盖的复杂场景。阅读账本记录前序基线；本次修复文件另行完成差异审查。
 
@@ -46,7 +47,7 @@ UI 默认自动批准计划，用户可关闭；API 创建默认等待批准。�
 
 生成文件没有冒充全文阅读：Contract 与 Manager 的 `--check` 分别验证 302 能力/243 schema 和 348 CLI 项；emoji 与 Margin Reader API 的当前生成器在截获写入的 VM 中逐字复现，未改源文件；七份 npm 锁核对所属 package 版本和每个直接生产依赖的锁定条目，不声称逐字审阅第三方传递依赖。
 
-最新[隔离测试记录](../../../.aexus/artifacts/deep-research-independent/final-tests.json)为 84/84，通过命令：
+当前[完整相关回归](../../../.aexus/artifacts/deep-research-fix/release-0143760/full-regression.log)为 96/96，通过命令：
 
 ```sh
 node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/test/source-read.test.mjs Engine/deep-research/test/cli.test.mjs Infra/src/test/deep-research-independent-test.mjs Infra/src/test/deep-research-host-test.mjs Infra/src/test/retired-research-unit-test.mjs
@@ -60,9 +61,9 @@ node --test Engine/deep-research/test/workflow.test.mjs Engine/deep-research/tes
 
 ## 当前安装
 
-截至 2026-10-09，[最新安装记录](../../../.aexus/artifacts/deep-research-fix/latest-installed.json)保存实际 `/Applications/Aexus.app` 的构建提交和 ASAR SHA256。Deep Research `2.0.0` 已包含独立核对的 HTML 标题、快速研究预算、停止后的状态同步和持久错误恢复。
+截至 2026-10-09，[最新安装记录](../../../.aexus/artifacts/deep-research-fix/latest-installed.json)保存实际 `/Applications/Aexus.app` 的构建提交和 ASAR SHA256。Deep Research `2.0.0` 已包含独立核对的 HTML 标题、快速研究预算、逐来源报告引用约束、超额来源读取筛选、停止后的状态同步和持久错误恢复。
 
-[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-1cd79a7/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-1cd79a7/installed-verification.json)均通过私有依赖、GFM、公开 PDF 文本层和隐藏界面检查，没有启动测试模型进程。[安装与恢复记录](../../../.aexus/artifacts/deep-research-fix/release-1cd79a7/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。
+[隔离候选](../../../.aexus/artifacts/deep-research-fix/release-0143760/candidate-verification.json)与[实际安装包](../../../.aexus/artifacts/deep-research-fix/release-0143760/installed-verification.json)均通过私有依赖、GFM、公开 PDF 文本层和隐藏界面检查，没有启动测试模型进程。[安装与恢复记录](../../../.aexus/artifacts/deep-research-fix/release-0143760/production-restart.json)确认原 80 名员工和 17 条工作流的 ID 与状态、根 JSON 哈希保持不变，窗口未显示且无新增提供商进程。安装前曾因后台应用进程退出而安全中止；以隐藏模式恢复当前版本并确认空闲后才继续安装，没有强制结束工作。
 
 ## 剩余验收
 
