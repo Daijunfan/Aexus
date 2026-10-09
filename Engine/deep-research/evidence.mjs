@@ -128,11 +128,19 @@ export function validateReport(result, state) {
   const report = result?.report;
   if (!report || !Array.isArray(report.sections) || !report.sections.length) throw Error('报告必须包含非空 sections 数组');
   const sources = new Map(state.sources.filter(s => s.verified && isIndependentSource(s)).map(s => [s.id, s]));
+  const findingsById = new Map(state.findings.map(finding => [finding.id, finding]));
   const sections = report.sections.map((section, i) => {
     if (typeof section.content !== 'string' || !section.content.trim()) throw Error('报告章节正文不能为空');
     const citations = [...new Set(section.citations || [])];
     if (citations.some(id => !sources.has(id))) throw Error('报告引用了未阅读、未核验或不存在的来源');
-    const evidence = state.findings.filter(f => f.sourceIds.some(id => citations.includes(id))).flatMap(f => (f.evidence || []).filter(e => citations.includes(e.sourceId)).map(e => ({ ...e, claim: f.claim })));
+    if (section.findingIds !== undefined && !Array.isArray(section.findingIds)) throw Error('章节 findingIds 必须是论断 ID 数组');
+    const findings = section.findingIds === undefined ? state.findings.filter(f => f.sourceIds.some(id => citations.includes(id))) : [...new Set(section.findingIds)].map(id => {
+      const finding = findingsById.get(id);
+      if (!finding) throw Error('章节引用了不存在的论断: ' + id);
+      return finding;
+    });
+    if (findings.some(f => !f.sourceIds.some(id => citations.includes(id)))) throw Error('章节论断与引用来源不匹配');
+    const evidence = findings.flatMap(f => (f.evidence || []).filter(e => citations.includes(e.sourceId)).map(e => ({ ...e, claim: f.claim })));
     if (evidence.some(e => !proofFor(sources.get(e.sourceId), e.excerpt))) throw Error('报告论断的原文片段没有对应的独立获取证据');
     if (!citations.length || !evidence.length) throw Error('每个报告章节必须引用已核验论断和对应原文片段');
     const supported = new Set(evidence.map(e => e.sourceId));

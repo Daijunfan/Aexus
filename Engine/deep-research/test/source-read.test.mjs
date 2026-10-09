@@ -237,6 +237,22 @@ test('one URL keeps its real proof and attributed rejected excerpts without acce
   assert.throws(() => validateReport(report, research), /片段/);
 });
 
+test('report chapters include only their selected verified findings', async () => {
+  const research = {sources: [], findings: [], contradictions: [], input: {maxSources: 1, topic: 'Two distinct claims'}};
+  const first = 'The first bounded source statement.', second = 'The second bounded source statement.';
+  mergeSources(research, await acquireSources(research, [candidate(first), candidate(second)], {read: async url => ({url, mediaType: 'text/plain', body: first + ' ' + second})}));
+  const id = research.sources[0].id;
+  mergeVerification(research, normalizeVerification({verifications: [{sourceId: id, credibilityScore: 1, claims: [{text: 'First claim', excerpt: first}, {text: 'Second claim', excerpt: second}]}]}, research.sources));
+  const [firstFinding, secondFinding] = research.findings;
+  const report = {report: {sections: [
+    {heading: 'First', content: 'First claim.', citations: [id], findingIds: [firstFinding.id]},
+    {heading: 'Second', content: 'Second claim.', citations: [id], findingIds: [secondFinding.id]}
+  ]}};
+  assert.deepEqual(validateReport(report, research).sections.map(section => section.evidence.map(item => item.claim)), [['First claim'], ['Second claim']]);
+  report.report.sections[1].findingIds = ['missing-finding'];
+  assert.throws(() => validateReport(report, research), /论断|finding/);
+});
+
 test('verification requires one independently read proof and cannot join separate excerpt boundaries', async () => {
   const body = 'First bounded statement. Second bounded statement.';
   const research = {sources: [], input: {maxSources: 10}};

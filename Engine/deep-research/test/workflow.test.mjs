@@ -136,7 +136,7 @@ test('native tools are reserved for discovery while evidence and report stages u
     else assert.match(call.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
     if (call.task.kind === 'plan') { assert.match(call.args.text, /未读取或片段被拒绝的来源须先由 search 节点补做取证/); assert.match(call.args.text, /write 只能改报告文本和引用 ID/); }
     if (call.task.kind === 'verify') { assert.match(call.args.text, /不重复 GET、解析 PDF 内部结构/); assert.match(call.args.text, /未经核验的 snippet 是缺口，不是矛盾/); }
-    if (call.task.kind === 'write') { assert.match(call.args.text, /写作者不能改动或声称已改动/); assert.match(call.args.text, /quick 模式总长控制在约 450 字符/); }
+    if (call.task.kind === 'write') { assert.match(call.args.text, /写作者不能改动或声称已改动/); assert.match(call.args.text, /quick 模式总长控制在约 450 字符/); assert.match(call.args.text, /findingIds 只列本章实际使用/); }
     if (call.task.kind === 'review') { assert.match(call.args.text, /snippet 未核验误称为矛盾/); assert.match(call.args.text, /不要求写作者修改不可写字段/); }
   }
 });
