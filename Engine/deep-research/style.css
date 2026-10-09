@@ -151,6 +151,29 @@
   font-weight: 600;
   line-height: 1.3;
 }
+.dr-follow-up-context {
+  padding: 15px 18px;
+  margin: -10px 0 27px;
+  border-left: 3px solid var(--dr-green);
+  border-radius: 5px;
+  background: var(--dr-surface);
+}
+.dr-follow-up-context strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+}
+.dr-follow-up-context p,
+.dr-follow-up-context button {
+  margin-top: 7px;
+  font-size: 11px;
+  color: var(--dr-muted);
+}
+.dr-follow-up-context button {
+  padding: 0;
+  background: none;
+  color: var(--dr-blue);
+}
 .dr-intake > label {
   display: block;
   font-size: 13px;
@@ -417,11 +440,29 @@
   margin-top: 5px;
   max-width: 900px;
 }
+.dr-parent-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  color: var(--dr-blue) !important;
+  font-size: 11px !important;
+}
+.dr-parent-link .codicon {
+  font-size: 12px;
+}
 .dr-job-actions {
   display: flex;
   align-items: center;
   gap: 7px;
   flex: none;
+}
+.dr-followup-action {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 11px;
 }
 .dr-icon-button {
   display: inline-grid;

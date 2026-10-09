@@ -21,3 +21,10 @@ test('CLI downloads preserve UTF-8 report bytes instead of comparing character c
     assert.equal(await fs.readFile(output, 'utf8'), content);
   } finally { await fs.rm(directory, { recursive: true, force: true }); }
 });
+
+test('CLI follow-up keeps the exact parent revision and request identity', async () => {
+  const calls = [];
+  const client = {invoke: async (command, args) => {calls.push({command, args}); return {id: 'child', parent: {id: args.id, revision: args.expectedRevision}}}};
+  await main(['fork', '--id', 'wf-parent', '--revision', '7', '--topic', 'What changed?', '--request-id', 'follow-up-7'], client);
+  assert.deepEqual(calls, [{command: 'workflow.fork', args: {id: 'wf-parent', expectedRevision: 7, clientRequestId: 'follow-up-7', input: {topic: 'What changed?'}}}]);
+});

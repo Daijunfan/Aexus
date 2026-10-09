@@ -286,6 +286,7 @@ graph.nodes = normalizeNodes(graph.nodes).map((node, index) => ({
 }));
 let job = null;
 let historyFixtures = null;
+let parentJobForFork = null;
 let state;
 let unrelatedActivity = false;
 let pauseIncomplete = false;
@@ -352,8 +353,30 @@ async function call(command, args) {
     };
     return job;
   }
+  if (command === "workflow.fork") {
+    assert.equal(job.status, "completed");
+    assert.equal(args.id, job.id);
+    assert.equal(args.expectedRevision, job.revision);
+    parentJobForFork = job;
+    state = create(args.input);
+    state.phase = "scouting";
+    job = {
+      ...job,
+      id: "wf_00000000-0000-0000-0000-000000000002",
+      status: "running",
+      revision: 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      parent: {id: parentJobForFork.id, revision: parentJobForFork.revision, engineVersion: parentJobForFork.engineVersion},
+      summary: describe(state),
+      files: [],
+    };
+    return job;
+  }
   if (command === "workflow.get" && historyFixtures)
     return historyFixtures.find((item) => item.id === args.id);
+  if (command === "workflow.get" && args.id === parentJobForFork?.id)
+    return parentJobForFork;
   if (command === "workflow.get")
     return args.ifRevision === job.revision
       ? { id: job.id, revision: job.revision, unchanged: true }
@@ -1486,6 +1509,36 @@ try {
   checks.push(
     "research history below the input loads every page without duplicate rows",
   );
+  historyFixtures = null;
+  job = {
+    ...job,
+    status: "completed",
+    revision: job.revision + 1,
+    summary: {...job.summary, topic: "已完成的原研究", phase: "complete", progress: {...job.summary.progress, mode: "determinate", percent: 100}, deliverable: longState.report},
+  };
+  await page.reload();
+  await page.locator(".dr-recent > button").first().click();
+  await page.getByRole("button", {name: "继续研究", exact: true}).click();
+  assert.equal(await page.getByText("基于已完成研究", {exact: true}).count(), 1);
+  assert.equal(await page.getByLabel("关键节点由我确认").isChecked(), true);
+  await page.locator(".dr-segment label").first().click();
+  assert.equal(await page.getByLabel("来源预算").inputValue(), "6");
+  await page.locator(".dr-segment label").nth(1).click();
+  assert.equal(await page.getByLabel("来源预算").inputValue(), "80");
+  await screen("11-follow-up-intake");
+  await page.getByLabel("后续问题").fill("上次结论中哪项假设已经变化？");
+  await page.getByRole("button", {name: "开始后续研究"}).click();
+  await page.getByRole("button", {name: "查看上次报告"}).waitFor();
+  const forkCall = calls.findLast(item => item.command === "workflow.fork");
+  assert.equal(forkCall.args.id, parentJobForFork.id);
+  assert.equal(forkCall.args.expectedRevision, parentJobForFork.revision);
+  assert.equal(forkCall.args.input.autoApprove, false);
+  assert.equal(forkCall.args.input.topic, "上次结论中哪项假设已经变化？");
+  await screen("11-follow-up-child");
+  await page.getByRole("button", {name: "查看上次报告"}).click();
+  await page.locator(".dr-job-header h1").getByText("已完成的原研究").waitFor();
+  assert.equal(await page.getByRole("tab", {name: "报告", exact: true}).getAttribute("aria-selected"), "true");
+  checks.push("completed research starts a linked follow-up with a fresh approval and a return path to the prior report");
   assert.deepEqual(errors, []);
   await fs.writeFile(
     path.join(out, "verification.json"),

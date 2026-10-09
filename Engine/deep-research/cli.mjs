@@ -11,6 +11,7 @@ const usage = `Deep Research 2.0 — Multi-Agent Research Engine
 Workflow commands (保留 request key 重试时使用):
   start --topic "研究主题" --request-id KEY [--scope comprehensive]
   start --input @input.json --request-id KEY
+  fork --id COMPLETED_ID --revision N --topic "后续问题" --request-id KEY [--input @input.json]
   list
   get --id WORKFLOW_ID
   respond --id ID --revision N --action approve-plan --request-id KEY
@@ -35,6 +36,9 @@ Examples:
 
   # 从 JSON 输入
   node cli.mjs start --input @research-input.json --request-id req-003
+
+  # 基于已完成报告继续研究，历史报告只作为背景线索
+  node cli.mjs fork --id WORKFLOW_ID --revision 12 --topic "哪些假设已变化？" --request-id req-005
 
   # 查看进度
   node cli.mjs get --id WORKFLOW_ID
@@ -143,6 +147,13 @@ export async function main(argv = process.argv.slice(2), client = createNodeClie
       input,
       clientRequestId: args['request-id']
     });
+
+  } else if (command === 'fork') {
+    const input = args.input ? await json(args.input) : {};
+    if (args.topic) input.topic = args.topic;
+    if (args.scope) input.scope = args.scope;
+    if (!input.topic) throw Error('缺少后续研究主题。使用 --topic 或 --input');
+    result = await client.invoke('workflow.fork', {...mutation(), input});
 
   } else if (command === 'list') {
     result = await client.invoke('workflow.list', {

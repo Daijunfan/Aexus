@@ -70,6 +70,7 @@ function Empty({ icon, children }: { icon: string; children: ReactNode }) {
 export default function Page({ client }: { client: ContractClient }) {
   const [job, setJob] = useState<WorkflowView | null>(null),
     [history, setHistory] = useState<WorkflowView[]>([]);
+  const [forkParent, setForkParent] = useState<WorkflowView | null>(null);
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
@@ -240,12 +241,13 @@ export default function Page({ client }: { client: ContractClient }) {
       clearTimeout(timer);
     };
   }, [job?.id, job?.status, client, tab, nodeId]);
-  const load = async (id: string) => {
+  const load = async (id: string, view = "graph") => {
     selected.current = id;
+    setForkParent(null);
     setNodeId(null);
     setSourceId(null);
     reportReturn.current = null;
-    setTab("graph");
+    setTab(view);
     setRevisionOpen(false);
     const next = await client.invoke<WorkflowView>("workflow.get", { id });
     if (alive.current && selected.current === id) apply(next);
@@ -269,31 +271,51 @@ export default function Page({ client }: { client: ContractClient }) {
     selected.current = null;
     current.current = null;
     setJob(null);
+    setForkParent(null);
     setError("");
     setRevisionOpen(false);
+    request.current = null;
+    reportReturn.current = null;
+  };
+  const beginFollowUp = () => {
+    const parent = current.current;
+    if (!parent || parent.status !== "completed") return;
+    selected.current = null;
+    current.current = null;
+    setJob(null);
+    setForkParent(parent);
+    setTopic("");
+    setScope(parent.summary.scope ?? "comprehensive");
+    const previousBudget = parent.summary.progress?.sources?.max;
+    const defaultBudget = parent.summary.scope === "quick" ? 6 : 80;
+    setMaxSources(previousBudget === defaultBudget ? null : previousBudget ?? null);
+    setMaterials([]);
+    setAutoApprove(false);
+    setError("");
     request.current = null;
     reportReturn.current = null;
   };
   const start = (event: FormEvent) => {
     event.preventDefault();
     void operate(async () => {
-      const body = {
-        engineId: ENGINE,
-        input: {
-          topic: topic.trim(),
-          scope,
-          maxSources: sourceBudget,
-          languages: ["zh-CN", "en"],
-          autoApprove,
-          ...(materials.length ? { materials } : {}),
-        },
+      const input = {
+        topic: topic.trim(),
+        scope,
+        maxSources: sourceBudget,
+        ...(!forkParent ? { languages: ["zh-CN", "en"] } : {}),
+        autoApprove,
+        ...(materials.length ? { materials } : {}),
       };
-      const next = await client.invoke<WorkflowView>("workflow.start", {
+      const body = forkParent
+        ? { id: forkParent.id, expectedRevision: forkParent.revision, input }
+        : { engineId: ENGINE, input };
+      const next = await client.invoke<WorkflowView>(forkParent ? "workflow.fork" : "workflow.start", {
         ...body,
         clientRequestId: keyFor(body),
       });
       selected.current = next.id;
       apply(next);
+      setForkParent(null);
       setTab("graph");
       setNodeId(null);
       setSourceId(null);
@@ -379,7 +401,7 @@ export default function Page({ client }: { client: ContractClient }) {
         throw Error("支持 TXT、Markdown、CSV、JSON，每份不超过 200KB");
       next.push({ name: file.name, content: await file.text() });
     }
-    if (next.length > 10) throw Error("最多 10 份背景材料");
+    if (next.length > (forkParent ? 9 : 10)) throw Error(forkParent ? "后续研究最多添加 9 份背景材料" : "最多 10 份背景材料");
     setMaterials(next);
   };
   const summary = job?.summary ?? {},
@@ -626,14 +648,22 @@ export default function Page({ client }: { client: ContractClient }) {
           <div className="dr-intake-page">
             <div className="dr-intake-heading">
               <Icon name="telescope" />
-              <h1>Deep Research</h1>
+              <h1>{forkParent ? "继续研究" : "Deep Research"}</h1>
             </div>
+            {forkParent && (
+              <div className="dr-follow-up-context">
+                <span className="dr-eyebrow">基于已完成研究</span>
+                <strong>{forkParent.summary.deliverable?.title ?? forkParent.summary.topic}</strong>
+                <p>上次报告作为历史线索；新问题的来源与引用会重新独立核验，并先确认新计划。</p>
+                <button type="button" disabled={busy} onClick={() => setForkParent(null)}>取消追问</button>
+              </div>
+            )}
             <form className="dr-intake" onSubmit={start}>
-              <label htmlFor="dr-topic">研究目标</label>
+              <label htmlFor="dr-topic">{forkParent ? "后续问题" : "研究目标"}</label>
               <textarea
                 id="dr-topic"
-                aria-label="研究目标"
-                placeholder="例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本；请给出可定位引用和研究局限"
+                aria-label={forkParent ? "后续问题" : "研究目标"}
+                placeholder={forkParent ? "例如：上次报告中的哪项假设已经变化？请重新核验来源并说明影响" : "例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本；请给出可定位引用和研究局限"}
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
                 minLength={1}
@@ -671,7 +701,7 @@ export default function Page({ client }: { client: ContractClient }) {
                   disabled={busy || !topic.trim()}
                 >
                   <Icon name={busy ? "loading" : "arrow-right"} />
-                  开始研究
+                  {forkParent ? "开始后续研究" : "开始研究"}
                 </button>
               </div>
               <details className="dr-settings">
@@ -795,6 +825,11 @@ export default function Page({ client }: { client: ContractClient }) {
                   {PHASES[summary.phase] ?? summary.phaseLabel ?? "研究"}
                 </span>
                 <h1>{summary.topic}</h1>
+                {job.parent && (
+                  <button className="dr-parent-link" onClick={() => void operate(() => load(job.parent!.id, "report"))}>
+                    <Icon name="arrow-left" /> 查看上次报告
+                  </button>
+                )}
               </div>
               <div className="dr-job-actions">
                 <span className={"dr-status " + job.status}>
@@ -802,6 +837,11 @@ export default function Page({ client }: { client: ContractClient }) {
                     ? labelFor("stopping")
                     : STATUS[job.status]}
                 </span>
+                {job.status === "completed" && (
+                  <button className="dr-secondary dr-followup-action" onClick={beginFollowUp}>
+                    <Icon name="comment-discussion" /> 继续研究
+                  </button>
+                )}
                 {["running", "waiting", "paused", "failed"].includes(
                   job.status,
                 ) && (
