@@ -87,6 +87,17 @@ test('quick research uses smaller default caps while explicit budgets remain aut
   assert.equal(custom.input.maxReplans, 0);
 });
 
+test('native tools are reserved for discovery while evidence and report stages use saved proofs', async () => {
+  const f = fixture();
+  const done = await run(create({topic: 'Phase-specific native research tools', autoApprove: true}), f.ctx);
+  assert.equal(done.status, 'completed');
+  for (const call of f.calls.filter(item => item.command === 'session.send')) {
+    if (['scout', 'search'].includes(call.task.kind)) assert.match(call.args.text, /按需使用已开放的浏览\/搜索工具/);
+    else assert.match(call.args.text, /此阶段只分析 payload 中已有的研究证据，不调用工具/);
+    if (call.task.kind === 'verify') assert.match(call.args.text, /不重复 GET、解析 PDF 内部结构/);
+  }
+});
+
 test('oversized teams receive the exact headcount and role-reuse correction', () => {
   const oversized = plan();
   oversized.team = team.filter(member => ['coordinator', 'r1', 'writer'].includes(member.id));
