@@ -32,6 +32,9 @@ export function generateArtifacts(state) {
   <details class="source-proof"><summary>查看核验记录</summary><dl><dt>最终网址</dt><dd>${finalUrl ? `<a href="${html(finalUrl)}" rel="noreferrer">${html(finalUrl)}</a>` : html(proof.finalUrl)}</dd><dt>SHA-256</dt><dd><code>${html(proof.sha256)}</code></dd></dl></details>` : ''}
 </li>`;
   }).join('\n');
+  const highlightItems = (state.findings ?? []).filter(item => typeof item?.claim === "string" && item.claim.trim())
+    .slice(0, 6).map((item, index) => `<article class="highlight-card"><small>${String(index + 1).padStart(2, "0")}</small><p>${html(item.claim)}</p></article>`).join("");
+  const researchHighlights = highlightItems ? `<section class="visual-highlights" aria-label="研究发现速览"><h2>研究发现速览</h2><div class="highlights-grid">${highlightItems}</div></section>` : "";
   const sectionsHtml = report.sections.map(section => {
     const citations = section.citations.map(id => `<a href="#${html(id)}">[${numbered.get(id)}]</a>`).join(' ');
     const evidence = section.evidence.map(e => `
@@ -66,6 +69,11 @@ export function generateArtifacts(state) {
     .lead > :first-child { margin-top: 0; }
     .stats { display: flex; flex-wrap: wrap; gap: 20px 34px; margin-top: 38px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
     .stats strong { display: block; color: var(--ink); font-size: 19px; line-height: 1.2; }
+    .visual-highlights { padding-bottom: 22px; }
+    .highlights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 12px; }
+    .highlight-card { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: linear-gradient(145deg,#f4faf6,white); }
+    .highlight-card small { font-size: 11px; color: var(--green); font-weight: 700; }
+    .highlight-card p { font-size: 14px; line-height: 1.75; margin: 9px 0 0; }
     .content-grid { display: grid; grid-template-columns: 230px minmax(0,1fr); }
     nav { position: sticky; top: 0; align-self: start; padding: 38px 24px; border-right: 1px solid var(--line); }
     nav strong { color: var(--muted); font-size: 11px; letter-spacing: .13em; }
@@ -138,6 +146,7 @@ export function generateArtifacts(state) {
   <div class="content-grid">
   <nav aria-label="报告目录"><strong>目录 / CONTENTS</strong><ol>${report.sections.map(s => `<li><a href="#${html(s.id)}">${html(s.heading)}</a></li>`).join('')}</ol></nav>
   <main>
+  ${researchHighlights}
   ${sectionsHtml}
   ${report.conclusion ? '<section><h2>结论</h2><div class="report-content">' + markdown(report.conclusion) + '</div></section>' : ''}
   ${limitations}

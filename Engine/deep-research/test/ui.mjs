@@ -766,6 +766,7 @@ try {
     contradictions: disagreement.contradictions,
   });
   await page.getByRole("heading", { name: "来源存在分歧", exact: true }).waitFor();
+  assert.equal(await page.locator(".dr-dispute-sides > div").count(), 2, "disagreement displays each source side-by-side");
   assert.deepEqual(job.summary.contradictions[0].sources, disagreement.sources.map(source => source.id));
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
@@ -1306,6 +1307,75 @@ try {
   checks.push(
     "three hashed acquired full texts derive 20 backend-normalized claims, six report chapters, 20 table rows and 20 linked citations with exact locator; raw text collapsed",
   );
+  // Research Studio rounds 1-3: overview, matrix, branches, timeline, updates, board and export.
+  await page.getByRole("tab", {name: "成果总览", exact: true}).click();
+  await page.getByRole("heading", {name: "研究范围地图"}).waitFor();
+  await page.getByRole("heading", {name: "资料分布"}).waitFor();
+  assert.ok(await page.locator(".dr-breadth-hosts > div").count() >= 1, "source-breadth visualization shows actual host coverage");
+  assert.ok(await page.locator(".dr-coverage-card").count() >= 2);
+  assert.ok(await page.locator(".dr-insight-list article").count() >= 3);
+  for (const width of [1440, 768, 390]) {
+    await embedHost(width, width === 390 ? 844 : 900);
+    await fits();
+    assert.ok(await page.locator(".dr-overview").evaluate(el => el.scrollWidth <= el.clientWidth + 1), "overview fits available width");
+    await screen("05-studio-overview-" + width);
+  }
+  await resetHost();
+  await page.getByRole("button", {name: "收藏发现 1"}).click();
+  await page.getByRole("tab", {name: "成果板", exact: true}).click();
+  assert.equal(await page.locator(".dr-board-items article").count(), 1);
+  await embedHost(390, 844);
+  await fits();
+  await screen("05-studio-board-mobile");
+  await resetHost();
+  await page.getByLabel("成果说明 1").fill("我将这一结论用于最终决策。");
+  const [briefFile] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", {name: /导出视觉简报/}).click(),
+  ]);
+  assert.equal(briefFile.suggestedFilename(), "aexus-research-brief.html");
+  const briefHTML = await fs.readFile(await briefFile.path(), "utf8");
+  assert.ok(briefHTML.includes("我将这一结论用于最终决策。"));
+  assert.ok(briefHTML.includes("研究范围") && briefHTML.includes("比较"));
+  const stored = await page.evaluate(id => JSON.parse(localStorage.getItem("aexus:research:studio:" + id)), job.id);
+  assert.equal(stored.board[0].note, "我将这一结论用于最终决策。");
+  await page.getByRole("tab", {name: "比较矩阵", exact: true}).click();
+  assert.ok(await page.locator(".dr-matrix").count(), "report tables become navigable comparison matrices");
+  await embedHost(390, 844);
+  await fits();
+  await screen("05-studio-matrix-mobile");
+  await resetHost();
+  await page.getByRole("button", {name: "复制并编辑矩阵"}).click();
+  await page.locator(".dr-matrix textarea").first().fill("自定义对比备注");
+  assert.equal((await page.evaluate(id => JSON.parse(localStorage.getItem("aexus:research:studio:" + id)), job.id)).matrix.rows[0].values[0], "自定义对比备注");
+  await page.locator(".dr-matrix-builder summary").click();
+  await page.getByLabel("新矩阵名称").fill("决策对比");
+  await page.getByLabel("新矩阵对象").fill("方案甲,方案乙");
+  await page.getByLabel("新矩阵维度").fill("成本,适用条件");
+  await page.getByRole("button", {name: "创建矩阵"}).click();
+  assert.equal(await page.locator(".dr-matrix textarea").count(), 4);
+  await page.locator(".dr-matrix-fill").first().click();
+  assert.match(await page.getByRole("textbox", {name: "调整研究方向"}).inputValue(), /补充比较矩阵/);
+  await page.getByRole("button", {name: "取消", exact: true}).click();
+  await page.getByRole("tab", {name: "时间线", exact: true}).click();
+  await page.getByRole("group", {name: "时间线类型"}).getByRole("button", {name: /研究过程/}).click();
+  assert.ok(await page.locator(".dr-topic-timeline").count());
+  await embedHost(390, 844);
+  await fits();
+  await screen("05-studio-timeline-mobile");
+  await resetHost();
+  await page.getByRole("tab", {name: "研究更新", exact: true}).click();
+  await page.getByRole("heading", {name: "计划演变"}).waitFor();
+  await page.getByRole("tab", {name: "研究地图", exact: true}).click();
+  await page.getByRole("button", {name: "按主题分支筛选"}).click();
+  assert.ok(await page.getByRole("group", {name: "研究分支筛选"}).getByRole("button").count() >= 3);
+  await page.getByRole("group", {name: "研究分支筛选"}).getByRole("button").nth(1).click();
+  assert.ok(await page.locator("[data-node-id]").count() < 48, "branch focus simplifies the DAG");
+  await page.getByRole("group", {name: "研究分支筛选"}).getByRole("button").first().click();
+  await page.getByRole("tab", {name: "报告", exact: true}).click();
+  await page.locator(".dr-report-digest").waitFor();
+  await page.getByRole("tab", {name: /^发现/}).click();
+  checks.push("research experience rounds: overview coverage, branch DAG focus, comparison create/edit, targeted replan draft, timeline, revisions, curated board persistence and actual visual HTML download");
   await page.getByRole("button", { name: "调整研究方向", exact: true }).click();
   await page
     .getByRole("textbox", { name: "调整研究方向", exact: true })
@@ -1544,6 +1614,7 @@ try {
   };
   await page.reload();
   await page.locator(".dr-recent > button").first().click();
+  assert.equal(await page.getByRole("tab", {name: "成果总览", exact: true}).getAttribute("aria-selected"), "true", "completed history opens a readable overview");
   await page.getByRole("button", {name: "继续研究", exact: true}).click();
   assert.equal(await page.getByText("基于已完成研究", {exact: true}).count(), 1);
   assert.equal(await page.getByLabel("关键节点由我确认").isChecked(), true);
@@ -1556,6 +1627,9 @@ try {
   await page.getByLabel("后续问题").fill("上次结论中哪项假设已经变化？");
   await page.getByRole("button", {name: "开始后续研究"}).click();
   await page.getByRole("button", {name: "查看上次报告"}).waitFor();
+  await page.getByRole("tab", {name: "研究更新", exact: true}).click();
+  await page.getByText("与上次研究中的论断逐条比较").waitFor();
+  assert.ok(await page.locator(".dr-change-list article").count() > 0, "linked child compares with parent findings");
   const forkCall = calls.findLast(item => item.command === "workflow.fork");
   assert.equal(forkCall.args.id, parentJobForFork.id);
   assert.equal(forkCall.args.expectedRevision, parentJobForFork.revision);
@@ -1568,6 +1642,15 @@ try {
   await page.locator(".dr-job-header h1").getByText("已完成的原研究").waitFor();
   assert.equal(await page.getByRole("tab", {name: "报告", exact: true}).getAttribute("aria-selected"), "true");
   checks.push("completed research starts a linked follow-up with a fresh approval and a return path to the prior report");
+  await page.getByRole("tab", {name: "成果板", exact: true}).click();
+  assert.equal(await page.getByLabel("成果说明 1").inputValue(), "我将这一结论用于最终决策。", "curated board survives a page reload");
+  await page.getByRole("tab", {name: "比较矩阵", exact: true}).click();
+  assert.ok(await page.getByLabel("选择比较矩阵").count() > 0, "custom matrix survives page reload");
+  await page.getByRole("tab", {name: "成果总览", exact: true}).click();
+  await page.locator(".dr-coverage-card .dr-tertiary").first().click();
+  assert.equal(await page.getByText("基于已完成研究", {exact: true}).count(), 1);
+  assert.match(await page.getByLabel("后续问题").inputValue(), /继续调查/);
+  checks.push("completed node-specific deep dive pre-fills a linked follow-up rather than editing a finished study");
   availableEngines = [{engine: "codex", label: "Codex", configuration: {hasApiKey: false}}];
   await page.reload();
   await page.getByLabel("研究目标").fill("仅有 Codex 时显式选择");

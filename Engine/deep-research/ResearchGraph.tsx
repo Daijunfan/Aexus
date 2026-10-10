@@ -8,6 +8,7 @@ import {
   type ResearchNode,
   type GraphEdge,
 } from "./ui";
+import { focusAreas, nodeInsight, clean } from "./ResearchInsights";
 
 export function ResearchGraph({
   nodes,
@@ -35,10 +36,15 @@ export function ResearchGraph({
   workflow: { status: string; controlPending?: boolean };
 }) {
   const [zoom, setZoom] = useState(1);
+  const [branchOpen, setBranchOpen] = useState(false);
+  const [branchId, setBranchId] = useState<string | null>(null);
   const viewport = useRef<HTMLDivElement>(null);
+  const branches = useMemo(() => focusAreas(nodes), [nodes]);
+  const branch = branches.find(area => area.id === branchId);
+  const displayed = branch ? nodes.filter(node => branch.nodeIds.includes(node.id)) : nodes;
   const graph = useMemo(
-    () => layoutGraph(nodes, edges, direction),
-    [nodes, edges, direction],
+    () => layoutGraph(displayed, edges, direction),
+    [nodes, edges, direction, branchId],
   );
   const selectedNode = graph.nodes.find((node) => node.id === selectedId);
   const nearby = graph.nodes.filter(
@@ -187,6 +193,11 @@ export function ResearchGraph({
             >
               <span className="codicon codicon-add" />
             </button>
+            {branches.length >= 2 && (
+              <button aria-label="按主题分支筛选" title="按主题分支筛选" aria-pressed={branchOpen} onClick={() => setBranchOpen(value => !value)}>
+                <span className="codicon codicon-filter" />
+              </button>
+            )}
             {graph.nodes.length > 0 && (
               <button
                 aria-label={inspectorOpen ? "收起任务详情" : "展开任务详情"}
@@ -199,6 +210,12 @@ export function ResearchGraph({
           </div>
         </div>
       )}
+      {branchOpen && branches.length >= 2 && <div className="dr-branch-toolbar" role="group" aria-label="研究分支筛选">
+        <button aria-pressed={!branchId} onClick={() => { setBranchId(null); setZoom(1); }}>全部任务（{nodes.filter(n => n.active !== false && n.status !== "superseded").length}）</button>
+        {branches.map(area => <button key={area.id} aria-pressed={branchId === area.id} onClick={() => {
+          setBranchId(area.id); setZoom(1); onSelect(area.id);
+        }} title={area.title}>{area.title} · {area.completed}/{area.total}</button>)}
+      </div>}
       <div
         ref={viewport}
         className="dr-graph-viewport"
@@ -283,6 +300,7 @@ export function ResearchGraph({
                     className={
                       "dr-graph-node " +
                       node.status +
+                      (nodeInsight(node) ? " has-insight" : "") +
                       (selectedId === node.id
                         ? " selected"
                         : related.has(node.id)
@@ -328,6 +346,7 @@ export function ResearchGraph({
                       </span>
                     </span>
                     <strong>{node.label}</strong>
+                    {nodeInsight(node) && <span className="dr-node-preview">{clean(nodeInsight(node)).slice(0, 64)}</span>}
                     <span className={"dr-node-state " + node.status}>
                       {node.status === "completed" && (
                         <span

@@ -1,10 +1,15 @@
 import type { ReactNode } from "react";
 import type { WorkflowView } from "../../Contract/workflow";
-import type { EvidenceExcerpt, ResearchReport } from "./ui";
+import type { EvidenceExcerpt, ResearchReport, ResearchFinding, ResearchNode } from "./ui";
+import { focusAreas, extractMatrices, extractTopicTimeline, clean } from "./ResearchInsights";
 
 export function ReportView({
   report,
   job,
+  findings = [],
+  nodes = [],
+  onCompare,
+  onTimeline,
   onDownload,
   renderMarkdown,
   renderEvidence,
@@ -12,6 +17,10 @@ export function ReportView({
 }: {
   report?: ResearchReport;
   job: Pick<WorkflowView, "status" | "files">;
+  findings?: ResearchFinding[];
+  nodes?: ResearchNode[];
+  onCompare?: () => void;
+  onTimeline?: () => void;
   onDownload: (name: string) => void;
   renderMarkdown: (content: string, section?: string) => ReactNode;
   renderEvidence: (items: EvidenceExcerpt[], section?: string) => ReactNode;
@@ -63,6 +72,24 @@ export function ReportView({
                 {renderMarkdown(report.abstract)}
               </div>
             )}
+            <details className="dr-report-digest" open>
+              <summary>研究视觉摘要 · {findings.length} 条发现</summary>
+              <div className="dr-report-digest-grid">
+                {focusAreas(nodes).slice(0, 4).map(area => <div className="dr-report-scope-card" key={area.id}>
+                  <strong>{area.title}</strong><span>{area.completed} / {area.total} 相关任务完成</span>
+                  <div><i style={{ width: (area.total ? area.completed / area.total * 100 : 0) + "%" }}/></div>
+                </div>)}
+              </div>
+              {findings.length > 0 && <div className="dr-report-highlights">
+                {findings.slice(0, 3).map((finding, index) => <p key={finding.id ?? index}>
+                  <b>{String(index + 1).padStart(2, "0")}</b> {clean(finding.claim).slice(0, 230)}
+                </p>)}
+              </div>}
+              <div className="dr-report-digest-actions">
+                {extractMatrices(report).length > 0 && <button onClick={onCompare}>查看 {extractMatrices(report).length} 张比较矩阵 ↗</button>}
+                {extractTopicTimeline(report, findings).length > 0 && <button onClick={onTimeline}>查看时间线 ↗</button>}
+              </div>
+            </details>
             {report.sections.map((section, index) => {
               const id = "report-" + (section.id ?? index);
               return (

@@ -12,6 +12,9 @@ import type { WorkflowView } from "../../Contract/workflow";
 import { ResearchGraph } from "./ResearchGraph";
 import { SourcePanel } from "./SourcePanel";
 import { ReportView } from "./ReportView";
+import { ResearchOverview, ResearchComparison, ResearchTimeline, ResearchUpdates, ResearchBoard, type BoardItem } from "./ResearchViews";
+import { type ResearchMatrix, nodeInsight } from "./ResearchInsights";
+import { visualBrief } from "./ResearchBrief";
 import {
   activityLabel,
   displayStatus,
@@ -50,7 +53,12 @@ const STATUS: Record<string, string> = {
   cancelled: "已停止",
 };
 const TABS = [
+  { id: "overview", label: "成果总览", icon: "dashboard" },
   { id: "graph", label: "研究地图", icon: "type-hierarchy" },
+  { id: "comparison", label: "比较矩阵", icon: "table" },
+  { id: "timeline", label: "时间线", icon: "history" },
+  { id: "updates", label: "研究更新", icon: "diff" },
+  { id: "board", label: "成果板", icon: "bookmark" },
   { id: "sources", label: "来源", icon: "globe" },
   { id: "findings", label: "发现", icon: "lightbulb" },
   { id: "report", label: "报告", icon: "file-text" },
@@ -110,6 +118,9 @@ export default function Page({ client }: { client: ContractClient }) {
       null,
     );
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
+  const [parentFindings, setParentFindings] = useState<any[] | null>(null);
+  const [studio, setStudio] = useState<{ jobId: string; board: BoardItem[]; matrix: ResearchMatrix | null }>({ jobId: "", board: [], matrix: null });
   const [graphDirection, setGraphDirection] = useState<
     "horizontal" | "vertical"
   >();
@@ -285,7 +296,10 @@ export default function Page({ client }: { client: ContractClient }) {
     setTab(view);
     setRevisionOpen(false);
     const next = await client.invoke<WorkflowView>("workflow.get", { id });
-    if (alive.current && selected.current === id) apply(next);
+    if (alive.current && selected.current === id) {
+      apply(next);
+      if (view === "graph" && next.status === "completed") setTab("overview");
+    }
   };
   const loadMoreHistory = async () => {
     const { jobs, hasMore } = await client.invoke<{
@@ -447,6 +461,44 @@ export default function Page({ client }: { client: ContractClient }) {
     if (next.length > (forkParent ? 9 : 10)) throw Error(forkParent ? "后续研究最多添加 9 份背景材料" : "最多 10 份背景材料");
     setMaterials(next);
   };
+  useEffect(() => {
+    if (!job?.id) return;
+    let board: BoardItem[] = [];
+    let matrix: ResearchMatrix | null = null;
+    try {
+      const saved = JSON.parse(localStorage.getItem("aexus:research:studio:" + job.id) || "{}");
+      if (Array.isArray(saved.board)) board = saved.board.filter((item: any) =>
+        ["node", "finding"].includes(item?.type) && typeof item.id === "string"
+      ).slice(0, 100).map((item: any) => ({ type: item.type, id: item.id, note: String(item.note ?? "").slice(0, 3000) }));
+      if (saved.matrix?.id === "custom" && Array.isArray(saved.matrix.columns) && Array.isArray(saved.matrix.rows)) {
+        const columns = saved.matrix.columns.filter((v: unknown) => typeof v === "string").slice(0, 12);
+        matrix = { id: "custom", title: String(saved.matrix.title ?? "我的比较矩阵"), columns,
+          rows: saved.matrix.rows.filter((r: any) => typeof r?.label === "string" && Array.isArray(r.values))
+            .slice(0, 35).map((r: any) => ({ label: r.label, values: columns.map((_: string, i: number) => String(r.values[i] ?? "").slice(0, 2000)) })) };
+      }
+    } catch { /* Local storage may be unavailable in embedded contexts. */ }
+    setStudio({ jobId: job.id, board, matrix });
+  }, [job?.id]);
+  useEffect(() => {
+    if (!job?.id || studio.jobId !== job.id) return;
+    try { localStorage.setItem("aexus:research:studio:" + job.id, JSON.stringify({ board: studio.board, matrix: studio.matrix })); }
+    catch { /* Research still works when local persistence is disabled. */ }
+  }, [job?.id, studio]);
+  useEffect(() => {
+    let active = true;
+    setParentFindings(null);
+    if (job?.parent?.id) {
+      void client.invoke<WorkflowView>("workflow.get", { id: job.parent.id }).then(parent => {
+        if (active) setParentFindings(parent.summary.findingsDetails ?? []);
+      }).catch(() => { if (active) setParentFindings(null); });
+    }
+    return () => { active = false; };
+  }, [client, job?.id, job?.parent?.id]);
+  useEffect(() => {
+    if (tab === "findings" && selectedFindingId) {
+      requestAnimationFrame(() => document.getElementById("dr-finding-" + selectedFindingId)?.scrollIntoView({block: "center", behavior: "smooth"}));
+    }
+  }, [tab, selectedFindingId]);
   const summary = job?.summary ?? {},
     progress = summary.progress ?? {};
   const nodes: ResearchNode[] =
@@ -535,6 +587,45 @@ export default function Page({ client }: { client: ContractClient }) {
   const domains = new Set(
     sources.filter(independentlyRead).map((source) => sourceHost(source.url)).filter(Boolean),
   ).size;
+  const board = studio.jobId === job?.id ? studio.board : [];
+  const customMatrix = studio.jobId === job?.id ? studio.matrix : null;
+  const updateBoard = (items: BoardItem[]) => {
+    if (!job) return;
+    setStudio(old => ({ jobId: job.id, matrix: old.jobId === job.id ? old.matrix : null, board: items }));
+  };
+  const pinItem = (item: BoardItem) => {
+    if (board.some(existing => existing.id === item.id && existing.type === item.type))
+      updateBoard(board.filter(existing => existing.id !== item.id || existing.type !== item.type));
+    else updateBoard([...board, item]);
+  };
+  const updateMatrix = (matrix: ResearchMatrix | null) => {
+    if (!job) return;
+    setStudio(old => ({ jobId: job.id, board: old.jobId === job.id ? old.board : [], matrix }));
+  };
+  const exportBrief = () => {
+    if (!job || !board.length) return;
+    const html = visualBrief({ topic: summary.topic, report, nodes, findings, sources, board, customMatrix });
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "aexus-research-brief.html";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  };
+  const openNode = (id: string) => { setTab("graph"); setNodeId(id); setInspectorOpen(true); };
+  const openFinding = (id: string) => { setSelectedFindingId(id); setTab("findings"); };
+  const drillDown = (question: string) => {
+    if (job?.status === "completed") {
+      beginFollowUp();
+      setTopic(question);
+    } else if (job && ["running", "waiting", "paused", "failed"].includes(job.status)) {
+      setInstructions(question);
+      setRevisionOpen(true);
+      setTab("graph");
+    } else {
+      setError("当前研究状态不支持继续调查");
+    }
+  };
   const scopeHelp: Record<string, string> = {
     quick: "快速概览：默认最多 6 个来源、4 位协作者，聚焦关键原始资料。",
     comprehensive:
@@ -1335,6 +1426,16 @@ export default function Page({ client }: { client: ContractClient }) {
                 </button>
               ))}
             </nav>
+            {tab === "overview" && <ResearchOverview
+              nodes={nodes} findings={findings} sources={sources} report={report}
+              pinned={board} onNode={openNode} onFinding={openFinding} onDrill={drillDown}
+              onPin={pinItem} onCompare={() => setTab("comparison")} onBoard={() => setTab("board")} onTimeline={() => setTab("timeline")} onSources={() => setTab("sources")}
+            />}
+            {tab === "comparison" && <ResearchComparison report={report} draft={customMatrix} onDraft={updateMatrix} onDrill={drillDown}/>}
+            {tab === "timeline" && <ResearchTimeline report={report} findings={findings} events={timeline} onDrill={drillDown}/>}
+            {tab === "updates" && <ResearchUpdates current={findings} previous={parentFindings} revisions={revisions}/>}
+            {tab === "board" && <ResearchBoard nodes={nodes} findings={findings} pinned={board}
+              onChange={updateBoard} onExport={exportBrief} onNode={openNode} onFinding={openFinding}/>}
             {tab === "graph" && (
               <div className="dr-map-layout" data-inspector={showInspector}>
                 <section className="dr-map-section" aria-label="研究任务图">
@@ -1487,6 +1588,15 @@ export default function Page({ client }: { client: ContractClient }) {
                         {labelFor(activeNode.kind)}
                       </span>
                       <h3>{activeNode.label}</h3>
+                      {nodeInsight(activeNode) && <section className="dr-node-key-result">
+                        <h4>核心发现</h4><p>{nodeInsight(activeNode)}</p>
+                      </section>}
+                      <div className="dr-node-actions">
+                        <button onClick={() => pinItem({ type: "node", id: activeNode.id, note: "" })}>
+                          <Icon name="bookmark" />{board.some(item => item.type === "node" && item.id === activeNode.id) ? "从成果板移除" : "收藏到成果板"}
+                        </button>
+                        <button onClick={() => drillDown("深入调查「" + activeNode.label + "」，补充不同观点、适用条件、反例与最新案例。")}>补查此问题 ↗</button>
+                      </div>
                       {(activeNode.objective || activeNode.description) && (
                         <section className="dr-task-objective">
                           <h4>研究目标</h4>
@@ -1724,18 +1834,33 @@ export default function Page({ client }: { client: ContractClient }) {
                     {contradictions.map((contradiction) => (
                       <article key={contradiction.id}>
                         <p>{contradiction.description}</p>
+                        <div className="dr-dispute-sides">
+                          {contradiction.sources.map((id, index) => {
+                            const source = sources.find(item => item.id === id);
+                            return <div key={id}>
+                              <small>相关材料 {index + 1}</small>
+                              <strong>{source?.title || id}</strong>
+                              <p>{source?.summary || source?.snippet || "当前未提供摘要，可查看原文证据。"}</p>
+                              <button onClick={() => openSource(id)}>查看材料与原文 ↗</button>
+                            </div>;
+                          })}
+                        </div>
+                        <p className="dr-dispute-note">分歧需结合资料时间、版本和适用条件审阅。</p>
                         {citations(contradiction.sources)}
                       </article>
                     ))}
                   </div>
                 )}
                 {findings.map((finding, index) => (
-                  <article key={finding.id ?? index}>
+                  <article key={finding.id ?? index} id={"dr-finding-" + (finding.id ?? index)} className={selectedFindingId === finding.id ? "dr-highlight-finding" : ""}>
                     <span className="dr-finding-number">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <div>
                       <h3>{finding.claim ?? finding.text ?? finding.title}</h3>
+                      <div className="dr-node-actions"><button onClick={() => pinItem({ type: "finding", id: String(finding.id ?? index), note: "" })}>
+                        <Icon name="bookmark" />{board.some(item => item.type === "finding" && item.id === String(finding.id ?? index)) ? "从成果板移除" : "收藏到成果板"}
+                      </button><button onClick={() => drillDown("进一步核实并扩展研究发现：「" + (finding.claim ?? finding.text ?? finding.title) + "」。请补充反例、适用范围和不同角度。")}>继续深挖 ↗</button></div>
                       {finding.detail && (
                         <div className="dr-markdown">
                           {markdown(finding.detail)}
@@ -1754,6 +1879,10 @@ export default function Page({ client }: { client: ContractClient }) {
               <ReportView
                 report={report}
                 job={job}
+                findings={findings}
+                nodes={nodes}
+                onCompare={() => setTab("comparison")}
+                onTimeline={() => setTab("timeline")}
                 onDownload={(name) => void operate(() => download(name))}
                 renderMarkdown={markdown}
                 renderEvidence={evidence}
