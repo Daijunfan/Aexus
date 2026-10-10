@@ -10,13 +10,13 @@ const temp = await fs.mkdtemp(path.join(os.tmpdir(), "aexus-experience-"));
 const code = path.resolve(import.meta.dirname, "..");
 await build({
   stdin: {
-    contents: "export * from './ResearchInsights.ts'; export * from './ResearchBrief.ts';",
+    contents: "export * from './ResearchInsights.ts'; export * from './ResearchBrief.ts'; export {layoutGraph} from './ui.ts';",
     resolveDir: code, sourcefile: "studio-check.ts", loader: "ts",
   },
   bundle: true, platform: "node", format: "esm",
   outfile: path.join(temp, "experience.mjs"),
 });
-const { focusAreas, extractMatrices, extractTopicTimeline, compareFindings, visualBrief } =
+const { focusAreas, layoutGraph, extractMatrices, extractTopicTimeline, compareFindings, visualBrief } =
   await import(pathToFileURL(path.join(temp, "experience.mjs")).href);
 
 test("branches are based on real plan dependencies, and unresolved tasks are visible", () => {
@@ -35,6 +35,22 @@ test("branches are based on real plan dependencies, and unresolved tasks are vis
   assert.equal(cost.completed, 1);
   assert.equal(cost.pending, 1);
   assert.equal(cost.insight, "总成本受到规模影响");
+});
+
+test("large DAG branch accounting and layout remain complete and finite", () => {
+  const nodes = Array.from({ length: 650 }, (_, index) => ({
+    id: "n" + index, label: "分支 " + index, status: index < 200 ? "completed" : "pending",
+    kind: index % 5 === 0 ? "search" : "verify",
+    dependencies: index > 0 ? ["n" + (index - 1)] : [],
+  }));
+  const branches = focusAreas(nodes);
+  const graph = layoutGraph(nodes);
+  assert.equal(branches[0].total, 650, "coverage must not silently cap at 400 tasks");
+  assert.ok(branches.length > 12, "users must be able to reveal all research branches");
+  assert.equal(graph.nodes.length, 650);
+  assert.equal(graph.edges.length, 649);
+  assert.ok(Number.isFinite(graph.width) && Number.isFinite(graph.height));
+  assert.deepEqual(layoutGraph([]), {nodes: [], edges: [], width: 212, height: 212, vertical: false});
 });
 
 test("comparison matrices preserve actual markdown cells and do not invent missing data", () => {

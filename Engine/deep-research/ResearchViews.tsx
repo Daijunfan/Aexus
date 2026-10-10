@@ -25,14 +25,17 @@ const pinned = (list: BoardItem[], type: BoardItem["type"], id: string) =>
 
 export function ResearchOverview({
   nodes, findings, report, sources, onNode, onFinding, onDrill, onPin, pinned: board,
-  onCompare, onBoard, onTimeline, onSources,
+  onCompare, onBoard, onTimeline, onUpdates, showUpdates, onSources,
 }: Common & {
   sources: ResearchSource[];
   onCompare: () => void;
   onBoard: () => void;
   onTimeline: () => void;
+  onUpdates: () => void;
+  showUpdates: boolean;
   onSources: () => void;
 }) {
+  const [visibleAreas, setVisibleAreas] = useState(8);
   const areas = focusAreas(nodes);
   const readSources = sources.filter(independentlyRead);
   const hostCounts = new Map<string, number>();
@@ -53,19 +56,28 @@ export function ResearchOverview({
     <section className="dr-studio dr-overview" aria-label="研究成果总览">
       <div className="dr-studio-hero">
         <span className="dr-studio-kicker">RESEARCH / OVERVIEW</span>
-        <h2>{report?.title || "研究全貌"}</h2>
-        <p>{clean(report?.abstract || "").slice(0, 430) || "研究发现将随着任务完成逐步出现。先从研究范围进入，查看每条分支正在回答的问题。"}</p>
-        <div className="dr-studio-stats">
-          <span><strong>{complete}</strong> 已完成任务</span>
-          <span><strong>{insights.length}</strong> 可读发现</span>
-          <span><strong>{areas.length}</strong> 研究分支</span>
-          <span><strong>{gaps}</strong> 待处理任务</span>
-          <span><strong>{sources.length}</strong> 已发现资料</span>
+        <div className="dr-hero-grid">
+          <div className="dr-hero-content">
+            <h2>{report?.title || "研究全貌"}</h2>
+            <p>{clean(report?.abstract || "").slice(0, 300) || "研究正在推进。点击下方研究分支，查看已经得到的结论和仍需探索的问题。"}</p>
+            <div className="dr-studio-stats">
+              <span><strong>{areas.length}</strong> 研究方向</span>
+              <span><strong>{complete}</strong> 已完成任务</span>
+              <span><strong>{readSources.length}</strong> 实读资料</span>
+              {gaps > 0 && <span><strong>{gaps}</strong> 待处理</span>}
+            </div>
+          </div>
+          {insights[0] && <button className="dr-studio-feature" onClick={() => insights[0].type === "node" ? onNode(insights[0].id) : onFinding(insights[0].id)}>
+            <small>研究发现 / 01</small>
+            <strong>{clean(insights[0].text).slice(0, 190)}</strong>
+            <span>查看详情 ↗</span>
+          </button>}
         </div>
       </div>
       <div className="dr-studio-actions">
-        <button onClick={onCompare}>查看比较矩阵 {tables.length ? "(" + tables.length + ")" : ""} →</button>
-        <button onClick={onTimeline}>时间与变化 →</button>
+        <button onClick={onCompare}>比较矩阵 {tables.length ? "(" + tables.length + ")" : ""} →</button>
+        <button onClick={onTimeline}>时间线 →</button>
+        {showUpdates && <button onClick={onUpdates}>研究更新 →</button>}
         <button onClick={onBoard}>成果板 {board.length ? "(" + board.length + ")" : ""} →</button>
       </div>
       <div className="dr-studio-section-heading">
@@ -73,7 +85,7 @@ export function ResearchOverview({
         <small>按计划任务分支整理；进度代表相关任务执行情况，并非知识覆盖率</small>
       </div>
       {areas.length ? <div className="dr-coverage-grid">
-        {areas.map(area => {
+        {areas.slice(0, visibleAreas).map(area => {
           const percent = area.total ? Math.round(area.completed / area.total * 100) : 0;
           return <article className="dr-coverage-card" key={area.id}>
             <button className="dr-coverage-main" onClick={() => onNode(area.id)}>
@@ -86,6 +98,9 @@ export function ResearchOverview({
           </article>;
         })}
       </div> : <div className="dr-studio-empty">正在形成研究计划；有计划节点后将在此展示范围分布。</div>}
+      {visibleAreas < areas.length && <button className="dr-tertiary dr-coverage-more" onClick={() => setVisibleAreas(count => count + 8)}>
+        查看更多研究方向（剩余 {areas.length - visibleAreas}）
+      </button>}
       <div className="dr-studio-section-heading">
         <div><span className="dr-studio-kicker">BREADTH / MATERIALS</span><h3>资料分布</h3></div>
         <button onClick={onSources}>浏览所有资料 ↗</button>

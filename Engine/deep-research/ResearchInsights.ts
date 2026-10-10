@@ -35,34 +35,34 @@ export function focusAreas(nodes: ResearchNode[]): FocusArea[] {
   const current = nodes.filter(active);
   if (!current.length) return [];
   const byId = new Map(current.map(node => [node.id, node]));
-  const parents = (node: ResearchNode) =>
-    (node.dependencies ?? node.dependsOn ?? []).filter(id => byId.has(id));
-  const roots = current.filter(node => parents(node).length === 0);
-  const directChildren = current.filter(node => parents(node).some(id => roots.some(root => root.id === id)));
-  const candidates = [
-    ...current.filter(node => node.kind === "search" && parents(node).length <= 1),
-    ...directChildren, ...roots, ...current,
-  ].filter((node, index, all) => all.findIndex(other => other.id === node.id) === index);
-  const selected = candidates.filter(node => node.kind === "search" || (!roots.includes(node) && directChildren.includes(node)));
-  const start = selected.length >= 2 ? selected : candidates;
-  return start.slice(0, 12).map(node => {
-    const seen = new Set<string>();
+  const parents = new Map(current.map(node => [
+    node.id, (node.dependencies ?? node.dependsOn ?? []).filter(id => byId.has(id)),
+  ]));
+  const children = new Map(current.map(node => [node.id, [] as string[]]));
+  for (const [id, dependencies] of parents)
+    for (const dependency of dependencies) children.get(dependency)!.push(id);
+  const roots = new Set(current.filter(node => !parents.get(node.id)?.length).map(node => node.id));
+  const direct = new Set(current.filter(node =>
+    parents.get(node.id)?.some(id => roots.has(id))).map(node => node.id));
+  const ordered = [
+    ...current.filter(node => node.kind === "search" && parents.get(node.id)!.length <= 1),
+    ...current.filter(node => direct.has(node.id)), ...current.filter(node => roots.has(node.id)), ...current,
+  ];
+  const candidates = [...new Map(ordered.map(node => [node.id, node])).values()];
+  const selected = candidates.filter(node => node.kind === "search" || (!roots.has(node.id) && direct.has(node.id)));
+  return (selected.length >= 2 ? selected : candidates).map(node => {
+    const visited = new Set<string>([node.id]);
     const queue = [node.id];
-    for (let i = 0; i < queue.length && i < 400; i++) {
-      const id = queue[i];
-      if (seen.has(id)) continue;
-      seen.add(id);
-      for (const child of current) {
-        if (parents(child).includes(id) && !seen.has(child.id)) queue.push(child.id);
-      }
-    }
-    const relevant = [...seen].map(id => byId.get(id)).filter((n): n is ResearchNode => !!n);
+    for (let index = 0; index < queue.length; index++)
+      for (const id of children.get(queue[index]) ?? [])
+        if (!visited.has(id)) { visited.add(id); queue.push(id); }
+    const relevant = queue.map(id => byId.get(id)!);
     return {
       id: node.id, title: node.label,
       completed: relevant.filter(n => n.status === "completed").length,
       running: relevant.filter(n => n.status === "running" || n.status === "working").length,
       pending: relevant.filter(n => n.status === "pending" || n.status === "prepared").length,
-      total: relevant.length, nodeIds: [...seen],
+      total: relevant.length, nodeIds: queue,
       insight: clean(nodeInsight(node)).slice(0, 220),
     };
   });

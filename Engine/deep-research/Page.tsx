@@ -56,13 +56,13 @@ const TABS = [
   { id: "overview", label: "成果总览", icon: "dashboard" },
   { id: "graph", label: "研究地图", icon: "type-hierarchy" },
   { id: "comparison", label: "比较矩阵", icon: "table" },
-  { id: "timeline", label: "时间线", icon: "history" },
-  { id: "updates", label: "研究更新", icon: "diff" },
-  { id: "board", label: "成果板", icon: "bookmark" },
-  { id: "sources", label: "来源", icon: "globe" },
   { id: "findings", label: "发现", icon: "lightbulb" },
+  { id: "sources", label: "来源", icon: "globe" },
   { id: "report", label: "报告", icon: "file-text" },
 ];
+const DETAIL_VIEWS: Record<string, string> = {
+  timeline: "时间与演变", updates: "研究更新", board: "成果板",
+};
 type EngineOption = {
   engine: string;
   label: string;
@@ -137,6 +137,7 @@ export default function Page({ client }: { client: ContractClient }) {
     current = useRef<WorkflowView | null>(null),
     selected = useRef<string | null>(null);
   const taskDetail = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLElement>(null);
   const reportReturn = useRef<{
     section: string;
     outer: number;
@@ -499,6 +500,19 @@ export default function Page({ client }: { client: ContractClient }) {
       requestAnimationFrame(() => document.getElementById("dr-finding-" + selectedFindingId)?.scrollIntoView({block: "center", behavior: "smooth"}));
     }
   }, [tab, selectedFindingId]);
+  useEffect(() => {
+    const alignTab = () => {
+      const nav = tabsRef.current;
+      const selectedTab = nav?.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!nav || !selectedTab) return;
+      const navBox = nav.getBoundingClientRect();
+      const tabBox = selectedTab.getBoundingClientRect();
+      nav.scrollLeft += tabBox.left - navBox.left - (nav.clientWidth - tabBox.width) / 2;
+    };
+    alignTab();
+    window.addEventListener("resize", alignTab);
+    return () => window.removeEventListener("resize", alignTab);
+  }, [tab, job?.id]);
   const summary = job?.summary ?? {},
     progress = summary.progress ?? {};
   const nodes: ResearchNode[] =
@@ -1411,13 +1425,23 @@ export default function Page({ client }: { client: ContractClient }) {
                 </button>
               </section>
             )}
-            <nav className="dr-tabs" role="tablist" aria-label="研究视图">
+            <nav ref={tabsRef} className="dr-tabs" role="tablist" aria-label="研究视图">
               {TABS.map((item) => (
                 <button
                   key={item.id}
                   role="tab"
-                  aria-selected={tab === item.id}
+                  aria-selected={tab === item.id || (item.id === "overview" && !!DETAIL_VIEWS[tab])}
+                  tabIndex={tab === item.id || (item.id === "overview" && !!DETAIL_VIEWS[tab]) ? 0 : -1}
                   onClick={() => setTab(item.id)}
+                  onKeyDown={event => {
+                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                    event.preventDefault();
+                    const index = TABS.findIndex(tab => tab.id === item.id);
+                    const next = event.key === "Home" ? 0 : event.key === "End" ? TABS.length - 1
+                      : (index + (event.key === "ArrowRight" ? 1 : -1) + TABS.length) % TABS.length;
+                    setTab(TABS[next].id);
+                    requestAnimationFrame(() => tabsRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus({preventScroll: true}));
+                  }}
                 >
                   <Icon name={item.icon} />
                   {item.label}
@@ -1426,10 +1450,14 @@ export default function Page({ client }: { client: ContractClient }) {
                 </button>
               ))}
             </nav>
+            {DETAIL_VIEWS[tab] && <div className="dr-view-back">
+              <button onClick={() => setTab("overview")}><Icon name="arrow-left" /> 返回成果总览</button>
+              <span>/ {DETAIL_VIEWS[tab]}</span>
+            </div>}
             {tab === "overview" && <ResearchOverview
               nodes={nodes} findings={findings} sources={sources} report={report}
               pinned={board} onNode={openNode} onFinding={openFinding} onDrill={drillDown}
-              onPin={pinItem} onCompare={() => setTab("comparison")} onBoard={() => setTab("board")} onTimeline={() => setTab("timeline")} onSources={() => setTab("sources")}
+              onPin={pinItem} showUpdates={revisions.length > 1 || !!job.parent} onCompare={() => setTab("comparison")} onBoard={() => setTab("board")} onTimeline={() => setTab("timeline")} onUpdates={() => setTab("updates")} onSources={() => setTab("sources")}
             />}
             {tab === "comparison" && <ResearchComparison report={report} draft={customMatrix} onDraft={updateMatrix} onDrill={drillDown}/>}
             {tab === "timeline" && <ResearchTimeline report={report} findings={findings} events={timeline} onDrill={drillDown}/>}

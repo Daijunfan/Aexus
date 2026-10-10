@@ -40,22 +40,25 @@ export function ResearchGraph({
   const [branchId, setBranchId] = useState<string | null>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const branches = useMemo(() => focusAreas(nodes), [nodes]);
+  const activeCount = nodes.filter(node => node.active !== false && node.status !== "superseded").length;
+  const options = branches.filter(area => area.total < activeCount);
   const branch = branches.find(area => area.id === branchId);
-  const displayed = branch ? nodes.filter(node => branch.nodeIds.includes(node.id)) : nodes;
+  const displayed = useMemo(() => {
+    if (!branch) return nodes;
+    const ids = new Set(branch.nodeIds);
+    return nodes.filter(node => ids.has(node.id));
+  }, [nodes, branchId]);
   const graph = useMemo(
     () => layoutGraph(displayed, edges, direction),
-    [nodes, edges, direction, branchId],
+    [displayed, edges, direction],
   );
-  const selectedNode = graph.nodes.find((node) => node.id === selectedId);
-  const nearby = graph.nodes.filter(
-    (node) =>
-      node.id === selectedId ||
-      graph.edges.some(
-        (edge) =>
-          (edge.from === selectedId && edge.to === node.id) ||
-          (edge.to === selectedId && edge.from === node.id),
-      ),
-  );
+  const selectedNode = graph.nodes.find(node => node.id === selectedId);
+  const related = new Set<string>(selectedId ? [selectedId] : []);
+  for (const edge of graph.edges) {
+    if (edge.from === selectedId) related.add(edge.to);
+    if (edge.to === selectedId) related.add(edge.from);
+  }
+  const nearby = graph.nodes.filter(node => related.has(node.id));
   const focusZoom = () => {
     const area = viewport.current;
     if (!area || !nearby.length) return 1;
@@ -88,13 +91,8 @@ export function ResearchGraph({
         top: (selectedNode.y + NODE_HEIGHT / 2) * zoom - area.clientHeight / 2,
       });
   }, [selectedId, zoom, selectedNode?.x, selectedNode?.y]);
-  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
-  const related = new Set([
-    selectedId,
-    ...graph.edges
-      .filter((edge) => edge.from === selectedId || edge.to === selectedId)
-      .flatMap((edge) => [edge.from, edge.to]),
-  ]);
+  const byId = useMemo(() => new Map(graph.nodes.map(node => [node.id, node])), [graph.nodes]);
+  const workerNames = useMemo(() => new Map(workers.map(worker => [worker.id, worker.label])), [workers]);
   const fit = () => {
     const area = viewport.current;
     if (area) {
@@ -193,8 +191,8 @@ export function ResearchGraph({
             >
               <span className="codicon codicon-add" />
             </button>
-            {branches.length >= 2 && (
-              <button aria-label="按主题分支筛选" title="按主题分支筛选" aria-pressed={branchOpen} onClick={() => setBranchOpen(value => !value)}>
+            {options.length > 0 && (
+              <button aria-label="按主题分支筛选" title="按主题分支筛选" aria-pressed={branchOpen} onClick={() => { setBranchOpen(value => !value); if (branchOpen) { setBranchId(null); setZoom(1); } }}>
                 <span className="codicon codicon-filter" />
               </button>
             )}
@@ -210,11 +208,17 @@ export function ResearchGraph({
           </div>
         </div>
       )}
-      {branchOpen && branches.length >= 2 && <div className="dr-branch-toolbar" role="group" aria-label="研究分支筛选">
-        <button aria-pressed={!branchId} onClick={() => { setBranchId(null); setZoom(1); }}>全部任务（{nodes.filter(n => n.active !== false && n.status !== "superseded").length}）</button>
-        {branches.map(area => <button key={area.id} aria-pressed={branchId === area.id} onClick={() => {
-          setBranchId(area.id); setZoom(1); onSelect(area.id);
-        }} title={area.title}>{area.title} · {area.completed}/{area.total}</button>)}
+      {branchOpen && options.length > 0 && <div className="dr-branch-toolbar" role="group" aria-label="研究分支筛选">
+        <label htmlFor="dr-branch-select">研究方向</label>
+        <select id="dr-branch-select" aria-label="筛选研究方向" value={branch?.id ?? ""} onChange={event => {
+          setBranchId(event.target.value || null);
+          setZoom(1);
+          if (event.target.value) onSelect(event.target.value);
+        }}>
+          <option value="">全部任务（{activeCount}）</option>
+          {options.map(area => <option key={area.id} value={area.id}>{area.title} · {area.completed}/{area.total}</option>)}
+        </select>
+        {branch && <button onClick={() => { setBranchId(null); setZoom(1); }}>清除筛选</button>}
       </div>}
       <div
         ref={viewport}
@@ -236,6 +240,7 @@ export function ResearchGraph({
                 height: graph.height,
                 transform: `scale(${zoom})`,
               }}
+              data-compact={zoom < 0.55}
             >
               <svg
                 className="dr-graph-lines"
@@ -289,10 +294,8 @@ export function ResearchGraph({
                 })}
               </svg>
               {graph.nodes.map((original) => {
-                const node = {
-                  ...original,
-                  status: displayStatus(original.status, workflow),
-                };
+                const node = { ...original, status: displayStatus(original.status, workflow) };
+                const insight = clean(nodeInsight(node)).slice(0, 64);
                 return (
                   <button
                     key={node.id}
@@ -300,7 +303,7 @@ export function ResearchGraph({
                     className={
                       "dr-graph-node " +
                       node.status +
-                      (nodeInsight(node) ? " has-insight" : "") +
+                      (insight ? " has-insight" : "") +
                       (selectedId === node.id
                         ? " selected"
                         : related.has(node.id)
@@ -346,7 +349,7 @@ export function ResearchGraph({
                       </span>
                     </span>
                     <strong>{node.label}</strong>
-                    {nodeInsight(node) && <span className="dr-node-preview">{clean(nodeInsight(node)).slice(0, 64)}</span>}
+                    {insight && <span className="dr-node-preview">{insight}</span>}
                     <span className={"dr-node-state " + node.status}>
                       {node.status === "completed" && (
                         <span
@@ -359,8 +362,7 @@ export function ResearchGraph({
                     <span className="dr-graph-node-footer">
                       <span>
                         <span className="codicon codicon-person" />
-                        {workers.find((worker) => worker.id === node.employeeId)
-                          ?.label ?? "待分配"}
+                        {workerNames.get(node.employeeId ?? "") ?? "待分配"}
                       </span>
                       {!!node.sourceIds?.length && (
                         <span title="已产出证据来源">
