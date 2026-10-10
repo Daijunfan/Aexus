@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { independentlyRead, sourceHost, type ResearchNode, type ResearchFinding, type ResearchReport, type ResearchSource } from "./ui";
 import {
   focusAreas, extractMatrices, extractTopicTimeline, compareFindings,
@@ -36,22 +36,25 @@ export function ResearchOverview({
   onSources: () => void;
 }) {
   const [visibleAreas, setVisibleAreas] = useState(8);
-  const areas = focusAreas(nodes);
-  const readSources = sources.filter(independentlyRead);
-  const hostCounts = new Map<string, number>();
-  for (const source of sources) {
-    const host = sourceHost(source.url);
-    if (host) hostCounts.set(host, (hostCounts.get(host) ?? 0) + 1);
-  }
-  const rankedHosts = [...hostCounts].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const readHosts = new Set(readSources.map(source => sourceHost(source.url)).filter(Boolean)).size;
-  const insights = findings.length
+  const areas = useMemo(() => focusAreas(nodes), [nodes]);
+  const activeNodes = useMemo(() => visibleNodes(nodes), [nodes]);
+  const readSources = useMemo(() => sources.filter(independentlyRead), [sources]);
+  const {hostCounts, rankedHosts, readHosts} = useMemo(() => {
+    const hostCounts = new Map<string, number>();
+    for (const source of sources) {
+      const host = sourceHost(source.url);
+      if (host) hostCounts.set(host, (hostCounts.get(host) ?? 0) + 1);
+    }
+    return { hostCounts, rankedHosts: [...hostCounts].sort((a, b) => b[1] - a[1]).slice(0, 6),
+      readHosts: new Set(sources.filter(independentlyRead).map(source => sourceHost(source.url)).filter(Boolean)).size };
+  }, [sources]);
+  const insights = useMemo(() => findings.length
     ? findings.slice(0, 8).map(finding => ({ id: finding.id, type: "finding" as const, text: finding.claim }))
-    : visibleNodes(nodes).filter(n => !!nodeInsight(n)).slice(0, 8)
-      .map(node => ({ id: node.id, type: "node" as const, text: nodeInsight(node) }));
-  const complete = visibleNodes(nodes).filter(n => n.status === "completed").length;
-  const gaps = visibleNodes(nodes).filter(n => n.status === "pending" || n.status === "failed").length;
-  const tables = extractMatrices(report);
+    : activeNodes.filter(n => !!nodeInsight(n)).slice(0, 8)
+      .map(node => ({ id: node.id, type: "node" as const, text: nodeInsight(node) })), [findings, activeNodes]);
+  const complete = activeNodes.filter(n => n.status === "completed").length;
+  const gaps = activeNodes.filter(n => n.status === "pending" || n.status === "failed").length;
+  const tables = useMemo(() => extractMatrices(report), [report]);
   return (
     <section className="dr-studio dr-overview" aria-label="研究成果总览">
       <div className="dr-studio-hero">
@@ -156,7 +159,7 @@ export function ResearchComparison({
   onDraft: (value: ResearchMatrix | null) => void;
   onDrill: (topic: string) => void;
 }) {
-  const extracted = extractMatrices(report);
+  const extracted = useMemo(() => extractMatrices(report), [report]);
   const [selected, setSelected] = useState("");
   const [name, setName] = useState("");
   const [candidates, setCandidates] = useState("");
@@ -185,8 +188,9 @@ export function ResearchComparison({
       }}>复制并编辑矩阵</button>}
       {editable && <button onClick={() => { onDraft(null); setSelected(extracted[0]?.id ?? ""); }}>删除自建矩阵</button>}
     </div>
+    {current && <div className="dr-matrix-hint">左右滑动查看所有比较对象，首列保持可见。</div>}
     {current && <div className="dr-matrix-scroll" role="region" aria-label="可横向滚动的比较表" tabIndex={0}>
-      <table className="dr-matrix">
+      <table className="dr-matrix" style={{minWidth: Math.max(600, (current.columns.length + 1) * 170)}}>
         <thead><tr><th scope="col">比较维度</th>{current.columns.map((column, index) => <th scope="col" key={index}>
           {editable ? <input aria-label={"比较对象 " + (index + 1)} value={column} onChange={e => update(d => ({
             ...d, columns: d.columns.map((v, i) => i === index ? e.target.value : v),
@@ -245,7 +249,7 @@ export function ResearchTimeline({
   onDrill: (topic: string) => void;
 }) {
   const [mode, setMode] = useState<"topic" | "activity">("topic");
-  const facts = extractTopicTimeline(report, findings);
+  const facts = useMemo(() => extractTopicTimeline(report, findings), [report, findings]);
   return <section className="dr-studio dr-topic-timeline" aria-label="时间线">
     <div className="dr-studio-section-heading"><div><span className="dr-studio-kicker">TIME / EVOLUTION</span><h2>时间与演变</h2></div></div>
     <div className="dr-studio-toolbar" role="group" aria-label="时间线类型">

@@ -1177,6 +1177,15 @@ export default function Page({ client }: { client: ContractClient }) {
                     </span>
                   )}
                 </div>
+                <details key={tab} className="dr-execution-details">
+                  <summary>
+                    <span className={"dr-activity-indicator " + job.status} />
+                    <strong>执行动态</strong>
+                    <span>{runningNodes.length ? `${runningNodes.length} 项研究中` : (STATUS[job.status] ?? "整理中")}</span>
+                    <em>{runningNodes[0]?.label ?? stageTask?.label ?? ""}</em>
+                    <Icon name="chevron-down" />
+                  </summary>
+                  <div className="dr-execution-content">
                 <div className="dr-current-activity" aria-label="当前研究活动">
                   <span className={"dr-activity-indicator " + job.status} />
                   <div>
@@ -1256,6 +1265,8 @@ export default function Page({ client }: { client: ContractClient }) {
                     })}
                   </div>
                 )}
+                  </div>
+                </details>
               </section>
             )}
             {job.status === "failed" && (

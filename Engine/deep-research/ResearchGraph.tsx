@@ -36,7 +36,10 @@ export function ResearchGraph({
   workflow: { status: string; controlPending?: boolean };
 }) {
   const [zoom, setZoom] = useState(1);
+  const compact = zoom < 0.55;
   const [branchOpen, setBranchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [branchId, setBranchId] = useState<string | null>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const branches = useMemo(() => focusAreas(nodes), [nodes]);
@@ -59,6 +62,17 @@ export function ResearchGraph({
     if (edge.to === selectedId) related.add(edge.from);
   }
   const nearby = graph.nodes.filter(node => related.has(node.id));
+  const matches = useMemo(() => {
+    const term = query.trim().toLocaleLowerCase();
+    return term ? nodes.filter(node => node.active !== false && node.status !== "superseded" &&
+      `${node.label} ${node.objective ?? ""} ${nodeInsight(node)}`.toLocaleLowerCase().includes(term)).slice(0, 8) : [];
+  }, [nodes, query]);
+  const locateNode = (id: string) => {
+    setBranchId(null);
+    setQuery("");
+    setSearchOpen(false);
+    onSelect(id);
+  };
   const focusZoom = () => {
     const area = viewport.current;
     if (!area || !nearby.length) return 1;
@@ -191,6 +205,9 @@ export function ResearchGraph({
             >
               <span className="codicon codicon-add" />
             </button>
+            <button aria-label="查找研究节点" title="查找研究节点" aria-pressed={searchOpen} onClick={() => setSearchOpen(value => !value)}>
+              <span className="codicon codicon-search" />
+            </button>
             {options.length > 0 && (
               <button aria-label="按主题分支筛选" title="按主题分支筛选" aria-pressed={branchOpen} onClick={() => { setBranchOpen(value => !value); if (branchOpen) { setBranchId(null); setZoom(1); } }}>
                 <span className="codicon codicon-filter" />
@@ -208,6 +225,19 @@ export function ResearchGraph({
           </div>
         </div>
       )}
+      {searchOpen && <div className="dr-node-lookup" role="search" aria-label="研究节点定位">
+        <input autoFocus type="search" aria-label="输入要定位的研究节点" placeholder="查找任务、主题或发现…" value={query}
+          onChange={event => setQuery(event.target.value)} onKeyDown={event => {
+            if (event.key === "Escape") { setSearchOpen(false); setQuery(""); }
+            if (event.key === "Enter" && matches[0]) { event.preventDefault(); locateNode(matches[0].id); }
+          }} />
+        <small>{query.trim() ? (matches.length ? `显示前 ${matches.length} 项 · 回车定位首项` : "无匹配节点") : "输入关键词快速定位到节点"}</small>
+        {matches.length > 0 && <div className="dr-node-matches" role="group" aria-label="匹配节点">
+          {matches.map(node => <button type="button" key={node.id} onClick={() => locateNode(node.id)}>
+            <span>{node.label}</span><small>{labelFor(node.status)}</small>
+          </button>)}
+        </div>}
+      </div>}
       {branchOpen && options.length > 0 && <div className="dr-branch-toolbar" role="group" aria-label="研究分支筛选">
         <label htmlFor="dr-branch-select">研究方向</label>
         <select id="dr-branch-select" aria-label="筛选研究方向" value={branch?.id ?? ""} onChange={event => {
@@ -240,7 +270,7 @@ export function ResearchGraph({
                 height: graph.height,
                 transform: `scale(${zoom})`,
               }}
-              data-compact={zoom < 0.55}
+              data-compact={compact}
             >
               <svg
                 className="dr-graph-lines"
@@ -293,7 +323,7 @@ export function ResearchGraph({
                   );
                 })}
               </svg>
-              {graph.nodes.map((original) => {
+              {graph.nodes.map((original, index) => {
                 const node = { ...original, status: displayStatus(original.status, workflow) };
                 const insight = clean(nodeInsight(node)).slice(0, 64);
                 return (
@@ -331,7 +361,7 @@ export function ResearchGraph({
                     >
                       <path d="M 36 135 C 18 135 7 122 7 105 C 7 89 18 77 34 76 C 36 59 48 48 64 48 C 77 21 111 19 128 40 C 135 48 139 57 139 66 C 161 69 177 84 177 104 C 177 123 163 135 145 135 Z" />
                     </svg>
-                    <span className="dr-graph-node-meta">
+                    {!compact && <span className="dr-graph-node-meta">
                       <span>
                         <span
                           className={
@@ -347,10 +377,10 @@ export function ResearchGraph({
                         />
                         {labelFor(node.kind)}
                       </span>
-                    </span>
-                    <strong>{node.label}</strong>
-                    {insight && <span className="dr-node-preview">{insight}</span>}
-                    <span className={"dr-node-state " + node.status}>
+                    </span>}
+                    {compact ? <strong className="dr-node-index">{String(index + 1).padStart(2, "0")}</strong> : <strong>{node.label}</strong>}
+                    {!compact && insight && <span className="dr-node-preview">{insight}</span>}
+                    {!compact && <span className={"dr-node-state " + node.status}>
                       {node.status === "completed" && (
                         <span
                           aria-hidden="true"
@@ -358,8 +388,8 @@ export function ResearchGraph({
                         />
                       )}
                       {labelFor(node.status)}
-                    </span>
-                    <span className="dr-graph-node-footer">
+                    </span>}
+                    {!compact && <span className="dr-graph-node-footer">
                       <span>
                         <span className="codicon codicon-person" />
                         {workerNames.get(node.employeeId ?? "") ?? "待分配"}
@@ -370,7 +400,7 @@ export function ResearchGraph({
                           {node.sourceIds.length}
                         </span>
                       )}
-                    </span>
+                    </span>}
                   </button>
                 );
               })}

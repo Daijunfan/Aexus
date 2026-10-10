@@ -673,6 +673,8 @@ try {
       .count(),
     0,
   );
+  assert.equal(await page.locator(".dr-execution-details").evaluate(element => element.open), false, "execution transcript starts collapsed");
+  await page.locator(".dr-execution-details summary").click();
   await page.locator(".dr-live-activity").waitFor();
   await screen("02a-scouting-owned-activity");
   checks.push("scouting has no invented percentage or ETA");
@@ -796,6 +798,7 @@ try {
   await page.getByText("技术研究负责人", { exact: true }).first().waitFor();
   await fits();
   await screen("03-dag-48-nodes");
+  if (!(await page.locator(".dr-execution-details").evaluate(element => element.open))) await page.locator(".dr-execution-details summary").click();
   await page.locator(".dr-live-activity").waitFor();
   assert.ok(
     calls.some((call) => call.command === "session.status"),
@@ -807,11 +810,18 @@ try {
   );
   unrelatedActivity = false;
   await page.locator(".dr-live-activity").waitFor();
+  await page.locator(".dr-execution-details summary").click();
   await page
     .getByRole("button", { name: "适应研究地图画布", exact: true })
     .click();
   await screen("03b-dag-fit");
   assert.equal(await page.locator(".dr-graph-canvas").getAttribute("data-compact"), "true", "fitted large DAG hides low-value card metadata");
+  assert.equal(await page.locator(".dr-graph-node-meta").count(), 0, "compact mode omits secondary DOM rather than hiding it");
+  const compactElements = await page.locator(".dr-graph-canvas").evaluate(element => element.querySelectorAll("*").length);
+  await page.getByRole("button", { name: "查找研究节点" }).click();
+  await page.getByRole("searchbox", { name: "输入要定位的研究节点" }).fill("研究用户交互与干预");
+  await page.getByRole("group", { name: "匹配节点" }).getByRole("button", { name: /研究用户交互与干预/ }).click();
+  await page.locator('.dr-task-detail').getByRole("heading", { name: "研究用户交互与干预", exact: true }).waitFor();
   await page.locator('[data-node-id="node-6"]').click();
   assert.ok(
     parseInt(
@@ -822,6 +832,9 @@ try {
     "selected neighborhood retains readable zoom",
   );
   assert.equal(await page.locator(".dr-graph-canvas").getAttribute("data-compact"), "false", "focused DAG restores full node details");
+  const focusedElements = await page.locator(".dr-graph-canvas").evaluate(element => element.querySelectorAll("*").length);
+  assert.ok(focusedElements > compactElements + 160, "semantic zoom removes hundreds of invisible elements from the DAG overview");
+  await fs.writeFile(path.join(out, "semantic-zoom-metrics.json"), JSON.stringify({nodes:48, compactElements, focusedElements, reduction:focusedElements - compactElements}, null, 2));
   assert.equal(await page.locator(".dr-graph-lines>path.selected").count(), 5);
   assert.equal(await page.locator(".dr-task-links").count(), 2);
   await page
@@ -1310,6 +1323,7 @@ try {
     "three hashed acquired full texts derive 20 backend-normalized claims, six report chapters, 20 table rows and 20 linked citations with exact locator; raw text collapsed",
   );
   // Research Studio rounds 1-3: overview, matrix, branches, timeline, updates, board and export.
+  if (await page.locator(".dr-execution-details").evaluate(element => element.open)) await page.locator(".dr-execution-details summary").click();
   await page.getByRole("tab", {name: "成果总览", exact: true}).click();
   await page.getByRole("heading", {name: "研究范围地图"}).waitFor();
   await page.getByRole("heading", {name: "资料分布"}).waitFor();
@@ -1363,6 +1377,14 @@ try {
   assert.ok(await page.locator(".dr-matrix").count(), "report tables become navigable comparison matrices");
   await embedHost(390, 844);
   await fits();
+  await page.getByText("左右滑动查看所有比较对象，首列保持可见。").waitFor();
+  const comparisonScroll = page.getByRole("region", {name: "可横向滚动的比较表"});
+  const firstDimension = comparisonScroll.locator("tbody th").first();
+  assert.equal(await firstDimension.evaluate(element => getComputedStyle(element).position), "sticky");
+  const labelBefore = await firstDimension.boundingBox();
+  await comparisonScroll.evaluate(element => { element.scrollLeft = 160; });
+  const labelAfter = await firstDimension.boundingBox();
+  assert.ok(Math.abs(labelBefore.x - labelAfter.x) <= 2, "comparison dimension labels remain visible during horizontal scrolling");
   await screen("05-studio-matrix-mobile");
   await resetHost();
   await page.getByRole("button", {name: "复制并编辑矩阵"}).click();

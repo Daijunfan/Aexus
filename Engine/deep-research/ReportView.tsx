@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { WorkflowView } from "../../Contract/workflow";
 import type { EvidenceExcerpt, ResearchReport, ResearchFinding, ResearchNode } from "./ui";
 import { focusAreas, extractMatrices, extractTopicTimeline, clean } from "./ResearchInsights";
@@ -26,6 +26,9 @@ export function ReportView({
   renderEvidence: (items: EvidenceExcerpt[], section?: string) => ReactNode;
   renderCitations: (ids: string[], section?: string) => ReactNode;
 }) {
+  const scopePreview = useMemo(() => focusAreas(nodes).slice(0, 4), [nodes]);
+  const matrixCount = useMemo(() => extractMatrices(report).length, [report]);
+  const datedCount = useMemo(() => extractTopicTimeline(report, findings).length, [report, findings]);
   return (
     <section className="dr-report-view" aria-label="研究报告">
       {report ? (
@@ -75,7 +78,7 @@ export function ReportView({
             <details className="dr-report-digest" open>
               <summary>研究视觉摘要 · {findings.length} 条发现</summary>
               <div className="dr-report-digest-grid">
-                {focusAreas(nodes).slice(0, 4).map(area => <div className="dr-report-scope-card" key={area.id}>
+                {scopePreview.map(area => <div className="dr-report-scope-card" key={area.id}>
                   <strong>{area.title}</strong><span>{area.completed} / {area.total} 相关任务完成</span>
                   <div><i style={{ width: (area.total ? area.completed / area.total * 100 : 0) + "%" }}/></div>
                 </div>)}
@@ -86,8 +89,8 @@ export function ReportView({
                 </p>)}
               </div>}
               <div className="dr-report-digest-actions">
-                {extractMatrices(report).length > 0 && <button onClick={onCompare}>查看 {extractMatrices(report).length} 张比较矩阵 ↗</button>}
-                {extractTopicTimeline(report, findings).length > 0 && <button onClick={onTimeline}>查看时间线 ↗</button>}
+                {matrixCount > 0 && <button onClick={onCompare}>查看 {matrixCount} 张比较矩阵 ↗</button>}
+                {datedCount > 0 && <button onClick={onTimeline}>查看时间线 ↗</button>}
               </div>
             </details>
             {report.sections.map((section, index) => {
