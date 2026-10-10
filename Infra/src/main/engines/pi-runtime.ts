@@ -14,7 +14,7 @@ import { sandboxFor } from './session-support'
 import { patchSession } from '../store'
 import { APP_HOME } from '../../shared/protocol'
 import { approvalHandler,cancelApprovals } from '../approvals'
-import { engineEnvironment,processProvider } from './configuration'
+import { engineEnvironment,engineConfiguration,piAgentDirectory,processProvider,publicEngineConfiguration } from './configuration'
 import type { ModelInfo } from '../../shared/types'
 const modelsFrom=(models:any[],provider:ReturnType<typeof processProvider>):ModelInfo[]=>models.filter(m=>m.provider===provider.provider).map(m=>({value:m.id,displayName:m.name??m.id,description:provider.managedReasoning?'OpenAI-compatible · Provider-controlled reasoning':'DeepSeek · Thinking off',inputModalities:['text'],supportsEffort:false,supportedEffortLevels:[],supportsAdaptiveThinking:false,supportsFastMode:false,isDefault:m.id===provider.model}))
 export async function discoverPi(){
@@ -25,11 +25,12 @@ export async function openPi(context:EngineStart){
   const {args,card,cardId,sessionId,cwd,permissionMode,host}=context
   if(context.nativeRemote)throw Error('Pi requires a Core-local engine; cloud workspaces use Tunnel')
   if(context.remote&&!context.remoteLaunch)throw Error('Missing cloud Tunnel; local execution is disabled')
-  if(!engineEnvironment('pi').DEEPSEEK_API_KEY)throw Error('Configure the Pi API key in Coding Agent settings first')
+  if(!publicEngineConfiguration('pi').hasApiKey)throw Error('Configure the Pi API key first')
   if(args.planMode||permissionMode==='plan')throw Error('Pi does not support Plan mode')
   const provider=processProvider('pi')
   const directory=path.join(APP_HOME,'agent-access',cardId,'pi'),{register,isOpen,rememberMeta,emit,dispatchQueued}=host
-  if(card?.piSessionFile&&!path.resolve(card.piSessionFile).startsWith(path.resolve(directory)+path.sep))throw Error('Pi session belongs to a different employee profile')
+  const sessionRoots=[directory,...(engineConfiguration('pi').sharedPiConfig&&!context.remoteLaunch?[path.join(piAgentDirectory(),'sessions')]:[])]
+  if(card?.piSessionFile&&!sessionRoots.some(root=>path.resolve(card.piSessionFile!).startsWith(path.resolve(root)+path.sep)))throw Error('Pi session belongs to a different employee profile')
   const state=engineState(context,{model:args.model||provider.model,planMode:false})
   const approve=approvalHandler(sessionId,()=>emit('session:changed',{sessionId}))
   let receiptTaskId:string|undefined,receiptRead=false

@@ -65,4 +65,4 @@ schedule.preview 的准确参数以 api.describe 返回为准。修改使用当�
 
 ## 工作流状态与低开销读取
 
-Engine 后台任务继续通过公共 `workflow.*` 调用。`workflow.get` 可传入非负整数 `ifRevision`；版本相同时仅返回 `{id, engineId, revision, unchanged: true}`，客户端保留上一次公开视图。版本变化或不传该参数时返回完整公开视图。`workflow.events` 接受 `id`、可选 `afterRevision` 与 `limit`（1–100），提供最近最多 128 个**只含阶段、进度及计数**的持久检查点事件；旧任务在新的检查点之前可返回空历史。所有读取均先检查工作流所有者与 Engine 作用域，不启动模型、不修改任务、不暴露私有材料、网页摘录或提示词。调用类型与生命周期见 [Workflow Contract](../../../Contract/WORKFLOWS.md)。
+Engine 后台任务继续通过公共 `workflow.*` 调用。历史列表使用 `workflow.list {brief:true}` 时只取任务身份、状态、修订号与有长度上限的标题/主题/阶段，不传完整 DAG、资料及最终文件清单；默认不传 `brief` 仍返回原完整公开视图。进入具体任务再用 `workflow.get`，可传入非负整数 `ifRevision`；版本相同时仅返回 `{id, engineId, revision, unchanged: true}`，客户端保留上一次公开视图。版本变化或不传该参数时返回完整公开视图。`workflow.events` 接受 `id`、可选 `afterRevision` 与 `limit`（1–100），提供最多 128 个**只含阶段、真实完成比例及任务/来源计数**的持久检查点事件；带游标按从旧到新读取，未知比例保持缺省，旧任务在新的检查点之前可返回空历史。所有读取均先检查工作流所有者与 Engine 作用域，不启动模型、不修改任务、不暴露私有材料、网页摘录或提示词。调用类型与生命周期见 [Workflow Contract](../../../Contract/WORKFLOWS.md)。

@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import sys
+sys.dont_write_bytecode = True
 
 # Resolve bundled sibling modules even with the Windows embedded Python runtime.
 sys.path.insert(0, str(Path(__file__).resolve().parent))

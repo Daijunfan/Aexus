@@ -3,7 +3,7 @@ import path from 'node:path'
 import spawn from 'cross-spawn'
 const root=path.resolve(import.meta.dirname,'../../..'),release=process.argv.includes('--release')
 const lock=JSON.parse(fs.readFileSync(path.join(root,'Infra/src/resources/plugins.lock.json'),'utf8'))
-if(lock.schemaVersion!==1||!lock.plugins?.length)throw Error('Missing plugin distribution lock')
+if(lock.schemaVersion!==1||!Array.isArray(lock.plugins))throw Error('Missing plugin distribution lock')
 for(const item of lock.plugins){
   if(!/^[a-z0-9-]+$/.test(item.directory))throw Error('Invalid plugin directory')
   const directory=path.join(root,'Infra/Plugins',item.directory),manifest=path.join(directory,'package.json')

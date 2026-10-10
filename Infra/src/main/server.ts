@@ -971,7 +971,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       authorize('card.create',a);
       const employee:StoredSession = { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,workEnvironment:a.workEnvironment,directoryMode:a.directoryMode??(a.cwd?'bind':'default'),localWorkspaceRoot:a.workEnvironment==='local'&&teamSettings(store,a.group).mode==='cloud'?employeeRoot(store,identity):undefined,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
         model,
-        thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??(engine==='codex'?'high':'low'), permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
+        thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??(engine==='codex'?'medium':'low'), permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
       employee.initialization=pendingInitialization()
       ensureEmployeeBootstrap(employee,latest)
       const saved=patchSession(id,employee)

@@ -16,6 +16,9 @@ for(const {args,input,expected} of [...cases,...messageCases]){
  assert.deepEqual(actual,expected,args.join(' '))
 }
 assert.equal(new Set(cases.map(({args})=>args.slice(0,2).join('.'))).size,Object.keys(compiled).length)
+const brief=spawnSync(process.execPath,[path.join(root,'Infra/src/cli/agents'),'workflow','list','--engine-id','deep-research','--brief','--json'],{cwd:root,env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8'})
+assert.equal(brief.status,0,brief.stderr)
+assert.deepEqual(JSON.parse(brief.stdout),{cmd:'workflow.list',args:{engineId:'deep-research',brief:true}},'new optional brief flag must reach Core as a boolean without changing legacy CLI inputs')
 const unknown=JSON.parse(spawnSync(process.execPath,[path.join(root,'Infra/src/cli/agents'),'unknown-command','--json'],{cwd:root,env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8'}).stdout)
 assert.match(unknown.error,/unknown command: unknown-command/);assert.doesNotMatch(unknown.error,/not defined/)
 console.log(`PASS ${cases.length+messageCases.length} original CLI payloads; ${Object.keys(compiled).length} schema-owned routes, remote input and failure parity`)

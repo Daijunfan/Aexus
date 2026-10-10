@@ -6,7 +6,7 @@ import {spawnEmployeeProcess} from '../agent-process-isolation'
 import {terminateTree} from '../platform'
 import {childEnv} from '../exec'
 import {engineExecutable} from './executable'
-import {engineProcessEnvironment,processProvider} from './configuration'
+import {engineConfiguration,engineProcessEnvironment,piAgentDirectory,processProvider} from './configuration'
 import {atomicJson} from '../atomic-file'
 import type {RemoteLaunch} from '../tunnel'
 import {preparePiTunnel,type TunnelTool,type TunnelToolCall} from './pi-tunnel'
@@ -15,13 +15,15 @@ type CoreTool={tool:{name:string;description:string;inputSchema:Record<string,un
 
 export function piClient(options:{discussion?:CoreTool;documentation?:CoreTool;api?:CoreTool;cwd:string;directory:string;workRoot?:string;employeeId?:string;sessionFile?:string;model?:string;remoteLaunch?:RemoteLaunch;tunnelTools?:TunnelTool[];onTunnelCall?:(request:TunnelToolCall)=>Promise<unknown>;env?:NodeJS.ProcessEnv;onEvent?:(event:any)=>void;onPermission?:(request:{toolName:string;toolCallId:string;input:Record<string,unknown>})=>Promise<boolean>}){
   fs.mkdirSync(options.directory,{recursive:true,mode:0o700})
-  const provider=processProvider('pi'),modelsFile=path.join(options.directory,'models.json')
-  const models=fs.existsSync(modelsFile)?JSON.parse(fs.readFileSync(modelsFile,'utf8')):{}
-  if(provider.baseUrl){
-    models.providers={...models.providers,[provider.provider]:{baseUrl:provider.baseUrl,api:'openai-completions',apiKey:'$DEEPSEEK_API_KEY',models:[{id:provider.model}]}}
-    atomicJson(modelsFile,models,true)
-  }else if(models.providers?.['agents-company']){
-    delete models.providers['agents-company'];atomicJson(modelsFile,models,true)
+  const provider=processProvider('pi'),shared=!!engineConfiguration('pi').sharedPiConfig
+  if(!shared){
+    const modelsFile=path.join(options.directory,'models.json'),models=fs.existsSync(modelsFile)?JSON.parse(fs.readFileSync(modelsFile,'utf8')):{}
+    if(provider.baseUrl){
+      models.providers={...models.providers,[provider.provider]:{baseUrl:provider.baseUrl,api:'openai-completions',apiKey:'$DEEPSEEK_API_KEY',models:[{id:provider.model}]}}
+      atomicJson(modelsFile,models,true)
+    }else if(models.providers?.['agents-company']){
+      delete models.providers['agents-company'];atomicJson(modelsFile,models,true)
+    }
   }
 
   const policy=path.join(options.directory,'company-permissions.mjs')
@@ -29,10 +31,10 @@ export function piClient(options:{discussion?:CoreTool;documentation?:CoreTool;a
   const coreTools=[{descriptor:options.discussion,title:'Aexus discussion'},{descriptor:options.documentation,title:'Aexus documentation'},{descriptor:options.api,title:'Aexus API'}].filter((item):item is {descriptor:CoreTool;title:string}=>!!item.descriptor)
   const discussion=path.join(options.directory,'company-discussion.mjs')
   if(coreTools.length)fs.writeFileSync(discussion,`export default function(pi){for(const {tool,title} of ${JSON.stringify(coreTools.map(item=>({tool:item.descriptor.tool,title:item.title})))} ){pi.registerTool({name:tool.name,label:tool.name,description:tool.description,parameters:tool.inputSchema,async execute(toolCallId,input,signal,_update,ctx){if(signal?.aborted)throw Error('Interrupted');const reply=await ctx.ui.input(title,JSON.stringify({toolCallId,input}));if(reply===undefined||signal?.aborted)throw Error('Core tool cancelled');const value=JSON.parse(reply);if(value.isError)throw Error(value.error);return {content:[{type:'text',text:JSON.stringify(value.result)}],details:undefined}}});}}\n`,{mode:0o600})
-  const env={...engineProcessEnvironment('pi',childEnv(options.cwd,options.workRoot)),...options.env,PI_CODING_AGENT_DIR:options.directory,PI_OFFLINE:'1'}
+  const env={...engineProcessEnvironment('pi',childEnv(options.cwd,options.workRoot)),...options.env,PI_CODING_AGENT_DIR:shared?piAgentDirectory():options.directory,PI_OFFLINE:'1'}
   const secrets=Object.entries(env).filter(([k,v])=>/key|token|password/i.test(k)&&v&&v.length>8).map(([,v])=>v!)
   const redact=(text:string)=>secrets.reduce((value,secret)=>value.replaceAll(secret,'[redacted]'),text)
-  const args=['--mode','rpc','--offline','--provider',provider.provider,'--model',options.model||provider.model,'--thinking','off','--session-dir',path.join(options.directory,'sessions'),'--no-extensions','--no-skills','--no-prompt-templates','--no-themes','--no-approve','--extension',policy,...(coreTools.length?['--extension',discussion]:[]),...(options.remoteLaunch?['--no-builtin-tools','--no-context-files','--system-prompt',options.remoteLaunch.instructions,'--extension',preparePiTunnel(options.directory,options.tunnelTools??[],coreTools.map(item=>item.descriptor.tool.name))]:[]),...(options.sessionFile?['--session',options.sessionFile]:[])]
+  const args=['--mode','rpc','--offline','--provider',provider.provider,'--model',options.model||provider.model,'--thinking','off',...(shared&&!options.remoteLaunch?[]:['--session-dir',path.join(options.directory,'sessions')]),'--no-extensions','--no-skills','--no-prompt-templates','--no-themes','--no-approve','--extension',policy,...(coreTools.length?['--extension',discussion]:[]),...(options.remoteLaunch?['--no-builtin-tools','--no-context-files','--system-prompt',options.remoteLaunch.instructions,'--extension',preparePiTunnel(options.directory,options.tunnelTools??[],coreTools.map(item=>item.descriptor.tool.name))]:[]),...(options.sessionFile?['--session',options.sessionFile]:[])]
   const processOptions={cwd:options.cwd,env,stdio:['pipe','pipe','pipe'] as ['pipe','pipe','pipe'],windowsHide:true,detached:process.platform!=='win32'}
   const child=options.employeeId?spawnEmployeeProcess(options.employeeId,engineExecutable('pi'),args,processOptions):spawn(engineExecutable('pi'),args,processOptions)
   let sequence=0,stderr='',closed=false,buffer='';const decoder=new StringDecoder('utf8')

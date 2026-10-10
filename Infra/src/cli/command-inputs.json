@@ -288,6 +288,13 @@
         "number",
         false,
         false
+      ],
+      [
+        "brief",
+        "brief",
+        "boolean",
+        false,
+        false
       ]
     ]
   },

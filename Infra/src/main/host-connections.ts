@@ -43,7 +43,7 @@ export async function openHostDesktop(hostId:string){
       await new Promise<void>(r=>reserve.close(()=>r()))
       if(value.cancelled)throw Error('桌面连接已取消')
       const args=['-N','-T','-o','ExitOnForwardFailure=yes','-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=10','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=2']
-      for(const [field,flag] of [['port','-p'],['identity_file','-i'],['known_hosts','-o'],['ssh_config','-F'],['proxy_jump','-J']])if(config[field])args.push(flag,field==='known_hosts'?'UserKnownHostsFile='+config[field]:String(config[field]))
+      for(const [field,flag] of [['port','-p'],['identity_file','-i'],['known_hosts','-o'],['ssh_config','-F'],['proxy_jump','-J']])if(config[field])args.push(flag,field==='known_hosts'?'UserKnownHostsFile='+JSON.stringify(config[field]):String(config[field]))
       const remoteAddress=profile.address.includes(':')&&!profile.address.startsWith('[')?'['+profile.address+']':profile.address
       args.push('-L',`127.0.0.1:${port}:${remoteAddress}:${profile.port}`,target.host)
       const env=childEnv();if(config.askpass)Object.assign(env,{SSH_ASKPASS:config.askpass,SSH_ASKPASS_REQUIRE:'force',DISPLAY:'agents-company'})

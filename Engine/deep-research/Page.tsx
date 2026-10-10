@@ -1,23 +1,38 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
-  type ReactNode,
 } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ContractClient } from "../../Contract/protocol";
 import type { WorkflowView } from "../../Contract/workflow";
 import { ResearchGraph } from "./ResearchGraph";
-import { SourcePanel } from "./SourcePanel";
+import { SourcePanel } from "./retrieval/SourcePanel";
+import { parseResearchMaterial } from "./retrieval/materials";
 import { ReportView } from "./ReportView";
-import { ResearchOverview, ResearchComparison, ResearchTimeline, ResearchUpdates, ResearchBoard, type BoardItem } from "./ResearchViews";
-import { type ResearchMatrix, nodeInsight } from "./ResearchInsights";
+import { ResearchOverview, ResearchTimeline, ResearchUpdates, ResearchBoard } from "./ResearchViews";
 import { visualBrief } from "./ResearchBrief";
+import { ResearchTabs } from "./workspace/ResearchTabs";
+import { ResearchHistory } from "./workspace/ResearchHistory";
+import { ResearchIntake, preferredEngine, type EngineOption } from "./workspace/ResearchIntake";
+import { ResearchTaskInspector } from "./workspace/ResearchTaskInspector";
+import { ResearchJobHeader } from "./workspace/ResearchJobHeader";
+import { ResearchProgressBand } from "./workspace/ResearchProgressBand";
+import { ResearchExecutionControls } from "./workspace/ResearchExecutionControls";
+import { ResearchFindings } from "./workspace/ResearchFindings";
+import { projectPublicKnowledge } from "./knowledge/index.mjs";
+import { Icon } from "./workspace/Icon";
+import { useResearchHistory } from "./workspace/useResearchHistory";
+import { ResearchComparisonPanel } from "./workspace/ResearchComparisonPanel";
+import { useResearchStudio } from "./workspace/useResearchStudio";
+import { useWorkflowUpdates, useAgentActivityPreviews } from "./workspace/useWorkflowUpdates";
+import { readResearchView, rememberResearchView } from "./workspace/viewPreference";
+import { useResearchLocation } from "./workspace/useResearchLocation";
+import { citationLocator } from "./workspace/citationLocator";
 import {
-  activityLabel,
-  displayStatus,
   independentlyRead,
   labelFor,
   safeUrl,
@@ -25,84 +40,22 @@ import {
   type ResearchNode,
 } from "./ui";
 import "./style.css";
+import "./workspace/style.css";
 
 const ENGINE = "deep-research";
-const SCOPES = [
-  { value: "quick", label: "快速" },
-  { value: "comprehensive", label: "全面" },
-  { value: "deep", label: "深入" },
-  { value: "academic", label: "学术" },
-];
-const PHASES: Record<string, string> = {
-  init: "准备研究",
-  scouting: "初步调研",
-  planning: "制定计划",
-  research: "研究执行",
-  verification: "核验证据",
-  synthesis: "综合发现",
-  writing: "撰写报告",
-  review: "审阅报告",
-  complete: "研究完成",
-};
-const STATUS: Record<string, string> = {
-  running: "进行中",
-  waiting: "待确认",
-  paused: "已暂停",
-  completed: "已完成",
-  failed: "需处理",
-  cancelled: "已停止",
-};
-const TABS = [
-  { id: "overview", label: "成果总览", icon: "dashboard" },
-  { id: "graph", label: "研究地图", icon: "type-hierarchy" },
-  { id: "comparison", label: "比较矩阵", icon: "table" },
-  { id: "findings", label: "发现", icon: "lightbulb" },
-  { id: "sources", label: "来源", icon: "globe" },
-  { id: "report", label: "报告", icon: "file-text" },
-];
-const DETAIL_VIEWS: Record<string, string> = {
-  timeline: "时间与演变", updates: "研究更新", board: "成果板",
-};
-type EngineOption = {
-  engine: string;
-  label: string;
-  configuration: {
-    hasApiKey?: boolean;
-    sharedPiConfig?: boolean;
-    sharedClineConfig?: boolean;
-  };
-};
-const preferredEngine = (options: EngineOption[]) =>
-  options.find(
-    option => option.engine === "pi" && option.configuration.sharedPiConfig && option.configuration.hasApiKey,
-  )?.engine ??
-  options.find(
-    option => option.engine === "cline" && option.configuration.sharedClineConfig && option.configuration.hasApiKey,
-  )?.engine ??
-  options.find(option => option.configuration.hasApiKey)?.engine ?? "";
-function Icon({ name }: { name: string }) {
-  return <span className={"codicon codicon-" + name} aria-hidden="true" />;
-}
-function Empty({ icon, children }: { icon: string; children: ReactNode }) {
-  return (
-    <div className="dr-empty">
-      <Icon name={icon} />
-      <p>{children}</p>
-    </div>
-  );
-}
-
 export default function Page({ client }: { client: ContractClient }) {
-  const [job, setJob] = useState<WorkflowView | null>(null),
-    [history, setHistory] = useState<WorkflowView[]>([]);
+  const [job, setJob] = useState<WorkflowView | null>(null);
   const [forkParent, setForkParent] = useState<WorkflowView | null>(null);
   const [engineOptions, setEngineOptions] = useState<EngineOption[]>([]),
     [selectedEngine, setSelectedEngine] = useState(""),
     [engineLoading, setEngineLoading] = useState(true);
-  const [historyHasMore, setHistoryHasMore] = useState(false);
-  const [loading, setLoading] = useState(true),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [readingMaterials, setReadingMaterials] = useState(false);
+  const {
+    history, hasMore: historyHasMore, loading,
+    updateHistory, loadMoreHistory,
+  } = useResearchHistory(client, setError);
   const [topic, setTopic] = useState(""),
     [scope, setScope] = useState("comprehensive"),
     [maxSources, setMaxSources] = useState<number | null>(null),
@@ -120,39 +73,34 @@ export default function Page({ client }: { client: ContractClient }) {
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [parentFindings, setParentFindings] = useState<any[] | null>(null);
-  const [studio, setStudio] = useState<{ jobId: string; board: BoardItem[]; matrix: ResearchMatrix | null }>({ jobId: "", board: [], matrix: null });
+  const {board, customMatrix, updateBoard, updateMatrix, pinItem} =
+    useResearchStudio(job?.id);
   const [graphDirection, setGraphDirection] = useState<
     "horizontal" | "vertical"
   >();
-  const [liveActivities, setLiveActivities] = useState<
-    {
-      nodeId: string;
-      messageId: string;
-      preview: { kind: string; text: string; detail?: string; tool?: string };
-    }[]
-  >([]);
   const [revisionOpen, setRevisionOpen] = useState(false),
     [instructions, setInstructions] = useState("");
   const alive = useRef(true),
     current = useRef<WorkflowView | null>(null),
     selected = useRef<string | null>(null);
-  const taskDetail = useRef<HTMLDivElement>(null);
-  const tabsRef = useRef<HTMLElement>(null);
-  const reportReturn = useRef<{
-    section: string;
-    outer: number;
-    main: number;
-    window: number;
-  } | null>(null);
+  const { reportReturn, openSource, openReportSource, returnToReport } =
+    useResearchLocation(setTab, setSourceId);
   const request = useRef<{ payload: string; key: string } | null>(null);
+  const materialRead = useRef<AbortController | null>(null);
+  const cancelMaterialRead = () => {
+    materialRead.current?.abort();
+    materialRead.current = null;
+    setReadingMaterials(false);
+  };
   const apply = (next: WorkflowView) => {
-    current.current = next;
-    setJob(next);
-    setHistory((old) =>
-      [next, ...old.filter((item) => item.id !== next.id)].sort(
-        (a, b) => b.createdAt - a.createdAt,
-      ),
-    );
+    const latest = current.current;
+    // A late response can update history without reopening a job the user left.
+    if (selected.current === next.id &&
+        (latest?.id !== next.id || next.revision >= latest.revision)) {
+      current.current = next;
+      setJob(next);
+    }
+    updateHistory(next);
   };
   const keyFor = (value: unknown) => {
     const payload = JSON.stringify(value);
@@ -171,28 +119,17 @@ export default function Page({ client }: { client: ContractClient }) {
       if (alive.current) setBusy(false);
     }
   };
+  useWorkflowUpdates({
+    client, job, selected, current, onUpdate: apply, onError: setError,
+  });
+  const liveActivities = useAgentActivityPreviews({
+    client, job, tab, selectedNodeId: nodeId,
+  });
   useEffect(() => {
     alive.current = true;
-    void client
-      .invoke<{ jobs: WorkflowView[]; hasMore?: boolean }>("workflow.list", {
-        engineId: ENGINE,
-        offset: 0,
-        limit: 30,
-      })
-      .then(({ jobs, hasMore }) => {
-        if (alive.current) {
-          setHistory(jobs);
-          setHistoryHasMore(!!hasMore);
-        }
-      })
-      .catch((e) => {
-        if (alive.current) setError(e.message);
-      })
-      .finally(() => {
-        if (alive.current) setLoading(false);
-      });
     return () => {
       alive.current = false;
+      materialRead.current?.abort();
     };
   }, [client]);
   useEffect(() => {
@@ -209,115 +146,27 @@ export default function Page({ client }: { client: ContractClient }) {
       .finally(() => { if (active) setEngineLoading(false); });
     return () => { active = false; };
   }, [client]);
-  useEffect(() => {
-    if (!job || !["running", "waiting", "paused"].includes(job.status)) return;
-    let active = true,
-      activityAt = 0,
-      timer: ReturnType<typeof setTimeout>;
-    const poll = async () => {
-      try {
-        const next = await client.invoke<
-          WorkflowView & { unchanged?: boolean }
-        >("workflow.get", {
-          id: job.id,
-          ifRevision: current.current?.revision,
-        });
-        if (active && selected.current === job.id && !next.unchanged)
-          apply(next);
-        if (
-          active &&
-          job.status === "running" &&
-          tab === "graph" &&
-          !document.hidden &&
-          Date.now() - activityAt >= 3000
-        ) {
-          activityAt = Date.now();
-          const graphRunning: ResearchNode[] = (
-            current.current?.summary.graph?.nodes ?? []
-          )
-            .filter(
-              (node: ResearchNode) =>
-                node.status === "running" && node.employeeId && node.messageId,
-            )
-            .sort(
-              (a: ResearchNode, b: ResearchNode) =>
-                Number(b.id === nodeId) - Number(a.id === nodeId),
-            );
-          const running: ResearchNode[] = graphRunning.length
-            ? graphRunning
-            : (current.current?.summary.tasks ?? []).filter(
-                (task: any) =>
-                  ["running", "approval"].includes(task.status) &&
-                  task.employeeId &&
-                  task.messageId,
-              );
-          const readings = await Promise.allSettled(
-            running.slice(0, 2).map(async (node) => {
-              const [status] = await client.invoke<any[]>("session.status", {
-                employee: node.employeeId,
-              });
-              return status?.currentTask?.messageId === node.messageId &&
-                status.activityPreview &&
-                status.activityPreview.kind !== "thinking"
-                ? {
-                    nodeId: node.id,
-                    messageId: node.messageId!,
-                    preview: status.activityPreview,
-                  }
-                : null;
-            }),
-          );
-          if (active)
-            setLiveActivities(
-              readings.flatMap((result) =>
-                result.status === "fulfilled" && result.value
-                  ? [result.value]
-                  : [],
-              ),
-            );
-        }
-      } catch (e) {
-        if (active) setError((e as Error).message);
-      } finally {
-        if (active) timer = setTimeout(poll, 1500);
-      }
-    };
-    timer = setTimeout(poll, 750);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [job?.id, job?.status, client, tab, nodeId]);
-  const load = async (id: string, view = "graph") => {
+  const load = async (id: string, view?: string) => {
+    const previous = selected.current;
     selected.current = id;
-    setForkParent(null);
-    setNodeId(null);
-    setSourceId(null);
-    reportReturn.current = null;
-    setTab(view);
-    setRevisionOpen(false);
-    const next = await client.invoke<WorkflowView>("workflow.get", { id });
-    if (alive.current && selected.current === id) {
+    try {
+      const next = await client.invoke<WorkflowView>("workflow.get", { id });
+      if (!alive.current || selected.current !== id) return;
+      cancelMaterialRead();
+      setForkParent(null);
+      setNodeId(null);
+      setSourceId(null);
+      reportReturn.current = null;
+      setRevisionOpen(false);
       apply(next);
-      if (view === "graph" && next.status === "completed") setTab("overview");
-    }
-  };
-  const loadMoreHistory = async () => {
-    const { jobs, hasMore } = await client.invoke<{
-      jobs: WorkflowView[];
-      hasMore: boolean;
-    }>("workflow.list", { engineId: ENGINE, offset: history.length, limit: 30 });
-    if (alive.current) {
-      setHistory((old) => {
-        const known = new Set(old.map((item) => item.id));
-        return [...old, ...jobs.filter((item) => !known.has(item.id))].sort(
-          (a, b) => b.createdAt - a.createdAt,
-        );
-      });
-      setHistoryHasMore(hasMore);
+      setTab(view ?? (next.status === "completed" ? "overview" : readResearchView(next.id) ?? "graph"));
+    } catch (error) {
+      if (selected.current === id) selected.current = previous;
+      throw error;
     }
   };
   const newResearch = () => {
+    cancelMaterialRead();
     selected.current = null;
     current.current = null;
     setJob(null);
@@ -332,6 +181,7 @@ export default function Page({ client }: { client: ContractClient }) {
   const beginFollowUp = () => {
     const parent = current.current;
     if (!parent || parent.status !== "completed") return;
+    cancelMaterialRead();
     selected.current = null;
     current.current = null;
     setJob(null);
@@ -454,37 +304,25 @@ export default function Page({ client }: { client: ContractClient }) {
   };
   const upload = async (files: File[]) => {
     const next = [...materials];
-    for (const file of files) {
-      if (!/\.(txt|md|csv|json)$/i.test(file.name) || file.size > 200000)
-        throw Error("支持 TXT、Markdown、CSV、JSON，每份不超过 200KB");
-      next.push({ name: file.name, content: await file.text() });
-    }
-    if (next.length > (forkParent ? 9 : 10)) throw Error(forkParent ? "后续研究最多添加 9 份背景材料" : "最多 10 份背景材料");
-    setMaterials(next);
-  };
-  useEffect(() => {
-    if (!job?.id) return;
-    let board: BoardItem[] = [];
-    let matrix: ResearchMatrix | null = null;
+    if (next.length + files.length > (forkParent ? 9 : 10))
+      throw Error(forkParent ? "后续研究最多添加 9 份背景材料" : "最多 10 份背景材料");
+    cancelMaterialRead();
+    const controller = new AbortController();
+    materialRead.current = controller;
+    setReadingMaterials(true);
     try {
-      const saved = JSON.parse(localStorage.getItem("aexus:research:studio:" + job.id) || "{}");
-      if (Array.isArray(saved.board)) board = saved.board.filter((item: any) =>
-        ["node", "finding"].includes(item?.type) && typeof item.id === "string"
-      ).slice(0, 100).map((item: any) => ({ type: item.type, id: item.id, note: String(item.note ?? "").slice(0, 3000) }));
-      if (saved.matrix?.id === "custom" && Array.isArray(saved.matrix.columns) && Array.isArray(saved.matrix.rows)) {
-        const columns = saved.matrix.columns.filter((v: unknown) => typeof v === "string").slice(0, 12);
-        matrix = { id: "custom", title: String(saved.matrix.title ?? "我的比较矩阵"), columns,
-          rows: saved.matrix.rows.filter((r: any) => typeof r?.label === "string" && Array.isArray(r.values))
-            .slice(0, 35).map((r: any) => ({ label: r.label, values: columns.map((_: string, i: number) => String(r.values[i] ?? "").slice(0, 2000)) })) };
+      for (const file of files)
+        next.push(await parseResearchMaterial(file, { signal: controller.signal }));
+      if (!controller.signal.aborted) setMaterials(next);
+    } catch (error) {
+      if (!controller.signal.aborted) throw error;
+    } finally {
+      if (materialRead.current === controller) {
+        materialRead.current = null;
+        setReadingMaterials(false);
       }
-    } catch { /* Local storage may be unavailable in embedded contexts. */ }
-    setStudio({ jobId: job.id, board, matrix });
-  }, [job?.id]);
-  useEffect(() => {
-    if (!job?.id || studio.jobId !== job.id) return;
-    try { localStorage.setItem("aexus:research:studio:" + job.id, JSON.stringify({ board: studio.board, matrix: studio.matrix })); }
-    catch { /* Research still works when local persistence is disabled. */ }
-  }, [job?.id, studio]);
+    }
+  };
   useEffect(() => {
     let active = true;
     setParentFindings(null);
@@ -496,25 +334,19 @@ export default function Page({ client }: { client: ContractClient }) {
     return () => { active = false; };
   }, [client, job?.id, job?.parent?.id]);
   useEffect(() => {
+    if (job?.id && selected.current === job.id) rememberResearchView(job.id, tab);
+  }, [job?.id, tab]);
+  useEffect(() => {
     if (tab === "findings" && selectedFindingId) {
       requestAnimationFrame(() => document.getElementById("dr-finding-" + selectedFindingId)?.scrollIntoView({block: "center", behavior: "smooth"}));
     }
   }, [tab, selectedFindingId]);
-  useEffect(() => {
-    const alignTab = () => {
-      const nav = tabsRef.current;
-      const selectedTab = nav?.querySelector<HTMLElement>('[aria-selected="true"]');
-      if (!nav || !selectedTab) return;
-      const navBox = nav.getBoundingClientRect();
-      const tabBox = selectedTab.getBoundingClientRect();
-      nav.scrollLeft += tabBox.left - navBox.left - (nav.clientWidth - tabBox.width) / 2;
-    };
-    alignTab();
-    window.addEventListener("resize", alignTab);
-    return () => window.removeEventListener("resize", alignTab);
-  }, [tab, job?.id]);
   const summary = job?.summary ?? {},
     progress = summary.progress ?? {};
+  const knowledge = useMemo(
+    () => projectPublicKnowledge(job?.summary),
+    [job?.summary],
+  );
   const nodes: ResearchNode[] =
       summary.graph?.nodes ?? summary.plan?.nodes ?? [],
     sources: any[] = summary.sources ?? [],
@@ -558,32 +390,6 @@ export default function Page({ client }: { client: ContractClient }) {
     nodes.find((node) => node.id === nodeId) ??
     nodes.find((node) => node.status === "running") ??
     nodes.find((node) => node.active !== false);
-  const dependencies = (node: ResearchNode) =>
-    node.dependencies ?? node.dependsOn ?? [];
-  useEffect(() => {
-    taskDetail.current?.scrollTo(0, 0);
-  }, [activeNode?.id]);
-  const predecessors = activeNode
-    ? dependencies(activeNode)
-        .map((id) => nodes.find((node) => node.id === id))
-        .filter((node): node is ResearchNode => !!node)
-    : [];
-  const successors = activeNode
-    ? nodes.filter(
-        (node) =>
-          (activeNode.active === false || node.active !== false) &&
-          dependencies(node).includes(activeNode.id),
-      )
-    : [];
-  const timeLabel = (value?: number) =>
-    value
-      ? new Date(value).toLocaleString("zh-CN", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "尚未开始";
   const percent =
     progress.mode === "determinate" && typeof progress.percent === "number"
       ? Math.max(0, Math.min(100, progress.percent))
@@ -601,21 +407,6 @@ export default function Page({ client }: { client: ContractClient }) {
   const domains = new Set(
     sources.filter(independentlyRead).map((source) => sourceHost(source.url)).filter(Boolean),
   ).size;
-  const board = studio.jobId === job?.id ? studio.board : [];
-  const customMatrix = studio.jobId === job?.id ? studio.matrix : null;
-  const updateBoard = (items: BoardItem[]) => {
-    if (!job) return;
-    setStudio(old => ({ jobId: job.id, matrix: old.jobId === job.id ? old.matrix : null, board: items }));
-  };
-  const pinItem = (item: BoardItem) => {
-    if (board.some(existing => existing.id === item.id && existing.type === item.type))
-      updateBoard(board.filter(existing => existing.id !== item.id || existing.type !== item.type));
-    else updateBoard([...board, item]);
-  };
-  const updateMatrix = (matrix: ResearchMatrix | null) => {
-    if (!job) return;
-    setStudio(old => ({ jobId: job.id, board: old.jobId === job.id ? old.board : [], matrix }));
-  };
   const exportBrief = () => {
     if (!job || !board.length) return;
     const html = visualBrief({ topic: summary.topic, report, nodes, findings, sources, board, customMatrix });
@@ -625,6 +416,14 @@ export default function Page({ client }: { client: ContractClient }) {
     link.download = "aexus-research-brief.html";
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 30000);
+  };
+  const selectView = (view: string) => {
+    // A direct Sources tab visit starts at the library; citation navigation opens a document.
+    if (view === "sources" && tab !== "sources") {
+      setSourceId(null);
+      reportReturn.current = null;
+    }
+    setTab(view);
   };
   const openNode = (id: string) => { setTab("graph"); setNodeId(id); setInspectorOpen(true); };
   const openFinding = (id: string) => { setSelectedFindingId(id); setTab("findings"); };
@@ -640,13 +439,6 @@ export default function Page({ client }: { client: ContractClient }) {
       setError("当前研究状态不支持继续调查");
     }
   };
-  const scopeHelp: Record<string, string> = {
-    quick: "快速概览：默认最多 6 个来源、4 位协作者，聚焦关键原始资料。",
-    comprehensive:
-      "全面调查：覆盖主要问题、证据来源和交叉核验，适合作为默认起点。",
-    deep: "深度分析：为复杂问题展开更多证据、反证和影响分析。",
-    academic: "学术研究：强调方法、学术来源、局限和可复核引用。",
-  };
   const approval =
     job?.status === "waiting"
       ? (
@@ -657,33 +449,6 @@ export default function Page({ client }: { client: ContractClient }) {
           } as Record<string, string[]>
         )[summary.phase]
       : null;
-  const openSource = (id: string, locator?: string) => {
-    setSourceId({ id, locator });
-    setTab("sources");
-  };
-  const openReportSource = (id: string, section: string, locator?: string) => {
-    reportReturn.current = {
-      section,
-      outer: document.querySelector(".engine-surface")?.scrollTop ?? 0,
-      main: document.querySelector(".dr-main")?.scrollTop ?? 0,
-      window: window.scrollY,
-    };
-    openSource(id, locator);
-  };
-  const returnToReport = () => {
-    const place = reportReturn.current;
-    setTab("report");
-    requestAnimationFrame(() => {
-      const outer = document.querySelector(".engine-surface"),
-        main = document.querySelector(".dr-main");
-      if (outer) outer.scrollTop = place?.outer ?? 0;
-      if (main) main.scrollTop = place?.main ?? 0;
-      window.scrollTo(0, place?.window ?? 0);
-      document
-        .getElementById(place?.section ?? "")
-        ?.focus({ preventScroll: true });
-    });
-  };
   const citations = (ids: any[], section?: string, locator?: string) => (
     <div className="dr-citations">
       {ids.map((citation, index) => {
@@ -718,31 +483,11 @@ export default function Page({ client }: { client: ContractClient }) {
         {item.sourceId && citations([item.sourceId], section, item.locator)}
       </blockquote>
     ));
-  const taskLinks = (items: ResearchNode[], title: string) => (
-    <div className="dr-task-links">
-      <h4>{title}</h4>
-      {items.length ? (
-        items.map((node) => (
-          <button key={node.id} onClick={() => setNodeId(node.id)}>
-            <span
-              className={
-                "dr-state-dot " + displayStatus(node.status, job ?? undefined)
-              }
-            />
-            {node.label}
-            <Icon name="arrow-right" />
-          </button>
-        ))
-      ) : (
-        <p className="dr-muted">无</p>
-      )}
-    </div>
-  );
   const markdown = (content: string, section?: string) => (
     <Markdown
       remarkPlugins={[remarkGfm]}
       components={{
-        a: ({ href, children }) => {
+        a: ({ href, children, node }) => {
           const id =
             href?.startsWith("#") &&
             sources.some((source) => source.id === href.slice(1))
@@ -753,9 +498,19 @@ export default function Page({ client }: { client: ContractClient }) {
           return id ? (
             <button
               className="dr-inline-citation"
-              onClick={() =>
-                section ? openReportSource(id, section) : openSource(id)
-              }
+              onClick={() => {
+                if (!section) {
+                  openSource(id);
+                  return;
+                }
+                const context = report?.sections?.find(
+                  (item: any, index: number) => "report-" + (item.id ?? index) === section,
+                );
+                const locator = citationLocator(
+                  context?.content, node?.position?.start?.offset, id, findings,
+                );
+                openReportSource(id, section, locator);
+              }}
             >
               {children}
             </button>
@@ -794,683 +549,110 @@ export default function Page({ client }: { client: ContractClient }) {
         )}
         {!job ? (
           <div className="dr-intake-page">
-            <div className="dr-intake-heading">
-              <span className="dr-intake-mark"><Icon name="telescope" /></span>
-              <div>
-                <span className="dr-intake-kicker">AEXUS / RESEARCH STUDIO</span>
-                <h1>{forkParent ? "继续研究" : "Deep Research"}</h1>
-                <p>把问题展开成可审阅的计划、可追溯的证据和完整报告。</p>
-              </div>
-            </div>
-            {forkParent && (
-              <div className="dr-follow-up-context">
-                <span className="dr-eyebrow">基于已完成研究</span>
-                <strong>{forkParent.summary.deliverable?.title ?? forkParent.summary.topic}</strong>
-                <p>上次报告作为历史线索；新问题的来源与引用会重新独立核验，并先确认新计划。</p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setForkParent(null);
-                    setSelectedEngine(preferredEngine(engineOptions));
-                  }}
-                >
-                  取消追问
-                </button>
-              </div>
-            )}
-            <form className="dr-intake" onSubmit={start}>
-              <label htmlFor="dr-topic">{forkParent ? "后续问题" : "研究目标"}</label>
-              <textarea
-                id="dr-topic"
-                aria-label={forkParent ? "后续问题" : "研究目标"}
-                placeholder={forkParent ? "例如：上次报告中的哪项假设已经变化？请重新核验来源并说明影响" : "例如：比较当前开源多智能体研究引擎的能力、证据质量与实际成本；请给出可定位引用和研究局限"}
-                value={topic}
-                onChange={(event) => setTopic(event.target.value)}
-                minLength={1}
-                maxLength={2000}
-                required
-                rows={4}
-              />
-              <div className="dr-engine-choice">
-                <Icon name="organization" />
-                <label htmlFor="dr-engine">执行引擎</label>
-                <select
-                  id="dr-engine"
-                  value={selectedEngine}
-                  onChange={event => setSelectedEngine(event.target.value)}
-                >
-                  <option value="">选择已配置的引擎</option>
-                  {forkParent && <option value="inherit">沿用上次引擎组合</option>}
-                  {engineOptions.map(option => (
-                    <option key={option.engine} value={option.engine}>
-                      {option.label}
-                      {option.configuration.sharedPiConfig || option.configuration.sharedClineConfig
-                        ? " · 原生共享配置"
-                        : option.engine === "codex" ? " · 当前登录账号" : ""}
-                    </option>
-                  ))}
-                  <option value="automatic">自动组合所有已就绪引擎</option>
-                </select>
-              </div>
-              <p className="dr-engine-note">
-                {engineLoading
-                  ? "正在读取已配置引擎…"
-                  : selectedEngine === "automatic"
-                    ? "可能调用多个提供商；额度由各自配置决定。"
-                    : selectedEngine === "inherit"
-                      ? "沿用上次研究的引擎组合，可在这里改选。"
-                      : selectedEngine === "codex"
-                        ? "使用 Codex 当前登录账号的模型额度。"
-                        : selectedEngine
-                          ? "使用所选原生引擎当前配置的默认模型与凭据。"
-                          : "请选择执行引擎后开始研究。"}
-              </p>
-              <div className="dr-intake-controls">
-                <div
-                  className="dr-segment"
-                  role="radiogroup"
-                  aria-label="研究深度"
-                >
-                  {SCOPES.map((option) => (
-                    <label
-                      className={scope === option.value ? "active" : ""}
-                      key={option.value}
-                    >
-                      <input
-                        type="radio"
-                        name="depth"
-                        checked={scope === option.value}
-                        onChange={() => setScope(option.value)}
-                      />
-                      {option.label}
-                      <span className="dr-scope-help">
-                        {scopeHelp[option.value]}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-                <button
-                  className="dr-primary"
-                  type="submit"
-                  disabled={busy || !topic.trim() || !selectedEngine || engineLoading}
-                >
-                  <Icon name={busy ? "loading" : "arrow-right"} />
-                  {forkParent ? "开始后续研究" : "开始研究"}
-                </button>
-              </div>
-              <details className="dr-settings">
-                <summary>
-                  研究选项
-                  <Icon name="chevron-down" />
-                </summary>
-                <div className="dr-settings-grid">
-                  <label className="dr-source-urls-field">
-                    限定网址（每行一个，可选）
-                    <textarea
-                      aria-label="限定网址"
-                      rows={3}
-                      placeholder={"https://example.com/\nhttps://www.iana.org/help/example-domains"}
-                      value={sourceUrlsText}
-                      onChange={event => setSourceUrlsText(event.target.value)}
-                    />
-                    <small>报告只引用这些页面；原文仍由引擎独立复核。</small>
-                  </label>
-                  <label>
-                    来源预算
-                    <input
-                      aria-label="来源预算"
-                      type="number"
-                      min={1}
-                      max={1000}
-                      value={sourceBudget}
-                      onChange={(event) =>
-                        setMaxSources(Number(event.target.value))
-                      }
-                    />
-                  </label>
-                  <label className="dr-check">
-                    <input
-                      type="checkbox"
-                      checked={!autoApprove}
-                      onChange={(event) =>
-                        setAutoApprove(!event.target.checked)
-                      }
-                    />
-                    关键节点由我确认
-                  </label>
-                  <label className="dr-upload">
-                    <Icon name="attach" />
-                    添加背景材料
-                    <input
-                      aria-label="添加背景材料"
-                      type="file"
-                      multiple
-                      accept=".txt,.md,.csv,.json"
-                      onChange={(event) => {
-                        const files = [...(event.target.files ?? [])];
-                        event.target.value = "";
-                        if (files.length) void operate(() => upload(files));
-                      }}
-                    />
-                  </label>
-                </div>
-              </details>
-              {materials.length > 0 && (
-                <div className="dr-materials">
-                  {materials.map((material, index) => (
-                    <span key={index}>
-                      <Icon name="file-text" />
-                      {material.name}
-                      <button
-                        type="button"
-                        aria-label={"移除 " + material.name}
-                        title={"移除 " + material.name}
-                        onClick={() =>
-                          setMaterials((old) =>
-                            old.filter((_, i) => i !== index),
-                          )
-                        }
-                      >
-                        <Icon name="close" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </form>
-            <section className="dr-recent" aria-label="研究记录">
-              <h2>
-                研究记录 <span>{history.length || ""}{historyHasMore ? "+" : ""}</span>
-              </h2>
-              {!history.length && (
-                <p className="dr-muted">
-                  {loading ? "读取研究记录…" : "完成的研究与正在进行的任务会显示在这里"}
-                </p>
-              )}
-              {history.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => void operate(() => load(item.id))}
-                >
-                  <i className={"dr-state-dot " + item.status} />
-                  <strong>{item.summary.topic || item.summary.title || "研究"}</strong>
-                  <small>
-                    {STATUS[item.status]} ·{" "}
-                    {new Date(item.createdAt).toLocaleDateString("zh-CN", {
-                      month: "short", day: "numeric",
-                    })}
-                  </small>
-                  <Icon name="arrow-right" />
-                </button>
-              ))}
-              {historyHasMore && (
-                <button
-                  className="dr-history-more"
-                  disabled={busy}
-                  onClick={() => void operate(loadMoreHistory)}
-                >
-                  查看更多研究记录 <Icon name="chevron-down" />
-                </button>
-              )}
-            </section>
+            <ResearchIntake
+              parent={forkParent}
+              values={{topic, scope, sourceBudget, sourceUrlsText, autoApprove, materials}}
+              onChange={{
+                topic: setTopic,
+                scope: setScope,
+                sourceBudget: setMaxSources,
+                sourceUrlsText: setSourceUrlsText,
+                autoApprove: setAutoApprove,
+                removeMaterial: index => setMaterials(old => old.filter((_, i) => i !== index)),
+              }}
+              engines={{
+                selected: selectedEngine,
+                options: engineOptions,
+                loading: engineLoading,
+                onSelect: setSelectedEngine,
+              }}
+              busy={busy}
+              readingMaterials={readingMaterials}
+              onCancelFollowUp={() => {
+                setForkParent(null);
+                setSelectedEngine(preferredEngine(engineOptions));
+              }}
+              onStart={start}
+              onUpload={files => void operate(() => upload(files))}
+            />
+            <ResearchHistory
+              history={history}
+              hasMore={historyHasMore}
+              loading={loading}
+              busy={busy}
+              onOpen={id => void operate(() => load(id))}
+              onMore={() => void operate(loadMoreHistory)}
+            />
           </div>
         ) : (
           <>
-            <header className="dr-job-header">
-              <button
-                className="dr-icon-button"
-                title="返回研究首页"
-                aria-label="返回研究首页"
-                onClick={newResearch}
-              >
-                <Icon name="arrow-left" />
-              </button>
-              <div className="dr-job-title">
-                <span className="dr-eyebrow">
-                  {PHASES[summary.phase] ?? summary.phaseLabel ?? "研究"}
-                </span>
-                <h1>{summary.topic}</h1>
-                {!!summary.sourceUrls?.length && (
-                  <span className="dr-bounded-sites" title={summary.sourceUrls.join("\n")}>
-                    <Icon name="link" /> 限定 {summary.sourceUrls.length} 个页面
-                  </span>
-                )}
-                {job.parent && (
-                  <button className="dr-parent-link" onClick={() => void operate(() => load(job.parent!.id, "report"))}>
-                    <Icon name="arrow-left" /> 查看上次报告
-                  </button>
-                )}
-              </div>
-              <div className="dr-job-actions">
-                <span className={"dr-status " + job.status}>
-                  {job.status === "cancelled" && job.controlPending
-                    ? labelFor("stopping")
-                    : STATUS[job.status]}
-                </span>
-                {job.status === "completed" && (
-                  <button className="dr-secondary dr-followup-action" onClick={beginFollowUp}>
-                    <Icon name="comment-discussion" /> 继续研究
-                  </button>
-                )}
-                {["running", "waiting", "paused", "failed"].includes(
-                  job.status,
-                ) && (
-                  <button
-                    className="dr-icon-button"
-                    title="调整研究方向"
-                    aria-label="调整研究方向"
-                    disabled={busy || job.controlPending}
-                    onClick={() => setRevisionOpen((value) => !value)}
-                  >
-                    <Icon name="edit" />
-                  </button>
-                )}
-                {job.status === "running" && (
-                  <button
-                    className="dr-icon-button"
-                    title="暂停研究"
-                    aria-label="暂停研究"
-                    disabled={busy}
-                    onClick={() => void operate(pause)}
-                  >
-                    <Icon name="debug-pause" />
-                  </button>
-                )}
-                {["paused", "failed"].includes(job.status) && (
-                  <button
-                    className="dr-icon-button"
-                    title="恢复研究"
-                    aria-label="恢复研究"
-                    disabled={busy || job.controlPending}
-                    onClick={() =>
-                      void operate(() => mutate("workflow.resume"))
-                    }
-                  >
-                    <Icon name="debug-start" />
-                  </button>
-                )}
-                {(!["completed", "cancelled"].includes(job.status) ||
-                  (job.status === "cancelled" && job.controlPending)) && (
-                  <button
-                    className="dr-icon-button"
-                    title={job.status === "cancelled" ? "重试停止" : "停止研究"}
-                    aria-label={
-                      job.status === "cancelled" ? "重试停止" : "停止研究"
-                    }
-                    disabled={busy}
-                    onClick={() => void operate(stop)}
-                  >
-                    <Icon name="debug-stop" />
-                  </button>
-                )}
-              </div>
-            </header>
-            {!(job.status === "completed" && tab === "report") && (
-              <section className="dr-progress-band" aria-label="研究进度">
-                <div className="dr-progress-label">
-                  <span>
-                    {percent === null
-                      ? (PHASES[summary.phase] ?? "探索研究范围")
-                      : `当前计划 · 第 ${summary.graph?.version ?? progress.planVersion ?? 1} 版`}
-                    {revisions.length > 1 && (
-                      <span
-                        className="dr-plan-context"
-                        title="计划会随证据调整；当前进度按本版计划的任务范围计算。"
-                      >
-                        <Icon name="info" />
-                      </span>
-                    )}
-                  </span>
-                  <strong>
-                    {percent === null
-                      ? "进度尚未确定"
-                      : `${Math.round(percent)}%`}
-                  </strong>
-                </div>
-                <div
-                  className={
-                    "dr-progress-track " +
-                    (percent === null ? "indeterminate" : "")
-                  }
-                  role="progressbar"
-                  aria-label="当前计划进度"
-                  aria-valuemin={percent === null ? undefined : 0}
-                  aria-valuemax={percent === null ? undefined : 100}
-                  aria-valuenow={percent ?? undefined}
-                  aria-valuetext={
-                    percent === null
-                      ? "初步调研与规划中，尚未确定总工作量"
-                      : `当前计划完成 ${completedTasks} / ${totalTasks} 项任务`
-                  }
-                >
-                  <span
-                    style={
-                      percent === null ? undefined : { width: `${percent}%` }
-                    }
-                  />
-                </div>
-                <div className="dr-progress-metrics">
-                  <span>
-                    <Icon name="checklist" />
-                    {percent === null
-                      ? "工作量待规划"
-                      : `${completedTasks} / ${totalTasks} 任务`}
-                  </span>
-                  <span>
-                    <Icon name="organization" />
-                    {workers.length} 位协作者
-                  </span>
-                  <span
-                    title={`${sourceCount} 个已发现来源，${readCount} 个已读取正文，${verifiedCount} 个已核验；${domains} 个已独立读取网站域名`}
-                  >
-                    <Icon name="globe" />
-                    {sourceCount} 来源 · {domains} 实读网站
-                  </span>
-                  <span>
-                    <Icon name="verified" />
-                    {verifiedCount} 已核验 · {findings.length} 项论断
-                  </span>
-                  {progress.failed > 0 && (
-                    <span className="dr-error-text">
-                      {progress.failed} 项需处理
-                    </span>
-                  )}
-                </div>
-                <details key={tab} className="dr-execution-details">
-                  <summary>
-                    <span className={"dr-activity-indicator " + job.status} />
-                    <strong>执行动态</strong>
-                    <span>{runningNodes.length ? `${runningNodes.length} 项研究中` : (STATUS[job.status] ?? "整理中")}</span>
-                    <em>{runningNodes[0]?.label ?? stageTask?.label ?? ""}</em>
-                    <Icon name="chevron-down" />
-                  </summary>
-                  <div className="dr-execution-content">
-                <div className="dr-current-activity" aria-label="当前研究活动">
-                  <span className={"dr-activity-indicator " + job.status} />
-                  <div>
-                    <small>
-                      {job.status === "running"
-                        ? "当前执行"
-                        : STATUS[job.status]}
-                    </small>
-                    {runningNodes.length && job.status === "running" ? (
-                      runningNodes.map((node) => (
-                        <button
-                          key={node.id}
-                          onClick={() => {
-                            setTab("graph");
-                            setNodeId(node.id);
-                            setInspectorOpen(true);
-                          }}
-                        >
-                          <span className="dr-state-dot running" />
-                          {node.label}
-                        </button>
-                      ))
-                    ) : (
-                      <strong>
-                        {job.status === "paused"
-                          ? "保留当前进度，等待恢复研究"
-                          : job.status === "failed"
-                            ? "执行遇到问题，已保存完成的研究"
-                            : job.status === "waiting"
-                              ? "等待审阅后继续"
-                              : job.status === "completed"
-                                ? "研究与证据已交付"
-                                : job.status === "cancelled"
-                                  ? job.controlPending
-                                    ? "正在确认剩余任务停止"
-                                    : "研究已停止，已保存完成的研究"
-                                  : stageTask
-                                    ? labelFor(stageTask.label)
-                                    : (PHASES[summary.phase] ?? "正在组织研究")}
-                      </strong>
-                    )}
-                  </div>
-                  <time>
-                    {new Date(job.updatedAt).toLocaleTimeString("zh-CN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    更新
-                  </time>
-                </div>
-                {activities.length > 0 && (
-                  <div className="dr-live-activity" aria-label="实时工作活动">
-                    {activities.map((activity) => {
-                      const task = [...nodes, ...(summary.tasks ?? [])].find(
-                        (task) => task.id === activity.nodeId,
-                      );
-                      return (
-                        <div key={activity.nodeId}>
-                          <Icon
-                            name={
-                              activity.preview.kind === "thinking"
-                                ? "lightbulb"
-                                : "pulse"
-                            }
-                          />
-                          <small>
-                            {workers.find(
-                              (worker) => worker.id === task?.employeeId,
-                            )?.label ?? "研究团队"}
-                          </small>
-                          <span>{activityLabel(activity.preview)}</span>
-                          <span className="dr-live-context">
-                            {task ? labelFor(task.label) : ""}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                  </div>
-                </details>
-              </section>
-            )}
-            {job.status === "failed" && (
-              <div className="dr-alert error">
-                <Icon name="warning" />
-                <span>{job.error || "研究执行需要处理"}</span>
-              </div>
-            )}
-            {job.status === "paused" && (
-              <div className="dr-alert">
-                <Icon name="debug-pause" />
-                <span>
-                  {job.controlPending
-                    ? job.error || "正在确认任务暂停"
-                    : "研究已暂停"}
-                </span>
-                {job.controlPending && (
-                  <button
-                    className="dr-secondary"
-                    disabled={busy}
-                    onClick={() => void operate(pause)}
-                  >
-                    重试暂停
-                  </button>
-                )}
-              </div>
-            )}
-            {job.status === "cancelled" && job.controlPending && (
-              <div className="dr-alert error" role="alert">
-                <Icon name="warning" />
-                <span>
-                  {job.error || "部分研究任务尚未确认停止，请重试停止。"}
-                </span>
-                <button
-                  className="dr-secondary"
-                  disabled={busy}
-                  onClick={() => void operate(stop)}
-                >
-                  重试停止
-                </button>
-              </div>
-            )}
-            {summary.attention && (
-              <div className="dr-alert">
-                <Icon name="shield" />
-                <span>
-                  {summary.tasks?.some(
-                    (task: any) => task.status === "approval",
-                  )
-                    ? "协作者正在等待授权"
-                    : summary.attention.message}
-                </span>
-                <button
-                  className="dr-secondary"
-                  onClick={() =>
-                    void operate(async () => {
-                      await client.invoke("view.open", {
-                        kind: "conversation",
-                        employee: summary.attention.employeeId,
-                      });
-                    })
-                  }
-                >
-                  查看研究会话
-                </button>
-              </div>
-            )}
-            {revisionOpen && (
-              <form
-                className="dr-revision"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void operate(revise);
-                }}
-              >
-                <label htmlFor="dr-revision">调整研究方向</label>
-                <textarea
-                  id="dr-revision"
-                  value={instructions}
-                  onChange={(event) => setInstructions(event.target.value)}
-                  placeholder="补充研究问题、限定范围或指出需要重新核验的结论"
-                  required
-                  rows={3}
-                />
-                <div>
-                  <button
-                    type="button"
-                    className="dr-secondary"
-                    onClick={() => setRevisionOpen(false)}
-                  >
-                    取消
-                  </button>
-                  <button
-                    className="dr-primary"
-                    type="submit"
-                    disabled={
-                      busy || job.controlPending || !instructions.trim()
-                    }
-                  >
-                    <Icon name="refresh" />
-                    重新规划
-                  </button>
-                </div>
-              </form>
-            )}
-            {approval && (
-              <section className="dr-approval" aria-label={approval[0]}>
-                <div>
-                  <Icon name="checklist" />
-                  <h2>{approval[0]}</h2>
-                  <p>
-                    {summary.phase === "review"
-                      ? summary.review?.summary
-                      : (summary.plan?.strategy ?? "")}
-                  </p>
-                  {(summary.managerReviews ?? [])
-                    .filter(
-                      (review: any) =>
-                        review.planVersion === summary.graph?.version &&
-                        (summary.phase === "planning"
-                          ? review.stage !== "final"
-                          : review.stage === "final"),
-                    )
-                    .map((review: any, index: number) => (
-                      <details
-                        className={"dr-manager-review " + review.verdict}
-                        key={index}
-                      >
-                        <summary>
-                          <Icon
-                            name={
-                              review.verdict === "revise" ? "warning" : "check"
-                            }
-                          />
-                          {workers.find(
-                            (worker) => worker.id === review.managerId,
-                          )?.label ?? "研究负责人"}
-                          <span>
-                            {review.verdict === "revise"
-                              ? "建议修订"
-                              : "通过审阅"}
-                          </span>
-                        </summary>
-                        <p>{review.summary}</p>
-                        {review.issues?.map((issue: any, index: number) => (
-                          <p key={index}>
-                            {issue.description} {issue.suggestion}
-                          </p>
-                        ))}
-                      </details>
-                    ))}
-                </div>
-                <button
-                  className="dr-secondary"
-                  disabled={busy || job.controlPending}
-                  onClick={() => setRevisionOpen(true)}
-                >
-                  提出调整
-                </button>
-                <button
-                  className="dr-primary"
-                  disabled={busy || job.controlPending}
-                  onClick={() => void operate(() => answer(approval[1]))}
-                >
-                  <Icon name="check" />
-                  {approval[2]}
-                </button>
-              </section>
-            )}
-            <nav ref={tabsRef} className="dr-tabs" role="tablist" aria-label="研究视图">
-              {TABS.map((item) => (
-                <button
-                  key={item.id}
-                  role="tab"
-                  aria-selected={tab === item.id || (item.id === "overview" && !!DETAIL_VIEWS[tab])}
-                  tabIndex={tab === item.id || (item.id === "overview" && !!DETAIL_VIEWS[tab]) ? 0 : -1}
-                  onClick={() => setTab(item.id)}
-                  onKeyDown={event => {
-                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-                    event.preventDefault();
-                    const index = TABS.findIndex(tab => tab.id === item.id);
-                    const next = event.key === "Home" ? 0 : event.key === "End" ? TABS.length - 1
-                      : (index + (event.key === "ArrowRight" ? 1 : -1) + TABS.length) % TABS.length;
-                    setTab(TABS[next].id);
-                    requestAnimationFrame(() => tabsRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus({preventScroll: true}));
-                  }}
-                >
-                  <Icon name={item.icon} />
-                  {item.label}
-                  {item.id === "sources" && <span>{sourceCount}</span>}
-                  {item.id === "findings" && <span>{findings.length}</span>}
-                </button>
-              ))}
-            </nav>
-            {DETAIL_VIEWS[tab] && <div className="dr-view-back">
-              <button onClick={() => setTab("overview")}><Icon name="arrow-left" /> 返回成果总览</button>
-              <span>/ {DETAIL_VIEWS[tab]}</span>
-            </div>}
+            <ResearchJobHeader
+              job={job}
+              summary={summary}
+              busy={busy}
+              onHome={newResearch}
+              onParent={() => void operate(() => load(job.parent!.id, "report"))}
+              onFollowUp={beginFollowUp}
+              onToggleRevision={() => setRevisionOpen(value => !value)}
+              onPause={() => void operate(pause)}
+              onResume={() => void operate(() => mutate("workflow.resume"))}
+              onStop={() => void operate(stop)}
+            />
+            <ResearchProgressBand
+              job={job}
+              summary={summary}
+              tab={tab}
+              progress={progress}
+              percent={percent}
+              revisions={revisions}
+              completedTasks={completedTasks}
+              totalTasks={totalTasks}
+              sourceCount={sourceCount}
+              readCount={readCount}
+              verifiedCount={verifiedCount}
+              domains={domains}
+              workers={workers}
+              findingCount={findings.length}
+              nodes={nodes}
+              runningNodes={runningNodes}
+              stageTask={stageTask}
+              activities={activities}
+              onNode={openNode}
+            />
+            <ResearchExecutionControls
+              job={job}
+              summary={summary}
+              workers={workers}
+              busy={busy}
+              revisionOpen={revisionOpen}
+              instructions={instructions}
+              approval={approval}
+              onRetryPause={() => void operate(pause)}
+              onRetryStop={() => void operate(stop)}
+              onOpenAttention={() => void operate(async () => {
+                await client.invoke("view.open", {
+                  kind: "conversation", employee: summary.attention.employeeId,
+                });
+              })}
+              onRevise={() => void operate(revise)}
+              onInstructions={setInstructions}
+              onCancelRevision={() => setRevisionOpen(false)}
+              onShowRevision={() => setRevisionOpen(true)}
+              onAnswer={action => void operate(() => answer(action))}
+            />
+            <ResearchTabs
+              active={tab}
+              jobId={job.id}
+              sourceCount={sourceCount}
+              findingCount={findings.length}
+              onChange={selectView}
+            />
             {tab === "overview" && <ResearchOverview
               nodes={nodes} findings={findings} sources={sources} report={report}
               pinned={board} onNode={openNode} onFinding={openFinding} onDrill={drillDown}
-              onPin={pinItem} showUpdates={revisions.length > 1 || !!job.parent} onCompare={() => setTab("comparison")} onBoard={() => setTab("board")} onTimeline={() => setTab("timeline")} onUpdates={() => setTab("updates")} onSources={() => setTab("sources")}
+              onPin={pinItem} showUpdates={revisions.length > 1 || !!job.parent} onCompare={() => setTab("comparison")} onBoard={() => setTab("board")} onTimeline={() => setTab("timeline")} onUpdates={() => setTab("updates")} onSources={() => selectView("sources")}
             />}
-            {tab === "comparison" && <ResearchComparison report={report} draft={customMatrix} onDraft={updateMatrix} onDrill={drillDown}/>}
+            {tab === "comparison" && <ResearchComparisonPanel report={report} draft={customMatrix} onDraft={updateMatrix} onDrill={drillDown}/>}
             {tab === "timeline" && <ResearchTimeline report={report} findings={findings} events={timeline} onDrill={drillDown}/>}
             {tab === "updates" && <ResearchUpdates current={findings} previous={parentFindings} revisions={revisions}/>}
             {tab === "board" && <ResearchBoard nodes={nodes} findings={findings} pinned={board}
@@ -1488,6 +670,10 @@ export default function Page({ client }: { client: ContractClient }) {
                     }}
                     workers={workers}
                     workflow={job}
+                    knowledge={knowledge}
+                    onOpenFinding={openFinding}
+                    onOpenSource={openSource}
+                    onOpenNode={openNode}
                     direction={graphDirection}
                     onDirection={setGraphDirection}
                     inspectorOpen={inspectorOpen}
@@ -1600,251 +786,27 @@ export default function Page({ client }: { client: ContractClient }) {
                     </details>
                   )}
                 </section>
-                <aside
-                  className="dr-inspector"
-                  aria-label="任务与协作者"
-                  hidden={!showInspector}
-                >
-                  <div className="dr-section-heading">
-                    <h2>
-                      {activeNode?.active === false ? "历史任务" : "任务详情"}
-                    </h2>
-                    {activeNode && (
-                      <span
-                        className={
-                          "dr-node-state " +
-                          displayStatus(activeNode.status, job)
-                        }
-                      >
-                        {activeNode.active === false && "已归档 · "}
-                        {labelFor(displayStatus(activeNode.status, job))}
-                      </span>
-                    )}
-                  </div>
-                  {activeNode ? (
-                    <div ref={taskDetail} className="dr-task-detail">
-                      <span className="dr-eyebrow">
-                        {labelFor(activeNode.kind)}
-                      </span>
-                      <h3>{activeNode.label}</h3>
-                      {nodeInsight(activeNode) && <section className="dr-node-key-result">
-                        <h4>核心发现</h4><p>{nodeInsight(activeNode)}</p>
-                      </section>}
-                      <div className="dr-node-actions">
-                        <button onClick={() => pinItem({ type: "node", id: activeNode.id, note: "" })}>
-                          <Icon name="bookmark" />{board.some(item => item.type === "node" && item.id === activeNode.id) ? "从成果板移除" : "收藏到成果板"}
-                        </button>
-                        <button onClick={() => drillDown("深入调查「" + activeNode.label + "」，补充不同观点、适用条件、反例与最新案例。")}>补查此问题 ↗</button>
-                      </div>
-                      {(activeNode.objective || activeNode.description) && (
-                        <section className="dr-task-objective">
-                          <h4>研究目标</h4>
-                          <p>
-                            {activeNode.objective || activeNode.description}
-                          </p>
-                        </section>
-                      )}
-                      {activeNode.error && (
-                        <p className="dr-error-text">{activeNode.error}</p>
-                      )}
-                      <dl>
-                        {displayStatus(activeNode.status, job) !==
-                          activeNode.status && (
-                          <>
-                            <dt>最后执行状态</dt>
-                            <dd>{labelFor(activeNode.status)}</dd>
-                          </>
-                        )}
-                        <dt>执行者</dt>
-                        <dd>
-                          {allWorkers.find(
-                            (worker) =>
-                              worker.id ===
-                              (activeNode.employeeId ?? activeNode.ownerId),
-                          )?.label ?? "待分配"}
-                        </dd>
-                        <dt>负责人</dt>
-                        <dd>
-                          {activeNode.managerIds
-                            ?.map(
-                              (id) =>
-                                allWorkers.find(
-                                  (worker) =>
-                                    worker.id === id || worker.specId === id,
-                                )?.label ?? id,
-                            )
-                            .join("、") || "研究团队"}
-                        </dd>
-                        <dt>开始时间</dt>
-                        <dd>{timeLabel(activeNode.startedAt)}</dd>
-                        <dt>结束时间</dt>
-                        <dd>
-                          {activeNode.finishedAt
-                            ? timeLabel(activeNode.finishedAt)
-                            : activeNode.startedAt
-                              ? "尚未结束"
-                              : "尚未开始"}
-                        </dd>
-                        <dt>计划版本</dt>
-                        <dd>
-                          第{" "}
-                          {activeNode.planVersion ??
-                            summary.graph?.version ??
-                            1}{" "}
-                          版
-                        </dd>
-                      </dl>
-                      {taskLinks(predecessors, "前置任务")}
-                      {(activeNode.inputSourceIds?.length ?? 0) > 0 && (
-                        <section className="dr-task-input">
-                          <h4>输入证据</h4>
-                          {citations(activeNode.inputSourceIds ?? [])}
-                        </section>
-                      )}
-                      {activeNode.payload?.query &&
-                        activeNode.payload.query !== activeNode.objective && (
-                          <section className="dr-task-input">
-                            <h4>调查问题</h4>
-                            <p>{activeNode.payload.query}</p>
-                          </section>
-                        )}
-                      {taskLinks(successors, "后继任务")}
-                      {activeNode.resultSummary && (
-                        <section className="dr-task-result">
-                          <h4>结果摘要</h4>
-                          <p>{activeNode.resultSummary}</p>
-                          {activeNode.result?.insights?.map(
-                            (insight: string, index: number) => (
-                              <p key={index}>{insight}</p>
-                            ),
-                          )}
-                          {activeNode.result?.issues?.map(
-                            (issue: any, index: number) => (
-                              <p key={index}>
-                                {issue.description} {issue.suggestion}
-                              </p>
-                            ),
-                          )}
-                          {activeNode.result?.sections?.map(
-                            (section: any, index: number) => (
-                              <details key={index}>
-                                <summary>{section.heading}</summary>
-                                <div className="dr-markdown">
-                                  {markdown(section.content)}
-                                </div>
-                              </details>
-                            ),
-                          )}
-                        </section>
-                      )}
-                      {activities
-                        .filter((activity) => activity.nodeId === activeNode.id)
-                        .map((activity) => (
-                          <section
-                            className="dr-task-result"
-                            key={activity.nodeId}
-                          >
-                            <h4>{activityLabel(activity.preview)}</h4>
-                            <details>
-                              <summary>查看工作摘要</summary>
-                              <p>{activity.preview.text}</p>
-                              {activity.preview.detail && (
-                                <p className="dr-tool-detail">
-                                  {activity.preview.detail}
-                                </p>
-                              )}
-                            </details>
-                          </section>
-                        ))}
-                      {(activeNode.sourceIds?.length ?? 0) > 0 && (
-                        <h4 className="dr-evidence-heading">证据来源</h4>
-                      )}
-                      {citations(activeNode.sourceIds ?? [])}
-                      {sources
-                        .filter((source) =>
-                          activeNode.sourceIds?.includes(source.id),
-                        )
-                        .map((source) => (
-                          <details className="dr-task-evidence" key={source.id}>
-                            <summary>{source.title}</summary>
-                            {evidence(
-                              source.acquisition?.excerpts ??
-                                (source.acquisition?.excerpt
-                                  ? [source.acquisition]
-                                  : []),
-                            )}
-                          </details>
-                        ))}
-                    </div>
-                  ) : (
-                    <Empty icon="search">
-                      {summary.phase === "scouting"
-                        ? "初步调研正在进行"
-                        : "正在形成研究计划"}
-                    </Empty>
-                  )}
-                  <details className="dr-team">
-                    <summary>
-                      <Icon name="organization" />
-                      <strong>协作团队</strong>
-                      <span>
-                        {
-                          workers.filter(
-                            (worker) =>
-                              displayStatus(worker.status, job) === "working",
-                          ).length
-                        }{" "}
-                        工作中 / {workers.length}
-                      </span>
-                      <Icon name="chevron-down" />
-                    </summary>
-                    <div className="dr-team-list">
-                      {workers.map((worker) => (
-                        <button
-                          key={worker.id}
-                          className="dr-person"
-                          onClick={() =>
-                            void operate(async () => {
-                              await client.invoke("view.open", {
-                                kind: "conversation",
-                                employee: worker.id,
-                              });
-                            })
-                          }
-                          title={"查看 " + worker.label + " 的研究会话"}
-                        >
-                          <span
-                            className={
-                              "dr-person-icon " +
-                              displayStatus(worker.status, job)
-                            }
-                          >
-                            <Icon
-                              name={
-                                worker.managementRole === "manager"
-                                  ? "organization"
-                                  : "person"
-                              }
-                            />
-                          </span>
-                          <span>
-                            <strong>{worker.label}</strong>
-                            <small>
-                              {worker.managementRole === "manager"
-                                ? "Manager · "
-                                : ""}
-                              {labelFor(displayStatus(worker.status, job))}
-                            </small>
-                          </span>
-                          <Icon name="arrow-up-right" />
-                        </button>
-                      ))}
-                      {!workers.length && (
-                        <p className="dr-muted">正在组织研究团队</p>
-                      )}
-                    </div>
-                  </details>
-                </aside>
+                <ResearchTaskInspector
+                  job={job}
+                  summary={summary}
+                  activeNode={activeNode}
+                  nodes={nodes}
+                  sources={sources}
+                  allWorkers={allWorkers}
+                  workers={workers}
+                  activities={activities}
+                  showInspector={showInspector}
+                  board={board}
+                  onPin={pinItem}
+                  onDrill={drillDown}
+                  onSelectNode={setNodeId}
+                  onOpenWorker={id => void operate(async () => {
+                    await client.invoke("view.open", {kind: "conversation", employee: id});
+                  })}
+                  renderCitations={citations}
+                  renderEvidence={evidence}
+                  renderMarkdown={markdown}
+                />
               </div>
             )}
             {tab === "sources" && (
@@ -1858,61 +820,21 @@ export default function Page({ client }: { client: ContractClient }) {
               />
             )}
             {tab === "findings" && (
-              <section className="dr-findings" aria-label="研究发现">
-                <div className="dr-section-heading">
-                  <h2>研究发现</h2>
-                  <span>
-                    {findings.length} 条
-                    {contradictions.length > 0 &&
-                      ` · ${contradictions.length} 项分歧待解释`}
-                  </span>
-                </div>
-                {contradictions.length > 0 && (
-                  <div className="dr-contradictions">
-                    <h3><Icon name="warning" />来源存在分歧</h3>
-                    {contradictions.map((contradiction) => (
-                      <article key={contradiction.id}>
-                        <p>{contradiction.description}</p>
-                        <div className="dr-dispute-sides">
-                          {contradiction.sources.map((id, index) => {
-                            const source = sources.find(item => item.id === id);
-                            return <div key={id}>
-                              <small>相关材料 {index + 1}</small>
-                              <strong>{source?.title || id}</strong>
-                              <p>{source?.summary || source?.snippet || "当前未提供摘要，可查看原文证据。"}</p>
-                              <button onClick={() => openSource(id)}>查看材料与原文 ↗</button>
-                            </div>;
-                          })}
-                        </div>
-                        <p className="dr-dispute-note">分歧需结合资料时间、版本和适用条件审阅。</p>
-                        {citations(contradiction.sources)}
-                      </article>
-                    ))}
-                  </div>
-                )}
-                {findings.map((finding, index) => (
-                  <article key={finding.id ?? index} id={"dr-finding-" + (finding.id ?? index)} className={selectedFindingId === finding.id ? "dr-highlight-finding" : ""}>
-                    <span className="dr-finding-number">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <div>
-                      <h3>{finding.claim ?? finding.text ?? finding.title}</h3>
-                      <div className="dr-node-actions"><button onClick={() => pinItem({ type: "finding", id: String(finding.id ?? index), note: "" })}>
-                        <Icon name="bookmark" />{board.some(item => item.type === "finding" && item.id === String(finding.id ?? index)) ? "从成果板移除" : "收藏到成果板"}
-                      </button><button onClick={() => drillDown("进一步核实并扩展研究发现：「" + (finding.claim ?? finding.text ?? finding.title) + "」。请补充反例、适用范围和不同角度。")}>继续深挖 ↗</button></div>
-                      {finding.detail && (
-                        <div className="dr-markdown">
-                          {markdown(finding.detail)}
-                        </div>
-                      )}
-                      {evidence(finding.evidence ?? [])}
-                    </div>
-                  </article>
-                ))}
-                {!findings.length && (
-                  <Empty icon="lightbulb">尚未形成研究发现</Empty>
-                )}
-              </section>
+              <ResearchFindings
+                knowledge={knowledge}
+                findings={findings}
+                sources={sources}
+                contradictions={contradictions}
+                selectedFindingId={selectedFindingId}
+                board={board}
+                onPin={pinItem}
+                onDrill={drillDown}
+                onOpenSource={openSource}
+                onOpenNode={openNode}
+                renderCitations={citations}
+                renderEvidence={evidence}
+                renderMarkdown={markdown}
+              />
             )}
             {tab === "report" && (
               <ReportView

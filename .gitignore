@@ -1,5 +1,6 @@
 node_modules/
 .aexus/
+/dist/
 /progress
 /share_chat
 Infra/src/resources/plugins/

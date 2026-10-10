@@ -1,0 +1,108 @@
+/* Retrieval-only presentation; theme tokens and the application shell remain workspace-owned. */
+.dr-retrieval.dr-evidence-layout {
+  grid-template-columns: minmax(260px, .95fr) minmax(300px, 1.15fr);
+}
+.dr-retrieval .dr-source-list,
+.dr-retrieval .dr-source-detail { overscroll-behavior: contain; }
+.dr-retrieval .dr-retrieval-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--dr-bg);
+  border-bottom: 1px solid var(--dr-border);
+}
+.dr-retrieval .dr-search { padding: 14px 18px; }
+.dr-retrieval .dr-search input { font-size: 13px; }
+.dr-retrieval .dr-source-filters { padding: 9px 18px; }
+.dr-retrieval .dr-source-filters button { font-size: 11px; min-height: 32px; }
+.dr-retrieval .dr-retrieval-controls,
+.dr-retrieval .dr-retrieval-range,
+.dr-retrieval .dr-retrieval-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 18px;
+  font-size: 12px;
+}
+.dr-retrieval .dr-retrieval-controls { flex-wrap: wrap; }
+.dr-retrieval .dr-retrieval-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+}
+.dr-retrieval .dr-retrieval-controls select {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  padding: 6px 8px;
+  font: inherit;
+  background: var(--dr-bg);
+  color: var(--dr-text);
+  border: 1px solid var(--dr-border);
+  border-radius: 5px;
+}
+.dr-retrieval .dr-retrieval-controls button,
+.dr-retrieval .dr-retrieval-range button,
+.dr-retrieval .dr-retrieval-notice button,
+.dr-retrieval .dr-empty button {
+  padding: 6px 8px;
+  background: var(--dr-surface);
+  border: 1px solid var(--dr-border);
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.dr-retrieval .dr-retrieval-range { color: var(--dr-muted); }
+.dr-retrieval .dr-retrieval-range nav { display: flex; gap: 6px; align-items: center; }
+.dr-retrieval .dr-retrieval-range nav span { white-space: nowrap; }
+.dr-retrieval .dr-retrieval-notice {
+  background: var(--dr-surface);
+  border-bottom: 1px solid var(--dr-border);
+  flex-wrap: wrap;
+}
+.dr-retrieval .dr-source-row {
+  background: var(--dr-bg);
+  overflow-wrap: anywhere;
+  scroll-margin-top: 210px;
+}
+.dr-retrieval .dr-source-row:hover,
+.dr-retrieval .dr-source-row.selected { background: color-mix(in srgb, var(--dr-blue) 7%, var(--dr-bg)); }
+.dr-retrieval .dr-source-row p { font-size: 12px; }
+.dr-retrieval .dr-retrieval-match { display: block; margin-top: 8px; color: var(--dr-blue); font-size: 11px; }
+.dr-retrieval .dr-source-detail { padding-inline: 24px; overflow-wrap: anywhere; }
+.dr-retrieval .dr-source-detail .dr-section-heading {
+  position: sticky;
+  top: 0;
+  background: var(--dr-bg);
+  z-index: 1;
+}
+.dr-retrieval .dr-source-detail h2:focus { outline: none; }
+.dr-retrieval .dr-retrieval-limitation { font-size: 12px; }
+.dr-retrieval .dr-retrieval-excerpts { margin-top: 20px; }
+.dr-retrieval .dr-retrieval-excerpts summary { cursor: pointer; font-size: 12px; }
+.dr-retrieval .dr-linked-excerpt {
+  background: color-mix(in srgb, var(--dr-blue) 7%, var(--dr-bg));
+  border-left: 2px solid var(--dr-blue);
+  padding: 8px 12px;
+}
+.dr-retrieval .dr-retrieval-back-label { display: none; }
+.dr-retrieval select:focus-visible { outline: 2px solid var(--dr-blue); outline-offset: 2px; }
+@media (max-width: 800px) {
+  /* Only the retrieval view uses an in-panel mobile reader; keep surrounding shell views unchanged. */
+  .dr-app[data-view="sources"]:has(.dr-retrieval) { display: grid; height: 100dvh; min-height: 0; }
+  .engine-surface > .dr-app[data-view="sources"]:has(.dr-retrieval) { height: calc(100% - 60px); }
+  .dr-retrieval.dr-evidence-layout { display: flex; flex-direction: column; overflow: hidden; }
+  .dr-retrieval .dr-source-list { flex: 1; }
+  .dr-retrieval .dr-source-detail { display: none; flex: 1; max-height: none; border: 0; padding-inline: 18px; }
+  /* Legacy shell CSS hides empty detail placeholders on narrow screens; missing source IDs must stay visible. */
+  .dr-retrieval[data-detail-open="true"] .dr-source-detail > .dr-empty { display: flex; }
+  .dr-retrieval[data-detail-open="true"] .dr-source-list { display: none; }
+  .dr-retrieval[data-detail-open="true"] .dr-source-detail { display: block; }
+  .dr-retrieval .dr-retrieval-back-label { display: inline; font-size: 12px; margin-right: 6px; }
+  .dr-retrieval .dr-retrieval-range { gap: 5px; font-size: 11px; padding-inline: 12px; }
+  .dr-retrieval .dr-retrieval-range button { padding-inline: 5px; }
+  .dr-retrieval .dr-source-filters { padding-inline: 12px; }
+}

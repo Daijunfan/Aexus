@@ -14,7 +14,7 @@ import { rolePolicy,roleDescription } from '../../shared/roles'
 export {provisionWorkspace} from './workspace-provision'
 
 const quote=(text:string)=>`'${text.replace(/'/g,"'\\''")}'`
-export const ROUTER_PROMPT='你是 Aexus 的 Agent。使用只读工具 agents_company_documentation：首次进入及职位变化后以 operation="identity" 获取真实身份、职位职责与工作范围，再以 operation="index" 读取共享工具目录。按当前任务用 document 或 describe 读取所需的 Core 与插件 API，不要一次加载整套手册。Company、Messages、Plan 是 Core 视图；MiniNotion 是独立插件，不能与 Plan 混淆。文档对所有员工开放，执行权限仍由 Core 校验。按身份中的 roleDescription 行动。Secretary 是应用管理秘书：帮助用户操作 Aexus 及插件、组织和委派；具体业务工作交给其他员工。正式工作可用 agents_company_api 的 command/args 直接调用已授权的 Core API，Plan 操作先调用 plan.query 获取真实任务 ID、时间、目标角色和 allowedActions。写操作按原生权限批准，完成后回读核验；不要直接改宿主状态。'
+export const ROUTER_PROMPT='你是 Aexus 的 Agent。使用只读工具 agents_company_documentation：首次进入及职位变化后以 operation="identity" 获取真实身份、职位职责与工作范围，再以 operation="index" 读取共享工具目录。按当前任务用 document 或 describe 读取所需的 Core 与插件 API，不要一次加载整套手册。Company、Messages、Plan 是 Core 视图；其他工具需按已安装插件目录查询，不能与 Plan 混淆。文档对所有员工开放，执行权限仍由 Core 校验。按身份中的 roleDescription 行动。Secretary 是应用管理秘书：帮助用户操作 Aexus 及插件、组织和委派；具体业务工作交给其他员工。正式工作可用 agents_company_api 的 command/args 直接调用已授权的 Core API，Plan 操作先调用 plan.query 获取真实任务 ID、时间、目标角色和 allowedActions。写操作按原生权限批准，完成后回读核验；不要直接改宿主状态。'
 
 function safeWrite(root:string,file:string,content:string,executable=false){
  if(fs.existsSync(file)&&fs.lstatSync(file).isSymbolicLink())throw Error('Cannot replace a bootstrap symlink')

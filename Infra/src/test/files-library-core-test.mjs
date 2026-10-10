@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import assert from 'node:assert/strict'
-import {createRequire} from 'node:module'
 import {createHash} from 'node:crypto'
 import {profileApplication} from './fixtures/profile-application.mjs'
 import {assetWorkbenchFixture} from './fixtures/asset-workbench.mjs'
@@ -34,11 +33,11 @@ try{
  let offset=0,ids=[];do{const page=await rpc('assets.browse',{root:'shared',query:'',limit:1,offset});ids.push(...page.entries.map(n=>n.id));offset=page.nextOffset}while(offset!==null)
  assert.equal(ids.length,new Set(ids).size);assert.ok(ids.some(id=>decodeURIComponent(id).includes('Documents')))
  pass('Gallery browsing and recursive folder/file search retain literal matching, stable page identities and storage-host filtering.')
- const reader=createRequire(path.join(root,'Infra/src/resources/plugins/margin-reader/package.json')),pdfLib=reader('pdf-lib'),pdf=await pdfLib.PDFDocument.create(),cover=pdf.addPage([360,480]);cover.drawText('Research Library',{x:35,y:380,size:25});fs.writeFileSync(path.join(f.shared,'Documents','Research.pdf'),await pdf.save());fs.writeFileSync(path.join(f.shared,'Documents','Article.html'),'<html><title>Reading notes</title><h1>Reading notes</h1><p>Original local material.</p><script>throw Error("Never execute")</script><img src="https://example.invalid/no-network.png"></html>')
+ fs.copyFileSync(path.join(root,'Infra/src/test/fixtures/library-preview.pdf'),path.join(f.shared,'Documents','Research.pdf'));fs.writeFileSync(path.join(f.shared,'Documents','Article.html'),'<html><title>Reading notes</title><h1>Reading notes</h1><p>Original local material.</p><script>throw Error("Never execute")</script><img src="https://example.invalid/no-network.png"></html>')
  const sourceFiles=['Research.pdf','Article.html'].map(name=>path.join(f.shared,'Documents',name)),before=sourceFiles.map(hash)
- for(const name of ['Research.pdf','Article.html','Deep Folder/report.md']){const preview=await rpc('assets.preview',{id:nodeId('shared','Documents/'+name)});assert.equal(preview.kind,'image',name+': '+preview.reason);assert.equal(preview.mimeType,'image/png');assert.ok(Buffer.from(preview.data,'base64').subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));assert.ok(preview.width<=360&&preview.height<=480);if(name.endsWith('.pdf'))assert.equal(preview.pageCount,1)}
+ for(const name of ['Research.pdf','Article.html','Deep Folder/report.md']){const preview=await rpc('assets.preview',{id:nodeId('shared','Documents/'+name)});assert.equal(preview.kind,'fallback',name);assert.match(preview.reason,/No built-in document preview renderer/)}
  assert.equal((await rpc('assets.preview',{id:image.id})).kind,'image');assert.equal((await rpc('assets.preview',{id:cloud.id})).kind,'fallback');assert.equal((await rpc('assets.preview',{id:nodeId('team:Remote%20team','remote.txt')})).kind,'fallback');assert.deepEqual(sourceFiles.map(hash),before)
- const textPath=path.join(f.shared,'Documents','Deep Folder','report.md'),first=await rpc('assets.preview',{id:nodeId('shared','Documents/Deep Folder/report.md')});fs.writeFileSync(textPath,'# Changed source\nNew evidence.');const second=await rpc('assets.preview',{id:nodeId('shared','Documents/Deep Folder/report.md')});assert.notEqual(first.version,second.version)
- pass('Actual Reader workers render PDF/HTML/Markdown/image covers with bounded dimensions and current-version checks; no remote original is auto-fetched and source bytes remain unchanged.')
+ const imagePath=path.join(f.shared,'Documents','Preview.png');fs.writeFileSync(imagePath,f.image);const first=await rpc('assets.preview',{id:nodeId('shared','Documents/Preview.png')});assert.equal(first.kind,'image');assert.equal(first.mimeType,'image/png');assert.ok(Buffer.from(first.data,'base64').subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));fs.utimesSync(imagePath,new Date(),new Date(Date.now()+5000));const second=await rpc('assets.preview',{id:nodeId('shared','Documents/Preview.png')});assert.notEqual(first.version,second.version)
+ pass('Standalone document formats no longer require an Aexus plugin renderer; safe local images retain bounded previews, version checks and no remote fetches.')
  report.passed=true
 }catch(error){report.error=error.stack;throw error}finally{await f?.close();application.dispose();fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'core-verification.json'),JSON.stringify(report,null,2))}

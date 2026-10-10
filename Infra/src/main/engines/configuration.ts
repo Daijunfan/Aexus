@@ -1,22 +1,43 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import os from 'node:os'
 import {randomBytes,createCipheriv,createDecipheriv} from 'node:crypto'
 import {APP_HOME} from '../../shared/protocol'
 import {isEngine,type EngineId} from '../../shared/engines'
 import {atomicJson,readJson} from '../atomic-file'
-type Config={path?:string;managedPath?:string;sdkPath?:string;baseUrl?:string;model?:string;secret?:string}
+type Config={path?:string;managedPath?:string;sdkPath?:string;baseUrl?:string;model?:string;secret?:string;sharedPiConfig?:boolean;sharedClineConfig?:boolean}
 const directory=path.join(APP_HOME,'engines'),file=path.join(directory,'settings.json'),keyFile=path.join(directory,'credential.key')
 const all=()=>readJson<Partial<Record<EngineId,Config>>>(file,()=>({}))
+export const piAgentDirectory=()=>process.env.PI_CODING_AGENT_DIR||path.join(os.homedir(),'.pi','agent')
+export const clineDataDirectory=()=>process.env.CLINE_DATA_DIR||path.join(process.env.CLINE_DIR||path.join(os.homedir(),'.cline'),'data')
+function sharedClineSettings(){
+  const config=readJson<{lastUsedProvider?:string;providers?:Record<string,{settings?:{provider?:string;model?:string;baseUrl?:string;apiKey?:string}}> }>(path.join(clineDataDirectory(),'settings','providers.json'),()=>({}))
+  const settings=config.providers?.[config.lastUsedProvider??'']?.settings
+  if(!settings?.provider||!settings.model||!settings.baseUrl||!settings.apiKey)throw Error('Configure a compatible provider in the native Cline settings first')
+  return settings
+}
+function sharedPiProvider(){
+  const root=piAgentDirectory(),settings=readJson<{defaultProvider?:string;defaultModel?:string}>(path.join(root,'settings.json'),()=>({}))
+  if(!settings.defaultProvider||!settings.defaultModel)throw Error('Set a default provider and model in the shared Pi configuration first')
+  const models=readJson<{providers?:Record<string,{baseUrl?:string;apiKey?:string}>}>(path.join(root,'models.json'),()=>({}))
+  const auth=readJson<Record<string,unknown>>(path.join(root,'auth.json'),()=>({}))
+  const selected=models.providers?.[settings.defaultProvider]
+  return {provider:settings.defaultProvider,model:settings.defaultModel,baseUrl:selected?.baseUrl,managedReasoning:!!selected?.baseUrl,hasApiKey:!!auth[settings.defaultProvider]||!!selected?.apiKey&&!selected.apiKey.startsWith('$')}
+}
 function key(){if(!fs.existsSync(keyFile)){fs.mkdirSync(directory,{recursive:true,mode:0o700});fs.writeFileSync(keyFile,randomBytes(32),{mode:0o600,flag:'wx'})};return fs.readFileSync(keyFile)}
 export const engineConfiguration=(engine:EngineId)=>all()[engine]??{}
 export function processProvider(engine:'cline'|'pi'){
   const config=engineConfiguration(engine),custom=!!config.baseUrl
+  if(engine==='pi'&&config.sharedPiConfig)return sharedPiProvider()
+  if(engine==='cline'&&config.sharedClineConfig){const settings=sharedClineSettings();return {provider:settings.provider!,model:settings.model!,baseUrl:settings.baseUrl,managedReasoning:true,hasApiKey:true}}
   return {provider:custom?(engine==='cline'?'openai-compatible':'agents-company'):'deepseek',model:custom?config.model||'deepseek-flash':'deepseek-flash',baseUrl:config.baseUrl,managedReasoning:custom}
 }
-export function publicEngineConfiguration(engine:EngineId){const {secret,...config}=engineConfiguration(engine);return {...config,hasApiKey:!!secret}}
-export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:string;baseUrl?:string;model?:string;apiKey?:string}){
-  if(!isEngine(engine)||!patch||Object.keys(patch).some(k=>!['path','sdkPath','baseUrl','model','apiKey'].includes(k)))throw Error('Invalid engine configuration')
+export function publicEngineConfiguration(engine:EngineId){const {secret,...config}=engineConfiguration(engine);return {...config,hasApiKey:engine==='pi'&&config.sharedPiConfig?sharedPiProvider().hasApiKey:engine==='cline'&&config.sharedClineConfig?!!sharedClineSettings().apiKey:!!secret}}
+export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:string;baseUrl?:string;model?:string;apiKey?:string;sharedPiConfig?:boolean;sharedClineConfig?:boolean}){
+  if(!isEngine(engine)||!patch||Object.keys(patch).some(k=>!['path','sdkPath','baseUrl','model','apiKey','sharedPiConfig','sharedClineConfig'].includes(k)))throw Error('Invalid engine configuration')
   const data=all(),value={...data[engine]}
+  if(patch.sharedPiConfig!==undefined){if(engine!=='pi'||typeof patch.sharedPiConfig!=='boolean')throw Error('Shared Pi configuration is only available for Pi');value.sharedPiConfig=patch.sharedPiConfig}
+  if(patch.sharedClineConfig!==undefined){if(engine!=='cline'||typeof patch.sharedClineConfig!=='boolean')throw Error('Shared Cline configuration is only available for Cline');value.sharedClineConfig=patch.sharedClineConfig}
   if(patch.path!==undefined){if(patch.path&&(!path.isAbsolute(patch.path)||!fs.existsSync(patch.path)||!fs.statSync(patch.path).isFile()))throw Error('Choose an existing executable on the Core host');value.path=patch.path||undefined}
   if(patch.sdkPath!==undefined){if(engine!=='claude'||patch.sdkPath&&(!path.isAbsolute(patch.sdkPath)||!fs.existsSync(patch.sdkPath)||!fs.statSync(patch.sdkPath).isFile()))throw Error('Choose an existing Claude Agent SDK module on the Core host');value.sdkPath=patch.sdkPath||undefined}
   if(patch.baseUrl!==undefined){if(patch.baseUrl){const url=new URL(patch.baseUrl);if(url.username||url.password||url.search||url.hash||url.protocol!=='https:'&&!(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)))throw Error('Provider URL must use HTTPS (HTTP is allowed only for loopback development)')};value.baseUrl=patch.baseUrl||undefined}
@@ -30,6 +51,8 @@ export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:str
     if(patch.apiKey){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key(),iv),bytes=Buffer.concat([cipher.update(patch.apiKey,'utf8'),cipher.final()]);value.secret=Buffer.concat([iv,cipher.getAuthTag(),bytes]).toString('base64')}
     else delete value.secret
   }
+  if(value.sharedPiConfig)sharedPiProvider()
+  if(value.sharedClineConfig)sharedClineSettings()
   data[engine]=value;atomicJson(file,data,true);return publicEngineConfiguration(engine)
 }
 export function setManagedEngine(engine:EngineId,executable:string,sdkPath?:string){const data=all();data[engine]={...data[engine],path:undefined,managedPath:executable,...(sdkPath?{sdkPath}:{})};atomicJson(file,data,true)}
@@ -45,6 +68,8 @@ export function engineProcessEnvironment(engine:EngineId,base:NodeJS.ProcessEnv)
 }
 export function engineEnvironment(engine:EngineId):NodeJS.ProcessEnv{
   const config=engineConfiguration(engine),env:NodeJS.ProcessEnv={}
+  if(engine==='pi'&&config.sharedPiConfig)return env
+  if(engine==='cline'&&config.sharedClineConfig){const settings=sharedClineSettings();return {CLINE_API_KEY:settings.apiKey,OPENAI_BASE_URL:settings.baseUrl}}
   if(config.baseUrl)env[engine==='claude'?'ANTHROPIC_BASE_URL':'OPENAI_BASE_URL']=config.baseUrl
   if(config.secret){const bytes=Buffer.from(config.secret,'base64'),cipher=createDecipheriv('aes-256-gcm',key(),bytes.subarray(0,12));cipher.setAuthTag(bytes.subarray(12,28));const secret=Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]).toString('utf8');env[engine==='cline'?'CLINE_API_KEY':engine==='pi'?'DEEPSEEK_API_KEY':engine==='claude'?'ANTHROPIC_API_KEY':'OPENAI_API_KEY']=secret;if(engine==='claude')env.ANTHROPIC_AUTH_TOKEN=''}
   return env

@@ -52,7 +52,7 @@ function materialize(){
   '| Company | Team、员工、关系与画布 | `group.*`、`card.*`、`management.*`、`office.*`、`team-view.*` |',
   '| Messages | 私聊、群聊、新闻频道与讨论 | `session.*`、`chat.*`、`channel.*`、`messenger.*`、`conversation.*` |',
   '| Plan | 员工任务的计划、排期与运行记录 | `plan.*`、`schedule.*` |','',
-  '**Plan 是 Core 视图，不是 MiniNotion 插件。** Core Plan 操作同一套调度记录；MiniNotion 是独立的笔记/数据库软件，插件命令不能替代 `agents plan` 或 `agents schedule`。','',
+  'Plan 是 Core 视图，调度记录仅由 plan.* 和 schedule.* 维护；插件命令不替代 Core 调度接口。','',
   '`describe` 仅查询 Core 命令，例如 `agents api describe schedule.create --all --json`；不接收插件方法名或文档 ID。`--all` 只扩展公开文档发现，不授予执行权限；实际身份用 `agents auth whoami --json` 查询。','',
   '群组 Owner / Admin / Member 与 Company 职位独立。先读 `conversation.policy` 获取实际职位和可执行动作。固定正文通知、静音与禁言只由会话 Owner/Admin 配置；通知使用 `conversation.notice-*`，不调用模型、不进入 Plan。频道按新增帖数触发成员提示词使用 `channel.post-trigger-*`，会调用成员但不进入 Plan；Plan 排期继续使用 `schedule.*`。`workspace.catalog` 列出本人所有工作区；`conversation.entry/download/download-status` 读取完整公开帖子并复制附件到本人工作区。完整界限见 `agents api docs core/message-collaboration`。','',
   '## 查询与操作','',
@@ -65,9 +65,9 @@ function materialize(){
   '## 已安装插件','',
   ...plugins.map(plugin=>'- **'+plugin.name+'** (`'+plugin.id+'`, '+plugin.version+') — [方法索引](plugins/'+plugin.id+'/README.md); `agents api docs plugin/'+plugin.id+'/index`。'),
   ...(plugins.length?[]:['当前没有已安装插件。']), '',
-  '先读插件 index，再用文档工具 `{"operation":"document","document":"plugin/mininotion/command/page.create"}`（或 `agents api docs plugin/mininotion/command/page.create`）读取单方法；先看准确参数再执行，不能猜。完整参考仍为 `plugin/PLUGIN_ID/api` 或 `plugin/PLUGIN_ID/schema`。','',
-  "执行模板：`agents plugin call mininotion page.create --employee EMPLOYEE_ID --params '{\"title\":\"...\"}' --json`。EMPLOYEE_ID 取 identity 返回的员工 ID，此模板操作其已绑定的 Work 插件工作区；也可使用统一工具的 `command=plugin.call`、`args={id,method,employee,params}`；两者进入同一工作区授权。",
-  'Governor 操作插件默认共享范围时省略 `--employee`、`--team`、`--workspace`；MiniNotion 默认是共享 collection 根目录。显式传 `--employee` 仍选择该员工工作区。','',
+  '先读已安装插件的 index，再用 agents api docs plugin/PLUGIN_ID/command/METHOD 读取单方法的参数。完整参考是 plugin/PLUGIN_ID/api 或 plugin/PLUGIN_ID/schema。','',
+  '执行示例：agents plugin call cloud-hosts hosts.list --json。其他插件按当前安装列表及该方法 schema 调用，工作区授权由 Core 校验。','',
+  'Governor 操作插件的授权范围应根据当前插件声明的工作区策略选择；显式选择员工时使用 --employee。','',
   '插件列表来自当前安装包。执行插件仍须使用已授权工作区。远端或隔离环境可通过原生只读文档工具或同一 CLI 按需取正文，不需要复制手册到员工文件夹。',''
  ].join('\n')})
  for(const {file,text} of documents.values()){

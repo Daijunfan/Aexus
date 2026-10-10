@@ -4,8 +4,8 @@ import type {Live} from './sessions'
 
 export const DOCUMENTATION_TOOL={
  name:'agents_company_documentation',
- description:'Read your real identity and the shared API index, then only the needed reference. describe is for Core commands only (such as schedule.create). For a plugin method use operation="document", document="plugin/mininotion/command/page.create"; inspect its exact parameters before executing through agents plugin call. Plan is a Core view; MiniNotion is a separate plugin. All roles can read documents, but execution permissions remain unchanged. This tool cannot execute operations.',
- inputSchema:{type:'object',additionalProperties:false,required:['operation'],properties:{operation:{type:'string',enum:['identity','index','document','describe']},document:{type:'string',description:'For operation=document: a document ID such as core/plan, plugin/mininotion/index or plugin/mininotion/command/page.create.'},command:{type:'string',description:'For operation=describe: a Core command such as schedule.create, never a plugin method or document ID.'}}}
+ description:'Read your real identity and the shared API index, then only the needed reference. describe is for Core commands only (such as schedule.create). For a plugin method use operation="document", document="plugin/PLUGIN_ID/command/METHOD"; inspect its exact parameters before executing through agents plugin call. Plan is a Core view; plugins are separate from Core Plan. All roles can read documents, but execution permissions remain unchanged. This tool cannot execute operations.',
+ inputSchema:{type:'object',additionalProperties:false,required:['operation'],properties:{operation:{type:'string',enum:['identity','index','document','describe']},document:{type:'string',description:'For operation=document: a document ID such as core/plan, plugin/PLUGIN_ID/index or plugin/PLUGIN_ID/command/METHOD.'},command:{type:'string',description:'For operation=describe: a Core command such as schedule.create, never a plugin method or document ID.'}}}
 } as const
 
 const credentials=new WeakMap<Live,string>(),reads=new WeakMap<Live,Set<string>>()

@@ -7,16 +7,22 @@ const labels:Record<string,string>={running:'执行中',waiting:'等待确认',p
 type Row=Pick<WorkflowView,'id'|'status'|'summary'|'revision'|'updatedAt'|'controlPending'|'error'>
 export function ResearchTaskManager(){
  const [jobs,setJobs]=useState<Row[]>([]),[offset,setOffset]=useState(0),[hasMore,setHasMore]=useState(false),[total,setTotal]=useState(0),[pending,setPending]=useState<string|null>(null),[confirm,setConfirm]=useState<Row|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true)
- const alive=useRef(true),lock=useRef(false)
+ const alive=useRef(true),lock=useRef(false),readOrder=useRef(0)
  useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[])
- useEffect(()=>{let mounted=true
-  const refresh=async()=>{try{const result=await api.call<{jobs:Row[];hasMore:boolean;total:number}>('workflow.list',{engineId:'deep-research',offset,limit:30});if(mounted){setJobs(result.jobs);setHasMore(result.hasMore);setTotal(result.total);setError('')}}catch(e){if(mounted)setError((e as Error).message)}finally{if(mounted)setLoading(false)}}
+ useEffect(()=>{
+  let mounted=true,inFlight=false,dirty=false,timer:ReturnType<typeof setTimeout>|undefined
+  const schedule=()=>{if(!timer)timer=setTimeout(()=>{timer=undefined;void refresh()},120)}
+  const refresh=async()=>{
+   if(inFlight){dirty=true;return}
+   inFlight=true;const order=++readOrder.current
+   try{const result=await api.call<{jobs:Row[];hasMore:boolean;total:number}>('workflow.list',{engineId:'deep-research',offset,limit:30,brief:true});if(mounted&&order===readOrder.current){setJobs(result.jobs);setHasMore(result.hasMore);setTotal(result.total);setError('')}}catch(e){if(mounted&&order===readOrder.current)setError((e as Error).message)}finally{inFlight=false;if(mounted){setLoading(false);if(dirty){dirty=false;schedule()}}}
+  }
   setLoading(true);void refresh()
-  const unsub=api.onEvent(event=>{if(event.channel==='workflow:changed'&&event.payload?.engineId==='deep-research')void refresh()})
-  return()=>{mounted=false;unsub()}
+  const unsub=api.onEvent(event=>{if(event.channel==='workflow:changed'&&event.payload?.engineId==='deep-research')schedule()})
+  return()=>{mounted=false;readOrder.current++;clearTimeout(timer);unsub()}
  },[offset])
  useEffect(()=>{if(!confirm)return;const esc=(event:KeyboardEvent)=>{if(event.key==='Escape'&&!lock.current){event.preventDefault();setConfirm(null)}};document.addEventListener('keydown',esc);return()=>document.removeEventListener('keydown',esc)},[confirm])
- const reload=async()=>{const result=await api.call<{jobs:Row[];hasMore:boolean;total:number}>('workflow.list',{engineId:'deep-research',offset,limit:30});if(alive.current){setJobs(result.jobs);setTotal(result.total);setHasMore(result.hasMore);if(offset>0&&!result.jobs.length)setOffset(v=>Math.max(0,v-30))}}
+ const reload=async()=>{const order=++readOrder.current;const result=await api.call<{jobs:Row[];hasMore:boolean;total:number}>('workflow.list',{engineId:'deep-research',offset,limit:30,brief:true});if(alive.current&&order===readOrder.current){setJobs(result.jobs);setTotal(result.total);setHasMore(result.hasMore);if(offset>0&&!result.jobs.length)setOffset(v=>Math.max(0,v-30))}}
  const action=async(row:Row,name:'workflow.cancel'|'workflow.delete')=>{
   if(lock.current)return
   lock.current=true;setPending(row.id);setError('')
@@ -29,7 +35,7 @@ export function ResearchTaskManager(){
   finally{lock.current=false;if(alive.current)setPending(null)}
  }
  return <section className="research-manager" aria-label="历史研究任务管理">
-  <header><div><span>RESEARCH ARCHIVE · INFRA</span><h2>历史研究任务</h2><p>研究引擎已保留为空壳。这里可停止旧任务并清理记录；仅中断原研究持有回执的 Agent 执行。</p></div><strong>{total} <small>RECORDS</small></strong></header>
+  <header><div><span>RESEARCH ARCHIVE · INFRA</span><h2>历史研究任务</h2><p>查看、停止与归档研究任务。停止操作仅核对并中断该任务持有的 Agent 执行，不影响其他研究或会话。</p></div><strong>{total} <small>RECORDS</small></strong></header>
   {error&&<div role="alert" className="research-manager-error">{error}<button type="button" onClick={()=>void reload().then(()=>setError('')).catch(e=>setError((e as Error).message))}>重试读取</button></div>}
   {loading&&<p className="research-manager-empty" role="status">正在读取历史研究…</p>}
   {!loading&&!jobs.length&&<p className="research-manager-empty">没有需要管理的历史研究记录。</p>}

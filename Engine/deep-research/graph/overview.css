@@ -1,0 +1,205 @@
+/* High-level navigation while a long research graph would be illegible at fit zoom. */
+.dr-graph-semantic-overview {
+  position: absolute;
+  z-index: 6;
+  inset: 44px 0 0;
+  min-height: 0;
+  overflow: auto;
+  padding: clamp(14px, 2.6vw, 28px);
+  background: var(--dr-bg);
+  color: var(--dr-text);
+}
+.dr-graph-semantic-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  max-width: 1260px;
+  margin: 0 auto 20px;
+}
+.dr-graph-semantic-header > div { min-width: 0; }
+.dr-graph-semantic-header > div > span {
+  display: block;
+  font-size: 10px;
+  color: var(--dr-blue);
+  font-weight: 650;
+  margin-bottom: 6px;
+}
+.dr-graph-semantic-header strong {
+  display: block;
+  font-size: clamp(15px, 2vw, 20px);
+  line-height: 1.35;
+}
+.dr-graph-semantic-header p {
+  max-width: 750px;
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--dr-muted);
+}
+.dr-graph-semantic-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--dr-muted);
+}
+.dr-graph-semantic-summary span:first-child { color: var(--dr-green); }
+.dr-graph-semantic-summary .attention, .dr-graph-region-status .attention { color: var(--dr-red); }
+.dr-app .dr-graph-semantic-header > button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid var(--dr-border);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--dr-blue);
+  background: var(--dr-bg);
+}
+.dr-app .dr-graph-semantic-header > button:hover { border-color: var(--dr-blue); }
+.dr-graph-semantic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  max-width: 1260px;
+  margin: auto;
+}
+.dr-app .dr-graph-semantic-region {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+  min-height: 182px;
+  border: 1px solid var(--dr-border);
+  border-radius: 10px;
+  padding: 15px;
+  text-align: left;
+  color: var(--dr-text);
+  background: var(--dr-bg);
+}
+.dr-app .dr-graph-semantic-region:hover,
+.dr-app .dr-graph-semantic-region:focus-visible {
+  border-color: var(--dr-blue);
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--dr-blue) 9%, transparent);
+}
+.dr-graph-region-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+.dr-graph-region-top > span { font-size: 11px; font-weight: 650; color: var(--dr-blue); }
+.dr-graph-region-top small { color: var(--dr-muted); font-size: 10px; }
+.dr-graph-semantic-region > strong {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.5;
+  width: 100%;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dr-graph-semantic-region > p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--dr-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.dr-graph-region-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 11px;
+  color: var(--dr-muted);
+  font-size: 10px;
+}
+.dr-graph-region-status span:first-child { color: var(--dr-green); }
+.dr-graph-region-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--dr-border);
+  padding-top: 11px;
+  margin-top: auto;
+}
+.dr-graph-region-links small { font-size: 10px; color: var(--dr-muted); }
+.dr-graph-region-links > span { font-size: 10px; color: var(--dr-blue); white-space: nowrap; }
+@media (max-width: 600px) {
+  .dr-graph-semantic-overview { padding: 12px; }
+  .dr-graph-semantic-header { margin-bottom: 12px; }
+  .dr-graph-semantic-grid { grid-template-columns: repeat(auto-fit,minmax(min(160px, 100%),1fr)); gap: 8px; }
+  .dr-app .dr-graph-semantic-region { min-height: 156px; padding: 12px; gap: 7px; }
+}
+
+.dr-graph-topic-guide {
+  max-width: 1260px;
+  margin: 0 auto 16px;
+  border: 1px solid var(--dr-border);
+  border-radius: 9px;
+  padding: 12px 14px;
+  background: var(--dr-surface);
+}
+.dr-graph-topic-guide-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.dr-graph-topic-guide-header strong { font-size: 12px; font-weight: 650; }
+.dr-graph-topic-guide-header span { font-size: 10px; color: var(--dr-muted); }
+.dr-graph-topic-guide-list {
+  display: flex;
+  gap: 7px;
+  overflow: auto;
+  padding: 2px 0 5px;
+  max-height: 170px;
+  overscroll-behavior: contain;
+}
+.dr-app .dr-graph-topic-guide-list button {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 4px;
+  width: 190px;
+  max-width: 65%;
+  min-height: 59px;
+  padding: 9px 10px;
+  border: 1px solid var(--dr-border);
+  border-radius: 6px;
+  background: var(--dr-bg);
+  text-align: left;
+  color: var(--dr-text);
+}
+.dr-app .dr-graph-topic-guide-list button:hover { border-color: var(--dr-blue); }
+.dr-graph-topic-guide-list button strong {
+  display: block;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dr-graph-topic-guide-list button small {
+  color: var(--dr-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.dr-app .dr-graph-topics-more {
+  display: block;
+  padding: 4px 0 0;
+  background: transparent;
+  color: var(--dr-blue);
+  font-size: 10px;
+}

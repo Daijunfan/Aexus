@@ -3,7 +3,7 @@ import type {PrincipalRef} from './management'
 
 export const PLAN_STATES=['scheduled','running','paused','completed','attention'] as const
 export const PLAN_PRIORITIES=['low','normal','high','urgent'] as const
-/** Same layout IDs as the source-versioned MiniNotion database catalog. */
+/** Layout identifiers are maintained by the Core Plan view. */
 export const PLAN_LAYOUTS=['table','board','timeline','calendar','plan','list','gallery','chart','feed','form'] as const
 export const PLAN_LAYOUT_CATALOG=[
   {id:'table',label:'Table',icon:'table',description:'All schedule properties in rows and columns.'},

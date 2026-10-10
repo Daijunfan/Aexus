@@ -11,6 +11,7 @@ import shlex
 import signal
 import struct
 import sys
+sys.dont_write_bytecode = True
 import termios
 import transport
 

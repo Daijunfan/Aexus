@@ -208,7 +208,7 @@
     },
     {
       "name": "workflow.list",
-      "summary": "Read paginated caller-owned workflows without exposing private checkpoints; includes total and hasMore",
+      "summary": "Read paginated caller-owned workflows; brief mode keeps only titles, phase and status, omitting heavy summary and file metadata",
       "permission": "operator",
       "inputSchema": {
         "type": "object",
@@ -226,6 +226,9 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100
+          },
+          "brief": {
+            "type": "boolean"
           }
         }
       },
@@ -462,7 +465,7 @@
     },
     {
       "name": "workflow.delete",
-      "summary": "Stop, verify and archive a retired Deep Research workflow; idempotent, owner-scoped, never removes Agent identities",
+      "summary": "Stop, verify and archive a Deep Research workflow; idempotent, owner-scoped, never removes Agent identities",
       "permission": "operator",
       "inputSchema": {
         "type": "object",

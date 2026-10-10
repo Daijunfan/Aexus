@@ -1,17 +1,15 @@
 // Regression locks for issues first found during the interactive exploration in .aexus/artifacts/plan-parity.
 // Operator-only disposable Core; no production credentials, paid models or real hosts.
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
-import path from 'node:path'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 const f=await fixtureCore(),rpc=async(cmd,args={})=>{const r=await f.request(null,cmd,args);assert.ok(r.ok,r.error);return r.data}
 const iso=ms=>new Date(ms).toISOString(),day=86400000,base=Date.now()+40*day
 try{
-  const source=fs.readFileSync(path.join(f.root,'Infra/Plugins/mini-notion/src/database/viewTypes.ts'),'utf8')
-  const notion=[...source.matchAll(/\{ type: '([^']+)'/g)].map(match=>match[1])
+  // Plan is a standalone Aexus feature; test its public catalog without loading removed plugins.
+  const expected=['table','board','timeline','calendar','plan','list','gallery','chart','feed','form']
   const schema=await f.cli('plan','schema'),views=await f.cli('plan','views')
-  assert.deepEqual(new Set(schema.layouts),new Set(notion),'source-versioned Notion layout catalog must stay in parity')
-  assert.equal(notion.length,10);assert.deepEqual(views.filter(view=>view.builtin).map(view=>view.layout),schema.layouts)
+  assert.deepEqual(new Set(schema.layouts),new Set(expected),'Plan must expose its ten supported layouts')
+  assert.deepEqual(views.filter(view=>view.builtin).map(view=>view.layout),schema.layouts)
   await f.cli('group','add','Release Studio');await f.cli('group','add','Night Operations')
   const a=await f.create('Alex','Release Studio'),b=await f.create('Alex','Night Operations')
   const once=(name,at,extra={})=>({name,action:{type:'agent',employeeId:a.id,prompt:'Review rehearsal evidence; do not publish or deploy.'},rule:{kind:'once',at:iso(at)},...extra})
