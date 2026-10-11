@@ -34,6 +34,10 @@ export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
  const samples=(snapshot?.history??[]).slice(-18)
  const peak=Math.max(1,...samples.map(item=>(item.rxBytesPerSecond??0)+(item.txBytesPerSecond??0)))
  const online=!!snapshot&&Date.now()-snapshot.sampledAt<12000&&!paused
+ const traceNow=Date.now(),traceWindow=86400000,traceStep=7200000
+ const traceEvents=[...(feed?.events??[])].filter(event=>event.lastSeenAt>=traceNow-traceWindow&&event.lastSeenAt<=traceNow).sort((a,b)=>a.lastSeenAt-b.lastSeenAt)
+ const traceSlots=Array.from({length:12},(_,index)=>traceEvents.filter(event=>Math.min(11,Math.floor((event.lastSeenAt-traceNow+traceWindow)/traceStep))===index))
+ const tracePeak=Math.max(1,...traceSlots.map(items=>items.length))
  const nav=(domain:Destination)=>()=>onOpen(domain)
  const signals:Record<Focus,{name:string;value:string;description:string;chip:string}>={
   cpu:{name:'处理器',value:cpu,description:cores.length?cores.length+' 核 · 最近采样':'等待核心采样',chip:'CPU'},
@@ -108,6 +112,12 @@ export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
    <button data-domain="report" onClick={nav('report')}>七日回看 <Icon name="arrow-right"/></button>
   </div>
   <section className="gc-watchlist"><header><div><span className="gc-kicker">SIGNALS / NEED YOUR ATTENTION</span><h3>此刻值得关注</h3></div><button data-domain="events" onClick={nav('events')}>进入调查室 <Icon name="arrow-right"/></button></header>
+   <div className="gc-event-rhythm" data-testid="guardian-event-rhythm">
+    <div className="gc-rhythm-heading"><span>24H / EVENT PULSE</span><strong>事件脉冲</strong><small>每格 2 小时 · 点击有记录的时段直达调查</small><div><i/>需要关注 <i/>一般记录</div></div>
+    <div className="gc-rhythm-chart"><div className="gc-rhythm-bars" role="group" aria-label="过去 24 小时每 2 小时的事件记录">
+     {traceSlots.map((items,index)=>{const attention=items.filter(event=>event.importance==='attention').length;return <button type="button" key={index} disabled={!items.length} data-testid="guardian-event-rhythm-bin" data-count={items.length} aria-label={`${24-index*2} 至 ${22-index*2} 小时前，${items.length} 条事件记录，其中 ${attention} 条需要关注${items.length?'；查看最新事件':''}`} onClick={()=>onEvent(items[items.length-1].id)}><span className="gc-rhythm-track"><i className="gc-rhythm-attention" style={{height:attention/tracePeak*100+'%'}}/><i className="gc-rhythm-notice" style={{height:(items.length-attention)/tracePeak*100+'%'}}/></span><span className="gc-rhythm-count">{items.length||'·'}</span></button>})}
+    </div><div className="gc-rhythm-axis"><span>24 小时前</span><small>{feed?traceEvents.length+' 条记录 · 按最后观测时间统计；无记录不代表安全':'等待事件记录 · 未观测时段状态未知'}</small><span>现在</span></div></div>
+   </div>
    <div className="gc-watchlist-rows">{outstanding.length?outstanding.slice(0,3).map(event=><button key={event.id} onClick={()=>onEvent(event.id)}><span className="gc-watchlist-light"/><div><strong>{event.title}</strong><small>{new Date(event.lastSeenAt).toLocaleString('zh-CN')} · {event.kind==='manual'?'人工登记':'系统观测'}</small></div><span>查看事件 <Icon name="arrow-up-right"/></span></button>):<div className="gc-watchlist-idle"><Icon name="check"/><span><strong>{feed?'当前没有待核对记录':'正在读取事件记录'}</strong><small>已观测范围有限，未采样时段不能判定正常。</small></span><button onClick={nav('applications')}>探索应用 <Icon name="arrow-right"/></button></div>}</div>
   </section>
  </div>
