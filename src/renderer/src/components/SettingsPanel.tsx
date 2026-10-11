@@ -12,7 +12,7 @@ import {usePreferencesAutosave} from './usePreferencesAutosave'
 import {DEFAULT_PREFERENCES,DEFAULT_VIEW_APPEARANCE,PRESENTATION_VIEWS,COLOR_THEMES,THEMES,THEME_LABELS,mergePreferences,readableThemeAccent,type Preferences,type PreferencesPatch,type PresentationView,type ViewAppearance} from '../../../shared/preferences'
 import '../styles/view-preferences.css'
 
-const viewLabels={company:'Company',messages:'Messages',plan:'Plan'},viewIcons={company:'organization',messages:'comment-discussion',plan:'checklist'}
+const viewLabels={company:'Company',messages:'Messages',plan:'Plan',guardian:'Guardian'},viewIcons={company:'organization',messages:'comment-discussion',plan:'checklist',guardian:'shield'}
 const neutralThemes:Preferences['theme'][]=['white','light','space','black','midnight','graphite']
 type EmployeeDefaults=Pick<Preferences,'defaultPermissionMode'|'defaultCodexModel'|'defaultClaudeModel'|'defaultClineModel'|'defaultPiModel'>
 const employeeDefaults:EmployeeDefaults={defaultPermissionMode:DEFAULT_PREFERENCES.defaultPermissionMode,defaultCodexModel:DEFAULT_PREFERENCES.defaultCodexModel,defaultClaudeModel:DEFAULT_PREFERENCES.defaultClaudeModel,defaultClineModel:DEFAULT_PREFERENCES.defaultClineModel,defaultPiModel:DEFAULT_PREFERENCES.defaultPiModel}

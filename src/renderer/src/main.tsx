@@ -42,3 +42,5 @@ import './styles/channels.css'
 import './styles/employee-profile.css'
 import './styles/message-categories.css'
 import './styles/employee-workbench.css'
+
+import './styles/guardian.css'

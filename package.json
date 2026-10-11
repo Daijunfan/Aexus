@@ -1,11 +1,11 @@
 {
-  "name": "agents-company",
-  "productName": "Avalon",
-  "version": "0.58.1",
-  "description": "Open CLI-first infrastructure for coding-agent interaction, experiments, games and user-defined work",
+  "name": "aexus",
+  "productName": "Aexus",
+  "version": "0.65.0",
+  "description": "Aexus: Company, Messages, Plan and local Mac Guardian",
   "main": "./out/main/index.js",
   "author": {
-    "name": "Avalon",
+    "name": "Aexus",
     "email": "Daijunfan@users.noreply.github.com"
   },
   "scripts": {
@@ -126,11 +126,12 @@
     "test:cloud-robustness": "node test/terminal-output-test.mjs && node test/terminal-wait-cancel-test.mjs && node test/cloud-terminal-stress-test.mjs && node test/cloud-connection-lifecycle-test.mjs",
     "test:plan-scenarios": "node test/plan-polish-core-test.mjs && node test/plan-polish-ui-test.mjs && node test/plan-notion-delivery-test.mjs",
     "test:plan-parity": "node test/plan-parity-core-test.mjs && node test/plan-parity-ui-test.mjs",
-    "test:slimming": "node scripts/sync-manager-docs.mjs --check && node test/cli-contract-test.mjs && node test/architecture-boundaries-test.mjs && node test/slimming-domains-test.mjs && node test/message-index-test.mjs && node test/message-index-worker-test.mjs && node test/slimming-read-model-test.mjs && node test/api-documents-test.mjs && node test/slimming-performance-test.mjs"
+    "test:slimming": "node scripts/sync-manager-docs.mjs --check && node test/cli-contract-test.mjs && node test/architecture-boundaries-test.mjs && node test/slimming-domains-test.mjs && node test/message-index-test.mjs && node test/message-index-worker-test.mjs && node test/slimming-read-model-test.mjs && node test/api-documents-test.mjs && node test/slimming-performance-test.mjs",
+    "test:guardian:ui": "node test/guardian-ui-test.mjs"
   },
   "build": {
     "appId": "com.agentscompany.app",
-    "productName": "Avalon",
+    "productName": "Aexus",
     "directories": {
       "output": "release"
     },
@@ -169,7 +170,8 @@
       "docs/MESSAGE_COLLABORATION.md",
       "docs/FILES_WORKBENCH.md",
       "docs/releases/0.57.0.zh-CN.md",
-      "docs/releases/0.58.0.zh-CN.md"
+      "docs/releases/0.58.0.zh-CN.md",
+      "docs/GUARDIAN.md"
     ],
     "mac": {
       "target": [
@@ -190,8 +192,8 @@
       "identity": null,
       "icon": "build/icon.icns",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "仅在你点击录音后使用麦克风。Recording starts only when you choose to record.",
-        "NSCameraUsageDescription": "允许网页聊天在你同意后使用摄像头。"
+        "NSMicrophoneUsageDescription": "\u4ec5\u5728\u4f60\u70b9\u51fb\u5f55\u97f3\u540e\u4f7f\u7528\u9ea6\u514b\u98ce\u3002Recording starts only when you choose to record.",
+        "NSCameraUsageDescription": "\u5141\u8bb8\u7f51\u9875\u804a\u5929\u5728\u4f60\u540c\u610f\u540e\u4f7f\u7528\u6444\u50cf\u5934\u3002"
       },
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"
@@ -296,7 +298,8 @@
   "bin": {
     "agents": "./bin/agents",
     "anexus": "./bin/anexus",
-    "avalon": "./bin/avalon"
+    "avalon": "./bin/avalon",
+    "aexus": "./bin/aexus"
   },
   "optionalDependencies": {
     "node-pty": "1.1.0"

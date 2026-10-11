@@ -1,5 +1,7 @@
 # Avalon 权限说明
 
+Guardian 的 `guardian.snapshot` / `guardian.settings-get` 只读接口允许用户、Governor 和 Secretary，普通 Employee/Manager 不因加入某个 Team 而获得全机观测权。`guardian.settings-set` 仅用户可调用，任何 Agent（包括 Secretary）都不能替用户同意外部 IP 定位或修改地图位置。默认不向外部定位服务发请求；用户启用后仅通过 HTTPS ipwho.is 查询实际公网对端及公网出口，关闭时中止在途请求、清空定位缓存。Guardian 不授予提权、抓包、进程终止、修改防火墙或自动处置权，也不会自动创建安全运营团队。
+
 管理权限属于员工的 `managementRole`，与 Team 名称、工作目录、目录标记和视图无关。CLI 与 UI 进入相同的 Core 授权入口。完整命令见 [API.md](API.md)。`management.topology.teams` 从同一授权入口返回逐 Team 的 allowedActions、deleteBlockedReason、governorIds 和 isOwnTeam，避免把少数受保护 Team 误判为全部不可删除。
 
 ## 四种职位

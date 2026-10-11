@@ -1,12 +1,14 @@
-# Avalon
+# Aexus
 
 [简体中文](README.md) · [English](README.en.md)
 
 **把 Coding Agent 组织成能协作的小队：Company 看分工，Messages 聊任务，Plan 安排下一步。**
 
-Avalon 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
+Aexus 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
 
-**当前源码版本：0.58.1。** 应用显示名、窗口标题和 macOS 安装目录已统一为 Avalon，旧 Anexus 应用沿用原有数据迁移。详见 [0.58.1 更新说明](docs/releases/0.58.1.zh-CN.md)。
+**当前本地版本：0.65.0 · Guardian。** 从 domain Engine 重构前的 `25d686e`（0.58.1）恢复 Company、Messages、Plan、频道与群组，再增加 Guardian 电脑卫士。应用仍为 `/Applications/Aexus.app`，本次改动仅在本地。详见 [Guardian 功能与采样范围](docs/GUARDIAN.md)。
+
+Guardian 提供真实 Mac CPU、内存、磁盘、TCP 连接、进程和安全配置观察，以及可以旋转和缩放的地球连接视图。公网 IP 定位需要明确授权；普通连接不等于攻击。下文旧界面截图与历史功能记录保留其拍摄时的版本语境。
 
 ## 三个视图，同一支小队
 
@@ -115,7 +117,7 @@ npm run dev
 
 ### CLI 与浏览器
 
-当前应用名称为 `Avalon.app`，命令入口为 `agents` 和 `avalon`。旧 `Anexus.app` 会由安装器迁移，`anexus` 命令仍作为兼容入口连接同一 Core。
+当前应用名称为 `Aexus.app`，命令入口为 `aexus` 和 `agents`，`avalon` 保留为兼容入口。旧 `Anexus.app` 会由安装器迁移，`anexus` 命令仍作为兼容入口连接同一 Core。
 
 ```sh
 npm run build:server

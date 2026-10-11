@@ -114,7 +114,7 @@ function createWindow() {
     show: !HIDDEN,
     titleBarStyle: process.platform==='darwin'?'hiddenInset':'default',
     trafficLightPosition: { x: 14, y: 20 },
-    backgroundColor: '#141724',
+    backgroundColor: '#f6f8fa',
     webPreferences: {
       preload: join(__dirname,REMOTE_WEB_URL?'../preload/web.js':'../preload/index.js'), sandbox: true,
       contextIsolation: true, nodeIntegration: false, offscreen: OFFSCREEN,

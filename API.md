@@ -1,5 +1,51 @@
 # CLI and Core API
 
+## Guardian local Mac observations
+
+`guardian.snapshot` samples the **Core host** through the same authenticated desktop,
+web and CLI operation. It returns timestamped CPU utilization, memory pages and
+pressure, APFS container capacity, per-interface byte-counter deltas, visible TCP
+sockets with process identity, process CPU/RSS, and cached Firewall/FileVault/SIP
+status. It runs no sudo, packet capture, firewall change, process termination or
+remediation. The full observation feature requires macOS.
+
+```sh
+agents guardian snapshot --json
+agents guardian settings-get --json
+agents guardian settings-set --data '{"home":{"latitude":39.9,"longitude":116.4,"label":"My Mac"}}' --json
+# Explicit external lookup consent; off by default.
+agents guardian settings-set --data '{"geoLookupEnabled":true}' --json
+agents guardian settings-set --data '{"geoLookupEnabled":false}' --json
+```
+
+The snapshot is shared for two seconds, concurrent reads share a single collection,
+and the in-memory history contains at most 60 samples. The first CPU/rate observation
+is null until a real delta is available. Security checks refresh every five minutes.
+Network totals include physical `en*` interfaces only; loopback, bridges and tunnels
+remain separately visible so traffic is not counted twice. Memory `usedBytes` is
+physical occupancy excluding free/speculative pages; `availableBytes` also includes
+reclaimable inactive pages and is not an additive complement. File-backed cached pages
+overlap active/inactive pages. Process CPU follows `ps` single-core percentages.
+
+TCP observations are not individual HTTP requests, malware detections or attack
+verdicts. Direction remains unknown unless an established socket matches the same
+process's listening address/port. Proxy/VPN sockets may conceal the original peer.
+No external IP lookup occurs before the user enables `geoLookupEnabled`. After consent,
+Guardian uses only fixed HTTPS `ipwho.is` URLs, queries the observed public peer IPs and
+the current public egress IP, and sends no PID, hostname, local/private IP, port or
+traffic payload. The service necessarily sees the requesting public egress IP.
+Results are approximate and may describe a proxy/VPN location. Manual home coordinates
+remain local and take precedence in the map. Requests are bounded to three concurrent
+and 30 per minute; successful peer results are cached in memory for one day, failures
+for five minutes. Disabling consent aborts pending lookups and clears location results.
+Settings persist separately in `guardian.json` under the existing application home.
+
+The user, Governor and Secretary can read Guardian observations and settings. Only the
+human operator can change location or external-lookup consent, including through the
+native API tool; an Agent's role cannot consent on the user's behalf. This API is the
+future security-team integration boundary; no monitoring Agent is started or assigned
+automatically. API response types live in `src/shared/guardian.ts`.
+
 ## File workspace browser and ownership filters
 
 The Files/Assets panel projects the existing Company, Messages and Plan workspaces.
@@ -3090,7 +3136,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 323 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 326 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3198,7 +3244,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents channel post-trigger-batch</code> | <code>CHANNEL_ID --batch-id ID [--offset N --limit N]</code> | Read the exact counted batch with paged complete posts and explicit unavailable entries; no approximate latest-N window, model call or user-read acknowledgment | Batch source posts | chat |
 | <code>agents card profile</code> | <code>ID [--offset N] [--limit N]</code> | Read employee identity, authorized memberships, named workspaces and paged Plan tasks without opening an engine or changing read receipts | Employee profile | employee.read |
 | <code>agents view list</code> | <code>—</code> | List application views and their shared data contracts | Shared views / group conversations | operator |
-| <code>agents view select</code> | <code>company&#124;messages&#124;plan [--team-view ID]</code> | Select a presentation mode; Messages resumes the last conversation for this client | Shared views / group conversations | operator |
+| <code>agents view select</code> | <code>company&#124;messages&#124;plan&#124;guardian [--team-view ID]</code> | Select a presentation mode; Messages resumes the last conversation for this client | Shared views / group conversations | operator |
 | <code>agents chat list</code> | <code>—</code> | List groups for the current authenticated member | Shared views / group conversations | chat |
 | <code>agents chat create</code> | <code>--name NAME [--team TEAM] [--members JSON] [--owner-id ID]</code> | Create a group with an Agent Owner; Agent creators own their group, user selects ownerId (defaults to first selected member) | Shared views / group conversations | chat |
 | <code>agents chat update</code> | <code>ID --patch JSON</code> | Conversation Owner/Admin: edit group name and membership; Company role does not confer access | Shared views / group conversations | chat |
@@ -3213,6 +3259,9 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents chat post</code> | <code>ID [--text TEXT] [--images JSON] [--files JSON] [--kind summary&#124;decision&#124;blocker&#124;question&#124;result&#124;message] [--reply-to ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only] [--client-message-id ID]</code> | Publish a public group message to all current members | Shared views / group conversations | chat |
 | <code>agents chat acknowledge</code> | <code>ID --message ID</code> | User-only: mark group messages read; private receipts remain separate | Shared views / group conversations | operator |
 | <code>agents system info</code> | <code>—</code> | Read Core host OS, architecture and deployment capabilities | 后端信息 | identity |
+| <code>agents guardian snapshot</code> | <code>—</code> | Read live Core-host CPU, memory, disk, network connections and security observations; Governor, Secretary or user; connections are not attack verdicts | Guardian | operator |
+| <code>agents guardian settings-get</code> | <code>—</code> | Read Guardian location and external IP lookup consent settings | Guardian | operator |
+| <code>agents guardian settings-set</code> | <code>--data JSON&#124;@file</code> | User-only: save manual map coordinates or explicitly enable/disable HTTPS public-IP geolocation | Guardian | operator |
 | <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user or Secretary) | 后端目录选择 | operator |
 | <code>agents engine capabilities</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi</code> | Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference | 创建员工能力检查 | identity |
 | <code>agents engine list</code> | <code>—</code> | List registered Coding Agent adapters and public configuration | 引擎管理 | operator |
@@ -3281,9 +3330,9 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents schedule cancel</code> | <code>ID</code> | Cancel an active run, preserving its history | Plan task editor | schedule |
 | <code>agents settings get</code> | <code>—</code> | Read independent Company, Messages and Plan appearances, shared controls and default employee models | 应用设置 | operator |
 | <code>agents engine models</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi [--kind worker&#124;cloud-native-worker] [--team NAME]</code> | List available models before employee creation, without inference; Cloud Native reads the selected host | 创建员工和默认模型设置 | operator |
-| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan &#124; --view-appearance JSON&#124;@file] [--message-wallpaper JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--asset-drawer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
+| <code>agents settings set</code> | <code>[--view company&#124;messages&#124;plan&#124;guardian &#124; --view-appearance JSON&#124;@file] [--message-wallpaper JSON&#124;@file] [--language en&#124;zh-CN] [--theme violet&#124;blue&#124;mint&#124;teal&#124;cyan&#124;rose&#124;coral&#124;amber&#124;indigo&#124;graphite&#124;custom&#124;white&#124;light&#124;space&#124;black&#124;midnight&#124;sage] [--theme-color #RRGGBB] [--default-permission default&#124;acceptEdits&#124;bypassPermissions] [--explorer-width N] [--asset-drawer-width N] [--terminal-height N] [--page-zoom N] [--zoom-sensitivity N] [--pan-sensitivity N] [--sidebar-width N] [--snap-employees on&#124;off] [--team-overview on&#124;off] [--default-codex-model ID] [--default-claude-model ID] [--default-cline-model ID] [--default-pi-model ID]</code> | Patch independent view appearances and shared settings; legacy theme flags target Messages only | 背景、灵敏度和团队索引 | operator |
 | <code>agents view get</code> | <code>—</code> | Read service-owned navigation, including without a window | 当前面板 | operator |
-| <code>agents view open</code> | <code>home&#124;messages&#124;plan&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID &#124; --chat GROUP_ID &#124; --channel CHANNEL_ID] [--source SOURCE_ID] [--plugin ID] [--plan-view ID]</code> | Open a form, workspace, news channel or employee conversation | 打开资料或会话 | operator |
+| <code>agents view open</code> | <code>home&#124;messages&#124;plan&#124;guardian&#124;team&#124;employee&#124;workspace&#124;conversation&#124;initialization&#124;plugin&#124;settings [--name NAME] [--employee ID &#124; --chat GROUP_ID &#124; --channel CHANNEL_ID] [--source SOURCE_ID] [--plugin ID] [--plan-view ID]</code> | Open a form, workspace, news channel or employee conversation | 打开资料或会话 | operator |
 | <code>agents view close</code> | <code>—</code> | Close the current panel after saving workspace edits; keep engines running | × / Escape / 收起面板 | operator |
 | <code>agents view details</code> | <code>on&#124;off</code> | Show or hide employee details inside a conversation | 员工资料 / 返回会话 | operator |
 | <code>agents status</code> | <code>—</code> | Is the app running, and how many sessions are live | The app window being open | operator |
@@ -3292,7 +3341,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents session new</code> | <code>[--engine claude&#124;codex] [--group NAME] [--model M]</code> | Create a session | “+ Hire employee” | operator |
 | <code>agents session rename</code> | <code>&lt;card-or-session-id&gt; &lt;title&gt;</code> | Rename an employee and its one conversation without moving the folder | 会话名称 / 员工名牌 | operator |
 | <code>agents session open</code> | <code>&lt;cardId&gt;</code> | Open a stored card (resumes its engine context) | Clicking a card | employee.message |
-| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--source-view company&#124;messages&#124;plan] [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Send a message to a Worker session | 对话输入框 | employee.message |
+| <code>agents session send</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--source-view company&#124;messages&#124;plan&#124;guardian] [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Send a message to a Worker session | 对话输入框 | employee.message |
 | <code>agents host fingerprints</code> | <code>&lt;id&gt;</code> | Read SSH host key fingerprints without trusting them | 查看主机指纹 | operator |
 | <code>agents host trust</code> | <code>&lt;id&gt; --fingerprint SHA256:...</code> | Trust an explicitly confirmed and matching SSH host fingerprint | 确认信任主机 | operator |
 | <code>agents host terminal-open</code> | <code>&lt;id&gt; [--directory PATH --cols N --rows N]</code> | Open a persistent SSH PTY without an employee | Cloud Hosts 工作台 | operator |
@@ -3337,11 +3386,11 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents external open</code> | <code>&lt;https-url&gt;</code> | Validate an external URL and open it when a desktop is attached | 原生授权链接 | operator |
 | <code>agents engine inspect</code> | <code>&lt;id&gt; [capabilities&#124;skills&#124;mcp&#124;account&#124;usage&#124;config]</code> | Inspect native engine capabilities and configuration | 引擎工具面板 | operator |
 | <code>agents engine skill</code> | <code>&lt;id&gt; &lt;name&gt; [prompt]</code> | Invoke a discovered engine skill | 使用技能 | operator |
-| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt; [--source-view company&#124;messages&#124;plan]</code> | Append instructions to the active native turn with optional per-message presentation context | 运行中追加 | operator |
+| <code>agents session steer</code> | <code>&lt;id&gt; &lt;text&gt; [--source-view company&#124;messages&#124;plan&#124;guardian]</code> | Append instructions to the active native turn with optional per-message presentation context | 运行中追加 | operator |
 | <code>agents session background</code> | <code>&lt;id&gt;</code> | List agent-owned background terminals | 后台进程 | operator |
 | <code>agents session background-stop</code> | <code>&lt;id&gt; [--process ID]</code> | Stop one or all agent-owned background terminals | 停止后台进程 | operator |
 | <code>agents session review</code> | <code>&lt;id&gt; [--base BRANCH&#124;--commit SHA&#124;--instructions TEXT]</code> | Run native Codex review for a chosen target | /review | operator |
-| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--source-view company&#124;messages&#124;plan] [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Queue a message after the active turn | 排队发送 | employee.message |
+| <code>agents session enqueue</code> | <code>&lt;id&gt; &lt;text&gt; &#124; --employee ID --text TEXT [--source-view company&#124;messages&#124;plan&#124;guardian] [--view VIEW_ID] [--client-message-id ID] [--images JSON] [--files JSON] [--reply-to MESSAGE_ID] [--reply-quote JSON] [--reply-conversation REF] [--reply-text-only]</code> | Queue a message after the active turn | 排队发送 | employee.message |
 | <code>agents session queue</code> | <code>&lt;id&gt;</code> | List queued messages | 待发送消息 | employee.read |
 | <code>agents session dequeue</code> | <code>&lt;id&gt; &lt;messageId&gt;</code> | Remove a queued message | 取消排队 | employee.message |
 | <code>agents session export</code> | <code>&lt;id&gt; [--format markdown&#124;json] [--path RELATIVE]</code> | Export conversation into the employee workspace | 导出会话 | operator |

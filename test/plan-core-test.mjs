@@ -11,7 +11,7 @@ try{
  const a=await f.create('Aster','Studio'),b=await f.create('Byte','Studio'),outside=await f.create('Outside','Remote team'),manager=await f.create('Manager','Studio','manager'),governor=await f.create('Governor','Remote team','governor')
  const at=await f.token(a.id),mt=await f.token(manager.id),gt=await f.token(governor.id)
  const records=(await f.cli('session','list')).sessions.map(card=>({id:card.id,cwd:card.cwd,engine:card.engine,group:card.group,avatar:card.avatar,createdBy:card.createdBy,role:card.managementRole}))
- assert.deepEqual((await f.cli('view','list')).views.map(view=>view.id),['company','messages','plan'])
+ assert.deepEqual((await f.cli('view','list')).views.map(view=>view.id),['company','messages','plan','guardian'])
  await f.cli('view','select','plan');assert.equal((await f.cli('view','get')).kind,'plan')
  const schema=await f.call(at,'plan','schema');assert.equal(schema.scheduler.inputSchema.properties.afterSeconds.minimum,1);assert.equal(schema.data.create,'schedule.create')
  for(const command of ['plan.schema','plan.query','plan.calendar','plan.views','schedule.create','schedule.preview','schedule.pause','schedule.resume'])assert.ok((await f.call(at,'api','list')).some(item=>item.name===command))

@@ -1,3 +1,4 @@
+import {guardianSnapshot,guardianSettings,setGuardianSettings} from './guardian'
 import {employeeReady} from '../shared/types'
 import {directoryName} from '../shared/directory-names'
 import {assetNaming} from './asset-naming'
@@ -280,6 +281,9 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'messenger.forward-status':return forwardStatus(a)
     case 'messenger.profile':case 'messenger.profile-image':case 'messenger.directory':case 'messenger.social':case 'messenger.forward-draft':case 'messenger.gallery':case 'messenger.reference':case 'messenger.state':case 'messenger.reorder':case 'messenger.folder-save':case 'messenger.folder-delete':case 'messenger.conversation':case 'messenger.message':case 'messenger.draft':case 'messenger.search':return messengerRequest(req.cmd,a)
     case 'system.info': return {...runtimeInfo(),clientId:requestContext().clientId}
+    case 'guardian.snapshot': return guardianSnapshot()
+    case 'guardian.settings-get': return guardianSettings()
+    case 'guardian.settings-set': return setGuardianSettings(a)
     case 'system.directories': {
       const directory=realpathSync(a.path?resolve(s(a.path)):homedir())
       if(!statSync(directory).isDirectory())throw Error('请选择后端主机上的文件夹')
@@ -416,7 +420,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'view.get': return getView()
     case 'view.open': {
       const kind=a.kind as ViewState['kind'],store=readStore()
-      if(!['home','team','employee','workspace','conversation','initialization','settings','plugin','clone','messages','plan'].includes(kind))throw new Error('Unknown view kind')
+      if(!['home','team','employee','workspace','conversation','initialization','settings','plugin','clone','messages','plan','guardian'].includes(kind))throw new Error('Unknown view kind')
       if(a.planViewId!==undefined&&(kind!=='plan'||!((await planRequest('views',{})) as Array<{id:string}>).some((view:any)=>view.id===a.planViewId)))throw Error('Unknown Plan view')
       if([a.employee,a.chatId,a.channelId].filter(value=>value!==undefined).length>1)throw Error('Choose one conversation')
       if(a.chatId!==undefined){if(kind!=='messages')throw Error('Group conversations belong to Messages');getChatGroup(a.chatId)}
@@ -431,12 +435,13 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       await beforeViewChange()
       if(kind==='plugin'){await openPluginWindow(s(pluginId),pluginWorkspace({id:pluginId}));return setView({kind:'home',pluginId})}
       const previous=getView()
-      const returnTo=!['home','messages','plugin','plan'].includes(kind)?(previous.kind==='plan'?{kind:'plan' as const,planViewId:previous.planViewId}:previous.kind==='messages'?{kind:'messages' as const,employee:previous.employee,...(previous.chatId?{chatId:previous.chatId}:{}),...(previous.channelId?{channelId:previous.channelId,...(previous.sourceId?{sourceId:previous.sourceId}:{})}:{})}:previous.returnTo):undefined
+      const returnTo=!['home','messages','plugin','plan','guardian'].includes(kind)?(previous.kind==='guardian'?{kind:'guardian' as const}:previous.kind==='plan'?{kind:'plan' as const,planViewId:previous.planViewId}:previous.kind==='messages'?{kind:'messages' as const,employee:previous.employee,...(previous.chatId?{chatId:previous.chatId}:{}),...(previous.channelId?{channelId:previous.channelId,...(previous.sourceId?{sourceId:previous.sourceId}:{})}:{})}:previous.returnTo):undefined
       return setView({kind,name:a.name,employee:a.employee,chatId:a.chatId,channelId:a.channelId,sourceId:a.sourceId,planViewId:a.planViewId,settings:a.settings,pluginId,details:!!a.details,shared:previous.shared,returnTo})
     }
     case 'view.close': {
       await beforeViewChange()
       const view=getView(),back=view.returnTo
+      if(back?.kind==='guardian')return setView({kind:'guardian'})
       if(back?.kind==='plan')return setView({kind:'plan',planViewId:back.planViewId})
       if(back){let channelId:string|undefined;if(back.channelId){try{channelId=getChannel(back.channelId).id}catch{}};return setView({kind:'messages',employee:readStore().sessions.some(card=>card.id===back.employee&&!card.deleting)?back.employee:undefined,...(back.chatId&&listChatGroups().some(group=>group.id===back.chatId)?{chatId:back.chatId}:{}),...(channelId?{channelId,...(back.sourceId?{sourceId:back.sourceId}:{})}:{})})}
       if(view.kind==='messages'&&(view.employee||view.chatId||view.channelId))return setView({kind:'messages'})

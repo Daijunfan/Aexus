@@ -36,3 +36,9 @@ __pycache__/
 /promo_avalon_*/
 /publish/
 /Avalon_Live_Views_*.zip
+
+# Preserved build outputs from the later engine workspace.
+/.aexus/
+/dist/
+/progress
+/share_chat

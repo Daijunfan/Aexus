@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The `agents` CLI: drives the running Avalon app over its local
+// The `agents` CLI: drives the running Aexus app over its local
 // socket. Every command maps to the same operation the GUI performs, so this
 // is a faithful remote control rather than a parallel implementation.
 
@@ -60,7 +60,7 @@ function jsonArgument(value) {
 function messageSourceOption(parts) {
   const index=parts.indexOf('--source-view');if(index<0)return {}
   const sourceView=parts[index+1]
-  if(!['company','messages','plan'].includes(sourceView))throw Error('--source-view requires company, messages or plan')
+  if(!['company','messages','plan','guardian'].includes(sourceView))throw Error('--source-view requires company, messages, plan or guardian')
   parts.splice(index,2);return {sourceView}
 }
 /** Preserve literal message words while consuming only the established send options. */
@@ -108,7 +108,7 @@ function send(req, { stream = false } = {}) {
   if(process.env.AGENTS_COMPANY_URL)return require('./http-client.cjs').send(req,{stream,onEvent})
   return new Promise((resolve, reject) => {
     if (process.platform!=='win32'&&!process.env.AGENTS_COMPANY_PORT&&!existsSync(SOCKET)) {
-      reject(new Error('Avalon is not running. Run `agents serve` first.'))
+      reject(new Error('Aexus is not running. Run `agents serve` first.'))
       return
     }
     let auth
@@ -177,7 +177,7 @@ function out(data, human) {
 
 // ---------- commands ----------
 
-const help = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['agents / avalon / anexus — Avalon authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','Raw API payload: agents api call COMMAND --args JSON|@file --json (same authenticated endpoint).' ,'',...commands.filter(c=>!c.replacement).map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})
+const help = (()=>{let commands=[];try{commands=JSON.parse(require('node:fs').readFileSync(join(__dirname,'../docs/managers/commands.json'),'utf8'))}catch{}return ['aexus / agents / avalon / anexus — Aexus authenticated CLI','','Usage: agents <command> [args] [--json]','Run agents serve for the windowless service.','Run agents auth whoami / api docs for your identity-specific API.','JSON arguments accept an inline object/array or @file.json.','Raw API payload: agents api call COMMAND --args JSON|@file --json (same authenticated endpoint).' ,'',...commands.filter(c=>!c.replacement).map(c=>'  '+c.name.replaceAll('.',' ')+' '+c.args+'\n      '+c.summary)].join('\n')})
 
 let onEvent = (m) => {
   if (useJson) console.log(JSON.stringify(m.payload))
@@ -224,6 +224,7 @@ async function main() {
   if(input!==undefined)return out(await call(command,input))
   switch (command) {
     case 'system.directories': {const p=parse(rest);return out(await call('system.directories',{path:p.path}))}
+    case 'guardian.settings-set': {const p=parse(rest);return out(await call('guardian.settings-set',jsonArgument(p.data)))}
     case 'engine.capabilities': {const p=parse(rest);return out(await call('engine.capabilities',{engine:p.engine}))}
     case 'engine.check': {const p=parse(rest);return out(await call('engine.check',{engine:p.engine,team:p.team,force:!!p.force}))}
     case 'engine.probe': {const p=parse(rest);return out(await call('engine.probe',{engine:p.engine,model:p.model,confirm:p.confirm===true}))}
@@ -244,7 +245,7 @@ async function main() {
       if(p['message-wallpaper']!==undefined)a.messageWallpaper=jsonArgument(p['message-wallpaper'])
       if(p['view-appearance']!==undefined)a.viewAppearance=jsonArgument(p['view-appearance'])
       if(p.view!==undefined){
-        if(!['company','messages','plan'].includes(p.view))throw Error('--view accepts company, messages or plan')
+        if(!['company','messages','plan','guardian'].includes(p.view))throw Error('--view accepts company, messages, plan or guardian')
         if(p['view-appearance']!==undefined)throw Error('Choose --view or --view-appearance')
         if(a.theme===undefined&&a.themeColor===undefined)throw Error('--view requires --theme or --theme-color')
         a.viewAppearance={[p.view]:{...(a.theme!==undefined?{theme:a.theme}:{}),...(a.themeColor!==undefined?{themeColor:a.themeColor}:{})}};delete a.theme;delete a.themeColor

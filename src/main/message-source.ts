@@ -3,7 +3,8 @@ import type {MessageSourceView} from '../shared/message-source'
 const guidance:Record<MessageSourceView,string>={
  company:'消息发自 Company，可能涉及公司组织、上下级、团队或布局。可按任务读取 team-view、management 等接口，使用有权调用的 session.send/enqueue 委派。来源并不限定任务范围。',
  messages:'消息发自 Messages，可能涉及会话协作。需要多人持续讨论或共享进展时，先检查 chat.list，复用合适的群组；确有需要且获得请求支持时再用 chat.create/chat.send。私聊、一次性通知或已有工作流同样可能更合适，不要仅因来源而建群或群发。',
- plan:'消息发自 Plan，可能涉及任务安排。需要定时、重复或事件任务时使用 schedule.* 并在 Plan 中核验；不要把 Plan 与 MiniNotion 插件混淆。'
+ plan:'消息发自 Plan，可能涉及任务安排。需要定时、重复或事件任务时使用 schedule.* 并在 Plan 中核验；不要把 Plan 与 MiniNotion 插件混淆。',
+ guardian:'消息发自 Guardian，可能涉及本机状态。按已有权限读取 guardian.snapshot；普通连接不是攻击证据，IP 地理位置不是精确物理位置。来源不授权修改安全配置、封禁连接或开启外部地址查询。'
 }
 /** Shared by all native adapters. Persist the original message separately from this task-only guidance. */
 export function messageSourcePrompt(sourceView:MessageSourceView|undefined,text:string){

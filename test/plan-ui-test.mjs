@@ -21,7 +21,7 @@ try{
  const before=(await call('session.list')).sessions.map(card=>({id:card.id,engine:card.engine,cwd:card.cwd,avatar:card.avatar,group:card.group}))
  await page.getByRole('button',{name:'Plan',exact:true}).click();await expect(page.locator('.plan-view')).toBeVisible()
  assert.deepEqual(await call('terminal.list'),[]);assert.equal((await call('session.list',{live:true})).length,initializedLive,'opening Plan must not start another engine after initialization')
- const geometry=await page.locator('.app-view-button').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return [r.width,r.height,s.borderRadius,s.fontSize,s.fontWeight]}));assert.equal(geometry.length,3);assert.deepEqual(geometry[0],geometry[1]);assert.deepEqual(geometry[1],geometry[2])
+ const geometry=await page.locator('.app-view-button').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return [r.width,r.height,s.borderRadius,s.fontSize,s.fontWeight]}));assert.equal(geometry.length,4);assert.deepEqual(geometry[0],geometry[1]);assert.deepEqual(geometry[1],geometry[2])
  await page.locator('.plan-new').click();await expect(editor).toBeVisible()
  await editor.locator('[name=plan-name]').fill('Sunday project review');await editor.locator('[name=plan-employee]').selectOption(a.id);await editor.locator('[name=plan-prompt]').fill('Review the project and report blockers and next steps.')
  await editor.locator('[name=plan-mode]').selectOption('weekly');await editor.locator('[name=plan-timezone]').fill('Asia/Shanghai');await editor.locator('[name=plan-time]').fill('17:00')
@@ -62,5 +62,5 @@ try{
  await page.reload();await expect(page.locator('.plan-view')).toBeVisible();assert.ok((await call('plan.views')).some(v=>v.name==='Product roadmap'))
  const after=(await call('session.list')).sessions.map(card=>({id:card.id,engine:card.engine,cwd:card.cwd,avatar:card.avatar,group:card.group}));assert.deepEqual(after,before)
  assert.deepEqual(errors,[]);assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(win=>!win.isVisible())))
- console.log('PASS Plan UI: three equal navigation buttons, schedule editor/preview/save, Sunday 17:00, Table/Board/Calendar/List, filters, saved views, pause/resume/manual run, real history and workbench return, static portraits, responsive layout, reload and unchanged employees; isolated fixtures only')
+ console.log('PASS Plan UI: four equal navigation buttons, schedule editor/preview/save, Sunday 17:00, Table/Board/Calendar/List, filters, saved views, pause/resume/manual run, real history and workbench return, static portraits, responsive layout, reload and unchanged employees; isolated fixtures only')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true,maxRetries:10,retryDelay:100})}

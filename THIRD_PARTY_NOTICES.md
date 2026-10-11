@@ -136,3 +136,13 @@ SOFTWARE.
 
 ### tiny-pinyin 1.3.2
 MIT-licensed directory-name romanization library by creeperyang. License: `licenses/tiny-pinyin-1.3.2-MIT.txt`. Source: https://github.com/creeperyang/pinyin.
+
+
+## Guardian globe map
+
+Guardian bundles Natural Earth 1:110m physical land geometry. Natural Earth map data is in the public domain.
+
+- Source: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_land.geojson
+- Terms: https://www.naturalearthdata.com/about/terms-of-use/
+
+The geometry is shipped locally; rendering the map makes no external map requests.

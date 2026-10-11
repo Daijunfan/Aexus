@@ -2594,6 +2594,14 @@
     "fields": [],
     "rawPositionals": true
   },
+  "guardian.snapshot": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "guardian.settings-get": {
+    "fields": [],
+    "rawPositionals": true
+  },
   "engine.list": {
     "fields": [],
     "rawPositionals": true

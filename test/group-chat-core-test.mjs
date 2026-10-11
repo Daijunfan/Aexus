@@ -10,7 +10,7 @@ try{
  const a=await f.create('Aster','Studio'),b=await f.create('Byte','Studio'),c=await f.create('Cross Team','Engineering'),m=await f.create('Manager','Studio','manager'),g=await f.create('Governor','Engineering','governor')
  const at=await f.token(a.id),mt=await f.token(m.id),gt=await f.token(g.id)
  const before=await f.cli('session','list'),original=before.sessions.map(card=>({id:card.id,group:card.group,cwd:card.cwd,role:card.managementRole,createdBy:card.createdBy}))
- const views=await f.cli('view','list');assert.deepEqual(views.views.map(v=>v.id),['company','messages','plan']);assert.equal(views.shared.readReceipts,'session.acknowledge')
+ const views=await f.cli('view','list');assert.deepEqual(views.views.map(v=>v.id),['company','messages','plan','guardian']);assert.equal(views.shared.readReceipts,'session.acknowledge')
  const custom=await f.cli('team-view','create','--name','Studio only','--teams','["Studio"]')
  await f.cli('view','select','messages');assert.equal((await f.cli('view','get')).kind,'messages')
  await f.cli('view','select','company');assert.equal((await f.cli('team-view','list')).activeId,'all')
