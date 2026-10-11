@@ -18,13 +18,17 @@
 .guardian-workbench .gc-stage:after{content:"AEXUS / GUARDIAN  •  LOCAL OBSERVABILITY";position:absolute;top:19px;left:25px;color:#9aafbb;font:9px "SFMono-Regular",monospace;letter-spacing:1.6px}
 .guardian-workbench .gc-wiring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .guardian-workbench .gc-wiring path{stroke:url(#gc-wiring-grad);fill:none;stroke-width:1.5}
-.guardian-workbench .gc-wiring .gc-wire-active{stroke:#4ba99e;stroke-width:1.4;stroke-dasharray:3 13;opacity:.48;animation:gc-wire 16s linear infinite}
+.guardian-workbench .gc-wiring .gc-wire-active{stroke:#399e96;stroke-width:2.6;stroke-dasharray:5 12;opacity:0}
+.guardian-workbench .gc-wiring g.is-focused .gc-wire-active{opacity:1;animation:gc-wire 7s linear infinite}
+.guardian-workbench .gc-wiring g.is-focused circle{fill:#449b90;stroke:#fff;stroke-width:2.5}
 .guardian-workbench .gc-wiring circle{fill:#fff;stroke:#8cb7be;stroke-width:2}
 .guardian-workbench .gc-orbit{position:absolute;left:50%;top:46%;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
 .guardian-workbench .gc-orbit-outer{width:440px;height:440px;border:1px dashed #a4cfd26b;box-shadow:0 0 0 25px #f3fbfc3d}
 .guardian-workbench .gc-orbit-inner{width:355px;height:355px;border:1px solid #bbdbde89;box-shadow:0 0 0 9px #ffffff66}
 .guardian-workbench button.gc-machine{position:absolute;left:50%;top:42%;width:385px;height:340px;transform:translate(-50%,-50%);display:grid;place-items:center;border:0;padding:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;transition:filter .2s ease}
 .guardian-workbench button.gc-machine:hover{filter:brightness(1.07) drop-shadow(0 0 12px #4eaaa42e)}
+.guardian-workbench .gc-stage:not([data-focus=none]) .gc-machine-ring{border-color:var(--gc-focus-color);box-shadow:0 0 0 8px #ffffff71,0 0 0 11px color-mix(in srgb,var(--gc-focus-color) 40%,transparent);animation:gc-focus-pulse 2.8s ease-in-out infinite}
+.guardian-workbench .gc-stage:not([data-focus=none]) .gc-mainboard-core{border-color:var(--gc-focus-color)}
 .guardian-workbench .gc-machine-halo{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#bdede567 0,transparent 64%),conic-gradient(from 12deg,#5bbca113,transparent 34%,#7497c522,transparent 66%,#4db1a02f);box-shadow:inset 0 0 0 1px #d2e5e5;border:9px solid #fff6}
 .guardian-workbench .gc-machine-ring{position:absolute;width:275px;height:275px;border-radius:50%;border:2px dotted #8dc5bd88;box-shadow:0 0 0 8px #ffffff71,0 0 0 10px #afcfca66}
 .guardian-workbench .gc-mainboard{position:relative;z-index:2;width:233px;height:233px;transform:perspective(700px) rotateX(52deg) rotateZ(-45deg);border:12px solid #e5f0f0;border-radius:37px;background:linear-gradient(130deg,#fff 0%,#e8f7f3 65%,#d3ebe7);box-shadow:0 5px 0 #87bab7,0 10px 0 #6caaa6,0 24px 44px #326b7052,inset 0 0 0 2px #97cbc2;display:grid;place-items:center}
@@ -32,7 +36,7 @@
 .guardian-workbench .gc-mainboard:after{inset:27px;border-style:dashed}
 .guardian-workbench .gc-mainboard-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 13px,#90c6be29 13px 14px),repeating-linear-gradient(90deg,transparent 0 13px,#90c6be29 13px 14px);border-radius:20px}
 .guardian-workbench .gc-mainboard-core{position:relative;width:103px;height:103px;background:linear-gradient(140deg,#2d8392,#1d506e 70%);border:7px solid #aedbd5;border-radius:22px;color:#f8fffd;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:4px;box-shadow:0 6px 0 #2e6e72,0 14px 27px #205c7366, inset 0 0 20px #6df4ce36}
-.guardian-workbench .gc-mainboard-core>span{font-size:34px;font-weight:800;letter-spacing:-2px;line-height:1}
+.guardian-workbench .gc-mainboard-core>span{font-size:30px;font-weight:800;letter-spacing:-2px;line-height:1}
 .guardian-workbench .gc-mainboard-core>i{height:1px;width:42px;background:#85e1d0}
 .guardian-workbench .gc-mainboard-core>b{font:8px/1.5 "SFMono-Regular",monospace;letter-spacing:1px}
 .guardian-workbench .gc-board-port{position:absolute;height:9px;width:56px;background:repeating-linear-gradient(90deg,#4da69b 0 6px,transparent 6px 11px);opacity:.8}
@@ -43,7 +47,7 @@
 .guardian-workbench .gc-device-identity strong{font-size:16px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .guardian-workbench .gc-device-identity>span{font-size:10px;color:#78919e}
 .guardian-workbench button.gc-node{--gc-accent:#46a59b;position:absolute;z-index:4;width:22%;min-width:184px;height:153px;display:flex;align-items:stretch;flex-direction:column;justify-content:flex-start;text-align:left;gap:0;padding:15px 17px;background:linear-gradient(148deg,#ffffffeb,#f9fcffdf);border:1px solid #d8e5ea;border-top:2px solid var(--gc-accent);border-radius:16px;color:#243951;box-shadow:0 8px 27px #41637c10,0 1px 0 #fff inset;backdrop-filter:blur(12px);transform:translateY(0);transition:transform .23s ease,box-shadow .23s ease,border-color .23s ease}
-.guardian-workbench button.gc-node:hover{transform:translateY(-4px);border-color:#91cfc6;box-shadow:0 19px 40px #41637c20}
+.guardian-workbench button.gc-node:hover,.guardian-workbench button.gc-node.is-focused{transform:translateY(-4px);border-color:var(--gc-accent);box-shadow:0 19px 40px #41637c20,0 0 0 1px color-mix(in srgb,var(--gc-accent) 32%,transparent)}
 .guardian-workbench button.gc-node:active{transform:translateY(-1px)}
 .guardian-workbench .gc-node-cpu,.guardian-workbench .gc-node-network,.guardian-workbench .gc-node-processes{left:2.8%}
 .guardian-workbench .gc-node-memory,.guardian-workbench .gc-node-storage,.guardian-workbench .gc-node-security{right:2.8%}
@@ -119,6 +123,7 @@
 .guardian-workbench .gc-watchlist-idle small{font-size:11px;color:#768e88}
 .guardian-workbench .gc-watchlist-idle button{background:white;border-color:#cce1d9}
 @keyframes gc-wire{to{stroke-dashoffset:-190}}
+@keyframes gc-focus-pulse{50%{box-shadow:0 0 0 8px #ffffff71,0 0 0 15px color-mix(in srgb,var(--gc-focus-color) 18%,transparent)}}
 @media(max-width:1120px) and (min-width:901px){
  .guardian-workbench button.gc-node{width:23%;min-width:160px;padding:12px;height:162px}
  .guardian-workbench .gc-node-cpu,.guardian-workbench .gc-node-network,.guardian-workbench .gc-node-processes{left:1.7%}
@@ -163,4 +168,4 @@
  .guardian-workbench .gc-watchlist-rows{grid-template-columns:1fr}
  .guardian-workbench .gc-watchlist-idle{flex-wrap:wrap}
 }
-@media(prefers-reduced-motion:reduce){.guardian-workbench .gc-wiring .gc-wire-active{animation:none}.guardian-workbench .gc-node{transition:none!important}}
+@media(prefers-reduced-motion:reduce){.guardian-workbench .gc-wiring .gc-wire-active,.guardian-workbench .gc-machine-ring{animation:none!important}.guardian-workbench .gc-node{transition:none!important}}

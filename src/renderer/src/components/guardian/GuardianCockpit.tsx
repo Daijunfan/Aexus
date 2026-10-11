@@ -1,4 +1,4 @@
-import type {CSSProperties} from 'react'
+import {useState,type CSSProperties} from 'react'
 import type {GuardianSnapshot} from '../../../../shared/guardian'
 import type {GuardianEventFeed} from '../../../../shared/guardian-events'
 import {Icon} from '../Icon'
@@ -7,10 +7,20 @@ import '../../styles/guardian-cockpit.css'
 
 type Destination='cpu'|'memory'|'storage'|'network'|'processes'|'security'|'applications'|'ai'|'events'|'report'
 type Props={snapshot:GuardianSnapshot|null;feed:GuardianEventFeed|null;paused:boolean;onOpen:(dest:Destination)=>void;onEvent:(id:string)=>void}
+type Focus='cpu'|'network'|'processes'|'memory'|'storage'|'security'
+const wires: {domain:Focus;path:string;end:[number,number]}[]=[
+ {domain:'cpu',path:'M 480 277 C 420 225 415 99 265 99',end:[265,99]},
+ {domain:'network',path:'M 463 307 H 265',end:[265,307]},
+ {domain:'processes',path:'M 481 342 C 422 404 415 494 265 494',end:[265,494]},
+ {domain:'memory',path:'M 720 277 C 781 225 785 99 935 99',end:[935,99]},
+ {domain:'storage',path:'M 736 307 H 935',end:[935,307]},
+ {domain:'security',path:'M 720 343 C 782 408 789 494 935 494',end:[935,494]}
+]
 const theme={cpu:'#48aca0',network:'#7198d9',processes:'#9b8cc7',memory:'#8095cd',storage:'#cfaa69',security:'#4eac97'}
 const highlight=(value:number|null|undefined)=>value==null?'—':percent(value)
 
 export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
+ const [focus,setFocus]=useState<Focus|null>(null)
  const cores=snapshot?.cpu.cores??[]
  const cpu=highlight(snapshot?.cpu.usagePercent)
  const memory=snapshot?.memory
@@ -25,6 +35,14 @@ export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
  const peak=Math.max(1,...samples.map(item=>(item.rxBytesPerSecond??0)+(item.txBytesPerSecond??0)))
  const online=!!snapshot&&Date.now()-snapshot.sampledAt<12000&&!paused
  const nav=(domain:Destination)=>()=>onOpen(domain)
+ const signals:Record<Focus,{name:string;value:string;description:string;chip:string}>={
+  cpu:{name:'处理器',value:cpu,description:cores.length?cores.length+' 核 · 最近采样':'等待核心采样',chip:'CPU'},
+  network:{name:'全球连接',value:String(connections?.publicConnections??'—'),description:'可见公网 TCP · 非流量推断',chip:'NET'},
+  processes:{name:'进程活动',value:String(snapshot?.processes.length??'—'),description:'采样可见的进程数量',chip:'PROC'},
+  memory:{name:'内存压力',value:memory?pressureLabel[memory.pressure]:'—',description:bytes(memory?.availableBytes)+' 可用',chip:'RAM'},
+  storage:{name:'磁盘空间',value:highlight(disk?.usedPercent),description:'数据卷已用 · '+bytes(disk?.availableBytes)+' 可用',chip:'DISK'},
+  security:{name:'系统保护',value:snapshot?enabled+'/'+security.length:'—',description:unknown?unknown+' 项状态未知':'读取到的保护配置',chip:'SEC'}
+ }
  return <div className="gc-page" data-testid="guardian-overview-panel">
   <div className="gc-intro">
    <div><div className="gc-kicker"><span className="gc-kicker-mark"/>GUARDIAN / INTERACTIVE OBSERVATORY <span className="gc-kicker-no">01 — 06</span></div>
@@ -33,46 +51,44 @@ export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
    </div>
    <div className="gc-live-meta"><span className={online?'gc-signal-dot active':'gc-signal-dot'}/><div><strong>{paused?'页面采样暂停':online?'观测在线':snapshot?'最近一次观测':'等待首次采样'}</strong><small>{snapshot?new Date(snapshot.sampledAt).toLocaleTimeString('zh-CN',{hour12:false})+' · 本机采样':'无可展示数据'}</small></div></div>
   </div>
-  <section className="gc-stage" aria-label="可点击的设备观测机舱" data-testid="guardian-cockpit-stage">
+  <section className="gc-stage" data-focus={focus??'none'} aria-label="可点击的设备观测机舱" data-testid="guardian-cockpit-stage">
    <div className="gc-orbit gc-orbit-outer"/><div className="gc-orbit gc-orbit-inner"/>
    <svg aria-hidden="true" className="gc-wiring" viewBox="0 0 1200 600" preserveAspectRatio="none">
     <defs><linearGradient id="gc-wiring-grad"><stop stopColor="#8aafcf" stopOpacity=".26"/><stop offset=".5" stopColor="#3f9d95" stopOpacity=".6"/><stop offset="1" stopColor="#8aafcf" stopOpacity=".26"/></linearGradient></defs>
-    <path d="M 480 277 C 420 225 415 99 265 99 M 463 307 H 265 M 481 342 C 422 404 415 494 265 494 M 720 277 C 781 225 785 99 935 99 M 736 307 H 935 M 720 343 C 782 408 789 494 935 494"/>
-    <path className="gc-wire-active" d="M 480 277 C 420 225 415 99 265 99 M 463 307 H 265 M 481 342 C 422 404 415 494 265 494 M 720 277 C 781 225 785 99 935 99 M 736 307 H 935 M 720 343 C 782 408 789 494 935 494"/>
-    {[[265,99],[265,307],[265,494],[935,99],[935,307],[935,494]].map(([cx,cy])=><circle key={cx+'-'+cy} cx={cx} cy={cy} r="4.5"/>)}
+    {wires.map(wire=><g key={wire.domain} data-signal={wire.domain} className={focus===wire.domain?'is-focused':''}><path d={wire.path}/><path className="gc-wire-active" d={wire.path}/><circle cx={wire.end[0]} cy={wire.end[1]} r="4.5"/></g>)}
    </svg>
-   <button className="gc-machine" data-testid="guardian-device-core" onClick={nav('cpu')} aria-label="打开芯片机舱，查看 CPU 核心监控">
+   <button className="gc-machine" data-testid="guardian-device-core" style={{'--gc-focus-color':theme[focus??'cpu']} as CSSProperties} onClick={nav(focus??'cpu')} aria-label={focus?'打开'+signals[focus].name+'监控':'打开芯片机舱，查看 CPU 核心监控'}>
     <div className="gc-machine-halo"/><div className="gc-machine-ring"/>
-    <div className="gc-mainboard"><div className="gc-mainboard-grid"/><div className="gc-mainboard-core"><span>AX</span><i/><b>LIVE CORE</b></div><span className="gc-board-port p1"/><span className="gc-board-port p2"/><span className="gc-board-port p3"/><span className="gc-board-port p4"/></div>
+    <div className="gc-mainboard"><div className="gc-mainboard-grid"/><div className="gc-mainboard-core"><span>{focus?signals[focus].chip:'AX'}</span><i/><b>{focus?'SIGNAL FOCUS':'LOCAL CORE'}</b></div><span className="gc-board-port p1"/><span className="gc-board-port p2"/><span className="gc-board-port p3"/><span className="gc-board-port p4"/></div>
     <div className="gc-machine-shadow"/>
    </button>
-   <div className="gc-device-identity"><small>CONNECTED DEVICE / CORE HOST</small><strong>{snapshot?.host.hostname??'等待设备采样'}</strong><span>{snapshot?.host.arch??'—'} · {snapshot?.host.cpuCount??'—'} 核 · {bytes(memory?.totalBytes)} RAM · 点击芯片探索</span></div>
-   <button data-domain="cpu" className="gc-node gc-node-cpu" style={{'--gc-accent':theme.cpu} as CSSProperties} onClick={nav('cpu')} aria-label={'查看处理器监控 '+cpu}>
+   <div className="gc-device-identity" aria-live="off"><small>{focus?'SIGNAL FOCUS / 点击中心进入':'CONNECTED DEVICE / CORE HOST'}</small><strong>{focus?signals[focus].name+' · '+signals[focus].value:snapshot?.host.hostname??'等待设备采样'}</strong><span>{focus?signals[focus].description:(snapshot?.host.arch??'—')+' · '+(snapshot?.host.cpuCount??'—')+' 核 · '+bytes(memory?.totalBytes)+' RAM · 点击芯片探索'}</span></div>
+   <button data-domain="cpu" className={focus==='cpu'?'gc-node gc-node-cpu is-focused':'gc-node gc-node-cpu'} style={{'--gc-accent':theme.cpu} as CSSProperties} onPointerEnter={()=>setFocus('cpu')} onFocus={()=>setFocus('cpu')} onClick={nav('cpu')} aria-label={'查看处理器监控 '+cpu}>
     <span className="gc-node-top"><span className="gc-node-icon"><Icon name="chip"/></span><span className="gc-node-code">01 / COMPUTE</span><Icon name="arrow-up-right"/></span>
     <strong>处理器<span>CPU</span></strong><div className="gc-node-reading"><b>{cpu}</b><small>{cores.length?cores.length+' 核实时负载':'等待核心采样'}</small></div>
     <div className="gc-core-samples" aria-hidden="true">{cores.length?cores.slice(0,16).map((value,index)=><i key={index} style={{opacity:.16+Math.max(0,value)/100*.84}}/>):Array.from({length:12},(_,index)=><i key={index} style={{opacity:.16}}/>)}</div>
    </button>
-   <button data-domain="network" className="gc-node gc-node-network" style={{'--gc-accent':theme.network} as CSSProperties} onClick={nav('network')} aria-label={'查看全球网络连接 '+(connections?.publicConnections??'未知')}>
+   <button data-domain="network" className={focus==='network'?'gc-node gc-node-network is-focused':'gc-node gc-node-network'} style={{'--gc-accent':theme.network} as CSSProperties} onPointerEnter={()=>setFocus('network')} onFocus={()=>setFocus('network')} onClick={nav('network')} aria-label={'查看全球网络连接 '+(connections?.publicConnections??'未知')}>
     <span className="gc-node-top"><span className="gc-node-icon"><Icon name="globe"/></span><span className="gc-node-code">02 / WORLD</span><Icon name="arrow-up-right"/></span>
     <strong>全球连接<span>NETWORK</span></strong><div className="gc-node-reading"><b>{connections?.publicConnections??'—'}</b><small>可见公网 TCP</small></div>
     <div className="gc-flow-samples" aria-label="最近吞吐量相对变化">{samples.length>1?samples.map((sample,index)=><i key={sample.at} style={{height:Math.max(5,((sample.rxBytesPerSecond??0)+(sample.txBytesPerSecond??0))/peak*100)+'%'}}/>):<span>等待吞吐采样</span>}</div>
    </button>
-   <button data-domain="processes" className="gc-node gc-node-processes" style={{'--gc-accent':theme.processes} as CSSProperties} onClick={nav('processes')} aria-label={'查看进程资源 '+(snapshot?.processes.length??'未知')}>
+   <button data-domain="processes" className={focus==='processes'?'gc-node gc-node-processes is-focused':'gc-node gc-node-processes'} style={{'--gc-accent':theme.processes} as CSSProperties} onPointerEnter={()=>setFocus('processes')} onFocus={()=>setFocus('processes')} onClick={nav('processes')} aria-label={'查看进程资源 '+(snapshot?.processes.length??'未知')}>
     <span className="gc-node-top"><span className="gc-node-icon"><Icon name="pulse"/></span><span className="gc-node-code">03 / ACTIVITY</span><Icon name="arrow-up-right"/></span>
     <strong>进程活动<span>PROCESSES</span></strong><div className="gc-node-reading"><b>{snapshot?.processes.length??'—'}</b><small>可见进程</small></div>
     <div className="gc-process-samples">{top.length?top.map((item,index)=><span key={item.pid}><i>{String(index+1).padStart(2,'0')}</i><em>{item.name}</em><b>{percent(item.cpuPercent)}</b></span>):<small>等待进程采样</small>}</div>
    </button>
-   <button data-domain="memory" className="gc-node gc-node-memory" style={{'--gc-accent':theme.memory} as CSSProperties} onClick={nav('memory')} aria-label={'查看内存压力 '+(memory?pressureLabel[memory.pressure]:'未知')}>
+   <button data-domain="memory" className={focus==='memory'?'gc-node gc-node-memory is-focused':'gc-node gc-node-memory'} style={{'--gc-accent':theme.memory} as CSSProperties} onPointerEnter={()=>setFocus('memory')} onFocus={()=>setFocus('memory')} onClick={nav('memory')} aria-label={'查看内存压力 '+(memory?pressureLabel[memory.pressure]:'未知')}>
     <span className="gc-node-top"><span className="gc-node-icon"><Icon name="server"/></span><span className="gc-node-code">04 / MEMORY</span><Icon name="arrow-up-right"/></span>
     <strong>内存压力<span>MEMORY</span></strong><div className="gc-node-reading"><b>{memory?pressureLabel[memory.pressure]:'—'}</b><small>{bytes(memory?.totalBytes)} 总量</small></div>
     <div className="gc-memory-samples"><div><i style={{width:memory?Math.min(100,memory.usedBytes/memory.totalBytes*100)+'%':'0%'}}/></div><span>可回收后可用 {bytes(memory?.availableBytes)}</span></div>
    </button>
-   <button data-domain="storage" className="gc-node gc-node-storage" style={{'--gc-accent':theme.storage} as CSSProperties} onClick={nav('storage')} aria-label={'查看磁盘空间 '+highlight(disk?.usedPercent)}>
+   <button data-domain="storage" className={focus==='storage'?'gc-node gc-node-storage is-focused':'gc-node gc-node-storage'} style={{'--gc-accent':theme.storage} as CSSProperties} onPointerEnter={()=>setFocus('storage')} onFocus={()=>setFocus('storage')} onClick={nav('storage')} aria-label={'查看磁盘空间 '+highlight(disk?.usedPercent)}>
     <span className="gc-node-top"><span className="gc-node-icon"><Icon name="database"/></span><span className="gc-node-code">05 / STORAGE</span><Icon name="arrow-up-right"/></span>
     <strong>磁盘空间<span>STORAGE</span></strong><div className="gc-node-reading"><b>{highlight(disk?.usedPercent)}</b><small>数据卷已用</small></div>
     <div className="gc-storage-samples"><span className="gc-storage-ring" style={{background:`conic-gradient(var(--gc-accent) ${disk?.usedPercent??0}%, #e8edf4 0)`}}/><span>{bytes(disk?.availableBytes)} 可用</span></div>
    </button>
-   <button data-domain="security" className="gc-node gc-node-security" style={{'--gc-accent':theme.security} as CSSProperties} onClick={nav('security')} aria-label={'查看系统保护检查 '+enabled+' 项启用'}>
+   <button data-domain="security" className={focus==='security'?'gc-node gc-node-security is-focused':'gc-node gc-node-security'} style={{'--gc-accent':theme.security} as CSSProperties} onPointerEnter={()=>setFocus('security')} onFocus={()=>setFocus('security')} onClick={nav('security')} aria-label={'查看系统保护检查 '+enabled+' 项启用'}>
     <span className="gc-node-top"><span className="gc-node-icon"><Icon name="shield"/></span><span className="gc-node-code">06 / PROTECTION</span><Icon name="arrow-up-right"/></span>
     <strong>系统保护<span>SECURITY</span></strong><div className="gc-node-reading"><b>{snapshot?enabled+'/3':'—'}</b><small>{unknown?'含 '+unknown+' 项未知':'保护配置已读取'}</small></div>
     <div className="gc-security-samples">{security.length?security.map(item=><span key={item.id} className={item.status}><i/>{item.label}</span>):<small>等待系统配置采样</small>}</div>

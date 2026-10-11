@@ -93,13 +93,25 @@ try{
  await expect(cockpit.locator('.gc-node-processes')).toContainText(String(snapshot.processes.length))
  report.cockpit={portals,stageWidth:await cockpit.evaluate(node=>node.getBoundingClientRect().width)}
  await cockpit.getByTestId('guardian-device-core').click();await expect(page.getByTestId('guardian-cpu-panel')).toBeVisible();await domain('overview')
+ const focusedStage=page.getByTestId('guardian-cockpit-stage')
+ await focusedStage.locator('.gc-node-network').hover()
+ await expect(focusedStage).toHaveAttribute('data-focus','network')
+ await expect(focusedStage.locator('.gc-wiring g.is-focused')).toHaveAttribute('data-signal','network')
+ await expect(focusedStage.locator('.gc-device-identity')).toContainText('全球连接 · '+snapshot.network.publicConnections)
+ await focusedStage.getByTestId('guardian-device-core').click()
+ await expect(page.getByTestId('guardian-network-panel')).toBeVisible();await domain('overview')
+ const keyboardStage=page.getByTestId('guardian-cockpit-stage')
+ await keyboardStage.locator('.gc-node-memory').focus()
+ await expect(keyboardStage).toHaveAttribute('data-focus','memory')
+ await keyboardStage.locator('.gc-node-memory').press('Enter')
+ await expect(page.getByTestId('guardian-memory-panel')).toBeVisible();await domain('overview')
  for(const id of ['network','memory','processes','storage','security','ai','events']){
   await page.getByTestId('guardian-overview-panel').locator(`[data-domain="${id}"]`).first().click()
   await expect(page.getByTestId(id==='storage'?'guardian-storage':'guardian-'+id+'-panel')).toBeVisible()
   await domain('overview')
  }
  await screenshot('aexus-guardian-overview')
- pass('Immersive light cockpit replaces sidebar: six live interactive device modules and direct navigation from measured values')
+ pass('The light cockpit offers keyboard and pointer focus, highlights the selected visual signal and routes through the same live Core-backed monitoring modules')
 
  await domain('cpu');const cpu=page.getByTestId('guardian-cpu-panel')
  const silicon=cpu.getByTestId('guardian-silicon-board')
