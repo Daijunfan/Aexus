@@ -1,0 +1,8 @@
+'use strict';
+exports.register=({command,str,num,opt,obj})=>{
+ const id=str('Document UUID.',true),expectedRevision=num('Current document revision.',true,{integer:true,minimum:1});
+ command('document.virtual.create','Create a linked page collection in a small .mrv reference file; originals remain in place.',true,{path:str('New relative .mrv path.',true),title:str('Collection title.'),pages:opt('array','1–2000 PDF page references: documentId,expectedSourceVersion,page,crop,rotation; blank pages use blank:true,width,height,paper.',true),includeAnnotations:opt('boolean','Show projected source-study annotations; default true.'),activate:opt('boolean','Activate after creation; default true.')});
+ command('document.virtual.update','Replace/append virtual references or undo/redo page assembly without altering originals.',true,{id,expectedRevision,action:str('Update mode.',false,{enum:['replace','append','undo','redo']}),pages:opt('array','New page references.'),title:str('Updated title.'),includeAnnotations:opt('boolean','Show source-study annotations.'),activate:opt('boolean','Activate after editing; default true.')});
+ command('document.virtual.refresh','Reopen changed originals and rebuild the virtual cache, retaining stale-source warnings on old annotations.',true,{id,expectedRevision,activate:opt('boolean','Activate after refresh; default true.')});
+ command('document.virtual.source','Resolve a virtual point/page to its original PDF location.',false,{id,page:num('One-based page.',true,{integer:true,minimum:1}),point:opt('array','Optional normalized x,y pair; default top left.')});
+};

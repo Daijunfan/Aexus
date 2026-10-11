@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="tile" x1="20" y1="12" x2="107" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#25cbb9"/><stop offset=".55" stop-color="#109eae"/><stop offset="1" stop-color="#176aaf"/>
+    </linearGradient>
+    <linearGradient id="server" x1="39" y1="64" x2="90" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#155c7f"/><stop offset="1" stop-color="#103b66"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="12" width="104" height="104" rx="24" fill="url(#tile)"/>
+  <path d="M36 13h56a23 23 0 0 1 22 17C84 43 47 38 14 60V36a23 23 0 0 1 22-23Z" fill="#fff" opacity=".09"/>
+  <path d="M40 66c-9 0-15-5-15-13 0-7 5-13 13-14 3-10 11-15 21-13 10-1 19 5 22 14 10-2 20 5 20 15 0 7-6 12-14 12H40Z" fill="#fff"/>
+  <rect x="37" y="63" width="54" height="17" rx="5" fill="url(#server)" stroke="#b1f8ef" stroke-opacity=".65"/>
+  <rect x="37" y="84" width="54" height="17" rx="5" fill="url(#server)" stroke="#b1f8ef" stroke-opacity=".65"/>
+  <g fill="#7ff4cc"><circle cx="47" cy="71.5" r="2.5"/><circle cx="47" cy="92.5" r="2.5"/></g>
+  <g stroke="#e3fffa" stroke-width="2.5" stroke-linecap="round"><path d="M61 71.5h19"/><path d="M61 92.5h19"/></g>
+</svg>

@@ -32,8 +32,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            Infra/Plugins/*/package-lock.json
-            Engine/*/package-lock.json
+            PlugIns/*/package-lock.json
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
@@ -41,13 +40,12 @@ jobs:
       - run: npm run setup
       - run: npm run build:plugins:release
       - run: npm run typecheck
-      - run: npm run contract:check
       - run: npm run build
       - run: npm run build:server
       - run: npm run test:coverage
       - run: npm run test:release-core
-      - run: node Infra/src/test/platform-smoke-test.mjs
-      - run: python -m unittest discover -s Infra/src/tunnel/tests -v
+      - run: node test/platform-smoke-test.mjs
+      - run: python -m unittest discover -s Modules/Tunnel/tests -v
       - if: runner.os == 'Linux'
         run: npx --no-install playwright install --with-deps chromium
       - if: runner.os != 'Linux'
@@ -63,8 +61,8 @@ jobs:
         with:
           name: test-results-${{ matrix.os }}
           path: |
-            .aexus/artifacts/release-tests/**/*.json
-            .aexus/artifacts/release-tests/**/*.log
-            .aexus/artifacts/platform-smoke.json
+            artifacts/release-tests/**/*.json
+            artifacts/release-tests/**/*.log
+            artifacts/platform-smoke.json
           retention-days: 10
           if-no-files-found: ignore

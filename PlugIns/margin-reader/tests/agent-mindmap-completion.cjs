@@ -1,0 +1,26 @@
+'use strict';
+const assert=require('node:assert/strict');
+exports.exercise=async({api,deny})=>{
+ const catalog=await api('study.mindmap.catalog');assert.equal(Object.keys(catalog.skeletons).length,54);
+ let set=await api('study.create',{title:'Employee advanced design'});const change=async(method,p={})=>set=await api(method,{setId:set.id,expectedRevision:set.revision,...p});
+ await change('study.mindmap.outline.import',{text:'Shared knowledge\n  Evidence\n    Original sources\n  Model\n    Validation'});const root=set.cards[0].id,main=set.cards.find(c=>c.parentId===root).id;
+ const destination=set.cards.find(c=>c.title==='Model').id;
+ await change('study.card.update',{cardId:destination,collapsed:true});const original=structuredClone(set.cards);
+ await change('study.cards.move',{cardIds:[main],parentId:destination,expandParent:true});assert.equal(set.cards.find(c=>c.id===main).parentId,destination);assert.equal(set.cards.find(c=>c.id===destination).collapsed,false);
+ await change('study.undo',{});assert.deepEqual(set.cards,original);await change('study.card.update',{cardId:destination,collapsed:false});
+ console.log('PASS Employee reparents a complete branch and expands the destination in one reversible, revision-checked public operation');
+ await change('study.mindmap.configure',{patch:{skeleton:'mind-hexagon',palette:['#B36678','#367F86'],centralColor:'#283147',freeBranches:true,topicOverlap:true,levelStyles:[{shape:'pill',fill:'solid',size:6,bold:true},{shape:'hexagon',fill:'soft',size:1,bold:true},{shape:'underline',fill:'none',size:-1,bold:false}]}});
+ const g=await api('study.map.geometry',{setId:set.id}),b=g.positions.find(p=>p.cardId===main);await change('study.mindmap.arrange',{cardIds:[main],action:'place',positions:[{cardId:main,x:b.x+50,y:b.y+25}]});assert.equal(set.cards.find(c=>c.id===main).parentId,root);assert(set.cards.find(c=>c.id===main).mindmap.offset);
+ await change('study.mindmap.collapse',{cardIds:[root],level:1});assert.equal((await api('study.map.geometry',{setId:set.id})).positions.length,3);await change('study.mindmap.collapse',{cardIds:[root],level:-1});assert.equal((await api('study.map.geometry',{setId:set.id})).positions.length,5);
+ const formula=await api('study.mindmap.equation.preview',{latex:String.raw`\frac{1}{2}mv^2`});assert(formula.svg.includes('<path'));await change('study.mindmap.topics.update',{cardIds:[main],patch:{equation:{latex:String.raw`\frac{1}{2}mv^2`,scale:1.2}}});assert(set.cards.find(c=>c.id===main).mindmap.equation);assert(!set.cards.find(c=>c.id===main).equationSvg);
+ let designs=await api('study.mindmap.design.list');designs=await api('study.mindmap.design.save',{title:'Reusable employee design',setId:set.id,expectedRevision:set.revision,expectedVersion:designs.version});const design=designs.designId,version=designs.version;
+ const exported=await api('study.mindmap.design.export',{designId:design,expectedVersion:version,path:'Exports/employee-design.json'});const inspected=await api('study.mindmap.design.import',{path:exported.path});assert(!inspected.applied);designs=await api('study.mindmap.design.import',{path:exported.path,apply:true,expectedSourceVersion:inspected.sourceVersion,expectedVersion:version});assert(designs.designs.some(d=>d.id===design));
+ await deny('study.mindmap.design.archive',{designId:design,expectedVersion:version},'CONFLICT');designs=await api('study.mindmap.design.archive',{designId:design,expectedVersion:designs.version});assert(designs.designs.find(d=>d.id===design).archived);designs=await api('study.mindmap.design.archive',{designId:design,expectedVersion:designs.version,archived:false});
+ await change('study.mindmap.design.apply',{designId:design,expectedVersion:designs.version});assert.equal(set.map.mindmap.centralColor,'#283147');assert(set.cards.find(c=>c.id===main).mindmap.equation);
+ await change('study.mindmap.configure',{patch:{pitch:{layout:'grid',delivery:'topics',theme:'light',ratio:'16:9'}},topicPitch:{cardId:main,visible:true}});const plan=await api('study.mindmap.pitch.plan',{setId:set.id});assert.equal(plan.frames.length,5);
+ await change('study.presentation.start',{mode:'map'});assert.equal(set.presentation.frames.length,plan.frames.length);await change('study.presentation.action',{action:'stop'});
+ const pdf=await api('study.mindmap.export',{setId:set.id,expectedRevision:set.revision,path:'Exports/employee-vector.pdf',format:'pdf',paper:'A4'});assert(pdf.vector&&!pdf.rasterized);
+ const slides=await api('study.mindmap.export',{setId:set.id,expectedRevision:set.revision,path:'Exports/employee-pitch.pptx',format:'pptx'});assert.equal(slides.slides,5);assert(slides.editableText);
+ await deny('study.mindmap.design.export',{designId:design,expectedVersion:designs.version,path:'../outside.json'},'SCOPE_DENIED');
+ console.log('PASS Employee tools exercise all 54-profile discovery, custom designs, atomic free placement, depth folding, local formulas, automatic presentations and vector/PPTX exports in their assigned workspace');
+};

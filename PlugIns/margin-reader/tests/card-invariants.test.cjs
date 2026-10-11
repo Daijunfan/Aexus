@@ -1,0 +1,36 @@
+"use strict";
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),{randomUUID}=require('node:crypto');
+const {setup,pdfFixture}=require('./fixtures.cjs');
+test('split source notes display their own pieces, preserve Unicode and keep a working source reference',async t=>{
+ const f=await setup(t);await fs.writeFile(path.join(f.workspace,'source.html'),'<p>First paragraph🙂Second paragraph</p>');
+ let s=await f.api('study.create',{title:'Split invariants'});s=await f.api('study.documents.add',{setId:s.id,expectedRevision:s.revision,paths:['source.html']});
+ const doc=await f.api('document.open',{path:'source.html',activate:false});
+ const text='First paragraph🙂Second paragraph';
+ const capture=await f.api('study.card.create',{setId:s.id,expectedRevision:s.revision,documentId:doc.id,expectedSourceVersion:doc.sourceVersion,captureId:randomUUID(),title:'Original',text,color:'blue',locator:{section:0},selection:{start:0,end:text.length}});
+ s=await f.api('study.get',{setId:s.id});const cardId=capture.card.id;
+ await f.error('study.card.split',{setId:s.id,expectedRevision:s.revision,cardId,offsets:[16]},'INVALID_PARAMS');
+ s=await f.api('study.card.split',{setId:s.id,expectedRevision:s.revision,cardId,offsets:[17]});
+ const children=s.cards.filter(c=>c.parentId===cardId);
+ assert.deepEqual(children.map(c=>c.text),['First paragraph🙂','Second paragraph']);assert(children.every(c=>c.reference.live===false));
+ assert.equal((await f.api('study.card.activate',{setId:s.id,cardId:children[1].id})).source.documentId,doc.id);
+ const html=await f.api('study.card.render',{setId:s.id,cardId:children[1].id});assert.match(html.html,/Second paragraph/);assert(!html.html.includes('First paragraph'));
+});
+test('cross-study copies retain every excerpt source, remap internal references and remain independently navigable',async t=>{
+ const f=await setup(t);await fs.writeFile(path.join(f.workspace,'one.pdf'),pdfFixture());await fs.writeFile(path.join(f.workspace,'two.pdf'),pdfFixture());
+ let s=await f.api('study.create',{title:'Sources'});s=await f.api('study.documents.add',{setId:s.id,expectedRevision:s.revision,paths:['one.pdf','two.pdf']});
+ const one=await f.api('document.open',{path:'one.pdf',activate:false}),two=await f.api('document.open',{path:'two.pdf',activate:false});
+ const params=doc=>({documentId:doc.id,expectedSourceVersion:doc.sourceVersion,text:'',locator:{page:1},selection:{rects:[{page:1,x:.1,y:.1,width:.5,height:.15}]}});
+ const first=await f.api('study.card.create',{setId:s.id,expectedRevision:s.revision,...params(one),captureId:randomUUID(),color:'yellow'});s=await f.api('study.get',{setId:s.id});
+ const append=await f.api('study.excerpt.append',{setId:s.id,expectedRevision:s.revision,cardId:first.card.id,...params(two),captureId:randomUUID()});s=await f.api('study.get',{setId:s.id});
+ s=await f.api('study.card.reference',{setId:s.id,expectedRevision:s.revision,targetSetId:s.id,targetCardId:first.card.id});const ref=s.cards.at(-1);
+ s=await f.api('study.card.move',{setId:s.id,expectedRevision:s.revision,cardId:ref.id,parentId:first.card.id});
+ const target=await f.api('study.create',{title:'Copies'});
+ await f.api('study.cards.copy',{setId:s.id,expectedRevision:s.revision,cardIds:[first.card.id],targetSetId:target.id,targetRevision:target.revision});
+ const copied=await f.api('study.get',{setId:target.id}),root=copied.cards.find(c=>!c.parentId),child=copied.cards.find(c=>c.parentId===root.id);
+ assert(copied.documentIds.includes(one.id)&&copied.documentIds.includes(two.id));
+ assert.equal(child.reference.setId,target.id);assert.equal(child.reference.cardId,root.id);
+ const jump=await f.api('study.card.activate',{setId:target.id,cardId:root.id,excerptId:append.partId});assert.equal(jump.source.documentId,two.id);assert.equal(jump.source.excerptId,append.partId);
+ assert((await f.api('study.excerpt.image',{setId:target.id,cardId:root.id,partId:append.partId})).contentBase64.length>100);
+ s=await f.api('study.get',{setId:s.id});await f.api('study.remove',{setId:s.id,expectedRevision:s.revision});
+ assert.equal((await f.api('study.card.activate',{setId:target.id,cardId:child.id})).source.documentId,one.id);
+});

@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import {fixtureCore} from './fixtures/headless-core.mjs'
+const f=await fixtureCore(),{cli,call,raw,create,token,status,until}=f
+try{
+  await cli('group','add','A')
+  const manager=await create('Lead','A','manager'),employee=await create('Worker')
+  const m=await token(manager.id),e=await token(employee.id)
+  assert.equal((await status(employee.id)).lastReply,undefined,'hidden OK never creates unread')
+  const geometry=rooms=>rooms.map(r=>({name:r.name,bounds:r.bounds,employees:r.employees.map(e=>({id:e.id,position:e.position,width:e.width,height:e.height}))}))
+  const layout=JSON.stringify(geometry((await cli('office','layout')).rooms))
+  const replyFile=path.join(f.control,employee.id+'.reply.txt')
+  fs.writeFileSync(replyFile,'第一段：工作已处理。\n\n最后一段：请用户确认验收结果。')
+  const send=async text=>{await cli('session','send','--employee',employee.id,'--text',text);await until(async()=>!(await status(employee.id)).busy,'turn end');return (await status(employee.id)).lastReply}
+  const first=await send('执行第一项任务')
+  assert.ok(first?.id);assert.equal(first.text,'最后一段：请用户确认验收结果。');assert.equal(first.readAt,undefined)
+  await call(m,'session','transcript','--employee',employee.id)
+  assert.equal((await raw(m,'session','follow','--employee',employee.id)).type,'snapshot')
+  const opened=await cli('session','open',employee.id)
+  assert.equal((await cli('session','snapshot',opened.sessionId)).activityPreview.unread,true)
+  assert.equal((await status(employee.id)).lastReply.readAt,undefined,'queries are not read receipts')
+  for(const credential of [m,e])assert.equal((await raw(credential,'session','acknowledge','--employee',employee.id,'--reply-id',first.id)).ok,false)
+  await cli('management','global',manager.id,'on')
+  assert.equal((await raw(m,'session','acknowledge','--employee',employee.id,'--reply-id',first.id)).ok,false,'even global Agent cannot read for user')
+  assert.equal((await cli('session','acknowledge','--employee',employee.id,'--reply-id','stale')).acknowledged,false)
+  const acknowledged=await cli('session','acknowledge','--employee',employee.id,'--reply-id',first.id)
+  assert.ok(acknowledged.acknowledged);assert.ok((await status(employee.id)).lastReply.readAt)
+  assert.equal((await cli('session','snapshot',opened.sessionId)).activityPreview,null)
+  const revision=(await cli('session','list')).revision
+  await cli('session','acknowledge','--employee',employee.id,'--reply-id',first.id)
+  assert.equal((await cli('session','list')).revision,revision,'idempotent ack does not write')
+  const second=await send('再次执行，回复可以相同')
+  assert.notEqual(second.id,first.id);assert.equal(second.readAt,undefined)
+  assert.equal((await cli('session','acknowledge','--employee',employee.id,'--reply-id',first.id)).acknowledged,false)
+  await cli('session','close',opened.sessionId)
+  assert.equal((await status(employee.id)).lastReply.id,second.id)
+  await f.stop();await f.start()
+  assert.equal((await status(employee.id)).lastReply.id,second.id);assert.equal((await status(employee.id)).lastReply.readAt,undefined)
+  assert.equal(JSON.stringify(geometry((await cli('office','layout')).rooms)),layout,'messages and read receipts never reflow')
+  assert.equal((await f.request(null,'card.update',{id:employee.id,patch:{lastReply:{id:'forged',readAt:1}}})).ok,false)
+  const normal=await cli('session','transcript','--employee',employee.id)
+  assert.ok(!normal.text.includes('PRIVATE_INIT'))
+  fs.writeFileSync(replyFile,'前文。\n\n'+ '界😀'.repeat(2500))
+  const large=await send('长回复验证')
+  assert.ok(Array.from(large.text).length<=4001);assert.ok(large.text.endsWith('界😀'))
+  assert.ok((await cli('session','transcript','--employee',employee.id)).text.includes('界😀'.repeat(2500)))
+  fs.writeFileSync(path.join(f.root,'artifacts/reply-receipts-core.json'),JSON.stringify({passed:true,hiddenInitializationExcluded:true,staleAcknowledgementSafe:true,persistsOnRestart:true,layoutUnchanged:true},null,2))
+  console.log('PASS durable unread final paragraph; no init/tool leakage; Manager reads do not acknowledge; exact-version user acknowledgement; restart/close persistence; Unicode-safe bounded preview and unchanged layout')
+}finally{await f.close()}

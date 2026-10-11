@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path');
+const {expect}=require('./ui-session.cjs');
+exports.exercise=async({page,api,pass,workspace,output,url})=>{
+ let set=await api('study.create',{title:'拖动边界与定位'});
+ set=await api('study.mindmap.outline.import',{setId:set.id,expectedRevision:set.revision,text:'中心\n  待移动\n    子主题\n  目标\n    原有子主题'});
+ const source=set.cards.find(c=>c.title==='待移动').id,target=set.cards.find(c=>c.title==='目标').id;
+ const get=async()=>set=await api('study.get',{setId:set.id});
+ const node=id=>page.locator(`#study-map-world>.mindmap-topic[data-card-id="${id}"]`),view=page.locator('#study-map-viewport');
+ const stable=async()=>{await get();await expect(page.locator('#study-board')).toHaveAttribute('data-rendered-study-revision',String(set.revision));await expect(page.locator('#study-board')).not.toHaveAttribute('data-map-animating','true');await expect(page.locator('#study-board')).toHaveAttribute('aria-busy','false');};
+ await api('study.open',{setId:set.id});await page.goto(url||page.url());await page.locator('body[data-ready=true]').waitFor();await page.click('#study-zoom-fit');await stable();
+ const begin=async()=>{const b=await node(source).boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+35,b.y+b.height/2+18,{steps:5});await expect(node(source)).toHaveAttribute('data-mm-dragging','true');};
+ const before=structuredClone(set.cards),revision=set.revision;
+ await begin();const toolbar=await page.locator('.app-bar').boundingBox();await page.mouse.move(toolbar.x+toolbar.width/2,toolbar.y+toolbar.height/2,{steps:12});await expect(page.locator('.mm-drop-status')).toContainText('松开取消');await page.mouse.up();
+ await expect(page.locator('.mm-drag-overlay,.mm-drop-status')).toHaveCount(0);await stable();assert.equal(set.revision,revision,'Dropping outside the map must cancel instead of silently reordering the branch');assert.deepEqual(set.cards,before);
+ pass('Releasing a dragged topic outside the actual canvas cancels without a move, source navigation or model write');
+ set=await api('study.map.preferences',{setId:set.id,expectedRevision:set.revision,mode:'hierarchy'});await stable();await begin();const b=await node(target).boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:12});await expect(node(target)).toHaveAttribute('data-mm-drop','child');await expect(page.locator('.mm-drop-status')).toContainText('目标');await page.mouse.up();
+ await expect.poll(async()=>(await get()).cards.find(c=>c.id===source).parentId).toBe(target);await stable();await page.click('#study-undo');await expect.poll(async()=>(await get()).cards.find(c=>c.id===source).parentId).toBe(before.find(c=>c.id===source).parentId);assert.deepEqual(set.cards,before);
+ pass('The explicit hierarchy tool shares the same subtree preview and parent-target feedback as ordinary dragging, including one-step undo');
+ await fs.writeFile(path.join(workspace,'boundary-reading.html'),'<h1>原文阅读保持独立</h1><p>拖到文档区域应取消脑图层级修改。</p>');
+ set=await api('study.documents.add',{setId:set.id,expectedRevision:set.revision,paths:['boundary-reading.html']});await stable();await page.click('#study-split-toggle');await expect(page.locator('#reader-view')).toBeVisible();await expect(view).toBeVisible();await page.click('#study-zoom-fit');await stable();
+ const reader=page.locator('#reader-scroll'),readerBox=await reader.boundingBox(),splitRevision=set.revision;
+ await begin();await page.mouse.move(readerBox.x+readerBox.width/2,readerBox.y+readerBox.height/2,{steps:12});await expect(page.locator('.mm-drop-status')).toContainText('松开取消');await page.mouse.up();await stable();assert.equal(set.revision,splitRevision);assert.deepEqual(set.cards,before);await expect(reader).toContainText('原文阅读保持独立');
+ await begin();await page.mouse.move(readerBox.x+readerBox.width/2,readerBox.y+readerBox.height/2,{steps:8});const dest=await node(target).boundingBox();await page.mouse.move(dest.x+dest.width/2,dest.y+dest.height/2,{steps:12});await expect(node(target)).toHaveAttribute('data-mm-drop','child');await page.mouse.up();await expect.poll(async()=>(await get()).cards.find(c=>c.id===source).parentId).toBe(target);await stable();assert.equal(set.view,'split');
+ await page.click('#study-undo');await expect.poll(async()=>(await get()).cards.find(c=>c.id===source).parentId).toBe(before.find(c=>c.id===source).parentId);assert.deepEqual(set.cards,before);
+ pass('Crossing into the adjacent reader and releasing cancels; returning to a topic before release still reparents once and preserves side-by-side reading');
+ await fs.mkdir(output,{recursive:true});await page.screenshot({path:path.join(output,'drag-boundary-verified.png'),animations:'disabled'});
+};

@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {create,expect}=require('./ui-session.cjs');
+(async()=>{const f=await create('library-stability');let failure;
+ try{
+  const {page,api}=f;
+  await api('fs.write',{path:'Stable.md',content:'# Original note'});await api('fs.mkdir',{path:'Destination'});
+  await page.goto(f.server.url);await page.locator('body[data-ready=true]').waitFor();
+  const tile=page.locator('.file-card[data-path="Stable.md"]'),tree=page.locator('.tree-row[data-path="Stable.md"]');
+  await expect(tile).toBeVisible();await expect(tree).toBeVisible();await tile.locator('.file-more').focus();
+  await page.evaluate(()=>{window.savedLibraryTile=document.querySelector('.file-card[data-path="Stable.md"]');window.savedLibraryRow=document.querySelector('.tree-row[data-path="Stable.md"]');window.savedLibraryFocus=document.activeElement;});
+  const waitList=()=>page.waitForResponse(r=>r.url().endsWith('/rpc')&&r.request().postDataJSON()?.method==='fs.list');
+  let response=waitList();await api('settings.set',{uiPalette:'rose'});await response;await expect(page.locator('body')).toHaveAttribute('data-ui-palette','rose');
+  await page.waitForTimeout(300);
+  assert.deepEqual(await page.evaluate(()=>({tile:window.savedLibraryTile===document.querySelector('.file-card[data-path="Stable.md"]'),tree:window.savedLibraryRow===document.querySelector('.tree-row[data-path="Stable.md"]'),focus:window.savedLibraryFocus===document.activeElement})),{tile:true,tree:true,focus:true});
+  response=waitList();await page.locator('#refresh-files').evaluate(button=>button.click());await response;await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(()=>window.savedLibraryTile===document.querySelector('.file-card[data-path="Stable.md"]')),true);
+  f.pass('Unchanged watcher and manual refreshes retain actual file/tree nodes, keyboard focus and thumbnail targets');
+  const entry=(await api('fs.list',{path:'.'})).entries.find(e=>e.path==='Stable.md');
+  await api('fs.write',{path:'Stable.md',expectedVersion:entry.version,content:'# Changed note\n'+ 'More content. '.repeat(200)});
+  await expect.poll(()=>page.evaluate(()=>document.querySelector('.file-card[data-path="Stable.md"]')!==window.savedLibraryTile)).toBe(true);
+  await expect(tile).toBeVisible();assert.equal(await page.evaluate(()=>window.savedLibraryTile.isConnected),false);
+  await api('fs.write',{path:'New.md',content:'# New note'});await expect(page.locator('.file-card[data-path="New.md"]')).toBeVisible();
+  await page.click('#list-view');await expect(page.locator('#files')).toHaveClass(/list/);await expect(tile.locator('.file-more')).toBeVisible();
+  await page.click('#grid-view');await expect(page.locator('#files')).toHaveClass(/grid/);
+  f.pass('Changed file versions, added files and layout switches still update the visible file list');
+ }catch(e){failure=e;}await f.finish(failure);
+})().catch(e=>{console.error(e);process.exitCode=1;});

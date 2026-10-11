@@ -1,0 +1,44 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path');
+const {create,expect}=require('./ui-session.cjs');
+(async()=>{
+ const f=await create('appearance-portable');let failure;
+ try{
+  const {page,api}=f,output=await fs.readFile(path.join(__dirname,'../artifacts/interaction-current.txt'),'utf8').then(s=>s.trim(),()=>f.output);
+  await api('fs.write',{path:'notes.md',content:'# 阅读空间\n\n独立保存的原始内容。'});
+  await page.goto(f.server.url);await page.locator('body[data-ready=true]').waitFor();
+  await page.click('#ui-appearance');await page.locator('#appearance-custom summary').click();
+  await page.fill('[name=uiCustomAccent]','#23cebd');await page.fill('[name=uiCustomGlow]','#bf9bff');
+  await page.locator('[name=uiBackgroundStrength]').fill('0.4');
+  await expect(page.locator('#appearance-preview-status')).toContainText('自定义配色');
+  assert.equal((await api('appearance.get')).appearance.uiCustomAccent,null);
+  await page.fill('[name=themeTitle]','海盐与暮光');await page.fill('[name=themePath]','theme.mrtheme.json');await page.click('#theme-export-file');
+  await expect(page.locator('#theme-transfer-status')).toContainText('已导出');
+  const exported=JSON.parse(await fs.readFile(path.join(f.workspace,'theme.mrtheme.json')));assert.equal(exported.settings.uiCustomAccent,'#23cebd');assert.equal(exported.settings.uiBackgroundStrength,.4);assert(!('lastDocument' in exported.settings));
+  await page.click('#theme-export-file');await expect(page.locator('#theme-transfer-status')).toContainText('已有同名文件');
+  f.pass('Custom accents and backdrop strength preview locally; exporting writes only safe theme data and refuses overwrites');
+  await page.screenshot({path:path.join(output,'custom-theme-studio.png'),animations:'disabled'});
+  await api('settings.set',{fontSize:24});await page.click('#dialog-submit');await expect(page.locator('#dialog')).toBeHidden();
+  await expect.poll(async()=>(await api('settings.get')).uiCustomAccent).toBe('#23cebd');assert.equal((await api('settings.get')).fontSize,24);
+  await page.reload();await page.locator('body[data-ready=true]').waitFor();assert.equal((await api('appearance.get')).appearance.uiBackgroundStrength,.4);
+  f.pass('Applying custom appearance preserves unrelated concurrent settings and survives reopening');
+  await page.click('#ui-appearance');await page.locator('#appearance-custom summary').click();await page.fill('[name=uiCustomAccent]','#112244');
+  await api('settings.set',{uiCustomAccent:'#aa3377'});await page.click('#dialog-submit');
+  await expect(page.locator('#dialog-error')).toContainText('数据已被另一处修改');await expect(page.locator('[name=uiCustomAccent]')).toHaveValue('#112244');assert.equal((await api('settings.get')).uiCustomAccent,'#aa3377');await page.click('#dialog-cancel');
+  f.pass('An appearance edit conflict retains the preview and never overwrites another client’s theme');
+  await page.click('#ui-appearance');await page.locator('#appearance-custom summary').click();
+  const malicious={schema:'margin-reader.theme/v1',title:'Unsafe',settings:{uiCustomAccent:'url(https://example.com)'}};
+  await page.locator('#theme-upload-input').setInputFiles({name:'unsafe.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(malicious))});
+  await expect(page.locator('#theme-transfer-status')).toContainText('Custom colors');assert.equal((await api('settings.get')).uiCustomAccent,'#aa3377');
+  await page.locator('#theme-upload-input').setInputFiles({name:'theme.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
+  await expect(page.locator('#theme-transfer-status')).toContainText('当前仅预览');await expect(page.locator('[name=uiCustomAccent]')).toHaveValue('#23cebd');assert.equal((await api('settings.get')).uiCustomAccent,'#aa3377');
+  await page.click('#dialog-submit');await expect.poll(async()=>(await api('settings.get')).uiCustomAccent).toBe('#23cebd');
+  f.pass('Client file import is validated by Core before preview; unsafe theme content never reaches CSS or changes settings');
+  await page.click('#ui-appearance');await page.locator('#appearance-custom summary').click();await page.fill('[name=uiCustomAccent]','#fff');await page.click('#dialog-submit');await expect(page.locator('#dialog-error')).toContainText('#RRGGBB');
+  await page.fill('[name=uiCustomAccent]','');await page.fill('[name=uiCustomGlow]','');await page.locator('[name=uiBackgroundStrength]').fill('0');await page.click('#dialog-submit');
+  await expect.poll(async()=>(await api('settings.get')).uiBackgroundStrength).toBe(0);assert.equal((await api('settings.get')).uiCustomAccent,null);
+  assert.equal(await fs.readFile(path.join(f.workspace,'notes.md'),'utf8'),'# 阅读空间\n\n独立保存的原始内容。');
+  f.pass('Invalid custom hex is rejected; automatic colors and a zero-strength backdrop remain valid without touching documents');
+ }catch(error){failure=error;}
+ await f.finish(failure);
+})().catch(error=>{console.error(error);process.exitCode=1;});

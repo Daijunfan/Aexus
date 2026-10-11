@@ -1,0 +1,6 @@
+.control-tooltip{position:fixed;inset:auto;margin:0;padding:8px 11px;max-width:min(320px,calc(100vw - 16px));border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font:12px/1.5 system-ui;box-shadow:var(--shadow);pointer-events:none;overflow-wrap:anywhere}
+#mm-delete-topic{font-size:22px;line-height:1;min-width:30px;padding:4px 8px;color:var(--muted)}
+#mm-delete-topic:hover:not(:disabled){color:#c24150;background:#c2415012}
+.mm-zone [data-zone-drag]{cursor:grab}.mm-zone [data-zone-resize]{cursor:nwse-resize}.mm-zone [data-zone-toggle]{cursor:pointer}
+.mm-zone text{pointer-events:none}.mm-zone [data-zone-toggle] text{pointer-events:auto}
+.mm-zone-gesture{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:10}.mm-zone-gesture rect{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4}

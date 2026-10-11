@@ -1,0 +1,40 @@
+"""Private transport for Codex's native execution protocol. Not a model tool."""
+import json
+import os
+import shlex
+import signal
+import subprocess
+import sys
+import threading
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from transport import ssh_args, ssh_env
+
+config = json.loads(sys.stdin.readline())
+if config['os'] == 'windows':
+    quote = lambda value: "'" + value.replace("'", "''") + "'"
+    script = "$ErrorActionPreference = 'Stop'; Set-Location -LiteralPath " + quote(config['directory']) + "; codex exec-server --listen stdio; exit $LASTEXITCODE"
+    if config.get('cli_bin'):script="$env:PATH="+quote(config['cli_bin'])+"+';'+$env:PATH;"+script
+    import base64
+    command = 'powershell.exe -NoLogo -NoProfile -NonInteractive -EncodedCommand ' + base64.b64encode(script.encode('utf-16le')).decode()
+else:
+    command = 'cd ' + shlex.quote(config['directory']) + ' && exec codex exec-server --listen stdio'
+if config.get('cli_bin') and config['os']!='windows':command='export PATH='+shlex.quote(config['cli_bin'])+':"$PATH"; '+command
+process = subprocess.Popen(ssh_args(config) + [command], stdin=subprocess.PIPE, env=ssh_env(config))
+
+def stop(*_):
+    process.terminate()
+signal.signal(signal.SIGTERM, stop)
+
+def forward():
+    try:
+        for line in sys.stdin:
+            process.stdin.write(line.encode())
+            process.stdin.flush()
+    except BrokenPipeError:
+        pass
+    finally:
+        process.stdin.close()
+threading.Thread(target=forward, daemon=True).start()
+sys.exit(process.wait())

@@ -1,0 +1,17 @@
+export const folderCommands: import('./protocol.ts').CommandDefinition[] = [
+  {method:'fs.path',description:'查询页面独立文件夹、父页面、全局深度及绝对路径',options:{pageId:{type:'string',description:'页面 ID',required:true}}},
+  {method:'fs.bind',description:'绑定文件夹为对应层级的页面；重复绑定不覆盖内容',mutates:true,options:{path:{type:'string',description:'相对目录；. 表示当前员工工作目录',required:true},title:{type:'string',description:'新主页面标题，默认文件夹名称'},color:{type:'string',description:'新主页面颜色，默认 white'}},examples:[{path:'.',title:'项目知识库',color:'white'}]},
+  {method:'fs.organize',description:'预览或执行旧平铺页面到逐层子文件夹的整理；默认只预览',mutates:true,options:{dryRun:{type:'boolean',description:'默认 true 仅预览；false 执行文件迁移'}},examples:[{dryRun:true},{dryRun:false}]},
+  {method:'fs.restore',description:'从回收目录恢复文件',mutates:true,options:{path:{type:'string',description:'原相对路径',required:true}}},
+  {method:'fs.asset-upload',description:'保存图片或附件，返回稳定资源地址',mutates:true,options:{name:{type:'string',description:'文件名'},path:{type:'string',description:'Workspace 中已有的文件'},contentBase64:{type:'string',description:'附件字节的 Base64'}}},
+  {method:'fs.draft-read',description:'读取嵌入式视图的未提交草稿',options:{key:{type:'string',description:'可选的文档草稿标识'}}},
+  {method:'fs.draft-write',description:'保存嵌入式视图草稿',mutates:true,options:{key:{type:'string',description:'可选的文档草稿标识'},draft:{type:'json',description:'待提交差异与冲突信息；null 清除'}}},
+  { method: 'fs.info', description: '当前文件夹、文件索引与同步错误' },
+  { method: 'fs.audit', description: '验收页面树与目录树逐层对应，返回 valid、pages 和 errors' },
+  { method: 'fs.sync', description: '立即从工作文件夹重新同步页面' },
+  { method: 'fs.list', description: '列出工作文件夹中的实际文件', options: { path: {type:'string',description:'相对目录，默认根目录'} } },
+  { method: 'fs.read', description: '读取文本文件与内容哈希', options: { path: {type:'string',description:'相对文件路径',required:true} } },
+  { method: 'fs.write', description: '写入文本文件，支持乐观并发校验', mutates: true, options: {path:{type:'string',description:'相对文件路径',required:true},content:{type:'string',description:'文件内容',required:true},hash:{type:'string',description:'读取时的哈希，防止覆盖其他修改'}} },
+  { method: 'fs.mkdir', description: '创建文件夹', mutates: true, options: {path:{type:'string',description:'相对路径',required:true}} },
+  { method: 'fs.remove', description: '把文件移到本工作区的回收目录', mutates: true, options: {path:{type:'string',description:'相对文件路径',required:true}} },
+];
