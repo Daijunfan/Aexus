@@ -11,7 +11,7 @@ const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_PROJECTS:path.
 try{
  await build({stdin:{contents:`import {getPreferences,setPreferences} from './src/main/store';import {readableThemeAccent} from './src/shared/preferences';const [operation,value,color]=process.argv.slice(2);if(operation==='set')setPreferences({theme:value,...(color?{themeColor:color}:{})});process.stdout.write(JSON.stringify(operation==='contrast'?readableThemeAccent(value):getPreferences()));`,resolveDir:root,loader:'ts'},outfile:bundle,bundle:true,platform:'node',format:'cjs',logLevel:'silent'})
  const invoke=async(...args)=>JSON.parse((await run(process.execPath,[bundle,...args],{env})).stdout)
- assert.equal((await invoke('get')).theme,'violet')
+ assert.equal((await invoke('get')).theme,'white')
  assert.equal((await invoke('get')).themeColor,'#7953ce')
  const file=path.join(home,'sessions.json')
  for(const theme of ['violet','blue','mint','teal','cyan','rose','coral','amber','indigo','graphite','white','light','space','black','midnight','sage']){
@@ -31,5 +31,5 @@ try{
   if(['#000000','#7953ce','#2479c4','#2e825c'].includes(color))assert.equal(accent,color,'already readable colors stay unchanged')
  }
  const state=JSON.parse(fs.readFileSync(file,'utf8'));assert.deepEqual(state.groups,[]);assert.deepEqual(state.sessions,[])
- console.log('PASS settings persistence: default Violet, ten palettes, six legacy IDs, custom hex color, new-process reload, invalid updates leave state unchanged, custom white/yellow/black accent contrast; no models or real user state')
+ console.log('PASS settings persistence: default White, ten palettes, six legacy IDs, custom hex color, new-process reload, invalid updates leave state unchanged, custom white/yellow/black accent contrast; no models or real user state')
 }finally{fs.rmSync(temp,{recursive:true,force:true})}
