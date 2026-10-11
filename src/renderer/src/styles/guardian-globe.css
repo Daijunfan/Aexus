@@ -1,0 +1,47 @@
+/* Local-only Earth observatory. Geographic contours are Natural Earth; no tile service. */
+.guardian-workbench .guardian-globe{position:relative;isolation:isolate;height:460px;min-height:420px;flex:1;overflow:hidden;border:1px solid #d7e9ed;border-radius:17px;background:radial-gradient(ellipse at 52% 43%,#e7f8f7 0%,#ecf6fb 51%,#f8fcff 90%);box-shadow:inset 0 1px #fff,inset 0 0 80px #deedf58a}
+.guardian-workbench .guardian-globe:before{position:absolute;inset:0;content:"";background-image:radial-gradient(#7ab1c02a .8px,transparent .8px);background-size:18px 18px;mask-image:radial-gradient(ellipse,#000 25%,transparent 85%);pointer-events:none}
+.guardian-workbench .guardian-globe canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.guardian-workbench .guardian-globe .guardian-globe-surface{z-index:1;pointer-events:none}
+.guardian-workbench .guardian-globe [data-testid="guardian-globe-canvas"]{z-index:2;cursor:grab;touch-action:none}
+.guardian-workbench .guardian-globe [data-testid="guardian-globe-canvas"]:active{cursor:grabbing}
+.guardian-workbench .guardian-globe-caption{z-index:3;top:20px;left:22px;gap:10px;color:#407183;font-size:11px}
+.guardian-workbench .guardian-globe-caption .guardian-crosshair{font-size:25px;color:#328b91}
+.guardian-workbench .guardian-globe-caption small{font:8px "SFMono-Regular",monospace;letter-spacing:1.45px;color:#688da0;margin-top:4px}
+.guardian-workbench .guardian-globe-signal{position:absolute;z-index:3;top:84px;left:19px;display:flex;flex-direction:column;gap:4px;max-width:180px;padding:13px 14px;border:1px solid #ffffffaf;border-radius:12px;background:#f9feffcc;backdrop-filter:blur(12px);box-shadow:0 8px 27px #3c788514;pointer-events:none}
+.guardian-workbench .guardian-globe-signal>span,.guardian-workbench .guardian-globe-peers>span{font:9px "SFMono-Regular",monospace;letter-spacing:1px;color:#4b8b92}
+.guardian-workbench .guardian-globe-signal strong{font-size:16px;font-weight:720;color:#204e5b;letter-spacing:-.35px}
+.guardian-workbench .guardian-globe-signal small{font-size:10px;line-height:1.6;color:#617f91;overflow-wrap:anywhere}
+.guardian-workbench .guardian-globe-peers{position:absolute;z-index:3;left:19px;bottom:76px;display:flex;flex-direction:column;gap:4px;width:188px;padding:10px;border:1px solid #e3eff3bb;border-radius:11px;background:#faffffdd;backdrop-filter:blur(14px);box-shadow:0 6px 27px #34778b17}
+.guardian-workbench .guardian-globe-peers>span{padding:1px 3px 6px}
+.guardian-workbench .guardian-globe-peers button{min-height:37px;justify-content:flex-start;gap:8px;padding:4px 6px;border:0;border-radius:7px;text-align:left;background:transparent}
+.guardian-workbench .guardian-globe-peers button:hover,.guardian-workbench .guardian-globe-peers button[aria-pressed=true]{background:#d7f2ed;color:#236f70}
+.guardian-workbench .guardian-globe-peers button>i{width:7px;height:7px;flex:none;background:#46aaad;border-radius:50%;box-shadow:0 0 0 3px #a6dbdb62}
+.guardian-workbench .guardian-globe-peers button>i.inbound{background:#dca767;box-shadow:0 0 0 3px #eed8b862}
+.guardian-workbench .guardian-globe-peers button>span{display:flex;flex-direction:column;min-width:0;flex:1;gap:1px}
+.guardian-workbench .guardian-globe-peers button strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.guardian-workbench .guardian-globe-peers button small{font:9px "SFMono-Regular",monospace;color:#6a8794;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.guardian-workbench .guardian-globe-peers button>b{font-size:10px;font-variant-numeric:tabular-nums;color:#357f89}
+.guardian-workbench .guardian-globe-peers>small{color:#6a8794;font-size:9px;line-height:1.5}
+.guardian-workbench .guardian-globe-controls{z-index:4;right:17px;bottom:19px;gap:3px;border:1px solid #d0e5ea;border-radius:10px;padding:5px;color:#467a86;box-shadow:0 6px 19px #4a80961a}
+.guardian-workbench .guardian-globe-controls button{border:0;min-height:26px;min-width:26px;border-radius:6px;padding:1px 6px;color:#4c7988;font-size:16px}
+.guardian-workbench .guardian-globe-controls button:hover{background:#e8f6f5}
+.guardian-workbench .guardian-globe-controls>span{width:34px;font-size:10px}
+.guardian-workbench .guardian-globe-controls button.active{color:#228a82;background:#e3f5ef}
+.guardian-workbench .guardian-globe-note{z-index:3;bottom:18px;left:21px;max-width:60%;font-size:9px;line-height:1.5;color:#57818e}
+.guardian-workbench .guardian-globe-note span{display:block;font-size:9px;color:#57818e;margin-top:4px}
+.guardian-workbench .guardian-globe-note span:last-child{color:#6b8995;font-size:8px}
+.guardian-workbench .g-globe-card{background:linear-gradient(#fff,#fbfeff)}
+.guardian-workbench .g-globe-card .g-card-head{margin-bottom:12px}
+@media(max-width:740px){
+ .guardian-workbench .guardian-globe{height:370px;min-height:350px}
+ .guardian-workbench .guardian-globe-caption{left:13px;top:13px}
+ .guardian-workbench .guardian-globe-signal{top:65px;left:12px;max-width:135px;padding:9px}
+ .guardian-workbench .guardian-globe-signal strong{font-size:13px}
+ .guardian-workbench .guardian-globe-signal small{font-size:9px}
+ .guardian-workbench .guardian-globe-peers{left:10px;bottom:68px;width:145px;padding:6px}
+ .guardian-workbench .guardian-globe-peers button{min-height:30px;padding:3px}
+ .guardian-workbench .guardian-globe-note{left:12px;bottom:9px;max-width:59%}
+ .guardian-workbench .guardian-globe-note span:last-child{display:none}
+ .guardian-workbench .guardian-globe-controls{right:8px;bottom:8px;padding:3px}
+}

@@ -291,6 +291,23 @@
 .guardian-workbench .go-create input,.guardian-workbench .go-create textarea{height:38px;padding:8px;width:100%;min-height:38px}
 .guardian-workbench .go-create textarea{height:53px}
 /* Authenticated AI-session visibility. */
+.guardian-workbench .go-ai-spectrum{padding:18px 20px;border:1px solid #d5e8eb;border-radius:15px;background:linear-gradient(115deg,#fcfeff 0%,#edf8f8 65%,#f3f3fc 100%);box-shadow:0 8px 26px #457b8b0d}
+.guardian-workbench .go-ai-spectrum-heading{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.guardian-workbench .go-ai-spectrum-heading strong{font-size:19px;font-weight:720;color:#294d5b}
+.guardian-workbench .go-ai-spectrum-heading small{margin-left:auto;font-size:10px;color:#67868d}
+.guardian-workbench .go-ai-spectrum-track{display:flex;gap:2px;width:100%;height:14px;overflow:hidden;border:1px solid #dce6ed;border-radius:9px;background:#e8eef2;margin:16px 0 14px}
+.guardian-workbench .go-ai-spectrum-track>i{height:100%;min-width:0;transition:width .3s ease}
+.guardian-workbench .go-ai-spectrum-track .running{background:linear-gradient(90deg,#1d8a82,#63c8ab)}
+.guardian-workbench .go-ai-spectrum-track .idle{background:#8fb3d1}
+.guardian-workbench .go-ai-spectrum-track .unobserved{background:#cbd7e4}
+.guardian-workbench .go-ai-spectrum-actions{display:flex;gap:8px;flex-wrap:wrap}
+.guardian-workbench .go-ai-spectrum-actions button{display:flex;gap:8px;min-height:31px;border:1px solid #deeaef;border-radius:8px;background:#ffffffb5;font-size:11px;color:#516e7a;padding:5px 10px}
+.guardian-workbench .go-ai-spectrum-actions button[aria-pressed=true]{border-color:#93cabc;background:#e1f4ef;color:#236f69}
+.guardian-workbench .go-ai-spectrum-actions button i{width:7px;height:7px;border-radius:2px;background:#93b2be}
+.guardian-workbench .go-ai-spectrum-actions button i.running{background:#3caa93}
+.guardian-workbench .go-ai-spectrum-actions button i.idle{background:#8fb3d1}
+.guardian-workbench .go-ai-spectrum-actions button i.unobserved{background:#cbd7e4}
+.guardian-workbench .go-ai-spectrum-actions button b{font-size:12px;font-weight:760;font-variant-numeric:tabular-nums}
 .guardian-workbench .go-ai-layout{display:grid;grid-template-columns:minmax(245px,.7fr) minmax(0,1.5fr);gap:15px}
 .guardian-workbench .go-ai-people{padding:15px;display:flex;flex-direction:column;gap:6px}
 .guardian-workbench .go-ai-people>button em{font-size:10px;font-style:normal;color:#637585}
@@ -301,6 +318,8 @@
 .guardian-workbench .go-ai-activity span{font-size:10px;font-weight:650;color:#367b71}
 .guardian-workbench .go-ai-activity p{font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 0}
 .guardian-workbench .go-ai-activity small{font-size:10px;color:#738692}
+@media(max-width:740px){.guardian-workbench .go-ai-spectrum{padding:13px}.guardian-workbench .go-ai-spectrum-heading{gap:5px}.guardian-workbench .go-ai-spectrum-heading small{margin-left:0;width:100%}.guardian-workbench .go-ai-spectrum-actions{gap:5px}.guardian-workbench .go-ai-spectrum-actions button{padding:5px 7px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.guardian-workbench .go-ai-spectrum-track>i{transition:none}}
 @media(min-width:1600px){.guardian-workbench .g-overview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.guardian-workbench .g-content{padding:30px 35px 46px}}
 @media(max-width:1350px){.guardian-workbench .g-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guardian-workbench .go-investigation{grid-template-columns:255px minmax(0,1fr)}.guardian-workbench .go-decision{grid-column:2;min-height:0}.guardian-workbench .g-network-top{grid-template-columns:1fr}.guardian-workbench .g-network-side{display:grid;grid-template-columns:1fr 1fr}}
 @media(max-width:1000px){.guardian-workbench .g-workspace{grid-template-columns:175px minmax(0,1fr)}.guardian-workbench .g-domain-sidebar nav>button{padding:6px;gap:7px}.guardian-workbench .g-domain-sidebar nav>button b{display:none}.guardian-workbench .g-content{padding:20px 17px}.guardian-workbench .go-app-layout,.guardian-workbench .go-ai-layout{grid-template-columns:1fr}.guardian-workbench .go-app-list{max-height:300px}.guardian-workbench .g-two-columns,.guardian-workbench .g-security-grid{grid-template-columns:1fr}.guardian-workbench .go-create{grid-template-columns:1fr}}
