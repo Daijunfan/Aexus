@@ -19,7 +19,7 @@ export type GuardianEvent={
 }
 export type GuardianEventFeed={
  events:GuardianEvent[];retentionDays:number
- coverage:{mode:'on-demand';startedAt:number|null;lastSampledAt:number|null;sampleCount:number}
+ coverage:{mode:'on-demand'|'background';startedAt:number|null;lastSampledAt:number|null;sampleCount:number}
 }
 export type GuardianManualEvent={title:string;summary:string;subject?:GuardianEventSubject}
 export type GuardianEventChange={id:string;status:GuardianEventStatus;note?:string}

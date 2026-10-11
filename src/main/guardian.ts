@@ -1,5 +1,5 @@
 import os from 'node:os'
-import {observeGuardianSnapshot} from './guardian-events'
+import {observeGuardianSnapshot,setGuardianEventBackgroundSampling} from './guardian-events'
 import path from 'node:path'
 import {isIP} from 'node:net'
 import {execFile} from 'node:child_process'
@@ -12,6 +12,8 @@ import type {GuardianConnection,GuardianInterface,GuardianLocation,GuardianSecur
 const run=promisify(execFile),settingsFile=path.join(APP_HOME,'guardian.json')
 const command=async(file:string,args:string[]=[]) => (await run(file,args,{timeout:5000,maxBuffer:8*1024*1024,env:{...process.env,LC_ALL:'C'}})).stdout
 let settings:GuardianSettings|undefined,cached:GuardianSnapshot|undefined,inflight:Promise<GuardianSnapshot>|undefined
+const BACKGROUND_INTERVAL_MS=60_000
+let backgroundStarted=false,backgroundTimer:ReturnType<typeof setInterval>|null=null
 let previousCpu:os.CpuInfo[]|undefined,previousNetwork:{at:number;interfaces:GuardianInterface[]}|undefined
 let securityCache:GuardianSecurityCheck[]|undefined
 const history:GuardianSnapshot['history']=[]
@@ -20,13 +22,17 @@ const geoRequests:number[]=[]
 let geoError:string|null=null,publicIp:string|null=null,publicLocation:GuardianLocation|null=null,selfLookupAt=0
 
 export function guardianSettings():GuardianSettings{
-  if(!settings)settings=existsSync(settingsFile)?JSON.parse(readFileSync(settingsFile,'utf8')):{geoLookupEnabled:false,home:null}
-  return structuredClone(settings!)
+  if(!settings){
+    const saved=existsSync(settingsFile)?JSON.parse(readFileSync(settingsFile,'utf8')) as Partial<GuardianSettings>:{}
+    settings={geoLookupEnabled:saved.geoLookupEnabled===true,backgroundSamplingEnabled:saved.backgroundSamplingEnabled===true,home:saved.home??null}
+  }
+  return structuredClone(settings)
 }
 export function setGuardianSettings(patch:Record<string,unknown>):GuardianSettings{
-  if(Object.keys(patch).some(key=>!['geoLookupEnabled','home'].includes(key)))throw Error('Unknown Guardian setting')
+  if(Object.keys(patch).some(key=>!['geoLookupEnabled','backgroundSamplingEnabled','home'].includes(key)))throw Error('Unknown Guardian setting')
   const next=guardianSettings()
   if(patch.geoLookupEnabled!==undefined){if(typeof patch.geoLookupEnabled!=='boolean')throw Error('geoLookupEnabled must be boolean');next.geoLookupEnabled=patch.geoLookupEnabled}
+  if(patch.backgroundSamplingEnabled!==undefined){if(typeof patch.backgroundSamplingEnabled!=='boolean')throw Error('backgroundSamplingEnabled must be boolean');next.backgroundSamplingEnabled=patch.backgroundSamplingEnabled}
   if(patch.home!==undefined){
     if(patch.home===null)next.home=null
     else{
@@ -38,7 +44,33 @@ export function setGuardianSettings(patch:Record<string,unknown>):GuardianSettin
   mkdirSync(APP_HOME,{recursive:true});writeFileSync(settingsFile+'.tmp',JSON.stringify(next,null,2)+'\n',{mode:0o600});renameSync(settingsFile+'.tmp',settingsFile)
   settings=next;cached=undefined
   if(!next.geoLookupEnabled){for(const controller of geoPending.values())controller.abort();geoPending.clear();locations.clear();publicIp=null;publicLocation=null;selfLookupAt=0;geoError=null}
+  synchronizeGuardianBackgroundSampling()
   return guardianSettings()
+}
+
+/** User opt-in, Core-host only. An app quit or sleep leaves a visible observation gap. */
+function synchronizeGuardianBackgroundSampling(){
+ if(backgroundTimer){clearInterval(backgroundTimer);backgroundTimer=null}
+ setGuardianEventBackgroundSampling(false)
+ if(!backgroundStarted)return
+ let enabled=false
+ try{enabled=guardianSettings().backgroundSamplingEnabled}catch(error){console.error('[Guardian background settings]',(error as Error).message);return}
+ if(!enabled)return
+ setGuardianEventBackgroundSampling(true)
+ const sample=()=>{void guardianSnapshot().catch(error=>console.error('[Guardian background sample]',(error as Error).message))}
+ sample()
+ backgroundTimer=setInterval(sample,BACKGROUND_INTERVAL_MS)
+ backgroundTimer.unref?.()
+}
+export function startGuardianBackgroundSampling(){
+ if(backgroundStarted)return stopGuardianBackgroundSampling
+ backgroundStarted=true
+ synchronizeGuardianBackgroundSampling()
+ return stopGuardianBackgroundSampling
+}
+export function stopGuardianBackgroundSampling(){
+ backgroundStarted=false
+ synchronizeGuardianBackgroundSampling()
 }
 
 /** Reject private, local, special-use and proxy fake-IP ranges before any external lookup. */

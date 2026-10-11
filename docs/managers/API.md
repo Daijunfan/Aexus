@@ -34,13 +34,15 @@ agents guardian settings-set --data '{"home":{"latitude":39.9,"longitude":116.4,
 # Explicit external lookup consent; off by default.
 agents guardian settings-set --data '{"geoLookupEnabled":true}' --json
 agents guardian settings-set --data '{"geoLookupEnabled":false}' --json
+# Separately opt in to local, Core-host sampling every 60 seconds while Aexus is running.
+agents guardian settings-set --data '{"backgroundSamplingEnabled":true}' --json
+agents guardian settings-set --data '{"backgroundSamplingEnabled":false}' --json
 ```
 
 The snapshot is shared for two seconds, concurrent reads share a single collection,
 and the in-memory history contains at most 300 samples from the last 15 minutes.
 Each historical point includes real per-core CPU percentages, all memory components
-and pressure, and disk usage/capacity. No data is backfilled while sampling is paused
-or the view is closed. The first CPU/rate observation is null until a real delta is
+and pressure, and disk usage/capacity. No data is backfilled while the app is closed, the host sleeps, or there is no active polling. By default, only explicit requests (including an open Guardian view) collect snapshots. The separate, **off by default** `backgroundSamplingEnabled` setting lets the human user opt in to one system snapshot every 60 seconds while the Aexus Core process runs, including when Guardian is not open. Disabling it clears the timer without changing the existing read-only APIs, and does not authorize any employee or automatic action. The first CPU/rate observation is null until a real delta is
 available. Security checks refresh every five minutes.
 Network totals include physical `en*` interfaces only; loopback, bridges and tunnels
 remain separately visible so traffic is not counted twice. Memory `usedBytes` is
@@ -73,8 +75,8 @@ automatically. API response types live in `src/shared/guardian.ts`.
 in `guardian-events.json` with mode `0600` (7-day retention, up to 250 records).
 It includes event kind, status, supporting snapshot details, related process/PID,
 potentially public peer IPs, and user-provided notes. The event feed also states
-that observation only happens on demand, last successful sample time, and count
-for the current Core runtime; closed/hidden/paused periods are not backfilled.
+whether observation is on-demand or explicitly enabled at 60-second intervals, plus last sampled time and count
+for the current Core runtime; gaps while the app is closed, the host is asleep, or polling is unavailable are not backfilled.
 
 `guardian.event-create` explicitly registers a human investigation;
 `guardian.event-change` changes human triage status

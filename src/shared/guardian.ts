@@ -1,6 +1,6 @@
 /** Read-only observations of the Core host. A connection is not an attack verdict. */
 export type GuardianLocation={latitude:number;longitude:number;label:string;country?:string;countryCode?:string;city?:string;source:'manual'|'ipwho.is'}
-export type GuardianSettings={geoLookupEnabled:boolean;home:GuardianLocation|null}
+export type GuardianSettings={geoLookupEnabled:boolean;backgroundSamplingEnabled:boolean;home:GuardianLocation|null}
 export type GuardianConnection={id:string;pid:number|null;process:string;localAddress:string;localPort:number;remoteAddress:string|null;remotePort:number|null;state:string;scope:'public'|'private'|'loopback'|'listening';direction:'inbound'|'unknown';location:GuardianLocation|null;rxBytes:number;txBytes:number}
 export type GuardianInterface={name:string;addresses:string[];rxBytes:number;txBytes:number;rxBytesPerSecond:number|null;txBytesPerSecond:number|null}
 export type GuardianSecurityCheck={id:'firewall'|'filevault'|'sip';label:string;status:'enabled'|'disabled'|'unknown';detail:string;checkedAt:number}

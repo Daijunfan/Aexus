@@ -13,7 +13,8 @@ const MAX_ENTRIES=24
 const DEDUPE_MS=30*60000
 let events:GuardianEvent[]|undefined
 let previous:GuardianSnapshot|undefined
-let startedAt:number|null=null,lastSampledAt:number|null=null,sampleCount=0
+let startedAt:number|null=null,lastSampledAt:number|null=null,sampleCount=0,backgroundSampling=false
+export function setGuardianEventBackgroundSampling(active:boolean){backgroundSampling=active}
 
 function store():GuardianEvent[]{
  if(events)return events
@@ -63,7 +64,7 @@ function record(input:Pick<GuardianEvent,'fingerprint'|'kind'|'importance'|'titl
  return true
 }
 export function guardianEventFeed():GuardianEventFeed{
- return {events:structuredClone(store().filter(event=>event.lastSeenAt>=Date.now()-RETENTION_MS).sort((a,b)=>b.lastSeenAt-a.lastSeenAt).slice(0,MAX_EVENTS)),retentionDays:RETENTION_DAYS,coverage:{mode:'on-demand',startedAt,lastSampledAt,sampleCount}}
+ return {events:structuredClone(store().filter(event=>event.lastSeenAt>=Date.now()-RETENTION_MS).sort((a,b)=>b.lastSeenAt-a.lastSeenAt).slice(0,MAX_EVENTS)),retentionDays:RETENTION_DAYS,coverage:{mode:backgroundSampling?'background':'on-demand',startedAt,lastSampledAt,sampleCount}}
 }
 export function guardianEventCreate(input:GuardianManualEvent){
  if(!input||typeof input!=='object')throw Error('Invalid event')

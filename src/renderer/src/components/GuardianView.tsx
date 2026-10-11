@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react'
-import type {GuardianConnection,GuardianSecurityCheck,GuardianSnapshot} from '../../../shared/guardian'
+import type {GuardianConnection,GuardianSecurityCheck,GuardianSettings,GuardianSnapshot} from '../../../shared/guardian'
 import type {GuardianEventFeed,GuardianEventSubject} from '../../../shared/guardian-events'
 import {api} from '../api'
 import {Icon} from './Icon'
@@ -21,12 +21,13 @@ type Domain=typeof DOMAINS[number]['id']
 export default function GuardianView(){
  const [snapshot,setSnapshot]=useState<GuardianSnapshot|null>(null),[error,setError]=useState(''),[refreshing,setRefreshing]=useState(false),[paused,setPaused]=useState(false),[domain,setDomain]=useState<Domain>('overview'),[minutes,setMinutes]=useState<1|5|15>(5),[settings,setSettings]=useState(false)
  const [process,setProcess]=useState<GuardianSnapshot['processes'][number]|null>(null),[network,setNetwork]=useState<{filter:ConnectionFilter;pid:number|null}>({filter:'all',pid:null}),[security,setSecurity]=useState<GuardianSecurityCheck['id']>('firewall')
- const [feed,setFeed]=useState<GuardianEventFeed|null>(null),[eventError,setEventError]=useState(''),[focusEventId,setFocusEventId]=useState<string|null>(null)
+ const [feed,setFeed]=useState<GuardianEventFeed|null>(null),[eventError,setEventError]=useState(''),[focusEventId,setFocusEventId]=useState<string|null>(null),[settingsValue,setSettingsValue]=useState<GuardianSettings|null>(null)
  const inFlight=useRef(false),alive=useRef(false),scroll=useRef<HTMLDivElement>(null)
  const refresh=useCallback(async()=>{if(inFlight.current)return;inFlight.current=true;setRefreshing(true);try{const value=await api.call<GuardianSnapshot>('guardian.snapshot');if(alive.current){setSnapshot(value);setError('')}try{const changes=await api.call<GuardianEventFeed>('guardian.event-list');if(alive.current){setFeed(changes);setEventError('')}}catch(cause){if(alive.current)setEventError((cause as Error).message)}}catch(e){if(alive.current)setError((e as Error).message)}finally{inFlight.current=false;if(alive.current)setRefreshing(false)}},[])
  useEffect(()=>{alive.current=true;void refresh();return()=>{alive.current=false}},[refresh])
  useEffect(()=>{if(paused)return;const timer=setInterval(()=>{if(!document.hidden)void refresh()},3000);return()=>clearInterval(timer)},[paused,refresh])
  useEffect(()=>{scroll.current?.scrollTo({top:0});document.querySelector<HTMLButtonElement>(`[data-domain="${domain}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'})},[domain])
+ const showSettings=()=>{void api.call<GuardianSettings>('guardian.settings-get').then(value=>{if(alive.current){setSettingsValue(value);setSettings(true)}}).catch(cause=>{if(alive.current)setError((cause as Error).message)})}
  const openDomain=(next:Domain)=>{if(next==='network')setNetwork({filter:'all',pid:null});setDomain(next)}
  const openNetwork=(filter:ConnectionFilter='all',pid:number|null=null)=>{setNetwork({filter,pid});setDomain('network');setProcess(null)}
  const openProcess=(pid:number)=>{const selected=snapshot?.processes.find(p=>p.pid===pid);if(selected)setProcess(selected);else {setError('该进程已退出或不在当前采样中。');void refresh()}}
@@ -38,12 +39,12 @@ export default function GuardianView(){
  const parts=memoryParts(snapshot?.memory),history=snapshot?.history??[],memory=snapshot?.memory
  const processTiles=useMemo(()=>[...(snapshot?.processes??[])].sort((a,b)=>b.memoryBytes-a.memoryBytes).map(p=>({id:String(p.pid),label:p.name,value:p.memoryBytes})),[snapshot])
  const diskItems=snapshot?.disk?[{id:'used',label:'已用空间',value:snapshot.disk.usedBytes,color:palette[3]},{id:'available',label:'可用空间',value:snapshot.disk.availableBytes,color:'#dce8e6'}]:[]
- const observationLabel=paused?'采样已暂停':error?'采样连接异常':snapshot?'正在实时采样':'连接本机中'
+ const observationLabel=paused?(snapshot?.settings.backgroundSamplingEnabled?'页面暂停 · 后台采样中':'采样已暂停'):error?'页面采样异常':snapshot?(snapshot.settings.backgroundSamplingEnabled?'页面实时 · 后台已开启':'正在实时采样'):'连接本机中'
  const domainValue=(id:Domain)=>id==='cpu'?percent(snapshot?.cpu.usagePercent):id==='memory'?(memory?pressureLabel[memory.pressure]:'—'):id==='storage'?percent(snapshot?.disk?.usedPercent):id==='network'?String(snapshot?.network.connections.length??'—'):id==='processes'?String(snapshot?.processes.length??'—'):id==='security'?`${snapshot?.security.filter(c=>c.status==='enabled').length??'—'}/3`:id==='applications'?String(new Set(snapshot?.processes.map(p=>p.name)??[]).size):id==='events'?String(feed?.events.filter(item=>item.status==='open').length??'—'):id==='ai'?'会话':id==='report'?'7 天':undefined
  return <main className="guardian-view guardian-workbench" data-testid="guardian-view">
-  <header className="g-app-header"><div className="g-brand"><span className="g-brand-symbol"><Icon name="shield"/></span><div><h1>Guardian <span>电脑卫士</span></h1><p>{snapshot?.host.hostname??'本机系统'}<i/>macOS · {snapshot?.host.cpuCount??'—'} 核心 · {bytes(memory?.totalBytes)} 内存</p></div></div><div className="g-app-actions"><span className={`g-live ${paused?'paused':error?'error':''}`}><i/>{observationLabel}</span><button aria-label={paused?'恢复实时采样':'暂停实时采样'} aria-pressed={paused} onClick={()=>setPaused(!paused)}><Icon name={paused?'play':'debug-pause'}/>{paused?'恢复':'暂停'}</button><button aria-label="立即刷新 Guardian" disabled={refreshing} onClick={()=>void refresh()}><Icon name="refresh"/></button><button data-testid="guardian-location-settings" onClick={()=>setSettings(true)}><Icon name="settings-gear"/><span>位置与隐私</span></button></div></header>
+  <header className="g-app-header"><div className="g-brand"><span className="g-brand-symbol"><Icon name="shield"/></span><div><h1>Guardian <span>电脑卫士</span></h1><p>{snapshot?.host.hostname??'本机系统'}<i/>macOS · {snapshot?.host.cpuCount??'—'} 核心 · {bytes(memory?.totalBytes)} 内存</p></div></div><div className="g-app-actions"><span className={`g-live ${paused?'paused':error?'error':''}`}><i/>{observationLabel}</span><button aria-label={paused?'恢复实时采样':'暂停实时采样'} aria-pressed={paused} onClick={()=>setPaused(!paused)}><Icon name={paused?'play':'debug-pause'}/>{paused?'恢复':'暂停'}</button><button aria-label="立即刷新 Guardian" disabled={refreshing} onClick={()=>void refresh()}><Icon name="refresh"/></button><button data-testid="guardian-location-settings" onClick={showSettings}><Icon name="settings-gear"/><span>位置与隐私</span></button></div></header>
   <div className="g-workspace"><aside className="g-domain-sidebar"><span className="g-eyebrow">工作空间</span><nav aria-label="Guardian 功能导航">{DOMAINS.map(item=><button key={item.id} data-domain={item.id} aria-current={domain===item.id?'page':undefined} onClick={()=>openDomain(item.id)}><Icon name={item.icon}/><span>{item.name}<small>{item.caption}</small></span>{item.id!=='overview'&&<b>{domainValue(item.id)}</b>}</button>)}</nav><div className="g-sidebar-note"><Icon name="shield"/><strong>本机只读观测</strong><p>真实采样，可追溯依据。<br/>不自动清理或修改系统。</p><button onClick={()=>void api.call('view.select',{id:'company'})}>前往 Company <Icon name="arrow-right"/></button></div></aside>
-  <div className="g-main"><div className="g-workspace-toolbar"><div><strong>{DOMAINS.find(d=>d.id===domain)?.name}</strong><span>每 3 秒采样 · {snapshot?`更新于 ${time(snapshot.sampledAt)}`:'正在读取系统'}</span></div><div className="g-time-range" aria-label="历史时间范围">{([1,5,15] as const).map(value=><button key={value} aria-label={`最近 ${value} 分钟`} aria-pressed={minutes===value} onClick={()=>setMinutes(value)}>{value} 分钟</button>)}</div></div>
+  <div className="g-main"><div className="g-workspace-toolbar"><div><strong>{DOMAINS.find(d=>d.id===domain)?.name}</strong><span>{paused?'页面采样已暂停':'页面每 3 秒采样'}{snapshot?.settings.backgroundSamplingEnabled?' · 后台每 60 秒':''} · {snapshot?`更新于 ${time(snapshot.sampledAt)}`:'正在读取系统'}</span></div><div className="g-time-range" aria-label="历史时间范围">{([1,5,15] as const).map(value=><button key={value} aria-label={`最近 ${value} 分钟`} aria-pressed={minutes===value} onClick={()=>setMinutes(value)}>{value} 分钟</button>)}</div></div>
    {error&&<div className="g-error-banner" role="alert"><Icon name="warning"/><span>{error} {snapshot&&'当前保留最后一次成功采样。'}</span><button onClick={()=>void refresh()}>重试</button></div>}
    <div className="g-content" ref={scroll}>
     {domain==='overview'&&<div className="g-overview" data-testid="guardian-overview-panel"><div className="g-overview-intro"><div><span className="g-eyebrow">A CLEARER PICTURE OF YOUR MAC</span><h2>看见全局，深入每一处。</h2><p>点击图形探索核心、内存、目录和连接。所有模块都可以继续展开。</p></div><span className="g-observation-badge"><i/>{snapshot?'本机数据已连接':'正在取得采样'}</span></div>
@@ -59,7 +60,7 @@ export default function GuardianView(){
     {domain==='cpu'&&<GuardianCpu snapshot={snapshot} minutes={minutes} onProcess={openProcess}/>}
     {domain==='memory'&&<GuardianMemory snapshot={snapshot} minutes={minutes} onProcess={openProcess}/>}
     {domain==='storage'&&<GuardianStorage snapshot={snapshot}/>}
-    {domain==='network'&&<GuardianNetwork snapshot={snapshot} minutes={minutes} initialFilter={network.filter} initialPid={network.pid} onProcess={openProcess} onLocationSettings={()=>setSettings(true)} onInvestigate={investigateConnection}/>}
+    {domain==='network'&&<GuardianNetwork snapshot={snapshot} minutes={minutes} initialFilter={network.filter} initialPid={network.pid} onProcess={openProcess} onLocationSettings={showSettings} onInvestigate={investigateConnection}/>}
     {domain==='processes'&&<GuardianProcesses snapshot={snapshot} onProcess={openProcess}/>}
     {domain==='security'&&<GuardianSecurity key={security} snapshot={snapshot} initial={security} onNetwork={()=>openNetwork('inbound')}/>}
     {domain==='applications'&&<GuardianApplications snapshot={snapshot} events={feed?.events??[]} onProcess={openProcess} onNetwork={pid=>openNetwork('all',pid)} onInvestigate={createInvestigation} onEvent={openEvent}/>}
@@ -69,7 +70,7 @@ export default function GuardianView(){
     {!!snapshot?.issues.length&&<details className="g-issues"><summary><Icon name="info"/>{snapshot.issues.length} 项观测暂不可用 · 查看原因</summary>{snapshot.issues.map((issue,i)=><p key={i}>{issue}</p>)}</details>}
    </div>
   </div></div>
-  {settings&&<GuardianLocationSettings value={snapshot?.settings??{geoLookupEnabled:false,home:null}} onClose={()=>setSettings(false)} onSaved={()=>void refresh()}/>}
+  {settings&&settingsValue&&<GuardianLocationSettings value={settingsValue} onClose={()=>setSettings(false)} onSaved={()=>void refresh()}/>}
   {process&&<GuardianProcessInspector key={process.pid} process={process} snapshot={snapshot} onClose={()=>setProcess(null)} onConnections={pid=>openNetwork('all',pid)} onInvestigate={investigateProcess}/>}
  </main>
 }

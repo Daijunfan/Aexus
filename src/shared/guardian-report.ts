@@ -23,7 +23,7 @@ export function summarizeGuardianEvents(feed:GuardianEventFeed|null,now=Date.now
   return {date,count:items.length,reviewed:items.filter(item=>item.status==='reviewed').length}
  })
  const categories=(Object.keys(GUARDIAN_KIND_LABELS) as GuardianEvent['kind'][]).map(kind=>({kind,label:GUARDIAN_KIND_LABELS[kind],count:all.filter(e=>e.kind===kind).length}))
- return {periodStart,periodEnd:now,total:all.length,open:all.filter(e=>e.status==='open').length,reviewed:all.filter(e=>e.status==='reviewed').length,dismissed:all.filter(e=>e.status==='dismissed').length,days,categories,observedOnly:feed?.coverage.mode==='on-demand'}
+ return {periodStart,periodEnd:now,total:all.length,open:all.filter(e=>e.status==='open').length,reviewed:all.filter(e=>e.status==='reviewed').length,dismissed:all.filter(e=>e.status==='dismissed').length,days,categories,observedOnly:true}
 }
 /** Intentionally contains no event titles, IPs, process names, paths, hostnames or investigation notes. */
 export function guardianShareSummary(summary:GuardianReportSummary){

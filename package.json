@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.66.0",
+  "version": "0.66.1",
   "description": "Aexus: Company, Messages, Plan and local Mac Guardian",
   "main": "./out/main/index.js",
   "author": {

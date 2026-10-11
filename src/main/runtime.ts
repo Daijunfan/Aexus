@@ -29,6 +29,7 @@ import {initializeManagement} from './management'
 import {closeTransfers} from './transfers'
 import {onPluginWindows,closePluginWindows} from './plugins/windows'
 import { startScheduler, stopScheduler, reconcileSchedules } from './scheduler/service'
+import {startGuardianBackgroundSampling} from './guardian'
 import { getLive,setEmitter, closeAll,revokeInvalidDelegations } from './sessions'
 import { onStoreChange,migrateCloudTeams,migrateCloudHostBindings } from './store'
 import { onViewChange } from './presentation'
@@ -93,5 +94,6 @@ export function startRuntime(notify: (channel: string, payload: any) => void = (
   const unwindows=onPluginWindows(windows=>broadcast('plugin:windows',windows))
   const unview = onViewChange((state,clientId) => publishEvent('view:changed',state,clientId))
   startServer(() => {startInitializations();startScheduler(broadcast);startConversationNotices(broadcast);startPostTriggers()})
-  return async () => {await stopPostTriggers();stopConversationNotices();setConversationPolicyEmitter(()=>{});await closeChannelIngress();stopExports();closeAllMedia();closeEngineLogins();await closeInstallations();await closeUploads();resetManagementActivity(); await closePluginWindows(); unwindows(); unsubscribe(); unview(); await stopInitializations(); await stopScheduler(); await closeAll(); await closeTransfers(); closeRemoteFiles(); await closeHostConnections(); await closeTerminals(); stopServer(); setDesktopEvent(()=>{}); await closePlugins();setChatEmitter(()=>{});setPlanEmitter(()=>{});setMessengerEmitter(()=>{});await closeChannels();await closeMessageIndex();await closeAssetPreviews();await assetIndex.close();setChannelsEmitter(()=>{});releaseLock() }
+  const stopGuardianSampling=startGuardianBackgroundSampling()
+  return async () => {stopGuardianSampling();await stopPostTriggers();stopConversationNotices();setConversationPolicyEmitter(()=>{});await closeChannelIngress();stopExports();closeAllMedia();closeEngineLogins();await closeInstallations();await closeUploads();resetManagementActivity(); await closePluginWindows(); unwindows(); unsubscribe(); unview(); await stopInitializations(); await stopScheduler(); await closeAll(); await closeTransfers(); closeRemoteFiles(); await closeHostConnections(); await closeTerminals(); stopServer(); setDesktopEvent(()=>{}); await closePlugins();setChatEmitter(()=>{});setPlanEmitter(()=>{});setMessengerEmitter(()=>{});await closeChannels();await closeMessageIndex();await closeAssetPreviews();await assetIndex.close();setChannelsEmitter(()=>{});releaseLock() }
 }

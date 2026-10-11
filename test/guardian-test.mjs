@@ -30,7 +30,7 @@ try{
   assert.equal(memory.freeBytes,100*16384);assert.equal(memory.swapUsedBytes,128*1024**2);assert.equal(memory.pressure,'normal');assert.equal(memory.compressedBytes,60*16384)
   let calls=[]
   globalThis.fetch=async url=>{calls.push(String(url));const ip=decodeURIComponent(new URL(url).pathname.slice(1))||'8.8.8.8';return new Response(JSON.stringify({success:true,ip,latitude:37.3,longitude:-121.8,country:'United States',country_code:'US',city:'San Jose'}),{status:200,headers:{'content-type':'application/json'}})}
-  assert.deepEqual(core.guardianSettings(),{geoLookupEnabled:false,home:null})
+  assert.deepEqual(core.guardianSettings(),{geoLookupEnabled:false,backgroundSamplingEnabled:false,home:null})
   const caller=role=>({principal:{kind:'agent',employeeId:role},requestId:'guardian-test'})
   for(const role of ['employee','manager']){
    await assert.rejects(core.handleRequest({cmd:'guardian.snapshot'},caller(role)),/Forbidden/)
@@ -50,7 +50,7 @@ try{
   if(process.platform==='darwin'){assert.ok(second.network.interfaces.length>0);assert.ok(second.network.connections.length>0);assert.ok(second.processes.length>0);assert.equal(second.security.length,3);assert.deepEqual(second.issues,[])}
   const user=core.operatorContext(),home={latitude:39.9,longitude:116.4,label:'Local observation point'}
   const saved=await core.handleRequest({cmd:'guardian.settings-set',args:{home}},user);assert.equal(saved.home.source,'manual');assert.equal(calls.length,0,'manual location stays local')
-  for(const bad of [{geoLookupEnabled:'yes'},{home:{...home,latitude:91}},{home:{...home,longitude:181}},{endpoint:'https://other.invalid'}])assert.throws(()=>core.setGuardianSettings(bad))
+  for(const bad of [{geoLookupEnabled:'yes'},{backgroundSamplingEnabled:'always'},{home:{...home,latitude:91}},{home:{...home,longitude:181}},{endpoint:'https://other.invalid'}])assert.throws(()=>core.setGuardianSettings(bad))
   await core.handleRequest({cmd:'guardian.settings-set',args:{geoLookupEnabled:true}},user)
   await core.guardianSnapshot();await new Promise(resolve=>setTimeout(resolve,30));const located=await core.guardianSnapshot()
   assert.ok(calls.length>0);assert.equal(located.geo.publicIp,'8.8.8.8');assert.ok(calls.every(url=>{const value=new URL(url),ip=decodeURIComponent(value.pathname.slice(1));return value.protocol==='https:'&&value.host==='ipwho.is'&&(!ip||core.publicAddress(ip))}))
@@ -61,6 +61,6 @@ try{
   core.setGuardianSettings({geoLookupEnabled:false});await new Promise(resolve=>setTimeout(resolve,10));core.setGuardianSettings({geoLookupEnabled:true});await core.guardianSnapshot()
   assert.ok(pending.slice(firstPending.length).some(item=>item.url===firstPending[0]),'withdrawn request never poisons the lookup cache after re-enable')
   core.setGuardianSettings({geoLookupEnabled:false});await new Promise(resolve=>setTimeout(resolve,10))
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(temp,'guardian.json'),'utf8')),{geoLookupEnabled:false,home:{...home,source:'manual'}})
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(temp,'guardian.json'),'utf8')),{geoLookupEnabled:false,backgroundSamplingEnabled:false,home:{...home,source:'manual'}})
   console.log(`PASS Guardian: live ${process.platform} sampling; CPU/network deltas; ${second.network.connections.length} actual TCP sockets; snapshot coalescing; IPv4/IPv6 private/fake-IP exclusions; listener direction evidence; role authorization; opt-in-only mocked HTTPS geolocation; local-only manual location; disable clears location and stops lookups.`)
 }finally{globalThis.fetch=originalFetch;core?.setGuardianSettings({geoLookupEnabled:false});core?.closeChannels();if(previous===undefined)delete process.env.AGENTS_COMPANY_HOME;else process.env.AGENTS_COMPANY_HOME=previous;fs.rmSync(temp,{recursive:true,force:true})}
