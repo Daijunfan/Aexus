@@ -18,7 +18,7 @@ const pass=label=>{checks.push(label);console.log('PASS '+label)}
 const call=(cmd,args={})=>page.evaluate(({cmd,args})=>window.agents.call(cmd,args),{cmd,args})
 const screenshot=async(name,scroll=true)=>{if(scroll&&!name.endsWith('failure')&&await page.locator('.g-content').count())await page.locator('.g-content').evaluate(element=>element.scrollTop=0);return page.screenshot({animations:'disabled',path:path.join(output,name+'.png')})}
 const report={passed:false,platform:process.platform,application:process.env.AGENTS_COMPANY_TEST_APP??'source Electron',checks,errors,consoleErrors,paidModelCalls:0,productionDataWritten:false,geoConsentGranted:false}
-const domain=async id=>{await page.locator(`[data-domain="${id}"]`).click();if(!['overview','storage'].includes(id))await expect(page.getByTestId('guardian-'+id+'-panel')).toBeVisible();if(id==='storage')await expect(page.getByTestId('guardian-storage')).toBeVisible()}
+const domain=async id=>{if(id==='overview')await page.getByTestId('guardian-home').click();else{const shortcut=page.getByTestId('guardian-overview-panel').locator(`[data-domain="${id}"]`);if(await shortcut.count())await shortcut.first().click();else{await page.getByTestId('guardian-open-modules').click();await page.getByTestId('guardian-modules-menu').locator(`[data-domain="${id}"]`).click()}}if(id==='overview')await expect(page.getByTestId('guardian-cockpit-stage')).toBeVisible();else if(id==='storage')await expect(page.getByTestId('guardian-storage')).toBeVisible();else await expect(page.getByTestId('guardian-'+id+'-panel')).toBeVisible()}
 const currentScan=async storage=>call('guardian.storage-status',{id:await storage.getAttribute('data-scan-id')})
 const scanComplete=async storage=>{await expect(storage.getByTestId('guardian-storage-status')).toHaveAttribute('data-status','completed',{timeout:20000})}
 const largestNumericTile=async map=>(await map.locator('g[data-chart-item]').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.chartItem,value:Number(node.dataset.value)})))).filter(item=>/^\d+$/.test(item.id)).sort((a,b)=>b.value-a.value)[0]
@@ -82,11 +82,24 @@ try{
  assert.equal(snapshot.history.at(-1).memory.totalBytes,os.totalmem())
  report.telemetry={physicalMemoryBytes:snapshot.memory.totalBytes,diskBytes:snapshot.disk.totalBytes,processCount:snapshot.processes.length,coreCount:snapshot.host.cpuCount,historyPoints:snapshot.history.length,issues:snapshot.issues}
  await page.getByRole('button',{name:'暂停实时采样',exact:true}).click()
- await expect(page.locator('[data-overview]')).toHaveCount(6)
- report.overviewPanels=await page.locator('[data-overview]').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return {domain:node.dataset.overview,width:box.width,height:box.height,charts:node.querySelectorAll('svg').length}}))
- assert.ok(report.overviewPanels.every(panel=>panel.charts>0&&panel.width>200))
+ const cockpit=page.getByTestId('guardian-cockpit-stage')
+ await expect(page.locator('.g-domain-sidebar')).toHaveCount(0)
+ await expect(cockpit.locator('.gc-node')).toHaveCount(6)
+ const portals=await cockpit.locator('.gc-node').evaluateAll(nodes=>nodes.map(node=>({domain:node.dataset.domain,width:node.getBoundingClientRect().width,visible:node.getBoundingClientRect().height>120})))
+ assert.deepEqual(new Set(portals.map(node=>node.domain)),new Set(['cpu','memory','storage','network','processes','security']))
+ assert.ok(portals.every(portal=>portal.width>160&&portal.visible))
+ await expect(cockpit.locator('.gc-node-cpu')).toContainText(snapshot.cpu.usagePercent.toFixed(1)+'%')
+ await expect(cockpit.locator('.gc-node-network')).toContainText(String(snapshot.network.publicConnections))
+ await expect(cockpit.locator('.gc-node-processes')).toContainText(String(snapshot.processes.length))
+ report.cockpit={portals,stageWidth:await cockpit.evaluate(node=>node.getBoundingClientRect().width)}
+ await cockpit.getByTestId('guardian-device-core').click();await expect(page.getByTestId('guardian-cpu-panel')).toBeVisible();await domain('overview')
+ for(const id of ['network','memory','processes','storage','security','ai','events']){
+  await page.getByTestId('guardian-overview-panel').locator(`[data-domain="${id}"]`).first().click()
+  await expect(page.getByTestId(id==='storage'?'guardian-storage':'guardian-'+id+'-panel')).toBeVisible()
+  await domain('overview')
+ }
  await screenshot('aexus-guardian-overview')
- pass('A light overview exposes every observation domain; all metrics and per-core history come from the actual Mac')
+ pass('Immersive light cockpit replaces sidebar: six live interactive device modules and direct navigation from measured values')
 
  await domain('cpu');const cpu=page.getByTestId('guardian-cpu-panel')
  const silicon=cpu.getByTestId('guardian-silicon-board')
@@ -301,7 +314,7 @@ try{
 
  await page.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,get:()=>false}))
  await page.getByRole('button',{name:'恢复实时采样',exact:true}).click()
- const sample=page.locator('.g-workspace-toolbar > div > span').first(),beforePolling=await sample.innerText()
+ const sample=page.locator('.g-sample-clock'),beforePolling=await sample.innerText()
  await expect.poll(()=>sample.innerText(),{timeout:12000,intervals:[500]}).not.toBe(beforePolling)
  await page.getByRole('button',{name:'暂停实时采样',exact:true}).click();const paused=await sample.innerText();await page.waitForTimeout(3500);assert.equal(await sample.innerText(),paused)
  await page.getByRole('button',{name:'恢复实时采样',exact:true}).click();await expect.poll(()=>sample.innerText(),{timeout:12000,intervals:[500]}).not.toBe(paused)
