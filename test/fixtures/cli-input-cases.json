@@ -5399,5 +5399,75 @@
         "offset": 40
       }
     }
+  },
+  {
+    "args": [
+      "guardian",
+      "snapshot"
+    ],
+    "expected": {
+      "cmd": "guardian.snapshot",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "guardian",
+      "settings-get"
+    ],
+    "expected": {
+      "cmd": "guardian.settings-get",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "guardian",
+      "event-list"
+    ],
+    "expected": {
+      "cmd": "guardian.event-list",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "guardian",
+      "storage-start",
+      "--root",
+      "downloads"
+    ],
+    "expected": {
+      "cmd": "guardian.storage-start",
+      "args": {
+        "root": "downloads"
+      }
+    }
+  },
+  {
+    "args": [
+      "guardian",
+      "storage-status",
+      "scan-fixture"
+    ],
+    "expected": {
+      "cmd": "guardian.storage-status",
+      "args": {
+        "id": "scan-fixture"
+      }
+    }
+  },
+  {
+    "args": [
+      "guardian",
+      "storage-cancel",
+      "scan-fixture"
+    ],
+    "expected": {
+      "cmd": "guardian.storage-cancel",
+      "args": {
+        "id": "scan-fixture"
+      }
+    }
   }
 ]

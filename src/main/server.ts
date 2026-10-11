@@ -1,4 +1,7 @@
 import {guardianSnapshot,guardianSettings,setGuardianSettings} from './guardian'
+import {guardianEventFeed,guardianEventCreate,guardianEventChange,guardianEventNote,guardianEventSample} from './guardian-events'
+import type {GuardianManualEvent,GuardianEventChange as GuardianEventChangeInput,GuardianEventNote as GuardianEventNoteInput} from '../shared/guardian-events'
+import {guardianStorageStart,guardianStorageStatus,guardianStorageCancel} from './guardian-storage'
 import {employeeReady} from '../shared/types'
 import {directoryName} from '../shared/directory-names'
 import {assetNaming} from './asset-naming'
@@ -282,8 +285,16 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'messenger.profile':case 'messenger.profile-image':case 'messenger.directory':case 'messenger.social':case 'messenger.forward-draft':case 'messenger.gallery':case 'messenger.reference':case 'messenger.state':case 'messenger.reorder':case 'messenger.folder-save':case 'messenger.folder-delete':case 'messenger.conversation':case 'messenger.message':case 'messenger.draft':case 'messenger.search':return messengerRequest(req.cmd,a)
     case 'system.info': return {...runtimeInfo(),clientId:requestContext().clientId}
     case 'guardian.snapshot': return guardianSnapshot()
+    case 'guardian.event-list': return guardianEventFeed()
+    case 'guardian.event-create': return guardianEventCreate(a as GuardianManualEvent)
+    case 'guardian.event-change': return guardianEventChange(a as GuardianEventChangeInput)
+    case 'guardian.event-note': return guardianEventNote(a as GuardianEventNoteInput)
+    case 'guardian.event-sample': return guardianEventSample(a as {id:string},await guardianSnapshot())
     case 'guardian.settings-get': return guardianSettings()
     case 'guardian.settings-set': return setGuardianSettings(a)
+    case 'guardian.storage-start': return guardianStorageStart(a)
+    case 'guardian.storage-status': return guardianStorageStatus(s(a.id))
+    case 'guardian.storage-cancel': return guardianStorageCancel(s(a.id))
     case 'system.directories': {
       const directory=realpathSync(a.path?resolve(s(a.path)):homedir())
       if(!statSync(directory).isDirectory())throw Error('请选择后端主机上的文件夹')

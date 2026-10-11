@@ -4,7 +4,7 @@ workspace.catalog conversation.entry conversation.download-status channel.post-t
 conversation.policy conversation.audit conversation.notice-list conversation.notice-get conversation.notice-preview conversation.notice-history
 assets.browse assets.info assets.preview assets.tree assets.children assets.locate assets.search
 status auth.whoami api.list api.describe api.docs avatar.list management.roles management.topology management.activity
-system.info system.directories guardian.snapshot guardian.settings-get settings.get engine.list engine.check engine.capabilities engine.models engine.inspect engine.install-plan engine.install-status engine.login-status
+system.info system.directories guardian.snapshot guardian.settings-get guardian.event-list guardian.storage-status settings.get engine.list engine.check engine.capabilities engine.models engine.inspect engine.install-plan engine.install-status engine.login-status
 session.list session.status session.info session.snapshot session.activity session.transcript session.inbox session.queue session.background session.search commands.list commands.complete
 card.profile group.list office.layout room.layout canvas.view team-view.list connector.get
 plan.schema plan.query plan.views plan.calendar plan.timeline plan.analytics plan.feed

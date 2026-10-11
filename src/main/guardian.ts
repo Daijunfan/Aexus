@@ -1,4 +1,5 @@
 import os from 'node:os'
+import {observeGuardianSnapshot} from './guardian-events'
 import path from 'node:path'
 import {isIP} from 'node:net'
 import {execFile} from 'node:child_process'
@@ -55,13 +56,17 @@ export function publicAddress(address:string):boolean{
 const loopback=(address:string)=>address==='::1'||address.startsWith('127.')||address.startsWith('::ffff:127.')
 function endpoint(value:string){const dot=value.lastIndexOf('.'),address=value.slice(0,dot);return {address:address==='*'?'*':address,port:Number(value.slice(dot+1))||0}}
 export function parseConnections(output:string):GuardianConnection[]{
-  const rows:GuardianConnection[]=[]
+  const rows:GuardianConnection[]=[],identityCount=new Map<string,number>()
   for(const line of output.split('\n')){
     const match=line.trim().match(/^tcp[46]\s+\d+\s+\d+\s+(\S+)\s+(\S+)\s+([A-Z_]+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+(.+?):(\d+)\s/)
     if(!match)continue
     const local=endpoint(match[1]),remote=endpoint(match[2]),state=match[3],pid=Number(match[7])||null,remoteAddress=remote.address==='*'?null:remote.address
     const scope=state==='LISTEN'?'listening':!remoteAddress?'private':loopback(remoteAddress)?'loopback':publicAddress(remoteAddress)?'public':'private'
-    rows.push({id:`${pid}:${match[1]}:${match[2]}`,pid,process:match[6].trim(),localAddress:local.address,localPort:local.port,remoteAddress,remotePort:remoteAddress?remote.port:null,state,scope,direction:'unknown',location:null,rxBytes:Number(match[4]),txBytes:Number(match[5])})
+    // Multiple sockets can share the same endpoint tuple in netstat. React keys and
+    // inspector selection must stay unique even for duplicate listening rows.
+    const key=`${line.trim().split(/\s+/)[0]}:${pid}:${match[1]}:${match[2]}:${state}`,occurrence=identityCount.get(key)??0
+    identityCount.set(key,occurrence+1)
+    rows.push({id:`${key}:${occurrence}`,pid,process:match[6].trim(),localAddress:local.address,localPort:local.port,remoteAddress,remotePort:remoteAddress?remote.port:null,state,scope,direction:'unknown',location:null,rxBytes:Number(match[4]),txBytes:Number(match[5])})
   }
   const listeners=rows.filter(row=>row.state==='LISTEN')
   for(const row of rows)if(row.state==='ESTABLISHED'&&row.pid&&listeners.some(listener=>listener.pid===row.pid&&listener.localPort===row.localPort&&(listener.localAddress==='*'||listener.localAddress===row.localAddress)))row.direction='inbound'
@@ -164,8 +169,10 @@ async function collect():Promise<GuardianSnapshot>{
   previousNetwork={at:sampledAt,interfaces}
   // Physical interfaces only: summing utun/bridge and physical counters double-counts traffic.
   const physical=interfaces.filter(item=>/^en\d+$/.test(item.name)),rxBytesPerSecond=intervalMs?physical.reduce((sum,item)=>sum+(item.rxBytesPerSecond??0),0):null,txBytesPerSecond=intervalMs?physical.reduce((sum,item)=>sum+(item.txBytesPerSecond??0),0):null
-  history.push({at:sampledAt,cpuPercent:usagePercent,memoryPercent:memory.usedBytes/totalBytes*100,rxBytesPerSecond,txBytesPerSecond});if(history.length>60)history.shift()
-  return {sampledAt,intervalMs,host:{hostname:os.hostname(),platform:process.platform,arch:process.arch,cpuModel:cpu[0]?.model??'Unknown',cpuCount:cpu.length,uptimeSeconds:os.uptime()},cpu:{usagePercent,cores},memory,disk,network:{interfaces,rxBytesPerSecond,txBytesPerSecond,connections,listening:connections.filter(row=>row.state==='LISTEN').length,publicConnections:connections.filter(row=>row.scope==='public').length},processes:allProcesses,security:[...checks],settings:guardianSettings(),geo:geolocation(connections),issues,history:[...history]}
+  history.push({at:sampledAt,cpuPercent:usagePercent,cores,memoryPercent:memory.usedBytes/totalBytes*100,memory,disk,rxBytesPerSecond,txBytesPerSecond});while(history.length>300||history.length&&sampledAt-history[0].at>15*60*1000)history.shift()
+  const snapshot:GuardianSnapshot={sampledAt,intervalMs,host:{hostname:os.hostname(),platform:process.platform,arch:process.arch,cpuModel:cpu[0]?.model??'Unknown',cpuCount:cpu.length,uptimeSeconds:os.uptime()},cpu:{usagePercent,cores},memory,disk,network:{interfaces,rxBytesPerSecond,txBytesPerSecond,connections,listening:connections.filter(row=>row.state==='LISTEN').length,publicConnections:connections.filter(row=>row.scope==='public').length},processes:allProcesses,security:[...checks],settings:guardianSettings(),geo:geolocation(connections),issues,history:[...history]}
+  try{observeGuardianSnapshot(snapshot)}catch(error){issues.push('Guardian event journal: '+(error as Error).message)}
+  return snapshot
 }
 export function guardianSnapshot():Promise<GuardianSnapshot>{
   if(cached&&Date.now()-cached.sampledAt<2000){cached.settings=guardianSettings();cached.geo=geolocation(cached.network.connections);return Promise.resolve(cached)}

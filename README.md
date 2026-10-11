@@ -6,7 +6,7 @@
 
 Aexus 把 Codex、Claude Code、Cline 和 Pi 等既有 Coding Agent 接入同一个 Core。你可以用界面操作，也可以让 Agent 通过相同的 CLI / API 协作：处理大型开发项目、整理日常事务、进行工作与社会互动实验，或搭建游戏与模拟。目标、角色、规则和流程由你定义。
 
-**当前本地版本：0.65.0 · Guardian。** 从 domain Engine 重构前的 `25d686e`（0.58.1）恢复 Company、Messages、Plan、频道与群组，再增加 Guardian 电脑卫士。应用仍为 `/Applications/Aexus.app`，本次改动仅在本地。详见 [Guardian 功能与采样范围](docs/GUARDIAN.md)。
+**当前版本：0.66.0 · Guardian 安全运营。** 从 domain Engine 重构前的 `25d686e`（0.58.1）恢复 Company、Messages、Plan、频道与群组，并增加 Guardian 电脑卫士。Guardian 已具备应用观测档案、变化记录、调查室、AI 员工活动与脱敏周报；后台持续巡检、自动处置、GPU 归因尚未实现。应用路径为 `/Applications/Aexus.app`。详见 [Guardian 功能与采样范围](docs/GUARDIAN.md)。
 
 Guardian 提供真实 Mac CPU、内存、磁盘、TCP 连接、进程和安全配置观察，以及可以旋转和缩放的地球连接视图。公网 IP 定位需要明确授权；普通连接不等于攻击。下文旧界面截图与历史功能记录保留其拍摄时的版本语境。
 

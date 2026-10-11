@@ -19,8 +19,11 @@ agents guardian settings-set --data '{"geoLookupEnabled":false}' --json
 ```
 
 The snapshot is shared for two seconds, concurrent reads share a single collection,
-and the in-memory history contains at most 60 samples. The first CPU/rate observation
-is null until a real delta is available. Security checks refresh every five minutes.
+and the in-memory history contains at most 300 samples from the last 15 minutes.
+Each historical point includes real per-core CPU percentages, all memory components
+and pressure, and disk usage/capacity. No data is backfilled while sampling is paused
+or the view is closed. The first CPU/rate observation is null until a real delta is
+available. Security checks refresh every five minutes.
 Network totals include physical `en*` interfaces only; loopback, bridges and tunnels
 remain separately visible so traffic is not counted twice. Memory `usedBytes` is
 physical occupancy excluding free/speculative pages; `availableBytes` also includes
@@ -45,6 +48,80 @@ human operator can change location or external-lookup consent, including through
 native API tool; an Agent's role cannot consent on the user's behalf. This API is the
 future security-team integration boundary; no monitoring Agent is started or assigned
 automatically. API response types live in `src/shared/guardian.ts`.
+
+### Guardian on-demand incidents and AI team handoff
+
+`guardian.event-list` reads a bounded, persistent local investigation ledger stored
+in `guardian-events.json` with mode `0600` (7-day retention, up to 250 records).
+It includes event kind, status, supporting snapshot details, related process/PID,
+potentially public peer IPs, and user-provided notes. The event feed also states
+that observation only happens on demand, last successful sample time, and count
+for the current Core runtime; closed/hidden/paused periods are not backfilled.
+
+`guardian.event-create` explicitly registers a human investigation;
+`guardian.event-change` changes human triage status
+(`open`, `reviewed`, `dismissed`), and `guardian.event-note` appends a note.
+`guardian.event-sample` explicitly requests one live Core snapshot to retain bounded
+before/after observations (CPU, memory pressure, recognized PID, TCP peer and
+relevant system protection); up to 8 measurements are kept per event. A repeated
+cached sample is rejected. Absence in a TCP snapshot cannot prove that all traffic
+stopped, and comparisons across different workloads cannot establish causality.
+All four mutations are **human-operator-only**, including through native
+tools; Agents cannot create or close these records.
+
+```sh
+agents guardian event-list --json
+# Mutations use Core request JSON through the authenticated desktop/web client.
+```
+
+The Core compares consecutive successful snapshots only: CPU pressure changes,
+memory pressure changes, Firewall/FileVault/SIP known-state transitions, and
+newly observed public TCP peers of previously observed processes. These are
+bounded observations, not threat verdicts. Reviewing a finding does not
+terminate processes, alter protections, prove remediation, or automatically
+start an Agent. In the Guardian GUI, any delegation is an explicit human
+`session.send` to a selected ready employee, with a warning about sending
+observations to a model provider. AI activity shows existing Core session
+metadata, not OS-level file-change provenance or actual provider costs.
+The seven-day report generates a locally copied **aggregate-only** summary,
+excluding event details, addresses, paths, names and notes.
+
+### Explicit local storage inspection
+
+`guardian.storage-start` starts an asynchronous metadata scan of an explicitly chosen
+directory on the Core host. Provide exactly one absolute `path` or preset `root`
+(`home`, `downloads`, `documents`); nothing is scanned by opening Guardian. The existing
+`workspace.choose` / `system.directories` APIs can select or browse a local root.
+Paths are resolved through `realpath`, checked for directory/read/traverse access,
+and passed directly to Node filesystem calls, never to an interpolated shell command.
+
+```sh
+agents guardian storage-start --root downloads --json
+agents guardian storage-start --path /absolute/chosen/folder --json
+agents guardian storage-status SCAN_ID --json
+agents guardian storage-cancel SCAN_ID --json
+```
+
+Only the human operator can start, read or cancel these scans; Governor and Secretary
+cannot obtain arbitrary local directory inventories through this interface. There is
+one active scan at a time and four recent results in memory. A running result exposes
+observed `bytes/files/directories`, pending directory count and timestamps; progress
+has no invented completion percentage. `entries` contains the largest 200 immediate
+children, with recursive directory totals and `otherBytes/otherEntries` retaining the
+omitted totals. `largestFiles` contains up to 40 files found anywhere below the root.
+To drill down, start a new scan using a returned directory entry's absolute path.
+Cancel the active scan before starting another; cancellation retains the observed
+partial totals and stops further enumeration.
+
+Sizes are regular-file logical `lstat.size` bytes, counting each path, including hidden
+files. They do not represent unique APFS physical allocation, compressed blocks or
+deduplicated hard links. Scanning never reads file contents, follows symlinks, deletes
+files, changes permissions or requests elevation. Skipped symlinks and special files
+are counted separately. Unreadable/disappearing entries increment `errorCount`, include
+up to 100 concrete error records, and mark the affected first-level directory partial.
+A scan with errors ends as `partial`, an unreadable root as `failed`, and an explicit
+stop as `cancelled`; none is presented as a complete inventory. Closed application
+state and restarting Core do not resume a scan automatically.
 
 ## File workspace browser and ownership filters
 
@@ -3136,7 +3213,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 326 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 334 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3261,6 +3338,14 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents system info</code> | <code>—</code> | Read Core host OS, architecture and deployment capabilities | 后端信息 | identity |
 | <code>agents guardian snapshot</code> | <code>—</code> | Read live Core-host CPU, memory, disk, network connections and security observations; Governor, Secretary or user; connections are not attack verdicts | Guardian | operator |
 | <code>agents guardian settings-get</code> | <code>—</code> | Read Guardian location and external IP lookup consent settings | Guardian | operator |
+| <code>agents guardian event-list</code> | <code>—</code> | Read locally retained Guardian change observations and their user review history; sampling occurs on request only | Guardian 事件调查 | operator |
+| <code>agents guardian event-create</code> | <code>--data JSON&#124;@file</code> | Human-only: explicitly open an observation investigation; does not execute an AI agent or system change | Guardian 事件调查 | operator |
+| <code>agents guardian event-change</code> | <code>--data JSON&#124;@file</code> | Human-only: mark an observed incident open, reviewed or dismissed; manual review is not a verified remediation | Guardian 事件调查 | operator |
+| <code>agents guardian event-note</code> | <code>--data JSON&#124;@file</code> | Human-only: append a user action note to a Guardian investigation; no action is executed | Guardian 事件调查 | operator |
+| <code>agents guardian event-sample</code> | <code>--data JSON&#124;@file</code> | Human-only: explicitly sample real host metrics to compare investigation before/after; no remediation and no automatic success verdict | Guardian 事件复核 | operator |
+| <code>agents guardian storage-start</code> | <code>--path ABSOLUTE_PATH &#124; --root home&#124;downloads&#124;documents</code> | Human-only: start one explicit local directory metadata scan; no file contents, symlink traversal or deletion | Guardian Storage treemap | operator |
+| <code>agents guardian storage-status</code> | <code>ID</code> | Human-only: read scan progress, logical byte totals, largest entries and permission errors; partial scans are explicitly marked | Guardian Storage treemap | operator |
+| <code>agents guardian storage-cancel</code> | <code>ID</code> | Human-only: stop the selected directory scan and retain its partial observation | Guardian Storage treemap | operator |
 | <code>agents guardian settings-set</code> | <code>--data JSON&#124;@file</code> | User-only: save manual map coordinates or explicitly enable/disable HTTPS public-IP geolocation | Guardian | operator |
 | <code>agents system directories</code> | <code>[--path PATH]</code> | Browse directories on the Core host (user or Secretary) | 后端目录选择 | operator |
 | <code>agents engine capabilities</code> | <code>--engine codex&#124;claude&#124;cline&#124;pi</code> | Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference | 创建员工能力检查 | identity |

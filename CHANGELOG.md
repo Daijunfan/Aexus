@@ -2,6 +2,14 @@
 
 > 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
 
+## 0.66.0 — Aexus Guardian 变化调查与本地运营闭环
+
+- 将 Mac Guardian 的真实 CPU、内存、磁盘、网络 TCP 与系统保护配置数据打通交互式地球、进程档案和目录树图；公网 IP 查询仍需用户明确开启。
+- 增加事件收件箱、基于相邻成功采样的变化检测、人工备注和状态、主动复核采样、7 日留存与脱敏汇总。
+- 用户可将事件显式委派给已有 Agent，在 AI 行为中心查看现有会话状态；所有危险系统操作仍由原有授权边界控制。
+- 保留 Company / Messages / Plan 的导航及原有协作能力，修复重复 TCP 端点标识引发的过滤残影。
+- macOS 隐藏窗口测试覆盖上述交互；不声称已实现后台巡检、UDP/QUIC 逐包分析、GPU 归因或自动修复。
+
 ## 0.58.1 — Avalon application naming and live view captures
 
 - Rename the current product, UI, window title, package and CLI documentation to Avalon; retain data identities and legacy CLI/API namespaces.

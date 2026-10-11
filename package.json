@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.65.0",
+  "version": "0.66.0",
   "description": "Aexus: Company, Messages, Plan and local Mac Guardian",
   "main": "./out/main/index.js",
   "author": {
@@ -192,8 +192,8 @@
       "identity": null,
       "icon": "build/icon.icns",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "\u4ec5\u5728\u4f60\u70b9\u51fb\u5f55\u97f3\u540e\u4f7f\u7528\u9ea6\u514b\u98ce\u3002Recording starts only when you choose to record.",
-        "NSCameraUsageDescription": "\u5141\u8bb8\u7f51\u9875\u804a\u5929\u5728\u4f60\u540c\u610f\u540e\u4f7f\u7528\u6444\u50cf\u5934\u3002"
+        "NSMicrophoneUsageDescription": "仅在你点击录音后使用麦克风。Recording starts only when you choose to record.",
+        "NSCameraUsageDescription": "允许网页聊天在你同意后使用摄像头。"
       },
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"

@@ -20,6 +20,8 @@ try{
   const row=(local,remote,state,pid=22,name='node')=>`tcp4 0 0 ${local} ${remote} ${state} 120 90 131072 131072 ${name}:${pid} 00100 0000`
   const connections=core.parseConnections([row('*.8080','*.*','LISTEN'),row('10.0.0.2.8080','8.8.8.8.5555','ESTABLISHED'),row('10.0.0.2.9000','1.1.1.1.443','ESTABLISHED'),row('127.0.0.1.5000','127.0.0.1.7890','ESTABLISHED'),row('10.0.0.2.5001','198.18.0.1.443','ESTABLISHED')].join('\n'))
   assert.equal(connections.length,5);assert.equal(connections[1].direction,'inbound');assert.equal(connections[2].direction,'unknown');assert.equal(connections[3].scope,'loopback');assert.equal(connections[4].scope,'private');assert.equal(connections[0].remoteAddress,null)
+  const duplicate=core.parseConnections([row('*.8080','*.*','LISTEN'),row('*.8080','*.*','LISTEN')].join('\n'))
+  assert.equal(new Set(duplicate.map(c=>c.id)).size,2,'duplicate TCP records need unique identities for lists and selection')
   const ipv6=core.parseConnections(row('2001:4860::1.8080','2606:4700::1111.443','ESTABLISHED',33,'Google Chrome').replace('tcp4','tcp6'))
   assert.equal(ipv6[0].remoteAddress,'2606:4700::1111');assert.equal(ipv6[0].process,'Google Chrome')
   const interfaces=core.parseInterfaces('Name Mtu Network Address Ipkts Ierrs Ibytes Opkts Oerrs Obytes Coll\nen0 1500 <Link#15> aa:bb:cc 20 0 123456 30 0 654321 0\nen0 1500 10/8 10.1.2.3 20 - 123456 30 - 654321 -\nutun0 1500 <Link#17> 0 0 42 0 0 100 0')
@@ -30,12 +32,21 @@ try{
   globalThis.fetch=async url=>{calls.push(String(url));const ip=decodeURIComponent(new URL(url).pathname.slice(1))||'8.8.8.8';return new Response(JSON.stringify({success:true,ip,latitude:37.3,longitude:-121.8,country:'United States',country_code:'US',city:'San Jose'}),{status:200,headers:{'content-type':'application/json'}})}
   assert.deepEqual(core.guardianSettings(),{geoLookupEnabled:false,home:null})
   const caller=role=>({principal:{kind:'agent',employeeId:role},requestId:'guardian-test'})
-  for(const role of ['employee','manager'])await assert.rejects(core.handleRequest({cmd:'guardian.snapshot'},caller(role)),/Forbidden/)
-  for(const role of ['governor','secretary']){assert.doesNotThrow(()=>core.authorize('guardian.snapshot',{},undefined,caller(role)));await assert.rejects(core.handleRequest({cmd:'guardian.settings-set',args:{geoLookupEnabled:true}},caller(role)),/Only the user/)}
+  for(const role of ['employee','manager']){
+   await assert.rejects(core.handleRequest({cmd:'guardian.snapshot'},caller(role)),/Forbidden/)
+    assert.throws(()=>core.authorize('guardian.event-list',{},undefined,caller(role)),/Forbidden/)
+   }
+   for(const role of ['governor','secretary']){
+    assert.doesNotThrow(()=>core.authorize('guardian.snapshot',{},undefined,caller(role)))
+    assert.doesNotThrow(()=>core.authorize('guardian.event-list',{},undefined,caller(role)))
+    for(const cmd of ['guardian.event-create','guardian.event-change','guardian.event-note'])assert.throws(()=>core.authorize(cmd,{},undefined,caller(role)),/Only the user/)
+    await assert.rejects(core.handleRequest({cmd:'guardian.settings-set',args:{geoLookupEnabled:true}},caller(role)),/Only the user/)
+   }
   const a=core.guardianSnapshot(),b=core.guardianSnapshot();assert.equal(a,b,'concurrent sampling is shared')
   const first=await a;assert.equal(first.geo.enabled,false);assert.equal(calls.length,0,'default snapshot sends no geolocation request');assert.ok(first.memory.totalBytes>0);assert.ok(first.disk.totalBytes>0);assert.equal(first.cpu.usagePercent,null)
   await new Promise(resolve=>setTimeout(resolve,2100));const second=await core.guardianSnapshot()
   assert.ok(second.cpu.usagePercent>=0&&second.cpu.usagePercent<=100);assert.ok(second.network.rxBytesPerSecond>=0);assert.equal(second.history.length,2)
+  assert.deepEqual(second.history.at(-1).cores,second.cpu.cores);assert.deepEqual(second.history.at(-1).memory,second.memory);assert.deepEqual(second.history.at(-1).disk,second.disk);assert.equal(second.history[0].cores.length,0,'first sample has no invented per-core history')
   if(process.platform==='darwin'){assert.ok(second.network.interfaces.length>0);assert.ok(second.network.connections.length>0);assert.ok(second.processes.length>0);assert.equal(second.security.length,3);assert.deepEqual(second.issues,[])}
   const user=core.operatorContext(),home={latitude:39.9,longitude:116.4,label:'Local observation point'}
   const saved=await core.handleRequest({cmd:'guardian.settings-set',args:{home}},user);assert.equal(saved.home.source,'manual');assert.equal(calls.length,0,'manual location stays local')

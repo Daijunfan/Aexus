@@ -2602,6 +2602,52 @@
     "fields": [],
     "rawPositionals": true
   },
+  "guardian.event-list": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "guardian.storage-start": {
+    "fields": [
+      [
+        "path",
+        "path",
+        "text",
+        false,
+        false
+      ],
+      [
+        "root",
+        "root",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
+  "guardian.storage-status": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
+  "guardian.storage-cancel": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
   "engine.list": {
     "fields": [],
     "rawPositionals": true

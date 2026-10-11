@@ -2,6 +2,10 @@
 
 Guardian 的 `guardian.snapshot` / `guardian.settings-get` 只读接口允许用户、Governor 和 Secretary，普通 Employee/Manager 不因加入某个 Team 而获得全机观测权。`guardian.settings-set` 仅用户可调用，任何 Agent（包括 Secretary）都不能替用户同意外部 IP 定位或修改地图位置。默认不向外部定位服务发请求；用户启用后仅通过 HTTPS ipwho.is 查询实际公网对端及公网出口，关闭时中止在途请求、清空定位缓存。Guardian 不授予提权、抓包、进程终止、修改防火墙或自动处置权，也不会自动创建安全运营团队。
 
+`guardian.storage-start/storage-status/storage-cancel` 均仅人类用户可调用。用户必须主动选择本机路径或 home/downloads/documents 预设后开始扫描；打开 Guardian 不会触发目录扫描。扫描只读文件元数据统计逻辑字节，不读内容、不跟随软链接、不删除、不提权，权限错误会作为 partial/error 明确返回。扫描范围、结果、取消状态不授予任何 Agent 额外工作区权限。
+
+Guardian `guardian.event-list` 允许具备现有高级观测权限的用户、Governor、Secretary 读取有限期事件历史，可能包含公网 IP、PID、进程名和人工备注。事件留存在应用主目录的私有 JSON 文件（0600），仅在 Guardian 主动请求快照时生成，无法代表后台持续监控。新增的 `guardian.event-create`、`guardian.event-change`、`guardian.event-note`、`guardian.event-sample` 均仅人类用户可调用；任何 Agent 不能制造事件、标记已核对或删除调查。UI 中委派调查需要用户主动选择员工并确认，随后沿用已有 `session.send` 授权和模型权限；核对状态不代表系统整改完成。七日复制摘要只包含统计结果，不发送主机/IP/路径和备注。
+
 管理权限属于员工的 `managementRole`，与 Team 名称、工作目录、目录标记和视图无关。CLI 与 UI 进入相同的 Core 授权入口。完整命令见 [API.md](API.md)。`management.topology.teams` 从同一授权入口返回逐 Team 的 allowedActions、deleteBlockedReason、governorIds 和 isOwnTeam，避免把少数受保护 Team 误判为全部不可删除。
 
 ## 四种职位

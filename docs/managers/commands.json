@@ -5796,6 +5796,236 @@
     "target": "request"
   },
   {
+    "name": "guardian.event-list",
+    "args": "",
+    "summary": "Read locally retained Guardian change observations and their user review history; sampling occurs on request only",
+    "gui": "Guardian 事件调查",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "readOnly": true,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.event-create",
+    "args": "--data JSON|@file",
+    "summary": "Human-only: explicitly open an observation investigation; does not execute an AI agent or system change",
+    "gui": "Guardian 事件调查",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 900
+        },
+        "subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "process": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "pid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "remoteAddress": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "remotePort": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "security": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          }
+        }
+      },
+      "required": [
+        "title",
+        "summary"
+      ]
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.event-change",
+    "args": "--data JSON|@file",
+    "summary": "Human-only: mark an observed incident open, reviewed or dismissed; manual review is not a verified remediation",
+    "gui": "Guardian 事件调查",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "reviewed",
+            "dismissed"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "id",
+        "status"
+      ]
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.event-note",
+    "args": "--data JSON|@file",
+    "summary": "Human-only: append a user action note to a Guardian investigation; no action is executed",
+    "gui": "Guardian 事件调查",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "id",
+        "note"
+      ]
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.event-sample",
+    "args": "--data JSON|@file",
+    "summary": "Human-only: explicitly sample real host metrics to compare investigation before/after; no remediation and no automatic success verdict",
+    "gui": "Guardian 事件复核",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.storage-start",
+    "args": "--path ABSOLUTE_PATH | --root home|downloads|documents",
+    "summary": "Human-only: start one explicit local directory metadata scan; no file contents, symlink traversal or deletion",
+    "gui": "Guardian Storage treemap",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "root": {
+          "type": "string",
+          "enum": [
+            "home",
+            "downloads",
+            "documents"
+          ]
+        }
+      }
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.storage-status",
+    "args": "ID",
+    "summary": "Human-only: read scan progress, logical byte totals, largest entries and permission errors; partial scans are explicitly marked",
+    "gui": "Guardian Storage treemap",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": true,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
+    "name": "guardian.storage-cancel",
+    "args": "ID",
+    "summary": "Human-only: stop the selected directory scan and retain its partial observation",
+    "gui": "Guardian Storage treemap",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "readOnly": false,
+    "permission": "operator",
+    "target": "request"
+  },
+  {
     "name": "guardian.settings-set",
     "args": "--data JSON|@file",
     "summary": "User-only: save manual map coordinates or explicitly enable/disable HTTPS public-IP geolocation",
