@@ -18,6 +18,26 @@ const wires: {domain:Focus;path:string;end:[number,number]}[]=[
 ]
 const theme={cpu:'#48aca0',network:'#7198d9',processes:'#9b8cc7',memory:'#8095cd',storage:'#cfaa69',security:'#4eac97'}
 const highlight=(value:number|null|undefined)=>value==null?'—':percent(value)
+type TracePoint={at:number;value:number|null}
+function MiniTrace({points,ceiling,color}:{points:TracePoint[];ceiling:number;color:string}){
+ const first=points[0]?.at??0,span=Math.max(1,(points.at(-1)?.at??first)-first)
+ const known=points.filter(point=>point.value!==null&&Number.isFinite(point.value))
+ let previous:number|null=null
+ const coords=points.flatMap(point=>{
+  if(point.value===null||!Number.isFinite(point.value)){previous=null;return []}
+  const x=3+(point.at-first)/span*110,y=32-Math.max(0,Math.min(1,point.value/ceiling))*26
+  const command=previous!==null&&point.at-previous<=15000?'L':'M'
+  previous=point.at
+  return [command+x.toFixed(1)+' '+y.toFixed(1)]
+ })
+ const last=known.at(-1)
+ const lastX=last?3+(last.at-first)/span*110:0,lastY=last?32-Math.max(0,Math.min(1,last.value!/ceiling))*26:0
+ return <svg viewBox="0 0 116 36" aria-hidden="true" data-samples={known.length}>
+  <path d="M3 32H113" className="gc-mini-baseline"/>
+  {known.length>1&&<path d={coords.join(' ')} stroke={color} className="gc-mini-line"/>}
+  {last&&<circle cx={lastX} cy={lastY} r="2.6" fill={color} className="gc-mini-point"/>}
+ </svg>
+}
 
 export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
  const [focus,setFocus]=useState<Focus|null>(null)
@@ -31,8 +51,14 @@ export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
  const unknown=security.filter(item=>item.status==='unknown').length
  const outstanding=feed?.events.filter(event=>event.status==='open')??[]
  const top=[...(snapshot?.processes??[])].sort((a,b)=>b.cpuPercent-a.cpuPercent).slice(0,2)
- const samples=(snapshot?.history??[]).slice(-18)
+ const samples=(snapshot?.history??[]).slice(-24)
  const peak=Math.max(1,...samples.map(item=>(item.rxBytesPerSecond??0)+(item.txBytesPerSecond??0)))
+ const bandwidthPeak=Math.max(1,...samples.flatMap(item=>[item.rxBytesPerSecond??0,item.txBytesPerSecond??0]))
+ const telemetry=[
+  {key:'cpu',domain:'cpu',name:'CPU 使用率',value:cpu,color:theme.cpu,ceiling:100,points:samples.map(point=>({at:point.at,value:point.cpuPercent}))},
+  {key:'rx',domain:'network',name:'接收吞吐',value:rate(connections?.rxBytesPerSecond),color:'#568dce',ceiling:bandwidthPeak,points:samples.map(point=>({at:point.at,value:point.rxBytesPerSecond}))},
+  {key:'tx',domain:'network',name:'发送吞吐',value:rate(connections?.txBytesPerSecond),color:'#6eaea0',ceiling:bandwidthPeak,points:samples.map(point=>({at:point.at,value:point.txBytesPerSecond}))}
+ ] as const
  const online=!!snapshot&&Date.now()-snapshot.sampledAt<12000&&!paused
  const traceNow=Date.now(),traceWindow=86400000,traceStep=7200000
  const traceEvents=[...(feed?.events??[])].filter(event=>event.lastSeenAt>=traceNow-traceWindow&&event.lastSeenAt<=traceNow).sort((a,b)=>a.lastSeenAt-b.lastSeenAt)
@@ -103,13 +129,23 @@ export function GuardianCockpit({snapshot,feed,paused,onOpen,onEvent}:Props){
    </div>
    <div className="gc-stage-note"><i/> 本机真实观测 · 视觉结构为交互示意，不代表设备实际内部布线或流量路径</div>
   </section>
-  <div className="gc-pulse-strip">
-   <span><i/> LIVE TELEMETRY</span>
-   <div><strong>{rate(connections?.rxBytesPerSecond)}</strong><small>↓ 当前接收</small></div>
-   <div><strong>{rate(connections?.txBytesPerSecond)}</strong><small>↑ 当前发送</small></div>
-   <div><strong>{feed?.coverage.mode==='background'?'已开启':'未开启'}</strong><small>后台采样</small></div>
-   <button data-domain="applications" onClick={nav('applications')}>应用行为 <Icon name="arrow-right"/></button>
-   <button data-domain="report" onClick={nav('report')}>七日回看 <Icon name="arrow-right"/></button>
+  <div className="gc-pulse-strip" data-testid="guardian-telemetry-strip">
+   <header><span><i/>{paused?'页面采样暂停':snapshot?'LOCAL TELEMETRY':'AWAITING TELEMETRY'}</span><small>{samples.length?'最近 '+samples.length+' 次真实采样':'尚无历史采样'}</small></header>
+   <div className="gc-pulse-grid">
+    {telemetry.map(item=>{const count=item.points.filter(point=>point.value!==null&&Number.isFinite(point.value)).length;return <button key={item.key} type="button" data-metric={item.key} className="gc-pulse-metric" onClick={nav(item.domain)} aria-label={item.name+' '+item.value+'，'+count+' 次有效采样；打开'+(item.domain==='cpu'?'处理器':'网络')+'监控'}>
+     <span className="gc-pulse-metric-label"><i style={{background:item.color}}/>{item.name}<Icon name="arrow-up-right"/></span>
+     <strong>{item.value}</strong>
+     <MiniTrace points={item.points} ceiling={item.ceiling} color={item.color}/>
+     <small>{count>=2?'按实际时间排序 · 点击查看详情':count===1?'只有 1 次真实采样':'等待有效采样'}</small>
+    </button>})}
+    <button type="button" className="gc-pulse-metric gc-pulse-coverage" onClick={nav('events')} aria-label={'打开事件调查室；'+(feed?.coverage.sampleCount??'尚未取得')+' 次当前进程快照'}>
+     <span className="gc-pulse-metric-label"><i/>事件采样<Icon name="arrow-up-right"/></span>
+     <strong>{feed?feed.coverage.sampleCount:'—'}<em>{feed?' 次':' '}</em></strong>
+     <span className="gc-pulse-coverage-status">{feed?(feed.coverage.mode==='background'?'已授权后台观测':'按页面请求观测'):'等待 Core 记录'}</span>
+     <small>仅覆盖已取得的快照</small>
+    </button>
+   </div>
+   <footer><button data-domain="applications" onClick={nav('applications')}>应用行为 <Icon name="arrow-right"/></button><button data-domain="report" onClick={nav('report')}>七日回看 <Icon name="arrow-right"/></button></footer>
   </div>
   <section className="gc-watchlist"><header><div><span className="gc-kicker">SIGNALS / NEED YOUR ATTENTION</span><h3>此刻值得关注</h3></div><button data-domain="events" onClick={nav('events')}>进入调查室 <Icon name="arrow-right"/></button></header>
    <div className="gc-event-rhythm" data-testid="guardian-event-rhythm">
