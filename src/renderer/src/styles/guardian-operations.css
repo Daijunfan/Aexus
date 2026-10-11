@@ -175,6 +175,57 @@
 .guardian-workbench .go-today-empty{grid-column:1/-1;min-height:90px}
 .guardian-workbench .go-today-empty>div{display:flex;gap:8px}
 .guardian-workbench .go-today-empty p{font-size:11px;color:var(--go-muted)}
+
+/* Compute deck: each illuminated die tile is one measured CPU core. */
+.guardian-workbench .g-silicon-panel{padding:20px;background:linear-gradient(125deg,#122d3c,#071923 75%);border-color:#345263;color:#e5f3f4;overflow:hidden}
+.guardian-workbench .g-silicon-panel .g-card-head h3{color:#f0fafb;font-size:17px}
+.guardian-workbench .g-silicon-panel .g-card-head p{color:#93b6bd}
+.guardian-workbench .g-silicon-panel .g-eyebrow{color:#6ee1d0}
+.guardian-workbench .g-silicon-sample{font:11px "SFMono-Regular",monospace;color:#9bc7ce;white-space:nowrap}
+.guardian-workbench .g-silicon-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(230px,.85fr);gap:16px}
+.guardian-workbench .g-silicon-stage{position:relative;min-height:420px;min-width:0;overflow:hidden;isolation:isolate;display:flex;align-items:center;justify-content:center;padding:44px 28px 35px;border:1px solid #355869;border-radius:15px;background:radial-gradient(circle at 50% 42%,#24526888 0,#0d2634 63%,#081821 100%)}
+.guardian-workbench .g-silicon-stage:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#5488982b 1px,transparent 1px),linear-gradient(90deg,#5488982b 1px,transparent 1px);background-size:24px 24px;mask-image:radial-gradient(ellipse at center,#000 24%,transparent 78%)}
+.guardian-workbench .g-silicon-stage:after{content:"";position:absolute;inset:24px 6%;border:1px solid #4f83935a;border-radius:17px;pointer-events:none;box-shadow:inset 0 0 60px #3bb8a008,0 0 0 16px #2851660d}
+.guardian-workbench .g-silicon-stage-caption,.guardian-workbench .g-silicon-stage-footer{position:absolute;left:17px;right:17px;display:flex;justify-content:space-between;gap:12px;color:#83bac5;font:10px "SFMono-Regular",monospace;letter-spacing:1px;z-index:2}
+.guardian-workbench .g-silicon-stage-caption{top:14px}
+.guardian-workbench .g-silicon-stage-footer{bottom:12px;color:#7196a7}
+.guardian-workbench .g-silicon-stage-caption span{color:#7fe5cd}
+.guardian-workbench .g-silicon-chip{position:relative;z-index:1;width:min(100%,550px);padding:21px 21px 13px;border:1px solid #598b97;border-radius:15px;background:linear-gradient(145deg,#1c4656,#102c3c 40%,#091e29);box-shadow:0 22px 46px #010d17c9,0 0 0 7px #1b4c594d,0 0 0 9px #4a87913d,inset 0 0 30px #6de8d10d;transform:perspective(850px) rotateX(5deg)}
+.guardian-workbench .g-silicon-chip-heading{display:flex;justify-content:space-between;gap:8px;margin-bottom:14px;color:#8edcca;letter-spacing:2px;font:11px "SFMono-Regular",monospace}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-grid{grid-template-columns:repeat(var(--die-columns),minmax(0,1fr));gap:6px}
+.guardian-workbench .g-silicon-chip .gchart .gchart-heatmap-grid button{min-height:89px;gap:7px;padding:10px 8px;border-radius:6px;border:1px solid #406579;background:radial-gradient(circle at 70% 20%,var(--core-fill),transparent 78%),linear-gradient(140deg,#1d4354,#0c2330);box-shadow:inset 0 0 20px var(--core-fill);color:#d9f7f3}
+.guardian-workbench .g-silicon-chip .gchart .gchart-heatmap-grid button:hover,.guardian-workbench .g-silicon-chip .gchart .gchart-heatmap-grid button.is-selected{background:linear-gradient(140deg,var(--core-fill),#143d4c);border-color:#85e8d5;box-shadow:inset 0 0 0 1px #a0f7e4,0 0 20px var(--core-fill)}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-grid button>span{font-size:10px;color:#a6d2d1}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-grid button>strong{color:#e6fbf4;font-size:19px}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-grid button>strong>small{color:#badcd7}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-grid button>i{background:#102d39}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-legend{color:#8eb1c0;flex-wrap:wrap;font-size:10px}
+.guardian-workbench .g-silicon-chip .gchart-heatmap-legend>small{color:#9ac4c9;margin-left:0;width:100%}
+.guardian-workbench .g-silicon-chip .gchart-empty{background:transparent;border-color:#416473;color:#99c4c5}
+.guardian-workbench .g-silicon-console{display:flex;flex-direction:column;gap:13px;padding:19px;border:1px solid #3a606a;border-radius:14px;background:linear-gradient(155deg,#193d4b,#0c2735)}
+.guardian-workbench .g-silicon-overline{color:#77dfc9;font:10px "SFMono-Regular",monospace;letter-spacing:1.5px}
+.guardian-workbench .g-silicon-total{display:block;font-size:42px;font-weight:600;line-height:1.15;letter-spacing:-1.4px;font-variant-numeric:tabular-nums}
+.guardian-workbench .g-silicon-total>small{display:block;font-size:11px;font-weight:400;color:#9bbdc7;margin-top:9px;letter-spacing:0}
+.guardian-workbench .g-silicon-console-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.guardian-workbench .g-silicon-console-metrics>div{padding:13px 10px;border:1px solid #436375;background:#0c2b38;border-radius:9px}
+.guardian-workbench .g-silicon-console-metrics small{display:block;font-size:10px;color:#98c2c4}
+.guardian-workbench .g-silicon-console-metrics strong{display:block;margin-top:8px;font-size:23px;font-variant-numeric:tabular-nums}
+.guardian-workbench .g-silicon-console-metrics strong span{font-size:12px;color:#88acb9}
+.guardian-workbench .g-silicon-console-selection{padding:11px 0;border-top:1px solid #406273}
+.guardian-workbench .g-silicon-console-selection>span{color:#8fe5d2;font-size:11px}
+.guardian-workbench .g-silicon-console-selection>strong{display:block;font-size:19px;margin-top:5px}
+.guardian-workbench .g-silicon-console-selection p{font-size:11px;color:#b0ced4;margin-top:5px;line-height:1.6}
+.guardian-workbench .g-silicon-actions{display:flex;gap:7px;flex-wrap:wrap}
+.guardian-workbench .g-silicon-actions button,.guardian-workbench .g-silicon-top-process{border:1px solid #517b83;background:#1b4a56;color:#ddf6ed;font-size:11px}
+.guardian-workbench .g-silicon-actions button:hover,.guardian-workbench .g-silicon-top-process:hover{background:#295b63;color:#fff;border-color:#7ec5b8}
+.guardian-workbench .g-silicon-top-process{width:100%;margin-top:auto;padding:12px;display:flex;align-items:center;justify-content:space-between;text-align:left;gap:9px}
+.guardian-workbench .g-silicon-top-process small{display:block;color:#a6c7ca;font-size:10px}
+.guardian-workbench .g-silicon-top-process strong{display:block;color:#f1fbfa;font-size:12px;margin-top:5px;overflow-wrap:anywhere}
+.guardian-workbench .g-silicon-disclaimer{font-size:10px;color:#a0bcc8;margin-top:12px;line-height:1.6}
+.guardian-workbench .g-compute-details .g-card{padding:20px}
+@media(max-width:1200px){.guardian-workbench .g-silicon-layout{grid-template-columns:1fr}.guardian-workbench .g-silicon-stage{min-height:360px}.guardian-workbench .g-silicon-console{display:grid;grid-template-columns:1fr 1fr;gap:12px}.guardian-workbench .g-silicon-overline,.guardian-workbench .g-silicon-actions,.guardian-workbench .g-silicon-top-process{grid-column:1/-1}.guardian-workbench .g-silicon-console-selection{border:0;padding:0}}
+@media(max-width:740px){.guardian-workbench .g-silicon-layout,.guardian-workbench .g-silicon-console{display:flex;flex-direction:column}.guardian-workbench .g-silicon-stage{padding:42px 14px 33px;min-height:340px}.guardian-workbench .g-silicon-chip{padding:14px 12px 10px;transform:none}.guardian-workbench .g-silicon-chip .gchart-heatmap-grid{grid-template-columns:repeat(auto-fit,minmax(59px,1fr));gap:5px}.guardian-workbench .g-silicon-chip .gchart .gchart-heatmap-grid button{padding:8px 6px;min-height:75px}.guardian-workbench .g-silicon-chip .gchart-heatmap-grid button>strong{font-size:16px}}
+
 /* Process-group activity profiles. */
 .guardian-workbench .go-app-layout{display:grid;grid-template-columns:minmax(255px,.78fr) minmax(0,1.65fr);gap:16px;align-items:start}
 .guardian-workbench .go-app-browser{padding:17px}

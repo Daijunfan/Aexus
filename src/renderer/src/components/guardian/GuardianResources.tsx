@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from 'react'
+import {useEffect,useMemo,useState,type CSSProperties} from 'react'
 import type {GuardianSnapshot} from '../../../../shared/guardian'
 import {Icon} from '../Icon'
 import {useDialogFocus} from '../../office/useDialogFocus'
@@ -9,12 +9,40 @@ type Process=GuardianSnapshot['processes'][number]
 type Props={snapshot:GuardianSnapshot|null;minutes:1|5|15;onProcess:(pid:number)=>void}
 export function GuardianCpu({snapshot,minutes,onProcess}:Props){
  const [core,setCore]=useState<number|null>(null)
+ const cores=snapshot?.cpu.cores??[]
  const points=(snapshot?.history??[]).map(point=>({at:point.at,values:{cpu:core===null?point.cpuPercent:point.cores?.[core]??null}}))
  const processes=[...(snapshot?.processes??[])].sort((a,b)=>b.cpuPercent-a.cpuPercent).slice(0,8)
- return <div className="g-domain" data-testid="guardian-cpu-panel"><div className="g-section-intro"><div><span className="g-eyebrow">COMPUTE</span><h2>每一颗核心，都有自己的节奏。</h2><p>点选核心观察它的负载；从资源占用进一步定位到进程。</p></div><div className="g-primary-value">{percent(core===null?snapshot?.cpu.usagePercent:snapshot?.cpu.cores[core])}<small>{core===null?'整机 CPU 使用率':`核心 ${core+1} 使用率`}</small></div></div>
- <div className="g-two-columns"><section className="g-card"><header className="g-card-head"><div><h3>核心热力图</h3><p>{snapshot?.host.cpuModel??'读取中'} · {snapshot?.host.cpuCount??'—'} 核心</p></div>{core!==null&&<button onClick={()=>setCore(null)}>查看整机</button>}</header><GuardianCoreHeatmap values={snapshot?.cpu.cores??[]} selectedIndex={core} onSelect={setCore} label="选择 CPU 核心"/><div className="g-gradient-legend"><span>0% · 空闲</span><i/><span>100% · 满载</span></div><p className="g-caption">所有核心使用同一套 0–100% 色阶。首个采样尚无差值时显示等待。</p></section>
- <section className="g-card"><header className="g-card-head"><div><h3>{core===null?'整机负载趋势':`核心 ${core+1} 的负载趋势`}</h3><p>移动指针或用方向键查看历史采样值</p></div><span className="g-tag">最近 {minutes} 分钟</span></header><GuardianTimeSeries points={points} series={[{key:'cpu',label:core===null?'CPU':`核心 ${core+1}`,color:palette[0]}]} domain={[0,100]} valueFormat={percent} windowMinutes={minutes} height={235} ariaLabel="CPU 历史趋势"/></section></div>
- <section className="g-card"><header className="g-card-head"><div><h3>谁在使用处理器</h3><p>单核口径的进程 CPU，多个核心合计可超过 100%。点选条目查看进程。</p></div></header><div className="g-ranked-list">{processes.map(process=><button key={process.pid} onClick={()=>onProcess(process.pid)} aria-label={`查看进程 ${process.name} ${process.pid}`}><span className="g-process-badge">{process.name.slice(0,1)}</span><span className="g-ranked-name">{process.name}<small>PID {process.pid}</small></span><span className="g-ranked-track"><i style={{width:`${process.cpuPercent/Math.max(1,...processes.map(p=>p.cpuPercent))*100}%`}}/></span><strong>{percent(process.cpuPercent)}</strong><Icon name="chevron-right"/></button>)}</div></section></div>
+ const hottest=cores.length?cores.reduce((best,index,indexOf)=>index>cores[best]?indexOf:best,0):null
+ const busyCores=cores.filter(value=>value>=80).length
+ return <div className="g-domain g-compute-room" data-testid="guardian-cpu-panel">
+  <div className="g-section-intro"><div><span className="g-eyebrow">SILICON OBSERVATORY</span><h2>处理器机舱</h2><p>看见每颗核心此刻有多忙，点选任一核心追踪变化，再深入具体进程。</p></div><div className="g-primary-value">{percent(core===null?snapshot?.cpu.usagePercent:cores[core])}<small>{core===null?'整机 CPU 使用率':`核心 ${core+1} 使用率`}</small></div></div>
+  <section className="g-card g-silicon-panel">
+   <header className="g-card-head"><div><span className="g-eyebrow">COMPUTE DECK / MAC</span><h3>核心阵列 · 负载实时映射</h3><p>{snapshot?.host.cpuModel??'正在读取处理器'} · {snapshot?.host.cpuCount??'—'} 核心</p></div><span className="g-silicon-sample">{snapshot?`采样于 ${time(snapshot.sampledAt)}`:'等待采样'}</span></header>
+   <div className="g-silicon-layout">
+    <div className="g-silicon-stage" data-testid="guardian-silicon-board" data-core-count={cores.length} style={{'--die-columns':Math.max(1,Math.min(6,Math.ceil(cores.length/3)))} as CSSProperties}>
+     <div className="g-silicon-stage-caption">MAC / CORE ARRAY <span>{String(cores.length).padStart(2,'0')} CORES</span></div>
+     <div className="g-silicon-chip">
+      <div className="g-silicon-chip-heading"><span>CPU</span><span>ACTIVITY / %</span></div>
+      <GuardianCoreHeatmap values={cores} selectedIndex={core} onSelect={setCore} label="选择 CPU 核心"/>
+     </div>
+     <div className="g-silicon-stage-footer">负载亮度 · 真实采样<span>0% — 100%</span></div>
+    </div>
+    <div className="g-silicon-console">
+     <span className="g-silicon-overline">LIVE OBSERVATION</span>
+     <strong className="g-silicon-total">{percent(snapshot?.cpu.usagePercent)}<small>整机 CPU 占用</small></strong>
+     <div className="g-silicon-console-metrics"><div><small>高负载核心 ≥80%</small><strong>{cores.length?busyCores:'—'}<span> / {cores.length||'—'}</span></strong></div><div><small>当前最忙核心</small><strong>{hottest===null?'—':`#${String(hottest+1).padStart(2,'0')}`}</strong></div></div>
+     <div className="g-silicon-console-selection"><span>{core===null?'正在观察整机':`正在观察 CPU ${String(core+1).padStart(2,'0')}`}</span><strong>{percent(core===null?snapshot?.cpu.usagePercent:cores[core])}</strong><p>{core===null?'选中芯片上的核心，下面的曲线会同步聚焦。':'下方趋势已切换为该核心的真实采样。'}</p></div>
+     <div className="g-silicon-actions">{hottest!==null&&<button onClick={()=>setCore(hottest)}><Icon name="chip"/>聚焦最忙核心</button>}{core!==null&&<button onClick={()=>setCore(null)}>查看整机</button>}</div>
+     {processes[0]&&<button className="g-silicon-top-process" onClick={()=>onProcess(processes[0].pid)}><span><small>当前 CPU 占用最高的可见进程</small><strong>{processes[0].name} · {percent(processes[0].cpuPercent)}</strong></span><Icon name="arrow-right"/></button>}
+    </div>
+   </div>
+   <p className="g-silicon-disclaimer">芯片阵列为交互示意，非真实物理排布；色彩仅表达 CPU 负载，不代表温度或安全风险。</p>
+  </section>
+  <div className="g-two-columns g-compute-details">
+   <section className="g-card"><header className="g-card-head"><div><h3>{core===null?'整机负载趋势':`核心 ${core+1} 的负载趋势`}</h3><p>点选芯片上的核心切换；用指针或方向键探索真实历史。</p></div><span className="g-tag">最近 {minutes} 分钟</span></header><GuardianTimeSeries points={points} series={[{key:'cpu',label:core===null?'CPU':`核心 ${core+1}`,color:palette[0]}]} domain={[0,100]} valueFormat={percent} windowMinutes={minutes} height={235} ariaLabel="CPU 历史趋势"/></section>
+   <section className="g-card"><header className="g-card-head"><div><h3>谁在使用处理器</h3><p>单核口径统计，多核心进程可能超过 100%。点击查看进程。</p></div></header><div className="g-ranked-list">{processes.map(process=><button key={process.pid} onClick={()=>onProcess(process.pid)} aria-label={`查看进程 ${process.name} ${process.pid}`}><span className="g-process-badge">{process.name.slice(0,1)}</span><span className="g-ranked-name">{process.name}<small>PID {process.pid}</small></span><span className="g-ranked-track"><i style={{width:`${process.cpuPercent/Math.max(1,...processes.map(p=>p.cpuPercent))*100}%`}}/></span><strong>{percent(process.cpuPercent)}</strong><Icon name="chevron-right"/></button>)}</div></section>
+  </div>
+ </div>
 }
 export function GuardianMemory({snapshot,minutes,onProcess}:Props){
  const [part,setPart]=useState('wired'),[otherProcesses,setOtherProcesses]=useState<string[]>([])
