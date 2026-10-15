@@ -17,16 +17,17 @@ try{
 
  const codex=path.join(temp,'codex.cjs'),processFixture=path.join(temp,'process.cjs'),claude=path.join(temp,'claude.mjs')
  let codexSource=fs.readFileSync(path.join(root,'test/fixtures/initialization-codex.cjs'),'utf8')
- codexSource=codexSource.replace("note(hidden?'initializing':'user',{thread,turn,text,cwd,model:p.model})", "note(hidden?'initializing':'user',{thread,turn,text,cwd,model:p.model});if(text.includes('REJECT_RECEIPT')){send({id:request.id,error:{code:-32000,message:'Native rejected input'}});return}")
+ assert.ok(codexSource.includes('const input={thread,turn,text,cwd'))
+ codexSource=codexSource.replace('const input={thread,turn,text,cwd', "if(text.includes('REJECT_RECEIPT')){send({id:request.id,error:{code:-32000,message:'Native rejected input'}});return} const input={thread,turn,text,cwd")
  codexSource=codexSource.replace("event('turn/started',{threadId:thread,turn:{id:turn}})", "event('turn/started',{threadId:thread,turn:{id:turn}});if(text.includes('WRONG_TURN'))event('item/agentMessage/delta',{threadId:thread,turnId:'unrelated-turn',itemId:'other',delta:'Unrelated native turn'})")
  fs.writeFileSync(codex,codexSource,{mode:0o755})
  let processSource=fs.readFileSync(path.join(root,'test/fixtures/process-adapter.cjs'),'utf8')
  processSource=processSource.replace("if(text.includes('HOLD_FIXTURE'))return", "if(text.includes('HOLD_RECEIPT')){timer=setInterval(()=>{if(fs.existsSync(path.join(process.env.AC_INIT_FIXTURE,process.env.AGENTS_COMPANY_EMPLOYEE+'.receipt-release')))finish('Received and processed')},20);return};if(text.includes('HOLD_FIXTURE'))return")
  fs.writeFileSync(processFixture,processSource,{mode:0o755})
- fs.writeFileSync(claude,`import fs from 'node:fs';import path from 'node:path';import {randomUUID} from 'node:crypto';
+ fs.writeFileSync(claude,`import {initializeSdkInput} from ${JSON.stringify(path.join(root,'test/fixtures/sdk-initialization.mjs'))};export {tool,createSdkMcpServer} from ${JSON.stringify(path.join(root,'test/fixtures/sdk-initialization.mjs'))};import fs from 'node:fs';import path from 'node:path';import {randomUUID} from 'node:crypto';
  export function query({prompt,options}){
   let closed=false,interrupted=false;const sessionId=randomUUID(),employee=options.env?.AGENTS_COMPANY_EMPLOYEE??'catalog';
-  const q=(async function*(){yield {type:'system',subtype:'init',session_id:sessionId,model:'fixture-claude',slash_commands:[]};for await(const input of prompt){if(closed)return;interrupted=false;const text=typeof input.message.content==='string'?input.message.content:input.message.content.map(part=>part.text??'').join(''),uuid=input.uuid;fs.writeFileSync(path.join(process.env.AC_INIT_FIXTURE,employee+'.native-input.json'),JSON.stringify({uuid,text}));yield {type:'user',isReplay:true,uuid,session_id:sessionId,parent_tool_use_id:null,message:input.message};
+  const q=(async function*(){yield {type:'system',subtype:'init',session_id:sessionId,model:'fixture-claude',slash_commands:[]};for await(const input of prompt){if(await initializeSdkInput(input,options)){yield {type:'assistant',message:{content:[{type:'text',text:'OK'}]}};yield {type:'result',subtype:'success'};continue}if(closed)return;interrupted=false;const text=typeof input.message.content==='string'?input.message.content:input.message.content.map(part=>part.text??'').join(''),uuid=input.uuid;fs.writeFileSync(path.join(process.env.AC_INIT_FIXTURE,employee+'.native-input.json'),JSON.stringify({uuid,text}));yield {type:'user',isReplay:true,uuid,session_id:sessionId,parent_tool_use_id:null,message:input.message};
    if(text.includes('FAIL_RECEIPT')){yield {type:'assistant',uuid:randomUUID(),session_id:sessionId,parent_tool_use_id:null,user_message_uuid:uuid,error:'authentication_failed',message:{content:[{type:'text',text:'Synthetic API error'}]}};yield {type:'result',subtype:'error_during_execution',is_error:true,errors:['Synthetic API error'],session_id:sessionId,user_message_uuid:uuid};continue}
    if(text.includes('WRONG_UUID'))yield {type:'assistant',uuid:randomUUID(),session_id:sessionId,parent_tool_use_id:null,user_message_uuid:randomUUID(),message:{content:[{type:'text',text:'Unrelated native input'}]}};
    if(text.includes('HOLD_RECEIPT'))while(!closed&&!interrupted&&!fs.existsSync(path.join(process.env.AC_INIT_FIXTURE,employee+'.receipt-release')))await new Promise(resolve=>setTimeout(resolve,20));if(closed)return;
@@ -44,6 +45,7 @@ try{
  for(const engine of ['codex','cline','pi','claude']){
   if(['cline','pi'].includes(engine))await rpc('engine.configure',{engine,patch:{apiKey:'fixture-key-not-real'}})
   const card=await rpc('card.create',{title:engine,group:'Receipt Studio',engine,model:engine==='codex'?'gpt-6-luna':engine==='claude'?'fixture-claude':'deepseek-flash'}),release=path.join(f.control,card.id+'.receipt-release'),hold=path.join(f.control,card.id+'.hold-user'),stream=path.join(f.control,card.id+'.stream.txt')
+   await f.ready(card.id)
   if(engine==='codex')fs.writeFileSync(hold,'')
   const sent=await rpc('session.send',{employee:card.id,text:engine==='codex'?'WRONG_TURN HOLD_RECEIPT':engine==='claude'?'WRONG_UUID HOLD_RECEIPT':'HOLD_RECEIPT'})
   await f.until(async()=>!!await item(card.id,sent.messageId),'outgoing task is persisted')

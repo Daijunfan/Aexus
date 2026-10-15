@@ -14,24 +14,24 @@ window.runWorkspaceModeChecks=async function(){
    if(result.error)throw Error(result.error.message)
    return result.result
  }
- record('CloudHosts main toolbar has exactly Single Host, Hosts Board and Agent Board',
-  ['single-mode','hosts-board-mode','agent-board-mode'].every(id=>!!document.getElementById(id))&&
+ record('Aexus main toolbar has exactly Single Host, Hosts Board, Agent Board and Role Board',
+  ['single-mode','hosts-board-mode','agent-board-mode','role-board-mode'].every(id=>!!document.getElementById(id))&&
   !document.getElementById('board-mode')&&!document.getElementById('file-board-mode')&&
-  document.querySelectorAll('.mode-switch button').length===3)
+  document.querySelectorAll('.mode-switch button').length===4)
  const booted=await wait(()=>!document.querySelector('#add')?.disabled)
  record('Real HTTP RPC bootstrapped original single mode',booted&&(await rpc('hosts.workspace')).mode==='single')
  const button=id=>document.getElementById(id)
  const nav=document.querySelector('.mode-switch')
  const initialOrder=[...nav.querySelectorAll('button[data-id]')].map(button=>button.dataset.id)
- record('Three toolbar views expose draggable native buttons',initialOrder.join('|')==='single|hosts-board|agent-board'&&nav.querySelectorAll('button[draggable="true"]').length===3)
+ record('Four toolbar views expose draggable native buttons',initialOrder.join('|')==='single|hosts-board|agent-board|role-board'&&nav.querySelectorAll('button[draggable="true"]').length===4)
  const draggable=button('agent-board-mode')
  draggable.focus()
  draggable.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',altKey:true,bubbles:true,cancelable:true}))
  record('Alt + left arrow reorders view buttons without changing mode',
-  [...nav.children].map(node=>node.dataset.id).join('|')==='single|agent-board|hosts-board'&&draggable===document.activeElement)
+  [...nav.children].map(node=>node.dataset.id).join('|')==='single|agent-board|hosts-board|role-board'&&draggable===document.activeElement)
  const savedOrder=await wait(async()=>{
   const order=(await rpc('hosts.workspace')).viewOrder
-  return order?.join('|')==='single|agent-board|hosts-board'
+  return order?.join('|')==='single|agent-board|hosts-board|role-board'
  })
  record('View button order persists via the backend',savedOrder)
  const origin=button('single-mode'),destination=button('agent-board-mode'),transfer=new DataTransfer()
@@ -44,7 +44,7 @@ window.runWorkspaceModeChecks=async function(){
   origin.dispatchEvent(new DragEvent('dragend',{bubbles:true,dataTransfer:transfer,cancelable:true}))
  }finally{Element.prototype.animate=originalAnimate}
  const dragged=[...nav.children].map(node=>node.dataset.id).join('|')
- record('Mouse-style drag changes real view order',dragged==='agent-board|single|hosts-board')
+ record('Mouse-style drag changes real view order',dragged==='agent-board|single|hosts-board|role-board')
  record('FLIP animates tab movement unless reduced motion was requested',animations>0||matchMedia('(prefers-reduced-motion: reduce)').matches)
  record('Dragged order persists without activating another view',await wait(async()=>{
   const state=await rpc('hosts.workspace')
@@ -114,17 +114,18 @@ window.runWorkspaceModeChecks=async function(){
  const agentReady=await wait(()=>!!document.querySelector('.agent-grid')&&!!document.querySelector('.agent-count')&&button('agent-board-mode').classList.contains('active'),10000)
  record('Agent board click loads real bundled WebKit Xterm frontend',agentReady)
  record('Agent board mode persists through HTTP',(await rpc('hosts.workspace')).mode==='agent-board')
- record('Agent board preserves host columns but auto-flows inner roles, with a resizable area',
-   !!document.querySelector('#agent-columns')&&!document.querySelector('#agent-role-columns')&&!!document.querySelector('.agent-role-resize'))
+ record('Agent board keeps a per-workgroup host-column control, auto-flows inner roles and resizes them',
+   !!document.querySelector('#agent-group-columns')&&!document.querySelector('#agent-role-columns')&&
+   !!document.querySelector('.agent-role-resize')&&!!document.querySelector('.agent-role-grid'))
  button('hosts-board-mode').click()
  record('Hosts Board restores the last used File Board from Agent Board',await wait(()=>
   !!document.querySelector('.file-board-grid')&&document.querySelector('[data-hosts-board-view="file-board"][aria-selected="true"]'))&&
   (await rpc('hosts.workspace')).hostsBoardMode==='file-board')
  record('File Board restores saved columns after switching back',!!document.querySelector('#file-board-columns')&&document.querySelector('#file-board-columns').value==='6')
  document.querySelector('[data-hosts-board-view="board"]')?.click()
- record('Terminal Board switches within Hosts Board without a fourth top button',await wait(()=>
+ record('Terminal Board switches within Hosts Board without adding a top button',await wait(()=>
   !!document.querySelector('.board-grid')&&document.querySelector('[data-hosts-board-view="board"][aria-selected="true"]'))&&
-  (await rpc('hosts.workspace')).mode==='board'&&nav.querySelectorAll('button').length===3)
+  (await rpc('hosts.workspace')).mode==='board'&&nav.querySelectorAll('button').length===4)
  button('single-mode').click()
  record('Single Host remains independent of both Hosts Board children',await wait(()=>button('single-mode').classList.contains('active')&&!!document.querySelector('.view-tabs'))&&(await rpc('hosts.workspace')).mode==='single')
  button('hosts-board-mode').click()

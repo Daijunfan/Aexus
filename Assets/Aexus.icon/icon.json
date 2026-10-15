@@ -1,0 +1,36 @@
+{
+  "fill": {
+    "solid": "srgb:0,0,0,1"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "Aexus.png",
+          "name": "Original artwork",
+          "glass": false,
+          "position": {
+            "scale": 0.9175627240143369,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      },
+      "specular": false,
+      "blur-material": 0
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

@@ -120,8 +120,8 @@ metadata with an explanation; it is not reported as successful verification.
 
 ## Derived covers
 
-`assets.preview {id}` reuses Margin Reader's pure cover-rendering worker for local PDF,
-HTML, Markdown and text documents. It does not register a new Reader document or move files.
+`assets.preview {id}` uses Core's isolated cover-rendering worker for local PDF,
+HTML, Markdown and text documents. It does not require a Reader plugin or move files.
 Small validated PNG/JPEG/GIF/WebP files use the existing image read. Local source size is
 limited to 64 MiB, direct-image output to 1 MiB, worker concurrency to 2 and runtime to 15 s.
 The worker cache is limited to 72 entries/12 MiB and the client cache to 60 entries/10 MiB.

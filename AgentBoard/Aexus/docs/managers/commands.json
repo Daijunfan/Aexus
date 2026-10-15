@@ -3658,7 +3658,7 @@
   {
     "name": "assets.preview",
     "args": "ID",
-    "summary": "User-only: derive a bounded local PDF, article or image cover with the installed Reader renderer; never fetch remote originals or mutate files",
+    "summary": "User-only: derive a bounded local PDF, article or image cover with the Core renderer; never fetch remote originals or mutate files",
     "gui": "Document cover",
     "inputSchema": {
       "type": "object",

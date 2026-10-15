@@ -27,7 +27,10 @@ import WebKit
     func applicationDidFinishLaunching(_ notification: Notification) {
         ToolDock.install()
         let resources = Bundle.main.bundleURL.appendingPathComponent("Contents/Resources")
-        if let icon = NSImage(contentsOf: resources.appendingPathComponent("Aexus.icns")) {NSApp.applicationIconImage = icon}
+        // With CFBundleIconName present AppKit already loads the named catalog
+        // icon; fall back to the legacy icns setter only when that key is absent.
+        if Bundle.main.object(forInfoDictionaryKey: "CFBundleIconName") == nil,
+           let icon = NSImage(contentsOf: resources.appendingPathComponent("Aexus.icns")) {NSApp.applicationIconImage = icon}
         let process = Process(), pipe = Pipe()
         process.executableURL = resources.appendingPathComponent("node")
         process.arguments = [resources.appendingPathComponent("backend/cli.cjs").path, "start"]

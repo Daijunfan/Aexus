@@ -34,6 +34,7 @@ export function employeeProcessOptions(employeeId:string){
 (allow file-write* (subpath ${quote(canonical(runtime))}))
 (allow process-exec) (allow process-fork) (allow sysctl-read) (allow signal (target same-sandbox))
 (allow network-outbound)
+(allow mach-lookup (global-name "com.apple.system.opendirectoryd.libinfo"))
 `
   return {profile,env:{...env,CODEX_HOME:path.join(runtime,'codex'),CLAUDE_CONFIG_DIR:path.join(runtime,'claude')}}
 }

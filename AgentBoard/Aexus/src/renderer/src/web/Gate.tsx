@@ -6,11 +6,15 @@ import companyIcon from '../../../../app_icon.png'
 export function WebGate({children}:{children:ReactNode}){
   useI18n()
 
-  const [state,setState]=useState({authenticated:false,checking:true,connected:false})
+  const [state,setState]=useState({authenticated:false,checking:true,connected:false,ready:false})
   const [opened,setOpened]=useState(false),[token,setToken]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
   useEffect(()=>{
     let authenticated=false
-    const off=onWebState(value=>{authenticated=value.authenticated;setState(value);if(value.authenticated)setOpened(true)})
+    // Mounting follows `ready`: in a hosted window that means the host session
+    // for this client is established, not merely that an older cookie still
+    // authenticates. The app is never asked to act on a session the host is
+    // about to replace.
+    const off=onWebState(value=>{authenticated=value.authenticated;setState(value);if(value.ready)setOpened(true)})
     void initializeWeb()
     // In CloudHosts the private Core session is provisioned by the host. Never
     // ask the user to copy an Aexus token or start an independent Aexus app.

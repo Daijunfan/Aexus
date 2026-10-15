@@ -10,16 +10,16 @@ import {chromium,_electron as electron,expect} from '@playwright/test'
 import sharp from 'sharp'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 
-const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url),progress=path.join(root,'progress/Agents-company1.md')
+const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url)
 // The MCP terminal can start as root. Restore only files created by this task,
 // then drop to the repository owner's identity before builds or browsers run.
 if(process.getuid?.()===0){
  const {uid,gid}=fs.statSync(root)
- for(const file of ['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md','src/renderer/src/components/ChannelPostFeed.tsx','src/renderer/src/components/channel-post-model.ts','src/renderer/src/styles/channel-posts.css','test/channel-post-model-test.mjs','test/channel-post-views-ui-test.mjs'])fs.chownSync(path.join(root,file),uid,gid)
+ for(const file of ['src/renderer/src/components/ChannelPostFeed.tsx','src/renderer/src/components/channel-post-model.ts','src/renderer/src/styles/channel-posts.css','test/channel-post-model-test.mjs','test/channel-post-views-ui-test.mjs'])fs.chownSync(path.join(root,file),uid,gid)
  process.setgroups([gid]);process.setgid(gid);process.setuid(uid)
  const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})
 }
-const out=path.join(root,'artifacts/channel-post-views'),application=path.join(out,'application')
+const out=path.join(root,'artifacts/channel-post-views'),application=path.join(out,'application'),progress=path.join(out,'progress-notes.md')
 fs.mkdirSync(out,{recursive:true})
 const note=text=>{console.log(text);fs.appendFileSync(progress,'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 if(!process.argv.includes('--skip-build')){

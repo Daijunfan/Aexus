@@ -28,9 +28,10 @@ window.runWorkspaceModeChecks=async function(){
   document.documentElement.lang==='en'&&lang.value==='en'&&(await rpc('hosts.workspace')).language==='en')
  untranslated.home=collectChinese()
  check('Navigation, toolbar, search, and primary actions are English on initial load',
-  el('h1')?.textContent==='Cloud Hosts'&&el('#single-mode').textContent==='Single Host'&&
+  el('h1')?.textContent==='Aexus'&&el('#single-mode').textContent==='Single Host'&&
   el('#hosts-board-mode').textContent==='Hosts Board'&&!el('#board-mode')&&!el('#file-board-mode')&&
-  el('#agent-board-mode').textContent==='Agent Board'&&el('#add').textContent.trim().includes('Add Host')&&
+  el('#agent-board-mode').textContent==='Agent Board'&&el('#role-board-mode').textContent==='Role Board'&&
+  el('#add').textContent.trim().includes('Add Host')&&
   el('#search').placeholder==='Search hosts or systems')
  check('Styled language selector offers English and Chinese with the native select preserved',
   lang.closest('.styled-select')?.querySelector('.styled-select-trigger')&&
@@ -47,7 +48,7 @@ window.runWorkspaceModeChecks=async function(){
   draft.querySelector('.host-card strong').textContent==='云主机'&&
   draft.querySelector('.agent-role-name').textContent==='新建主机'&&draft.querySelector('textarea').value==='Agent 原始任务')
  check('Chinese labels and actions are visible in the host workbench',
-  el('h1')?.textContent==='云主机'&&el('#add')?.textContent?.includes('新建主机')&&el('#search').placeholder==='搜索主机或系统')
+  el('h1')?.textContent==='Aexus'&&el('#add')?.textContent?.includes('新建主机')&&el('#search').placeholder==='搜索主机或系统')
  lang.value='en';lang.dispatchEvent(new Event('change',{bubbles:true}))
  check('Switching back to English restores English without duplicating controls',await wait(async()=>
   document.documentElement.lang==='en'&&el('#single-mode').textContent==='Single Host'&&
@@ -58,7 +59,7 @@ window.runWorkspaceModeChecks=async function(){
   !!el('.hosts-board-tabs')&&el('.hosts-board-tabs').querySelectorAll('button').length===2&&
   el('[data-hosts-board-view="board"]')?.textContent==='Terminal Board'&&
   el('[data-hosts-board-view="file-board"]')?.textContent==='File Board'&&
-  el('.mode-switch').querySelectorAll('button').length===3))
+  el('.mode-switch').querySelectorAll('button').length===4))
  const file=el('[data-hosts-board-view="file-board"]');file?.click()
  check('File Board is localized to English after asynchronous rendering',await wait(()=>{
   const heading=el('.file-board-heading')
@@ -67,11 +68,12 @@ window.runWorkspaceModeChecks=async function(){
  }))
  untranslated.files=collectChinese(el('#detail'))
  el('#agent-board-mode').click()
- check('Agent Board title and role/host column controls show English',await wait(()=>{
+ check('Agent Board title and per-workgroup host-column controls show English',await wait(()=>{
   const heading=el('.agent-heading')
+  const columns=el('#agent-group-columns')
   return !!heading&&heading.querySelector('h2')?.textContent==='Agent Board'&&
-   /Per row/i.test(heading.querySelector('.agent-columns')?.textContent||'')&&
-   !heading.querySelector('.agent-role-columns')
+   !!columns&&[...columns.options].map(option=>option.textContent.trim()).join('|')==='1 columns|2 columns|3 columns|4 columns|5 columns|6 columns'&&
+   !el('#agent-columns')&&!el('.agent-columns')&&!el('#agent-role-columns')&&!el('.agent-role-columns')
  }))
  check('Native language change does not emit Agent messages or open an Agent',
   !issues.length&&document.querySelectorAll('.agent-inspector').length===0)
@@ -81,9 +83,15 @@ window.runWorkspaceModeChecks=async function(){
   add.click()
   check('Agent creation dialog is translated, including source/target and action controls',await wait(()=>{
    const dialog=el('.agent-create-dialog')
-   return !!dialog&&dialog.querySelector('h2')?.textContent==='New Agent'&&
-    /Engine Origin/.test(dialog.textContent)&&/Work Host/.test(dialog.textContent)&&
-    /Create & Connect/.test(dialog.textContent)
+   return !!dialog&&/Engine Origin/.test(dialog.textContent)&&/Work Host/.test(dialog.textContent)&&
+    /Create & Connect/.test(dialog.textContent)&&/Session Name/.test(dialog.textContent)
+  }))
+  // Separated from the control check above so an untranslated header cannot hide
+  // behind correctly translated labels. Reported as a product defect, not repaired here.
+  check('Agent creation dialog header carries no untranslated source copy in English mode',await wait(()=>{
+   const dialog=el('.agent-create-dialog')
+   const header=dialog?.querySelector('header')
+   return !!header&&/Coding Agent/.test(header.textContent)&&!/[㐀-鿿]/.test(header.textContent)
   }))
   untranslated.dialog=collectChinese(el('.agent-create-dialog'))
   const input=el('#agent-name');if(input)input.value='研发中文会话'

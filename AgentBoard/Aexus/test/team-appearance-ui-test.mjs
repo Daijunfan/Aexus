@@ -16,8 +16,9 @@ const cli=async(...args)=>{const reply=JSON.parse((await run(process.execPath,[p
 let n=0;const ok=(value,label)=>{assert.ok(value,label);n++;console.log('PASS '+label)}
 try{
  await page.locator('.infinite-canvas').waitFor();ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())),'windows remain hidden')
- await cli('group','add','Studio');await cli('room','bounds','Studio','--x','0','--y','0','--width','760','--height','700')
+ await cli('settings','set','--language','zh-CN');await cli('group','add','Studio');await cli('room','bounds','Studio','--x','0','--y','0','--width','760','--height','700')
  const first=await cli('card','create','--title','Alice','--group','Studio'),second=await cli('card','create','--title','Bob','--group','Studio')
+ await expect.poll(async()=>(await cli('session','status')).every(item=>item.initialization?.status==='ready')).toBe(true)
  await cli('canvas','set','--x','80','--y','120','--zoom','.8');await expect(page.locator('.infinite-canvas')).toHaveAttribute('data-zoom','0.800')
  await cli('view','open','team','--name','Studio');await expect(page.locator('input[name="team-name"]')).toBeEditable()
  await expect(page.locator('.appearance-settings')).toBeVisible()
@@ -26,8 +27,8 @@ try{
  const room=page.locator('[data-department="Studio"]'),layout=()=>cli('room','layout','Studio')
  await expect.poll(()=>room.evaluate(e=>e.style.getPropertyValue('--room-floor-top'))).toBe('#d8e9f3')
  ok(await room.locator('.room-scenery').count()===0&&(await cli('session','list')).rooms.Studio.design.pattern==='grid','custom background color, texture and scene visibility are saved through the CLI')
- await cli('view','open','employee','--employee',first.id);await expect(page.locator('input[name="title"]')).not.toBeEditable();await expect(page.locator('select[name="kind"]')).toHaveValue('worker');await page.locator('.avatar-options button').nth(1).click();await page.locator('.save-employee').click();await expect(page.locator('.office-panel')).toHaveCount(0)
- ok((await cli('session','list')).sessions.find(c=>c.id===first.id).avatar==='dewey','employee name and job type are locked while the character remains editable')
+ await cli('view','open','employee','--employee',first.id);await page.getByRole('button',{name:'编辑资料',exact:true}).click();await expect(page.locator('input[name="title"]')).toBeEditable();await expect(page.locator('select[name="kind"]')).toHaveValue('worker');await page.locator('.profile-change-character').click();await page.locator('.avatar-options button').nth(1).click();await page.locator('.save-employee').click();await cli('view','close');await expect(page.locator('.office-panel')).toHaveCount(0)
+ ok((await cli('session','list')).sessions.find(c=>c.id===first.id).avatar==='dewey','employee profile name and character remain editable while job type is fixed')
  await expect(room.locator('.room-resize-handle,.department-sign')).toHaveCount(0);await expect(room.locator('.team-title')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
  const beforeMove=(await layout()).bounds,rbox=await room.boundingBox(),blank={x:rbox.x+30*.8,y:rbox.y+480*.8};await page.mouse.move(blank.x,blank.y);await page.mouse.down();await page.mouse.move(blank.x+40,blank.y+24,{steps:10});await page.mouse.up();await expect.poll(async()=>(await layout()).bounds.x).toBe(beforeMove.x+50);await expect(page.locator('.team-workspace,.conversation-dialog')).toHaveCount(0);ok(true,'team interior drags the whole Team without opening a page; title has no plaque and no corner button');
  const initial=await layout(),pet=page.locator(`[data-card-id="${first.id}"]`),p=await pet.boundingBox()

@@ -8,10 +8,10 @@ const f=await fixtureCore(),{cli,create,ready,until,control}=f
 const read=(employee,name)=>JSON.parse(fs.readFileSync(path.join(control,employee.id+'-'+name+'.json'),'utf8'))
 try{
  await cli('group','add','Build')
- await cli('group','add','Work','--mode','work','--plugin','mininotion')
- const worker=await create('Clean Worker','Work'),buildWorker=await create('Build Worker','Build')
+ await assert.rejects(()=>cli('group','add','Work','--mode','work','--plugin','mininotion'))
+ const worker=await create('Clean Worker','Build'),buildWorker=await create('Build Worker','Build')
  let commonInstructions
- for(const [employee,profile] of [[worker,'agents-company-work'],[buildWorker,'agents-company-readonly']]){
+ for(const [employee,profile] of [[worker,'agents-company-readonly'],[buildWorker,'agents-company-readonly']]){
   assert.equal((await f.status(employee.id)).initialization.status,'ready')
   assert.equal(employee.permissionMode,'default')
   assert.ok(fs.existsSync(path.join(control,employee.id+'-initializing.json')))
@@ -28,7 +28,7 @@ try{
   assert.equal(launch.permissions,profile);assert.equal(launch.sandbox,null)
   assert.match(launch.developerInstructions,/agents_company_documentation/)
   if(commonInstructions===undefined)commonInstructions=launch.developerInstructions
-  else assert.equal(launch.developerInstructions,commonInstructions,'Build and Work share the same router prompt')
+  else assert.equal(launch.developerInstructions,commonInstructions,'Build workers share the same router prompt')
   const [context,body]=work.text.split('\n\n[Current message]\n')
   assert.ok(context.startsWith('[Agents Company role]\n'+JSON.stringify({employeeId:employee.id,managementRole:'employee'})+'\n\n[Agents Company message source]\n{"sourceView":null}\n'));assert.equal(body,'Read the current directory.');assert.ok(!context.includes('[Agents Company private initialization]'))
   const history=(await cli('session','transcript','--employee',employee.id)).items
@@ -44,5 +44,5 @@ try{
  legacy.fullAccessDefaultApplied=false;legacy.sessions.find(card=>card.id===worker.id).permissionMode='acceptEdits'
  fs.writeFileSync(stateFile,JSON.stringify(legacy));await f.start()
  assert.equal((await cli('session','list')).sessions.find(card=>card.id===worker.id).permissionMode,'acceptEdits')
- console.log('PASS shared native initialization with pristine public history, same-thread work, scoped Build/Work permissions, role metadata and preserved upgrade preferences; deterministic fixtures only')
+ console.log('PASS shared native initialization with pristine public history, same-thread work, scoped Build permissions, role metadata and preserved upgrade preferences; deterministic fixtures only')
 }finally{await f.close()}

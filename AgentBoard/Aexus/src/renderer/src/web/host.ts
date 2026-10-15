@@ -45,6 +45,8 @@ const activityListeners=new Set<()=>void>()
 const flushers=new Set<()=>Promise<void>>()
 const pendingNative=new Map<string,PendingNative>()
 const EMPTY=Object.freeze({})
+// transport imports this module, so it is always loaded lazily.
+const transport=()=>import('./transport')
 
 export const currentHostActivity=()=>activity
 export const useHostActivity=()=>useSyncExternalStore(subscribeHostActivity,currentHostActivity,currentHostActivity)
@@ -130,7 +132,8 @@ export function startHostedBridge(api:AgentsApi,clientId:string){
   document.documentElement.dataset.cloudhostsEmbedded='true'
   document.documentElement.dataset.hostVisible='false'
   document.documentElement.dataset.hostFocused='false'
-  let disposed=false
+  let disposed=false,navigationId:string|undefined
+  let navigation=Promise.resolve()
   const receive=async(input:unknown,origin?:string,source?:MessageEventSource|null)=>{
     if(disposed)return
     const raw=asObject(input)
@@ -158,6 +161,10 @@ export function startHostedBridge(api:AgentsApi,clientId:string){
     }
     if(!binding)return
     if(item.type==='host.ticket'){
+      // A ticket authorizes exactly the host instance, window and client this
+      // document is bound to; anything else is refused before it is exchanged.
+      if(item.instanceId!==binding.instanceId||item.windowId!==binding.windowId||item.clientId!==binding.clientId)
+        return failure(item.requestId,'WRONG_BINDING','Ticket does not belong to this bound host window')
       if(typeof payload.ticket!=='string'||payload.ticket.length>8192)
         return failure(item.requestId,'TICKET_INVALID','Missing hosted session ticket')
       try{
@@ -165,13 +172,13 @@ export function startHostedBridge(api:AgentsApi,clientId:string){
           headers:{'content-type':'application/json'},body:JSON.stringify({ticket:payload.ticket})})
         const reply=await response.json()
         if(!response.ok||reply.ok!==true)throw Error(String(reply.error||'Hosted session exchange rejected'))
-        // An HTTP exchange alone does not prove WKWebView retained its
-        // HttpOnly session cookie. Verify the original authenticated endpoint.
-        const bootstrap=await fetch('/api/bootstrap',{credentials:'same-origin'})
-        if(!bootstrap.ok)throw Error('Hosted session bootstrap refused: HTTP '+bootstrap.status)
-        const {initializeWeb,webAuthenticated}=await import('./transport')
-        await initializeWeb()
+        // Read the swapped-in session before the exchange is treated as final,
+        // so an in-flight bootstrap of the previous cookie cannot be mistaken
+        // for the result of this authorization.
+        const {initializeWeb,webAuthenticated,confirmHostedSession}=await transport()
+        await initializeWeb(true)
         if(!webAuthenticated())throw Error('Hosted browser session is not authenticated')
+        confirmHostedSession()
         emit('host.ticket',{accepted:true},item.requestId)
       }catch(cause){failure(item.requestId,'HOST_AUTH_FAILED',cause instanceof Error?cause.message:String(cause))}
       return
@@ -191,21 +198,28 @@ export function startHostedBridge(api:AgentsApi,clientId:string){
       if(next!=='company'&&next!=='messages'&&next!=='plan')return failure(item.requestId,'VIEW_DISABLED','Only company/messages/plan are available')
       const roleId=payload.roleId
       if(roleId!==undefined&&(next!=='messages'||typeof roleId!=='string'||!roleId||roleId.length>128))return failure(item.requestId,'INVALID_PAYLOAD','Expected a Role Board employee ID')
-      if(next===activeTab&&!roleId){emit('navigation.change',{accepted:true,view:next},item.requestId);return}
-      try{
-        suppressTab=next;suppressUntil=Date.now()+2500
-        if(roleId){
-          const [role]=await api.call<Array<Pick<StoredSession,'id'|'initialization'>>>('session.status',{employee:roleId})
-          if(!role)throw Error('Role no longer exists')
-          await api.call('view.open',{kind:employeeReady(role)?'messages':'initialization',employee:roleId})
+      navigationId=item.requestId
+      // Core view changes must finish in order. Coalesce queued clicks and never
+      // acknowledge from activeTab while a previous selection is still running.
+      navigation=navigation.then(async()=>{
+        if(disposed||navigationId!==item.requestId)return
+        try{
+          suppressTab=next;suppressUntil=Date.now()+2500
+          if(roleId){
+            const [role]=await api.call<Array<Pick<StoredSession,'id'|'initialization'>>>('session.status',{employee:roleId})
+            if(!role)throw Error('Role no longer exists')
+            await api.call('view.open',{kind:employeeReady(role)?'messages':'initialization',employee:roleId})
+          }
+          else await api.call('view.select',{id:next})
+          if(disposed||navigationId!==item.requestId)return
+          activeTab=next
+          emit('navigation.change',{accepted:true,view:next},item.requestId)
+        }catch(cause){
+          if(disposed||navigationId!==item.requestId)return
+          suppressTab=undefined;suppressUntil=0
+          failure(item.requestId,'NAVIGATION_FAILED',cause instanceof Error?cause.message:String(cause))
         }
-        else await api.call('view.select',{id:next})
-        activeTab=next
-        emit('navigation.change',{accepted:true,view:next},item.requestId)
-      }catch(cause){
-        suppressTab=undefined;suppressUntil=0
-        failure(item.requestId,'NAVIGATION_FAILED',cause instanceof Error?cause.message:String(cause))
-      }
+      })
       return
     }
     if(item.type==='state.flush'){
@@ -235,8 +249,23 @@ export function startHostedBridge(api:AgentsApi,clientId:string){
   window.addEventListener('cloudhosts:host-envelope',fromNative)
   const hide=()=>{updateActivity(inactive);void flushState().catch(()=>{})}
   window.addEventListener('pagehide',hide)
+  // An expired, revoked or replaced session cannot be repaired from inside the
+  // browser: only the host can authorize a new one. Ask for a fresh ticket and
+  // resume the current view; no request is replayed on its behalf.
+  let watchAuth=()=>{}
+  void transport().then(({onWebState})=>{
+    if(disposed)return
+    let requestedAt=0
+    watchAuth=onWebState(state=>{
+      if(disposed||!binding||state.checking||state.authenticated)return
+      if(Date.now()-requestedAt<3000)return
+      requestedAt=Date.now()
+      emit('auth.required',{reason:'session-unavailable'})
+    })
+  }).catch(()=>{})
   return()=>{
     disposed=true
+    watchAuth()
     window.removeEventListener('message',fromParent)
     window.removeEventListener('cloudhosts:host-envelope',fromNative)
     window.removeEventListener('pagehide',hide)

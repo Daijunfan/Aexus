@@ -83,7 +83,9 @@ try{
   const settings=fs.readFileSync(path.join(f.env.AGENTS_COMPANY_HOME,'engines/settings.json'),'utf8')
   assert.ok(!settings.includes('fixture-secret-not-a-real-key'));assert.ok(!JSON.stringify(await call(a,'engine.list')).includes('fixture-secret-not-a-real-key'));pass('provider secrets stay out of browser projections and plaintext settings')
   await call(a,'engine.configure',{engine:'claude',patch:{apiKey:''}})
-  const view=await call(a,'plugin.open',{id:'cloud-hosts'})
+  let view
+  if((await call(a,'plugin.list',{})).some(plugin=>plugin.id==='cloud-hosts')){
+  view=await call(a,'plugin.open',{id:'cloud-hosts'})
   assert.ok(view.url.startsWith(url+'/'))
   const plugin=await fetch(new URL('rpc',view.url),{method:'POST',headers:{Origin:'null','content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'hosts.list',params:{}})})
   assert.equal(plugin.status,403,'a plugin page URL cannot grant RPC authority')
@@ -92,20 +94,19 @@ try{
   assert.equal((await request(b,'plugin.call',{id:'cloud-hosts',workspace:view.workspace,viewId:view.id,method:'hosts.list',params:{},raw:true})).status,403)
   assert.match(await (await fetch(view.url,{headers:{Origin:'null'}})).text(),/_agents-bridge\.js/)
   pass('plugin page has an isolated parent bridge; only the authenticated owning client can execute RPC')
+  }else{assert.equal((await request(a,'plugin.open',{id:'cloud-hosts'})).body.ok,false);console.log('SKIP removed Cloud Hosts plugin bridge, view access and SSE lifecycle')}
   // Keep an engine turn and both HTTP streaming paths open while revoking login.
   fs.writeFileSync(path.join(f.control,employee.id+'.hold-user'),'')
   await call(a,'session.send',{employee:employee.id,text:'held turn survives browser logout'})
   const follow=await fetch(url+'/api/follow',{method:'POST',headers:{Origin:url,Cookie:a.cookie,'content-type':'application/json','x-agents-csrf':a.csrf,'x-agents-client':a.client},body:JSON.stringify({cmd:'session.follow',args:{employee:employee.id}})})
   assert.equal(follow.status,200)
-  let followed='',followEnded=false,pluginEnded=false
+  let followed='',followEnded=false,pluginEnded=!view
   const consumeFollow=(async()=>{try{for await(const chunk of follow.body)followed+=Buffer.from(chunk).toString()}catch{}finally{followEnded=true}})()
-  const stream=await fetch(new URL('events',view.url),{headers:{Origin:'null'}})
-  assert.equal(stream.status,200)
-  const consumePlugin=(async()=>{try{for await(const _ of stream.body){}}catch{}finally{pluginEnded=true}})()
+  const consumePlugin=view?(async()=>{const stream=await fetch(new URL('events',view.url),{headers:{Origin:'null'}});assert.equal(stream.status,200);try{for await(const _ of stream.body){}}catch{}finally{pluginEnded=true}})():Promise.resolve()
   await f.until(()=>followed.includes('following'),'HTTP follow snapshot')
   const logout=await fetch(url+'/api/logout',{method:'POST',headers:{Origin:url,Cookie:a.cookie,'content-type':'application/json','x-agents-csrf':a.csrf,'x-agents-client':a.client},body:'{}'});assert.equal(logout.status,200)
-  assert.equal((await fetch(view.url,{headers:{Origin:'null'}})).status,401);await f.until(()=>ws.readyState===WebSocket.CLOSED,'logout closes stream');pass('logout immediately revokes HTTP, WebSocket and plugin view access')
-  await f.until(()=>followEnded&&pluginEnded,'logout closes active HTTP follow and plugin SSE')
+  if(view)assert.equal((await fetch(view.url,{headers:{Origin:'null'}})).status,401);await f.until(()=>ws.readyState===WebSocket.CLOSED,'logout closes stream');pass('logout immediately revokes HTTP and WebSocket access'+(view?' and plugin view access':''))
+  await f.until(()=>followEnded&&pluginEnded,'logout closes active authenticated streams')
   await Promise.all([consumeFollow,consumePlugin])
   assert.equal((await f.status(employee.id)).busy,true,'Logging out must not cancel backend work')
   fs.rmSync(path.join(f.control,employee.id+'.hold-user'))

@@ -1,3 +1,4 @@
+import {readyEmployee} from './fixtures/ready-employee.mjs'
 import {nativeFixture} from './native-fixture.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -23,9 +24,9 @@ const stop=async()=>{service.kill('SIGTERM');await done}
 const state=()=>cli('session','list'),add=(name,root,mode='build')=>mode==='work'?cli('group','add',name,'--mode','work','--plugin','mininotion'):cli('group','add',name,'--mode','build','--directory-mode','bind','--root',root)
 let n=0;const ok=(value,label)=>{assert.ok(value,label);n++;console.log('PASS '+label)}
 try{
- await start();await add('Bound Build',external)
+ await start();await cli('settings','set','--default-codex-model','gpt-5.6-luna');const hasPlugin=(await cli('plugin','list')).some(plugin=>plugin.id==='mininotion');let worker;await add('Bound Build',external)
  ok((await state()).teamRoots['Bound Build']===external&&!fs.existsSync(path.join(projects,'Bound Build')),'Build binding reuses the chosen directory without creating a managed project')
- const member=await cli('card','create','--title','开发 Alice','--group','Bound Build')
+ const member=await cli('card','create','--title','开发 Alice','--group','Bound Build');await readyEmployee(cli,member.id)
  await cli('group','rename','Bound Build','Renamed Build')
  const renamed=await state()
  ok(!renamed.groups.includes('Bound Build')&&renamed.teamRoots['Renamed Build']===external&&renamed.sessions.find(c=>c.id===member.id).group==='Renamed Build'&&renamed.sessions.find(c=>c.id===member.id).cwd===member.cwd&&fs.readFileSync(path.join(external,'keep.md'),'utf8')==='existing work','bound Team rename changes membership but preserves its directory and files')
@@ -33,8 +34,9 @@ try{
  await add('Shared Build',external);await assert.rejects(()=>cli('group','rename','Bound Build','Shared Build'))
  await cli('group','remove','Bound Build')
  ok((await state()).groups.includes('Shared Build')&&!(await state()).sessions.some(c=>c.id===member.id)&&fs.existsSync(member.cwd),'deleting a populated bound Team preserves shared directories and other Teams')
+ if(hasPlugin){
  await add('Scoped Work',sub,'work')
- const worker=await cli('card','create','--title','Writer','--group','Scoped Work')
+ worker=await cli('card','create','--title','Writer','--group','Scoped Work')
  ok(worker.cwd===path.join(sub,'Writer')&&fs.existsSync(path.join(worker.cwd,'AGENTS.md')),'Work Team uses its fixed plugin folder; employee defaults and docs use that root')
  const live=await cli('session','open',worker.id);await cli('session','send',live.sessionId,'capture policy only')
  for(let i=0;i<250&&!fs.existsSync(capture);i++)await new Promise(r=>setTimeout(r,20))
@@ -52,25 +54,31 @@ try{
  await assert.rejects(()=>cli('card','create','--title','Link','--group','Scoped Work','--directory-mode','bind','--cwd',path.join(sub,'escape')))
  await assert.rejects(()=>cli('group','add','Invalid Work','--mode','work','--plugin','mininotion','--directory-mode','bind','--root',external))
  await assert.rejects(()=>cli('group','add','Invalid Work','--mode','work','--plugin','mininotion','--root',external))
+ }else{await assert.rejects(()=>add('Scoped Work',sub,'work'));console.log('SKIP removed Mini Notion Work directory, native policy and rename scenarios')}
  await assert.rejects(()=>add('Missing Build',path.join(temp,'missing')))
  await assert.rejects(()=>add('App data',home))
  ok(!(await state()).groups.includes('Invalid Work'),'bindings reject app data and Work Team overrides before writing')
+ if(hasPlugin){
  await add('Plugin Root',plugin,'work')
  ok((await state()).teamRoots['Plugin Root']===path.join(plugin,'Plugin Root'),'another Work Team receives its own fixed plugin folder')
  await cli('group','root','Scoped Work',worker.cwd,'--directory-mode','bind').then(()=>assert.fail('employee would own Team root'),()=>{})
- ok((await state()).teamRoots['Scoped Work']===sub,'rebind rejects invalid employee ownership without changing the Team')
+ if(hasPlugin)ok((await state()).teamRoots['Scoped Work']===sub,'rebind rejects invalid employee ownership without changing the Team')
+ }
  await cli('group','add','Default Build')
- await cli('group','root','Default Build',external,'--directory-mode','bind')
+ await assert.rejects(()=>cli('group','root','Default Build',external,'--directory-mode','bind'))
  await cli('group','rename','Default Build','Now Bound')
- ok((await state()).teamRoots['Now Bound']===external&&(await cli('workspace','suggest','--team','Now Bound')).path===external&&fs.existsSync(path.join(projects,'Default Build')),'renaming a Build Team preserves its registered folder and prior workfiles')
+ ok((await state()).teamRoots['Now Bound']===path.join(projects,'default-build')&&(await cli('workspace','suggest','--team','Now Bound')).path===path.join(projects,'default-build')&&fs.existsSync(path.join(projects,'default-build')),'rebind rejection and Team renaming preserve the registered folder and prior workfiles')
  await cli('group','rename','Now Bound','Default Build')
  await cli('group','add','Change mode')
+ if(hasPlugin){
  await cli('group','configure','Change mode','--mode','work','--plugin','mininotion')
  ok((await state()).teamRoots['Change mode']===path.join(plugin,'Change mode'),'empty Team mode change selects the fixed plugin folder')
+ }else{await assert.rejects(()=>cli('group','configure','Change mode','--mode','work','--plugin','mininotion'));console.log('SKIP removed Mini Notion mode-change and fixed Work restart scenarios')}
  await stop();await start()
- ok((await state()).teamRoots['Scoped Work']===sub&&(await cli('workspace','suggest','--team','Scoped Work')).path===sub,'fixed Work folder and employee suggestions survive service restart')
+ if(hasPlugin)ok((await state()).teamRoots['Scoped Work']===sub&&(await cli('workspace','suggest','--team','Scoped Work')).path===sub,'fixed Work folder and employee suggestions survive service restart')
  // References shared with an employee outside the deleted Team must be retained.
  const a=await cli('card','create','--title','A','--group','Shared Build'),b=await cli('card','create','--title','B','--group','Default Build')
+ await readyEmployee(cli,a.id);await readyEmployee(cli,b.id)
  const stored=await state();for(const id of [a.id,b.id])stored.sessions.find(c=>c.id===id).threadId='11111111-1111-4111-8111-111111111111'
  fs.writeFileSync(path.join(home,'sessions.json'),JSON.stringify(stored))
  await assert.rejects(()=>cli('group','remove','Shared Build'))

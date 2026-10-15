@@ -4,12 +4,12 @@ Aexus 是统一管理原生 Coding Agent、协作角色与云主机的工作台�
 
 - **Single Host**：主机详情、终端、文件，以及相互独立的 Agent / Role 子页。
 - **Hosts Board**：终端和文件看板。
-- **Agent Board**：按工作组组织主机，连接原生 Codex、Claude Code、Pi、Cline；支持主机本机引擎和 Mac 引擎跨主机执行。
+- **Agent Board**：按工作组组织主机，各组独立保存主机排序与 1–6 列数，连接原生 Codex、Claude Code、Pi、Cline；支持主机本机引擎和 Mac 引擎跨主机执行。
 - **Role Board**：Company、Messages、Plan；合作关系、群聊与计划均由独立的角色模块管理。
 
-原 Aexus 的 Mini Notion、Margin Reader、Cloud Hosts 插件产品不再打包或加载。主机管理与 VM Lab 软件独立。
+原 Aexus 的 Mini Notion、Margin Reader、Cloud Hosts 插件产品不再打包或加载；文档封面预览改由 Core 自身的预览 worker 独立渲染，不依赖 Margin Reader。主机管理与 VM Lab 软件独立。
 
-当前版本 **2.11.1**。macOS 应用安装为 `/Applications/Aexus.app`，使用原 Aexus 图标。现有云主机数据仍沿用 `~/Library/Application Support/Toolbox/CloudHosts`，无需迁移凭据或会话；`cloud-hosts` 命令继续兼容，新的主命令为 `aexus`。
+当前版本 **2.11.2**（build 50，构建标识 `5cf36f9b2d20…`），`/Applications/Aexus.app` 已同步安装。2.11.2 修复 Role Board 重新进入/刷新后的 `Invalid CSRF token`（会话 Cookie 现按 Core 实例与浏览器客户端分别命名，重新授权复用同一活动会话，不轮换 Cookie、不重放被拒写入），Company/Messages/Plan 切换改为单击直达、无需重试或再次点击；同时把图标外圈白边改为透明（现代 Assets.car + `CFBundleIconName` 优先加载，`Engine/App.swift` 仅在缺少该键时才回退旧版 icns）。macOS 应用沿用原 Aexus 图标。现有云主机数据仍沿用 `~/Library/Application Support/Toolbox/CloudHosts`，无需迁移凭据或会话；`cloud-hosts` 命令继续兼容，新的主命令为 `aexus`。验收证据见 [Agent / Role Board 拆分验收](docs/AGENT_ROLE_SPLIT.md)。
 
 宣传海报、文案和可编辑源素材保存在 [Marketing](Marketing/README.md)，历史素材不能直接视为当前功能承诺。
 
@@ -135,9 +135,9 @@ CLI 可使用 `hosts.reorder --data`、`hosts.workspace --data` 和 `hosts.inspe
 
 2.9.2：四个工作台视图按钮支持拖动／Alt+左右方向键排序并持久保存；窄终端有可拖动的横向滚动条。Mac 本机 Pi 已按 Aexus 所用的 `@earendil-works/pi-coding-agent@0.87.1` 重新安装并完成离线原生 RPC 初始化检查；Pi 认证和模型配置由用户本机原有账户维护。Agent 角色卡片换成原生引擎 SVG 标志及紧凑会话矩形，主机内有独立的多行多列布局、双向滚动和高度拖动。详细说明见 [AGENT_BOARD.md](AGENT_BOARD.md)。
 
-Agent 看板参考 Aexus Company 的“工作主机 → Coding Agent 角色”结构，每个主机框可展示多个不同来源的会话；只允许上下滚动，按用户指定的 **1–6 个固定列**显示，主机排序独立保存。角色卡片显示引擎、会话名称、工作目录、状态及真实启动来源：本地启动显示本机操作系统图标与“本地主机 / Mac”等标识；远端启动显示云朵及其真实云主机名称。角色属于**工作目标主机**，不依赖引擎启动主机的位置。
+Agent 看板参考 Aexus Company 的“工作主机 → Coding Agent 角色”结构，每个主机框可展示多个不同来源的会话；只允许上下滚动，按用户指定的 **1–6 个固定列**显示，列数与主机排序按工作组独立保存。角色卡片显示引擎、会话名称、工作目录、状态及真实启动来源：本地启动显示本机操作系统图标与“本地主机 / Mac”等标识；远端启动显示云朵及其真实云主机名称。角色属于**工作目标主机**，不依赖引擎启动主机的位置。
 
-同机 Agent 支持 Codex、Claude Code、Cline、Pi 原生 PTY。**跨主机透明执行当前支持兼容的 Codex 原生协议**：来源主机启动 app-server，工作目标主机的 exec-server 负责命令与文件操作；原始任务直接发送，不添加路由提示词，也不把来源工作目录混入模型请求。其他引擎跨主机尚无满足无提示词注入条件的原生适配器，创建界面会禁用。离开 Agent 看板不会结束后台会话；详见 [AGENT_BOARD.md](AGENT_BOARD.md) 的验证、权限和兼容性边界。
+同机 Agent 支持 Codex、Claude Code、Cline、Pi 原生 PTY。**跨主机透明执行支持 Codex、Claude Code、Cline、Pi 四种引擎**：Codex 由来源主机启动 app-server、工作目标主机的 exec-server 负责命令与文件操作；Claude 经官方 mods 的 `$.tool.call` 调用目标主机原生工具；Cline 由目标主机原生 SDK 执行；Pi 经既有 SSH Workspace 传输命令与文件操作。原始任务直接发送，不添加路由提示词，也不把来源工作目录混入模型请求；创建界面依据各引擎实际的源/目标兼容性显示。离开 Agent 看板不会结束后台会话；详见 [AGENT_BOARD.md](AGENT_BOARD.md) 的验证、权限和兼容性边界。
 
 文件看板支持每行 1–6 个窗口，按主机管理多个独立的“文件 1 / 文件 2”目录标签；目录树按需展开、读取，布局独立于终端看板，跨页面和进程重启保存。桌面端使用统一风格下拉菜单。升级已有安装后必须运行新版后台进程：仅替换 `.app` 或 `.exe` 文件而不更新旧后台，会导致切换看板时出现 `Invalid workspace layout`。`tests/workspace-mode-integration.test.cjs` 和原生 WebKit 四按钮测试可用于验收。
 

@@ -6,7 +6,8 @@ import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const run=promisify(execFile),project=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-modes-'))),home=path.join(temp,'state'),work=path.join(temp,'work','mini-notion-workspace','Planning'),build=path.join(temp,'projects','Build project')
 fs.mkdirSync(work,{recursive:true});fs.mkdirSync(build,{recursive:true})
-const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects')},server=spawn(process.execPath,['bin/agents','serve'],{cwd:project,env,stdio:['ignore','pipe','pipe']}),done=new Promise(r=>server.once('exit',r))
+const control=path.join(temp,'fixture');fs.mkdirSync(control);fs.writeFileSync(path.join(control,'release-all'),'')
+const env={...process.env,CODEX_BIN:path.join(project,'test/fixtures/initialization-codex.cjs'),CODEX_HOME:path.join(temp,'codex'),AC_INIT_FIXTURE:control,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects')},server=spawn(process.execPath,['bin/agents','serve'],{cwd:project,env,stdio:['ignore','pipe','pipe']}),done=new Promise(r=>server.once('exit',r))
 let log='';server.stderr.on('data',d=>log+=d)
 const cli=async(...args)=>{const reply=JSON.parse((await run(process.execPath,['bin/agents',...args,'--json'],{cwd:project,env,timeout:20000,maxBuffer:8<<20})).stdout);assert.ok(reply.ok,reply.error);return reply.data}
 const plugin=(employee,method,params={})=>cli('plugin','call','mininotion',method,'--employee',employee.id,'--params',JSON.stringify(params))
@@ -16,7 +17,7 @@ try{
   await assert.rejects(()=>cli('group','add','Invalid','--root',work,'--mode','work'))
   await assert.rejects(()=>cli('group','add','Invalid','--root',work,'--mode','work','--plugin','missing'))
   ok(!(await cli('group','list')).includes('Invalid'),'Work requires an installed plugin before creating the Team')
-  await cli('group','add','Build project','--root',build,'--mode','build')
+  await cli('group','add','Build project','--root',build,'--mode','build','--directory-mode','bind')
   const builder=await cli('card','create','--title','Builder','--group','Build project','--cwd','.','--directory-mode','bind'),builder2=await cli('card','create','--title','Reviewer','--group','Build project','--cwd','.','--directory-mode','bind')
   ok(builder.cwd===build&&builder2.cwd===build&&!fs.existsSync(path.join(build,'AGENTS.md'))&&!fs.existsSync(path.join(build,'.agents-company')),'Build is an ordinary shared folder without plugin injection')
   await assert.rejects(()=>cli('plugin','call','mininotion','fs.list','--team','Build project'))
@@ -27,6 +28,7 @@ try{
   await cli('workspace','move','src/index.ts','--to','src/main.ts','--team','Build project')
   const removed=await cli('workspace','trash','src/main.ts','--team','Build project');await cli('workspace','restore','--id',removed.id,'--team','Build project')
   ok((await cli('workspace','read','src/main.ts','--team','Build project')).content===file.content,'Build file CRUD and conflict protection operate on real project files')
+  if((await cli('plugin','list')).some(plugin=>plugin.id==='mininotion')){
   await cli('group','add','Planning','--mode','work','--plugin','mininotion')
   const hire=async(title,cwd)=>cli('card','create','--title',title,'--group','Planning','--cwd',cwd)
   const owner=await hire('Owner','studio'),manager=await hire('Manager','studio/department'),worker=await hire('Writer','studio/department/writer'),other=await hire('Other','studio/other')
@@ -67,5 +69,6 @@ try{
   ok((await cli('session','list')).teamSettings.Planning.pluginId==='mininotion','Team name is locked while its mode and plugin binding remain intact')
   await assert.rejects(()=>cli('group','configure','Planning','--mode','build'))
   ok(fs.existsSync(shim),'mode changes cannot silently reassign existing employee files')
+  }else{await assert.rejects(()=>cli('group','add','Planning','--mode','work','--plugin','mininotion'));console.log('SKIP removed Mini Notion Work directory, plugin API and launcher scenarios')}
   console.log(`PASS=${checks} FAIL=0 — no model calls`)
 }catch(error){console.error(log.slice(-6000));throw error}finally{server.kill('SIGTERM');await done;fs.rmSync(temp,{recursive:true,force:true})}

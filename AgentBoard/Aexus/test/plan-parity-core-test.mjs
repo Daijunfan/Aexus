@@ -7,10 +7,9 @@ import {fixtureCore} from './fixtures/headless-core.mjs'
 const f=await fixtureCore(),rpc=async(cmd,args={})=>{const r=await f.request(null,cmd,args);assert.ok(r.ok,r.error);return r.data}
 const iso=ms=>new Date(ms).toISOString(),day=86400000,base=Date.now()+40*day
 try{
-  const source=fs.readFileSync(path.join(f.root,'PlugIns/mini-notion/src/database/viewTypes.ts'),'utf8')
-  const notion=[...source.matchAll(/\{ type: '([^']+)'/g)].map(match=>match[1])
+  const notion=['table','board','timeline','calendar','plan','list','gallery','chart','feed','form']
   const schema=await f.cli('plan','schema'),views=await f.cli('plan','views')
-  assert.deepEqual(new Set(schema.layouts),new Set(notion),'source-versioned Notion layout catalog must stay in parity')
+  assert.deepEqual(new Set(schema.layouts),new Set(notion),'Core preserves all ten supported layout contracts independently of removed plugins')
   assert.equal(notion.length,10);assert.deepEqual(views.filter(view=>view.builtin).map(view=>view.layout),schema.layouts)
   await f.cli('group','add','Release Studio');await f.cli('group','add','Night Operations')
   const a=await f.create('Alex','Release Studio'),b=await f.create('Alex','Night Operations')

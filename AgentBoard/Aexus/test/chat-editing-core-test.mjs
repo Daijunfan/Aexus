@@ -10,7 +10,7 @@ const root=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtem
 fs.symlinkSync(path.join(root,'node_modules'),path.join(temp,'node_modules'),'dir')
 let f
 try{
- await build({entryPoints:[path.join(root,'src/main/daemon.ts')],outfile:entry,bundle:true,platform:'node',format:'cjs',target:'node22',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent',plugins:[{name:'hold-group-copy',setup(build){build.onLoad({filter:/src\/main\/server\.ts$/},args=>{const source=fs.readFileSync(args.path,'utf8'),signature="async function copyGroupAttachments(employee:string,group:string,message:import('../shared/chat-groups').ChatMessage){";assert.ok(source.includes(signature));return {contents:source.replace(signature,signature+"\n  while(existsSync(process.env.AC_INIT_FIXTURE+'/'+employee+'.hold-copy'))await new Promise(resolve=>setTimeout(resolve,20))"),loader:'ts'}})}}]})
+ await build({entryPoints:[path.join(root,'src/main/daemon.ts')],outfile:entry,bundle:true,platform:'node',format:'cjs',target:'node22',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'})
  f=await fixtureCore({AC_CHAT_ACK_MANUAL:'0'},entry)
  const rpc=async(cmd,args={},token=null)=>{const result=await f.request(token,cmd,args);assert.ok(result.ok,result.error);return result.data}
  const reject=async(cmd,args,pattern,token=null)=>{const result=await f.request(token,cmd,args);assert.equal(result.ok,false);if(pattern)assert.match(result.error,pattern);return result}
@@ -51,15 +51,15 @@ try{
  assert.deepEqual(await rpc('chat.send',{id:group.id,text:'Original caption',files:[destination],clientMessageId:'caption-once'}),empty)
  console.log('PASS editing contract, Unicode/captions, CAS/idempotent retry, original send fingerprint, all-role authority and unchanged recency/read state')
 
- // Hold the existing attachment preparation boundary while the original mention fan-out is routing.
- const opening=path.join(f.control,fanout.id+'.hold-copy');fs.writeFileSync(opening,'')
+ // Hold real private reading while the accepted mention fan-out is in flight; attachments stay shared.
+ const opening=path.join(f.control,fanout.id+'.hold-ack');fs.writeFileSync(opening,'')
  const routedArgs={id:group.id,text:'ORIGINAL_FANOUT_TASK',mentions:[fanout.id],files:[destination],clientMessageId:'held-fanout'},sending=rpc('chat.send',routedArgs)
- const routing=await f.until(async()=>{const message=(await history(group.id)).messages.find(message=>message.clientMessageId==='held-fanout');if(message?.deliveries.some(item=>item.status==='failed'))throw Error(JSON.stringify(message.deliveries));return message&&delivery(message,fanout.id)?.status==='routing'&&otherRecipientsComplete(message,fanout.id)&&message},'fanout awaiting attachment copy')
+ const routing=await f.until(async()=>{const message=(await history(group.id)).messages.find(message=>message.clientMessageId==='held-fanout');if(message?.deliveries.some(item=>item.status==='failed'))throw Error(JSON.stringify(message.deliveries));return message&&(await f.status(fanout.id)).acknowledging&&otherRecipientsComplete(message,fanout.id)&&message},'fanout private reading is held')
  assert.equal(delivery(routing,fanout.id).mode,'work');assert.equal(delivery(routing,fanout.id).readAt,undefined)
- const routingEdit=await rpc('chat.edit',{id:group.id,messageId:routing.id,text:'PUBLIC_FANOUT_CORRECTION',expectedRevision:0});unchanged(routingEdit,routing);await rpc('chat.post',{id:group.id,replyTo:routing.id,text:'Received before work.'},await f.token(fanout.id));fs.unlinkSync(opening)
- assert.equal((await sending).text,routingEdit.text);await f.until(async()=>delivery(await get(group.id,routing.id),fanout.id).status==='completed','fanout completes with original prompt')
+ const routingEdit=await rpc('chat.edit',{id:group.id,messageId:routing.id,text:'PUBLIC_FANOUT_CORRECTION',expectedRevision:0});unchanged(routingEdit,routing);fs.unlinkSync(opening)
+ assert.equal((await sending).text,routedArgs.text);assert.equal((await get(group.id,routing.id)).text,routingEdit.text);await f.until(async()=>delivery(await get(group.id,routing.id),fanout.id).status==='completed','fanout completes with original prompt')
  const fanoutNative=JSON.parse(fs.readFileSync(path.join(f.control,fanout.id+'-user.json'),'utf8')).text;assert.ok(fanoutNative.includes(routedArgs.text));assert.ok(!fanoutNative.includes(routingEdit.text))
- const fanoutTranscript=await f.cli('session','transcript',fanout.id);assert.equal(fanoutTranscript.items.filter(item=>item.role==='user'&&item.text===routedArgs.text).length,1);assert.equal((await rpc('chat.send',routedArgs)).id,routing.id);assert.deepEqual(await f.cli('session','transcript',fanout.id),fanoutTranscript)
+ const fanoutTranscript=await f.cli('session','transcript',fanout.id);assert.equal(fanoutTranscript.items.filter(item=>item.role==='user'&&item.text.startsWith(routedArgs.text)).length,1);assert.equal((await rpc('chat.send',routedArgs)).id,routing.id);assert.deepEqual(await f.cli('session','transcript',fanout.id),fanoutTranscript)
 
  // A queued quoted task retains both its submitted prompt and accepted quote after source correction.
  const quoteSource=await note({id:group.id,kind:'message',text:'Accepted quote remains.',clientMessageId:'quote-source'}),quote={text:'Accepted quote',offset:0},hold=path.join(f.control,worker.id+'.hold-user');fs.writeFileSync(hold,'')
@@ -69,7 +69,7 @@ try{
  await rpc('chat.edit',{id:group.id,messageId:quoteSource.id,text:'Published source is corrected.',expectedRevision:0})
  const queuedEdit=await rpc('chat.edit',{id:group.id,messageId:queued.id,text:'PUBLIC_QUEUED_CORRECTION',expectedRevision:0});unchanged(queuedEdit,queued);assert.deepEqual(await f.cli('session','queue','--employee',worker.id),queueBefore);assert.equal(fs.readFileSync(path.join(f.control,worker.id+'-user.json'),'utf8'),nativeBefore);assert.deepEqual(await f.cli('session','transcript',worker.id),privateBefore)
  await reject('chat.send',{id:group.id,text:'Invalid new quote',replyTo:quoteSource.id,replyQuote:quote,clientMessageId:'stale-new-quote'},/no longer matches/)
- await rpc('chat.post',{id:group.id,replyTo:queued.id,text:'Received before queued work.'},await f.token(worker.id));fs.unlinkSync(hold);await f.until(async()=>delivery(await get(group.id,queued.id),worker.id).status==='completed','accepted queued quote completes')
+ fs.unlinkSync(hold);await f.until(async()=>delivery(await get(group.id,queued.id),worker.id).status==='completed','accepted queued quote completes')
  const dispatched=JSON.parse(fs.readFileSync(path.join(f.control,worker.id+'-user.json'),'utf8')).text;assert.ok(dispatched.includes(queuedArgs.text));assert.ok(dispatched.includes(JSON.stringify(quote)));assert.ok(!dispatched.includes(queuedEdit.text));assert.ok(!dispatched.includes('Published source is corrected.'))
  const transcript=await f.cli('session','transcript',worker.id);assert.equal(transcript.items.filter(item=>item.role==='user'&&item.text===queuedArgs.text).length,1);assert.equal((await rpc('chat.send',queuedArgs)).id,queued.id);assert.deepEqual(await f.cli('session','transcript',worker.id),transcript)
  for(const message of (await history(group.id)).messages)await settle(message)

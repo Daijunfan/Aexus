@@ -8,7 +8,7 @@ import {chromium,_electron as electron,expect} from '@playwright/test'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 import {profileApplication} from './fixtures/profile-application.mjs'
 const root=path.resolve(import.meta.dirname,'..'),out=path.join(root,'artifacts/conversation-controls'),require=createRequire(import.meta.url),built=await profileApplication()
-fs.mkdirSync(out,{recursive:true});const note=text=>{console.log(text);for(const file of ['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md'])fs.appendFileSync(path.join(root,file),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
+fs.mkdirSync(out,{recursive:true});const note=text=>{console.log(text);fs.appendFileSync(path.join(out,'progress-notes.md'),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 note('PASS 通知专项独立构建：未覆盖根 out/，未打包或安装。')
 async function run(native){
  const mode=native?'desktop':'web',probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));const port=probe.address().port;await new Promise(resolve=>probe.close(resolve))

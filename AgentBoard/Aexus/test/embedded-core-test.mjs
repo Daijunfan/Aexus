@@ -26,17 +26,29 @@ try{
  for(const command of ['card.create','chat.send','plan.query','schedule.create','api.docs'])assert.ok(commands.some(c=>c.name===command))
  assert.ok(commands.every(c=>!c.name.startsWith('guardian.')));
  assert.ok(commands.some(c=>c.name==='plugin.call'));checks++
- const plugins=await rpc('plugin.list');
- assert.ok(plugins.some(plugin=>plugin.id==='mininotion'));
- assert.ok(plugins.some(plugin=>plugin.id==='margin-reader'));
+ // Mini Notion and Margin Reader are no longer shipped (root AGENTS.md: Aexus
+ // dropped the legacy plugin products). The Core keeps the plugin plumbing, so
+ // the removed plugins are excluded explicitly here — by proving they are gone
+ // — instead of asserting that they are still installed.
+ const plugins=await rpc('plugin.list')
+ assert.deepEqual(plugins.map(plugin=>plugin.id),[],'No legacy plugin package may ship with the current product')
+ const refusesPlugin=async(id,cmd,args)=>{const result=await f.request(null,cmd,args);assert.equal(result.ok,false,cmd);assert.match(String(result.error),new RegExp('Plugin not installed: '+id))}
+ await refusesPlugin('mininotion','plugin.describe',{id:'mininotion'})
+ await refusesPlugin('margin-reader','plugin.describe',{id:'margin-reader'})
+ await refusesPlugin('mininotion','group.add',{name:'Removed Plugin Work',mode:'work',pluginId:'mininotion'})
+ assert.ok(!(await rpc('group.list')).includes('Removed Plugin Work'),'A Work Team must not bind a removed plugin')
+ await denied('api.docs',{document:'plugin/mininotion/index'})
+ await denied('api.docs',{document:'plugin/margin-reader/schema'})
  await denied('guardian.snapshot',{},'GUARDIAN_DISABLED');checks++
  const index=await rpc('api.docs')
  assert.equal(index.document,'index')
- assert.match(index.markdown,/mininotion/)
- assert.ok((await rpc('api.docs',{document:'plugin/mininotion/index'})).markdown)
+ assert.match(index.markdown,/当前没有已安装插件/,'The index must report that no plugin is installed')
+ assert.match(index.markdown,/Plan 是 Core 视图/,'Plan must stay documented as a Core view, not a plugin')
  assert.equal((await rpc('api.describe',{command:'schedule.create',all:true})).name,'schedule.create')
  assert.ok(await rpc('plan.query'));checks++
- await rpc('group.add',{name:'Native Work',mode:'work',pluginId:'mininotion'});checks++
+ // With every plugin product removed, a native Build Team is the only Team
+ // kind the current product can create.
+ await rpc('group.add',{name:'Native Work',mode:'build'});checks++
  await f.stop()
  const stateFile=path.join(f.env.AGENTS_COMPANY_HOME,'sessions.json')
  const state=JSON.parse(fs.readFileSync(stateFile,'utf8'))

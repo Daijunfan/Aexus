@@ -1,14 +1,24 @@
 // Actual Claude CLI/SDK transport with a loopback response fixture; no provider requests.
 import http from 'node:http';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import assert from 'node:assert/strict';import {fixtureCore} from './fixtures/headless-core.mjs';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-claude-view-')),received=[];
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-claude-view-')),received=[],documentationTool='mcp__agents_company__agents_company_documentation';
 const server=http.createServer(async(req,res)=>{
  req.setEncoding('utf8');let raw='';for await(const part of req)raw+=part;
  if(req.url.includes('count_tokens')){res.writeHead(200,{'content-type':'application/json'}).end('{"input_tokens":1}');return}
  if(!req.url.includes('messages')){res.writeHead(404).end();return}
  const body=JSON.parse(raw),content=body.messages.filter(m=>m.role==='user').at(-1)?.content,text=typeof content==='string'?content:(content??[]).filter(c=>c.type==='text').map(c=>c.text).join('\n');received.push(text);
- const answer=text.includes('[Agents Company private initialization]')?'OK':'这一轮任务已按指定范围检查。',message={id:'fixture-'+received.length,type:'message',role:'assistant',model:body.model,content:[],stop_reason:null,stop_sequence:null,usage:{input_tokens:1,output_tokens:1}};
- if(!body.stream){res.writeHead(200,{'content-type':'application/json'}).end(JSON.stringify({...message,content:[{type:'text',text:answer}],stop_reason:'end_turn'}));return}
- res.writeHead(200,{'content-type':'text/event-stream'});for(const event of [{type:'message_start',message},{type:'content_block_start',index:0,content_block:{type:'text',text:''}},{type:'content_block_delta',index:0,delta:{type:'text_delta',text:answer}},{type:'content_block_stop',index:0},{type:'message_delta',delta:{stop_reason:'end_turn',stop_sequence:null},usage:{output_tokens:1}},{type:'message_stop'}])res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);res.end();
+ // Private onboarding only settles once the employee actually read its identity
+ // and the shared API index through the documentation tool
+ // (src/main/documentation-tool.ts assertDocumentationRead), so the fixture model
+ // performs both reads before it answers the task turn. Detection scans the whole
+ // conversation: after the first read the newest user message is only the tool
+ // result, so the marker has to be found anywhere in the history.
+ const initializing=JSON.stringify(body.messages).includes('[Agents Company private initialization]');
+ const reads=body.messages.flatMap(m=>Array.isArray(m.content)?m.content:[]).filter(c=>c?.type==='tool_use'&&c.name===documentationTool).map(c=>c.input?.operation);
+ const call=initializing&&!['identity','index'].every(operation=>reads.includes(operation));
+ const block=call?{type:'tool_use',id:'tool-'+received.length,name:documentationTool,input:{operation:reads.includes('identity')?'index':'identity'}}:{type:'text',text:initializing?'OK':'这一轮任务已按指定范围检查。'};
+ const message={id:'fixture-'+received.length,type:'message',role:'assistant',model:body.model,content:[],stop_reason:null,stop_sequence:null,usage:{input_tokens:1,output_tokens:1}};
+ if(!body.stream){res.writeHead(200,{'content-type':'application/json'}).end(JSON.stringify({...message,content:[block],stop_reason:call?'tool_use':'end_turn'}));return}
+ res.writeHead(200,{'content-type':'text/event-stream'});for(const event of [{type:'message_start',message},{type:'content_block_start',index:0,content_block:call?{...block,input:{}}:{type:'text',text:''}},{type:'content_block_delta',index:0,delta:call?{type:'input_json_delta',partial_json:JSON.stringify(block.input)}:{type:'text_delta',text:block.text}},{type:'content_block_stop',index:0},{type:'message_delta',delta:{stop_reason:call?'tool_use':'end_turn',stop_sequence:null},usage:{output_tokens:1}},{type:'message_stop'}])res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);res.end();
 });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const f=await fixtureCore({CLAUDE_CONFIG_DIR:path.join(temp,'claude'),ANTHROPIC_API_KEY:'local-fixture-only',ANTHROPIC_AUTH_TOKEN:'',ANTHROPIC_BASE_URL:`http://127.0.0.1:${server.address().port}`,CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:'1',NO_PROXY:'127.0.0.1,localhost'});
 try{
@@ -16,7 +26,7 @@ try{
  const a=await f.cli('team-view','create','--name','研发','--teams','["Claude Team"]'),b=await f.cli('team-view','create','--name','阅读','--teams','[]');
  await f.cli('session','send','--employee',g.id,'--view',a.id,'--text','核对研发视图的位置');await f.cli('team-view','select',b.id);await f.until(()=>received.some(t=>t.endsWith('核对研发视图的位置')),'Claude receives task');const input=received.find(t=>t.endsWith('核对研发视图的位置'));assert.match(input,/Agents Company task view/);assert.ok(input.includes(a.id));assert.ok(!input.includes(b.id));await f.until(async()=>!(await f.cli('session','info','--employee',g.id)).busy,'Claude finished');
  assert.equal((await f.cli('session','info','--employee',g.id)).currentTask.viewId,a.id);const visible=(await f.cli('session','transcript','--employee',g.id)).text;assert.ok(visible.includes('核对研发视图的位置'));assert.ok(!visible.includes('[Agents Company task view]'));
- const employee=await f.cli('card','create','--title','Employee','--group','Claude Team','--engine','claude','--model','claude-sonnet-4-6');await f.cli('session','send','--employee',employee.id,'--text','描述这个项目的目标');await f.until(()=>received.some(t=>t.includes('描述这个项目的目标')),'Employee input');assert.ok(!received.find(t=>t.includes('描述这个项目的目标')).includes('[Agents Company task view]'),'no host view context on Employee input');
+ const employee=await f.cli('card','create','--title','Employee','--group','Claude Team','--engine','claude','--model','claude-sonnet-4-6');await f.ready(employee.id);await f.cli('session','send','--employee',employee.id,'--text','描述这个项目的目标');await f.until(()=>received.some(t=>t.includes('描述这个项目的目标')),'Employee input');assert.ok(!received.find(t=>t.includes('描述这个项目的目标')).includes('[Agents Company task view]'),'no host view context on Employee input');
  await f.until(async()=>!(await f.cli('session','info','--employee',employee.id)).busy,'Employee completes');const source=(await f.cli('session','transcript','--employee',employee.id)).items.filter(item=>item.role==='assistant'&&item.blocks.some(block=>block.kind==='text')).at(-1);await f.cli('session','send','--employee',employee.id,'--text','就这条回复继续讨论','--reply-to',source.id);await f.until(()=>received.some(text=>text.includes('[Reply to a previous message in this conversation]')&&text.endsWith('就这条回复继续讨论')),'Claude receives public reply context');await f.until(async()=>!(await f.cli('session','info','--employee',employee.id)).busy,'Claude reply completes');assert.equal((await f.cli('session','transcript','--employee',employee.id)).items.find(item=>item.text==='就这条回复继续讨论').reply.id,source.id)
  console.log('PASS actual Claude SDK/CLI receives pinned Governor view context, ignores subsequent tab changes, keeps metadata out of visible chat, and leaves Employee input pristine. Local response fixture only.');
 }finally{await f.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));fs.rmSync(temp,{recursive:true,force:true})}

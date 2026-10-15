@@ -30,7 +30,10 @@ try{
  assert.equal(count(),before,'invalid bindings fail before SSH or mkdir')
  await call('group','add','Real Ubuntu','--host-id',linux.id,'--directory-mode','default','--os','linux','--distribution','ubuntu')
  const team=(await call('management','topology','--teams-only')).teams.find(t=>t.name==='Real Ubuntu')
- assert.equal(team.mode,'cloud');assert.equal(team.hostId,linux.id);assert.equal(team.os,'linux');assert.equal(team.distribution,'ubuntu');assert.equal(team.directory,path.join(remote,'Real Ubuntu'));assert.ok(fs.statSync(team.directory).isDirectory())
+ // A Team directory is derived from the Team name through
+ // src/shared/directory-names.ts directoryName, which slugifies it, so
+ // 'Real Ubuntu' becomes 'real-ubuntu' on the host as well.
+ assert.equal(team.mode,'cloud');assert.equal(team.hostId,linux.id);assert.equal(team.os,'linux');assert.equal(team.distribution,'ubuntu');assert.equal(team.directory,path.join(remote,'real-ubuntu'));assert.ok(fs.statSync(team.directory).isDirectory())
  fs.mkdirSync(path.join(remote,'Existing'));fs.writeFileSync(path.join(remote,'Existing','keep'),'untouched')
  await assert.rejects(()=>call('group','add','Existing','--host-id',linux.id,'--directory-mode','default'))
  assert.equal(fs.readFileSync(path.join(remote,'Existing','keep'),'utf8'),'untouched')
@@ -58,8 +61,11 @@ try{
  assert.equal((await f.raw(workerToken,'host','credentials',linux.id)).ok,false)
  assert.equal((await f.raw(workerToken,'host','list','--credentials')).ok,false)
  for(const callerToken of [managerToken,workerToken])for(const args of [['host','check',linux.id],['host','exec',linux.id,'--command','pwd'],['host','remove',linux.id],['host','update',linux.id,'--data','{"name":"Forbidden"}']])assert.equal((await f.raw(callerToken,...args)).ok,false,'credential reads do not grant host administration')
- assert.match((await f.call(workerToken,'api','docs')).markdown,/host list --summary/)
- const docs=await call('api','docs');assert.match(docs.markdown,/按操作系统建队并委派招人/)
+ // The OS-team guidance moved from the removed per-employee handbook into the
+ // shared Core API document, which every employee may read without gaining
+ // authority (the credential refusals above prove reading grants none).
+ assert.match((await f.call(workerToken,'api','docs','core/api')).markdown,/host list --summary/)
+ const docs=await call('api','docs','core/api');assert.match(docs.markdown,/Missing hosts must be reported, never replaced with renamed local teams/)
  const offline=await f.cli('host','create','--data',JSON.stringify({name:'Offline',host:'offline',os:'linux',defaultDirectory:remote}))
  await assert.rejects(()=>call('group','add','No Fallback','--host-id',offline.id,'--directory-mode','default'))
  assert.ok(!(await f.cli('group','list')).includes('No Fallback'));assert.ok(!fs.existsSync(path.join(f.env.AGENTS_COMPANY_PROJECTS,'No Fallback')))

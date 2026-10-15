@@ -22,7 +22,7 @@ try{
  await call('session.send',{employee:a.id,text:'Let’s make this a space we love working in.'});await expect.poll(async()=>(await call('session.status',{employee:a.id}))[0].busy).toBe(false)
  const before=(await call('session.transcript',{id:a.id})).items
  const group=await call('chat.create',{name:'Design circle',members:people.map(person=>person.id)})
- await call('chat.update',{id:group.id,members:[]});
+ await call('chat.update',{id:group.id,members:[a.id]});
  for(let i=0;i<105;i++)await call('chat.post',{kind:'message',id:group.id,text:i===0?'ORIGINAL_BRIEF: Start with the user’s needs.':`Design note ${i}: a detail worth discussing.`,clientMessageId:'design-'+i})
  await call('chat.update',{id:group.id,members:people.map(person=>person.id)});
  await page.getByRole('button',{name:'Messages',exact:true}).click();await expect(page.locator('.message-contact')).toHaveCount(5)

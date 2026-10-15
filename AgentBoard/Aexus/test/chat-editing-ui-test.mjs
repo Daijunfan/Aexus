@@ -83,7 +83,7 @@ try{
  await edit(routed.id);await editText.fill('Public clarification only; the accepted task stays original.');await save();const routedCorrection=await message(routed.id);assert.deepEqual(invariant(routedCorrection),invariant(running));assert.equal(fs.readFileSync(path.join(f.control,a.id+'-user.json'),'utf8'),nativeRequest)
  const duplicate=await call('chat.send',routedArgs);assert.equal(duplicate.id,routed.id);assert.equal(duplicate.text,routedCorrection.text);assert.equal(fs.readFileSync(path.join(f.control,a.id+'-user.json'),'utf8'),nativeRequest)
  fs.unlinkSync(path.join(f.control,a.id+'.hold-user'));await f.until(async()=>!(await f.status(a.id)).busy&&delivery(await message(routed.id),a.id)?.status==='completed','original task completed')
- const originalTranscript=await call('session.transcript',{employee:a.id});assert.ok(originalTranscript.text.includes(routedArgs.text));assert.ok(!originalTranscript.text.includes(routedCorrection.text));assert.equal((await f.status(a.id)).lastReply.readAt,undefined)
+ const originalTranscript=await call('session.transcript',{employee:a.id});assert.ok(originalTranscript.text.includes(routedArgs.text));assert.ok(!originalTranscript.text.includes(routedCorrection.text));assert.equal((await f.status(a.id)).lastReply,undefined,'shared-task completion does not create a private unread reply receipt')
 
  // A separate authenticated socket client changes the same message during editing.
  const beforeConflict=await message(first.id);await edit(first.id);await editText.fill('My retained correction after a concurrent change.')

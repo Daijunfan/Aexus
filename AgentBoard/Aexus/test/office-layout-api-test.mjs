@@ -25,7 +25,7 @@ try{
   assert.equal((await request(m,'room.bounds',{name:'B',team:'A',bounds:{x:200}})).ok,false,'conflicting Team aliases')
   assert.equal((await request(m,'card.place',{id:outsider.id,employee:child.id,x:300,y:250})).ok,false,'conflicting employee aliases')
   for(const name of ['ui.click','ui.drag','ui.type','ui.wheel','session.acknowledge'])assert.equal((await request(g,name,{})).ok,false)
-  assert.ok((await call(m,'api','docs')).markdown.includes('office layout'))
+  assert.ok((await call(m,'api','docs','core/api')).markdown.includes('office layout'))
   console.log('PASS layout API scope: Governors edit every Team and themselves; all same-Team Employees; alias and UI-driver bypasses denied')
   await cli('room','bounds','Managers','--x','-2200','--y','-1800')
   await cli('room','bounds','Far','--x','9000','--y','9000')

@@ -85,7 +85,7 @@ export function buildOptions(args: {
     // The installed system CLI may predate custom model capabilities. Use the SDK's paired runtime.
     opts.pathToClaudeCodeExecutable=engineExecutable('claude',true)
     opts.model=deepSeekModel(provider,args.model||'deepseek-flash')
-    opts.thinking=args.thinking===true?{type:'adaptive',display:'summarized'}:{type:'disabled'}
+    delete opts.thinking;opts.settings={...opts.settings,alwaysThinkingEnabled:args.thinking===true}
     opts.effort=(deepSeekEffort(args.effort)??'high') as Options['effort']
     opts.settings={...opts.settings,...deepSeekPicker,fastMode:false}
   }

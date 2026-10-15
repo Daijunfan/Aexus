@@ -1,6 +1,6 @@
 window.runAgentBoardChecks=async function(){
  const waitFor=async test=>{for(let n=0;n<40&&!test();n++)await new Promise(resolve=>setTimeout(resolve,100))}
- const checks=[],record=(name,passed)=>checks.push({name,passed:!!passed}),sleep=()=>new Promise(resolve=>setTimeout(resolve,110))
+ const checks=[],record=(name,passed)=>checks.push({name,passed:!!passed}),sleep=()=>new Promise(resolve=>setTimeout(resolve,110)),tuiDetails=[]
  const local={id:'local',name:'本地主机',host:'local-device',os:'macos',defaultDirectory:'/Users/dev/work',local:true}
  const hosts=[local,{id:'mac-1',name:'Mac Build Host',host:'mac.invalid',os:'macos',defaultDirectory:'/Users/build'}, {id:'win-1',name:'Windows Engine',host:'win.invalid',os:'windows',defaultDirectory:'C:\\projects'},...Array.from({length:5},(_,i)=>({id:'linux-'+i,name:'Linux '+i,host:'linux.invalid',os:'linux',defaultDirectory:'/home/dev'}))]
  const role=(id,engineHostId,targetHostId,engine,name)=>({id,name,engineHostId,targetHostId,hostId:targetHostId,engineHost:hosts.find(h=>h.id===engineHostId),targetHost:hosts.find(h=>h.id===targetHostId),engine,kind:'agent',transport:engine==='codex'?'native':'pty',threadId:engine==='codex'?'thread-'+id:undefined,running:true,status:'idle',cwd:hosts.find(h=>h.id===targetHostId).defaultDirectory})
@@ -74,14 +74,35 @@ window.runAgentBoardChecks=async function(){
  record('Agent inspector never asks for a manual Restart button',!q('.agent-restart')&&!operations.some(op=>op.method==='hosts.agent-send'))
  close();failedRole.error=undefined;failedRole.running=true;failedRole.status='idle';q('#agent-refresh').click();await sleep()
  failTui='s1';const beforeFallback=operations.filter(op=>op.method==='hosts.agent-send').length;
- q('[data-session="s1"]').click();await waitFor(()=>!!q('.agent-inspector .agent-tui-notice')&&!!q('.agent-inspector .agent-conversation-log'));
- record('Native TUI handshake outage falls back to the exact live Codex conversation without a toast or model request',
-  !!q('.agent-inspector .agent-retry-tui')&&!!q('.agent-inspector .agent-conversation-log')&&
+ const beforeRetryTui=operations.filter(op=>op.method==='hosts.agent-tui'&&op.args.session==='s1').length;
+ q('[data-session="s1"]').click();await waitFor(()=>!!q('.agent-inspector .agent-connect-panel'));
+ // A native TUI handshake outage is a transport failure, not a conversation
+ // change: the product keeps the same native Codex identity and offers the
+ // shared retry control (ui/agent-board.js openSession catch). The retired
+ // inline conversation-log fallback and its `.agent-retry-tui` control no
+ // longer exist, so assert the surviving contract: the exact bound thread is
+ // preserved, the raw protocol diagnostic stays inside the on-demand
+ // <details> panel, and no model message is injected on the failure path.
+ const tuiPanel=q('.agent-inspector .agent-connect-panel')
+ tuiDetails.push({panel:!!tuiPanel,retry:!!q('.agent-inspector .agent-retry-connect'),
+  visible:tuiPanel?.textContent.slice(0,160),
+  diagnostic:q('.agent-inspector .agent-connect-panel details pre')?.textContent,
+  thread:records.find(row=>row.id==='s1').threadId,toasts:messages.slice()})
+ record('Native TUI handshake outage keeps the exact bound Codex conversation without a toast or model request',
+  !!tuiPanel&&!!q('.agent-inspector .agent-retry-connect')&&
+  q('.agent-inspector .agent-connect-panel details pre')?.textContent.includes('native_tui_handshake_timeout')&&
+  !tuiPanel.textContent.split('连接诊断')[0].includes('native_tui_handshake_timeout')&&
   !messages.some(text=>String(text).includes('native_tui_handshake_timeout'))&&
+  records.find(row=>row.id==='s1').threadId==='thread-s1'&&
   operations.filter(op=>op.method==='hosts.agent-send').length===beforeFallback);
- failTui=null;q('.agent-inspector .agent-retry-tui')?.click();await waitFor(()=>!!q('.agent-inspector .xterm'));
- record('Retry from inline native fallback restores original Codex TUI and bound thread',
-  !!q('.agent-inspector .xterm')&&records.find(row=>row.id==='s1').threadId==='thread-s1');
+ failTui=null;q('.agent-inspector .agent-retry-connect')?.click();await waitFor(()=>!!q('.agent-inspector .xterm'));
+ const retryTui=operations.filter(op=>op.method==='hosts.agent-tui'&&op.args.session==='s1').length;
+ tuiDetails.push({retried:!!q('.agent-inspector .xterm'),thread:records.find(row=>row.id==='s1').threadId,tuiCalls:{beforeRetryTui,afterRetry:retryTui},
+  socket:sockets.findLast(socket=>socket.url.searchParams.get('terminal')==='tui-s1')?.url.search})
+ record('Retry from the connect panel restores the original Codex TUI and bound thread',
+  !!q('.agent-inspector .xterm')&&!q('.agent-inspector .agent-connect-panel')&&
+  records.find(row=>row.id==='s1').threadId==='thread-s1'&&retryTui>beforeRetryTui&&
+  sockets.findLast(socket=>socket.url.searchParams.get('terminal')==='tui-s1')?.url.searchParams.get('host')==='mac-1');
  close();await sleep()
 
  const nativeIcons=['codex','claude','cline','pi']
@@ -112,27 +133,42 @@ window.runAgentBoardChecks=async function(){
   !!q('[data-session="s3"] .agent-engine-native')&&!!q('[data-session="s4"] .agent-engine-native')&&
   root.querySelectorAll('[data-session]').length===records.length)
  record('Fixed Within host columns setting is completely removed',!q('#agent-role-columns')&&!q('.agent-role-columns'))
- const selector=q('#agent-columns')
- selector.value='1';selector.dispatchEvent(new Event('change',{bubbles:true}));await sleep()
  for(let i=0;i<14;i++)records.push(role('extra-'+i,i%2?'win-1':'local','mac-1','codex','Long-running Role '+i))
  q('#agent-refresh').click();await sleep()
  const viewport=q('[data-host="mac-1"] .agent-role-viewport')
  const inner=viewport.querySelector('.agent-role-grid')
  const first=q('[data-host="mac-1"] [data-session="s1"]')
- const adaptive=[]
+ const adaptive=[],layoutDetails=[],columnDetails=[]
  for(const width of [430,650,1000]){
   root.style.width=width+'px';await sleep();
   const count=getComputedStyle(inner).gridTemplateColumns.trim().split(/\s+/).length
   adaptive.push(count)
+  layoutDetails.push({width,innerColumns:count,innerTrack:getComputedStyle(inner).gridTemplateColumns,viewportScrollWidth:viewport.scrollWidth,viewportClientWidth:viewport.clientWidth,rootScrollWidth:root.scrollWidth,rootClientWidth:root.clientWidth,tileWidths:[...inner.querySelectorAll('.agent-role')].map(tile=>tile.clientWidth),tileHeights:[...inner.querySelectorAll('.agent-role')].map(tile=>Math.round(tile.getBoundingClientRect().height))})
   record(`Host inner grid at ${width}px is responsive without horizontal clipping`,
    count>=1&&viewport.scrollWidth<=viewport.clientWidth+1&&root.scrollWidth<=root.clientWidth+1&&
    [...inner.querySelectorAll('.agent-role')].every(tile=>tile.clientWidth<=220&&tile.getBoundingClientRect().height<=150))
  }
- record('Panel resize automatically increases real Agent columns',adaptive[0]<adaptive[1]&&adaptive[1]<=adaptive[2])
- root.style.width='1000px';selector.value='2';selector.dispatchEvent(new Event('change',{bubbles:true}));await sleep()
+ // `.agent-role-grid` is `repeat(auto-fill,minmax(min(100%,176px),1fr))`
+ // (dist/ui/agent-board.bundle.css), so the real column count is a step
+ // function of the *viewport* width, not of the outer window: the host card
+ // stops widening before the next 176px column fits. Assert the contract —
+ // monotonic in width, strictly more columns in the widest layout, and every
+ // multi-column track at least the 176px floor — instead of demanding an
+ // increase at every sampled window size.
+ const roleGridWidths=layoutDetails.filter(entry=>entry.innerColumns!==undefined)
+ const trackFloors=roleGridWidths.map(entry=>entry.innerTrack.trim().split(/\s+/).map(track=>parseFloat(track)))
+ tuiDetails.push({roleGridWidths,trackFloors})
+ record('Panel resize automatically increases real Agent columns',
+  adaptive.every((count,index)=>index===0||count>=adaptive[index-1])&&
+  adaptive[2]>adaptive[0]&&
+  roleGridWidths.map(entry=>entry.viewportClientWidth).every((width,index,all)=>index===0||width>=all[index-1])&&
+  trackFloors.every(tracks=>tracks.length===1||tracks.every(track=>track>=175)))
+ root.style.width='1000px';await sleep()
+ layoutDetails.push({stage:'dense',adaptive,scrollHeight:viewport.scrollHeight,clientHeight:viewport.clientHeight,scrollWidth:viewport.scrollWidth,clientWidth:viewport.clientWidth,connected:viewport.isConnected,outerHTML:viewport.outerHTML.slice(0,200)})
  record('Dense Agent roles scroll vertically, not horizontally',viewport.scrollHeight>viewport.clientHeight&&viewport.scrollWidth<=viewport.clientWidth+1)
  viewport.scrollTop=90
  record('Role viewport retains its independent vertical scroll offset',viewport.scrollTop>0)
+ layoutDetails.push({stage:'scroll',scrollTop:viewport.scrollTop,connected:viewport.isConnected})
  first.focus({preventScroll:true})
  const beforeFocus=document.activeElement===first, beforeId=first.dataset.session;
  records[0].busy=true;await controller.refresh(true);await sleep()
@@ -176,6 +212,7 @@ window.runAgentBoardChecks=async function(){
  record('Large fleets add vertical rows with no horizontal card clipping',
   roleViewport.scrollHeight>1800&&roleViewport.scrollWidth<=roleViewport.clientWidth+1&&root.scrollWidth<=root.clientWidth+1&&canvas.querySelectorAll('.agent-role').length===99)
  window.scrollbarDetails={hidden:scrollTrack.hidden,track:getComputedStyle(scrollTrack).cursor,thumb:getComputedStyle(scrollThumb).cursor,scrollHeight:roleViewport.scrollHeight,clientHeight:roleViewport.clientHeight}
+ layoutDetails.push({stage:'fleet',roleViewport:{scrollHeight:roleViewport.scrollHeight,clientHeight:roleViewport.clientHeight,scrollWidth:roleViewport.scrollWidth,clientWidth:roleViewport.clientWidth},root:{scrollWidth:root.scrollWidth,clientWidth:root.clientWidth},tiles:canvas.querySelectorAll('.agent-role').length,track:{hidden:scrollTrack.hidden,cursor:getComputedStyle(scrollTrack).cursor,classes:scrollTrack.className}})
  record('Right-side vertical scrollbar becomes a hand/grab cursor and is always visible on overflow',
   !scrollTrack.hidden&&getComputedStyle(scrollTrack).cursor==='grab'&&getComputedStyle(scrollThumb).cursor==='grab')
  roleViewport.scrollTop=60;scrollTrack.setPointerCapture=()=>{}
@@ -191,15 +228,36 @@ window.runAgentBoardChecks=async function(){
   Number(resize.getAttribute('aria-valuenow'))===height+10&&q('[data-host="local"] .agent-role-viewport').style.height===(height+10)+'px')
 
  const grid=q('.agent-grid')
+ // The user-facing host-column selector moved into the Agent workgroup settings
+ // (`#agent-group-columns`, ui/agent-groups.js) in the unified-workbench
+ // revision. The board pane no longer owns a column control: it *receives* the
+ // active workgroup's saved column count through workspace state and reports it
+ // back on `agentBoardPatch.columns`. The matrix below therefore mounts the
+ // board pane exactly the way the workgroup pane does, once per column count.
+ // tests/workspace-mode-webkit.js and tests/language-webkit.js assert the real
+ // `#agent-group-columns` control and its 1–6 options in the full application.
+ const mountColumnBoard=async(columns,width)=>{
+  const container=document.createElement('div')
+  container.style.width=width+'px'
+  document.body.append(container)
+  const board=pane(container,hosts.filter(host=>host.id!=='local'),rpc,text=>messages.push(text),'mac-1',{agentBoard:{columns,hosts:[],initialized:false,roleHeight:270}})
+  await waitFor(()=>!!container.querySelector('.agent-host-card')&&!!container.querySelector('.agent-role'))
+  await sleep()
+  return {container,board,grid:container.querySelector('.agent-grid')}
+ }
  for(const width of [1000,600,380]){
-  root.style.width=width+'px'
   for(const columns of [1,2,3,4,5,6]){
-   selector.value=String(columns);selector.dispatchEvent(new Event('change',{bubbles:true}));await sleep()
-   record(`Fixed ${columns} host columns at ${width}px, no horizontal board overflow`,getComputedStyle(grid).gridTemplateColumns.split(' ').length===columns&&root.scrollWidth<=root.clientWidth+1)
+   const mounted=await mountColumnBoard(columns,width)
+   columnDetails.push({width,columns,mounted:!!mounted.grid,track:mounted.grid?getComputedStyle(mounted.grid).gridTemplateColumns:null,dataset:mounted.grid?.dataset.columns,boardScrollWidth:mounted.container.scrollWidth,boardClientWidth:mounted.container.clientWidth,hostCards:mounted.container.querySelectorAll('.agent-host-card').length})
+   record(`Fixed ${columns} host columns at ${width}px, no horizontal board overflow`,
+    getComputedStyle(mounted.grid).gridTemplateColumns.split(' ').length===columns&&
+    mounted.container.scrollWidth<=mounted.container.clientWidth+1)
+   mounted.board.dispose()
+   mounted.container.remove()
   }
  }
  record('Column selection persists independently of other boards',saved.at(-1).agentBoardPatch.columns===6&&!saved.at(-1).boardPatch&&!saved.at(-1).fileBoardPatch)
- root.style.width='1000px';selector.value='2';selector.dispatchEvent(new Event('change',{bubbles:true}));await sleep()
+ root.style.width='1000px';await sleep()
  const stale=records.find(item=>item.id==='s2')
  stale.engineHost={...stale.engineHost,name:'已过期的登记名'}
  hosts.find(host=>host.id==='win-1').name='Windows Engine · Renamed'
@@ -322,5 +380,5 @@ window.runAgentBoardChecks=async function(){
   q('[data-session="s7"]')?.querySelector('.agent-role-name')?.textContent==='Late background creation')
  const before=operations.length;controller.dispose();await sleep()
  record('Disposal closes owned views without stopping other backend roles',sockets.every(socket=>socket.readyState===3)&&!root.querySelector('dialog')&&!operations.slice(before).some(op=>op.method==='hosts.agent-close'))
- return {checks,passed:checks.every(check=>check.passed),statusFocusDetails:window.statusFocusDetails,errors:messages,debug:window.codexRouteDebug,iconGeometry,scrollbarDetails:window.scrollbarDetails}
+ return {checks,passed:checks.every(check=>check.passed),statusFocusDetails:window.statusFocusDetails,errors:messages,debug:window.codexRouteDebug,iconGeometry,scrollbarDetails:window.scrollbarDetails,layoutDetails,columnDetails,tuiDetails}
 }

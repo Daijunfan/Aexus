@@ -28,6 +28,10 @@ import WebKit
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         Task { @MainActor in
             do {
+                // ui/app.js:34 defines both registries before loading any bundle; the
+                // bare page here must provide them too, or the bundle throws
+                // "undefined is not an object" before a single check runs.
+                _ = try await web.evaluateJavaScript("window.cloudClients = {}; window.cloudClientReady = {};")
                 _ = try await web.evaluateJavaScript(try String(contentsOfFile: bundle, encoding: .utf8) + ";void 0")
                 _ = try await web.evaluateJavaScript(try String(contentsOfFile: fixture, encoding: .utf8) + ";void 0")
                 let result = try await web.callAsyncJavaScript("return await runFileBoardChecks()", arguments: [:], in: nil, contentWorld: .page)

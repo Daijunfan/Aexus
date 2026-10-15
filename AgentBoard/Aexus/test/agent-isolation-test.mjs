@@ -1,3 +1,4 @@
+import {readyEmployee} from './fixtures/ready-employee.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -6,14 +7,15 @@ import {promisify} from 'node:util'
 import {build} from 'esbuild'
 import assert from 'node:assert/strict'
 const root=path.resolve(import.meta.dirname,'..'),temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-seatbelt-'))),run=promisify(execFile)
-const env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_BUILTIN_PLUGINS:path.join(root,'build/plugins')}
+const initControl=path.join(temp,'fixture');fs.mkdirSync(initControl);fs.writeFileSync(path.join(initControl,'release-all'),'')
+const env={...process.env,AC_INIT_FIXTURE:initControl,CODEX_HOME:path.join(temp,'codex'),CODEX_BIN:path.join(root,'test/fixtures/initialization-codex.cjs'),AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_BUILTIN_PLUGINS:path.join(root,'build/plugins')}
 const service=spawn(process.execPath,[root+'/bin/agents','serve'],{env,stdio:'ignore'}),ended=new Promise(resolve=>service.once('exit',resolve))
 const cli=async(...args)=>{const result=JSON.parse((await run(process.execPath,[root+'/bin/agents',...args,'--json'],{env,timeout:10000})).stdout);assert.ok(result.ok,result.error);return result.data}
 try{
  for(let i=0;i<100;i++){try{await cli('status');break}catch{await new Promise(resolve=>setTimeout(resolve,30))}}
  await cli('group','add','Test')
- const worker=await cli('card','create','--title','Restricted','--group','Test'),other=await cli('card','create','--title','Other','--group','Test')
- const otherCredential=await cli('auth','agent-token',other.id);await cli('card','access-mode',worker.id,'isolated')
+ const worker=await cli('card','create','--title','Restricted','--group','Test','--access-mode','isolated'),other=await cli('card','create','--title','Other','--group','Test')
+ await readyEmployee(cli,worker.id);await readyEmployee(cli,other.id);const otherCredential=await cli('auth','agent-token',other.id)
  const source=path.join(temp,'runner.ts'),bundle=path.join(temp,'runner.cjs')
  fs.writeFileSync(source,`import {spawnEmployeeProcess} from ${JSON.stringify(root+'/src/main/agent-process-isolation.ts')};const child=spawnEmployeeProcess(${JSON.stringify(worker.id)},${JSON.stringify(process.execPath)},['-e',process.argv[2]],{env:process.env,cwd:${JSON.stringify(worker.cwd)}});child.stdout.pipe(process.stdout);child.stderr.pipe(process.stderr);child.on('close',code=>process.exit(code??1));`)
  await build({entryPoints:[source],outfile:bundle,bundle:true,platform:'node',format:'cjs',logLevel:'silent'})

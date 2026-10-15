@@ -19,11 +19,20 @@ try{
  for(const token of [managerAuth,workerAuth]){const scoped=(await f.call(token,'management','topology')).teams;assert.equal(scoped.length,1);assert.equal(scoped[0].name,'Ordinary');assert.deepEqual(scoped[0].allowedActions,[]);assert.match(scoped[0].deleteBlockedReason,/Forbidden/)}
  assert.ok((await f.cli('management','topology')).teams.every(t=>t.allowedActions.includes('delete')&&t.deleteBlockedReason===null))
  await f.cli('group','rename','Home','Renamed Home');assert.equal((await f.call(auth,'management','topology')).teams.find(t=>t.isOwnTeam).name,'Renamed Home')
- const guide=fs.readFileSync(path.join(governor.cwd,'.agents-company/employees',governor.id,'AGENTS.md'),'utf8')
- assert.match(guide,/其他团队/);assert.match(guide,/同一对话/);assert.match(guide,/全有或全无/);assert.match(guide,/只读请求不得触发删除/)
- const api=(await f.call(auth,'api','docs')).markdown;assert.match(api,/deleteBlockedReason/);assert.match(api,/没有明确|不要把未知文件策略/)
+ // The per-employee handbook was replaced by one shared ROUTER_PROMPT plus the
+ // Core API documents the read-only documentation tool serves on demand
+ // (src/main/plugins/documents.ts employeeInstructions, src/main/api-documents.ts),
+ // which state that no handbook is copied into an employee folder. The Team
+ // authority rules the handbook carried are enforced by the Core and reported
+ // per Team through allowedActions/deleteBlockedReason, asserted above.
+ const employeeRoot=path.join(governor.cwd,'.agents-company','employees',governor.id)
+ assert.ok(!fs.existsSync(path.join(employeeRoot,'AGENTS.md')),'an employee folder must not receive a private handbook copy')
+ assert.deepEqual(fs.existsSync(employeeRoot)?fs.readdirSync(employeeRoot).filter(name=>name.endsWith('.md')):[],[])
+ const description=await f.call(auth,'api','describe','management.topology','--all')
+ assert.match(description.summary,/deleteBlockedReason/,'the shared API description must document the per-Team deleteBlockedReason the handbook used to explain')
+ const api=(await f.call(auth,'api','docs')).markdown;assert.match(api,/实际操作仍由 Core 校验身份、角色、成员与工作区权限/)
  for(const name of ['Ordinary','Empty'])await f.call(auth,'group','remove',name)
  await assert.rejects(()=>f.call(auth,'group','remove','Protected'),/Governor/)
  assert.ok((await f.cli('session','list')).sessions.some(c=>c.id===peer.id))
- console.log('PASS authoritative Team permissions: own Team, empty Teams, protected peers, real deletion parity, role scope, creator-filter independence, rename, and precise authorization handbooks')
+ console.log('PASS authoritative Team permissions: own Team, empty Teams, protected peers, real deletion parity, role scope, creator-filter independence, rename, and shared authorization documents with no per-employee handbook copy')
 }finally{await f.close()}

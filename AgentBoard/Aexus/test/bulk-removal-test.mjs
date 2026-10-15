@@ -5,7 +5,7 @@ import {fixtureCore} from './fixtures/headless-core.mjs'
 
 const f=await fixtureCore(),put=card=>fs.writeFileSync(path.join(card.cwd,'keep.txt'),'employee data')
 const cards=async()=>(await f.cli('session','list')).sessions
-const bind=async(title,team,cwd)=>f.cli('card','create','--title',title,'--group',team,'--cwd',cwd,'--directory-mode','bind','--model','gpt-6-luna','--effort','low')
+const bind=async(title,team,cwd)=>{const card=await f.cli('card','create','--title',title,'--group',team,'--cwd',cwd,'--directory-mode','bind','--model','gpt-6-luna','--effort','low');await f.ready(card.id);return card}
 try{
  for(const name of ['A','B','C','Protected'])await f.cli('group','add',name)
  const keep1=await f.create('Keep1'),keep2=await f.create('Keep2');put(keep1);put(keep2)
@@ -32,7 +32,7 @@ try{
  const state=await f.cli('session','list'),root=state.teamRoots.B,rootEmployee=await bind('Team root employee','B',root)
  const b=await f.create('B employee','B');put(b)
  const creatorChild=await f.call(governorToken,'card','create','--title','Created child','--group','A','--model','gpt-6-luna','--effort','low')
- await f.cli('session','send','--employee',creatorChild.id,'--text','fixture reply');await f.until(async()=>!(await f.status(creatorChild.id)).busy,'fixture answer')
+ await f.ready(creatorChild.id);await f.cli('session','send','--employee',creatorChild.id,'--text','fixture reply');await f.until(async()=>!(await f.status(creatorChild.id)).busy,'fixture answer')
  const revoked=await f.token(creatorChild.id),job=await f.cli('schedule','create','--name','Deleted target','--employee',creatorChild.id,'--prompt','later','--every-seconds','3600','--paused')
  const view=await f.cli('team-view','create','--name','Selected Teams','--teams',JSON.stringify(['A','B','C']))
  const sshFile=path.join(safe.cwd,'shared-key');fs.writeFileSync(sshFile,'fixture key')

@@ -1,10 +1,19 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const registryFile=path.join(os.homedir(),'Library/Application Support/Toolbox/CloudHosts/hosts.json');
 const taskHome=fs.mkdtempSync(path.join(os.tmpdir(),'cloud-station-live-'));process.env.CLOUD_HOSTS_HOME=taskHome;fs.copyFileSync(registryFile,path.join(taskHome,'hosts.json'));
-const {rpc,state}=require('../cli.cjs');
+// The CLI module must match the backend that serves this run. The tree cannot
+// serve itself while other work is in flight (src/release.cjs refuses a
+// fingerprint mismatch), so the same pin the WebKit runners accept
+// (CLOUD_HOSTS_TEST_BACKEND / CLOUD_HOSTS_TEST_NODE, tests/run-hosts-board-webkit.sh)
+// selects the already-built backend this suite drives. Without the pin the
+// suite drives the working tree, exactly as before.
+const cli=process.env.CLOUD_HOSTS_TEST_BACKEND?require(path.join(process.env.CLOUD_HOSTS_TEST_BACKEND,'cli.cjs')):require('../cli.cjs');
+const {rpc,state}=cli;
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 (async()=>{
- const hosts=await rpc('hosts.list'),selected=['GPU-server','BUPT Windows','DJF-Windows'].map(name=>hosts.find(h=>h.name===name)),created=[];
+ // Registered host names are matched exactly; the Windows BUPT host is stored as
+ // 'BUPT-Windows' in the live registry, not 'BUPT Windows'.
+ const hosts=await rpc('hosts.list'),selected=['GPU-server','BUPT-Windows','DJF-Windows'].map(name=>hosts.find(h=>h.name===name)),created=[];
  const filename='中转 测试 '+crypto.randomUUID().slice(0,8)+'.bin',local=path.join(taskHome,filename);fs.writeFileSync(local,crypto.randomBytes(32*1024*1024));const sha=hash(local);
  async function finish(job){const deadline=Date.now()+240000;while(job.state==='running'){assert.ok(Date.now()<deadline,'Transfer timed out');await new Promise(r=>setTimeout(r,300));job=(await rpc('station.list')).jobs.find(j=>j.id===job.id)}assert.equal(job.state,'done',job.error);return job.result}
  const rows=[];

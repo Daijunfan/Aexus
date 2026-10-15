@@ -13,7 +13,7 @@ const getClient=()=>{
 };
 export function aexusEmbed({root,rpc,message,onNavigation}){
  let disposed=false,frame=null,origin='',instanceId='',nonce='',ready=false,active=false;
- let status='stopped',lastView='company',queuedNavigation={view:'company'},generation=0,refreshTimer=null,helloTimer=null,ticketId=null;
+ let status='stopped',lastView='company',queuedNavigation={view:'company'},generation=0,refreshTimer=null,helloTimer=null,ticketId=null,requestedAt=0,navigationId=null;
  const pending=new Map(),clientId=getClient(),windowId=id();
  const trace=[];const record=(event,details={})=>{trace.push({at:Date.now(),event,...details});if(trace.length>40)trace.shift()};
  // Safe, read-only UI diagnostics. Never expose ticket, nonce, private bridge secret,
@@ -48,6 +48,10 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
    for(const task of pending.values()){clearTimeout(task.timer);task.reject(Error(reason))}
    pending.clear();
  }
+ function navigateFrame(){
+   navigationId=id();
+   send('navigation.change',queuedNavigation,navigationId);
+ }
  function ask(type,payload={}){
    if(!ready)return Promise.reject(Error('Hosted Aexus has not completed handshake'));
    const requestId=id();
@@ -56,6 +60,23 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
      pending.set(requestId,{type,resolve,reject,timer});
      send(type,payload,requestId);
    });
+ }
+ // One authorization at a time. A lost or refused session asks the owning host
+ // for a fresh single-use ticket; the child is never asked to re-run its own
+ // failed work.
+ async function requestTicket(){
+   if(disposed||ticketId||Date.now()-requestedAt<1000)return;
+   requestedAt=Date.now();
+   try{
+     const data=await rpc('roleboard.ticket',{instanceId,windowId,clientId,parentOrigin:location.origin});
+     if(disposed)return;
+     ticketId=id();
+     send('host.ticket',{ticket:data.ticket,expiresAt:data.expiresAt},ticketId);
+   }catch(e){
+     ticketId=null;
+     record('ticket-failed',{error:String(e.message||e).slice(0,180)});
+     error('Aexus authorization failed: '+e.message);
+   }
  }
  async function nativeOperation(capability,args,requestId){
    if(!NATIVE.has(capability))throw Error('Unsupported native capability');
@@ -95,24 +116,30 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
      return;
    }
    const {type,payload,requestId}=event.data;
-   if(type==='navigation.change'||type==='aexus.ready'||type==='host.ticket'||type==='protocol.error')record('received',{type,view:payload.view,revision:payload.revision,accepted:payload.accepted,code:payload.code,errorMessage:String(payload.message||'').slice(0,180),lastView,ready});
+   if(type==='navigation.change'||type==='aexus.ready'||type==='host.ticket'||type==='protocol.error'||type==='auth.required')record('received',{type,view:payload.view,revision:payload.revision,accepted:payload.accepted,code:payload.code,errorMessage:String(payload.message||'').slice(0,180),lastView,ready});
    if(type==='aexus.ready'){
      if(ready||ticketId||payload.nonce!==nonce||payload.origin!==origin)return;
      statusNode.hidden=false;statusText.textContent='Authorizing the original Aexus client…';
-     try{
-       const data=await rpc('roleboard.ticket',{instanceId,windowId,clientId,parentOrigin:location.origin});
-       if(disposed)return;
-       ticketId=id();
-       send('host.ticket',{ticket:data.ticket,expiresAt:data.expiresAt},ticketId);
-     }catch(e){ticketId=null;ready=false;error('Aexus authorization failed: '+e.message)}
+     await requestTicket();
+     return;
+   }
+   // The hosted Core session expired, was revoked, or was replaced. Only the
+   // host can authorize another one; the running view is kept as it is.
+   if(type==='auth.required'){
+     if(!ready||ticketId)return;
+     statusNode.hidden=false;statusText.textContent='Reauthorizing the original Aexus client…';
+     await requestTicket();
      return;
    }
    if(type==='host.ticket'&&ticketId===requestId){
      ticketId=null;
-     if(payload.accepted!==true){error('Aexus rejected the host authorization');return}
+     if(payload.accepted!==true){ready=false;error('Aexus rejected the host authorization');return}
+     const initial=!ready;
      ready=true;statusNode.hidden=true;clearTimeout(helloTimer);
-     send('navigation.change',queuedNavigation);
-     send('view.visibility',{visible:active&&!document.hidden,focused:document.hasFocus()});
+     if(initial){
+       navigateFrame();
+       send('view.visibility',{visible:active&&!document.hidden,focused:document.hasFocus()});
+     }
      return;
    }
    if(type==='protocol.error'&&ticketId===requestId){
@@ -121,6 +148,7 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
    }
    if(!ready)return;
    if(type==='protocol.error'){
+     if(requestId===navigationId)navigationId=null;
      if(payload.code==='NAVIGATION_FAILED')message?.(String(payload.message||'Unable to open this role'),'error');
      return; // Prevent error ACK loops.
    }
@@ -135,6 +163,12 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
    }
    if(type==='navigation.change'){
      if(!VIEWS.has(payload.view)){send('protocol.error',{code:'VIEW_DENIED'},requestId);return}
+     // Older host requests and intermediate child states cannot replace the
+     // selection still awaiting its own acknowledgement.
+     if(payload.accepted===true){
+       if(requestId!==navigationId)return;
+       navigationId=null;
+     }else if(navigationId)return;
      if(lastView!==payload.view){lastView=payload.view;queuedNavigation={view:lastView};onNavigation?.(payload.view)}
      return;
    }
@@ -160,7 +194,7 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
  window.addEventListener('focus',visibility);
  window.addEventListener('blur',visibility);
  function createFrame(state){
-   generation++;ready=false;ticketId=null;status='starting';stopPending('Hosted Aexus reconnected');
+   generation++;ready=false;ticketId=null;requestedAt=0;navigationId=null;status='starting';stopPending('Hosted Aexus reconnected');
    if(frame){frame.remove();frame=null}
    instanceId=state.instanceId;origin=new URL(state.url).origin;nonce=id();
    frame=document.createElement('iframe');
@@ -204,7 +238,7 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
      record('navigate',{view,ready,previous:lastView});
      lastView=view;queuedNavigation={view,...options};
      if(!frame)await check();
-     if(ready)send('navigation.change',queuedNavigation);
+     if(ready)navigateFrame();
    },
    setVisible(visible){
      active=!!visible;root.hidden=!active;
@@ -216,7 +250,7 @@ export function aexusEmbed({root,rpc,message,onNavigation}){
    },
    dispose(){
      disposed=true;clearInterval(refreshTimer);clearTimeout(helloTimer);
-     if(window.cloudHosts?.agentBoard===diagnostics)delete window.cloudHosts.roleBoard;
+     if(window.cloudHosts?.roleBoard===diagnostics)delete window.cloudHosts.roleBoard;
      document.removeEventListener('visibilitychange',visibility);
      window.removeEventListener('focus',visibility);
      window.removeEventListener('blur',visibility);

@@ -58,7 +58,10 @@ export async function startWebServer(options:Options={}){
     return timingSafeEqual(Buffer.from(header),Buffer.from(expected))
   }
   let origin=configured?.origin??''
-  const auth=createWebAuth(configured?.protocol==='https:')
+  // Cookies ignore the port, so the bound port scopes this Core instance's
+  // session cookies apart from any other localhost Core on the same browser.
+  let bound=port
+  const auth=createWebAuth(configured?.protocol==='https:',()=>String(bound))
   const renderer=options.renderer??rendererDirectory()
   const peers=new Map<string,{socket:WebSocket;session:WebSession;context:RequestContext}>()
   const pending=new Map<string,{clientId:string;resolve:(value:any)=>void;reject:(error:Error)=>void;timer:NodeJS.Timeout}>()
@@ -132,8 +135,11 @@ export async function startWebServer(options:Options={}){
         return
       }
       if(hosted&&url.pathname==='/api/login')throw failure('Use CloudHosts host authorization',403,'HOSTED_ONLY')
-      if(url.pathname==='/api/login'&&req.method==='POST'){const data=await body(req,4096);json(res,{ok:true,data:auth.login(req,res,data.token)});return}
-      if(url.pathname==='/api/bootstrap'&&req.method==='GET'){const session=auth.session(req);json(res,{ok:true,data:{csrf:session.csrf,expires:session.expires,server:runtimeInfo()}});return}
+      // A browser identifies itself on every session-bearing request; its
+      // session cookie is selected by that identity alone. A caller that names
+      // no client uses the legacy shared namespace instead.
+      if(url.pathname==='/api/login'&&req.method==='POST'){const data=await body(req,4096);json(res,{ok:true,data:auth.login(req,res,data.token,auth.requestClient(req))});return}
+      if(url.pathname==='/api/bootstrap'&&req.method==='GET'){const session=auth.session(req,auth.requestClient(req));json(res,{ok:true,data:{csrf:session.csrf,expires:session.expires,server:runtimeInfo()}});return}
       if(url.pathname==='/api/health'){json(res,{ok:true,data:{service:'agents-company',apiVersion:1}});return}
       if(url.pathname.startsWith('/api/')){
         const requestId=String(req.headers['x-request-id']??randomUUID())
@@ -168,7 +174,7 @@ export async function startWebServer(options:Options={}){
         }
 
         if(url.pathname==='/api/logout'&&req.method==='POST'){
-          const id=auth.logout(req,res);for(const [key,grant] of mediaSessions)if(grant.session.id===id){withCaller(grant.context,()=>{try{closeMedia(key)}catch{}});mediaSessions.delete(key)};for(const peer of peers.values())if(peer.session.id===id)peer.socket.close(4001,'Signed out');pruneStreams();json(res,{ok:true});return
+          const id=auth.logout(req,res,auth.requestClient(req));for(const [key,grant] of mediaSessions)if(grant.session.id===id){withCaller(grant.context,()=>{try{closeMedia(key)}catch{}});mediaSessions.delete(key)};for(const peer of peers.values())if(peer.session.id===id)peer.socket.close(4001,'Signed out');pruneStreams();json(res,{ok:true});return
         }
         if(url.pathname!=='/api/rpc'&&url.pathname!=='/api/follow'||req.method!=='POST')throw failure('Unknown endpoint',404)
         const value=await body(req,64*1024*1024),request:Request={cmd:value.cmd,args:value.args}
@@ -220,9 +226,7 @@ export async function startWebServer(options:Options={}){
       if(desktops.upgrade(req,socket,head,origin))return
       checkOrigin(req,true);const url=new URL(req.url??'/',origin)
       if(url.pathname!=='/api/events')throw failure('Unknown stream',404)
-      const session=auth.session(req),client=String(url.searchParams.get('client')??'')
-      if(!/^[a-zA-Z0-9_-]{8,80}$/.test(client))throw failure('Invalid client')
-      if(session.hostedClientId&&session.hostedClientId!==client)throw failure('Hosted WebSocket client mismatch',403,'HOSTED_CLIENT_MISMATCH')
+      const client=auth.requireClient(url.searchParams.get('client')),session=auth.session(req,client)
       const context:RequestContext={principal:{kind:'operator'},requestId:randomUUID(),clientId:'web-'+client}
       wss.handleUpgrade(req,socket,head,ws=>{
         const id=context.clientId!,previous=peers.get(id);previous?.socket.close(4000,'Client reconnected')
@@ -243,7 +247,7 @@ export async function startWebServer(options:Options={}){
     }catch{socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')}
   })
   await new Promise<void>((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve)})
-  const bound=(server.address() as net.AddressInfo).port
+  bound=(server.address() as net.AddressInfo).port
   origin=configured?.origin??`http://${host==='::1'?'[::1]':host}:${bound}`
   const heartbeat=setInterval(()=>{pruneStreams();for(const [id,grant] of mediaSessions)if(!auth.valid(grant.session)||!mediaAvailable(id)){withCaller(grant.context,()=>{try{closeMedia(id)}catch{}});mediaSessions.delete(id)};for(const peer of peers.values()){if(!auth.valid(peer.session))peer.socket.close(4001,'Session expired');else peer.socket.ping()}},30000);heartbeat.unref()
   return {url:origin,port:bound,async close(){clearInterval(heartbeat);auth.clear();desktops.close();for(const peer of peers.values())peer.socket.terminate();wss.close();for(const socket of sockets)socket.destroy();await new Promise<void>(resolve=>server.close(()=>resolve()))}}

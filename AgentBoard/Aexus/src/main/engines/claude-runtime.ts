@@ -168,7 +168,7 @@ function createClaudeDriver(s:Live,id:string,host:EngineStart['host'],inputTasks
     async setModel(model){await s.q.setModel(model)},
     async setPlan(enabled){await s.q.setPermissionMode(enabled?'plan':s.permissionMode)},
     async setPermission(mode){await s.q.setPermissionMode(s.remoteLaunch?'acceptEdits':mode)},
-    async setThinking(enabled){await s.q.setMaxThinkingTokens(enabled?null:0,enabled?'summarized':null)},
+    async setThinking(enabled){await s.q.applyFlagSettings({alwaysThinkingEnabled:enabled});await s.q.setMaxThinkingTokens(enabled?null:0,enabled?'summarized':null)},
     async setEffort(effort){await s.q.applyFlagSettings({effortLevel:effort??(s.provider?'high':null)} as Parameters<typeof s.q.applyFlagSettings>[0])},
     async setFast(enabled){await s.q.applyFlagSettings({fastMode:enabled})},
     async background(processId,stop=false){

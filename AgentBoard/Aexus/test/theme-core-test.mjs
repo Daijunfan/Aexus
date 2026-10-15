@@ -2,7 +2,11 @@ import assert from 'node:assert/strict'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 const f=await fixtureCore()
 try{
- assert.equal((await f.cli('settings','get')).theme,'violet')
+ // The current Aexus brand default is white (src/shared/preferences.ts
+ // DEFAULT_PREFERENCES/DEFAULT_VIEW_APPEARANCE); `theme` is the legacy Messages
+ // alias, and violet remains a selectable theme in the list below.
+ assert.equal((await f.cli('settings','get')).theme,'white')
+ assert.deepEqual((await f.cli('settings','get')).viewAppearance,{company:{theme:'white',themeColor:'#526dc3'},messages:{theme:'white',themeColor:'#7953ce'},plan:{theme:'white',themeColor:'#526dc3'}})
  for(const theme of ['violet','blue','mint','teal','cyan','rose','coral','amber','indigo','graphite','white','light','space','black','midnight','sage']){
   await f.cli('settings','set','--theme',theme);assert.equal((await f.cli('settings','get')).theme,theme)
  }

@@ -22,7 +22,7 @@ const create=(title,extra=[])=>cli('card','create','--title',title,'--group','Te
 const start=async()=>{service=spawn(process.execPath,[process.env.AGENTS_COMPANY_TEST_CORE_ENTRY??entry],{env,stdio:['ignore','ignore','pipe']});ended=new Promise(resolve=>service.once('exit',resolve));service.stderr.on('data',data=>log=(log+data).slice(-8000));await until(()=>cli('status').catch(()=>false),'service')}
 const stop=async()=>{service.kill('SIGTERM');await ended}
 try{
- await build({entryPoints:[path.join(root,'src/main/daemon.ts')],outfile:entry,bundle:true,platform:'node',format:'cjs',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'});await start();await cli('group','add','Team');await cli('group','add','Work','--mode','work','--plugin','mininotion')
+ await build({entryPoints:[path.join(root,'src/main/daemon.ts')],outfile:entry,bundle:true,platform:'node',format:'cjs',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'});await start();await cli('group','add','Team')
  const before=Date.now(),manager=await create('Manager',['--management-role','manager']);assert.ok(Date.now()-before<3000);assert.equal(manager.initialization.status,'pending')
  assert.ok(!fs.existsSync(path.join(manager.cwd,'AGENTS.md')));assert.ok(!fs.existsSync(path.join(manager.cwd,'CLAUDE.md')))
  assert.ok(!fs.existsSync(path.join(manager.cwd,'.agents-company/employees',manager.id,'API.md')),'no duplicated employee handbook')

@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto'
 import {Worker} from 'node:worker_threads'
 import {assetCatalog,assetReference,locateAsset} from './assets'
 import {requestContext,withCaller} from './request-context'
-import {requirePlugin,pluginFile} from './plugins/registry'
+import {applicationRoot} from './resources'
 import {workspacePath,workspaceFiles} from './files'
 import {liveChannelPost,projectChannelDocuments} from './channel-store'
 import type {AssetPreview} from '../shared/asset-schema'
@@ -14,7 +14,7 @@ const cache=new Map<string,AssetPreview>(),pending=new Map<string,Promise<AssetP
 let active=0,cacheBytes=0,closed=false
 const version=(stat:fs.Stats)=>createHash('sha256').update(`${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeMs}:${stat.ctimeMs}`).digest('hex').slice(0,24)
 const fallback=(reason:string):AssetPreview=>({kind:'fallback',reason})
-/** Reuse the Reader's pure bounded cover worker, not its library database or workspace selection. */
+/** Core owns bounded document covers independently of installed plugins. */
 export async function assetPreview(id:string,call:(command:string,args:Record<string,any>)=>Promise<any>,resolve:(location:FileLocation,destination:boolean)=>FileEndpoint):Promise<AssetPreview>{
  if(requestContext().principal.kind!=='operator')throw Error('Only the user may preview all company assets')
  if(closed)return fallback('Preview service is closed')
@@ -30,8 +30,7 @@ export async function assetPreview(id:string,call:(command:string,args:Record<st
  const filename=workspacePath(end.root,end.path),stat=fs.lstatSync(filename)
  if(!stat.isFile()||stat.isSymbolicLink()||stat.size>64*1024*1024)return fallback('Preview size or file type limit')
  if(['png','jpg','jpeg','gif','webp'].includes(format)&&stat.size<=1024*1024){await end.validate?.('copy-info',{path:end.path});const image=workspaceFiles(end.root,'read-image',{path:end.path});if(version(fs.statSync(filename))!==version(stat))return fallback('File changed; refresh to load its cover');return {kind:'image',mimeType:image.mimeType,data:image.data,version:version(stat)}}
- let workerPath:string
- try{workerPath=pluginFile(requirePlugin('margin-reader').directory,'lib/preview-worker.cjs')}catch{return fallback('Reader preview renderer is not installed')}
+ const workerPath=path.join(applicationRoot(),'out/main/asset-preview-worker.js')
  const stamp=version(stat),key=[workerPath,filename,stamp,format].join('|'),context=requestContext()
  await end.validate?.('copy-info',{path:end.path})
  if(cache.has(key)){const value=cache.get(key)!;cache.delete(key);cache.set(key,value);return value}

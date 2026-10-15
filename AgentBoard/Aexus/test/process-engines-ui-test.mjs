@@ -11,6 +11,7 @@ fs.mkdirSync(env.AC_INIT_FIXTURE);fs.writeFileSync(path.join(env.AC_INIT_FIXTURE
 for(const k of Object.keys(env))if(k.startsWith('AGENTS_COMPANY_TOKEN')||['ELECTRON_RUN_AS_NODE','AGENTS_COMPANY_SOCKET','AGENTS_COMPANY_EMPLOYEE','AGENTS_COMPANY_PORT'].includes(k))delete env[k]
 const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[root],env}),page=await app.firstWindow(),errors=[];page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message))
 const call=(cmd,args={})=>page.evaluate(({cmd,args})=>window.agents.call(cmd,args),{cmd,args})
+const cliBack=()=>page.getByRole('button',{name:'Back to conversation',exact:true}).click();
 try{
  await page.locator('.infinite-canvas').waitFor();await call('engine.configure',{engine:'claude',patch:{sdkPath:path.join(root,'test/fixtures/discussion-claude-sdk.mjs')}});await call('group.add',{name:'Mixed Coding Agents',mode:'build'});const cards=[]
  for(const [engine,avatar] of [['codex','codex'],['claude','fireball'],['cline','clawd'],['pi','hoots']]){
@@ -36,7 +37,7 @@ try{
  for(const card of cards.filter(c=>['cline','pi'].includes(c.engine))){
   await call('view.open',{kind:'conversation',employee:card.id});await page.locator('.composer textarea').waitFor();await expect(page.locator('.session-settings')).toContainText(card.engine==='cline'?'Cline':'Pi');await expect(page.locator('.session-settings')).toContainText('Thinking off')
   const engineControl=page.locator('.session-settings [data-control="engine"]');assert.equal(await engineControl.evaluate(el=>el.tagName),'SPAN');await expect(engineControl).toHaveAttribute('title',/engine is fixed/);
-  await page.getByRole('button',{name:'Employee details',exact:true}).click();await expect(page.locator('.employee-form .engine-choices')).toHaveCount(0);await expect(page.locator('.employee-engine-fixed')).toContainText('engine is fixed');await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);
+  await page.getByRole('button',{name:'Employee details',exact:true}).click();await page.getByRole('button',{name:'Edit profile',exact:true}).click();await expect(page.locator('.employee-form .engine-choices')).toHaveCount(0);await expect(page.locator('.employee-engine-fixed')).toContainText('engine is fixed');await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);await cliBack();
   await page.locator('.composer textarea').fill('UNICODE_FIXTURE');await page.locator('.composer textarea').press('Enter');await expect(page.locator('.transcript')).toContainText('春')
   if(card.engine==='cline'){
    const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII='

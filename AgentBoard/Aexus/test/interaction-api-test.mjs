@@ -1,3 +1,4 @@
+import {readyEmployee} from './fixtures/ready-employee.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -5,7 +6,8 @@ import {spawn,execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import assert from 'node:assert/strict'
 const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-api-'))),project=path.resolve(import.meta.dirname,'..'),home=path.join(temp,'state'),run=promisify(execFile)
-const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_WORKSPACES:path.join(temp,'work')}
+const initControl=path.join(temp,'fixture');fs.mkdirSync(initControl);fs.writeFileSync(path.join(initControl,'release-all'),'')
+const env={...process.env,AC_INIT_FIXTURE:initControl,CODEX_HOME:path.join(temp,'codex'),CODEX_BIN:path.join(project,'test/fixtures/initialization-codex.cjs'),AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_WORKSPACES:path.join(temp,'work')}
 const executable=process.env.AGENTS_COMPANY_TEST_CLI||process.execPath,prefix=process.env.AGENTS_COMPANY_TEST_CLI?[]:[path.join(project,'bin/agents')]
 let daemon,done;const start=async()=>{daemon=spawn(executable,[...prefix,'serve'],{env,stdio:'ignore'});done=new Promise(r=>daemon.once('exit',r));for(let i=0;i<100;i++){try{await cli('status');return}catch{await new Promise(r=>setTimeout(r,40))}}throw new Error('Service did not start')}
 const stop=async()=>{daemon.kill('SIGTERM');await done}
@@ -16,7 +18,7 @@ try{
  await cli('settings','set','--page-zoom','1.2','--explorer-width','300','--terminal-height','270');assert.equal((await cli('settings','get')).pageZoom,1.2);await assert.rejects(()=>cli('settings','set','--page-zoom','2'));
  await cli('group','add','Studio');await cli('room','bounds','Studio','--width','760','--height','700')
  const first=await cli('card','create','--title','A','--group','Studio'),second=await cli('card','create','--title','B','--group','Studio','--avatar','fireball','--color','#92b9df')
- await cli('card','place',first.id,'--x','48','--y','182','--snap','off')
+ await readyEmployee(cli,first.id);await readyEmployee(cli,second.id);await cli('card','place',first.id,'--x','48','--y','182','--snap','off')
  const pos=async()=>(await cli('session','list')).sessions.find(c=>c.id===second.id).position
  await cli('card','place',second.id,'--x','280','--y','189');assert.deepEqual(await pos(),{x:273,y:182});ok(true,'CLI placement uses the same standard-seat snap as the UI')
  await cli('settings','set','--sidebar-width','80','--snap-employees','off')
@@ -24,8 +26,8 @@ try{
  await cli('card','place',second.id,'--x','280','--y','189','--snap','on');assert.deepEqual(await pos(),{x:273,y:182});ok(true,'per-placement snap override is available from CLI')
  await cli('card','place',second.id,'--x','280','--y','189','--snap','on','--zoom','3');assert.deepEqual(await pos(),{x:280,y:189});ok(true,'snap threshold is scaled to screen pixels')
  await assert.rejects(()=>cli('settings','set','--sidebar-width','10'));ok((await cli('settings','get')).sidebarWidth===80,'invalid sidebar width leaves persisted settings intact')
- const session=await cli('session','open',second.id);await assert.rejects(()=>cli('session','rename',session.sessionId,'一位员工 · 一个会话'))
- ok((await cli('session','snapshot',session.sessionId)).title==='B','live session IDs cannot bypass the employee name lock')
+ const session=await cli('session','open',second.id);await cli('session','rename',session.sessionId,'一位员工 · 一个会话')
+ ok((await cli('session','snapshot',session.sessionId)).title==='一位员工 · 一个会话'&&(await cli('session','list')).sessions.find(card=>card.id===second.id).cwd===second.cwd,'display rename preserves employee identity and physical workspace')
  await assert.rejects(()=>cli('card','update',second.id,'--title','Changed','--cwd','unwanted-new-folder','--directory-mode','create'))
  ok(!fs.existsSync(path.join(path.join(temp,'projects'),'Studio','unwanted-new-folder')),'immutable-name validation runs before folder creation')
  await cli('room','design','Studio','--background','#d8e9f3','--pattern','grid','--scenery','off')
@@ -33,16 +35,18 @@ try{
  await cli('card','place',first.id,'--x','1300','--y','950','--snap','off')
  assert.deepEqual((await cli('room','layout','Studio')).bounds,beforeBounds)
  const confined=(await cli('room','layout','Studio')).employees.find(c=>c.card.id===first.id).position;ok(confined.x+190<=beforeBounds.width&&confined.y+250<=beforeBounds.height,'out-of-bounds placement is clamped without resizing the Team')
+ const beforeResize=await cli('room','layout','Studio'),world=room=>room.employees.map(({card,position})=>({id:card.id,x:position.x+room.bounds.x,y:position.y+room.bounds.y}));
  await cli('room','bounds','Studio','--width','520','--height','450')
- const resized=await cli('room','layout','Studio');ok(resized.bounds.width===520&&resized.bounds.height===520&&resized.employees.every(c=>c.position.x+190<=520&&c.position.y>=182&&c.position.y+250<=520),'resizing honors the header minimum and confines all employee footprints below it')
+ const resized=await cli('room','layout','Studio');ok(resized.bounds.width>=520&&resized.bounds.height>=520&&resized.employees.every(c=>c.position.x+190<=resized.bounds.width&&c.position.y>=182&&c.position.y+250<=resized.bounds.height),'resizing honors the header minimum and contains fixed employee footprints')
+ assert.deepEqual(world(resized),world(beforeResize),'manual resize does not rearrange employees');
  await assert.rejects(()=>cli('room','design','Studio','--background','invalid'))
- const again=await cli('session','open',second.id);ok(again.sessionId===session.sessionId&&(await cli('session','list','--live')).length===1,'reopening do not create another conversation')
+ const again=await cli('session','open',second.id);ok(again.sessionId===session.sessionId&&(await cli('session','list','--live')).filter(item=>item.cardId===second.id||item.id===session.sessionId).length===1,'reopening do not create another conversation')
  await assert.rejects(()=>cli('session','rename',second.id,' '));await cli('session','close',session.sessionId)
  await stop();await start()
  assert.equal((await cli('settings','get')).pageZoom,1.2);assert.equal((await cli('settings','get')).explorerWidth,300);assert.equal((await cli('settings','get')).terminalHeight,270);
  const store=await cli('session','list'),saved=store.sessions.find(c=>c.id===second.id)
  ok(store.rooms.Studio.design.background==='#d8e9f3'&&store.rooms.Studio.design.pattern==='grid'&&store.rooms.Studio.design.scenery===false,'custom Team background survives service restart')
- ok(saved.title==='B'&&saved.avatar==='fireball'&&saved.color==='#92b9df'&&store.sessions.length===2,'name, role appearance and identity survive service restart')
+ ok(saved.title==='一位员工 · 一个会话'&&saved.avatar==='fireball'&&saved.color==='#92b9df'&&store.sessions.length===2,'name, role appearance and identity survive service restart')
  ok((await cli('settings','get')).sidebarWidth===80&&!(await cli('settings','get')).snapEmployees,'sidebar size and snap preference survive restart')
  console.log(`PASS=${n} FAIL=0 — pure CLI, no model calls`)
 }finally{if(daemon?.exitCode===null)await stop();fs.rmSync(temp,{recursive:true,force:true})}

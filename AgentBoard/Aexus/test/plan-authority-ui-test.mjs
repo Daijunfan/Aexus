@@ -8,10 +8,10 @@ import {createRequire} from 'node:module'
 import {build} from 'electron-vite'
 import {chromium,_electron as electron,expect} from '@playwright/test'
 import {fixtureCore} from './fixtures/headless-core.mjs'
-const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url),logs=['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md']
-if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of [...logs,'test/plan-authority-ui-test.mjs'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
+const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url)
+if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of ['test/plan-authority-ui-test.mjs'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
 const out=path.join(root,'artifacts/plan-authority'),application=path.join(out,'application');fs.mkdirSync(application,{recursive:true})
-const note=text=>{console.log(text);for(const file of logs)fs.appendFileSync(path.join(root,file),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
+const note=text=>{console.log(text);fs.appendFileSync(path.join(out,'progress-notes.md'),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 if(!process.argv.includes('--skip-build')){
  fs.writeFileSync(path.join(application,'package.json'),fs.readFileSync(path.join(root,'package.json')))
  for(const name of ['node_modules','bin','docs','Agents-Managers','Modules','build','src','API.md','ARCHITECTURE.md','AGENTS.md','PERMISSIONS.md','PLAN.md','SCHEDULER.md','PLUGIN_SPEC.md','README.md','engine-downloads.json'])if(!fs.existsSync(path.join(application,name))&&fs.existsSync(path.join(root,name)))fs.symlinkSync(path.join(root,name),path.join(application,name))

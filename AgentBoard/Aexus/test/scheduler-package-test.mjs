@@ -1,3 +1,4 @@
+import {readyEmployee} from './fixtures/ready-employee.mjs'
 import {nativeFixture} from './native-fixture.mjs'
 // Exercise the built/packaged headless daemon with a native-process fixture, no inference.
 import fs from 'node:fs'
@@ -18,10 +19,10 @@ const until=async(fn)=>{for(let i=0;i<100;i++){const value=await fn();if(value)r
 let checks=0;const ok=(condition,label)=>{assert.ok(condition,label);checks++;console.log('PASS '+label)}
 try{
  await until(async()=>{try{return (await cli('schedule','status')).running}catch{return false}})
- await cli('group','add','Build');const card=await cli('card','create','--group','Build','--title','Worker','--engine','codex')
- const json=path.join(temp,'schedule.json');fs.writeFileSync(json,JSON.stringify({name:'Packaged daily',action:{type:'agent',employeeId:card.id,prompt:'Run the project CLI',model:'gpt-5.6-luna',effort:'low'},rule:{kind:'weekly',days:[1,2,3,4,5],time:'09:00',timezone:'Asia/Shanghai'},enabled:false}))
+ await cli('group','add','Build');const card=await cli('card','create','--group','Build','--title','Worker','--engine','codex','--model','gpt-5.6-luna','--effort','low')
+ await readyEmployee(cli,card.id);const json=path.join(temp,'schedule.json');fs.writeFileSync(json,JSON.stringify({name:'Packaged daily',action:{type:'agent',employeeId:card.id,prompt:'Run the project CLI',model:'gpt-5.6-luna',effort:'low'},rule:{kind:'weekly',days:[1,2,3,4,5],time:'09:00',timezone:'Asia/Shanghai'},enabled:false}))
  const weekly=await cli('schedule','create','--spec','@'+json)
- ok((await cli('schedule','preview',weekly.id,'--after','2026-09-18T02:00:00Z','--count','1')).times[0]==='2026-09-21T01:00:00.000Z','packaged runtime resolves Temporal dependency and timezone calculations')
+ ok((await cli('schedule','preview','--spec','@'+json,'--after','2026-09-18T02:00:00Z','--count','1')).times[0]==='2026-09-21T01:00:00.000Z','packaged runtime resolves Temporal dependency and timezone calculations')
  const task=await cli('schedule','create','--name','Package timer','--employee',card.id,'--at',new Date(Date.now()+1200).toISOString(),'--prompt','Scheduled fixture work','--model','gpt-5.6-luna','--effort','low')
  const result=await until(async()=>{const r=(await cli('schedule','history',task.id))[0];return r&&r.status!=='running'?r:false})
  ok(result.status==='succeeded'&&fs.readFileSync(path.join(card.cwd,'result.txt'),'utf8')==='Scheduled fixture work','packaged daemon dispatches an automatic employee task without Electron windows')

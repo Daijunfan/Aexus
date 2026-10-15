@@ -25,12 +25,13 @@ const call=(cmd,args={})=>page.evaluate(({cmd,args})=>window.agents.call(cmd,arg
 try{
  await page.locator('.infinite-canvas').waitFor();await call('group.add',{name:'Fate verification',mode:'build'});await call('settings.set',{theme:'white'})
  const card=await call('card.create',{title:'Identity stays',group:'Fate verification',avatar:FATE_AVATARS[0],engine:'codex',model:'gpt-6-luna',effort:'low'}),actor=page.locator(`[data-card-id="${card.id}"]`)
+ await expect.poll(async()=>(await call('session.status',{employee:card.id}))[0].initialization.status).toBe('ready');
  for(const avatar of FATE_AVATARS){
   const updated=await call('card.update',{id:card.id,patch:{avatar,color:SPRITE_COLORS[avatar]}}),saved=updated.sessions.find(c=>c.id===card.id);assert.equal(saved.engine,card.engine);assert.equal(saved.cwd,card.cwd);assert.equal(saved.title,card.title)
   await expect(actor.locator('.fate-pet')).toHaveAttribute('data-avatar',avatar)
   const size=await actor.locator('.pet-cell').evaluate(async el=>{const img=new Image();img.src=getComputedStyle(el).backgroundImage.slice(5,-2);await img.decode();return [img.naturalWidth,img.naturalHeight]});assert.deepEqual(size,[3072,416])
  }
- await call('view.open',{kind:'employee',employee:card.id});await expect(page.locator('.avatar-options')).toHaveCount(1);await expect(page.locator('.avatar-options .fate-pet')).toHaveCount(42);await expect(page.locator('.avatar-collection')).toHaveCount(0)
+ await call('view.open',{kind:'employee',employee:card.id});await page.locator('.profile-portrait').click();await expect(page.locator('.avatar-options')).toHaveCount(1);await expect(page.locator('.avatar-options .fate-pet')).toHaveCount(42);await expect(page.locator('.avatar-collection')).toHaveCount(0)
  for(const avatar of FATE_AVATARS){const pet=page.locator(`.avatar-options [data-avatar="${avatar}"]`);const size=await pet.locator('.pet-cell').evaluate(async el=>{const img=new Image();img.src=getComputedStyle(el).backgroundImage.slice(5,-2);await img.decode();return [img.naturalWidth,img.naturalHeight]});assert.deepEqual(size,[1536,208]);await pet.hover();await expect(pet).toHaveAttribute('data-pose','pickup');const frame=await pet.getAttribute('data-frame');await expect.poll(()=>pet.getAttribute('data-frame')).not.toBe(frame)}
  await page.locator('.avatar-options [data-avatar="fate-rin-chibi"]').click();await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0)
  await call('view.open',{kind:'home'});await page.mouse.move(1100,40)

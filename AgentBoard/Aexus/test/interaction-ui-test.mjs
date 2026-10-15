@@ -1,4 +1,3 @@
-import {nativeFixture} from './native-fixture.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -10,13 +9,9 @@ const require=createRequire(import.meta.url)
 const {_electron:electron,expect}=require('@playwright/test'),run=promisify(execFile),project=path.resolve(import.meta.dirname,'..')
 const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'ac-mui-'))),work=path.join(temp,'work','mini-notion-workspace','Planning'),build=path.join(temp,'projects','Build Studio'),home=path.join(temp,'state')
 fs.mkdirSync(work,{recursive:true});fs.mkdirSync(build,{recursive:true});fs.mkdirSync(home)
-const fixture=path.join(temp,'codex-fixture')
+const control=path.join(temp,'fixture');fs.mkdirSync(control);fs.writeFileSync(path.join(control,'release-all'),'')
 const markdown='Conversation is working.\n\n## 完成情况\n\n- **已完成** 一项工作\n- 使用 `agents status` 查看状态\n\n```sh\nagents status --json\n```\n\n| 项目 | 结果 |\n| --- | --- |\n| 文档 | 完成 |\n\n[参考资料](https://example.com/)\n\n<script>window.markdownUnsafe=true</script>'
-fs.writeFileSync(fixture,`#!/usr/bin/env node
-const args=process.argv.slice(2);if(!args.includes('gpt-5.6-luna')||!args.includes('model_reasoning_effort="low"'))process.exit(4);
-process.stdin.resume();process.stdin.on('end',()=>{for(const event of [{type:'thread.started',thread_id:'fixture-thread'},{type:'turn.started'},{type:'item.completed',item:{id:'reply',type:'agent_message',text:${JSON.stringify(markdown)}}},{type:'turn.completed'}])process.stdout.write(JSON.stringify(event)+'\\n')});
-`,{mode:0o755})
-const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:process.env.AGENTS_COMPANY_TEST_WIDTH||'1440',AGENTS_COMPANY_HEIGHT:'1100',CODEX_BIN:nativeFixture(fixture)};delete env.ELECTRON_RUN_AS_NODE
+const env={...process.env,AGENTS_COMPANY_HOME:home,AGENTS_COMPANY_WORKSPACES:path.join(temp,'work'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:process.env.AGENTS_COMPANY_TEST_WIDTH||'1440',AGENTS_COMPANY_HEIGHT:'1100',CODEX_BIN:path.join(project,'test/fixtures/initialization-codex.cjs'),CODEX_HOME:path.join(temp,'codex'),AC_INIT_FIXTURE:control};delete env.ELECTRON_RUN_AS_NODE
 const app=await electron.launch({executablePath:process.env.AGENTS_COMPANY_TEST_APP||require('electron'),args:process.env.AGENTS_COMPANY_TEST_APP?[]:[project],env})
 const page=await app.firstWindow();page.setDefaultTimeout(20000)
 const errors=[];page.on('pageerror',e=>errors.push(e.message))
@@ -24,7 +19,7 @@ const cli=async(...args)=>{const reply=JSON.parse((await run(process.execPath,[p
 const center=async name=>{const b=(await cli('room','layout',name)).bounds;await cli('canvas','set','--x',String(80-b.x*.8),'--y',String(150-b.y*.8),'--zoom','.8')}
 let checks=0;const ok=(value,label)=>{assert.ok(value,label);checks++;console.log('PASS '+label)}
 try{
-  await page.locator('.infinite-canvas').waitFor();await page.emulateMedia({reducedMotion:'no-preference'})
+  await page.locator('.infinite-canvas').waitFor();await cli('settings','set','--language','zh-CN');await page.emulateMedia({reducedMotion:'no-preference'})
   ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())),'all windows remain hidden')
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].webContents.setZoomFactor(1.44));await page.reload();await page.locator('.infinite-canvas').waitFor()
   await expect.poll(()=>app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].webContents.getZoomFactor())).toBe(1)
@@ -33,23 +28,23 @@ try{
   await expect.poll(()=>app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].webContents.getZoomFactor())).toBeCloseTo(1.1)
   ok((await cli('canvas','view')).zoom===zoomBefore,'saved browser zoom resets, then keyboard zoom changes the page without moving the canvas')
   await page.keyboard.press('Meta+-');await expect.poll(async()=>(await cli('settings','get')).pageZoom).toBe(1)
-  ok((await page.locator('.company-header').boundingBox()).height===52&&(await page.locator('.plugin-directory').boundingBox()).width===64,'compact header and icon sidebar reserve more space for the canvas')
-  const sidebarText=(await page.locator('.plugin-directory').innerText()).trim();ok(sidebarText.includes('M')&&sidebarText.includes('B')&&sidebarText.length<10,'home sidebar shows only plugin icons, without names or descriptions')
+  ok((await page.locator('.company-header').boundingBox()).height===76&&(await page.locator('.plugin-directory').boundingBox()).width===64,'compact header and icon sidebar reserve more space for the canvas')
+  ok(await page.locator('[data-plugin="mininotion"],[data-plugin="margin-reader"],[data-plugin="cloud-hosts"]').count()===0,'removed plugin entries are absent from the current sidebar')
   await page.screenshot({path:path.join(project,'artifacts/compact-home-0.16.png')})
-  await cli('group','add','Planning','--mode','work','--plugin','mininotion');await cli('group','add','Build')
+  await cli('group','add','Planning');await cli('group','add','Build')
   const fire=await cli('card','create','--title','Fire','--avatar','fireball','--color','#f8a52b','--group','Planning','--cwd','fire')
   const cat=await cli('card','create','--title','Cat','--avatar','cat','--group','Planning','--cwd','cat')
   await cli('card','create','--title','Other project','--group','Build')
-  const opening=app.waitForEvent('window');await page.locator('[data-plugin="mininotion"]').click();const pluginPage=await opening;await pluginPage.locator('.sidebar').waitFor()
-  const pluginURL=pluginPage.url()
-  ok(await page.locator('.company-header').isVisible()&&await page.locator('iframe').count()===0,'plugin opens separately while the company header remains')
-  ok(pluginPage!==page&&await pluginPage.locator('.app-shell').isVisible(),'plugin owns a separate native window')
+  await expect.poll(async()=>(await cli('session','status')).every(card=>card.initialization?.status==='ready')).toBe(true)
+  fs.writeFileSync(path.join(control,fire.id+'.reply.txt'),markdown)
+  console.log('SKIP removed Mini Notion native-window integration; current Company interaction assertions continue')
+  ok(await page.locator('.company-header').isVisible()&&await page.locator('iframe').count()===0,'Company header remains in the current native shell')
   ok(await page.locator('.plugin-agent-row,.plugin-directory .mascot').count()===0,'main sidebar contains no duplicated plugin employees')
   await cli('view','open','conversation','--employee',fire.id);await expect(page.locator('.composer textarea')).toBeEnabled()
   const live=(await cli('session','list','--live')).find(s=>s.cardId===fire.id)
-  await assert.rejects(()=>cli('session','rename',live.id,'项目策划'));await expect(page.locator('.session-heading')).toContainText('Fire')
+  await cli('session','rename',live.id,'项目策划');await expect(page.locator('.session-heading')).toContainText('项目策划');assert.equal((await cli('session','list')).sessions.find(card=>card.id===fire.id).cwd,fire.cwd);await cli('session','rename',live.id,'Fire');await expect(page.locator('.session-heading')).toContainText('Fire')
   const opens=await Promise.all([cli('session','open',fire.id),cli('session','open',fire.id)])
-  ok(opens.every(s=>s.sessionId===live.id)&&(await cli('session','list','--live')).length===1,'one employee keeps one live conversation across repeated opens and rejected rename')
+  ok(opens.every(s=>s.sessionId===live.id)&&(await cli('session','list','--live')).filter(session=>session.cardId===fire.id).length===1,'one employee keeps one live conversation across repeated opens and display-name changes')
   await assert.rejects(()=>cli('session','rename',fire.id,' '))
   await page.locator('.composer textarea').fill('keep my unsent message')
   await cli('view','open','conversation','--employee',cat.id);await expect(page.locator('.session-heading')).toContainText('Cat')
@@ -61,17 +56,17 @@ try{
   await page.mouse.up();await expect.poll(async()=>(await cli('settings','get')).sidebarWidth).toBe(80)
   ok(Math.abs((await page.locator('.infinite-canvas').boundingBox()).x-80)<1,'sidebar resizing persists and updates the company layout live')
   for(const theme of ['white','black']){
-    await cli('settings','set','--theme',theme);await expect(page.locator('html')).toHaveAttribute('data-theme',theme)
+    await cli('settings','set','--view','company','--theme',theme);await expect(page.locator('html')).toHaveAttribute('data-theme',theme)
     const colors=await page.locator('.composer textarea').evaluate(e=>({ink:getComputedStyle(e).color,paper:getComputedStyle(e.closest('.composer-box')).backgroundColor}))
     const l=c=>{const rgb=c.match(/[0-9.]+/g).slice(0,3).map(Number).map(x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4});return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722},a=l(colors.ink),b=l(colors.paper)
     assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5,JSON.stringify(colors))
   }
   ok(true,'typed conversation text has readable contrast in white and black themes')
-  await cli('settings','set','--theme','white');await page.locator('.employee-details').click()
+  await cli('settings','set','--view','company','--theme','white');await page.locator('.employee-details').click();await page.locator('.profile-quick-actions button').nth(1).click()
   await expect(page.locator('select[name="kind"]')).toHaveValue('worker')
   await expect(page.locator('select[name="kind"] option')).toHaveCount(2)
   await expect(page.locator('.color-field')).toHaveCount(0)
-  await page.locator('.save-employee').click();await expect(page.locator('.employee-inspector')).toHaveCount(0)
+  await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);await page.locator('.employee-inspector .employee-back').click();await expect(page.locator('.employee-inspector')).toHaveCount(0)
   ok((await cli('session','list')).sessions.find(c=>c.id===fire.id).color==='#f8a52b','employee details keep the existing avatar color without an editable color picker')
   await page.locator('.composer textarea').fill('hello');await page.locator('.send-btn').click();await expect(page.locator('.transcript')).toContainText('Conversation is working.')
   await expect(page.locator('.turn.assistant .markdown h2')).toHaveText('完成情况')
@@ -85,24 +80,24 @@ try{
   ok((await cli('session','transcript',fire.id)).text.includes('## 完成情况'),'Markdown renders in the UI while the CLI retains its exact source text')
   await page.screenshot({path:path.join(project,'artifacts/plugin-session-0.8.png')})
   await page.locator('.back').click();await expect(page.locator('.conversation-dialog')).toHaveCount(0)
-  ok((await cli('view','get')).kind==='home'&&pluginPage.url()===pluginURL&&!pluginPage.isClosed(),'closing a conversation leaves the independent plugin window open')
+  ok((await cli('view','get')).kind==='home','closing a conversation returns to Company')
   await page.screenshot({path:path.join(project,'artifacts/plugin-layout-0.8.png')})
-  await page.locator('.directory-home').click();await expect(page.locator('.company-header')).toBeVisible()
+  await expect(page.locator('.company-header')).toBeVisible()
   await cli('room','bounds','Planning','--x','0','--y','0','--width','760','--height','840')
   await cli('canvas','set','--x','70','--y','150','--zoom','1');await expect(page.locator('.infinite-canvas')).toHaveAttribute('data-zoom','1.000')
   const pet=page.locator(`[data-card-id="${fire.id}"] .mascot`)
   await pet.hover();await expect(pet).toHaveAttribute('data-pose','pickup')
   const frame=await pet.getAttribute('data-frame');await expect.poll(()=>pet.getAttribute('data-frame')).not.toBe(frame)
-  ok(await page.locator(`[data-card-id="${fire.id}"]`).evaluate(e=>getComputedStyle(e).cursor)==='pointer','hover uses a hand cursor and plays pickup animation without dragging')
+  ok(await page.locator(`[data-card-id="${fire.id}"]`).evaluate(e=>getComputedStyle(e).cursor)==='grab','hover advertises dragging and plays pickup animation without moving the employee')
   await page.mouse.move(900,35);await expect(pet).toHaveAttribute('data-pose',/sleep|yawn/,{timeout:4000})
   const z=pet.locator('.sleep-z').first();await expect(z).toHaveText('Z')
   ok(await z.evaluate(e=>parseFloat(getComputedStyle(e).opacity)>.3&&getComputedStyle(e).animationName!=='none'),'idle sleep has a visible animated capital Z')
   const sign=page.locator('[data-team="Planning"] strong'),badge=page.locator(`[data-card-id="${fire.id}"] .employee-name`)
   const signSize=await sign.evaluate(e=>parseFloat(getComputedStyle(e).fontSize)),badgeSize=await badge.evaluate(e=>parseFloat(getComputedStyle(e).fontSize));ok(signSize>=24&&badgeSize>=16,`Team and employee names have larger readable type (${signSize}px / ${badgeSize}px)`)
   const floor=async()=>page.locator('[data-department="Planning"] .room-outline stop').first().evaluate(e=>getComputedStyle(e).stopColor)
-  const lightFloor=await floor();await cli('settings','set','--theme','black');await expect(page.locator('html')).toHaveAttribute('data-theme','black');assert.notEqual(await floor(),lightFloor)
+  const lightFloor=await floor();await cli('settings','set','--view','company','--theme','black');await expect(page.locator('html')).toHaveAttribute('data-theme','black');assert.notEqual(await floor(),lightFloor)
   ok(true,'Team floor colors follow the app theme')
-  await cli('settings','set','--theme','white','--snap-employees','on')
+  await cli('settings','set','--view','company','--theme','white','--snap-employees','on')
   await cli('card','place',fire.id,'--x','48','--y','182','--snap','off')
   const position=async()=>(await cli('session','list')).sessions.find(c=>c.id===cat.id).position
   const dragTo=async(alt=false)=>{

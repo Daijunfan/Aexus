@@ -6,18 +6,20 @@ import WebKit
     let window = NSWindow(contentRect: NSRect(x: -3000, y: -3000, width: 1100, height: 750), styleMask: [], backing: .buffered, defer: false)
     let bundle: String
     let fixture: String
-    let css: String
-    init(bundle: String, fixture: String, css: String) {
+    let stylesheets: [String]
+    init(bundle: String, fixture: String, stylesheets: [String]) {
         self.bundle = bundle
         self.fixture = fixture
-        self.css = css
+        self.stylesheets = stylesheets
         super.init()
         window.contentView = web
         web.navigationDelegate = self
     }
     func start() {
         do {
-            let stylesheet = try String(contentsOfFile: css, encoding: .utf8)
+            // The Agent Board ships its own stylesheet next to the shared one, so
+            // load every stylesheet argument instead of silently dropping the rest.
+            let stylesheet = try stylesheets.map { try String(contentsOfFile: $0, encoding: .utf8) }.joined(separator: "\n")
             let html = "<html><head><style>" + stylesheet + "</style></head><body><div id='root' style='width:1000px;height:700px'></div></body></html>"
             web.loadHTMLString(html, baseURL: URL(string: "http://127.0.0.1/"))
         } catch {
@@ -67,7 +69,7 @@ import WebKit
     static func main() {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
-        let checks = AgentBoardChecks(bundle: CommandLine.arguments[1], fixture: CommandLine.arguments[2], css: CommandLine.arguments[3])
+        let checks = AgentBoardChecks(bundle: CommandLine.arguments[1], fixture: CommandLine.arguments[2], stylesheets: Array(CommandLine.arguments.dropFirst(3)))
         checks.start()
         withExtendedLifetime(checks) { app.run() }
     }

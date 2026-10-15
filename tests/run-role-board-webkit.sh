@@ -17,7 +17,9 @@ done
 URL=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["url"])' "$TEST_HOME/server.json")
 BIN="$ROOT/artifacts/role-board-webkit"
 swiftc -parse-as-library tests/workspace-mode-webkit.swift -framework AppKit -framework WebKit -o "$BIN"
-"$BIN" "$URL" "$ROOT/tests/role-board-webkit.js" > "$ROOT/artifacts/role-board-acceptance/native-webkit.json"
+# The harness exits non-zero when a check fails; let the summary below report
+# which check failed instead of aborting on the exit code and printing nothing.
+"$BIN" "$URL" "$ROOT/tests/role-board-webkit.js" > "$ROOT/artifacts/role-board-acceptance/native-webkit.json" || true
 python3 - "$ROOT/artifacts/role-board-acceptance/native-webkit.json" <<'PY'
 import json,sys
 r=json.load(open(sys.argv[1]));print('ROLE_BOARD_NATIVE_WEBKIT',len(r['checks']),'PASS',r['passed'])

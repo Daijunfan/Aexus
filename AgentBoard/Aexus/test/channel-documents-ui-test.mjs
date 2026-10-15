@@ -18,13 +18,13 @@ let app,browser,page
 try{
  await rpc('settings.set',{language:'zh-CN',viewAppearance:{messages:{theme:'white'}}})
  const host=await rpc('host.create',{name:'Cloud fixture',host:'fixture',os:'linux',defaultDirectory:cloud}),source=await rpc('channel.source-add',{plugin:'telegram',targetId:'trunkietrunk-ui',locator:'trunkietrunk',name:'🟣🟢 English Trunk | Английский язык'}),collector=await rpc('channel.collector-add',{name:'Cloud fixture',sourceIds:[source.id]})
- await rpc('channel.source-avatar-put',{sourceId:source.id,name:'original-channel.jpg',mimeType:'image/jpeg',data:fs.readFileSync(path.join(root,'artifacts/trunkietrunk/telegram-original-avatar.jpg')).toString('base64')})
+ await rpc('channel.source-avatar-put',{sourceId:source.id,name:'fixture-channel.png',mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP+kAAAAASUVORK5CYII='})
  await rpc('channel.update',{id:source.channelId,engine:{kind:'external',location:'remote',name:'BUPT208 document collector',host:'fixture',endpoint:'http://127.0.0.1:5152',collectorId:collector.collector.id,fileStorage:{hostId:host.id,directory:cloud}}})
  const filename='The Week US_0910.pdf',bytes=Buffer.concat([Buffer.from('%PDF-1.7\n'),crypto.randomBytes(5*1024*1024)]),sha256=crypto.createHash('sha256').update(bytes).digest('hex'),file=path.join(cloud,sha256.slice(0,2),sha256)
  fs.mkdirSync(path.dirname(file));fs.writeFileSync(file,bytes)
  const timestamp=Date.now()-3600000,telegram={groupId:'14327791817345770',views:2700,subscriberCount:54017,reactions:[{emoji:'❤️',count:18},{emoji:'🔥',count:2}]}
  const post=await rpc('channel.publish',{sourceId:source.id,externalId:'23604',publishedAt:timestamp,title:filename,body:'',telegram,files:[{id:'file-0',name:filename,mimeType:'application/pdf',bytes:bytes.length,sha256}]})
- const preview=await rpc('channel.media-put',{sourceId:source.id,externalId:'23605',publishedAt:timestamp,mediaKey:'original-thumbnail',name:'original.jpg',mimeType:'image/jpeg',data:fs.readFileSync(path.join(root,'artifacts/trunkietrunk/telegram-original-thumb.jpg')).toString('base64')})
+ const preview=await rpc('channel.media-put',{sourceId:source.id,externalId:'23605',publishedAt:timestamp,mediaKey:'original-thumbnail',name:'fixture-thumbnail.png',mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP+kAAAAASUVORK5CYII='})
  await rpc('channel.publish',{sourceId:source.id,externalId:'23605',publishedAt:timestamp,title:'Techlife News_0310.pdf',body:'',telegram,mediaIds:[preview.media.id],files:[{id:'file-0',name:'Techlife News_0310.pdf',mimeType:'application/pdf',bytes:bytes.length,sha256,thumbnailMediaId:preview.media.id,thumbnailOrigin:'telegram'}]})
  await rpc('channel.publish',{sourceId:source.id,externalId:'23606',publishedAt:timestamp,title:'FT EU.pdf',body:'',telegram,files:[{id:'file-0',name:'FT EU.pdf',mimeType:'application/pdf',bytes:bytes.length,sha256}]})
  const workspace=await rpc('conversation.workspace',{conversation:'channel:'+source.channelId})

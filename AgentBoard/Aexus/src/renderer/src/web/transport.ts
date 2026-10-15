@@ -4,8 +4,13 @@ import {isCloudHostsEmbedded,requestHostedNative} from './host'
 import {chooseServerFolder} from './folders'
 import {flushPlugins} from '../plugins'
 type Event={channel:string;payload:any}
-type Connection={authenticated:boolean;connected:boolean;checking:boolean;server?:{os:string;hostname:string};error?:string}
-let csrf='',connection:Connection={authenticated:false,connected:false,checking:true},socket:WebSocket|undefined,retry:ReturnType<typeof setTimeout>|undefined
+type Connection={authenticated:boolean;connected:boolean;checking:boolean;ready:boolean;server?:{os:string;hostname:string};error?:string}
+// `ready` is the state a caller may act on: an established session that is also
+// final for this document. A hosted frame meets a cookie from its own earlier
+// session, but the host ticket exchange is what authorizes this window, so a
+// bare bootstrap must not mount the application before that exchange has been
+// confirmed.
+let csrf='',hostedConfirmed=!isCloudHostsEmbedded,connection:Connection={authenticated:false,connected:false,checking:true,ready:false},socket:WebSocket|undefined,retry:ReturnType<typeof setTimeout>|undefined
 const events=new Set<(event:Event)=>void>(),ui=new Set<(request:any)=>void>(),stateListeners=new Set<(state:Connection)=>void>()
 const lifecycle=(window as any).agentsDesktopLifecycle as {ready:()=>void;onRequest:(fn:(value:any)=>void)=>()=>void;answer:(value:any)=>void;onVisibility:(fn:(value:any)=>void)=>()=>void}|undefined
 const hostedClient=new URLSearchParams(location.search).get('client')
@@ -13,13 +18,28 @@ const validHostedClient=hostedClient&&/^[a-zA-Z0-9_-]{8,80}$/.test(hostedClient)
 export const clientId=(isCloudHostsEmbedded&&validHostedClient?hostedClient:undefined)
   ??sessionStorage.getItem('agents-company-client')??crypto.randomUUID()
 sessionStorage.setItem('agents-company-client',clientId)
-function update(patch:Partial<Connection>){const authChanged=patch.authenticated!==undefined&&patch.authenticated!==connection.authenticated;connection={...connection,...patch};if(authChanged)for(const listener of events)listener({channel:'client:authentication',payload:{authenticated:connection.authenticated}});for(const listener of stateListeners)listener(connection)}
+function update(patch:Partial<Connection>){
+  const next={...connection,...patch};next.ready=next.authenticated&&hostedConfirmed
+  const authChanged=patch.authenticated!==undefined&&patch.authenticated!==connection.authenticated
+  connection=next
+  if(authChanged)for(const listener of events)listener({channel:'client:authentication',payload:{authenticated:connection.authenticated}})
+  for(const listener of stateListeners)listener(connection)
+}
 export const webAuthenticated=()=>connection.authenticated
+/** Called once the host ticket exchange for this document has been accepted. */
+export function confirmHostedSession(){hostedConfirmed=true;update({})}
 export function onWebState(listener:(state:Connection)=>void){stateListeners.add(listener);listener(connection);return()=>{stateListeners.delete(listener)}}
 async function request(url:string,options:RequestInit={}){
-  const response=await fetch(url,{...options,credentials:'same-origin'})
+  // The Core selects this browser's session cookie by the client it identifies.
+  const response=await fetch(url,{...options,credentials:'same-origin',headers:{'x-agents-client':clientId,...options.headers as Record<string,string>|undefined}})
   let reply:any;try{reply=await response.json()}catch{throw Error(uiText('The Core returned an invalid response'))}
-  if(!response.ok||reply.ok===false){if(response.status===401)update({authenticated:false,connected:false});throw Object.assign(Error(reply.error??uiText('Request failed')),{code:reply.code,status:response.status})}
+  if(!response.ok||reply.ok===false){
+    // A session that no longer matches this browser (expired, revoked, or
+    // replaced) is dropped so the next bootstrap re-establishes the real one.
+    // The failed call itself is never replayed.
+    if(response.status===401||response.status===403&&(reply.code==='HOSTED_CLIENT_MISMATCH'||/csrf/i.test(String(reply.error??'')))){csrf='';update({authenticated:false,connected:false})}
+    throw Object.assign(Error(reply.error??uiText('Request failed')),{code:reply.code,status:response.status})
+  }
   return reply.data
 }
 function connect(){
@@ -44,7 +64,16 @@ function connect(){
   current.onerror=()=>current.close()
 }
 let starting:Promise<void>|undefined
-export function initializeWeb(){return starting??=(async()=>{try{const data=await request('/api/bootstrap');csrf=data.csrf;update({authenticated:true,checking:false,server:data.server});connect()}catch{update({authenticated:false,checking:false})}})().finally(()=>{starting=undefined})}
+async function bootstrap(){try{const data=await request('/api/bootstrap');csrf=data.csrf;update({authenticated:true,checking:false,server:data.server});connect()}catch{update({authenticated:false,checking:false})}}
+/**
+ * `refresh` waits for any in-flight bootstrap and then reads the session again,
+ * so a caller that just replaced this document's session (a host authorization)
+ * never receives the outcome of an older one.
+ */
+export function initializeWeb(refresh=false):Promise<void>{
+  if(starting)return refresh?starting.then(()=>initializeWeb(true)):starting
+  return starting=bootstrap().finally(()=>{starting=undefined})
+}
 export async function loginWeb(token:string){
   const result=await request('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token})})
   csrf=result.csrf

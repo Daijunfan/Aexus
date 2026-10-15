@@ -40,7 +40,7 @@ try{
  ok(j.state==='completed'&&hash(readOnly)===hash(path.join(dirs.cloud,'read-only.bin'))&&(fs.statSync(path.join(dirs.cloud,'read-only.bin')).mode&0o777)===0o444,'read-only multi-chunk files copy successfully and restore source mode at completion')
  const folder=path.join(dirs.local,'Folder');fs.mkdirSync(path.join(folder,'子目录'),{recursive:true});fs.writeFileSync(path.join(folder,'子目录','空文件'),'');fs.writeFileSync(path.join(folder,'script.sh'),'#!/bin/sh\n',{mode:0o755});fs.mkdirSync(path.join(folder,'.agents-company'));fs.writeFileSync(path.join(folder,'.agents-company','private'),'managed')
  j=await finish((await start({local:true,path:folder},{team:'Cloud',path:'.'})).id)
- ok(j.state==='completed'&&fs.existsSync(path.join(dirs.cloud,'Folder/子目录/空文件'))&&!fs.existsSync(path.join(dirs.cloud,'Folder/.agents-company'))&&(fs.statSync(path.join(dirs.cloud,'Folder/script.sh')).mode&0o111)!==0,'directory copy preserves empty files and executable bit; host metadata stays out')
+ ok(j.state==='completed'&&fs.existsSync(path.join(dirs.cloud,'Folder/zi-mu-lu/空文件'))&&!fs.existsSync(path.join(dirs.cloud,'Folder/.agents-company'))&&(fs.statSync(path.join(dirs.cloud,'Folder/script.sh')).mode&0o111)!==0,'directory copy preserves empty files and executable bit; host metadata stays out')
  j=await finish((await start({local:true,path:file},{shared:true,path:'inbox'})).id)
  ok(j.state==='failed'&&hash(file)===hash(path.join(dirs.shared,'inbox/二进制 data.bin')),'duplicate destination fails without overwriting either file')
  const removed=await cli('workspace','trash','inbox/二进制 data.bin','--shared')

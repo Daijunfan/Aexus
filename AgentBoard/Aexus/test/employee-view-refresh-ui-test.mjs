@@ -8,10 +8,10 @@ import {createRequire} from 'node:module'
 import {chromium,_electron as electron,expect} from '@playwright/test'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 import {profileApplication} from './fixtures/profile-application.mjs'
-const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url),logs=['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md']
-if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of [...logs,'test/employee-view-refresh-ui-test.mjs','src/renderer/src/styles/employee-workbench.css'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
+const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url)
+if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of ['test/employee-view-refresh-ui-test.mjs','src/renderer/src/styles/employee-workbench.css'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
 const out=path.join(root,'artifacts/employee-view-refresh');fs.mkdirSync(out,{recursive:true})
-const note=text=>{console.log(text);for(const file of logs)fs.appendFileSync(path.join(root,file),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
+const note=text=>{console.log(text);fs.appendFileSync(path.join(out,'progress-notes.md'),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 const built=await profileApplication();note('PASS 独立 main/preload/renderer 构建，未覆盖根 out/，未打包或安装。')
 async function run(native){
  const mode=native?'desktop':'web',probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));const port=probe.address().port;await new Promise(resolve=>probe.close(resolve))

@@ -5,11 +5,16 @@ import path from 'node:path'
 import assert from 'node:assert/strict'
 import {build} from 'esbuild'
 import {fixtureCore} from './fixtures/headless-core.mjs'
-const root=path.resolve(import.meta.dirname,'..'),logs=['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md']
-if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of [...logs,'test/plan-authority-core-test.mjs','src/main/scheduler/channel-policy.ts','src/renderer/src/components/ChannelPlans.tsx','src/renderer/src/styles/channel-plans.css'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-plan-authority-')),entry=path.join(temp,'daemon.cjs'),out=path.join(root,'artifacts/plan-authority'),report={passed:false,checks:[],platform:process.platform}
+const root=path.resolve(import.meta.dirname,'..')
+// The suite's appended progress record used to go to progress/Agents-company1.md
+// and share_chat/Agents-company1-channel-views.md in the source tree. The current
+// product ships neither directory and a test must not write into the source tree,
+// so the same appended record lives in the suite's own artifacts directory.
+const out=path.join(root,'artifacts/plan-authority'),logs=[path.join(out,'progress.md'),path.join(out,'channel-views.md')]
+if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of ['test/plan-authority-core-test.mjs','src/main/scheduler/channel-policy.ts','src/renderer/src/components/ChannelPlans.tsx','src/renderer/src/styles/channel-plans.css'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-plan-authority-')),entry=path.join(temp,'daemon.cjs'),report={passed:false,checks:[],platform:process.platform}
 fs.mkdirSync(out,{recursive:true});let f
-const note=text=>{console.log(text);report.checks.push(text);for(const file of logs)fs.appendFileSync(path.join(root,file),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
+const note=text=>{console.log(text);report.checks.push(text);for(const file of logs)fs.appendFileSync(file,'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 try{
  fs.symlinkSync(path.join(root,'node_modules'),path.join(temp,'node_modules'),'dir')
  await build({entryPoints:[path.join(root,'src/main/daemon.ts')],outfile:entry,bundle:true,platform:'node',format:'cjs',target:'node22',packages:'external',define:{__AGENTS_PROJECT_ROOT__:JSON.stringify(root)},logLevel:'silent'})

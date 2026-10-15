@@ -2,15 +2,27 @@
 
 更新日期：2026-10-15。用户已授权抽测 DeepSeek，并进一步要求深入验收 Role Board 的合作关系、三个视图和群聊；中转站故障不再作为软件验收阻塞项。
 
+## 2.11.2 验收
+
+版本 2.11.2（build 50，构建标识 `5cf36f9b2d20c9e60e6822b970dcc4bcd01e859524c3b405ab2153bd32f15c3d`）；候选包已冻结、重新构建并重跑原生验收，`/Applications/Aexus.app` 已安装该版本。逐项集成结果见 `artifacts/full-acceptance-20261015/integration-r2/`（10/10 通过），发布期汇总见 [RELEASE_2.11.2_ACCEPTANCE.md](RELEASE_2.11.2_ACCEPTANCE.md)。
+
+- 10/10 完整集成链执行于 build49；build50 图标补丁通过业务文件字节一致、原生启动与签名检查承接该结果，未重跑完整矩阵。完整 backend buildId 5cf 未变；runtime/native 改动不是 Core/UI 改动。
+
+- 修复 Role Board 重新进入或刷新后的 `Invalid CSRF token`：会话 Cookie 按（Core 实例端口、浏览器客户端）分别命名，重新授权复用同一活动会话，不再轮换 Cookie，也不重放被拒绝的写入。CSRF、Origin/Host 与一次性票据校验保持原样，未放宽。
+- 图标外圈白边改为透明；图像本身由负责人审定，这里只记录打包元数据。
+- 新增原生 macOS WKWebView 认证生命周期验收：真实落盘 `WKWebsiteDataStore`，分“冷启动”和“新进程沿用上次 Cookie”两个阶段，覆盖 Role Board 重新进入、窗口刷新、两个窗口共用同一 Cookie 存储、同一 Cookie 存储中的第二个 localhost Core 实例，并在每个文档里通过真实表单创建 Team。除设计内的登录前 `/api/bootstrap` 401 之外，任何非 401 的拒绝响应都计为失败，不做抑制。
+- 认证行为已按源码验证：每个阶段各 9 个真实文档通过原版 Team 表单完成写入，无任何被拒绝的已认证请求，Company/Messages/Plan 切换逐次由托管 Core 自身确认；沿用 Cookie 的新进程在自己的 Core 实例上首个 `/api/bootstrap` 即为 200，未重新登录，每个窗口各自的 Cookie 仍按（实例端口、浏览器客户端）分开。同一验收对安装版 2.11.1 运行会复现重新进入后的 `Invalid CSRF token` 403，说明它不是空过（见 `artifacts/full-acceptance-20261015/integration-negative-control/`）。候选包已冻结重建并重跑通过（`artifacts/full-acceptance-20261015/integration-r2/`）。
+- Company/Messages/Plan 切换为单击直达：子桥按序串行化 Core 选择、合并被取代的排队命令，不再从过期 `activeTab` 确认，也不需重试或再次点击主机标签；导航失配直接计为不一致。
+
 ## 当前实现
 
-- 2.10.2 发布目标： `/Applications/云主机.app`。旧 `vm` 数据仅作为兼容字段保留，不再影响主机可见性、SSH 地址、VS Code 跳板选择或删除依赖；界面移除虚拟机电源/宿主关联卡。清除旧元数据不再中断既有连接。
+- 2.11.2 发布目标： `/Applications/Aexus.app`。旧 `vm` 数据仅作为兼容字段保留，不再影响主机可见性、SSH 地址、VS Code 跳板选择或删除依赖；界面移除虚拟机电源/宿主关联卡。清除旧元数据不再中断既有连接。
 - 修复宿主窗口失焦后 Role Board 仍沿用旧焦点状态的问题；窗口 focus / blur 与页面可见性共同驱动原版消息已读规则。群聊、关系、计划等业务代码不变。Role Pi 接受原生内置服务商，不再要求 DeepSeek 必须在 models.json 重复定义；沿用原生设置和凭据；原生 thinking=low 等已开启推理时，不再按 Thinking off 错误拒绝初始化。显式 off 的严格检查保留。
 - 顶层四入口：Single Host、Hosts Board、Agent Board、Role Board。
-- Agent Board 仅按工作组组织主机：新建、切换、重命名、移除工作组；每组独立添加、隐藏、排序主机。移除分组或隐藏主机不影响原生会话。旧主机列表自动迁入默认工作组，不再显示 Project、Workspace、目录登记或目录筛选；旧目录数据和 API 保留兼容。
+- Agent Board 仅按工作组组织主机：新建、切换、重命名、移除工作组；每组独立添加、隐藏、排序主机并保存 1–6 列数。移除分组或隐藏主机不影响原生会话。旧主机列表自动迁入默认工作组，不再显示 Project、Workspace、目录登记或目录筛选；旧目录数据和 API 保留兼容。
 - Single Host 新增独立 Roles 子页面，仅按当前工作主机投影 Role Board 员工，不读取、创建或绑定 Agent 会话；打开角色使用原版 Aexus 的精确会话/初始化入口。原生 Coding Agents 子页面继续独立管理。
 - Role Board 独立承载 Company、Messages、Plan，复用内嵌 Aexus 0.66.2 的原始 Core、React 页面、存储、权限、消息和调度代码。三个子页面共用一个 iframe、clientId 和 Core 实例。
-- 按用户最新要求，不再构建、打包、加载 Aexus 的 Cloud Hosts、Mini Notion、Margin Reader 三个插件；关闭内嵌插件入口和安装功能。独立软件源码、应用及用户数据保留。Aexus 原版 Cline/Pi 原生配置读取能力继续保留。内嵌版新配置默认从本机原生 Cline/Pi 配置读取服务、模型和凭据，员工会话与工具权限独立。
+- 按用户最新要求，不再构建、打包、加载 Aexus 的 Cloud Hosts、Mini Notion、Margin Reader 三个插件；关闭内嵌插件入口和安装功能。文档封面预览改由 Core 自身的 `asset-preview-worker.js` 独立渲染，不再依赖 Margin Reader。独立软件源码、应用及用户数据保留。Aexus 原版 Cline/Pi 原生配置读取能力继续保留。内嵌版新配置默认从本机原生 Cline/Pi 配置读取服务、模型和凭据，员工会话与工具权限独立。
 - 原生 Codex 不再自动注入 CloudHosts 协作 MCP 或动态工具。原有历史不擦除，不通过切换线程制造“干净”的假恢复。
 - 原生 TUI 连接失败时显示重连入口和折叠诊断，不切换到自制聊天界面。Codex 精确线程、Pi 原生 session ID、Claude 原生 resume ID 保留；Cline 通过原生 SDK 在共享的生产 Hub 登记会话，再由原版 TUI 的 `--id` 连接精确标识；若 Hub 尚未运行，启动原版 CLI 自带的 Hub daemon，仍使用同一原生数据目录。创建操作不发送模型请求，也不复制引擎配置；原生引擎可以清理尚无消息的空历史。跨机 Cline 通过原生 Core 的提交事件记录是否有过输入，只在确认为空时按原 ID 重建；已有输入的历史丢失仍拒绝无关恢复。已实测本机及 Linux/Windows 跨机的空会话关闭重开、随后任务与历史恢复。
 - 补齐宿主适配：插件能力如实声明关闭；工作目录选择使用原生文件夹窗口，保留默认路径、取消语义和足够的选择时间；本地文件“在 Finder 中显示”先由原版 Core 做人类用户与目录权限检查，再交给宿主执行，支持临时目录和外置卷。浏览器独立模式和远端文件限制保持原版行为。
@@ -19,7 +31,7 @@
 
 ## 当前已运行的验收
 
-- CloudHosts Node 测试：上一版完整基线 211 项通过；当前工作组改动只执行构建与相关检查，不再启动批量真实模型测试。最新候选包内的 Role Board WebKit 和四引擎选择 WebKit 各 13 项通过，原版 Aexus 业务浏览器验收通过。
+- CloudHosts Node 测试：`npm test` 220 项通过、0 失败；当前核心套件 169 项通过，适用业务 UI 套件 107 项通过（106 完整 + 1 明确移除范围跳过，31 项排除不计入通过）。最新候选包内的 Role Board WebKit 和四引擎选择 WebKit 各 13 项通过，原版 Aexus 业务浏览器验收通过。发布期汇总见 [RELEASE_2.11.2_ACCEPTANCE.md](RELEASE_2.11.2_ACCEPTANCE.md)。
 - 在 bupt208、实体 DJF-Windows 分别同时启动四种引擎的真实 SSH 验收，八条路径全部通过；覆盖原版 TUI、工具文件效果、原生会话恢复，以及 Cline 检查点与 Core 崩溃恢复。模型均为隔离的确定性夹具，此轮不代表真实模型服务已验收。
 - 原版 Aexus Messages Core、Plan Core：通过，包含权限、消息历史、计划状态、重复规则、保存视图和重启恢复；使用确定性引擎夹具。
 - 此前插件业务测试结果属于旧版本；当前版本已移除插件分发。
@@ -44,7 +56,7 @@
 
 真实浏览器与原生 WebKit 的证据位于 `artifacts/role-board-acceptance/`。代码与包的验证不能当作生产安装或真实付费模型验收。
 
-## 仍未完成
+## 阶段记录与剩余边界
 
 1. 四种引擎在 Linux 及实体 Windows 参考主机上的核心原生路由已验证；扩展生态和其他原生交互分支尚未完整覆盖。Claude 的 `@文件` 和直接 `!` Shell 输入已在 Linux/Windows 验证；附件内容在目标主机经过原生 Read 后，由 Mac 原版 CLI 渲染，模型看到目标路径，原生 TUI 的附件行仍显示私有暂存路径。当前不能宣称全部原生操作均已完成。不得将普通 SSH 原生 CLI 或带 Tunnel/MCP 提示词的方式标为 Mac 本地透明执行。
    - `src/native-executor.cjs` 仅承载经过 SSH 的私有执行器消息；Cline 与 Claude 保留各自适配模块。源引擎配置和历史仍在原生目录，不复制到 CloudHosts。
@@ -59,7 +71,7 @@
 4. 已盘点现有 14 台远程主机、VM Lab 的 11 台 BUPT 客机，均有可访问的 SSH 记录；本地 Apple VM 后端没有发现已部署实例数据。重新核对清单仍为 11 台，已存在于 14 条云主机记录中，不创建重复记录。14 台主机均通过 SSH 盘点，并能访问 DeepSeek 与组内中转站（匿名请求分别得到 401/403，尚不等于模型鉴权验收）。更新后 11 台客机均已通过原有 API 删除 `vm` 关联，保留原主机 ID 和 SSH 地址，没有重复登记。已备份主机清单；未改客机网络。
 5. 用户后置虚拟机工作前已启动的安装中，ubuntu-target1 已完成 Node 24.16.0、Codex 0.162.1、Claude Code 2.1.299、Pi 1.2.0、Cline 3.0.71 安装；当时未写入模型凭据。交接后已完成剩余安装和配置；早先 BUPT-Windows 的临时 Node 上传失败也已通过新的校验传输完成。临时 SSH 出网通道已关闭。本阶段已将所有新增配置接入原生目录；两台参考主机的 Codex/Claude 文件哈希保持不变，其 DeepSeek key 与 Mac 一致。5 台 Windows 客机清除了抢占新版命令的旧 Codex PATH 项，备份保留。Pi 在 6 台 Windows 上使用原生 Shell 执行器写入并读回文件，客机的 Git Bash 路径写入 Pi 自己的设置；实体机原路径有效，未修改。BUPT-Windows 的 Claude 自更新缺失平台依赖后，已重新完成官方 2.1.300 包的安装并验证，原配置哈希不变。为原生 Pi 搜索适配，仅在 bupt208 和实体 DJF-Windows 的标准 Pi 缓存目录中安装并校验了官方 ripgrep 15.2.0；未改动这两台参考主机的模型配置、系统 PATH 或客机网络。
    - Cline 4.1.24 的 VS Code 端仍支持旧 `secrets.json` 覆盖。已备份并移除 15 个用户环境中的旧 DeepSeek key 覆盖，保留其他凭据，设置原生 Plan/Act 默认选择，使凭据回落到同一 `settings/providers.json`。Mac 已通过真实 VS Code Extension Host 调用原版 Cline 扩展，使用共享配置完成 DeepSeek 请求；原生记录的来源为 vscode，模型为 deepseek-flash，配置内容哈希未变。6 台 Windows（5 台客机及实体 DJF-Windows）也已通过同样的真实扩展验收，合计 7 项；证据为 `artifacts/agent-board-acceptance/cline-vscode-config.json`。已有面板的内存缓存需重新载入。
-6. `/Applications/云主机.app` 已安全更新为 2.10.0，旧包与用户数据已备份；原有空 Cline 会话及升级时仍活动的交互终端已恢复，未提交的 GPU Shell 草稿保留且未执行。安装包指纹与运行后端一致。Windows CloudHosts 本机运行和打包验收未完成；这不影响本次 Mac CloudHosts 管理 Windows 主机的范围。
+6. `/Applications/Aexus.app` 已安全更新为 2.11.2（build 50），旧包与用户数据已备份；原有空 Cline 会话及升级时仍活动的交互终端已恢复，未提交的 GPU Shell 草稿保留且未执行。安装包指纹与运行后端一致。Windows CloudHosts 本机运行和打包验收未完成；这不影响本次 Mac CloudHosts 管理 Windows 主机的范围。
 
 ## 边界与复现
 
@@ -67,6 +79,10 @@
 
 ```
 npm test
+sh tests/run-integration-acceptance.sh
+sh tests/run-webkit-auth-lifecycle.sh
+node tests/icon-packaging-metadata.cjs
+node tests/role-auth-lifecycle-live.cjs
 node tests/role-board-live-ui.cjs
 sh tests/run-role-board-webkit.sh
 node tests/agent-native-fixture.cjs

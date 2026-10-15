@@ -1141,7 +1141,7 @@
     ],
     "expected": {
       "ok": false,
-      "error": "--source-view requires company, messages, plan or guardian"
+      "error": "--source-view requires company, messages or plan"
     }
   },
   {
@@ -1196,7 +1196,7 @@
     ],
     "expected": {
       "ok": false,
-      "error": "--source-view requires company, messages, plan or guardian"
+      "error": "--source-view requires company, messages or plan"
     }
   },
   {
@@ -1251,7 +1251,7 @@
     ],
     "expected": {
       "ok": false,
-      "error": "--source-view requires company, messages, plan or guardian"
+      "error": "--source-view requires company, messages or plan"
     }
   }
 ]

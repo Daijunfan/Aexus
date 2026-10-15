@@ -9,7 +9,7 @@ import {fixtureCore} from './fixtures/headless-core.mjs'
 import {profileApplication} from './fixtures/profile-application.mjs'
 const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url),out=path.join(root,'artifacts/message-wallpaper'),built=await profileApplication()
 fs.mkdirSync(out,{recursive:true})
-const note=text=>{console.log(text);for(const name of ['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md'])fs.appendFileSync(path.join(root,name),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
+const note=text=>{console.log(text);fs.appendFileSync(path.join(out,'progress-notes.md'),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 note('PASS 本轮独立应用构建；未覆盖根 out/，未打包安装。')
 async function run(native){
  const mode=native?'desktop':'web',server=net.createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;await new Promise(resolve=>server.close(resolve))

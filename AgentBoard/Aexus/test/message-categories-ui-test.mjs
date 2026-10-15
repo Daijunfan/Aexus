@@ -23,7 +23,10 @@ try{
  else{browser=await chromium.launch({headless:true,...(process.platform==='darwin'?{channel:'chrome'}:{})});page=await browser.newPage({viewport:{width:1440,height:1000}});await page.goto('http://127.0.0.1:'+port);await page.locator('.web-login input').fill(fs.readFileSync(path.join(f.env.AGENTS_COMPANY_HOME,'control.token'),'utf8').trim());await page.getByRole('button',{name:'Enter workspace',exact:true}).click()}
  page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));await expect(page.locator('.infinite-canvas')).toBeVisible();await page.getByRole('button',{name:'Messages',exact:true}).click()
  const rows=()=>page.locator('.message-contacts > .message-contact-wrap'),row=key=>page.locator('[data-conversation-key="'+key+'"]'),tabs=page.getByRole('tablist',{name:'Conversation categories'}),dialog=()=>page.getByRole('dialog',{name:/^(Create|Edit) category$/}),shot=async name=>{await page.screenshot({path:path.join(out,name+'.png'),animations:'disabled'});screens.push(name)}
- await expect(rows()).toHaveCount(10);await expect(tabs.getByRole('tab',{name:'All',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Archived chats',exact:true})).toHaveCount(0)
+ // Telegram's one-source channel appears once in the inbox; its source remains in source-only categories.
+ const inboxKeys=['employee:'+a.id,'employee:'+b.id,'group:'+room.id,...[alpha,video,telegram].map(source=>'channel:'+source.channelId),...[alpha,beta,video].map(source=>'source:'+source.id)]
+ const expectInbox=async expected=>expect.poll(()=>rows().evaluateAll(items=>items.map(item=>item.dataset.conversationKey).sort())).toEqual([...expected].sort())
+ await expectInbox(inboxKeys);await expect(tabs.getByRole('tab',{name:'All',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Archived chats',exact:true})).toHaveCount(0)
  metrics.firstRowOffset=await rows().first().evaluate(el=>el.getBoundingClientRect().top-document.querySelector('.message-sidebar').getBoundingClientRect().top);assert.ok(metrics.firstRowOffset<225,JSON.stringify(metrics));await shot('01-compact-inbox')
  const create=async(preset,name,platform)=>{await page.getByRole('button',{name:'Create category',exact:true}).click();await dialog().getByRole('button',{name:preset,exact:true}).click();if(platform)await dialog().getByRole('combobox',{name:'Social platform',exact:true}).selectOption(platform);await dialog().locator('[name=conversation-folder-name]').fill(name)}
  const save=async()=>{await dialog().getByRole('button',{name:'Create category',exact:true}).click();await expect(dialog()).toHaveCount(0)}
@@ -72,9 +75,9 @@ try{
  // User-created tabs, including the last, are deletable without destroying content.
  let folders=(await rpc('messenger.state')).folders
  for(const folder of folders){const tab=tabs.locator('#message-folder-'+folder.id);await tab.click({button:'right'});await page.getByRole('menuitem',{name:'Delete category',exact:true}).click();await expect(tab).toHaveCount(0)}
- assert.equal((await rpc('messenger.state')).folders.length,0);await expect(rows()).toHaveCount(13);await expect(tabs.getByRole('tab')).toHaveCount(0)
+ assert.equal((await rpc('messenger.state')).folders.length,0);const finalInboxKeys=[...inboxKeys,'employee:'+c.id,'group:'+room2.id,'source:'+x3.id];await expectInbox(finalInboxKeys);await expect(tabs.getByRole('tab')).toHaveCount(0)
  assert.equal((await rpc('channel.post',{id:peer.id})).id,peer.id);assert.equal((await rpc('session.list')).sessions.length,3)
- await page.reload();await expect(rows()).toHaveCount(13);await expect(tabs.getByRole('tab')).toHaveCount(0)
+ await page.reload();await expectInbox(finalInboxKeys);await expect(tabs.getByRole('tab')).toHaveCount(0)
  await create('Social platform','X','x');await save();await expect(rows()).toHaveCount(3)
  for(const theme of ['black','violet']){await rpc('settings.set',{theme});await expect(page.locator('html')).toHaveAttribute('data-theme',theme);await shot('07-'+theme)}
  await page.setViewportSize({width:420,height:850});await page.getByRole('button',{name:'Back to conversations',exact:true}).click();await expect(page.locator('.message-sidebar')).toBeVisible();await expect(rows()).toHaveCount(3)

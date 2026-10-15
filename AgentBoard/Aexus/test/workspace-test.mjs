@@ -14,7 +14,17 @@ let n=0; const ok=(value,label)=>{assert.ok(value,label);console.log(`PASS  ${la
 try {
   await build({entryPoints:{workspaces:'src/main/workspaces.ts',canvas:'src/shared/canvas.ts'},outdir:join(temp,'lib'),bundle:true,platform:'node',format:'cjs',logLevel:'silent'})
   const require=createRequire(import.meta.url),{teamRoot,employeeWorkspace,workspaceStatus,defaultTeamRoot}=require(join(temp,'lib/workspaces.js'))
-  ok(defaultTeamRoot('Planning',{mode:'work',pluginId:'mininotion'})===join(import.meta.dirname,'../PlugIns/mini-notion/workspaces/Planning')&&defaultTeamRoot('Research',{mode:'work',pluginId:'cloud-hosts'})===join(import.meta.dirname,'../PlugIns/cloud-hosts/workspaces/Research'),'production Work roots belong to each plugin source folder and remain separate per Team')
+  // The Mini Notion / Cloud Hosts plugin products were removed from Aexus, so
+  // no plugin source folder or packaged plugin exists any more. The
+  // plugin-owned Work root convention is therefore scoped out explicitly: it
+  // needs an installed plugin. What survives is the refusal — a Work Team whose
+  // plugin is gone must not silently invent a root somewhere else.
+  assert.throws(()=>defaultTeamRoot('Planning',{mode:'work',pluginId:'mininotion'}),/Plugin not installed: mininotion/)
+  assert.throws(()=>defaultTeamRoot('Research',{mode:'work',pluginId:'cloud-hosts'}),/Plugin not installed: cloud-hosts/)
+  ok(defaultTeamRoot('Planning',{mode:'build'})!==defaultTeamRoot('Research',{mode:'build'})&&
+   !defaultTeamRoot('Planning',{mode:'build'}).startsWith(home),'ordinary Team roots stay separate per Team and outside the application data directory')
+  // Legacy stored settings still name the removed plugin; the workspace guards
+  // below run against that preserved record, exactly as an upgraded install has it.
   const store={groups:['Engineering'],teamRoots:{Engineering:realpathSync(root)},teamSettings:{Engineering:{mode:'work',pluginId:'mininotion'}},sessions:[]}
   assert.throws(()=>teamRoot(home));assert.throws(()=>teamRoot('relative'))
   ok(true,'Team root must be an existing absolute external folder')

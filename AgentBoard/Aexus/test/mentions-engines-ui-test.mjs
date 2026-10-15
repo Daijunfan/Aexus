@@ -8,10 +8,10 @@ import {createRequire} from 'node:module'
 import {build} from 'electron-vite'
 import {chromium,_electron as electron,expect} from '@playwright/test'
 import {fixtureCore} from './fixtures/headless-core.mjs'
-const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url),logs=['progress/Agents-company1.md','share_chat/Agents-company1-channel-views.md']
-if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of [...logs,'test/mentions-engines-ui-test.mjs','src/renderer/src/chat/useMentionPicker.ts'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
+const root=path.resolve(import.meta.dirname,'..'),require=createRequire(import.meta.url)
+if(process.getuid?.()===0){const{uid,gid}=fs.statSync(root);for(const file of ['test/mentions-engines-ui-test.mjs','src/renderer/src/chat/useMentionPicker.ts'])fs.chownSync(path.join(root,file),uid,gid);process.setgroups([gid]);process.setgid(gid);process.setuid(uid);const user=os.userInfo();Object.assign(process.env,{HOME:user.homedir,USER:user.username,LOGNAME:user.username,TMPDIR:'/tmp'})}
 const out=path.join(root,'artifacts/mentions-engines-cloud'),application=path.join(out,'application');fs.mkdirSync(application,{recursive:true})
-const note=text=>{console.log(text);for(const file of logs)fs.appendFileSync(path.join(root,file),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
+const note=text=>{console.log(text);fs.appendFileSync(path.join(out,'progress-notes.md'),'\n- ['+new Date().toISOString()+'] '+text+'\n')}
 if(!process.argv.includes('--skip-build')){
  fs.writeFileSync(path.join(application,'package.json'),fs.readFileSync(path.join(root,'package.json')))
  for(const name of ['node_modules','bin','docs','Modules','build','src','API.md','ARCHITECTURE.md','AGENTS.md','PERMISSIONS.md','PLAN.md','SCHEDULER.md','PLUGIN_SPEC.md','README.md','engine-downloads.json'])if(!fs.existsSync(path.join(application,name))&&fs.existsSync(path.join(root,name)))fs.symlinkSync(path.join(root,name),path.join(application,name))
@@ -25,7 +25,7 @@ async function run(native){
  let browser,app,page;const report={passed:false,mode,platform:process.platform,checks:[],errors:[]},check=text=>{report.checks.push(text);note('PASS '+mode+'：'+text)}
  try{
   await rpc('settings.set',{language:'en',viewAppearance:{company:{theme:'white'},messages:{theme:'violet'}}})
-  await rpc('group.add',{name:'Newsroom'});await rpc('group.add',{name:'Plugin desk',mode:'work',pluginId:'mininotion'})
+  await rpc('group.add',{name:'Newsroom'});await rpc('group.add',{name:'Plugin desk'})
   const a=await f.create('Aster','Newsroom'),b=await f.create('张三','Newsroom')
   const group=await rpc('chat.create',{name:'Mention laboratory',members:[a.id,b.id]}),channel=await rpc('channel.create',{name:'Channel laboratory',engine:{kind:'employees',employeeIds:[a.id,b.id]}})
   for(const engine of ['cline','pi'])await rpc('engine.configure',{engine,patch:{apiKey:'school-'+engine+'-fixture',baseUrl:'https://school.invalid/v1',model:'deepseek-v4-flash'}})
@@ -48,7 +48,7 @@ async function run(native){
    await area.getByRole('button',{name:'Remove mention 张三',exact:true}).click()
    await input.fill('前SELECT后');await caret(1,7);await page.keyboard.insertText('@Ast');await input.press('Tab');await expect(input).toHaveValue('前后');await area.getByRole('button',{name:'Remove mention Aster',exact:true}).click()
    await input.fill('prefix@Ast tail');await caret(10);await expect(menu.getByRole('option')).toHaveCount(1);await input.press('Escape');await expect(menu).toHaveCount(0);await caret(0);await expect(menu).toHaveCount(0);await caret(10);await expect(menu).toBeVisible();await input.press('Enter');await expect(input).toHaveValue('prefix tail');await area.getByRole('button',{name:'Remove mention Aster',exact:true}).click()
-   await input.fill('keep all this text');await caret(5);await area.getByRole('button',{name:kind==='group'?'Mention a member':'Mention an administrator',exact:true}).click();await menu.getByRole('option',{name:/Aster/}).click();await expect(input).toHaveValue('keep all this text');assert.equal(await input.evaluate(el=>el.selectionStart),5);await area.getByRole('button',{name:'Remove mention Aster',exact:true}).click()
+   await input.fill('keep all this text');await caret(5);await area.getByRole('button',{name:'Mention a member',exact:true}).click();await menu.getByRole('option',{name:/Aster/}).click();await expect(input).toHaveValue('keep all this text');assert.equal(await input.evaluate(el=>el.selectionStart),5);await area.getByRole('button',{name:'Remove mention Aster',exact:true}).click()
    await input.fill('beforeafter');await caret(6);await input.dispatchEvent('compositionstart');await page.keyboard.insertText('@张');await input.dispatchEvent('keydown',{key:'Enter',code:'Enter',keyCode:229,isComposing:true});await expect(input).toHaveValue('before@张after');await expect(menu).toHaveCount(0);await input.dispatchEvent('compositionend');await expect(menu.getByRole('option')).toHaveCount(1);await input.press('Enter');await expect(input).toHaveValue('beforeafter');await area.getByRole('button',{name:'Remove mention 张三',exact:true}).click()
    await input.fill('left right');await caret(5);await page.keyboard.insertText('@');await page.screenshot({path:path.join(out,mode+'-'+kind+'-mention.png'),animations:'disabled'});await input.press('ArrowDown');await input.press('Enter');await expect(input).toHaveValue('left right')
    await area.getByRole('button',{name:'Remove mention Aster',exact:true}).click()
@@ -65,7 +65,7 @@ async function run(native){
    await expect(form.locator('.engine-choices button[data-engine="'+engine+'"]')).toHaveClass(/selected/);await page.screenshot({path:path.join(out,mode+'-'+engine+'-work-picker.png'),animations:'disabled'})
    await form.locator('.save-employee').click();await expect(form).toHaveCount(0);const saved=(await rpc('session.list')).sessions.find(card=>card.title===engine+' created from Work UI');assert.ok(saved);assert.equal(saved.engine,engine);assert.equal(saved.group,'Plugin desk');assert.equal(saved.model,'deepseek-v4-flash');await f.ready(saved.id)
   }
-  check('员工创建：真实 Work Team 中 Cline/Pi 按钮可选，经表单保存并完成原生初始化，学校模型与引擎一致；未更改 Claude 配置。')
+  check('员工创建：Build Team 中 Cline/Pi 按钮可选，经表单保存并完成原生初始化，学校模型与引擎一致；未更改 Claude 配置。')
   if(native)await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(760,900));else await page.setViewportSize({width:390,height:844})
   await ui('view.open',{kind:'messages',chatId:group.id});const input=page.getByRole('textbox',{name:'Group message',exact:true});await input.fill('这是窄屏草稿');await input.evaluate(el=>el.setSelectionRange(2,2));await page.keyboard.insertText('@')
   await rpc('settings.set',{language:'zh-CN',viewAppearance:{messages:{theme:'midnight'}}});await expect(page.locator('html')).toHaveAttribute('data-theme','midnight');await expect(page.locator('.group-mention-menu')).toBeVisible();await page.screenshot({path:path.join(out,mode+'-mention-compact-dark.png'),animations:'disabled'})
