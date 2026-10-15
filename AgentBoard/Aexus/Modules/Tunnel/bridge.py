@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 
 # Resolve bundled sibling modules even with the Windows embedded Python runtime.
+# Keep the signed application bundle read-only during helper execution.
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import adapters
 import commands

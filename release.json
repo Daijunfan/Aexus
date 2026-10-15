@@ -1,6 +1,6 @@
 {
   "version": "2.11.1",
-  "buildId": "c95e3ee4ba77ff9e627977f50c7b27cdd22f33594334bd3bb8d9053f994b2da7",
+  "buildId": "138a9c394bf3738642f5825886147ca08537e98aa672c4fb8f5c8451ff4c542a",
   "algorithm": "sha256",
   "files": {
     "AgentBoard/Aexus/.gitattributes": "babbaf2897bdfd7840daf4259365217d34043d0632ca8c3456e6374ff074bd25",
@@ -109,7 +109,7 @@
     "AgentBoard/Aexus/Modules/Tunnel/adapters.py": "a15e65f8b93e4e5c3c1fbea2a4ab8bc7e7b6ad08dcc172d8bb7003c2c1203f69",
     "AgentBoard/Aexus/Modules/Tunnel/agent_process.py": "6655ab5aaf68302776c69ad9d126c1f82f6b9dd21a4214795e2b5e86e3545c10",
     "AgentBoard/Aexus/Modules/Tunnel/agents_client.py": "f9cce397f0fd55f7435fe288c730a9f1ec1581d4c7f8b41aab3328eda9bab310",
-    "AgentBoard/Aexus/Modules/Tunnel/bridge.py": "3cd4c5e709b6a3a1a67aaf9ed6e722b966cd6f78bc2523f126c0173ef94ebab8",
+    "AgentBoard/Aexus/Modules/Tunnel/bridge.py": "1c89d3bff9bf2ee75dc4e601b77a10c0e9eddb08e9cf0511930cf44700b9f8fc",
     "AgentBoard/Aexus/Modules/Tunnel/commands.py": "7103375c5fb190fa6224df2c272ca8892e6194f620424f6972df79effb9acfcb",
     "AgentBoard/Aexus/Modules/Tunnel/native_executor.py": "8e24d5c76b30641f6ac0ad92ed2b6151f127839c611ce936a2df8ebc237543b8",
     "AgentBoard/Aexus/Modules/Tunnel/README.md": "5b61793d347fbe693bb7519d48d7477e7e42a047191df7fbbafd40e964ecfdf8",
@@ -121,7 +121,7 @@
     "AgentBoard/Aexus/Modules/Tunnel/tests/test_workspace_images.py": "f257a96082ecfb59e7acb1bfb915fb2587ab505231e13ff4082b6a4b1b313b7b",
     "AgentBoard/Aexus/Modules/Tunnel/tests/test_workspace_removal.py": "ee6ae85c71e94a4dadd452c78ce6a92475456554844a242edecd9530f77fb737",
     "AgentBoard/Aexus/Modules/Tunnel/transport.py": "ddab6ed77c651b0c014aa74d3cab8f2c3a444bf30e2d4f45d8a27932e70e9f47",
-    "AgentBoard/Aexus/Modules/Tunnel/tunnel.py": "dc1f3c1f129d310d4407259290d8dd71a1944fbfba5e8b4eff4c846e66ebf2c0",
+    "AgentBoard/Aexus/Modules/Tunnel/tunnel.py": "3d1a1da500a6d3233188e7ac74fc0a61afbe8138c9c64221103f908006d6373c",
     "AgentBoard/Aexus/Modules/Tunnel/windows/askpass.cs": "f5669d5c9c880297bf14a9e9f1226f342b8ceba6c94afedfb26042155ec55ace",
     "AgentBoard/Aexus/Modules/Tunnel/windows/prepare-host.ps1": "5691568c943f720785e7fd9aa9e5338654eaf8f34dd5543d0dc7dbbffee3d0f5",
     "AgentBoard/Aexus/Modules/Tunnel/workspace_files.py": "d9301673bfa03e69f35e02e352a3945ad4002e3124148e65400f4e21aeb00957",
