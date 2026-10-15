@@ -45,7 +45,7 @@ export const english={
  '文件夹':'Folder','文件名':'File Name','名称':'Name','保存':'Save','完成':'Done',
  // Shared boards and terminal cards
  '工作组':'Workgroup','新建工作组':'New Workgroup','工作组设置':'Workgroup Settings',
- '工作组名称':'Workgroup Name','创建工作组':'Create Workgroup',
+ '每行主机列数':'Hosts per row','工作组名称':'Workgroup Name','创建工作组':'Create Workgroup',
  '每行卡片列数':'Host Columns','每行':'Per row','列':'columns','主机内':'Within host',
  '默认卡片高度':'Default Card Height','终端默认高度':'Default Terminal Height',
  '此主机已在当前工作组':'Host already belongs to this workgroup.',

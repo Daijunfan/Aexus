@@ -100,7 +100,8 @@ export function TeamForm({ name, index, layout, root = '', settings={mode:'build
   const [bounds, setBounds] = useState(()=>({...initialBounds(index,layout),...(name===undefined&&template?.bounds?{width:template.bounds.width,height:template.bounds.height,shape:template.bounds.shape,arrangement:template.bounds.arrangement,points:template.bounds.points}:{})}))
   const [folder,setFolder]=useState(root)
   const [config,setConfig]=useState<TeamSettings>(()=>{const initial=name===undefined?template?.settings??settings:settings;return isCloudHostsEmbedded&&name===undefined&&initial.mode==='work'?{mode:'build',directoryMode:'default'}:initial})
-  const directoryMode=config.directoryMode??'default'
+  // The cloud form selects an existing folder; it never requests remote creation.
+  const directoryMode=config.mode==='cloud'?'bind':config.directoryMode??'default'
   const [suggested,setSuggested]=useState(''),[deleting,setDeleting]=useState(false)
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(false)

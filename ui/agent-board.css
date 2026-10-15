@@ -6,7 +6,7 @@
 .agent-columns select{font-size:11px;padding:6px;margin:0;width:auto;min-width:68px}
 .agent-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;color:#718399;font-size:11px;padding:3px 0 12px}
 .agent-legend>span{display:flex;gap:6px;align-items:center;min-width:0;flex:none}.agent-legend>span>span{white-space:nowrap}.agent-legend>span:last-child{margin-left:auto}.agent-legend .os-icon{width:18px;height:18px;background:transparent;padding:0}.agent-legend .agent-cloud{width:22px;height:18px}
-.agent-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))!important;align-items:stretch!important;align-content:start;overflow:visible;gap:12px}.agent-grid:not(.loaded):empty::before{content:'正在读取工作主机…'}
+.agent-grid{display:grid!important;grid-template-columns:repeat(var(--agent-host-columns,2),minmax(0,1fr))!important;align-items:stretch!important;align-content:start;overflow:visible;gap:12px}.agent-grid:not(.loaded):empty::before{content:'正在读取工作主机…'}
 .agent-role-grid .aexus-role{display:flex;flex-direction:column;gap:6px;width:100%;height:148px;min-width:0;max-width:220px;box-sizing:border-box;overflow:hidden;text-align:left;border:1px solid #9dbbb7;border-radius:9px;background:#fafffe;color:#2b5054;box-shadow:0 1px 4px #253b5510;padding:9px;cursor:pointer;font:11px/1.4 system-ui}
 .agent-role-grid .aexus-role:hover{background:#f2faf7;border-color:#6aa39b}
 .agent-role-grid .aexus-role:focus-visible{outline:2px solid #5f9b8a;outline-offset:-2px}

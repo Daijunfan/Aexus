@@ -22,7 +22,7 @@ export function agentBoardPane(root,initialHosts,rpc,message,initialHost,state={
  if(singleHostId){root.classList.add('single-agent-workbench');q('.agent-heading h2').textContent='Coding Agents';q('.agent-heading p').textContent='Sessions working on this host · drag to swap';q('#agent-add-host').hidden=true}
 
  const hostById=id=>hosts.find(host=>host.id===id)||sessions.find(item=>item.targetHostId===id)?.targetHost;
- function gridColumns(){grid.style.gridTemplateColumns='';grid.dataset.columns='auto'}
+ function gridColumns(){grid.style.setProperty('--agent-host-columns',String(layout.columns));grid.dataset.columns=String(layout.columns)}
  async function persist(){
   // Keep legacy tab metadata out of native session layout updates.
   const {hubTab:_tab,projectViewId:_project,groups:_groups,activeGroup:_group,...layoutOnly}=layout

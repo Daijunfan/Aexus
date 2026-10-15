@@ -9,7 +9,7 @@ Aexus 是统一管理原生 Coding Agent、协作角色与云主机的工作台�
 
 原 Aexus 的 Mini Notion、Margin Reader、Cloud Hosts 插件产品不再打包或加载。主机管理与 VM Lab 软件独立。
 
-当前版本 **2.11.0**。macOS 应用安装为 `/Applications/Aexus.app`，使用原 Aexus 图标。现有云主机数据仍沿用 `~/Library/Application Support/Toolbox/CloudHosts`，无需迁移凭据或会话；`cloud-hosts` 命令继续兼容，新的主命令为 `aexus`。
+当前版本 **2.11.1**。macOS 应用安装为 `/Applications/Aexus.app`，使用原 Aexus 图标。现有云主机数据仍沿用 `~/Library/Application Support/Toolbox/CloudHosts`，无需迁移凭据或会话；`cloud-hosts` 命令继续兼容，新的主命令为 `aexus`。
 
 宣传海报、文案和可编辑源素材保存在 [Marketing](Marketing/README.md)，历史素材不能直接视为当前功能承诺。
 

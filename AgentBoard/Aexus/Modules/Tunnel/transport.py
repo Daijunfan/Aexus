@@ -24,7 +24,9 @@ def ssh_args(config):
     if config.get("identity_file"):
         args += ["-o", "IdentitiesOnly=yes"]
     if config.get("known_hosts"):
-        args += ["-o", "UserKnownHostsFile=" + config["known_hosts"]]
+        known = str(config["known_hosts"])
+        known = known.replace("\\", "/") if os.name == "nt" else json.dumps(known)
+        args += ["-o", "UserKnownHostsFile=" + known]
     return args + [config["host"]]
 
 

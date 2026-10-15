@@ -129,8 +129,9 @@ function workspace(patch = {}) {
   const agents = value.agentBoard;
   agents.groups ??= [{id:'default',name:'默认工作组',hosts:agents.hosts,initialized:agents.initialized}];
   agents.activeGroup ??= 'default';
+  for (const group of agents.groups) group.columns ??= agents.columns;
   if (patch.createAgentGroup) {
-    const group = {id:randomUUID(),name:patch.createAgentGroup.name,hosts:[],initialized:true};
+    const group = {id:randomUUID(),name:patch.createAgentGroup.name,hosts:[],columns:2,initialized:true};
     agents.groups.push(group); agents.activeGroup = group.id;
   }
   if (patch.removeAgentGroup) {
@@ -143,11 +144,11 @@ function workspace(patch = {}) {
   const activeAgentGroup = agents.groups.find(group => group.id === agents.activeGroup);
   const agentGroup = agents.groups.find(group => group.id === (patch.agentGroupId || agents.activeGroup));
   if (!activeAgentGroup || !agentGroup) throw Error('Unknown Agent workgroup');
-  if (patch.agentGroupPatch?.name !== undefined) agentGroup.name = patch.agentGroupPatch.name;
+  for (const field of ['name','columns']) if (patch.agentGroupPatch?.[field] !== undefined) agentGroup[field] = patch.agentGroupPatch[field];
   // Old clients keep reading/writing agentBoard.hosts for the active group.
-  for (const field of ['hosts','initialized']) if (patch.agentBoardPatch?.[field] !== undefined) agentGroup[field] = patch.agentBoardPatch[field];
-  if (patch.agentBoardPatch) for (const field of ['columns','hubTab','projectViewId','roleColumns','roleHeight','roleOrder','rolePositions','roleOffsets']) if (patch.agentBoardPatch[field] !== undefined) agents[field] = patch.agentBoardPatch[field];
-  agents.hosts = activeAgentGroup.hosts; agents.initialized = activeAgentGroup.initialized;
+  for (const field of ['hosts','columns','initialized']) if (patch.agentBoardPatch?.[field] !== undefined) agentGroup[field] = patch.agentBoardPatch[field];
+  if (patch.agentBoardPatch) for (const field of ['hubTab','projectViewId','roleColumns','roleHeight','roleOrder','rolePositions','roleOffsets']) if (patch.agentBoardPatch[field] !== undefined) agents[field] = patch.agentBoardPatch[field];
+  agents.hosts = activeAgentGroup.hosts; agents.columns = activeAgentGroup.columns; agents.initialized = activeAgentGroup.initialized;
   if (patch.fileBoardPatch) Object.assign(value.fileBoard, patch.fileBoardPatch);
   if (patch.createBoard) {
     const group = {id: randomUUID(), name: patch.createBoard.name, hosts: [], modes: {}, sizes: {}, columns: 2, cardHeight: 350, initialized: true};
@@ -185,6 +186,7 @@ function workspace(patch = {}) {
   for (const group of agents.groups) {
     group.name = String(group.name || '').trim();
     if (!group.name || group.name.length > 80 || !Array.isArray(group.hosts) || group.hosts.some(id => typeof id !== 'string') || new Set(group.hosts).size !== group.hosts.length) throw Error('Invalid Agent workgroup');
+    if (!Number.isInteger(group.columns) || group.columns < 1 || group.columns > 6) throw Error('Invalid Agent workgroup columns');
     group.hosts = group.hosts.filter(known);
   }
   agents.hosts = activeAgentGroup.hosts;

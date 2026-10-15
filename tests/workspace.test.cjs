@@ -90,3 +90,19 @@ test('Agent workgroups migrate host membership and stay independent across switc
  assert.throws(()=>registry.workspace({agentGroupPatch:{name:'  '}}),/Invalid Agent workgroup/);
  assert.equal(fs.readFileSync(workspaceFile,'utf8'),disk);
 });
+
+
+test('Agent workgroup columns migrate legacy layouts and persist independently across restarts',()=>{
+ fs.writeFileSync(workspaceFile,JSON.stringify({mode:'agent-board',agentBoard:{hosts:['local'],columns:4,initialized:true,groups:[{id:'default',name:'Existing',hosts:['local'],initialized:true}],activeGroup:'default'}}));
+ const migrated=registry.workspace();assert.equal(migrated.agentBoard.columns,4);assert.equal(migrated.agentBoard.groups[0].columns,4);
+ const other=registry.workspace({createAgentGroup:{name:'Other'}}).agentBoard.activeGroup;
+ assert.equal(registry.workspace().agentBoard.columns,2);
+ registry.workspace({agentGroupId:other,agentGroupPatch:{columns:6}});
+ registry.workspace({activeAgentGroup:'default'});
+ assert.equal(registry.workspace().agentBoard.columns,4);
+ registry.workspace({agentGroupId:other,agentBoardPatch:{columns:1}});
+ assert.equal(registry.workspace().agentBoard.columns,4,'queued saves do not change the selected group');
+ const reloaded=JSON.parse(execFileSync(process.execPath,['-e',`console.log(JSON.stringify(require(${JSON.stringify(require.resolve('../src/registry.cjs'))}).workspace()))`],{env:{...process.env,CLOUD_HOSTS_HOME:home},encoding:'utf8'}));
+ assert.equal(reloaded.agentBoard.groups.find(g=>g.id===other).columns,1);assert.equal(reloaded.agentBoard.groups[0].columns,4);
+ for(const columns of [0,7,1.5,'3']){const before=fs.readFileSync(workspaceFile,'utf8');assert.throws(()=>registry.workspace({agentGroupPatch:{columns}}),/columns/);assert.equal(fs.readFileSync(workspaceFile,'utf8'),before)}
+});
