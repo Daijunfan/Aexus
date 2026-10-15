@@ -1,6 +1,0 @@
-{
-  "host": "user@example.com",
-  "directory": "/home/user/project",
-  "os": "linux",
-  "identity_file": "~/.ssh/id_ed25519"
-}

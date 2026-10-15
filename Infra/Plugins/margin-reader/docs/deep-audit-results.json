@@ -1,6 +1,0 @@
-{
-  "status": "running",
-  "scope": "local-plugin-only",
-  "report": "DEEP_AUDIT.md",
-  "latestResults": "pending final full run; earlier results retained in artifacts"
-}

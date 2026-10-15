@@ -1,0 +1,12 @@
+{
+  "macos": "Aexus assets/os/macos-device.svg, Simple Icons CC0",
+  "kali": {
+    "shape": "https://gitlab.com/kalilinux/documentation/press-pack/-/raw/main/Kali/Logomark/kali-dragon-black.svg",
+    "usage": "Official dragon path in white over one vivid blue circular fill; no outer ring",
+    "reference": "User-supplied circular Kali badge, 2026-10-10"
+  },
+  "ubuntu": "Simple Icons CC0",
+  "linux": "Simple Icons CC0",
+  "debian": "Simple Icons CC0",
+  "windows": "Front-facing four-square Windows identification glyph, https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/mscle/documents/presentations/Windows_trademark_guidelines_2025.pdf"
+}

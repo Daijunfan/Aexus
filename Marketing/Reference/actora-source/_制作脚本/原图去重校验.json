@@ -1,0 +1,126 @@
+{
+  "posters": 30,
+  "uniqueSources": 30,
+  "checks": [
+    {
+      "source": "13-跨Team-中心Governor",
+      "sha256": "9723d75817d41adb51a41b5ce7ec59a470133516945ca69f0f7cbc770f84b9c1"
+    },
+    {
+      "source": "13-跨Team-具体员工",
+      "sha256": "5778d9044fc480c6732e7ca4b69df5c5de45acc0accf311bd483fe21f99109ef"
+    },
+    {
+      "source": "12-Governor-跨团队交接",
+      "sha256": "f994f42d7a2924eb09a2ecc23fc82861391825422ef1e723d9c22439711ed704"
+    },
+    {
+      "source": "02-多云-浅色",
+      "sha256": "009b3fd5a10482d8f3208e46717e401d736c48f98ae3334504d2552773e7d948"
+    },
+    {
+      "source": "02-云端-工作方式",
+      "sha256": "9b13ea926fc120bd9dcfc4d5a2298cbb506f3d972cce39a810ee5f56870af872"
+    },
+    {
+      "source": "02-云管家-主机列表",
+      "sha256": "1325842d20b34893747c70245fd05ee3b2043593d6c9a9577c6b56be9b044614"
+    },
+    {
+      "source": "03-双引擎-近景",
+      "sha256": "7ac7eca7da1ed4e6e046166bf80952862efa02349974a666a0e3fe1914db3d24"
+    },
+    {
+      "source": "12-Codex-斜杠命令",
+      "sha256": "50906941ef6eb9c96d48ac8acd63e3a5b2818331e0cf47d748b2288b9dc0cce6"
+    },
+    {
+      "source": "12-Claude-Markdown交接",
+      "sha256": "bd3e11cc77461deb9d4821316495fc89631bd26f8f4eabf068d713e7385cc601"
+    },
+    {
+      "source": "04-项目-多视图",
+      "sha256": "d0b9f5d303a7a6b83fec606c9129a6f8c4d918ed4272f3feccf4cece089a16f5"
+    },
+    {
+      "source": "12-视图-挑选团队",
+      "sha256": "4601578294ecd44df89fd0a17781b2e57eb1150f1b4ff0934f32a65730102dce"
+    },
+    {
+      "source": "12-视图-定位索引",
+      "sha256": "c3b49326de37bd4e388e7b3ea0bffee72577f3058fe126fa6557371da163aa56"
+    },
+    {
+      "source": "05-工作气泡-协作现场",
+      "sha256": "0e7b3e7aeaef25f76f8ed543dd5d4587c0c385f512ac3a10d6a3ffb95e429895"
+    },
+    {
+      "source": "12-会话-任务排队",
+      "sha256": "afa87543ee05a481198aa699cb96770f722185572081b6256b01b36bb30d1853"
+    },
+    {
+      "source": "01-协作-待命近景",
+      "sha256": "4f12794e7d9c839314da6944e951823e131f28d5c31a5796e6c0121fa68630b8"
+    },
+    {
+      "source": "12-Notion-六张卡片",
+      "sha256": "6b36682bbd6dca294f45f2a596baa63a3332860fffeef98c91cfa7d127f40713"
+    },
+    {
+      "source": "06-笔记-清爽页面",
+      "sha256": "338a0576261f4be2c1980522a9c5e65df3b23a31fcb0130a9ebe88b1763ab70b"
+    },
+    {
+      "source": "06-笔记-任务看板",
+      "sha256": "067dfaa466266237587d6746b066f394071e09c9efd3ac72b02a08a08a0a236f"
+    },
+    {
+      "source": "07-中转站-并排",
+      "sha256": "c533c3c492369eabc433d72dd3f73a2e5e64449424c812bed72811260039c06c"
+    },
+    {
+      "source": "12-中转站-TXT已保存",
+      "sha256": "9ab38207ccc07cec2d85ed8774b564d5abaf9e07867ca2fd27fdba4e89005d09"
+    },
+    {
+      "source": "12-中转站-交付已到达",
+      "sha256": "87160ae079a69f710ca021168d73cedb3b952645e5b6bbf15b0d29ed77fff011"
+    },
+    {
+      "source": "08-定时-对话示例",
+      "sha256": "bc7253e0da826932e09e657820eb2739ce37060b8bd08772e2be39bee7b29ba2"
+    },
+    {
+      "source": "12-定时-真实派发状态",
+      "sha256": "d13c4be077d30b2171c9b5b43a82ff5163b0fc62e26cc673d1e4e74ac650f5eb"
+    },
+    {
+      "source": "12-定时-结果文档",
+      "sha256": "d37caf880d21074565ee0460eaf1659e0f4e9fe0666a98a3ad637fdc909081d0"
+    },
+    {
+      "source": "09-知识库-清爽",
+      "sha256": "ac20830536661b1c0ee33859f59583d03f43913cf8eb5ab3fd9a173fa308a316"
+    },
+    {
+      "source": "12-知识库-全文搜索",
+      "sha256": "96569cb6905a950b3d3cfc985595e1968ac4d3ed27fe50cd52a39621be99fb87"
+    },
+    {
+      "source": "12-知识库-反向链接",
+      "sha256": "d9407c1f5ce70a37ffa8d4530705191214237ac63cbbc2d8a6036323eb8eac76"
+    },
+    {
+      "source": "10-插件-团队",
+      "sha256": "e1bda2fd4c8749791000e5b05601aefdcc56a92b559df771730ffce35b5fb63f"
+    },
+    {
+      "source": "12-插件-阅读空间",
+      "sha256": "f0a1b6f7dd0eab70bace1be0d078b276135d1963086626a834a3815c5d9aacc9"
+    },
+    {
+      "source": "12-插件-选择工作工具",
+      "sha256": "6165d79576b3e38c51e94a64bbe202dcc05e3ffdd4228073f2e7fadb2a17147d"
+    }
+  ]
+}

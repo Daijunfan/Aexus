@@ -1,0 +1,439 @@
+[
+  {
+    "file": "01_我给AI开了家公司/01_封面.png",
+    "width": 3600,
+    "height": 4800,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "urlBounds": {
+      "x": 100,
+      "y": 2294,
+      "width": 1600,
+      "height": 48,
+      "top": 2294,
+      "right": 1700,
+      "bottom": 2342,
+      "left": 100
+    },
+    "sha256": "2fa6609bf51ab6f4d4729719b57606728a882319c3b1275a95452439efa73786"
+  },
+  {
+    "file": "01_我给AI开了家公司/02.png",
+    "width": 4320,
+    "height": 3440,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/github-02.html",
+    "urlBounds": {
+      "x": 500.6875,
+      "y": 1639.203125,
+      "width": 1238.609375,
+      "height": 57.59375
+    },
+    "sha256": "af550337b0a4435b4c37302b3c0631d59f7bf98367f7610b06ac7510e0cd1197"
+  },
+  {
+    "file": "01_我给AI开了家公司/03.png",
+    "width": 4320,
+    "height": 3440,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/github-03.html",
+    "urlBounds": {
+      "x": 500.6875,
+      "y": 1639.203125,
+      "width": 1238.609375,
+      "height": 57.59375
+    },
+    "sha256": "681a2b1d2f3397c4858c573f86850fe310037b90fcb02a75a5d63004c586e2cd"
+  },
+  {
+    "file": "01_我给AI开了家公司/04.png",
+    "width": 4320,
+    "height": 3440,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/github-04.html",
+    "urlBounds": {
+      "x": 500.6875,
+      "y": 1639.203125,
+      "width": 1238.609375,
+      "height": 57.59375
+    },
+    "sha256": "23beea28609a519770bdc3e907026492fe3c3fd60f1012ea374ef1f3426f4a32"
+  },
+  {
+    "file": "02_一台Mac管理远处的项目/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/02-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "b301d63f37349aa9d162bc04363b1ce0b85049fff5e7fb3def6e8c3335e50831"
+  },
+  {
+    "file": "02_一台Mac管理远处的项目/02_人在本地工作可以在远处.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/02-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "f4b3c8d0d0e04f091f06b9ddfcfa6f6b0b626aacba4bb02f5c98433838deebdd"
+  },
+  {
+    "file": "02_一台Mac管理远处的项目/03_云主机也有自己的通讯录.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/02-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "ef4c1dbd06cb12703a7ebc236b2658d77b7e894cd8868397d00c20a9c4b7dcd0"
+  },
+  {
+    "file": "03_Codex与Claude做同事/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/03-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "9d29efa22aad75840849dfd81c11b329c404a55851fa329fd0e1e5e3835cbc69"
+  },
+  {
+    "file": "03_Codex与Claude做同事/02_熟悉的命令仍然顺手.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/03-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "ebb40f3c2e99ce1f356411dfbc336669b9b7e3999f3af5ca51cf77591fe05805"
+  },
+  {
+    "file": "03_Codex与Claude做同事/03_交接说明也要好好排版.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/03-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "fa000d809d2703843bc642eadb7ca71ee093fb2c49107ed3ddb3d4587ab50e77"
+  },
+  {
+    "file": "04_把项目摆成办公室/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/04-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "ede3415ab6109688c4d5ab6f2d712202dabd3479f7b4b957860db93d1b859c9e"
+  },
+  {
+    "file": "04_把项目摆成办公室/02_这一页只放想看的项目.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/04-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "c9aa0ec40c5d42e2ab9caeea92ec7da2bc6df64ed953c29167b1e7c4554914fa"
+  },
+  {
+    "file": "04_把项目摆成办公室/03_地图再大也找得到方向.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/04-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "c57d2a9e154feb89a2c93f4c08d76feb17c2bda393d7fe16b6cca598695c1ead"
+  },
+  {
+    "file": "05_抬头就能看见进度/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/05-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "e6bccc34bbc57603b60650e76f7a126c25bfd29c4235c3189702e4c454cb6a20"
+  },
+  {
+    "file": "05_抬头就能看见进度/02_它还在忙下一件事先排好.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/05-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "95ce90a14117552ba2d1198486ed60520c90d902bdab491b933e36ed03174d8d"
+  },
+  {
+    "file": "05_抬头就能看见进度/03_把注意力留给正在想的事.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/05-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "b2bdbe2c06bcca6ab3d86c04f96ad96c097c353b8cb7d4f252cb65a3fc841832"
+  },
+  {
+    "file": "06_MiniNotion住进办公室/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/06-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "ebabb4bd4ecf7ee41af7a78f606191c98a4832affb80ada8ba5f8e5466ddd68f"
+  },
+  {
+    "file": "06_MiniNotion住进办公室/02_漂亮只是开始点进去继续写.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/06-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "b65272423a10143f7c16ee925b931c98ec5ae7ed5bb550e703e84c3464e457b9"
+  },
+  {
+    "file": "06_MiniNotion住进办公室/03_想法变成任务摊开就能推进.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/06-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "bd86cc914482278c900e49a4e25276fa6d31ea1a64b9bfbb15a3e72359c3f287"
+  },
+  {
+    "file": "07_文件也能在同事间接力/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/07-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "22fcf9b8dc2e2d6bce49b0b50abe7512a18124e985cd6bf802a82a52da31c3b2"
+  },
+  {
+    "file": "07_文件也能在同事间接力/02_中转的笔记也能直接改.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/07-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "081a6a83241bf28d2c9b9e3835f799b33c263b8f3c43bfe40cce04d64fda6ff8"
+  },
+  {
+    "file": "07_文件也能在同事间接力/03_交到下一位接着往下做.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/07-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "2e47d2210bb715b2f2dd84d15e9e800ab6cf7e206fcada58a75e2c2e23a0fc0e"
+  },
+  {
+    "file": "08_给明天提前留个帮手/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/08-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "16b6dd3df16bb08d3a9e02b080764985e3deeadabc53086b061f18e511c95344"
+  },
+  {
+    "file": "08_给明天提前留个帮手/02_到了开工这一刻任务有迹可循.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/08-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "6e092f2413d89a8d3b4d35b76bedba65b3466df0d962936ac43e19407e2083c9"
+  },
+  {
+    "file": "08_给明天提前留个帮手/03_别只留下对话把结果留成文件.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/08-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "f8382ee90ce2492f43d0471b535dac906bb58773ba516b9b18e49970443cfccf"
+  },
+  {
+    "file": "09_给灵感一间资料室/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/09-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "8eacd5fd8a9cc91d2bf3703cf333bdb5574a7d13c72214913a6666c31d2ccbc7"
+  },
+  {
+    "file": "09_给灵感一间资料室/02_记得一点关键词就能找回来.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/09-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "bb5bd7a0945cfcdd0d9970911ef64e3e9dc0461569ea0c918a118abe571eb943"
+  },
+  {
+    "file": "09_给灵感一间资料室/03_一份约定连起几项工作.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/09-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "9c03bda16a57cc3c4fd4bf3952667021d466d737bb42c8637c689bfeca3e04c5"
+  },
+  {
+    "file": "10_你的工具也能住进来/01_封面.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/10-1.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "bb7d7b029e7e93786df3cc1bcecf38fa5bdf38a1194bf58f0654804ff0545775"
+  },
+  {
+    "file": "10_你的工具也能住进来/02_阅读也有自己的工作空间.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/10-2.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "07d1b2bb7b059ada490a79737722f69defdef9880ce6ef29bb1bdeb8d6d6e845"
+  },
+  {
+    "file": "10_你的工具也能住进来/03_选好一个工具再给想法安个家.png",
+    "width": 1440,
+    "height": 1920,
+    "url": "https://github.com/Daijunfan/Agents-Company",
+    "html": "_制作脚本/html/10-3.html",
+    "urlBounds": {
+      "x": 72,
+      "y": 1870,
+      "width": 1296,
+      "height": 40
+    },
+    "sha256": "e0741d4d8d57f77135283c061d29d194e6803c7b75727e527e2d8fea6d45af95"
+  }
+]

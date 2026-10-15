@@ -1,0 +1,1 @@
+{"source":"Aexus/Infra/Plugins/cloud-hosts","version":"1.2.2","uiLicense":"Apache-2.0","transportSource":"Aexus/Infra/src/tunnel","transportLicense":"GPL-3.0-only","migration":"Standalone CLI, storage, SSH, terminals and desktops; no Aexus runtime dependency"}

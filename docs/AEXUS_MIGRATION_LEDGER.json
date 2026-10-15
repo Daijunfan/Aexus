@@ -1,0 +1,3144 @@
+{
+  "source": {
+    "project": "Aexus",
+    "version": "0.66.2",
+    "file": "docs/managers/commands.json",
+    "sha256": "9a60b0b6aa496e2f27daa4c198e4478284c1039517d8e86cb79d6530626a9192",
+    "registered": 312,
+    "excludedGuardian": 0
+  },
+  "target": {
+    "project": "CloudHosts",
+    "version": "2.9.20",
+    "apiVersion": "1.1.0",
+    "schemaHash": "edf9ee6661a7c1a637d9a066baab97f329f375d80ba974cf6d6a764fc24723a5"
+  },
+  "total": 312,
+  "counts": {
+    "mapped-partial": 53,
+    "pending": 259
+  },
+  "completionPolicy": "Historical CloudHosts legacy mapping only. All 312 original Aexus non-plugin/non-Guardian handlers run in the separately embedded original Aexus Core. Do not use the partial mapping for migrated identities.",
+  "commands": [
+    {
+      "aexusCommand": "plan.schema",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Discover all ten layouts, fields, policies, authorized targets and mutation APIs",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.schema",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.query",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Find real task IDs/revisions, assigned people/roles/Teams, complete rules/times and allowedActions; includes removed-target records for Secretary",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.query",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.calendar",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Return bounded future occurrences and recorded runs in a maximum 93-day range",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.calendar",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.timeline",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Project forecast estimates and actual/ongoing run spans, including overlaps; no inferred duration from timeout",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.timeline",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.analytics",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Aggregate the complete authorized data set, never just the current UI page; explicitly distinguish schedules and retained runs",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.analytics",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.feed",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Read actual retained execution activity with stable cursor pagination, including removed schedules when authorized",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.feed",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.views",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "List built-in and authorized saved views; Secretary administers user-created views",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.views",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.view-create",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Save any of ten database layouts with filters, sorting, grouping and presentation options",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.view-create",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.view-update",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Update an authorized saved view without changing schedules; options are a complete replacement object",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.view-update",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "plan.view-delete",
+      "sourceVersion": "0.66.2",
+      "domain": "plan",
+      "summary": "Remove an authorized saved view only; schedules and histories remain",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.view-delete",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "channel.file-download",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User-only: copy a cloud document into this channel shared workspace, with SHA-256 verification; cloud cache retention never removes the local copy",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.file-status",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read cloud-to-channel download progress and the saved relative workspace path; never starts a download",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.connection",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read configured process origin, receiver URL, source IDs and last authenticated contact; saving configuration never claims a live connection",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.avatar-image",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: read the independently retained custom channel avatar",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.read-state",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: read personal reading state for retained channel entries; does not acknowledge or execute anything",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.acknowledge",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User-only: mark specific visible entries or explicitly mark all current unread channel entries read, independently of Agent delivery receipts",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.timeline",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read retained channel news and discussion with full content; choose 1–100 entries and paginate older history. Current members may read their channels; no read receipts or model calls.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.history",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Discussion messages only, excluding news. Use channel.timeline for the visible news feed or mixed history.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.context",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read retained news or discussion context within a current channel membership",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.message-send",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: share a channel message with all current members and assign work to its dialogue targets",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.message-post",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Deliberately publish a nonempty reply within a received user or Secretary discussion; no acknowledgment call is needed",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.source-avatar-put",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Submit a source-scoped identity image using the collector capability; this grants no message or membership permissions",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.source-image",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: read the original independently retained source avatar bytes",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.settings",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: read or configure the local collector listener; disabled by default",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.list",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "List your current channel memberships; the user additionally receives retained-item summaries",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.get",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read one channel identity as the user or a current member without scanning news histories",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.sources",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: list authoritative subscriptions, routes and retained author avatars",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.create",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: explicitly choose employee or external-process publishing; an issued collector token is returned once in setup",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.update",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Update channel identity, publishing membership or external connection without changing company roles or engine type; null avatar restores the default",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.source-add",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: follow a source; Telegram creates a one-to-one channel, X/YouTube default to aggregators",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.source-update",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: change source settings or route all retained news, including saved items",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.source-remove",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: unfollow a source while retaining its identity and saved news",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.posts",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: page current news and permanent saved items with stable item identities",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.post",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: read a retained news item with current channel routing",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.save",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: retain a news item and its local images permanently, or resume its original expiry",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.delete",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: delete local news and images with bounded replay protection",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.image",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: read a published local news image, never staging or arbitrary URLs",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.export",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: export a retained news article and original local images",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.collector-add",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Issue a source-scoped credential or bind a replacement process credential to an external channel; plaintext is returned once",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.collectors",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: list collector metadata without tokens or token hashes",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.collector-revoke",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "User or Secretary: revoke a news collector credential",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.collector-config",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read authoritative collector targets; external access requires the dedicated channel capability",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.media-put",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Upload an item-scoped image: employee publishers use channelId, external collectors use sourceId; the authenticated employee identity is enforced",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.publish",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Publish an article using a current employee channelId or an external sourceId. Scheduled employees may publish without a discussion parent; identity, deduplication and retention remain enforced",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.profile",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: upload a personal image, choose an avatar.list ID or reset with null; author identity stays unchanged",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.profile-image",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: read the current personal avatar image at its exact saved revision",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.directory",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: search current worker/group/channel/social identities and dynamic categories; no message bodies, read receipts or execution",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.social",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: list each social element with stable source ID, parent channel, latest publication and per-source unread count; no reads acknowledged",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.reorder",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: persist category or mixed conversation positions in categories/all/favorites/archive/a folder ID; null restores automatic order, unrelated drafts and hidden positions remain unchanged",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.media-open",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: open a client-scoped audio/video preview with a bounded lifetime; no inference",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.media-info",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: validate the owned media preview and file version",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.media-read",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: read at most 256 KiB from an owned media preview at a validated offset",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.media-close",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: release a media preview and stop future reads",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.gallery",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: page full public image history around stable source cursors, without reading image bytes or acknowledging messages",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.upload-begin",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: allocate a unique conversation attachment and begin a chunked upload",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.reference",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: resolve a public cross-conversation reference without sending, opening an engine or acknowledging a message",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.forward",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: deliberately forward selected public messages through existing Core send/queue paths, with durable retry protection",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.forward-draft",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: retain or discard one forwarding setup; discarding never cancels accepted work",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.forward-status",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User-only: check a forwarding receipt without sending, reading sources or starting work",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.state",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: read persisted conversation preferences, saved messages, reactions and drafts",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.folder-save",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: create or update a personal folder of private, group and channel conversations without moving their content",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.folder-delete",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: remove a personal conversation folder while retaining every conversation and message",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.conversation",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: pin, favorite, archive or mark conversations unread in one atomic update",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.message",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: save, pin, react to or hide an existing public message; native history stays intact",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.draft",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: persist a draft and its send identity, or conditionally clear the matching draft; never sends or opens an engine",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "messenger.search",
+      "sourceVersion": "0.66.2",
+      "domain": "messenger",
+      "summary": "User or Secretary: search full public histories and saved/media/link references without inference or read acknowledgements",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.browse",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: page real workspace shelves, one folder or recursive file/folder search with stable IDs and ownership; no implicit cloud download",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.info",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: explicitly inspect a file/folder physical path, storage host, metadata and logical ownership. Cloud-only items return metadata without downloading originals.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.preview",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: derive a bounded local PDF, article or image cover with the installed Reader renderer; never fetch remote originals or mutate files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.naming",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: preview or apply English directory names across managed and externally bound workspaces, retaining identities and legacy references",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.tree",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: read the fixed Company, Messages and Plan workspace tree",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.children",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: lazily page one real directory and its direct nonempty-folder count",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.search",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: page background-indexed files with their Team, employee, group or channel ownership",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.locate",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: resolve a current asset, its parent workspace and human-readable breadcrumbs without opening Finder or downloading cloud documents",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "assets.file",
+      "sourceVersion": "0.66.2",
+      "domain": "assets",
+      "summary": "User-only: use existing workspace operations without changing scope or member permissions",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.workspace",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read the shared folder and named member workspaces; members may read all shared files but write only their own subfolder",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.workspaces",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "List an employee’s group/channel workspaces without changing their personal workspace or execution host",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.file",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Operate shared files with current membership checks; own member folder is writable; only a member Secretary may modify direct root files; peer folders are read-only",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.copy",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Copy a shared file/folder to your named member folder or personal workspace; source is retained and existing destinations are never overwritten",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.transfer",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read or cancel your shared-workspace copy; queued is not completed, and a restart does not replay copies",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.member",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin adds an Agent as Member or removes membership without deleting the employee or files; transfer Owner first",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.audit",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin reads paged governance events with the actual actor, action and time; no private model traces",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.policy",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read independent Owner/Admin/Member offices, moderation state and allowed actions; Company rank grants no conversation office",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.role",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin may appoint or revoke Admins; only Owner transfers ownership. Member demotes an Admin without removing membership; use conversation.member to remove. Owner exists in both groups and channels.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.mute",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin changes public posting restrictions; all restricts Member posting in groups, all publishers in channels. Never changes Company work permissions.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.silence",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin enables quiet conversation notices: messages remain in history, but no notice attention banner is raised; not member posting mute",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-list",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin lists independent static notifications; these IDs never belong to Plan",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-get",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read one notification rule, saved text, publishing identity and next occurrence; no model work",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-create",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Owner/Admin creates an idempotent static notice. Required spec: name, text, publisherId, rule, enabled. Once/interval/weekly (all days=daily), independent of Plan.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-update",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Edit text/rule/publisher or pause/resume with enabled. Rechecks conversation authority; no Plan or employee queue edits.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-delete",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Remove an independent notification and cancel pending occurrences; published messages and audit history remain",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-preview",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read the next five notice occurrences in the stated timezone. No notification, agent or Plan task is created.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.notice-history",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read bounded static notice publication/skipped/cancelled history, including removed notices; no model logs or Plan history",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.catalog",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "List your Company workspace and every joined group/channel member workspace with exact paths, location, permissions and file API; does not choose a workspace or move files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.entry",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read a complete published group message, channel message or post: text, links, replies, media and downloadable document descriptors; current membership required",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.download",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Copy one published attachment into your own Company or joined Message member workspace; defaults to this conversation’s member workspace. Streams documents/images with integrity checks, never writes shared originals or overwrites files.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "conversation.download-status",
+      "sourceVersion": "0.66.2",
+      "domain": "conversation",
+      "summary": "Read your attachment copy progress, final path or failure; cancel affects only your copy. Restart never blindly replays interrupted downloads.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.post-trigger-list",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read per-Agent post-count rules and progress. Owner/Admin sees all; Members see their own rule. Independent of Plan and static timed notices.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.post-trigger-set",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Owner/Admin explicitly enables a saved prompt for one channel member every N newly accepted posts. Revision 0 creates; edits reset only this member’s counter. No Plan record; may invoke the selected Agent.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.post-trigger-remove",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Remove one post-count configuration and cancel its unstarted batches. Existing results and batch history remain; ordinary channel awareness resumes.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.post-trigger-history",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read counted batches and actual queued/running/completed/failed states, exact batch IDs and message references. Never reports a queued task as a completed summary.",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "channel.post-trigger-batch",
+      "sourceVersion": "0.66.2",
+      "domain": "channel",
+      "summary": "Read the exact counted batch with paged complete posts and explicit unavailable entries; no approximate latest-N window, model call or user-read acknowledgment",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.profile",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Read employee identity, authorized memberships, named workspaces and paged Plan tasks without opening an engine or changing read receipts",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.list",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "List application views and their shared data contracts",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.select",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Select a presentation mode; Messages resumes the last conversation for this client",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.list",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "List groups for the current authenticated member",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "messages.list",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "chat.create",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Create a group with an Agent Owner; Agent creators own their group, user selects ownerId (defaults to first selected member)",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "messages.create",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "chat.update",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Conversation Owner/Admin: edit group name and membership; Company role does not confer access",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "messages.update",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "chat.delete",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Conversation Owner (or the human user) removes a group; Admin cannot dissolve it; employees and private history are retained",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.mute",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Conversation Owner/Admin: mute visible posts; Company rank grants no moderation; reading and work remain available",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.get",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Read group metadata and member identities",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "messages.get",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "chat.history",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Read published group messages with pagination",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "messages.history",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "chat.file",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Read a published group attachment as an authenticated member",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.context",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Read published group context and concise reporting policy",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.send",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Deliver to current members; mentions and user replies select work, other recipients receive context",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.edit",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "User-only: correct own published group text or caption without changing accepted tasks or receipts",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "chat.post",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "Publish a public group message to all current members",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "messages.publish",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "chat.acknowledge",
+      "sourceVersion": "0.66.2",
+      "domain": "chat",
+      "summary": "User-only: mark group messages read; private receipts remain separate",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "system.info",
+      "sourceVersion": "0.66.2",
+      "domain": "system",
+      "summary": "Read Core host OS, architecture and deployment capabilities",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "system.directories",
+      "sourceVersion": "0.66.2",
+      "domain": "system",
+      "summary": "Browse directories on the Core host (user or Secretary)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.capabilities",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.list",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "List registered Coding Agent adapters and public configuration",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.check",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Check executable, protocol and authentication without inference",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.probe",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Explicit, potentially billed OK-only inference on the Core host; temporary workspace and 45s timeout",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.configure",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Set an executable path, encrypted key, or Cline/Pi compatible baseUrl and exact model ID (user or Secretary)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.install-plan",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Read the pinned official package and Core-host install destination",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.install",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Install a pinned engine into application storage, never global PATH",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.install-status",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Read bounded installation progress without credentials",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.cancel-install",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Cancel an application-owned installation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.login",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Start official Codex device authorization on the Core host",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.login-status",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Read device authorization progress",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.cancel-login",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Cancel a pending device authorization",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.upload-begin",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Begin a scoped upload with a hidden staging file",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.upload-chunk",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Write the next bounded upload chunk",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.upload-commit",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Atomically publish a completed upload without overwriting existing files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.upload-abort",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Cancel and clean an upload owned by this client",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.download-save",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "User-only: stream a scoped download to a Core-host file, or choose a destination in the desktop",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.download-info",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Read download size and version",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.download-chunk",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Read a bounded file chunk and reject a changed version",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "auth.whoami",
+      "sourceVersion": "0.66.2",
+      "domain": "auth",
+      "summary": "Read authenticated caller and management role",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "api.info",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "auth.agent-token",
+      "sourceVersion": "0.66.2",
+      "domain": "auth",
+      "summary": "Issue or read an employee API credential (user only)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "auth.revoke",
+      "sourceVersion": "0.66.2",
+      "domain": "auth",
+      "summary": "Revoke employee API credentials (user only)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "api.list",
+      "sourceVersion": "0.66.2",
+      "domain": "api",
+      "summary": "Discover callable APIs by domain or keyword; all includes retired and permission-restricted metadata, never authority",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "api.list",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "api.describe",
+      "sourceVersion": "0.66.2",
+      "domain": "api",
+      "summary": "Read an API schema; --all includes commands outside the caller execution authority",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "api.describe",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "api.docs",
+      "sourceVersion": "0.66.2",
+      "domain": "api",
+      "summary": "Read the shared Core documentation index or a Core document; no execution authority is granted",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "api.document",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "avatar.list",
+      "sourceVersion": "0.66.2",
+      "domain": "avatar",
+      "summary": "Discover exact avatar IDs, character names, styles and aliases from the live picker catalog; no inference",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "connector.get",
+      "sourceVersion": "0.66.2",
+      "domain": "connector",
+      "summary": "Read endpoint anchors and 24 availablePoints, including all four corners of the uniform employee frame",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "connector.set",
+      "sourceVersion": "0.66.2",
+      "domain": "connector",
+      "summary": "Persist endpoint sides and offsets; does not create management authority or a relation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "connector.segment",
+      "sourceVersion": "0.66.2",
+      "domain": "connector",
+      "summary": "Move an orthogonal segment in source-Team coordinates; preserve attached employees",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "connector.reset",
+      "sourceVersion": "0.66.2",
+      "domain": "connector",
+      "summary": "Restore automatic source and head-top target routing",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "office.layout",
+      "sourceVersion": "0.66.2",
+      "domain": "office",
+      "summary": "Read authorized Team bounds, employee coordinates and permitted layout actions; no filesystem access",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.acknowledge",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "User-only acknowledgement of the exact displayed reply; stale acknowledgements do not clear newer replies",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.relayout",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Group related employees and fit this Team without changing the viewport",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.topology",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Read teams with isOwnTeam, employeeCount, governorIds, allowedActions and deleteBlockedReason; employee nodes include creation provenance and allowedActions",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.activity",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Read live communication and delegated tasks; highlighted is a maximum 600ms visual cue, not task completion",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.roles",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "List employee-owned role policies: Employee, Manager and Governor, scopes and protected lifecycle rules",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.bind",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Add one persistent source-to-employee arrow; multiple managers allowed; permissions, true createdBy and positions unchanged",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.unbind",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Remove only the selected persistent arrow, including a creator line; does not revoke control or stop work; idempotent",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.request",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Deprecated permission request; use management.bind for a visual arrow without granting authority",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.decide",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Deprecated permission approval; visual bindings need no approval workflow",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.team",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "Deprecated discovery only; Team and folder membership no longer grant authority",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "management.global",
+      "sourceVersion": "0.66.2",
+      "domain": "management",
+      "summary": "User or Secretary compatibility alias: assign Governor or demote to Manager; Secretary lifecycle remains user-only",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.management-role",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Assign a role; Secretary administers the app and lower roles, only the user appoints or removes Secretaries",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.access-mode",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Set trusted or isolated engine execution",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.status",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Read lightweight employee activity without full transcripts",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "shared.info",
+      "sourceVersion": "0.66.2",
+      "domain": "shared",
+      "summary": "Locate the checkout Shared directory",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.shared",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Show or hide the shared transfer drawer without closing the conversation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.start",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Copy a file or directory between local, shared and Team/employee workspaces",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.list",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "List transfer progress and results for this service run",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.get",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Read a transfer result and byte progress",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "transfer.cancel",
+      "sourceVersion": "0.66.2",
+      "domain": "transfer",
+      "summary": "Cancel a queued or running copy; preserve source files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "schedule.schema",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Describe the host scheduling contract",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "schedule.status",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Read scheduler health and active runs",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "schedule.list",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Read raw saved schedules, including orphan records for application administrators; prefer plan.query for people, times and capabilities",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.list",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.get",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Read the exact saved configuration and revision, even when its employee was removed; discover IDs through plan.query",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.get",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.create",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Schedule an existing employee or yourself; enabled by default; --paused or --enabled false disables automatic runs; Governor requires --view; retry-safe clientRequestId",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.create",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.update",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Update an idle schedule; full action/rule replacement, optional revision; retains execution count",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.update",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.pause",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Pause future triggers without stopping the current run",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "schedule.resume",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Resume future triggers after rechecking the current target and original delegation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "schedule.delete",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Delete selected schedules, including orphaned records for Secretary; preflight all IDs and revisions before any cancellation; retain run history",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.archive",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.preview",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Preview saved or draft occurrences without executing; a saved job retains its consumed quota",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.preview",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.run",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Run once now; may use a model, does not consume the next occurrence",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.run",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.history",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Read durable run and job IDs, exact execution times and outcomes; deletion preserves authorized history",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.history",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "schedule.trigger",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Submit a deduplicated signal to an event schedule; current caller and original scheduling authority are checked; native channel events cannot be forged",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "schedule.cancel",
+      "sourceVersion": "0.66.2",
+      "domain": "schedule",
+      "summary": "Cancel an active run, preserving its history",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "plan.cancel",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "settings.get",
+      "sourceVersion": "0.66.2",
+      "domain": "settings",
+      "summary": "Read independent Company, Messages and Plan appearances, shared controls and default employee models",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.models",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "List available models before employee creation, without inference; Cloud Native reads the selected host",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "settings.set",
+      "sourceVersion": "0.66.2",
+      "domain": "settings",
+      "summary": "Patch independent view appearances and shared settings; legacy theme flags target Messages only",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.get",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Read service-owned navigation, including without a window",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.open",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Open a form, workspace, news channel or employee conversation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.close",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Close the current panel after saving workspace edits; keep engines running",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.details",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Show or hide employee details inside a conversation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "status",
+      "sourceVersion": "0.66.2",
+      "domain": "status",
+      "summary": "Is the app running, and how many sessions are live",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.inbox",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Read bounded direct-message previews for authorized employees; no model calls, terminal startup or read acknowledgements",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.list",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "List stored cards (or live sessions with --live)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.new",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Create a session",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.rename",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Rename an employee and its one conversation without moving the folder",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.open",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Open a stored card (resumes its engine context)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.send",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Send a message to a Worker session",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "host.fingerprints",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Read SSH host key fingerprints without trusting them",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.fingerprints",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.trust",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Trust an explicitly confirmed and matching SSH host fingerprint",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.trust",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.terminal-open",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Open a persistent SSH PTY without an employee",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.terminal-open",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.terminal-list",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "List host PTYs",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.terminal-list",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.terminal-read",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Read incremental host PTY output, optionally waiting up to 15000ms for new data",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.terminal-read",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.terminal-input",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Send host PTY input and control keys",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.terminal-input",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.terminal-resize",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Resize a host PTY",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.terminal-resize",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.terminal-close",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Close a host PTY",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.terminal-close",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.desktop-list",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "List active remote desktop transports",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.desktop-list",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.desktop-open",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Open configured RDP or VNC transport; does not imply desktop login",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.desktop-open",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.desktop-launch",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Launch native RDP client on the Core machine",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.desktop-launch",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.desktop-close",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Close desktop transport and SSH forward",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.desktop-close",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.exec",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Execute a management command exclusively on the registered remote host",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.exec",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.list",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Discover the shared host registry; credentials optionally includes passwords and SSH files for authorized Manager/Governor hosts; no SSH probes",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.list",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.get",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Read a cloud host connection record; Governor all hosts, Manager its Team host",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.get",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.create",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Create a cloud host in the shared registry",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.create",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.update",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Edit host connection and credentials",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.update",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.remove",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Remove an unbound cloud host",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.remove",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.check",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Check SSH connectivity without requiring a Team working directory",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.check",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.directories",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Browse existing directories on a registered cloud host",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.directories",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "host.credentials",
+      "sourceVersion": "0.66.2",
+      "domain": "host",
+      "summary": "Read authorized host password and registered private key, known_hosts and SSH config contents",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "hosts.credentials",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "engine.remote-check",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Check a Cloud Team native CLI, protocol, authentication and workspace before hiring",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.remote-sessions",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "List native sessions on the selected Cloud Team host",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.native-bind",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Bind an existing remote native session without taking deletion ownership",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.follow",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Stream a session’s events until its turn ends",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.transcript",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Read the full conversation by default, or its last 1–1000 items with --limit; no read acknowledgment",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.interrupt",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Stop the current turn",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.close",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Close a live engine while retaining the employee and history",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.info",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Show a live session’s engines, models, commands",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.activity",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Current speech, published thinking or tool preview; null when idle",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.snapshot",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Full frontend state",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.search",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Search employees and workspaces",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "approval.list",
+      "sourceVersion": "0.66.2",
+      "domain": "approval",
+      "summary": "Pending tool permissions",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "approval.respond",
+      "sourceVersion": "0.66.2",
+      "domain": "approval",
+      "summary": "Answer a tool permission",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.engine",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Retired: always rejects; delete the employee and create a new one to choose another engine",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.model",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Change model",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.remote-admin",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Explicitly authorize SSH-user administration on a cloud Codex worker; never local execution",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.permission",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Change permission mode",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.thinking",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Toggle thinking",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.effort",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Change effort level",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.plan",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Switch the official planning mode",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "external.open",
+      "sourceVersion": "0.66.2",
+      "domain": "external",
+      "summary": "Validate an external URL and open it when a desktop is attached",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.inspect",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Inspect native engine capabilities and configuration",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "engine.skill",
+      "sourceVersion": "0.66.2",
+      "domain": "engine",
+      "summary": "Invoke a discovered engine skill",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.steer",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Append instructions to the active native turn with optional per-message presentation context",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.background",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "List agent-owned background terminals",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.background-stop",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Stop one or all agent-owned background terminals",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.review",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Run native Codex review for a chosen target",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.enqueue",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Queue a message after the active turn",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.queue",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "List queued messages",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.dequeue",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Remove a queued message",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "session.export",
+      "sourceVersion": "0.66.2",
+      "domain": "session",
+      "summary": "Export conversation into the employee workspace",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "view.tools",
+      "sourceVersion": "0.66.2",
+      "domain": "view",
+      "summary": "Open or close the engine tools panel",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "config.fast",
+      "sourceVersion": "0.66.2",
+      "domain": "config",
+      "summary": "Set the official Fast service tier",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "commands.run",
+      "sourceVersion": "0.66.2",
+      "domain": "commands",
+      "summary": "Execute a discovered slash command through shared Core",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "commands.list",
+      "sourceVersion": "0.66.2",
+      "domain": "commands",
+      "summary": "Slash commands available to a session",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "commands.complete",
+      "sourceVersion": "0.66.2",
+      "domain": "commands",
+      "summary": "What Tab would insert",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "group.list",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "List departments",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "company.teams",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "team-view.list",
+      "sourceVersion": "0.66.2",
+      "domain": "team-view",
+      "summary": "List All Team and saved Team views with the active selection",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "team-view.create",
+      "sourceVersion": "0.66.2",
+      "domain": "team-view",
+      "summary": "Create and select a named view of existing Teams",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "team-view.update",
+      "sourceVersion": "0.66.2",
+      "domain": "team-view",
+      "summary": "Rename, reorder, or change Team membership of a custom view",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "team-view.remove",
+      "sourceVersion": "0.66.2",
+      "domain": "team-view",
+      "summary": "Delete a custom view without deleting Teams",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "team-view.select",
+      "sourceVersion": "0.66.2",
+      "domain": "team-view",
+      "summary": "Select a saved Team view and its canvas viewport",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "group.add",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "Create a real cloud Team with host-id; directory-mode default creates a new remote child folder; os/distribution assert actual host, never labels",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "company.createTeam",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "group.configure",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "Configure a legacy unbound Team; created Team bindings are fixed",
+      "disposition": "mapped-partial",
+      "cloudHostsCommand": "company.updateTeam",
+      "contractCoverage": "semantic-overlap-only",
+      "review": "Require parameter, permission, behavior, UI, persistence and scenario parity tests before marking migrated."
+    },
+    {
+      "aexusCommand": "group.remove",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "Delete selected Teams and all their employees; optionally delete their employee folders after one batch preflight",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "room.place",
+      "sourceVersion": "0.66.2",
+      "domain": "room",
+      "summary": "Position a department’s room on the floor",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.rename",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Rename an employee without moving its working folder",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.move",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Reorder within the existing Team; group and directory are fixed",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.remove",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Remove selected employees and owned sessions; optionally delete all their folders after one batch preflight",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.clone",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Clone an employee with an independent native conversation",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.initialize",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Retry read-only initialization: every role reads its identity and the shared documentation index",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.create",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; discover appearances with avatar.list and verify via session.status",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.avatar",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Set only a controlled employee appearance and its default palette; Manager own Team, Governor across Teams; discover IDs with avatar.list",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.update",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Application-wide general profile editing; supervisors use card.avatar for appearance; Team and folder stay fixed",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "group.rename",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "Rename a Team without renaming or moving its workspace folder",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "room.design",
+      "sourceVersion": "0.66.2",
+      "domain": "room",
+      "summary": "Replace room surfaces and furnishings",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "group.migrate",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "Move a legacy Team into its managed directory, preserving files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "group.root",
+      "sourceVersion": "0.66.2",
+      "domain": "group",
+      "summary": "Bind a legacy unbound Team; an existing Team root cannot be changed",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "room.bounds",
+      "sourceVersion": "0.66.2",
+      "domain": "room",
+      "summary": "Move and resize a canvas room",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "room.layout",
+      "sourceVersion": "0.66.2",
+      "domain": "room",
+      "summary": "Computed bounds and full-size employee positions",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "card.place",
+      "sourceVersion": "0.66.2",
+      "domain": "card",
+      "summary": "Place an employee freely or snap to nearby seats",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "canvas.view",
+      "sourceVersion": "0.66.2",
+      "domain": "canvas",
+      "summary": "Read viewport position and zoom",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "canvas.set",
+      "sourceVersion": "0.66.2",
+      "domain": "canvas",
+      "summary": "Pan and zoom the canvas",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.docs",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Prepare shared documentation and authorized CLI entry points without copying handbooks into the workspace",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.suggest",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Suggest an external workspace directory without changing files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.choose",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Choose a folder in the desktop directory picker",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "remote.check",
+      "sourceVersion": "0.66.2",
+      "domain": "remote",
+      "summary": "Check SSH and the target working directory; return remote OS details",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "terminal.open",
+      "sourceVersion": "0.66.2",
+      "domain": "terminal",
+      "summary": "Open a PTY in the employee working directory",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "terminal.list",
+      "sourceVersion": "0.66.2",
+      "domain": "terminal",
+      "summary": "List employee terminals",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "terminal.read",
+      "sourceVersion": "0.66.2",
+      "domain": "terminal",
+      "summary": "Read terminal output since an offset",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "terminal.input",
+      "sourceVersion": "0.66.2",
+      "domain": "terminal",
+      "summary": "Send terminal input, including control keys",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "terminal.resize",
+      "sourceVersion": "0.66.2",
+      "domain": "terminal",
+      "summary": "Resize the PTY",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "terminal.close",
+      "sourceVersion": "0.66.2",
+      "domain": "terminal",
+      "summary": "Close a terminal and its shell",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.reveal",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "User-only: reveal an existing scoped Core-host file or folder in the local desktop file manager; remote and browser paths cannot be revealed on the client",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.list",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "List real workspace files",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.image",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Read a scoped image for preview or model input",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.read",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Read a workspace file",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.write",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Save text or a PNG/JPEG/GIF/WebP image in a workspace",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.mkdir",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Create a folder",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.move",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Rename or move a file",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.trash",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Move a file to recoverable workspace trash",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "workspace.restore",
+      "sourceVersion": "0.66.2",
+      "domain": "workspace",
+      "summary": "Restore a trashed file",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.view",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Which view is showing (home or a session)",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.dom",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Query the live interface",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.text",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "All visible text, as rendered",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.click",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Click an element in the interface",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.type",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Type into an input",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.wait",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Wait for an element to appear",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.style",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Computed styles of an element",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.screenshot",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Capture a fresh desktop frame; privacy hides Team paths, activity bubbles and dimensions only during export",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.drag",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Drag a rendered component",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    },
+    {
+      "aexusCommand": "ui.wheel",
+      "sourceVersion": "0.66.2",
+      "domain": "ui",
+      "summary": "Pan or zoom with the mouse wheel",
+      "disposition": "pending",
+      "cloudHostsCommand": null,
+      "contractCoverage": "not-migrated",
+      "review": "No verified CloudHosts equivalent yet; preserve the real Aexus handler as migration source."
+    }
+  ]
+}

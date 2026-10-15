@@ -1,0 +1,728 @@
+{
+  "startedAt": "2026-09-27T16:39:09.405Z",
+  "prompt": "通知你的所有Manager，让他们手下的员工每人都写一首五言绝句",
+  "governor": "s_muj4r8pz_55m0a8",
+  "observer": "operator only; no requests impersonating Managers, no artificial hold, no forced activity",
+  "frames": [
+    {
+      "file": "verified-001-1-requests.png",
+      "from": 1790527200148,
+      "to": 1790527200557,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "b29ab3bd-8c00-4ccd-8b79-95f8cc5b184b",
+          "startedAt": 1790527200080
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "b29ab3bd-8c00-4ccd-8b79-95f8cc5b184b",
+          "startedAt": 1790527200080
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerU1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工A运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-002-1-requests.png",
+      "from": 1790527201667,
+      "to": 1790527202075,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "b29ab3bd-8c00-4ccd-8b79-95f8cc5b184b",
+          "startedAt": 1790527200080
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "b29ab3bd-8c00-4ccd-8b79-95f8cc5b184b",
+          "startedAt": 1790527200080
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerU1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工A运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-003-1-requests.png",
+      "from": 1790527202832,
+      "to": 1790527203271,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "981e414f-2ae3-4ce8-84a6-c72b0bcf3d67",
+          "startedAt": 1790527202679
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "981e414f-2ae3-4ce8-84a6-c72b0bcf3d67",
+          "startedAt": 1790527202679
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerU1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工B运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-004-1-requests.png",
+      "from": 1790527205005,
+      "to": 1790527205412,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "8765d608-797a-4982-be54-942afb22ebe8",
+          "startedAt": 1790527204891
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "8765d608-797a-4982-be54-942afb22ebe8",
+          "startedAt": 1790527204891
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerU1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工C运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-005-1-requests.png",
+      "from": 1790527206563,
+      "to": 1790527206998,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "8765d608-797a-4982-be54-942afb22ebe8",
+          "startedAt": 1790527204891
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "8765d608-797a-4982-be54-942afb22ebe8",
+          "startedAt": 1790527204891
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerU1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工C运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-006-1-requests.png",
+      "from": 1790527207198,
+      "to": 1790527207630,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "4d6c4e7c-0efa-40a9-9f9d-437b8aa06472",
+          "startedAt": 1790527206985
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "4d6c4e7c-0efa-40a9-9f9d-437b8aa06472",
+          "startedAt": 1790527206985
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerK1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工A运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-007-1-requests.png",
+      "from": 1790527208779,
+      "to": 1790527209240,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "4d6c4e7c-0efa-40a9-9f9d-437b8aa06472",
+          "startedAt": 1790527206985
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "4d6c4e7c-0efa-40a9-9f9d-437b8aa06472",
+          "startedAt": 1790527206985
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerK1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工A运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-008-1-requests.png",
+      "from": 1790527209677,
+      "to": 1790527210118,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "f39d0f15-4acc-4439-b314-78c30dde8b21",
+          "startedAt": 1790527209626
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "f39d0f15-4acc-4439-b314-78c30dde8b21",
+          "startedAt": 1790527209626
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerK1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工B运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-009-1-requests.png",
+      "from": 1790527211251,
+      "to": 1790527211693,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "f39d0f15-4acc-4439-b314-78c30dde8b21",
+          "startedAt": 1790527209626
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "f39d0f15-4acc-4439-b314-78c30dde8b21",
+          "startedAt": 1790527209626
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerK1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工B运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-010-1-requests.png",
+      "from": 1790527212553,
+      "to": 1790527213007,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "365954d3-d8a1-42d4-8a9f-eb451369a48b",
+          "startedAt": 1790527212521
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "365954d3-d8a1-42d4-8a9f-eb451369a48b",
+          "startedAt": 1790527212521
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerK1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工C运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-011-1-requests.png",
+      "from": 1790527214058,
+      "to": 1790527214497,
+      "requestsBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "365954d3-d8a1-42d4-8a9f-eb451369a48b",
+          "startedAt": 1790527212521
+        }
+      ],
+      "requestsAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "365954d3-d8a1-42d4-8a9f-eb451369a48b",
+          "startedAt": 1790527212521
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C · 通信中",
+          "visible": true
+        }
+      ],
+      "actors": [
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-working",
+          "text": "ManagerK1 经理运行位置本地工作环境本地工作中",
+          "visible": true
+        },
+        {
+          "tag": "button",
+          "cls": "employee with-official-pet  is-communicating",
+          "text": "Employee员工C运行位置本地工作环境云端通信中",
+          "visible": true
+        }
+      ],
+      "statuses": [
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        }
+      ],
+      "noSleepingParticipants": true
+    }
+  ],
+  "rejected": [
+    {
+      "file": "rejected-004.png",
+      "from": 1790527204402,
+      "to": 1790527204786,
+      "before": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "981e414f-2ae3-4ce8-84a6-c72b0bcf3d67",
+          "startedAt": 1790527202679
+        }
+      ],
+      "after": [],
+      "rendered": 0,
+      "sleeping": 0,
+      "reason": "Request set or rendered state changed during capture"
+    }
+  ],
+  "modelsBefore": [
+    {
+      "id": "s_muj728m5_qtswp2",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1mule_c65zar"
+    },
+    {
+      "id": "s_muj728yt_4w6nsy",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1mumd_jl79sz"
+    },
+    {
+      "id": "s_muj729fz_uef975",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1munf_1s1ibf"
+    },
+    {
+      "id": "s_muj7zkru_ka8ncj",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1muod_jz5nno"
+    },
+    {
+      "id": "s_muj7zks5_juensk",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1n1qm_3ej6m8"
+    },
+    {
+      "id": "s_muj7zkse_p3zgiy",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1n8p2_8fy4q1"
+    },
+    {
+      "id": "s_muj7zlej_iay2mp",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1nfrj_lo3dpe"
+    },
+    {
+      "id": "s_muj7zlh0_3xpyto",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1nh82_gpcmcj"
+    },
+    {
+      "id": "s_muj7zljw_rf4v7f",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1nigz_p4wyee"
+    },
+    {
+      "id": "s_muj7znn0_gd0fuo",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1njqj_x6vzn7"
+    },
+    {
+      "id": "s_muj7znng_75x729",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1nlgd_0o55av"
+    },
+    {
+      "id": "s_muj7znnr_v0su5m",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "liveId": "s_muk1nmt7_wyt9oj"
+    }
+  ],
+  "sent": {
+    "sent": true,
+    "messageId": "s_muk1no86_quqnlh"
+  },
+  "observerContinuedAt": "2026-09-27T16:44:27.865Z",
+  "modelsRestored": true,
+  "completedAt": "2026-09-27T16:44:38.858Z",
+  "pending": false,
+  "maxVerifiedConcurrent": 1,
+  "employeePositionsPreserved": true
+}

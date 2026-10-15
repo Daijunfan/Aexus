@@ -1,0 +1,10 @@
+{
+  "source": "Aexus/src/renderer/src/components/EngineMark.tsx and src/renderer/src/assets/engines",
+  "note": "Native Coding Agent brand marks. Attribution and license metadata for Pi/Cline are in Aexus engine sources.json; icons are trademarks of their respective projects.",
+  "engines": [
+    "codex",
+    "claude",
+    "cline",
+    "pi"
+  ]
+}

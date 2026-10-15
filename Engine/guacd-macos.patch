@@ -1,0 +1,135 @@
+diff --git a/src/common/iconv.c b/src/common/iconv.c
+index 3cd347c..331eb91 100644
+--- a/src/common/iconv.c
++++ b/src/common/iconv.c
+@@ -21,7 +21,13 @@
+ 
+ #include <guacamole/unicode.h>
+ 
++#ifdef __APPLE__
++#include <libkern/OSByteOrder.h>
++#define le16toh OSSwapLittleToHostInt16
++#define htole16 OSSwapHostToLittleInt16
++#else
+ #include <endian.h>
++#endif
+ #include <stdint.h>
+ #include <stdlib.h>
+ 
+diff --git a/src/guacd/connection.c b/src/guacd/connection.c
+index cd5ca64..aa729bb 100644
+--- a/src/guacd/connection.c
++++ b/src/guacd/connection.c
+@@ -220,6 +220,8 @@ static int guacd_add_user(guacd_proc* proc, guac_parser* parser, guac_socket* so
+     /* Send user file descriptor to process */
+     if (!guacd_send_fd(proc->fd_socket, proc_fd)) {
+         guacd_log(GUAC_LOG_ERROR, "Unable to add user.");
++        close(user_fd);
++        close(proc_fd);
+         return 1;
+     }
+ 
+diff --git a/src/guacd/daemon.c b/src/guacd/daemon.c
+index d5df582..4393b73 100644
+--- a/src/guacd/daemon.c
++++ b/src/guacd/daemon.c
+@@ -331,7 +331,9 @@ int main(int argc, char* argv[]) {
+     pthread_attr_t default_pthread_attr;
+     pthread_attr_init(&default_pthread_attr);
+     pthread_attr_setstacksize(&default_pthread_attr, GUACD_THREAD_STACK_SIZE);
++    #ifndef __APPLE__
+     pthread_setattr_default_np(&default_pthread_attr);
++    #endif
+ #endif // HAVE_DECL_PTHREAD_SETATTR_DEFAULT_NP
+ 
+     /* Load configuration */
+diff --git a/src/guacd/move-fd.c b/src/guacd/move-fd.c
+index 5ed3307..4c5bd61 100644
+--- a/src/guacd/move-fd.c
++++ b/src/guacd/move-fd.c
+@@ -29,6 +29,9 @@
+ #include <sys/socket.h>
+ #include <sys/wait.h>
+ #include <unistd.h>
++#ifdef __APPLE__
++#include <poll.h>
++#endif
+ 
+ #include <guacamole/error.h>
+ 
+@@ -62,6 +65,21 @@ int guacd_send_fd(int sock, int fd) {
+     ssize_t result;
+     GUAC_RETRY_EINTR(result, sendmsg(sock, &message, 0));
+ 
++#ifdef __APPLE__
++    /* Darwin may disconnect an in-flight socket when the sender closes its
++     * last descriptor. Keep it open until recvmsg() has installed the copy. */
++    if (result == sizeof(message_data)) {
++        struct pollfd pending = {.fd = sock, .events = POLLIN};
++        int ready;
++        GUAC_RETRY_EINTR(ready, poll(&pending, 1, 15000));
++        if (ready <= 0)
++            return 0;
++        char acknowledged;
++        GUAC_RETRY_EINTR(result, recv(sock, &acknowledged, 1, 0));
++        return result == 1 && acknowledged == 'A';
++    }
++#endif
++
+     return (result == sizeof(message_data));
+ 
+ }
+@@ -104,6 +122,14 @@ int guacd_recv_fd(int sock) {
+             /* Pull file descriptor from data */
+             if (control->cmsg_level == SOL_SOCKET && control->cmsg_type == SCM_RIGHTS) {
+                 memcpy(&fd, CMSG_DATA(control), sizeof(fd));
++#ifdef __APPLE__
++                const char acknowledged = 'A';
++                GUAC_RETRY_EINTR(result, send(sock, &acknowledged, 1, 0));
++                if (result != 1) {
++                    close(fd);
++                    return -1;
++                }
++#endif
+                 return fd;
+             }
+ 
+diff --git a/src/libguac/flag.c b/src/libguac/flag.c
+index 39afb5a..876343d 100644
+--- a/src/libguac/flag.c
++++ b/src/libguac/flag.c
+@@ -38,7 +38,9 @@ void guac_flag_init(guac_flag* event_flag) {
+      * time changes) */
+     pthread_condattr_t cond_attr;
+     pthread_condattr_init(&cond_attr);
++    #ifndef __APPLE__
+     pthread_condattr_setclock(&cond_attr, CLOCK_MONOTONIC);
++    #endif
+     pthread_condattr_setpshared(&cond_attr, PTHREAD_PROCESS_SHARED);
+     pthread_cond_init(&event_flag->value_changed, &cond_attr);
+ 
+@@ -151,7 +153,11 @@ int guac_flag_timedwait_and_lock(guac_flag* event_flag,
+     }
+ 
+     struct timespec ts_timeout;
++    #ifdef __APPLE__
++    clock_gettime(CLOCK_REALTIME, &ts_timeout);
++    #else
+     clock_gettime(CLOCK_MONOTONIC, &ts_timeout);
++    #endif
+ 
+     uint64_t nsec_timeout = msec_timeout * 1000000 + ts_timeout.tv_nsec;
+     ts_timeout.tv_sec += nsec_timeout / NANOS_PER_SECOND;
+diff --git a/src/protocols/rdp/plugins/guacai/guacai.c b/src/protocols/rdp/plugins/guacai/guacai.c
+index 2abae65..33b3c1f 100644
+--- a/src/protocols/rdp/plugins/guacai/guacai.c
++++ b/src/protocols/rdp/plugins/guacai/guacai.c
+@@ -188,7 +188,7 @@ static UINT guac_rdp_ai_close(IWTSVirtualChannelCallback* channel_callback) {
+  */
+ static UINT guac_rdp_ai_new_connection(
+         IWTSListenerCallback* listener_callback, IWTSVirtualChannel* channel,
+-        BYTE* data, int* accept,
++        BYTE* data, BOOL* accept,
+         IWTSVirtualChannelCallback** channel_callback) {
+ 
+     guac_rdp_ai_listener_callback* ai_listener_callback =

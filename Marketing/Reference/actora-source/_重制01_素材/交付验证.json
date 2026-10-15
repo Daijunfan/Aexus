@@ -1,0 +1,27 @@
+[
+  {
+    "employee": "开发",
+    "file": "启动页.html",
+    "content": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>AI 公司，开工了</title>\n  <style>\n    * { box-sizing: border-box; }\n    body {\n      min-height: 100vh;\n      margin: 0;\n      display: grid;\n      place-items: center;\n      background: #f5f7fb;\n      color: #172033;\n      font-family: system-ui, sans-serif;\n    }\n    main { text-align: center; padding: 2rem; }\n    h1 { margin: 0 0 2rem; font-size: clamp(2.5rem, 8vw, 5rem); }\n    ul {\n      display: flex;\n      justify-content: center;\n      gap: clamp(1rem, 5vw, 3rem);\n      margin: 0;\n      padding: 0;\n      list-style: none;\n    }\n    li { font-size: clamp(1.25rem, 3vw, 1.75rem); }\n  </style>\n</head>\n<body>\n  <main>\n    <h1>AI 公司，开工了</h1>\n    <ul>\n      <li>分工</li>\n      <li>协作</li>\n      <li>交付</li>\n    </ul>\n  </main>\n</body>\n</html>\n"
+  },
+  {
+    "employee": "测试",
+    "file": "测试结果.txt",
+    "content": "测试通过：标题及分工、协作、交付三项内容齐全。\n"
+  },
+  {
+    "employee": "写作",
+    "file": "开工宣言.txt",
+    "content": "一个人，也能带队。\n让 AI 各司其职，\n把想法做成结果。\n"
+  },
+  {
+    "employee": "校对",
+    "file": "校对结果.txt",
+    "content": "通过，三行文字与标点全部正确。\n"
+  },
+  {
+    "employee": "星火",
+    "file": "交付清单.txt",
+    "content": "启动页：已完成\n测试结果：已完成\n开工宣言：已完成\n校对结果：已完成"
+  }
+]

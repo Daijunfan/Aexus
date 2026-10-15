@@ -1,0 +1,70 @@
+{
+  "startedAt": "2026-09-27T16:20:22.912Z",
+  "prompt": "通知你的所有Manager，让他们手下的员工每人都写一首五言绝句",
+  "governor": "s_muj4r8pz_55m0a8",
+  "observer": "operator only; no requests impersonating Managers, no artificial hold, no forced activity",
+  "frames": [],
+  "rejected": [],
+  "modelsBefore": [
+    {
+      "id": "s_muj728m5_qtswp2",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj728yt_4w6nsy",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj729fz_uef975",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7zkru_ka8ncj",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7zks5_juensk",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7zkse_p3zgiy",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7zlej_iay2mp",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7zlh0_3xpyto",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7zljw_rf4v7f",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7znn0_gd0fuo",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7znng_75x729",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    },
+    {
+      "id": "s_muj7znnr_v0su5m",
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    }
+  ]
+}

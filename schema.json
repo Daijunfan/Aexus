@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "cloud-hosts",
+  "version": "1.2.2",
+  "transport": "JSON-RPC 2.0",
+  "commands": [
+    {
+      "method": "hosts.list",
+      "description": "列出所有云主机，密码默认隐藏",
+      "options": {}
+    },
+    {
+      "method": "hosts.get",
+      "description": "读取主机账号、系统和连接配置",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.create",
+      "description": "登记一台云主机",
+      "options": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "host": {
+          "type": "string",
+          "required": true
+        },
+        "os": {
+          "type": "string",
+          "required": true
+        },
+        "defaultDirectory": {
+          "type": "string",
+          "required": true
+        },
+        "port": {
+          "type": "number",
+          "required": false
+        },
+        "password": {
+          "type": "string",
+          "required": false
+        },
+        "identityFile": {
+          "type": "string",
+          "required": false
+        },
+        "knownHosts": {
+          "type": "string",
+          "required": false
+        },
+        "sshConfig": {
+          "type": "string",
+          "required": false
+        },
+        "jump": {
+          "type": "string",
+          "required": false
+        },
+        "distribution": {
+          "type": "string",
+          "required": false
+        },
+        "vm": {
+          "type": "object",
+          "description": "VM 资产：hypervisorId,name,projectDirectory,state,access,notes；无 SSH 时明确标注，不伪造连通性"
+        },
+        "desktop": {
+          "type": "object",
+          "description": "protocol:rdp|vnc,address,port,viaHostId?,username?,quality:balanced|sharp|fast"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.update",
+      "description": "修改云主机账号和连接配置",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "patch": {
+          "type": "object",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.remove",
+      "description": "删除没有 Team 绑定的云主机",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.check",
+      "description": "检查 SSH 连接并保存状态",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.directories",
+      "description": "浏览现有远端目录",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "method": "hosts.credentials",
+      "description": "明确请求查看保存的密码",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "files": {
+          "type": "boolean",
+          "description": "false 仅返回密码，不读取已登记 SSH 文件"
+        }
+      }
+    },
+    {
+      "method": "hosts.fingerprints",
+      "description": "读取服务器 SSH 指纹，不自动信任",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.trust",
+      "description": "核对并信任明确指定的 SSH 指纹",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "fingerprint": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.exec",
+      "description": "仅在登记主机上执行管理命令，不会回退本机",
+      "mutates": true,
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "command": {
+          "type": "string",
+          "required": true
+        },
+        "directory": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "number"
+        }
+      }
+    },
+    {
+      "method": "hosts.agent-list",
+      "description": "按工作主机列出 Agent 角色；engineHostId 独立标识真实启动主机",
+      "options": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "method": "hosts.agent-capabilities",
+      "description": "检测指定主机已经安装的 Codex / Claude Code / Cline / Pi CLI",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.agent-open",
+      "description": "创建具名角色；同机使用原生 PTY，跨主机 Codex 使用透明原生执行协议，不启动模型轮次",
+      "options": {
+        "id": {
+          "type": "string"
+        },
+        "engine": {
+          "type": "string",
+          "required": true
+        },
+        "directory": {
+          "type": "string"
+        },
+        "cols": {
+          "type": "number"
+        },
+        "rows": {
+          "type": "number"
+        },
+        "engineHostId": {
+          "type": "string"
+        },
+        "targetHostId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-close",
+      "description": "结束由指定主机拥有的 Agent 会话",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string"
+        },
+        "session": {
+          "type": "string"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-open",
+      "description": "Open a persistent SSH PTY without an employee",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "directory": {
+          "type": "string"
+        },
+        "cols": {
+          "type": "number"
+        },
+        "rows": {
+          "type": "number"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-list",
+      "description": "List host PTYs",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.terminal-read",
+      "description": "Read incremental host PTY output",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        },
+        "cursor": {
+          "type": "number"
+        },
+        "waitMs": {
+          "type": "number",
+          "description": "等待新输出或退出，0–15000ms，默认 0"
+        }
+      }
+    },
+    {
+      "method": "hosts.terminal-input",
+      "description": "Send host PTY input and control keys",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        },
+        "data": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-resize",
+      "description": "Resize a host PTY",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        },
+        "cols": {
+          "type": "number",
+          "required": true
+        },
+        "rows": {
+          "type": "number",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.terminal-close",
+      "description": "Close a host PTY",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "terminal": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.desktop-list",
+      "description": "List active remote desktop transports",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "hosts.desktop-open",
+      "description": "Open configured RDP or VNC transport; does not imply desktop login",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.desktop-launch",
+      "description": "Launch native RDP client on the Core machine",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.desktop-close",
+      "description": "Close desktop transport and SSH forward",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.reorder",
+      "description": "保存完整主机排序",
+      "options": {},
+      "mutates": true
+    },
+    {
+      "method": "hosts.workspace",
+      "description": "读取或保存单机和看板布局",
+      "options": {}
+    },
+    {
+      "method": "hosts.inspect",
+      "description": "读取主机网络与硬件信息",
+      "options": {}
+    },
+    {
+      "method": "hosts.rdp-open",
+      "description": "Open an embedded RDP session with transient credentials",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "remember": {
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "method": "hosts.rdp-list",
+      "description": "Read embedded RDP session states",
+      "options": {}
+    },
+    {
+      "method": "hosts.rdp-close",
+      "description": "Close an embedded RDP session",
+      "options": {}
+    },
+    {
+      "method": "hosts.rdp-credentials",
+      "description": "Check and import saved RDP login from Windows App into macOS Keychain; never returns the password",
+      "options": {}
+    },
+    {
+      "method": "hosts.agent-hosts",
+      "description": "列出引擎/工作主机；local 始终是 Core 主机",
+      "options": {}
+    },
+    {
+      "method": "hosts.agent-rename",
+      "description": "仅修改会话显示名称，不进入引擎上下文",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-restart",
+      "description": "显式启动停止的角色；原生 Codex 恢复已有线程",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-activate",
+      "description": "Open Agent and resume CLI automatically after Ctrl+C; remove an irrecoverable role without deleting engine history",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-remove",
+      "description": "移除已停止的角色；不删除工作文件与原生引擎历史",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "confirm": {
+          "type": "boolean",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-read",
+      "description": "读取原生路由会话事件和待处理确认",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "cursor": {
+          "type": "number"
+        }
+      }
+    },
+    {
+      "method": "hosts.agent-send",
+      "description": "向原生会话发送用户原文；不自动重试",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "text": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-respond",
+      "description": "响应此会话的原生权限或用户输入请求",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "requestId": {
+          "type": "string",
+          "required": true
+        },
+        "decision": {
+          "type": "string"
+        },
+        "answers": {
+          "type": "object"
+        }
+      },
+      "mutates": true
+    },
+    {
+      "method": "hosts.agent-interrupt",
+      "description": "中止此会话的当前原生轮次",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    }
+  ]
+}

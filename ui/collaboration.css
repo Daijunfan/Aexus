@@ -1,0 +1,316 @@
+/* Hosts Board owns two inner boards; only three primary views appear in the toolbar. */
+#detail.board-workbench > .hosts-board-tabs{display:flex;position:sticky;top:-12px;z-index:12;gap:6px;align-items:center;margin:-12px -12px 14px;padding:10px 14px;background:#f0f4f9;border-bottom:1px solid #dce6f1;min-width:0}
+.hosts-board-tabs button{flex:none;border:1px solid transparent;border-radius:7px;background:transparent;color:#637f9c;padding:8px 14px;font-size:12px;font-weight:630;cursor:pointer;line-height:1.3}
+.hosts-board-tabs button:hover{background:#e6eff9;color:#355e87}
+.hosts-board-tabs button[aria-selected="true"]{background:#fff;color:#315d90;border-color:#d8e5f4;box-shadow:0 1px 5px #294e6d13}
+.hosts-board-tabs button:focus-visible{outline:2px solid #669bd1;outline-offset:1px}
+@media(max-width:650px){#detail.board-workbench > .hosts-board-tabs{overflow-x:auto;gap:4px;padding:7px 10px}.hosts-board-tabs button{padding:7px 10px;font-size:11px}}
+
+/* Company and Messages enhancements remain separate from active Fileboard styling. */
+.collab-mention-picks:not([hidden]){position:absolute;bottom:112px;left:17px;z-index:24;min-width:220px;max-width:calc(100% - 34px);max-height:190px;overflow:auto;padding:5px;background:#fff;border:1px solid #cbd9e9;border-radius:12px;box-shadow:0 15px 40px #142c4640;display:grid;gap:2px}
+.collab-mention-picks [role=option]{text-align:left;border:0;background:transparent;color:#304c6a;font-size:12px;padding:9px 12px;border-radius:7px}
+.collab-mention-picks [role=option][aria-selected=true],.collab-mention-picks [role=option]:hover{background:#e4effe}
+.collab-mention-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.collab-address-chip{font-size:11px!important;padding:5px 9px!important;border:1px solid #b6cee8!important;color:#466f9f!important;background:#f0f5ff!important;border-radius:16px!important}
+.collab-note-control{font-size:11px;color:#637a95;display:inline-flex;gap:7px;align-items:center}
+.collab-note-control input{width:auto}
+.collab-composer{position:relative}
+.collab-receipts{display:flex;flex-wrap:wrap;gap:6px;padding:5px 0}
+.collab-receipt{display:inline-flex;align-items:center;gap:5px;border:1px solid #d5e3f1;border-radius:5px;background:#f4f8fc;font-size:10px;padding:3px 6px;color:#607795}
+.collab-receipt button{border:0!important;background:transparent!important;color:#295eaf!important;padding:0 2px!important;text-decoration:underline;font-size:10px!important}
+.hub-company{overflow:hidden;background:#f5f8fc}
+.company-workbench{display:flex;flex-direction:column;height:100%;min-height:0;color:#2d415a;background:#f6f9fd}
+.company-title{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 25px;border-bottom:1px solid #e3eaf3;background:#fff}
+.company-title h2{font-size:23px;font-weight:740;margin:3px 0;color:#294667}
+.company-title p{color:#8295aa;font-size:11px;margin:0}
+.company-title .primary{padding:8px 14px;font-size:12px;white-space:nowrap}
+.company-layout{display:flex;min-height:0;flex:1}
+.company-teams{flex:0 0 177px;padding:20px 10px;background:#f0f5fb;border-right:1px solid #e0e8f2;overflow:auto;display:flex;flex-direction:column;gap:5px}
+.company-teams>strong{font-size:11px;padding:5px 8px 13px;letter-spacing:.08em;color:#67809e}
+.company-teams button{display:flex;align-items:center;justify-content:space-between;text-align:left;padding:10px!important;border:1px solid transparent!important;border-radius:9px;background:transparent!important;color:#526b87!important;min-height:37px;font-size:12px!important;gap:10px}
+.company-teams button.active,.company-teams button:hover{background:#deebfb!important;color:#305783!important;border-color:#cee0f5!important}
+.company-teams em{font-size:10px;color:#90a5bd;font-style:normal}
+.company-teams p{font-size:10px;line-height:1.55;margin-top:auto;padding:18px 8px;color:#90a3b8}
+.company-main{min-width:0;min-height:0;flex:1;padding:21px 25px;overflow:auto}
+.company-summary{display:flex;gap:13px;flex-wrap:wrap;align-items:stretch;margin-bottom:23px}
+.company-summary>div{min-width:125px;flex:1;background:#fff;padding:15px 17px;border:1px solid #e0e7f1;border-radius:12px;display:flex;flex-direction:column;gap:5px}
+.company-summary strong{font-size:24px;color:#365779}
+.company-summary span{font-size:11px;color:#899bb1}
+.company-summary>button{font-size:11px;align-self:center}
+.company-section-head{display:flex;gap:13px;align-items:baseline;margin:12px 0}
+.company-section-head h3{font-size:14px;margin:0;color:#3a5672}
+.company-section-head span,.company-section-head small{font-size:11px;color:#92a2b5}
+.company-agent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.company-agent{border:1px solid #dfebf5;border-radius:12px;background:#fff;box-shadow:0 1px 6px #172e4610;min-width:0;padding:15px}
+.company-agent>header{display:flex;gap:10px;align-items:center}
+.company-agent>header img{width:31px;height:31px;object-fit:contain}
+.company-agent>header>div{display:flex;flex-direction:column;min-width:0;gap:3px;flex:1}
+.company-agent>header strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.company-agent>header small{font-size:10px;color:#8d9eb2}
+.company-agent-state{font-size:10px;white-space:nowrap;padding:4px 6px;border-radius:5px;background:#eef1f5;color:#738499}
+.company-agent-state.ready{background:#e9f5ee;color:#34856a}
+.company-agent-state.busy{background:#fdf0d8;color:#a47829}
+.company-agent-details{margin:15px 0;color:#8a9ab0;font-size:10px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.company-agent-details span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.company-agent-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.company-agent-footer label{display:flex;align-items:center;gap:5px;color:#90a2b5;font-size:10px;margin-right:auto}
+.company-agent-footer select{min-width:75px;max-width:118px;font-size:10px;padding:5px;border:1px solid #dbe5ef;border-radius:5px;background:#f9fbfd}
+.company-agent-footer button,.company-relations button,.company-task-list button{font-size:11px!important;padding:5px 7px!important}
+.company-relations{margin:19px 0 26px;background:#fff;border:1px solid #e0e8f2;border-radius:12px;padding:15px}
+.company-relations h3{font-size:13px;margin:0;color:#526c89}
+.company-relations p{font-size:10px;color:#95a6b8}
+.company-connection-list{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.company-connection-list span{font-size:11px;color:#537ba2;background:#e9f3fe;border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px}
+.company-connection-list button{border:0!important;color:#9b5362!important;background:transparent!important}
+.company-task-list{display:grid;gap:9px;padding-bottom:20px}
+.company-task-list article{border:1px solid #e1e9f1;border-radius:10px;background:#fff;padding:13px 16px;min-width:0}
+.company-task-list article>header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;color:#627b96;font-size:11px}
+.company-task-list article>header strong{color:#4b6583}
+.company-task-list article>header time{margin-left:auto;font-size:10px;color:#96a6b8}
+.company-task-state{font-size:10px;border-radius:4px;padding:3px 5px;background:#e7effa;color:#53769b}
+.company-task-state.failed,.company-task-state.needs_review{background:#fce7e5;color:#a65e52}
+.company-task-state.completed{background:#e4f3e8;color:#4b8963}
+.company-task-list article>p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.6;color:#405a76;margin:10px 0}
+.company-task-list details{font-size:11px;color:#627f9e}
+.company-task-list pre{white-space:pre-wrap;overflow-wrap:anywhere;border-radius:7px;background:#f2f6fb;padding:10px;font-size:11px;max-height:220px;overflow:auto}
+.company-task-list footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f0f3f7;padding-top:8px;margin-top:9px;font-size:10px;color:#92a4b9}
+.company-error{font-size:11px;color:#ad5754;line-height:1.5;overflow-wrap:anywhere}
+.company-empty{font-size:12px;color:#96a6b9;padding:20px}
+.company-dialog{border:1px solid #dce7f3;border-radius:13px;box-shadow:0 20px 55px #1b385746;background:#fff;color:#314a67;max-height:85vh;width:min(510px,90vw);padding:0}
+.company-dialog form{padding:20px;display:flex;flex-direction:column;gap:15px}
+.company-dialog header,.company-dialog footer{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.company-dialog h2{font-size:17px;margin:0}
+.company-dialog header button{border:0;background:transparent;font-size:19px}
+.company-dialog label{display:grid;gap:5px;font-size:11px;color:#7289a2}
+.company-dialog input:not([type=checkbox]),.company-dialog textarea,.company-dialog select{width:100%;padding:9px;border-radius:7px;border:1px solid #d5e2f1;font-size:12px;background:#fff;color:#324d69}
+.company-dialog p{font-size:11px;line-height:1.55;color:#7f97b0;overflow-wrap:anywhere}
+.company-member-options{max-height:250px;overflow:auto;display:grid;gap:5px}
+.company-dialog label.company-member-option{grid-template-columns:auto 21px 1fr auto;display:grid;align-items:center;gap:10px;background:#f8fbfe;padding:7px 9px;border-radius:7px}
+.company-member-option img{width:19px;height:19px;object-fit:contain}
+.company-member-option small{font-size:10px;color:#9aabc0}
+@media(max-width:800px){.company-teams{flex-basis:125px}.company-main{padding:12px}.company-title{padding:15px}.company-agent-grid{grid-template-columns:1fr}}
+
+/* Extended Plan projections: data comes from plan.calendar and plan.analytics. */
+.collab-layout-select{display:flex;overflow-x:auto;max-width:620px;flex-wrap:nowrap;scrollbar-width:thin}
+.collab-layout-select button{white-space:nowrap;flex:none}
+.collab-view-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.collab-view-controls select{min-width:140px;max-width:220px;border-radius:7px;border:1px solid #d4e0ee;background:#fff;color:#496581;padding:6px 9px;font-size:11px}
+.collab-view-controls button{white-space:nowrap}
+.collab-view-controls button[hidden]{display:none}
+.collab-view-dialog{width:min(650px,calc(100vw - 28px));max-height:calc(100vh - 54px);overflow:auto;border:1px solid #d9e5f2;border-radius:14px;background:#fff;box-shadow:0 22px 75px #1c3f6460;color:#3b5572;padding:20px}
+.collab-view-dialog::backdrop{background:#14253c70}
+.collab-view-dialog form{display:grid;gap:13px}
+.collab-view-dialog header,.collab-view-dialog footer{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.collab-view-dialog header h2{margin:0;font-size:16px;color:#294a6c}
+.collab-view-dialog header button{border:0;background:transparent;font-size:20px}
+.collab-view-dialog p{font-size:11px;line-height:1.6;color:#8096ad;margin:0}
+.collab-view-dialog label{font-size:11px;color:#738aa3;display:grid;gap:5px;min-width:0}
+.collab-view-dialog input,.collab-view-dialog select{width:100%;padding:8px;border-radius:7px;border:1px solid #d5e2f1;background:#fff;color:#325271;font-size:12px}
+.collab-view-dialog .collab-view-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.collab-view-dialog details{border:1px solid #e1eaf5;border-radius:8px;padding:10px}
+.collab-view-dialog summary{font-size:11px;cursor:pointer;margin-bottom:6px}
+.collab-view-dialog footer{justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:760px){.collab-view-dialog .collab-view-grid{grid-template-columns:1fr}.collab-view-controls select{max-width:160px}}
+
+.collab-calendar-legend{font-size:10px;color:#7f92a8;margin:3px 16px 10px}
+.collab-calendar-task.ran{background:#def2e7!important;color:#306c51!important}
+.collab-plan-list,.collab-plan-feed,.collab-plan-agenda{display:flex;flex-direction:column;gap:8px;padding:18px 24px}
+.collab-plan-list>div{display:flex;align-items:center;gap:15px;padding:12px 16px;border:1px solid #e0e7f0;background:#fff;border-radius:8px;font-size:12px}
+.collab-plan-list>div>button:first-child{flex:1;text-align:left;font-weight:600;color:#36597e;white-space:normal}
+.collab-plan-list>div>span,.collab-plan-list>div>time{font-size:10px;color:#8598ae}
+.collab-plan-list>div>em{font-size:10px;color:#5e7897;font-style:normal;background:#eaf1fa;border-radius:4px;padding:3px 6px}
+.collab-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:12px;align-items:start;padding:17px}
+.collab-plan-charts{margin:24px auto;max-width:700px;background:#fff;padding:24px;border:1px solid #e0e8f1;border-radius:12px}
+.collab-plan-charts h3{font-size:16px;color:#3d5c7f}
+.collab-plan-charts p{font-size:11px;color:#8398ae}
+.collab-chart-rows{display:flex;flex-direction:column;gap:10px;margin-top:19px}
+.collab-chart-rows>div{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:12px;font-size:12px}
+.collab-chart-rows strong{color:#58718d;font-weight:500}
+.collab-chart-rows span{background:#edf3fa;height:19px;display:block;border-radius:5px;overflow:hidden}
+.collab-chart-rows span i{background:#6c9fcb;display:block;height:100%;min-width:2px;border-radius:5px}
+.collab-chart-rows em{text-align:right;font-style:normal;color:#829ab3}
+.collab-plan-feed article{background:#fff;border:1px solid #e0e8f3;border-radius:10px;padding:14px;display:grid;grid-template-columns:140px 95px 1fr;gap:8px;align-items:start}
+.collab-plan-feed article time,.collab-plan-feed article span{font-size:10px;color:#8b9fb6}
+.collab-plan-feed article button{text-align:left;font-weight:600;font-size:12px;color:#4276aa}
+.collab-plan-feed article p{grid-column:1/-1;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:#5e7690;margin:0}
+.collab-plan-agenda section{background:#fff;border-radius:10px;border:1px solid #e1e8f1;overflow:hidden}
+.collab-plan-agenda section>h3{background:#eff5fc;padding:10px 15px;font-size:12px;color:#5b7694;margin:0}
+.collab-plan-agenda section>div{display:grid;grid-template-columns:125px 1fr 90px;gap:12px;align-items:center;padding:10px 15px;border-top:1px solid #edf1f6}
+.collab-plan-agenda time,.collab-plan-agenda span{font-size:11px;color:#8198b1}
+.collab-plan-agenda button{text-align:left;font-size:12px;font-weight:600;color:#4879af}
+.collab-plan-form-landing{text-align:center;max-width:550px;margin:45px auto;background:#fff;padding:35px;border:1px solid #e1e9f2;border-radius:13px}
+.collab-plan-form-landing h3{font-size:18px;color:#3a5779}
+.collab-plan-form-landing p{font-size:12px;color:#8198b2;line-height:1.6;margin:20px 0}
+.collab-run-history article small{display:block;font-size:10px;color:#849cb6;margin:5px 0;overflow-wrap:anywhere}
+.collab-run-history pre{font-size:11px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f5fc;color:#375574;padding:12px;border-radius:8px;max-height:220px;overflow:auto}
+.collab-run-history .collab-run-error{color:#a84e48}
+.collab-timeline-row>time small{display:block;margin-top:4px;font-size:10px;color:#90a3b8}
+@media(max-width:950px){.collab-layout-select{max-width:400px}.collab-plan-list>div{flex-wrap:wrap}.collab-plan-feed article{grid-template-columns:1fr 1fr}.collab-plan-feed article button{grid-column:1/-1}}
+
+/* Real-time approvals and verified group attachments. */
+.collab-approvals{display:grid;gap:5px;margin-top:10px}
+.collab-approval{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:8px 10px;border-radius:7px;background:#fff8e9;border:1px solid #f4dfb8;font-size:11px;color:#7a5c32}
+.collab-approval strong{color:#805829}
+.collab-approval button{font-size:10px!important;padding:4px 8px!important;background:#fff!important;border:1px solid #e0c69f!important;border-radius:5px}
+.collab-message-files{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.collab-message-files a{display:inline-flex;gap:5px;color:#3c729e;background:#f1f6fd;border:1px solid #dce8f5;border-radius:7px;padding:6px 9px;font-size:11px;text-decoration:none;overflow-wrap:anywhere}
+.collab-message-files a:hover{background:#e4f0fe}
+.collab-attachment-picks{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0}
+.collab-file-chip{display:flex;align-items:center;gap:5px;font-size:11px;color:#4d6a89;padding:4px 8px;background:#eef4fc;border:1px solid #d3e1ef;border-radius:8px;max-width:100%;overflow-wrap:anywhere}
+.collab-file-chip button{background:transparent!important;border:0!important;padding:0!important;font-size:14px!important;color:#7088a0!important}
+.collab-upload{display:inline-flex;cursor:pointer;font-size:11px;color:#4077a5;padding:6px 8px;border-radius:6px;background:#f1f6fc;border:1px solid #d8e6f2;white-space:nowrap}
+.collab-upload:hover{background:#e7f1fe}
+.collab-composer-actions{flex-wrap:wrap}
+.collab-upload[hidden],.collab-note-control[hidden],.collab-attachment-picks:empty{display:none!important}
+
+/* Threads retain readable quotes even when the original page is not loaded. */
+.collab-quote-open{display:flex!important;flex-direction:column;align-items:flex-start;gap:3px;max-width:100%;width:100%;text-align:left!important;white-space:normal;cursor:pointer}
+.collab-quote-open strong{font-size:10px;color:#5078a3}
+.collab-quote-open span{font-size:11px;color:#7b91aa;line-height:1.45;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.collab-targeted .collab-bubble{outline:2px solid #7da8d7;outline-offset:2px;transition:outline-color 1.6s}
+.collab-reference-dialog{width:min(570px,calc(100vw - 38px));max-height:80vh;border:1px solid #d9e5f3;border-radius:12px;padding:0;box-shadow:0 20px 65px #20395235;background:#fff;color:#3a5370}
+.collab-reference-dialog::backdrop{background:#1b2b4050}
+.collab-reference-dialog section{padding:19px 22px;overflow:auto;max-height:80vh}
+.collab-reference-dialog header,.collab-reference-dialog footer{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.collab-reference-dialog h3{font-size:15px;margin:0}
+.collab-reference-dialog time{font-size:11px;color:#93a3b4}
+.collab-reference-dialog p{font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:52vh;overflow:auto}
+.collab-reference-dialog footer{border-top:1px solid #e9eef5;padding-top:12px}
+.collab-reference-dialog button{font-size:11px!important;padding:6px 10px!important}
+
+/* Incoming Agent/Plan replies have a precise persisted read cursor. */
+.collab-group-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.collab-unread{min-width:18px;height:18px;padding:1px 5px;border-radius:10px;background:#477fae;color:#fff;font-size:10px;font-weight:650;display:inline-flex;align-items:center;justify-content:center}
+.collab-group-row.active .collab-unread{background:#356b98}
+
+
+/* Personal Messenger organization is a projection over existing message sources. */
+.collab-messenger-filters{display:grid;gap:7px;padding:8px 6px 11px;border-bottom:1px solid #e4ebf4;margin-bottom:6px}
+.collab-messenger-filter-buttons{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.collab-messenger-filter-buttons button{font-size:10px!important;padding:5px 7px!important;color:#7890aa!important;border:1px solid transparent!important;background:transparent!important;border-radius:6px!important}
+.collab-messenger-filter-buttons button.active{color:#315f91!important;background:#e7f0fc!important;border-color:#d2e2f5!important}
+.collab-messenger-filter-buttons button[data-message-search]{margin-left:auto;color:#4b79a5!important}
+.collab-conversation-quick-search,.collab-folder-bar select{width:100%;min-width:0;border:1px solid #dbe6f3;border-radius:7px;background:#fff;color:#355371;padding:7px 9px;font-size:11px}
+.collab-folder-bar{display:flex;gap:5px;align-items:center}
+.collab-folder-bar select{flex:1}
+.collab-folder-bar button{flex:none;padding:5px 8px!important;border:1px solid #dce6f3!important;border-radius:7px!important;background:#fff!important;color:#64809e!important;font-size:12px!important}
+.collab-folder-bar button[hidden]{display:none}
+.collab-personal-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding-top:7px}
+.collab-personal-actions button{font-size:10px!important;padding:4px 7px!important;border:1px solid #e1eaf5!important;background:#f8fbfe!important;color:#607d9e!important;border-radius:7px!important}
+.collab-personal-actions button[aria-pressed=true]{background:#e9f2fc!important;color:#396995!important}
+.collab-bubble-actions button[aria-pressed=true]{font-weight:700;color:#386ca0!important}
+.collab-personal-dialog{width:min(540px,calc(100vw - 32px));max-height:min(85vh,760px);overflow:auto;border:1px solid #dae5f2;border-radius:12px;padding:0;background:#fff;box-shadow:0 18px 60px #263c5a4a;color:#334d6c}
+.collab-personal-dialog::backdrop{background:#1b2d4466}
+.collab-personal-dialog form,.collab-personal-dialog section{display:grid;gap:13px;padding:19px}
+.collab-personal-dialog header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.collab-personal-dialog header h2{font-size:17px;margin:0;color:#2d4b70}
+.collab-personal-dialog header button{border:0;background:transparent;font-size:19px}
+.collab-personal-dialog p{font-size:11px;line-height:1.6;color:#7f93aa;margin:0}
+.collab-personal-dialog form>label{font-size:11px;color:#7289a3;display:grid;gap:5px}
+.collab-personal-dialog input:not([type=checkbox]),.collab-personal-dialog select{width:100%;min-width:0;border:1px solid #dbe5f1;background:#fff;border-radius:7px;color:#345471;padding:8px;font-size:12px}
+.collab-personal-dialog footer{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px}
+.collab-personal-dialog footer button{font-size:11px;padding:7px 10px}
+.collab-personal-members{display:grid;gap:3px;max-height:215px;overflow:auto;padding:9px;background:#f7f9fd;border:1px solid #e5edf7;border-radius:8px}
+.collab-personal-members label{display:flex;gap:9px;align-items:center;font-size:11px;color:#55708f;padding:5px;cursor:pointer}
+.collab-global-search{width:min(800px,calc(100vw - 30px))}
+.collab-global-search .collab-search-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:0}
+.collab-global-search .collab-search-toolbar [name=query]{flex:1;min-width:180px}
+.collab-global-search .collab-search-toolbar select{width:auto;max-width:150px}
+.collab-global-results{overflow:auto;max-height:54vh;min-height:100px;display:grid;align-content:start;gap:8px}
+.collab-global-result{border:1px solid #e2eaf5;border-radius:8px;padding:10px 12px;background:#fbfcff}
+.collab-global-result header{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:11px}
+.collab-global-result header strong{color:#3a658e}
+.collab-global-result header span{font-size:10px;color:#90a1b7}
+.collab-global-result p{white-space:pre-wrap;overflow-wrap:anywhere;color:#45617d;font-size:12px;margin:8px 0}
+.collab-global-result footer{justify-content:space-between}
+.collab-global-result footer span{color:#6584a5;font-size:10px}
+.collab-search-capped{font-size:11px;color:#956d3d}
+@media(max-width:760px){.collab-messenger-filter-buttons button{padding:5px!important}.collab-global-search .collab-search-toolbar select{max-width:100%}}
+
+/* Read-only Messages history search/pagination; independent from Fileboard. */
+.collab-group-search{display:flex;gap:8px;align-items:center;padding:9px 16px 11px;border-top:1px solid #e4ebf4;background:#f9fbfe}
+.collab-group-search input[type=search]{flex:1;min-width:0;height:32px;padding:7px 10px;border:1px solid #d4e1ef;border-radius:7px;background:#fff;color:#3c5673;font-size:12px;outline-offset:1px}
+.collab-group-search input[type=search]:focus{border-color:#7ca9d8;outline:2px solid #e0edfc}
+.collab-group-search button{flex:none;border:0!important;background:transparent!important;color:#577da5!important;font-size:11px!important;padding:5px!important}
+.collab-group-search button[hidden]{display:none!important}
+.collab-load-older{display:block;width:fit-content;margin:12px auto 18px;padding:7px 15px!important;color:#4273a2!important;border:1px solid #c9dff1!important;border-radius:9px!important;background:#f1f7ff!important;font-size:11px!important}
+.collab-load-older:hover{background:#e3effd!important}
+
+.collab-group-dialog label.collab-auto-replies{display:flex;flex-direction:row;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e2eaf3;border-radius:8px;background:#f6f9fd;color:#607d9a;font-size:11px;line-height:1.45}
+.collab-auto-replies input{margin:0;width:15px;height:15px;flex:none;accent-color:#588cbd}
+
+/* Channel workbench — actual article and discussion records in the shared Core. */
+.collab-messages{position:relative}
+.news-surface{position:absolute;inset:0;min-height:0;min-width:0;background:#fff;z-index:15}
+.news-surface[hidden]{display:none}
+.news-workbench{height:100%;display:grid;grid-template-columns:minmax(205px,255px) minmax(0,1fr);min-height:0;color:#335573}
+.news-sidebar{display:flex;flex-direction:column;min-height:0;background:#f6f9fd;border-right:1px solid #dfebf4;padding:14px 10px}
+.news-sidebar>header{display:flex;align-items:center;gap:9px;padding:5px 5px 12px}
+.news-sidebar>header h2{font-size:18px;margin:1px 0;font-weight:700;color:#2e5379}
+.news-sidebar>header small,.news-title small{font-size:10px;letter-spacing:.12em;color:#869fb9}
+.news-sidebar>header button{border:1px solid #dce6f1;border-radius:9px;background:#fff;color:#44688c;padding:6px 9px}
+.news-sidebar>header .news-add{margin-left:auto;font-size:16px}
+.news-sidebar>p,.news-foot{font-size:11px;line-height:1.5;color:#8a9fb5;padding:0 8px}
+.news-channel-list{display:flex;flex-direction:column;gap:4px;overflow:auto;flex:1;min-height:0;margin-top:13px}
+.news-channel-list button{display:flex;align-items:center;gap:10px;text-align:left;padding:11px 8px!important;border:1px solid transparent!important;border-radius:9px!important;background:transparent!important;color:#466687!important}
+.news-channel-list button.active,.news-channel-list button:hover{background:#e8f2ff!important;border-color:#d3e4f7!important}
+.news-channel-list button>span:nth-child(2){display:grid;gap:4px;min-width:0;flex:1}
+.news-channel-list button strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.news-channel-list button small{font-size:10px;color:#91a4b9}
+.news-channel-list button em{font-size:10px;background:#478dd0;color:#fff;border-radius:20px;padding:2px 6px;font-style:normal}
+.news-channel-letter{width:32px;height:32px;flex:none;display:grid;place-items:center;border-radius:10px;background:#dcebf9;color:#547a9d;font-size:14px;font-weight:700}
+.news-empty{font-size:12px;color:#91a7bd;text-align:center;line-height:1.6;padding:35px 12px}
+.news-main{display:flex;flex-direction:column;min-height:0;min-width:0;background:#fff}
+.news-header{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:17px 22px;border-bottom:1px solid #e3ebf4}
+.news-title h2,.news-header h2{font-size:20px;font-weight:700;margin:3px 0;color:#2e4e6f}
+.news-title p,.news-header p{font-size:11px;color:#8198b2;margin:3px 0;line-height:1.4}
+.news-actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.news-actions button,.news-entry-actions button{border:1px solid #d8e5f2;border-radius:7px;background:#fff;color:#4c7399;font-size:11px;padding:7px 9px}
+.news-actions button:hover,.news-entry-actions button:hover{background:#eef6ff;border-color:#afd0f1}
+.news-timeline{flex:1;min-height:0;overflow:auto;padding:18px clamp(12px,4vw,38px);display:grid;align-content:start;gap:15px;background:#fafcfe}
+.news-entry{border:1px solid #e0eaf4;background:#fff;border-radius:12px;padding:17px;max-width:890px;min-width:0}
+.news-entry.news-article{box-shadow:0 2px 8px #1c3b5c0b}
+.news-entry-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:#7390aa}
+.news-entry-type{letter-spacing:.08em;text-transform:uppercase;font-size:9px;font-weight:700;background:#edf5fb;color:#597a9d;padding:4px 7px;border-radius:5px}
+.news-entry-head strong{font-size:11px;color:#536f8b}
+.news-entry-head time{font-size:10px;margin-left:auto;color:#91a9c0}
+.news-entry h3{font-size:17px;line-height:1.4;margin:12px 0 8px;color:#2f4e6e;overflow-wrap:anywhere}
+.news-entry-body{font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;color:#4f6983;margin:9px 0}
+.news-quote{font-size:11px;color:#829ab2;background:#f3f7fb;padding:7px 9px;border-left:2px solid #c5d9ee}
+.news-entry-links,.news-entry-files{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;margin:7px 0}
+.news-entry a{color:#3c7db6;text-decoration:underline;overflow-wrap:anywhere}
+.news-entry-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;border-top:1px solid #edf1f5;margin-top:14px;padding-top:10px}
+.news-load-more{display:block;margin:0 auto 4px;padding:8px 14px;border:1px solid #c8d9eb;border-radius:9px;background:#f2f7fc;color:#496f95}
+.news-composer{display:grid;gap:6px;padding:13px 20px;border-top:1px solid #e1eaf4;background:#fff}
+.news-composer[hidden]{display:none}
+.news-composer textarea{width:100%;min-height:57px;max-height:170px;resize:vertical;border:1px solid #d7e4f1;border-radius:9px;padding:11px;color:#355a7f;font:inherit;font-size:12px}
+.news-compose-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.news-composer small{font-size:10px;color:#91a5b9}
+.news-attach{font-size:11px;cursor:pointer;color:#537ba3;border:1px solid #dae6f1;padding:7px 11px;border-radius:7px}
+.news-attached{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.news-attached span{font-size:11px;padding:4px 8px;background:#ecf5fe;border-radius:6px}
+.news-attached button{background:transparent;border:0;color:#527799;cursor:pointer}
+.news-reply-label{font-size:11px;color:#6389b0;cursor:pointer}
+.news-reply-label[hidden]{display:none}
+.news-dialog{width:min(560px,calc(100vw - 26px));max-height:calc(100vh - 50px);overflow:auto;background:#fff;color:#365571;border:1px solid #d6e3f1;border-radius:13px;padding:20px;box-shadow:0 20px 80px #132b4670}
+.news-dialog::backdrop{background:#11243b70}
+.news-dialog form{display:grid;gap:13px}
+.news-dialog header,.news-dialog footer,.news-token-list header,.news-token-list footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.news-dialog header h2{font-size:17px;margin:0;color:#315575}
+.news-dialog header button{border:0;background:transparent;font-size:20px}
+.news-dialog p{font-size:11px;line-height:1.5;color:#8399ae;margin:3px 0}
+.news-dialog label{display:grid;gap:6px;font-size:11px;color:#6c88a4}
+.news-dialog input:not([type=checkbox]),.news-dialog textarea,.news-dialog select{width:100%;border:1px solid #d5e2ef;border-radius:7px;padding:8px;background:#fff;color:#325774;font-size:12px}
+.news-dialog footer{justify-content:flex-end;margin-top:8px}
+.news-member-picks{max-height:155px;overflow:auto;display:grid;gap:4px;border:1px solid #e5edf5;padding:7px;border-radius:8px}
+.news-member-picks label{display:flex;gap:8px;align-items:center;min-height:27px;padding:3px 6px}
+.news-member-picks label small{margin-left:auto;color:#93a5b7}
+.news-dialog strong{font-size:11px;color:#567797}
+.news-source-row,.news-token-list>div{display:grid;gap:5px;padding:10px;border-bottom:1px solid #e6edf6;font-size:12px}
+.news-source-row small,.news-token-list small{font-size:10px;color:#8da5b9}
+.news-source-row button,.news-source-shortcuts button{justify-self:start;border:1px solid #d6e4f2;border-radius:7px;padding:5px 8px;background:#fff;color:#4f7192}
+.news-source-list{max-height:175px;overflow:auto;border:1px solid #e5edf6;border-radius:9px}
+.news-source-shortcuts{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:800px){.news-workbench{grid-template-columns:178px minmax(0,1fr)}.news-header{padding:13px}.news-timeline{padding:12px}.news-entry{padding:13px}}
+@media(max-width:530px){.news-workbench{grid-template-columns:125px minmax(0,1fr)}.news-sidebar{padding:9px 4px}.news-channel-letter{display:none}.news-actions button{font-size:10px;padding:5px}.news-header h2{font-size:16px}}
+

@@ -1,0 +1,36 @@
+const {test,after}=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const home=fs.mkdtempSync(path.join(os.tmpdir(),'cloudhosts-attachment-e2e-'));process.env.CLOUD_HOSTS_HOME=home;
+const agents=require('../src/agent-sessions.cjs'),original={sessions:agents.sessions,send:agents.send};
+const role={id:'attached-agent',name:'Tester',engine:'codex',transport:'native',engineHostId:'local',targetHostId:'local',cwd:home,running:true,busy:false,threadId:'native-attached'};
+const sent=[];agents.sessions=()=>[role];agents.send=async args=>{sent.push(args);return {accepted:true,turnId:'attach-turn-'+sent.length}};
+const station=require('../src/station.cjs'),groups=require('../src/collaboration.cjs'),store=require('../src/collaboration-store.cjs'),executor=require('../src/collaboration-execution.cjs'),journal=require('../src/session-journal.cjs');
+const until=async fn=>{for(let i=0;i<120;i++){if(fn())return;await new Promise(r=>setTimeout(r,25))}throw Error('Attachment delivery timed out')};
+after(()=>{executor.stop();Object.assign(agents,original);fs.rmSync(home,{recursive:true,force:true})});
+test('group attachment snapshots metadata, verifies bytes, stages into correct host, and sends paths to one native Agent',async()=>{
+ const item=station.create('report.txt','file',null,'A sample UTF-8 report with Unicode 测试');
+ const group=groups.create({name:'Shared file',memberIds:[role.id]});executor.start();
+ const message=groups.post({id:group.id,text:'Analyze attached report',mentions:[role.id],files:[item.id],clientMessageId:'group-file-send'});
+ assert.equal(message.attachments.length,1);
+ assert.equal(message.attachments[0].sha256,item.sha256);
+ await until(()=>store.delivery(message.id,role.id)?.status==='submitted');
+ assert.equal(sent.length,1);
+ const manifest=JSON.parse(sent[0].text.split('\n')[1]).attachments;
+ assert.ok(manifest,'group task must contain staged attachment manifest');
+ assert.equal(manifest.length,1);
+ assert.equal(manifest[0].hostId,'local');
+ assert.equal(manifest[0].sha256,item.sha256);
+ assert.equal(fs.readFileSync(manifest[0].path,'utf8'),'A sample UTF-8 report with Unicode 测试');
+ assert.ok(groups.messages({id:group.id}).messages[0].attachments[0].stationId===item.id);
+ journal.observe(role,{method:'turn/completed',params:{threadId:role.threadId,turn:{id:store.delivery(message.id,role.id).turn_id,status:'completed'}}});
+ assert.equal(fs.existsSync(manifest[0].path),true);
+});
+test('a mutated or deleted Station attachment is rejected, never silently substituted in a native prompt',async()=>{
+ const item=station.create('snapshot.md','file',null,'first version');
+ const group=groups.create({name:'Immutable evidence',memberIds:[]});
+ const message=groups.post({id:group.id,text:'Minutes',kind:'note',files:[item.id]});
+ assert.equal(message.attachments[0].sha256,item.sha256);
+ station.write(item.id,'second version',item.sha256);
+ assert.throws(()=>require('../src/collaboration-attachments.cjs').capture([item.id,'not-an-id']),/不存在|Invalid Station/);
+ await assert.rejects(()=>require('../src/collaboration-attachments.cjs').stage({attachments:message.attachments,id:message.id},role),/changed|deleted/);
+});

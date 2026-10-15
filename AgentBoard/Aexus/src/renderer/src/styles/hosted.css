@@ -1,0 +1,82 @@
+/* Hosted Aexus has one content header, beneath CloudHosts' own four tabs. */
+html[data-cloudhosts-embedded='true'] .app.in-office {
+  --company-header-height: 58px;
+}
+html[data-cloudhosts-embedded='true'] .company-header {
+  height: var(--company-header-height);
+  min-height: var(--company-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding: 6px 18px;
+}
+html[data-cloudhosts-embedded='true'] .company-navigation {
+  margin: 0;
+  min-width: 130px;
+  max-width: min(42vw, 280px);
+  padding: 3px;
+}
+html[data-cloudhosts-embedded='true'] .company-view-picker {
+  width: 100%;
+}
+html[data-cloudhosts-embedded='true'] .company-navigation .company-view-trigger {
+  width: 100%;
+  min-height: 38px;
+  height: 38px;
+}
+html[data-cloudhosts-embedded='true'] .company-header .company-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+html[data-cloudhosts-embedded='true'] .plugin-directory .directory-edit {
+  margin-top: 10px;
+}
+html[data-cloudhosts-embedded='true'] .web-connection {
+  display: none;
+}
+html[data-cloudhosts-embedded='true'] .web-login-overlay {
+  background: var(--bg);
+}
+/* Host visibility remains independent of document.visibilityState in WKWebView. */
+html[data-cloudhosts-embedded='true'][data-host-visible='false'] .office-layout *,
+html[data-cloudhosts-embedded='true'][data-host-visible='false'] .official-pet * {
+  animation-play-state: paused !important;
+}
+@media(max-width: 640px) {
+  html[data-cloudhosts-embedded='true'] .app.in-office {
+    --company-header-height: 94px;
+  }
+  html[data-cloudhosts-embedded='true'] .company-header {
+    min-height: var(--company-header-height);
+    height: auto;
+    display: flex;
+    padding: 7px 10px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+  }
+  html[data-cloudhosts-embedded='true'] .company-navigation {
+    align-self: stretch;
+    max-width: none;
+    width: 100%;
+  }
+  html[data-cloudhosts-embedded='true'] .company-navigation .company-view-trigger {
+    min-height: 34px;
+    height: 34px;
+  }
+  html[data-cloudhosts-embedded='true'] .company-header .company-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  html[data-cloudhosts-embedded='true'] .company-header .company-actions button {
+    padding: 5px 9px;
+    min-height: 31px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-cloudhosts-embedded='true'] .company-navigation .app-view-button {transition:none;}
+}

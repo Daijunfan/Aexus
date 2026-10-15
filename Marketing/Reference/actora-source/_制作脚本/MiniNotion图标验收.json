@@ -1,0 +1,52 @@
+{
+  "appVersion": "0.45.0",
+  "capturedAt": "2026-09-26T10:43:58.776Z",
+  "publicApis": [
+    "page.create",
+    "page.update",
+    "page.get"
+  ],
+  "checks": [
+    "six distinct icons",
+    "six distinct covers",
+    "editable non-empty content",
+    "GUI icon update visible via CLI",
+    "close/reopen persistence",
+    "actual responsive two-column layout",
+    "hidden windows only",
+    "zero model calls"
+  ],
+  "cards": [
+    {
+      "title": "产品路线图",
+      "icon": "🧭",
+      "cover": "blue"
+    },
+    {
+      "title": "设计灵感",
+      "icon": "🎨",
+      "cover": "dusk"
+    },
+    {
+      "title": "写作工作台",
+      "icon": "✍️",
+      "cover": "pink"
+    },
+    {
+      "title": "发布准备",
+      "icon": "🚀",
+      "cover": "sunset"
+    },
+    {
+      "title": "项目笔记",
+      "icon": "📝",
+      "cover": "sand"
+    },
+    {
+      "title": "资料书架",
+      "icon": "📚",
+      "cover": "paper"
+    }
+  ],
+  "source": "_原始截图/12-Notion-六张卡片.png"
+}

@@ -1,0 +1,434 @@
+{
+  "prompt": "通知你的所有Manager，让他们手下的员工每人都写一首五言绝句",
+  "governor": "s_muj4r8pz_55m0a8",
+  "startedAt": "2026-09-27T03:00:57.640Z",
+  "frames": [
+    {
+      "file": "真实宣传-协作-001-1绿线.png",
+      "at": "2026-09-27T03:00:59.840Z",
+      "pairs": [
+        "s_muj4r8pz_55m0a8>s_muj728em_bg1xv6"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "requestId": "c3484894-d95b-4dd2-b29f-16aa6776b093",
+          "startedAt": 1790478059778,
+          "expiresAt": 1790478061386
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-001-1绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-002-1绿线.png",
+      "at": "2026-09-27T03:01:01.229Z",
+      "pairs": [
+        "s_muj4r8pz_55m0a8>s_muj7299d_ku6lqj"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "672c566a-c537-4be1-8cca-bf85a30f6d68",
+          "startedAt": 1790478060987,
+          "expiresAt": 1790478062596
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-002-1绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-003-3绿线.png",
+      "at": "2026-09-27T03:01:02.609Z",
+      "pairs": [
+        "s_muj4r8pz_55m0a8>s_muj729fz_uef975",
+        "s_muj728em_bg1xv6>s_muj7z9i6_m3pwo0",
+        "s_muj728rq_x1ukbj>s_muj7zavg_x6wix7"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "requestId": "ed512e01-179d-4e64-b892-c94a98b0a8e8",
+          "startedAt": 1790478061400,
+          "expiresAt": 1790478063009
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "d7d7c66c-eeef-41eb-900d-5d90857abb5b",
+          "startedAt": 1790478061885,
+          "expiresAt": 1790478063493
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "29f9bf58-7416-43f2-8f78-77069c957dd1",
+          "startedAt": 1790478062563,
+          "expiresAt": 1790478064172
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-003-3绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-004-3绿线.png",
+      "at": "2026-09-27T03:01:04.571Z",
+      "pairs": [
+        "s_muj728rq_x1ukbj>s_muj7zcla_iioznx",
+        "s_muj7299d_ku6lqj>s_muj7zfr8_ow7pyl",
+        "s_muj728em_bg1xv6>s_muj7z9i6_m3pwo0"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "3f8e1405-eb4e-498a-94a5-73dd1be29e09",
+          "startedAt": 1790478063414,
+          "expiresAt": 1790478065023
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "af5a4c96-1387-4258-8996-f89dd391ae1f",
+          "startedAt": 1790478063913,
+          "expiresAt": 1790478065523
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "648dc19f-204b-4dc9-8cdb-4f4d4a8a75a0",
+          "startedAt": 1790478064308,
+          "expiresAt": 1790478065912
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-004-3绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-005-3绿线.png",
+      "at": "2026-09-27T03:01:13.561Z",
+      "pairs": [
+        "s_muj7299d_ku6lqj>s_muj7zfr8_ow7pyl",
+        "s_muj728m5_qtswp2>s_muj7zkru_ka8ncj",
+        "s_muj729fz_uef975>s_muj7zljw_rf4v7f"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "requestId": "00093421-2e65-4725-96bb-b2bacce2d199",
+          "startedAt": 1790478072981,
+          "expiresAt": 1790478074594
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zljw_rf4v7f",
+          "command": "session.send",
+          "requestId": "1b234e2d-e42d-45a4-ad46-6544179445cc",
+          "startedAt": 1790478073196,
+          "expiresAt": 1790478074806
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-005-3绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-006-3绿线.png",
+      "at": "2026-09-27T03:01:31.149Z",
+      "pairs": [
+        "s_muj728rq_x1ukbj>s_muj7zcla_iioznx",
+        "s_muj729fz_uef975>s_muj7zlh0_3xpyto",
+        "s_muj728m5_qtswp2>s_muj7zks5_juensk"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "4f3ecfa9-f1ca-46b7-abb0-e4f38cc2def3",
+          "startedAt": 1790478076943
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.follow",
+          "requestId": "8d685c38-352d-45b3-bb91-3023cddac098",
+          "startedAt": 1790478081906
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-006-3绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-007-3绿线.png",
+      "at": "2026-09-27T03:01:32.300Z",
+      "pairs": [
+        "s_muj729fz_uef975>s_muj7zlh0_3xpyto",
+        "s_muj728yt_4w6nsy>s_muj7znn0_gd0fuo",
+        "s_muj728m5_qtswp2>s_muj7zkru_ka8ncj"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "4f3ecfa9-f1ca-46b7-abb0-e4f38cc2def3",
+          "startedAt": 1790478076943
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.follow",
+          "requestId": "8d685c38-352d-45b3-bb91-3023cddac098",
+          "startedAt": 1790478081906
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.follow",
+          "requestId": "d47bd6b8-247d-4ce6-96fe-7797d9d92505",
+          "startedAt": 1790478090093
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-007-3绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-008-3绿线.png",
+      "at": "2026-09-27T03:01:36.247Z",
+      "pairs": [
+        "s_muj729fz_uef975>s_muj7zlh0_3xpyto",
+        "s_muj728yt_4w6nsy>s_muj7znn0_gd0fuo",
+        "s_muj728m5_qtswp2>s_muj7zkru_ka8ncj"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "4f3ecfa9-f1ca-46b7-abb0-e4f38cc2def3",
+          "startedAt": 1790478076943
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.follow",
+          "requestId": "8d685c38-352d-45b3-bb91-3023cddac098",
+          "startedAt": 1790478081906,
+          "expiresAt": 1790478097148
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.follow",
+          "requestId": "d47bd6b8-247d-4ce6-96fe-7797d9d92505",
+          "startedAt": 1790478090093,
+          "expiresAt": 1790478097258
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-008-3绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    },
+    {
+      "file": "真实宣传-协作-009-1绿线.png",
+      "at": "2026-09-27T03:01:46.402Z",
+      "pairs": [
+        "s_muj728yt_4w6nsy>s_muj7znnr_v0su5m"
+      ],
+      "after": [
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.transcript",
+          "requestId": "e477bc8e-0875-4b85-8328-e87e7d9349ba",
+          "startedAt": 1790478106104,
+          "expiresAt": 1790478107705
+        }
+      ],
+      "activeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "screenshot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/真实宣传-协作-009-1绿线.png",
+        "width": 2336,
+        "height": 2168
+      }
+    }
+  ],
+  "sent": {
+    "sent": true,
+    "messageId": "s_muj8en60_92g7f0"
+  },
+  "finishedAt": "2026-09-27T03:01:53.949Z"
+}

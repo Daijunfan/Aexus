@@ -1,0 +1,1041 @@
+{
+  "ok": true,
+  "data": {
+    "connections": [
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rdn0_y8j8v4",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rdn0_y8j8v4",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "产品研发组",
+        "sourceName": "星火",
+        "targetName": "阿蓝",
+        "origin": {
+          "x": 5753.966291071604,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 6003.966291071604,
+            "y": 440
+          },
+          {
+            "x": 6003.966291071604,
+            "y": 896
+          },
+          {
+            "x": 5905.966291071604,
+            "y": 896
+          },
+          {
+            "x": 5905.966291071604,
+            "y": 891
+          },
+          {
+            "x": 5553.966291071604,
+            "y": 891
+          },
+          {
+            "x": 5553.966291071604,
+            "y": 900
+          }
+        ],
+        "path": "M6003.966 440 V888 Q6003.966 896 5995.966 896 H5908.466 Q5905.966 896 5905.966 893.5 V893.5 Q5905.966 891 5903.466 891 H5558.466 Q5553.966 891 5553.966 895.5 V900",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rg41_koypl0",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rg41_koypl0",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "内容创作组",
+        "sourceName": "星火",
+        "targetName": "橘子",
+        "origin": {
+          "x": 5753.966291071604,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 6098.966291071604,
+            "y": 415
+          },
+          {
+            "x": 6225.966291071604,
+            "y": 415
+          },
+          {
+            "x": 6225.966291071604,
+            "y": 470
+          },
+          {
+            "x": 6269.966291071604,
+            "y": 470
+          },
+          {
+            "x": 6269.966291071604,
+            "y": 684
+          },
+          {
+            "x": 6049.966291071604,
+            "y": 684
+          },
+          {
+            "x": 6049.966291071604,
+            "y": 896
+          },
+          {
+            "x": 6101.966291071604,
+            "y": 896
+          },
+          {
+            "x": 6101.966291071604,
+            "y": 891
+          },
+          {
+            "x": 6453.966291071604,
+            "y": 891
+          },
+          {
+            "x": 6453.966291071604,
+            "y": 900
+          }
+        ],
+        "path": "M6098.966 415 H6217.966 Q6225.966 415 6225.966 423 V462 Q6225.966 470 6233.966 470 H6261.966 Q6269.966 470 6269.966 478 V676 Q6269.966 684 6261.966 684 H6057.966 Q6049.966 684 6049.966 692 V888 Q6049.966 896 6057.966 896 H6099.466 Q6101.966 896 6101.966 893.5 V893.5 Q6101.966 891 6104.466 891 H6449.466 Q6453.966 891 6453.966 895.5 V900",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rilw_bf93h0",
+        "managerId": "s_muj4rdn0_y8j8v4",
+        "employeeId": "s_muj4rilw_bf93h0",
+        "sourceTeam": "产品研发组",
+        "targetTeam": "产品研发组",
+        "sourceName": "阿蓝",
+        "targetName": "开发",
+        "origin": {
+          "x": 5173.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 5458.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5378.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5378.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M5458.966 1125 H5386.966 Q5378.966 1125 5378.966 1133 V1240",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rinj_9ve6l2",
+        "managerId": "s_muj4rdn0_y8j8v4",
+        "employeeId": "s_muj4rinj_9ve6l2",
+        "sourceTeam": "产品研发组",
+        "targetTeam": "产品研发组",
+        "sourceName": "阿蓝",
+        "targetName": "测试",
+        "origin": {
+          "x": 5173.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 5648.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5728.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5728.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M5648.966 1125 H5720.966 Q5728.966 1125 5728.966 1133 V1240",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4ripp_s32kfr",
+        "managerId": "s_muj4rg41_koypl0",
+        "employeeId": "s_muj4ripp_s32kfr",
+        "sourceTeam": "内容创作组",
+        "targetTeam": "内容创作组",
+        "sourceName": "橘子",
+        "targetName": "写作",
+        "origin": {
+          "x": 6073.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 6358.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6278.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6278.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M6358.966 1125 H6286.966 Q6278.966 1125 6278.966 1133 V1240",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rir5_0mzp8k",
+        "managerId": "s_muj4rg41_koypl0",
+        "employeeId": "s_muj4rir5_0mzp8k",
+        "sourceTeam": "内容创作组",
+        "targetTeam": "内容创作组",
+        "sourceName": "橘子",
+        "targetName": "校对",
+        "origin": {
+          "x": 6073.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 6548.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6628.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6628.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M6548.966 1125 H6620.966 Q6628.966 1125 6628.966 1133 V1240",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      }
+    ],
+    "revision": 3859,
+    "view": {
+      "id": "f37a7d9d-a01d-4a97-9cce-3d751e9490cf",
+      "name": "宣传 · 第一篇"
+    },
+    "crossTeamConnections": [
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj4rdn0_y8j8v4",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rdn0_y8j8v4",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rdn0_y8j8v4",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "产品研发组",
+        "sourceName": "星火",
+        "targetName": "阿蓝",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 250,
+              "y": 440
+            },
+            {
+              "x": 250,
+              "y": 458
+            },
+            {
+              "x": 250,
+              "y": 470
+            },
+            {
+              "x": 250,
+              "y": 502
+            },
+            {
+              "x": 250,
+              "y": 526
+            }
+          ],
+          "path": "M250 440 V526",
+          "port": {
+            "x": 250,
+            "y": 526
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 756,
+              "y": 196
+            },
+            {
+              "x": 732,
+              "y": 196
+            },
+            {
+              "x": 732,
+              "y": 191
+            },
+            {
+              "x": 659,
+              "y": 191
+            },
+            {
+              "x": 572,
+              "y": 191
+            },
+            {
+              "x": 567,
+              "y": 191
+            },
+            {
+              "x": 543,
+              "y": 191
+            },
+            {
+              "x": 505,
+              "y": 191
+            },
+            {
+              "x": 484,
+              "y": 191
+            },
+            {
+              "x": 481,
+              "y": 191
+            },
+            {
+              "x": 463,
+              "y": 191
+            },
+            {
+              "x": 451,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 200
+            }
+          ],
+          "path": "M756 196 H734.5 Q732 196 732 193.5 V193.5 Q732 191 729.5 191 H384.5 Q380 191 380 195.5 V200",
+          "port": {
+            "x": 756,
+            "y": 196
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 6003.966291071604,
+              "y": 526
+            },
+            {
+              "x": 6003.966291071604,
+              "y": 554
+            },
+            {
+              "x": 6003.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6003.966291071604,
+              "y": 896
+            },
+            {
+              "x": 5957.966291071604,
+              "y": 896
+            },
+            {
+              "x": 5929.966291071604,
+              "y": 896
+            }
+          ],
+          "path": "M6003.966 526 V888 Q6003.966 896 5995.966 896 H5929.966"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj4rg41_koypl0",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rg41_koypl0",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rg41_koypl0",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "内容创作组",
+        "sourceName": "星火",
+        "targetName": "橘子",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 345,
+              "y": 415
+            },
+            {
+              "x": 363,
+              "y": 415
+            },
+            {
+              "x": 472,
+              "y": 415
+            },
+            {
+              "x": 472,
+              "y": 428
+            },
+            {
+              "x": 472,
+              "y": 446
+            },
+            {
+              "x": 472,
+              "y": 449
+            },
+            {
+              "x": 472,
+              "y": 458
+            },
+            {
+              "x": 472,
+              "y": 470
+            },
+            {
+              "x": 496,
+              "y": 470
+            }
+          ],
+          "path": "M345 415 H464 Q472 415 472 423 V462 Q472 470 480 470 H496",
+          "port": {
+            "x": 496,
+            "y": 470
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 4,
+              "y": 196
+            },
+            {
+              "x": 28,
+              "y": 196
+            },
+            {
+              "x": 28,
+              "y": 191
+            },
+            {
+              "x": 101,
+              "y": 191
+            },
+            {
+              "x": 188,
+              "y": 191
+            },
+            {
+              "x": 193,
+              "y": 191
+            },
+            {
+              "x": 217,
+              "y": 191
+            },
+            {
+              "x": 255,
+              "y": 191
+            },
+            {
+              "x": 276,
+              "y": 191
+            },
+            {
+              "x": 279,
+              "y": 191
+            },
+            {
+              "x": 297,
+              "y": 191
+            },
+            {
+              "x": 309,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 200
+            }
+          ],
+          "path": "M4 196 H25.5 Q28 196 28 193.5 V193.5 Q28 191 30.5 191 H375.5 Q380 191 380 195.5 V200",
+          "port": {
+            "x": 4,
+            "y": 196
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 6249.966291071604,
+              "y": 470
+            },
+            {
+              "x": 6277.966291071604,
+              "y": 470
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 470
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 514
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 542
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 546
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 566
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 672
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6057.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 696
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 884
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 896
+            },
+            {
+              "x": 6077.966291071604,
+              "y": 896
+            }
+          ],
+          "path": "M6249.966 470 H6261.966 Q6269.966 470 6269.966 478 V676 Q6269.966 684 6261.966 684 H6057.966 Q6049.966 684 6049.966 692 V888 Q6049.966 896 6057.966 896 H6077.966"
+        }
+      }
+    ],
+    "coordinates": {
+      "team": "world pixels",
+      "employee": "pixels relative to its Team"
+    },
+    "rooms": [
+      {
+        "name": "宣传总部",
+        "bounds": {
+          "x": 5753.966291071604,
+          "y": 0,
+          "width": 500,
+          "height": 530,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "s_muj4r8pz_55m0a8",
+            "title": "星火",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 155,
+              "y": 190
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "产品研发组",
+        "bounds": {
+          "x": 5173.966291071604,
+          "y": 700,
+          "width": 760,
+          "height": 850,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj4rilw_bf93h0",
+            "managerId": "s_muj4rdn0_y8j8v4",
+            "employeeId": "s_muj4rilw_bf93h0",
+            "anchors": {
+              "managerId": "s_muj4rdn0_y8j8v4",
+              "employeeId": "s_muj4rilw_bf93h0",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 285,
+                "y": 425
+              },
+              {
+                "x": 267,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 459
+              },
+              {
+                "x": 205,
+                "y": 468
+              },
+              {
+                "x": 205,
+                "y": 516
+              },
+              {
+                "x": 205,
+                "y": 540
+              }
+            ],
+            "path": "M285 425 H213 Q205 425 205 433 V540"
+          },
+          {
+            "id": "created-s_muj4rinj_9ve6l2",
+            "managerId": "s_muj4rdn0_y8j8v4",
+            "employeeId": "s_muj4rinj_9ve6l2",
+            "anchors": {
+              "managerId": "s_muj4rdn0_y8j8v4",
+              "employeeId": "s_muj4rinj_9ve6l2",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 475,
+                "y": 425
+              },
+              {
+                "x": 493,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 437
+              },
+              {
+                "x": 555,
+                "y": 447
+              },
+              {
+                "x": 555,
+                "y": 456
+              },
+              {
+                "x": 555,
+                "y": 459
+              },
+              {
+                "x": 555,
+                "y": 468
+              },
+              {
+                "x": 555,
+                "y": 471
+              },
+              {
+                "x": 555,
+                "y": 480
+              },
+              {
+                "x": 555,
+                "y": 504
+              },
+              {
+                "x": 555,
+                "y": 516
+              },
+              {
+                "x": 555,
+                "y": 540
+              }
+            ],
+            "path": "M475 425 H547 Q555 425 555 433 V540"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj4rdn0_y8j8v4",
+            "title": "阿蓝",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 285,
+              "y": 200
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4rilw_bf93h0",
+            "title": "开发",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 110,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4rinj_9ve6l2",
+            "title": "测试",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 460,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "内容创作组",
+        "bounds": {
+          "x": 6073.966291071604,
+          "y": 700,
+          "width": 760,
+          "height": 850,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj4ripp_s32kfr",
+            "managerId": "s_muj4rg41_koypl0",
+            "employeeId": "s_muj4ripp_s32kfr",
+            "anchors": {
+              "managerId": "s_muj4rg41_koypl0",
+              "employeeId": "s_muj4ripp_s32kfr",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 285,
+                "y": 425
+              },
+              {
+                "x": 267,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 459
+              },
+              {
+                "x": 205,
+                "y": 468
+              },
+              {
+                "x": 205,
+                "y": 516
+              },
+              {
+                "x": 205,
+                "y": 540
+              }
+            ],
+            "path": "M285 425 H213 Q205 425 205 433 V540"
+          },
+          {
+            "id": "created-s_muj4rir5_0mzp8k",
+            "managerId": "s_muj4rg41_koypl0",
+            "employeeId": "s_muj4rir5_0mzp8k",
+            "anchors": {
+              "managerId": "s_muj4rg41_koypl0",
+              "employeeId": "s_muj4rir5_0mzp8k",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 475,
+                "y": 425
+              },
+              {
+                "x": 493,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 437
+              },
+              {
+                "x": 555,
+                "y": 447
+              },
+              {
+                "x": 555,
+                "y": 456
+              },
+              {
+                "x": 555,
+                "y": 459
+              },
+              {
+                "x": 555,
+                "y": 468
+              },
+              {
+                "x": 555,
+                "y": 471
+              },
+              {
+                "x": 555,
+                "y": 480
+              },
+              {
+                "x": 555,
+                "y": 504
+              },
+              {
+                "x": 555,
+                "y": 516
+              },
+              {
+                "x": 555,
+                "y": 540
+              }
+            ],
+            "path": "M475 425 H547 Q555 425 555 433 V540"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj4rg41_koypl0",
+            "title": "橘子",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 285,
+              "y": 200
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4ripp_s32kfr",
+            "title": "写作",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 110,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4rir5_0mzp8k",
+            "title": "校对",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 460,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      }
+    ]
+  }
+}

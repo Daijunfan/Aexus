@@ -1,9 +1,0 @@
-node_modules/
-dist-plugin/
-workspaces/
-artifacts/
-coverage/
-ui/vendor/
-.DS_Store
-*.log
-.env*

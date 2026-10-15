@@ -1,0 +1,1598 @@
+{
+  "teams": [
+    "宣传总部",
+    "产品研发组",
+    "内容创作组"
+  ],
+  "employees": [
+    {
+      "id": "s_muj4r8pz_55m0a8",
+      "title": "星火",
+      "group": "宣传总部",
+      "role": "governor",
+      "engine": "claude",
+      "cwd": "/Users/Shared/AI公司/总部/星火"
+    },
+    {
+      "id": "s_muj4rdn0_y8j8v4",
+      "title": "阿蓝",
+      "group": "产品研发组",
+      "role": "manager",
+      "engine": "claude",
+      "cwd": "/Users/Shared/AI公司/研发/阿蓝"
+    },
+    {
+      "id": "s_muj4rg41_koypl0",
+      "title": "橘子",
+      "group": "内容创作组",
+      "role": "manager",
+      "engine": "claude",
+      "cwd": "/Users/Shared/AI公司/创作/橘子"
+    },
+    {
+      "id": "s_muj4rilw_bf93h0",
+      "title": "开发",
+      "group": "产品研发组",
+      "role": "employee",
+      "engine": "codex",
+      "cwd": "/Users/Shared/AI公司/研发/开发"
+    },
+    {
+      "id": "s_muj4rinj_9ve6l2",
+      "title": "测试",
+      "group": "产品研发组",
+      "role": "employee",
+      "engine": "claude",
+      "cwd": "/Users/Shared/AI公司/研发/测试"
+    },
+    {
+      "id": "s_muj4ripp_s32kfr",
+      "title": "写作",
+      "group": "内容创作组",
+      "role": "employee",
+      "engine": "claude",
+      "cwd": "/Users/Shared/AI公司/创作/写作"
+    },
+    {
+      "id": "s_muj4rir5_0mzp8k",
+      "title": "校对",
+      "group": "内容创作组",
+      "role": "employee",
+      "engine": "codex",
+      "cwd": "/Users/Shared/AI公司/创作/校对"
+    }
+  ],
+  "createdAt": "2026-09-27T01:18:46.727Z",
+  "original": {
+    "store": {
+      "revision": 3816,
+      "fullAccessDefaultApplied": true,
+      "access": {
+        "version": 2,
+        "revision": 335,
+        "globalManagerIds": [],
+        "relations": [],
+        "globalGrants": {
+          "s_muial7gj_w3fb90": "5f980891-a737-4397-b188-945a2f7615fe",
+          "s_muiiox1y_nf6ltz": "25861dcb-9301-4a8e-8c7d-dd2b12200dde",
+          "s_muijwzn1_y2wytt": "24d57d30-f20f-4736-9f39-a7108e99c9bd",
+          "s_muilspjd_bwfdvv": "a39fd8ef-19cd-413e-996b-97877b5319b6"
+        }
+      },
+      "connectorAnchors": {},
+      "lastEmployeeTemplate": {
+        "engine": "claude",
+        "kind": "worker",
+        "group": "Team-Managers",
+        "directoryMode": "default",
+        "avatar": "robot",
+        "model": "deepseek-flash",
+        "effort": "low",
+        "permissionMode": "bypassPermissions",
+        "managementRole": "governor"
+      },
+      "lastTeamTemplate": {
+        "settings": {
+          "mode": "build"
+        },
+        "design": {
+          "background": "",
+          "pattern": "boards",
+          "scenery": true,
+          "theme": "sage",
+          "wall": "windows",
+          "desk": "walnut",
+          "subtitle": "Good things are made together.",
+          "plants": true,
+          "shelf": true,
+          "lamp": true,
+          "art": true
+        },
+        "bounds": {
+          "x": 2601.6905197329015,
+          "y": 923.2837863282421,
+          "width": 760,
+          "height": 520,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        }
+      },
+      "sessions": [
+        {
+          "title": "火火",
+          "avatar": "fireball",
+          "managementRole": "governor",
+          "createdBy": {
+            "kind": "operator"
+          },
+          "accessMode": "trusted",
+          "id": "s_muial7gj_w3fb90",
+          "engine": "codex",
+          "kind": "worker",
+          "workEnvironment": "local",
+          "directoryMode": "default",
+          "cwd": "/Users/djf/develop/Agents-company-projects/决策中枢/火火",
+          "group": "决策中枢",
+          "createdAt": 1790421256963,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "permissionMode": "bypassPermissions",
+          "initialization": {
+            "status": "ready",
+            "attemptId": "623c289b-dbf4-48a5-889a-f9808248a26b",
+            "createdAt": 1790421256963,
+            "startedAt": 1790421256968,
+            "finishedAt": 1790421270596
+          },
+          "position": {
+            "x": 120,
+            "y": 210
+          },
+          "planMode": false,
+          "fastMode": false,
+          "remoteAdmin": false,
+          "thinking": false,
+          "nativeSessions": [
+            {
+              "engine": "codex",
+              "id": "01a0dd6c-5058-7cf2-b406-8f301866bd85"
+            }
+          ],
+          "threadId": "01a0dd6c-5058-7cf2-b406-8f301866bd85",
+          "lastReply": {
+            "id": "18fd4bb688c95c1e052feaf9dba517cc8c18c8c95573f39e3942815c99d82b7c",
+            "itemId": "imuigvqce_2",
+            "text": "已删除 4 个团队（Web 研发部、产品体验部、研究实验室、内容创作部）、其中 4 位 Manager 和 15 名员工的账号及员工工作区。复查确认这四个团队及其员工关系已从拓扑中移除。",
+            "createdAt": 1790431940490
+          },
+          "remote": null
+        },
+        {
+          "title": "hi-new",
+          "avatar": "stacky",
+          "managementRole": "governor",
+          "createdBy": {
+            "kind": "operator"
+          },
+          "accessMode": "trusted",
+          "id": "s_muiiox1y_nf6ltz",
+          "engine": "claude",
+          "kind": "worker",
+          "workEnvironment": "local",
+          "directoryMode": "default",
+          "cwd": "/Users/djf/develop/CS/Agents-company/Agents-Managers/hi-new",
+          "group": "Team-Managers",
+          "createdAt": 1790434867030,
+          "model": "deepseek-flash",
+          "effort": "low",
+          "permissionMode": "bypassPermissions",
+          "initialization": {
+            "status": "ready",
+            "attemptId": "996fbdb7-8cbf-434b-bd2f-8012d6ba6a08",
+            "createdAt": 1790434867030,
+            "startedAt": 1790434867037,
+            "finishedAt": 1790434869990
+          },
+          "position": {
+            "x": 48,
+            "y": 206
+          },
+          "planMode": false,
+          "fastMode": false,
+          "remoteAdmin": false,
+          "thinking": false,
+          "nativeSessions": [
+            {
+              "engine": "claude",
+              "id": "26385654-2f1f-4dd3-8be4-283474f84ff7"
+            }
+          ],
+          "claudeSessionId": "26385654-2f1f-4dd3-8be4-283474f84ff7",
+          "lastReply": {
+            "id": "14d818014acd8232902232ecdd3b91b9c3e7fc515db7cf8ea6c7595364fb8bc6",
+            "itemId": "imuikv7dw_81",
+            "text": "现在公司回到我操作前的状态：3 个原始团队。你说过要用 SSH 云端主机的方式重建，那部分消息当时被截断，需要的话请补全团队清单和对应 host。",
+            "createdAt": 1790438520806
+          },
+          "remote": null
+        },
+        {
+          "title": "t1",
+          "role": "",
+          "avatar": "codex",
+          "accessory": "none",
+          "color": "#638df1",
+          "managementRole": "governor",
+          "createdBy": {
+            "kind": "operator"
+          },
+          "accessMode": "trusted",
+          "id": "s_muijwzn1_y2wytt",
+          "engine": "claude",
+          "kind": "worker",
+          "workEnvironment": "team",
+          "directoryMode": "default",
+          "cwd": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/workspaces/Project1/t1",
+          "group": "Project1",
+          "createdAt": 1790436923245,
+          "model": "deepseek-flash",
+          "effort": "low",
+          "permissionMode": "bypassPermissions",
+          "initialization": {
+            "status": "ready",
+            "attemptId": "c18108b3-ab40-4226-9ab4-0c32738beb5e",
+            "createdAt": 1790436923245,
+            "startedAt": 1790436923255,
+            "finishedAt": 1790436926466
+          },
+          "position": {
+            "x": 18,
+            "y": 252
+          },
+          "planMode": false,
+          "fastMode": false,
+          "remoteAdmin": false,
+          "thinking": false,
+          "nativeSessions": [
+            {
+              "engine": "claude",
+              "id": "4a3b48ed-0d07-4ccf-8448-fa94012afd61"
+            }
+          ],
+          "claudeSessionId": "4a3b48ed-0d07-4ccf-8448-fa94012afd61",
+          "lastReply": {
+            "id": "41732d19fafc5c3f70b8413bc84b42cbf3c6a2c9efbda4fdf1b5bad38a9f6a8b",
+            "itemId": "imuijxn0e_5",
+            "text": "没有任何文档，也没有被回收的文件。需要我导入文件或抓取网页的话告诉我来源即可。",
+            "createdAt": 1790436954150,
+            "readAt": 1790437343133
+          },
+          "remote": null
+        },
+        {
+          "title": "hi-cloud",
+          "avatar": "robot",
+          "managementRole": "governor",
+          "createdBy": {
+            "kind": "operator"
+          },
+          "accessMode": "trusted",
+          "id": "s_muilspjd_bwfdvv",
+          "engine": "claude",
+          "kind": "worker",
+          "directoryMode": "default",
+          "cwd": "/Users/djf/develop/CS/Agents-company/Agents-Managers/hi-cloud",
+          "group": "Team-Managers",
+          "createdAt": 1790440082761,
+          "model": "deepseek-flash",
+          "effort": "low",
+          "permissionMode": "bypassPermissions",
+          "initialization": {
+            "status": "ready",
+            "attemptId": "5991dda3-e87f-4872-9837-1c45b9913d5d",
+            "createdAt": 1790440082761,
+            "startedAt": 1790440082765,
+            "finishedAt": 1790440085597
+          },
+          "position": {
+            "x": 264,
+            "y": 206
+          },
+          "planMode": false,
+          "fastMode": false,
+          "remoteAdmin": false,
+          "thinking": true,
+          "nativeSessions": [
+            {
+              "engine": "claude",
+              "id": "22fa40dd-7e2c-42f1-ad85-0890e1902ae1"
+            }
+          ],
+          "claudeSessionId": "22fa40dd-7e2c-42f1-ad85-0890e1902ae1",
+          "lastReply": {
+            "id": "5dfaed47bf6f5438008b52c20854728cbe4b8e45d264496d12b9c8520ebad8db",
+            "itemId": "imuilsvb7_4",
+            "text": "两者都走 `host.read` 授权类别，只读；读取凭据不授予主机的修改权，也不授予其他 Team 的管理权限。实际执行主机操作另需 `host.exec` 等对应权限。本次仅查询，未调用 `host.credentials`，对话中未出现任何真实密码或私钥内容。",
+            "createdAt": 1790440093389
+          },
+          "remote": null
+        }
+      ],
+      "groups": [
+        "Team-Managers",
+        "决策中枢",
+        "Project1"
+      ],
+      "teamViews": [
+        {
+          "id": "150e77c4-217c-46a6-a0bb-adc0afc2d0e0",
+          "name": "Mac",
+          "teams": []
+        },
+        {
+          "id": "6eff51ff-2d89-43fe-bcb3-df56b014b3ed",
+          "name": "Kali",
+          "teams": []
+        },
+        {
+          "id": "b6c95b2d-81fa-49fd-9c02-5874c973fb32",
+          "name": "Ubuntu",
+          "teams": []
+        },
+        {
+          "id": "43e38cc8-fdea-4954-a301-cdbb91e23311",
+          "name": "Windows",
+          "teams": []
+        },
+        {
+          "id": "e8990643-74a6-4a90-83ff-889a9f3ba2c3",
+          "name": "remote control",
+          "teams": []
+        },
+        {
+          "id": "d4e6896b-e30e-4d3f-96c0-d5e05a88550a",
+          "name": "Plugins",
+          "teams": []
+        },
+        {
+          "id": "f1cccbce-8d2d-4ae9-b330-9574300e0287",
+          "name": "宣传场景",
+          "teams": [
+            "决策中枢"
+          ],
+          "viewport": {
+            "x": -4030.4055636176,
+            "y": -515.0405828829656,
+            "zoom": 0.7101667071522306
+          }
+        }
+      ],
+      "activeTeamViewId": "all",
+      "rooms": {
+        "Team-Managers": {
+          "col": 0,
+          "row": 0,
+          "w": 1,
+          "h": 1,
+          "bounds": {
+            "x": 1734.3757421132032,
+            "y": 922,
+            "width": 760,
+            "height": 520,
+            "shape": "rounded",
+            "arrangement": "free",
+            "pinned": true
+          },
+          "design": {
+            "theme": "amber",
+            "wall": "windows",
+            "desk": "walnut",
+            "pattern": "boards",
+            "plants": true,
+            "shelf": true,
+            "lamp": true,
+            "art": true,
+            "scenery": true,
+            "background": "",
+            "subtitle": "Good things are made together."
+          }
+        },
+        "决策中枢": {
+          "col": 0,
+          "row": 0,
+          "w": 1,
+          "h": 1,
+          "bounds": {
+            "x": 3543.9662910716042,
+            "y": 919.0794979306555,
+            "width": 430,
+            "height": 530,
+            "shape": "rounded",
+            "arrangement": "free",
+            "pinned": true
+          },
+          "design": {
+            "theme": "ocean",
+            "pattern": "dots",
+            "scenery": false
+          }
+        },
+        "Project1": {
+          "col": 0,
+          "row": 0,
+          "w": 1,
+          "h": 1,
+          "bounds": {
+            "x": 2601.6905197329015,
+            "y": 923.2837863282421,
+            "width": 760,
+            "height": 520,
+            "shape": "rounded",
+            "arrangement": "free",
+            "pinned": true
+          },
+          "design": {
+            "theme": "lavender",
+            "wall": "windows",
+            "desk": "walnut",
+            "pattern": "dots",
+            "plants": true,
+            "shelf": true,
+            "lamp": true,
+            "art": true,
+            "scenery": false,
+            "background": "",
+            "subtitle": "Good things are made together."
+          }
+        }
+      },
+      "teamRoots": {
+        "Team-Managers": "/Users/djf/develop/CS/Agents-company/Agents-Managers",
+        "决策中枢": "/Users/djf/develop/Agents-company-projects/决策中枢",
+        "Project1": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/workspaces/Project1"
+      },
+      "teamSettings": {
+        "Team-Managers": {
+          "mode": "build",
+          "directoryMode": "bind"
+        },
+        "决策中枢": {
+          "mode": "build"
+        },
+        "Project1": {
+          "mode": "work",
+          "pluginId": "margin-reader",
+          "directoryMode": "default"
+        }
+      },
+      "viewport": {
+        "x": -895.5913712009117,
+        "y": -175.6231161811586,
+        "zoom": 0.561785228900919
+      },
+      "preferences": {
+        "theme": "white",
+        "zoomSensitivity": 3.25,
+        "panSensitivity": 1.75,
+        "sidebarWidth": 56,
+        "snapEmployees": false,
+        "showTeamOverview": false,
+        "pageZoom": 1.1,
+        "explorerWidth": 244,
+        "terminalHeight": 317,
+        "defaultCodexModel": "",
+        "defaultClaudeModel": ""
+      }
+    },
+    "view": {
+      "activeId": "all",
+      "views": [
+        {
+          "id": "all",
+          "name": "All Team",
+          "teams": [
+            "Team-Managers",
+            "决策中枢",
+            "Project1"
+          ]
+        },
+        {
+          "id": "150e77c4-217c-46a6-a0bb-adc0afc2d0e0",
+          "name": "Mac",
+          "teams": []
+        },
+        {
+          "id": "6eff51ff-2d89-43fe-bcb3-df56b014b3ed",
+          "name": "Kali",
+          "teams": []
+        },
+        {
+          "id": "b6c95b2d-81fa-49fd-9c02-5874c973fb32",
+          "name": "Ubuntu",
+          "teams": []
+        },
+        {
+          "id": "43e38cc8-fdea-4954-a301-cdbb91e23311",
+          "name": "Windows",
+          "teams": []
+        },
+        {
+          "id": "e8990643-74a6-4a90-83ff-889a9f3ba2c3",
+          "name": "remote control",
+          "teams": []
+        },
+        {
+          "id": "d4e6896b-e30e-4d3f-96c0-d5e05a88550a",
+          "name": "Plugins",
+          "teams": []
+        },
+        {
+          "id": "f1cccbce-8d2d-4ae9-b330-9574300e0287",
+          "name": "宣传场景",
+          "teams": [
+            "决策中枢"
+          ],
+          "viewport": {
+            "x": -4030.4055636176,
+            "y": -515.0405828829656,
+            "zoom": 0.7101667071522306
+          }
+        }
+      ]
+    },
+    "settings": {
+      "theme": "white",
+      "zoomSensitivity": 3.25,
+      "panSensitivity": 1.75,
+      "sidebarWidth": 56,
+      "snapEmployees": false,
+      "showTeamOverview": false,
+      "pageZoom": 1.1,
+      "explorerWidth": 244,
+      "terminalHeight": 317,
+      "defaultCodexModel": "",
+      "defaultClaudeModel": ""
+    }
+  },
+  "offset": 5173.966291071604,
+  "viewId": "f37a7d9d-a01d-4a97-9cce-3d751e9490cf",
+  "layout": {
+    "connections": [
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rdn0_y8j8v4",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rdn0_y8j8v4",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "产品研发组",
+        "sourceName": "星火",
+        "targetName": "阿蓝",
+        "origin": {
+          "x": 5753.966291071604,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 6003.966291071604,
+            "y": 440
+          },
+          {
+            "x": 6003.966291071604,
+            "y": 896
+          },
+          {
+            "x": 5905.966291071604,
+            "y": 896
+          },
+          {
+            "x": 5905.966291071604,
+            "y": 891
+          },
+          {
+            "x": 5553.966291071604,
+            "y": 891
+          },
+          {
+            "x": 5553.966291071604,
+            "y": 900
+          }
+        ],
+        "path": "M6003.966 440 V888 Q6003.966 896 5995.966 896 H5908.466 Q5905.966 896 5905.966 893.5 V893.5 Q5905.966 891 5903.466 891 H5558.466 Q5553.966 891 5553.966 895.5 V900",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rg41_koypl0",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rg41_koypl0",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "内容创作组",
+        "sourceName": "星火",
+        "targetName": "橘子",
+        "origin": {
+          "x": 5753.966291071604,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 6098.966291071604,
+            "y": 415
+          },
+          {
+            "x": 6225.966291071604,
+            "y": 415
+          },
+          {
+            "x": 6225.966291071604,
+            "y": 470
+          },
+          {
+            "x": 6269.966291071604,
+            "y": 470
+          },
+          {
+            "x": 6269.966291071604,
+            "y": 684
+          },
+          {
+            "x": 6049.966291071604,
+            "y": 684
+          },
+          {
+            "x": 6049.966291071604,
+            "y": 896
+          },
+          {
+            "x": 6101.966291071604,
+            "y": 896
+          },
+          {
+            "x": 6101.966291071604,
+            "y": 891
+          },
+          {
+            "x": 6453.966291071604,
+            "y": 891
+          },
+          {
+            "x": 6453.966291071604,
+            "y": 900
+          }
+        ],
+        "path": "M6098.966 415 H6217.966 Q6225.966 415 6225.966 423 V462 Q6225.966 470 6233.966 470 H6261.966 Q6269.966 470 6269.966 478 V676 Q6269.966 684 6261.966 684 H6057.966 Q6049.966 684 6049.966 692 V888 Q6049.966 896 6057.966 896 H6099.466 Q6101.966 896 6101.966 893.5 V893.5 Q6101.966 891 6104.466 891 H6449.466 Q6453.966 891 6453.966 895.5 V900",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rilw_bf93h0",
+        "managerId": "s_muj4rdn0_y8j8v4",
+        "employeeId": "s_muj4rilw_bf93h0",
+        "sourceTeam": "产品研发组",
+        "targetTeam": "产品研发组",
+        "sourceName": "阿蓝",
+        "targetName": "开发",
+        "origin": {
+          "x": 5173.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 5458.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5378.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5378.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M5458.966 1125 H5386.966 Q5378.966 1125 5378.966 1133 V1240",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rinj_9ve6l2",
+        "managerId": "s_muj4rdn0_y8j8v4",
+        "employeeId": "s_muj4rinj_9ve6l2",
+        "sourceTeam": "产品研发组",
+        "targetTeam": "产品研发组",
+        "sourceName": "阿蓝",
+        "targetName": "测试",
+        "origin": {
+          "x": 5173.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 5648.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5728.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 5728.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M5648.966 1125 H5720.966 Q5728.966 1125 5728.966 1133 V1240",
+        "active": true,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4ripp_s32kfr",
+        "managerId": "s_muj4rg41_koypl0",
+        "employeeId": "s_muj4ripp_s32kfr",
+        "sourceTeam": "内容创作组",
+        "targetTeam": "内容创作组",
+        "sourceName": "橘子",
+        "targetName": "写作",
+        "origin": {
+          "x": 6073.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 6358.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6278.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6278.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M6358.966 1125 H6286.966 Q6278.966 1125 6278.966 1133 V1240",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rir5_0mzp8k",
+        "managerId": "s_muj4rg41_koypl0",
+        "employeeId": "s_muj4rir5_0mzp8k",
+        "sourceTeam": "内容创作组",
+        "targetTeam": "内容创作组",
+        "sourceName": "橘子",
+        "targetName": "校对",
+        "origin": {
+          "x": 6073.966291071604,
+          "y": 700
+        },
+        "points": [
+          {
+            "x": 6548.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6628.966291071604,
+            "y": 1125
+          },
+          {
+            "x": 6628.966291071604,
+            "y": 1240
+          }
+        ],
+        "path": "M6548.966 1125 H6620.966 Q6628.966 1125 6628.966 1133 V1240",
+        "active": true,
+        "temporary": false,
+        "manual": false
+      }
+    ],
+    "revision": 3858,
+    "view": {
+      "id": "f37a7d9d-a01d-4a97-9cce-3d751e9490cf",
+      "name": "undefined"
+    },
+    "crossTeamConnections": [
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj4rdn0_y8j8v4",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rdn0_y8j8v4",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rdn0_y8j8v4",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "产品研发组",
+        "sourceName": "星火",
+        "targetName": "阿蓝",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 250,
+              "y": 440
+            },
+            {
+              "x": 250,
+              "y": 458
+            },
+            {
+              "x": 250,
+              "y": 470
+            },
+            {
+              "x": 250,
+              "y": 502
+            },
+            {
+              "x": 250,
+              "y": 526
+            }
+          ],
+          "path": "M250 440 V526",
+          "port": {
+            "x": 250,
+            "y": 526
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 756,
+              "y": 196
+            },
+            {
+              "x": 732,
+              "y": 196
+            },
+            {
+              "x": 732,
+              "y": 191
+            },
+            {
+              "x": 659,
+              "y": 191
+            },
+            {
+              "x": 572,
+              "y": 191
+            },
+            {
+              "x": 567,
+              "y": 191
+            },
+            {
+              "x": 543,
+              "y": 191
+            },
+            {
+              "x": 505,
+              "y": 191
+            },
+            {
+              "x": 484,
+              "y": 191
+            },
+            {
+              "x": 481,
+              "y": 191
+            },
+            {
+              "x": 463,
+              "y": 191
+            },
+            {
+              "x": 451,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 200
+            }
+          ],
+          "path": "M756 196 H734.5 Q732 196 732 193.5 V193.5 Q732 191 729.5 191 H384.5 Q380 191 380 195.5 V200",
+          "port": {
+            "x": 756,
+            "y": 196
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 6003.966291071604,
+              "y": 526
+            },
+            {
+              "x": 6003.966291071604,
+              "y": 554
+            },
+            {
+              "x": 6003.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6003.966291071604,
+              "y": 896
+            },
+            {
+              "x": 5957.966291071604,
+              "y": 896
+            },
+            {
+              "x": 5929.966291071604,
+              "y": 896
+            }
+          ],
+          "path": "M6003.966 526 V888 Q6003.966 896 5995.966 896 H5929.966"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj4rg41_koypl0",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj4rg41_koypl0",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj4rg41_koypl0",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "内容创作组",
+        "sourceName": "星火",
+        "targetName": "橘子",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 345,
+              "y": 415
+            },
+            {
+              "x": 363,
+              "y": 415
+            },
+            {
+              "x": 472,
+              "y": 415
+            },
+            {
+              "x": 472,
+              "y": 428
+            },
+            {
+              "x": 472,
+              "y": 446
+            },
+            {
+              "x": 472,
+              "y": 449
+            },
+            {
+              "x": 472,
+              "y": 458
+            },
+            {
+              "x": 472,
+              "y": 470
+            },
+            {
+              "x": 496,
+              "y": 470
+            }
+          ],
+          "path": "M345 415 H464 Q472 415 472 423 V462 Q472 470 480 470 H496",
+          "port": {
+            "x": 496,
+            "y": 470
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 4,
+              "y": 196
+            },
+            {
+              "x": 28,
+              "y": 196
+            },
+            {
+              "x": 28,
+              "y": 191
+            },
+            {
+              "x": 101,
+              "y": 191
+            },
+            {
+              "x": 188,
+              "y": 191
+            },
+            {
+              "x": 193,
+              "y": 191
+            },
+            {
+              "x": 217,
+              "y": 191
+            },
+            {
+              "x": 255,
+              "y": 191
+            },
+            {
+              "x": 276,
+              "y": 191
+            },
+            {
+              "x": 279,
+              "y": 191
+            },
+            {
+              "x": 297,
+              "y": 191
+            },
+            {
+              "x": 309,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 191
+            },
+            {
+              "x": 380,
+              "y": 200
+            }
+          ],
+          "path": "M4 196 H25.5 Q28 196 28 193.5 V193.5 Q28 191 30.5 191 H375.5 Q380 191 380 195.5 V200",
+          "port": {
+            "x": 4,
+            "y": 196
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 6249.966291071604,
+              "y": 470
+            },
+            {
+              "x": 6277.966291071604,
+              "y": 470
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 470
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 514
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 542
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 546
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 566
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 672
+            },
+            {
+              "x": 6269.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6057.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 684
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 696
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 884
+            },
+            {
+              "x": 6049.966291071604,
+              "y": 896
+            },
+            {
+              "x": 6077.966291071604,
+              "y": 896
+            }
+          ],
+          "path": "M6249.966 470 H6261.966 Q6269.966 470 6269.966 478 V676 Q6269.966 684 6261.966 684 H6057.966 Q6049.966 684 6049.966 692 V888 Q6049.966 896 6057.966 896 H6077.966"
+        }
+      }
+    ],
+    "coordinates": {
+      "team": "world pixels",
+      "employee": "pixels relative to its Team"
+    },
+    "rooms": [
+      {
+        "name": "宣传总部",
+        "bounds": {
+          "x": 5753.966291071604,
+          "y": 0,
+          "width": 500,
+          "height": 530,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "s_muj4r8pz_55m0a8",
+            "title": "星火",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 155,
+              "y": 190
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "产品研发组",
+        "bounds": {
+          "x": 5173.966291071604,
+          "y": 700,
+          "width": 760,
+          "height": 850,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj4rilw_bf93h0",
+            "managerId": "s_muj4rdn0_y8j8v4",
+            "employeeId": "s_muj4rilw_bf93h0",
+            "anchors": {
+              "managerId": "s_muj4rdn0_y8j8v4",
+              "employeeId": "s_muj4rilw_bf93h0",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 285,
+                "y": 425
+              },
+              {
+                "x": 267,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 459
+              },
+              {
+                "x": 205,
+                "y": 468
+              },
+              {
+                "x": 205,
+                "y": 516
+              },
+              {
+                "x": 205,
+                "y": 540
+              }
+            ],
+            "path": "M285 425 H213 Q205 425 205 433 V540"
+          },
+          {
+            "id": "created-s_muj4rinj_9ve6l2",
+            "managerId": "s_muj4rdn0_y8j8v4",
+            "employeeId": "s_muj4rinj_9ve6l2",
+            "anchors": {
+              "managerId": "s_muj4rdn0_y8j8v4",
+              "employeeId": "s_muj4rinj_9ve6l2",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 475,
+                "y": 425
+              },
+              {
+                "x": 493,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 437
+              },
+              {
+                "x": 555,
+                "y": 447
+              },
+              {
+                "x": 555,
+                "y": 456
+              },
+              {
+                "x": 555,
+                "y": 459
+              },
+              {
+                "x": 555,
+                "y": 468
+              },
+              {
+                "x": 555,
+                "y": 471
+              },
+              {
+                "x": 555,
+                "y": 480
+              },
+              {
+                "x": 555,
+                "y": 504
+              },
+              {
+                "x": 555,
+                "y": 516
+              },
+              {
+                "x": 555,
+                "y": 540
+              }
+            ],
+            "path": "M475 425 H547 Q555 425 555 433 V540"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj4rdn0_y8j8v4",
+            "title": "阿蓝",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 285,
+              "y": 200
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4rilw_bf93h0",
+            "title": "开发",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 110,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4rinj_9ve6l2",
+            "title": "测试",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 460,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "内容创作组",
+        "bounds": {
+          "x": 6073.966291071604,
+          "y": 700,
+          "width": 760,
+          "height": 850,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj4ripp_s32kfr",
+            "managerId": "s_muj4rg41_koypl0",
+            "employeeId": "s_muj4ripp_s32kfr",
+            "anchors": {
+              "managerId": "s_muj4rg41_koypl0",
+              "employeeId": "s_muj4ripp_s32kfr",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 285,
+                "y": 425
+              },
+              {
+                "x": 267,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 425
+              },
+              {
+                "x": 205,
+                "y": 459
+              },
+              {
+                "x": 205,
+                "y": 468
+              },
+              {
+                "x": 205,
+                "y": 516
+              },
+              {
+                "x": 205,
+                "y": 540
+              }
+            ],
+            "path": "M285 425 H213 Q205 425 205 433 V540"
+          },
+          {
+            "id": "created-s_muj4rir5_0mzp8k",
+            "managerId": "s_muj4rg41_koypl0",
+            "employeeId": "s_muj4rir5_0mzp8k",
+            "anchors": {
+              "managerId": "s_muj4rg41_koypl0",
+              "employeeId": "s_muj4rir5_0mzp8k",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 475,
+                "y": 425
+              },
+              {
+                "x": 493,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 425
+              },
+              {
+                "x": 555,
+                "y": 437
+              },
+              {
+                "x": 555,
+                "y": 447
+              },
+              {
+                "x": 555,
+                "y": 456
+              },
+              {
+                "x": 555,
+                "y": 459
+              },
+              {
+                "x": 555,
+                "y": 468
+              },
+              {
+                "x": 555,
+                "y": 471
+              },
+              {
+                "x": 555,
+                "y": 480
+              },
+              {
+                "x": 555,
+                "y": 504
+              },
+              {
+                "x": 555,
+                "y": 516
+              },
+              {
+                "x": 555,
+                "y": 540
+              }
+            ],
+            "path": "M475 425 H547 Q555 425 555 433 V540"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj4rg41_koypl0",
+            "title": "橘子",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 285,
+              "y": 200
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4ripp_s32kfr",
+            "title": "写作",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 110,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj4rir5_0mzp8k",
+            "title": "校对",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 460,
+              "y": 540
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      }
+    ]
+  }
+}

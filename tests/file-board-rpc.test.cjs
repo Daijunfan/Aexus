@@ -1,0 +1,35 @@
+const {test,after}=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const home=fs.mkdtempSync(path.join(os.tmpdir(),'cloudhosts-file-board-rpc-'));
+process.env.CLOUD_HOSTS_HOME=path.join(home,'core');
+const directory=path.join(home,'file-board');fs.mkdirSync(directory);
+const core=require('../src/core.cjs');
+const action=(operation,args={})=>core.dispatch('hosts.files',{id:'local',directory,operation:'workspace',arguments:{operation,args}});
+after(async()=>{await core.shutdown();fs.rmSync(home,{recursive:true,force:true})});
+test('File Board uses native host RPC for create/list/edit/rename/trash/restore',async()=>{
+ await action('mkdir',{path:'docs'});
+ const original=await action('write',{path:'docs/readme.md',content:'Hello from File Board\n',create:true});
+ assert.equal(original.saved,true);
+ const list=await action('list',{path:'docs'});
+ assert.equal(list.entries.find(item=>item.name==='readme.md')?.directory,false);
+ const read=await action('read',{path:'docs/readme.md'});
+ assert.equal(read.content,'Hello from File Board\n');
+ await action('write',{path:'docs/readme.md',content:'Edited and saved\n',hash:read.hash});
+ assert.equal((await action('read',{path:'docs/readme.md'})).content,'Edited and saved\n');
+ await action('move',{path:'docs/readme.md',to:'docs/renamed.md'});
+ assert.equal((await action('read',{path:'docs/renamed.md'})).content,'Edited and saved\n');
+ const trashed=await action('trash',{path:'docs/renamed.md'});
+ assert.ok((await action('trash-list',{path:'.'})).items.some(item=>item.id===trashed.id));
+ assert.equal((await action('list',{path:'docs'})).entries.length,0);
+ await action('restore',{path:'.',id:trashed.id});
+ assert.equal((await action('read',{path:'docs/renamed.md'})).content,'Edited and saved\n');
+});
+test('File Board native RPC detects concurrent overwrite and never rewrites binary content',async()=>{
+ const file=path.join(directory,'docs','raw.bin');fs.writeFileSync(file,Buffer.from([0xff,0x00,0xfe]));
+ const raw=await action('read',{path:'docs/raw.bin'});assert.equal(raw.binary,true);
+ assert.deepEqual(fs.readFileSync(file),Buffer.from([0xff,0x00,0xfe]));
+ const initial=await action('read',{path:'docs/renamed.md'});
+ await action('write',{path:'docs/renamed.md',content:'Editor A',hash:initial.hash});
+ await assert.rejects(action('write',{path:'docs/renamed.md',content:'Editor B',hash:initial.hash}),/其他操作修改/);
+ assert.equal(fs.readFileSync(path.join(directory,'docs','renamed.md'),'utf8'),'Editor A');
+});

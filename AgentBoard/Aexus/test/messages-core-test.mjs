@@ -1,0 +1,49 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import assert from 'node:assert/strict'
+import {fixtureCore} from './fixtures/headless-core.mjs'
+const f=await fixtureCore()
+const rpc=async(auth,cmd,args={})=>{const result=await f.request(auth,cmd,args);assert.ok(result.ok,result.error);return result.data}
+try{
+ await f.cli('group','add','Studio');await f.cli('group','add','Other')
+ const lead=await f.create('Lead','Studio','manager'),a=await f.create('Aster','Studio'),b=await f.create('Other','Other'),gt=await f.create('Governor','Other','governor')
+ const manager=await f.token(lead.id),worker=await f.token(a.id),governor=await f.token(gt.id)
+ const before=await f.cli('session','list'),runtimeBefore=(await f.cli('session','status')).filter(c=>c.sessionId).length
+ const inbox=await f.cli('session','inbox');assert.equal(inbox.length,4);assert.ok(inbox.every(c=>!c.hasMessages&&!c.unread&&!c.text))
+ assert.deepEqual((await f.call(worker,'session','inbox')).map(c=>c.employeeId),[a.id])
+ assert.deepEqual(new Set((await f.call(manager,'session','inbox')).map(c=>c.employeeId)),new Set([lead.id,a.id]))
+ assert.equal((await f.call(governor,'session','inbox')).length,4)
+ assert.equal((await f.request(worker,'view.open',{kind:'messages',employee:a.id})).ok,false)
+ await f.cli('view','open','messages');assert.equal((await f.cli('view','get')).kind,'messages')
+ assert.equal((await f.cli('session','status')).filter(c=>c.sessionId).length,runtimeBefore,'opening the view alone never starts an engine')
+ await f.cli('view','open','messages','--employee',a.id);await rpc(null,'view.tools',{section:'config'});assert.equal((await f.cli('view','get')).tools,'config')
+ await rpc(null,'view.details',{enabled:true});assert.equal((await f.cli('view','get')).details,true)
+ await f.cli('view','open','conversation','--employee',a.id);assert.deepEqual((await f.cli('view','get')).returnTo,{kind:'messages',employee:a.id})
+ await f.cli('view','close');assert.equal((await f.cli('view','get')).kind,'messages');assert.equal((await f.cli('view','get')).employee,a.id)
+ await f.cli('view','close');assert.equal((await f.cli('view','get')).employee,undefined)
+ await assert.rejects(()=>f.cli('view','open','messages','--employee','missing'))
+ await f.cli('view','open','messages','--employee',a.id)
+ fs.writeFileSync(path.join(f.control,a.id+'.reply.txt'),'The new design is ready.\n\nA focused, calm workspace for your team.')
+ await f.cli('session','send','--employee',a.id,'--text','Review the workspace');await f.until(async()=>!(await f.status(a.id)).busy,'reply')
+ let result=(await f.cli('session','inbox')).find(c=>c.employeeId===a.id)
+ assert.equal(result.role,'assistant');assert.match(result.text,/focused, calm/);assert.equal(result.unread,true);assert.ok(result.updatedAt>0)
+ const reply=(await f.status(a.id)).lastReply
+ for(let i=0;i<3;i++)await f.call(manager,'session','inbox')
+ assert.deepEqual((await f.status(a.id)).lastReply,reply,'list reads never acknowledge a reply')
+ fs.writeFileSync(path.join(f.control,a.id+'.hold-user'),'')
+ await f.cli('session','send','--employee',a.id,'--text','Continue with the next iteration')
+ await f.until(async()=>(await f.status(a.id)).busy,'busy')
+ result=(await f.cli('session','inbox')).find(c=>c.employeeId===a.id);assert.equal(result.role,'user');assert.equal(result.text,'Continue with the next iteration')
+ await f.cli('session','interrupt','--employee',a.id)
+ const saved=(await f.cli('session','list')).sessions.find(c=>c.id===a.id)
+ assert.equal(saved.cwd,before.sessions.find(c=>c.id===a.id).cwd);assert.equal(saved.createdBy.kind,'operator')
+ const content=await f.cli('session','transcript',a.id);assert.ok(content.items.length>=3)
+ await f.stop();await f.start()
+ const resumed=(await f.cli('session','inbox')).find(c=>c.employeeId===a.id);assert.equal(resumed.text,result.text);assert.equal(resumed.unread,true)
+ assert.ok(!(await f.cli('session','inbox')).some(c=>c.text.includes('PRIVATE_INIT')))
+ await f.cli('view','open','messages','--employee',b.id);await f.cli('card','remove',b.id)
+ assert.equal((await f.cli('view','get')).kind,'messages');assert.equal((await f.cli('view','get')).employee,undefined)
+ assert.ok(!(await f.cli('session','inbox')).some(c=>c.employeeId===b.id))
+ assert.ok((await f.cli('api','describe','session.inbox')).summary.includes('bounded'))
+ console.log('PASS Messages Core/CLI: scoped previews, true timestamps, unread preservation, no implicit engines, existing-history restart, navigation/return path and employee deletion')
+}finally{await f.close()}

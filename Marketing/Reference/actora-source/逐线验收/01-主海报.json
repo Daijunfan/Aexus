@@ -1,0 +1,388 @@
+{
+  "checkedAt": "2026-09-26T11:30:42.469Z",
+  "count": 19,
+  "lines": [
+    {
+      "imageFile": "01-主海报-01-橘子-小码.png",
+      "number": 1,
+      "id": "created-s_muialo8z_3x6o8b",
+      "from": "橘子",
+      "to": "小码",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-02-橘子-文文.png",
+      "number": 2,
+      "id": "created-s_muialobr_rh3a5s",
+      "from": "橘子",
+      "to": "文文",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-03-橘子-阿石.png",
+      "number": 3,
+      "id": "created-s_muialpn1_ft1epn",
+      "from": "橘子",
+      "to": "阿石",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-04-阿白-阿蓝.png",
+      "number": 4,
+      "id": "created-s_muiam0k9_sh5r9w",
+      "from": "阿白",
+      "to": "阿蓝",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-05-阿白-小墨.png",
+      "number": 5,
+      "id": "created-s_muiam0me_id15dv",
+      "from": "阿白",
+      "to": "小墨",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-06-阿白-阿狸.png",
+      "number": 6,
+      "id": "created-s_muiam0o4_1t2gkd",
+      "from": "阿白",
+      "to": "阿狸",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-07-阿白-布丁.png",
+      "number": 7,
+      "id": "created-s_muiam0pt_ak0qfv",
+      "from": "阿白",
+      "to": "布丁",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-08-阿沐-火苗.png",
+      "number": 8,
+      "id": "created-s_muiam4id_9iime0",
+      "from": "阿沐",
+      "to": "火苗",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-09-阿沐-墨墨.png",
+      "number": 9,
+      "id": "created-s_muiam4l3_82pola",
+      "from": "阿沐",
+      "to": "墨墨",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-10-阿沐-木木.png",
+      "number": 10,
+      "id": "created-s_muiam4mv_mamum1",
+      "from": "阿沐",
+      "to": "木木",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-11-阿沐-方糖.png",
+      "number": 11,
+      "id": "created-s_muiam4ot_evq3ug",
+      "from": "阿沐",
+      "to": "方糖",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-12-阿沐-小字.png",
+      "number": 12,
+      "id": "created-s_muiam61f_q40ipg",
+      "from": "阿沐",
+      "to": "小字",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-13-阿森-写写.png",
+      "number": 13,
+      "id": "created-s_muiamde9_lvebw8",
+      "from": "阿森",
+      "to": "写写",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-14-阿森-点点.png",
+      "number": 14,
+      "id": "created-s_muiamdg3_piwby6",
+      "from": "阿森",
+      "to": "点点",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 4,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-15-阿森-皮皮.png",
+      "number": 15,
+      "id": "created-s_muiamdht_ebwbyn",
+      "from": "阿森",
+      "to": "皮皮",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 5,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-16-火火-橘子.png",
+      "number": 16,
+      "id": "created-s_muialia9_rslo32",
+      "from": "火火",
+      "to": "橘子",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 3,
+      "segments": 41,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-17-火火-阿白.png",
+      "number": 17,
+      "id": "created-s_muialppg_yivjlo",
+      "from": "火火",
+      "to": "阿白",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 3,
+      "segments": 57,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-18-火火-阿沐.png",
+      "number": 18,
+      "id": "created-s_muiam0rm_epnm1s",
+      "from": "火火",
+      "to": "阿沐",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 3,
+      "segments": 30,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "01-主海报-19-火火-阿森.png",
+      "number": 19,
+      "id": "created-s_muiam63x_rz5qes",
+      "from": "火火",
+      "to": "阿森",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 3,
+      "segments": 41,
+      "status": "PASS"
+    }
+  ],
+  "visualReview": "Each highlighted line image inspected after final capture",
+  "boundaryMarkers": 0
+}

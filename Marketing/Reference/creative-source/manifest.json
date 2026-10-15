@@ -1,0 +1,854 @@
+{
+  "project": "Avalon",
+  "github": "https://github.com/Daijunfan/Avalon",
+  "posts": 20,
+  "posters": 120,
+  "edition": "Dense 2.0",
+  "width": 1440,
+  "height": 1920,
+  "diagramTool": "Graphviz",
+  "screenshotsUsed": false,
+  "imageGenerationUsed": false,
+  "items": [
+    {
+      "post": 1,
+      "topic": "一个人的AI公司",
+      "sheet": 1,
+      "html": "01_One_Person_Company/01.html",
+      "png": "01_One_Person_Company/01.png"
+    },
+    {
+      "post": 1,
+      "topic": "一个人的AI公司",
+      "sheet": 2,
+      "html": "01_One_Person_Company/02.html",
+      "png": "01_One_Person_Company/02.png"
+    },
+    {
+      "post": 1,
+      "topic": "一个人的AI公司",
+      "sheet": 3,
+      "html": "01_One_Person_Company/03.html",
+      "png": "01_One_Person_Company/03.png"
+    },
+    {
+      "post": 1,
+      "topic": "一个人的AI公司",
+      "sheet": 4,
+      "html": "01_One_Person_Company/04.html",
+      "png": "01_One_Person_Company/04.png"
+    },
+    {
+      "post": 1,
+      "topic": "一个人的AI公司",
+      "sheet": 5,
+      "html": "01_One_Person_Company/05.html",
+      "png": "01_One_Person_Company/05.png"
+    },
+    {
+      "post": 1,
+      "topic": "一个人的AI公司",
+      "sheet": 6,
+      "html": "01_One_Person_Company/06.html",
+      "png": "01_One_Person_Company/06.png"
+    },
+    {
+      "post": 2,
+      "topic": "先让秘书带你上手",
+      "sheet": 1,
+      "html": "02_Secretary_First/01.html",
+      "png": "02_Secretary_First/01.png"
+    },
+    {
+      "post": 2,
+      "topic": "先让秘书带你上手",
+      "sheet": 2,
+      "html": "02_Secretary_First/02.html",
+      "png": "02_Secretary_First/02.png"
+    },
+    {
+      "post": 2,
+      "topic": "先让秘书带你上手",
+      "sheet": 3,
+      "html": "02_Secretary_First/03.html",
+      "png": "02_Secretary_First/03.png"
+    },
+    {
+      "post": 2,
+      "topic": "先让秘书带你上手",
+      "sheet": 4,
+      "html": "02_Secretary_First/04.html",
+      "png": "02_Secretary_First/04.png"
+    },
+    {
+      "post": 2,
+      "topic": "先让秘书带你上手",
+      "sheet": 5,
+      "html": "02_Secretary_First/05.html",
+      "png": "02_Secretary_First/05.png"
+    },
+    {
+      "post": 2,
+      "topic": "先让秘书带你上手",
+      "sheet": 6,
+      "html": "02_Secretary_First/06.html",
+      "png": "02_Secretary_First/06.png"
+    },
+    {
+      "post": 3,
+      "topic": "把AI协作看清楚",
+      "sheet": 1,
+      "html": "03_Visible_Collaboration/01.html",
+      "png": "03_Visible_Collaboration/01.png"
+    },
+    {
+      "post": 3,
+      "topic": "把AI协作看清楚",
+      "sheet": 2,
+      "html": "03_Visible_Collaboration/02.html",
+      "png": "03_Visible_Collaboration/02.png"
+    },
+    {
+      "post": 3,
+      "topic": "把AI协作看清楚",
+      "sheet": 3,
+      "html": "03_Visible_Collaboration/03.html",
+      "png": "03_Visible_Collaboration/03.png"
+    },
+    {
+      "post": 3,
+      "topic": "把AI协作看清楚",
+      "sheet": 4,
+      "html": "03_Visible_Collaboration/04.html",
+      "png": "03_Visible_Collaboration/04.png"
+    },
+    {
+      "post": 3,
+      "topic": "把AI协作看清楚",
+      "sheet": 5,
+      "html": "03_Visible_Collaboration/05.html",
+      "png": "03_Visible_Collaboration/05.png"
+    },
+    {
+      "post": 3,
+      "topic": "把AI协作看清楚",
+      "sheet": 6,
+      "html": "03_Visible_Collaboration/06.html",
+      "png": "03_Visible_Collaboration/06.png"
+    },
+    {
+      "post": 4,
+      "topic": "这才像真正的AI群聊",
+      "sheet": 1,
+      "html": "04_Group_Context/01.html",
+      "png": "04_Group_Context/01.png"
+    },
+    {
+      "post": 4,
+      "topic": "这才像真正的AI群聊",
+      "sheet": 2,
+      "html": "04_Group_Context/02.html",
+      "png": "04_Group_Context/02.png"
+    },
+    {
+      "post": 4,
+      "topic": "这才像真正的AI群聊",
+      "sheet": 3,
+      "html": "04_Group_Context/03.html",
+      "png": "04_Group_Context/03.png"
+    },
+    {
+      "post": 4,
+      "topic": "这才像真正的AI群聊",
+      "sheet": 4,
+      "html": "04_Group_Context/04.html",
+      "png": "04_Group_Context/04.png"
+    },
+    {
+      "post": 4,
+      "topic": "这才像真正的AI群聊",
+      "sheet": 5,
+      "html": "04_Group_Context/05.html",
+      "png": "04_Group_Context/05.png"
+    },
+    {
+      "post": 4,
+      "topic": "这才像真正的AI群聊",
+      "sheet": 6,
+      "html": "04_Group_Context/06.html",
+      "png": "04_Group_Context/06.png"
+    },
+    {
+      "post": 5,
+      "topic": "新闻和AI解读放一起",
+      "sheet": 1,
+      "html": "05_Channels_With_AI/01.html",
+      "png": "05_Channels_With_AI/01.png"
+    },
+    {
+      "post": 5,
+      "topic": "新闻和AI解读放一起",
+      "sheet": 2,
+      "html": "05_Channels_With_AI/02.html",
+      "png": "05_Channels_With_AI/02.png"
+    },
+    {
+      "post": 5,
+      "topic": "新闻和AI解读放一起",
+      "sheet": 3,
+      "html": "05_Channels_With_AI/03.html",
+      "png": "05_Channels_With_AI/03.png"
+    },
+    {
+      "post": 5,
+      "topic": "新闻和AI解读放一起",
+      "sheet": 4,
+      "html": "05_Channels_With_AI/04.html",
+      "png": "05_Channels_With_AI/04.png"
+    },
+    {
+      "post": 5,
+      "topic": "新闻和AI解读放一起",
+      "sheet": 5,
+      "html": "05_Channels_With_AI/05.html",
+      "png": "05_Channels_With_AI/05.png"
+    },
+    {
+      "post": 5,
+      "topic": "新闻和AI解读放一起",
+      "sheet": 6,
+      "html": "05_Channels_With_AI/06.html",
+      "png": "05_Channels_With_AI/06.png"
+    },
+    {
+      "post": 6,
+      "topic": "让AI工作有自己的节奏",
+      "sheet": 1,
+      "html": "06_Three_Task_Triggers/01.html",
+      "png": "06_Three_Task_Triggers/01.png"
+    },
+    {
+      "post": 6,
+      "topic": "让AI工作有自己的节奏",
+      "sheet": 2,
+      "html": "06_Three_Task_Triggers/02.html",
+      "png": "06_Three_Task_Triggers/02.png"
+    },
+    {
+      "post": 6,
+      "topic": "让AI工作有自己的节奏",
+      "sheet": 3,
+      "html": "06_Three_Task_Triggers/03.html",
+      "png": "06_Three_Task_Triggers/03.png"
+    },
+    {
+      "post": 6,
+      "topic": "让AI工作有自己的节奏",
+      "sheet": 4,
+      "html": "06_Three_Task_Triggers/04.html",
+      "png": "06_Three_Task_Triggers/04.png"
+    },
+    {
+      "post": 6,
+      "topic": "让AI工作有自己的节奏",
+      "sheet": 5,
+      "html": "06_Three_Task_Triggers/05.html",
+      "png": "06_Three_Task_Triggers/05.png"
+    },
+    {
+      "post": 6,
+      "topic": "让AI工作有自己的节奏",
+      "sheet": 6,
+      "html": "06_Three_Task_Triggers/06.html",
+      "png": "06_Three_Task_Triggers/06.png"
+    },
+    {
+      "post": 7,
+      "topic": "让AI按事件行动",
+      "sheet": 1,
+      "html": "07_Event_Driven_Work/01.html",
+      "png": "07_Event_Driven_Work/01.png"
+    },
+    {
+      "post": 7,
+      "topic": "让AI按事件行动",
+      "sheet": 2,
+      "html": "07_Event_Driven_Work/02.html",
+      "png": "07_Event_Driven_Work/02.png"
+    },
+    {
+      "post": 7,
+      "topic": "让AI按事件行动",
+      "sheet": 3,
+      "html": "07_Event_Driven_Work/03.html",
+      "png": "07_Event_Driven_Work/03.png"
+    },
+    {
+      "post": 7,
+      "topic": "让AI按事件行动",
+      "sheet": 4,
+      "html": "07_Event_Driven_Work/04.html",
+      "png": "07_Event_Driven_Work/04.png"
+    },
+    {
+      "post": 7,
+      "topic": "让AI按事件行动",
+      "sheet": 5,
+      "html": "07_Event_Driven_Work/05.html",
+      "png": "07_Event_Driven_Work/05.png"
+    },
+    {
+      "post": 7,
+      "topic": "让AI按事件行动",
+      "sheet": 6,
+      "html": "07_Event_Driven_Work/06.html",
+      "png": "07_Event_Driven_Work/06.png"
+    },
+    {
+      "post": 8,
+      "topic": "四种Agent一起协作",
+      "sheet": 1,
+      "html": "08_Four_Engines/01.html",
+      "png": "08_Four_Engines/01.png"
+    },
+    {
+      "post": 8,
+      "topic": "四种Agent一起协作",
+      "sheet": 2,
+      "html": "08_Four_Engines/02.html",
+      "png": "08_Four_Engines/02.png"
+    },
+    {
+      "post": 8,
+      "topic": "四种Agent一起协作",
+      "sheet": 3,
+      "html": "08_Four_Engines/03.html",
+      "png": "08_Four_Engines/03.png"
+    },
+    {
+      "post": 8,
+      "topic": "四种Agent一起协作",
+      "sheet": 4,
+      "html": "08_Four_Engines/04.html",
+      "png": "08_Four_Engines/04.png"
+    },
+    {
+      "post": 8,
+      "topic": "四种Agent一起协作",
+      "sheet": 5,
+      "html": "08_Four_Engines/05.html",
+      "png": "08_Four_Engines/05.png"
+    },
+    {
+      "post": 8,
+      "topic": "四种Agent一起协作",
+      "sheet": 6,
+      "html": "08_Four_Engines/06.html",
+      "png": "08_Four_Engines/06.png"
+    },
+    {
+      "post": 9,
+      "topic": "把本机和云主机连起来",
+      "sheet": 1,
+      "html": "09_Across_Hosts/01.html",
+      "png": "09_Across_Hosts/01.png"
+    },
+    {
+      "post": 9,
+      "topic": "把本机和云主机连起来",
+      "sheet": 2,
+      "html": "09_Across_Hosts/02.html",
+      "png": "09_Across_Hosts/02.png"
+    },
+    {
+      "post": 9,
+      "topic": "把本机和云主机连起来",
+      "sheet": 3,
+      "html": "09_Across_Hosts/03.html",
+      "png": "09_Across_Hosts/03.png"
+    },
+    {
+      "post": 9,
+      "topic": "把本机和云主机连起来",
+      "sheet": 4,
+      "html": "09_Across_Hosts/04.html",
+      "png": "09_Across_Hosts/04.png"
+    },
+    {
+      "post": 9,
+      "topic": "把本机和云主机连起来",
+      "sheet": 5,
+      "html": "09_Across_Hosts/05.html",
+      "png": "09_Across_Hosts/05.png"
+    },
+    {
+      "post": 9,
+      "topic": "把本机和云主机连起来",
+      "sheet": 6,
+      "html": "09_Across_Hosts/06.html",
+      "png": "09_Across_Hosts/06.png"
+    },
+    {
+      "post": 10,
+      "topic": "让Agent直接操作工作台",
+      "sheet": 1,
+      "html": "10_Native_API/01.html",
+      "png": "10_Native_API/01.png"
+    },
+    {
+      "post": 10,
+      "topic": "让Agent直接操作工作台",
+      "sheet": 2,
+      "html": "10_Native_API/02.html",
+      "png": "10_Native_API/02.png"
+    },
+    {
+      "post": 10,
+      "topic": "让Agent直接操作工作台",
+      "sheet": 3,
+      "html": "10_Native_API/03.html",
+      "png": "10_Native_API/03.png"
+    },
+    {
+      "post": 10,
+      "topic": "让Agent直接操作工作台",
+      "sheet": 4,
+      "html": "10_Native_API/04.html",
+      "png": "10_Native_API/04.png"
+    },
+    {
+      "post": 10,
+      "topic": "让Agent直接操作工作台",
+      "sheet": 5,
+      "html": "10_Native_API/05.html",
+      "png": "10_Native_API/05.png"
+    },
+    {
+      "post": 10,
+      "topic": "让Agent直接操作工作台",
+      "sheet": 6,
+      "html": "10_Native_API/06.html",
+      "png": "10_Native_API/06.png"
+    },
+    {
+      "post": 11,
+      "topic": "把开发任务组织成小队",
+      "sheet": 1,
+      "html": "11_Project_Delivery/01.html",
+      "png": "11_Project_Delivery/01.png"
+    },
+    {
+      "post": 11,
+      "topic": "把开发任务组织成小队",
+      "sheet": 2,
+      "html": "11_Project_Delivery/02.html",
+      "png": "11_Project_Delivery/02.png"
+    },
+    {
+      "post": 11,
+      "topic": "把开发任务组织成小队",
+      "sheet": 3,
+      "html": "11_Project_Delivery/03.html",
+      "png": "11_Project_Delivery/03.png"
+    },
+    {
+      "post": 11,
+      "topic": "把开发任务组织成小队",
+      "sheet": 4,
+      "html": "11_Project_Delivery/04.html",
+      "png": "11_Project_Delivery/04.png"
+    },
+    {
+      "post": 11,
+      "topic": "把开发任务组织成小队",
+      "sheet": 5,
+      "html": "11_Project_Delivery/05.html",
+      "png": "11_Project_Delivery/05.png"
+    },
+    {
+      "post": 11,
+      "topic": "把开发任务组织成小队",
+      "sheet": 6,
+      "html": "11_Project_Delivery/06.html",
+      "png": "11_Project_Delivery/06.png"
+    },
+    {
+      "post": 12,
+      "topic": "让AI小队帮你做内容",
+      "sheet": 1,
+      "html": "12_Content_Studio/01.html",
+      "png": "12_Content_Studio/01.png"
+    },
+    {
+      "post": 12,
+      "topic": "让AI小队帮你做内容",
+      "sheet": 2,
+      "html": "12_Content_Studio/02.html",
+      "png": "12_Content_Studio/02.png"
+    },
+    {
+      "post": 12,
+      "topic": "让AI小队帮你做内容",
+      "sheet": 3,
+      "html": "12_Content_Studio/03.html",
+      "png": "12_Content_Studio/03.png"
+    },
+    {
+      "post": 12,
+      "topic": "让AI小队帮你做内容",
+      "sheet": 4,
+      "html": "12_Content_Studio/04.html",
+      "png": "12_Content_Studio/04.png"
+    },
+    {
+      "post": 12,
+      "topic": "让AI小队帮你做内容",
+      "sheet": 5,
+      "html": "12_Content_Studio/05.html",
+      "png": "12_Content_Studio/05.png"
+    },
+    {
+      "post": 12,
+      "topic": "让AI小队帮你做内容",
+      "sheet": 6,
+      "html": "12_Content_Studio/06.html",
+      "png": "12_Content_Studio/06.png"
+    },
+    {
+      "post": 13,
+      "topic": "把资料读成可用的线索",
+      "sheet": 1,
+      "html": "13_Research_Workbench/01.html",
+      "png": "13_Research_Workbench/01.png"
+    },
+    {
+      "post": 13,
+      "topic": "把资料读成可用的线索",
+      "sheet": 2,
+      "html": "13_Research_Workbench/02.html",
+      "png": "13_Research_Workbench/02.png"
+    },
+    {
+      "post": 13,
+      "topic": "把资料读成可用的线索",
+      "sheet": 3,
+      "html": "13_Research_Workbench/03.html",
+      "png": "13_Research_Workbench/03.png"
+    },
+    {
+      "post": 13,
+      "topic": "把资料读成可用的线索",
+      "sheet": 4,
+      "html": "13_Research_Workbench/04.html",
+      "png": "13_Research_Workbench/04.png"
+    },
+    {
+      "post": 13,
+      "topic": "把资料读成可用的线索",
+      "sheet": 5,
+      "html": "13_Research_Workbench/05.html",
+      "png": "13_Research_Workbench/05.png"
+    },
+    {
+      "post": 13,
+      "topic": "把资料读成可用的线索",
+      "sheet": 6,
+      "html": "13_Research_Workbench/06.html",
+      "png": "13_Research_Workbench/06.png"
+    },
+    {
+      "post": 14,
+      "topic": "把周报拆成平时的小工作",
+      "sheet": 1,
+      "html": "14_Weekly_Review/01.html",
+      "png": "14_Weekly_Review/01.png"
+    },
+    {
+      "post": 14,
+      "topic": "把周报拆成平时的小工作",
+      "sheet": 2,
+      "html": "14_Weekly_Review/02.html",
+      "png": "14_Weekly_Review/02.png"
+    },
+    {
+      "post": 14,
+      "topic": "把周报拆成平时的小工作",
+      "sheet": 3,
+      "html": "14_Weekly_Review/03.html",
+      "png": "14_Weekly_Review/03.png"
+    },
+    {
+      "post": 14,
+      "topic": "把周报拆成平时的小工作",
+      "sheet": 4,
+      "html": "14_Weekly_Review/04.html",
+      "png": "14_Weekly_Review/04.png"
+    },
+    {
+      "post": 14,
+      "topic": "把周报拆成平时的小工作",
+      "sheet": 5,
+      "html": "14_Weekly_Review/05.html",
+      "png": "14_Weekly_Review/05.png"
+    },
+    {
+      "post": 14,
+      "topic": "把周报拆成平时的小工作",
+      "sheet": 6,
+      "html": "14_Weekly_Review/06.html",
+      "png": "14_Weekly_Review/06.png"
+    },
+    {
+      "post": 15,
+      "topic": "让AI帮你整理早间简报",
+      "sheet": 1,
+      "html": "15_Morning_Briefing/01.html",
+      "png": "15_Morning_Briefing/01.png"
+    },
+    {
+      "post": 15,
+      "topic": "让AI帮你整理早间简报",
+      "sheet": 2,
+      "html": "15_Morning_Briefing/02.html",
+      "png": "15_Morning_Briefing/02.png"
+    },
+    {
+      "post": 15,
+      "topic": "让AI帮你整理早间简报",
+      "sheet": 3,
+      "html": "15_Morning_Briefing/03.html",
+      "png": "15_Morning_Briefing/03.png"
+    },
+    {
+      "post": 15,
+      "topic": "让AI帮你整理早间简报",
+      "sheet": 4,
+      "html": "15_Morning_Briefing/04.html",
+      "png": "15_Morning_Briefing/04.png"
+    },
+    {
+      "post": 15,
+      "topic": "让AI帮你整理早间简报",
+      "sheet": 5,
+      "html": "15_Morning_Briefing/05.html",
+      "png": "15_Morning_Briefing/05.png"
+    },
+    {
+      "post": 15,
+      "topic": "让AI帮你整理早间简报",
+      "sheet": 6,
+      "html": "15_Morning_Briefing/06.html",
+      "png": "15_Morning_Briefing/06.png"
+    },
+    {
+      "post": 16,
+      "topic": "多个项目各有自己的小队",
+      "sheet": 1,
+      "html": "16_Multiple_Projects/01.html",
+      "png": "16_Multiple_Projects/01.png"
+    },
+    {
+      "post": 16,
+      "topic": "多个项目各有自己的小队",
+      "sheet": 2,
+      "html": "16_Multiple_Projects/02.html",
+      "png": "16_Multiple_Projects/02.png"
+    },
+    {
+      "post": 16,
+      "topic": "多个项目各有自己的小队",
+      "sheet": 3,
+      "html": "16_Multiple_Projects/03.html",
+      "png": "16_Multiple_Projects/03.png"
+    },
+    {
+      "post": 16,
+      "topic": "多个项目各有自己的小队",
+      "sheet": 4,
+      "html": "16_Multiple_Projects/04.html",
+      "png": "16_Multiple_Projects/04.png"
+    },
+    {
+      "post": 16,
+      "topic": "多个项目各有自己的小队",
+      "sheet": 5,
+      "html": "16_Multiple_Projects/05.html",
+      "png": "16_Multiple_Projects/05.png"
+    },
+    {
+      "post": 16,
+      "topic": "多个项目各有自己的小队",
+      "sheet": 6,
+      "html": "16_Multiple_Projects/06.html",
+      "png": "16_Multiple_Projects/06.png"
+    },
+    {
+      "post": 17,
+      "topic": "把文件交接变得清楚",
+      "sheet": 1,
+      "html": "17_File_Handoffs/01.html",
+      "png": "17_File_Handoffs/01.png"
+    },
+    {
+      "post": 17,
+      "topic": "把文件交接变得清楚",
+      "sheet": 2,
+      "html": "17_File_Handoffs/02.html",
+      "png": "17_File_Handoffs/02.png"
+    },
+    {
+      "post": 17,
+      "topic": "把文件交接变得清楚",
+      "sheet": 3,
+      "html": "17_File_Handoffs/03.html",
+      "png": "17_File_Handoffs/03.png"
+    },
+    {
+      "post": 17,
+      "topic": "把文件交接变得清楚",
+      "sheet": 4,
+      "html": "17_File_Handoffs/04.html",
+      "png": "17_File_Handoffs/04.png"
+    },
+    {
+      "post": 17,
+      "topic": "把文件交接变得清楚",
+      "sheet": 5,
+      "html": "17_File_Handoffs/05.html",
+      "png": "17_File_Handoffs/05.png"
+    },
+    {
+      "post": 17,
+      "topic": "把文件交接变得清楚",
+      "sheet": 6,
+      "html": "17_File_Handoffs/06.html",
+      "png": "17_File_Handoffs/06.png"
+    },
+    {
+      "post": 18,
+      "topic": "让AI工作有迹可查",
+      "sheet": 1,
+      "html": "18_Inspectable_Work/01.html",
+      "png": "18_Inspectable_Work/01.png"
+    },
+    {
+      "post": 18,
+      "topic": "让AI工作有迹可查",
+      "sheet": 2,
+      "html": "18_Inspectable_Work/02.html",
+      "png": "18_Inspectable_Work/02.png"
+    },
+    {
+      "post": 18,
+      "topic": "让AI工作有迹可查",
+      "sheet": 3,
+      "html": "18_Inspectable_Work/03.html",
+      "png": "18_Inspectable_Work/03.png"
+    },
+    {
+      "post": 18,
+      "topic": "让AI工作有迹可查",
+      "sheet": 4,
+      "html": "18_Inspectable_Work/04.html",
+      "png": "18_Inspectable_Work/04.png"
+    },
+    {
+      "post": 18,
+      "topic": "让AI工作有迹可查",
+      "sheet": 5,
+      "html": "18_Inspectable_Work/05.html",
+      "png": "18_Inspectable_Work/05.png"
+    },
+    {
+      "post": 18,
+      "topic": "让AI工作有迹可查",
+      "sheet": 6,
+      "html": "18_Inspectable_Work/06.html",
+      "png": "18_Inspectable_Work/06.png"
+    },
+    {
+      "post": 19,
+      "topic": "把读写管理连成工作流",
+      "sheet": 1,
+      "html": "19_Plugin_Workbench/01.html",
+      "png": "19_Plugin_Workbench/01.png"
+    },
+    {
+      "post": 19,
+      "topic": "把读写管理连成工作流",
+      "sheet": 2,
+      "html": "19_Plugin_Workbench/02.html",
+      "png": "19_Plugin_Workbench/02.png"
+    },
+    {
+      "post": 19,
+      "topic": "把读写管理连成工作流",
+      "sheet": 3,
+      "html": "19_Plugin_Workbench/03.html",
+      "png": "19_Plugin_Workbench/03.png"
+    },
+    {
+      "post": 19,
+      "topic": "把读写管理连成工作流",
+      "sheet": 4,
+      "html": "19_Plugin_Workbench/04.html",
+      "png": "19_Plugin_Workbench/04.png"
+    },
+    {
+      "post": 19,
+      "topic": "把读写管理连成工作流",
+      "sheet": 5,
+      "html": "19_Plugin_Workbench/05.html",
+      "png": "19_Plugin_Workbench/05.png"
+    },
+    {
+      "post": 19,
+      "topic": "把读写管理连成工作流",
+      "sheet": 6,
+      "html": "19_Plugin_Workbench/06.html",
+      "png": "19_Plugin_Workbench/06.png"
+    },
+    {
+      "post": 20,
+      "topic": "今天搭起第一支AI小队",
+      "sheet": 1,
+      "html": "20_First_Team/01.html",
+      "png": "20_First_Team/01.png"
+    },
+    {
+      "post": 20,
+      "topic": "今天搭起第一支AI小队",
+      "sheet": 2,
+      "html": "20_First_Team/02.html",
+      "png": "20_First_Team/02.png"
+    },
+    {
+      "post": 20,
+      "topic": "今天搭起第一支AI小队",
+      "sheet": 3,
+      "html": "20_First_Team/03.html",
+      "png": "20_First_Team/03.png"
+    },
+    {
+      "post": 20,
+      "topic": "今天搭起第一支AI小队",
+      "sheet": 4,
+      "html": "20_First_Team/04.html",
+      "png": "20_First_Team/04.png"
+    },
+    {
+      "post": 20,
+      "topic": "今天搭起第一支AI小队",
+      "sheet": 5,
+      "html": "20_First_Team/05.html",
+      "png": "20_First_Team/05.png"
+    },
+    {
+      "post": 20,
+      "topic": "今天搭起第一支AI小队",
+      "sheet": 6,
+      "html": "20_First_Team/06.html",
+      "png": "20_First_Team/06.png"
+    }
+  ]
+}

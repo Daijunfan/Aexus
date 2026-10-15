@@ -1,0 +1,5435 @@
+{
+  "startedAt": "2026-09-27T12:46:47.810Z",
+  "governor": "s_muj4r8pz_55m0a8",
+  "prompt": "通知你的所有Manager，让他们手下的员工每人都写一首五言绝句",
+  "frames": [
+    {
+      "file": "live-001-1-green.png",
+      "at": "2026-09-27T12:46:50.976Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "requestId": "3c630a23-f76b-41ac-83b1-740458d6d193",
+          "startedAt": 1790513210716,
+          "expiresAt": 1790513213129
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-001-1-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-002-2-green.png",
+      "at": "2026-09-27T12:46:52.392Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "requestId": "3c630a23-f76b-41ac-83b1-740458d6d193",
+          "startedAt": 1790513210716,
+          "expiresAt": 1790513213129
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "requestId": "a7ab8551-4bca-4fd8-ab85-198836416cf5",
+          "startedAt": 1790513212148,
+          "expiresAt": 1790513214565
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-002-2-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-003-2-green.png",
+      "at": "2026-09-27T12:46:53.889Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "requestId": "a7ab8551-4bca-4fd8-ab85-198836416cf5",
+          "startedAt": 1790513212148,
+          "expiresAt": 1790513214565
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728rq_x1ukbj",
+          "command": "session.send",
+          "requestId": "9aa3e380-90f6-4624-8851-8353fc86ffd7",
+          "startedAt": 1790513213651,
+          "expiresAt": 1790513216067
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-003-2-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-004-3-green.png",
+      "at": "2026-09-27T12:46:55.127Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728rq_x1ukbj",
+          "command": "session.send",
+          "requestId": "9aa3e380-90f6-4624-8851-8353fc86ffd7",
+          "startedAt": 1790513213651,
+          "expiresAt": 1790513216067
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "requestId": "e23282f8-b968-46ba-82fe-516b4e5a6b71",
+          "startedAt": 1790513214849,
+          "expiresAt": 1790513217262
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "requestId": "4f48ffa6-d687-4378-9de9-9e6ce684c59d",
+          "startedAt": 1790513214924,
+          "expiresAt": 1790513217337
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-004-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-005-5-green.png",
+      "at": "2026-09-27T12:46:55.388Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728rq_x1ukbj",
+          "command": "session.send",
+          "requestId": "9aa3e380-90f6-4624-8851-8353fc86ffd7",
+          "startedAt": 1790513213651,
+          "expiresAt": 1790513216067
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "requestId": "e23282f8-b968-46ba-82fe-516b4e5a6b71",
+          "startedAt": 1790513214849,
+          "expiresAt": 1790513217262
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "requestId": "4f48ffa6-d687-4378-9de9-9e6ce684c59d",
+          "startedAt": 1790513214924,
+          "expiresAt": 1790513217337
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "cd2befe4-4a8d-4a53-80c6-1e9925c939b5",
+          "startedAt": 1790513215107,
+          "expiresAt": 1790513217523
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "requestId": "12038d07-9065-47f8-93a2-9ddf0eb59127",
+          "startedAt": 1790513215170,
+          "expiresAt": 1790513217588
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-005-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-006-6-green.png",
+      "at": "2026-09-27T12:46:55.957Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728rq_x1ukbj",
+          "command": "session.send",
+          "requestId": "9aa3e380-90f6-4624-8851-8353fc86ffd7",
+          "startedAt": 1790513213651,
+          "expiresAt": 1790513216067
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "requestId": "e23282f8-b968-46ba-82fe-516b4e5a6b71",
+          "startedAt": 1790513214849,
+          "expiresAt": 1790513217262
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "requestId": "4f48ffa6-d687-4378-9de9-9e6ce684c59d",
+          "startedAt": 1790513214924,
+          "expiresAt": 1790513217337
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "cd2befe4-4a8d-4a53-80c6-1e9925c939b5",
+          "startedAt": 1790513215107,
+          "expiresAt": 1790513217523
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "requestId": "12038d07-9065-47f8-93a2-9ddf0eb59127",
+          "startedAt": 1790513215170,
+          "expiresAt": 1790513217588
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "96717a04-f649-4c47-831c-d1e123432929",
+          "startedAt": 1790513215701,
+          "expiresAt": 1790513218116
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-006-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-007-5-green.png",
+      "at": "2026-09-27T12:46:56.454Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "requestId": "e23282f8-b968-46ba-82fe-516b4e5a6b71",
+          "startedAt": 1790513214849,
+          "expiresAt": 1790513217262
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "requestId": "4f48ffa6-d687-4378-9de9-9e6ce684c59d",
+          "startedAt": 1790513214924,
+          "expiresAt": 1790513217337
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "cd2befe4-4a8d-4a53-80c6-1e9925c939b5",
+          "startedAt": 1790513215107,
+          "expiresAt": 1790513217523
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "requestId": "12038d07-9065-47f8-93a2-9ddf0eb59127",
+          "startedAt": 1790513215170,
+          "expiresAt": 1790513217588
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "96717a04-f649-4c47-831c-d1e123432929",
+          "startedAt": 1790513215701,
+          "expiresAt": 1790513218116
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-007-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-008-6-green.png",
+      "at": "2026-09-27T12:46:56.747Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "requestId": "e23282f8-b968-46ba-82fe-516b4e5a6b71",
+          "startedAt": 1790513214849,
+          "expiresAt": 1790513217262
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "requestId": "4f48ffa6-d687-4378-9de9-9e6ce684c59d",
+          "startedAt": 1790513214924,
+          "expiresAt": 1790513217337
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "cd2befe4-4a8d-4a53-80c6-1e9925c939b5",
+          "startedAt": 1790513215107,
+          "expiresAt": 1790513217523
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "requestId": "12038d07-9065-47f8-93a2-9ddf0eb59127",
+          "startedAt": 1790513215170,
+          "expiresAt": 1790513217588
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "96717a04-f649-4c47-831c-d1e123432929",
+          "startedAt": 1790513215701,
+          "expiresAt": 1790513218116
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "3ab6d7df-fe87-471a-b9e4-21e60326190f",
+          "startedAt": 1790513216433,
+          "expiresAt": 1790513218849
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-008-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-009-7-green.png",
+      "at": "2026-09-27T12:46:57.032Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "requestId": "e23282f8-b968-46ba-82fe-516b4e5a6b71",
+          "startedAt": 1790513214849,
+          "expiresAt": 1790513217262
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "requestId": "4f48ffa6-d687-4378-9de9-9e6ce684c59d",
+          "startedAt": 1790513214924,
+          "expiresAt": 1790513217337
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "cd2befe4-4a8d-4a53-80c6-1e9925c939b5",
+          "startedAt": 1790513215107,
+          "expiresAt": 1790513217523
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "requestId": "12038d07-9065-47f8-93a2-9ddf0eb59127",
+          "startedAt": 1790513215170,
+          "expiresAt": 1790513217588
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "96717a04-f649-4c47-831c-d1e123432929",
+          "startedAt": 1790513215701,
+          "expiresAt": 1790513218116
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "3ab6d7df-fe87-471a-b9e4-21e60326190f",
+          "startedAt": 1790513216433,
+          "expiresAt": 1790513218849
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "927794a1-c9f6-446d-ba28-8b958a47a59d",
+          "startedAt": 1790513216726,
+          "expiresAt": 1790513219143
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-009-7-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-010-8-green.png",
+      "at": "2026-09-27T12:46:57.319Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "2ba1c37c-95fd-430d-b533-f821bbf80c8e",
+          "startedAt": 1790513217020,
+          "expiresAt": 1790513218623
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "79cd8f9c-a83d-4e70-b53b-ad37b5b55316",
+          "startedAt": 1790513217086,
+          "expiresAt": 1790513218691
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "requestId": "cd2befe4-4a8d-4a53-80c6-1e9925c939b5",
+          "startedAt": 1790513215107,
+          "expiresAt": 1790513217523
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "requestId": "12038d07-9065-47f8-93a2-9ddf0eb59127",
+          "startedAt": 1790513215170,
+          "expiresAt": 1790513217588
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "96717a04-f649-4c47-831c-d1e123432929",
+          "startedAt": 1790513215701,
+          "expiresAt": 1790513218116
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "3ab6d7df-fe87-471a-b9e4-21e60326190f",
+          "startedAt": 1790513216433,
+          "expiresAt": 1790513218849
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "927794a1-c9f6-446d-ba28-8b958a47a59d",
+          "startedAt": 1790513216726,
+          "expiresAt": 1790513219143
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "7c24795a-f988-47ce-9614-06250701c865",
+          "startedAt": 1790513217121,
+          "expiresAt": 1790513219537
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-010-8-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-011-7-green.png",
+      "at": "2026-09-27T12:46:57.805Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "2ba1c37c-95fd-430d-b533-f821bbf80c8e",
+          "startedAt": 1790513217020,
+          "expiresAt": 1790513218623
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "79cd8f9c-a83d-4e70-b53b-ad37b5b55316",
+          "startedAt": 1790513217086,
+          "expiresAt": 1790513218691
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "10e8ad95-dd63-4d77-99e5-aa9f90e63740",
+          "startedAt": 1790513217153,
+          "expiresAt": 1790513218758
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.send",
+          "requestId": "96717a04-f649-4c47-831c-d1e123432929",
+          "startedAt": 1790513215701,
+          "expiresAt": 1790513218116
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "3ab6d7df-fe87-471a-b9e4-21e60326190f",
+          "startedAt": 1790513216433,
+          "expiresAt": 1790513218849
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "927794a1-c9f6-446d-ba28-8b958a47a59d",
+          "startedAt": 1790513216726,
+          "expiresAt": 1790513219143
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "7c24795a-f988-47ce-9614-06250701c865",
+          "startedAt": 1790513217121,
+          "expiresAt": 1790513219537
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-011-7-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-012-7-green.png",
+      "at": "2026-09-27T12:46:58.515Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "2ba1c37c-95fd-430d-b533-f821bbf80c8e",
+          "startedAt": 1790513217020,
+          "expiresAt": 1790513218623
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "79cd8f9c-a83d-4e70-b53b-ad37b5b55316",
+          "startedAt": 1790513217086,
+          "expiresAt": 1790513218691
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "10e8ad95-dd63-4d77-99e5-aa9f90e63740",
+          "startedAt": 1790513217153,
+          "expiresAt": 1790513218758
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "3ab6d7df-fe87-471a-b9e4-21e60326190f",
+          "startedAt": 1790513216433,
+          "expiresAt": 1790513218849
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "927794a1-c9f6-446d-ba28-8b958a47a59d",
+          "startedAt": 1790513216726,
+          "expiresAt": 1790513219143
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "7c24795a-f988-47ce-9614-06250701c865",
+          "startedAt": 1790513217121,
+          "expiresAt": 1790513219537
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "requestId": "cc1970b1-f9a9-4966-bbe9-f762c25b4298",
+          "startedAt": 1790513218224,
+          "expiresAt": 1790513220641
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-012-7-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-013-6-green.png",
+      "at": "2026-09-27T12:46:58.888Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "10e8ad95-dd63-4d77-99e5-aa9f90e63740",
+          "startedAt": 1790513217153,
+          "expiresAt": 1790513218758
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.send",
+          "requestId": "3ab6d7df-fe87-471a-b9e4-21e60326190f",
+          "startedAt": 1790513216433,
+          "expiresAt": 1790513218849
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "927794a1-c9f6-446d-ba28-8b958a47a59d",
+          "startedAt": 1790513216726,
+          "expiresAt": 1790513219143
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.send",
+          "requestId": "7c24795a-f988-47ce-9614-06250701c865",
+          "startedAt": 1790513217121,
+          "expiresAt": 1790513219537
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "requestId": "cc1970b1-f9a9-4966-bbe9-f762c25b4298",
+          "startedAt": 1790513218224,
+          "expiresAt": 1790513220641
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.status",
+          "requestId": "adb502e2-862b-4319-bc0b-71db0a1418d2",
+          "startedAt": 1790513218697,
+          "expiresAt": 1790513220303
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-013-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-014-5-green.png",
+      "at": "2026-09-27T12:46:59.171Z",
+      "edges": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "requestId": "927794a1-c9f6-446d-ba28-8b958a47a59d",
+          "startedAt": 1790513216726,
+          "expiresAt": 1790513219143
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.status",
+          "requestId": "41938689-a3e9-4701-8548-43f6b769df3e",
+          "startedAt": 1790513218943,
+          "expiresAt": 1790513220550
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "requestId": "cc1970b1-f9a9-4966-bbe9-f762c25b4298",
+          "startedAt": 1790513218224,
+          "expiresAt": 1790513220641
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.status",
+          "requestId": "adb502e2-862b-4319-bc0b-71db0a1418d2",
+          "startedAt": 1790513218697,
+          "expiresAt": 1790513220303
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.status",
+          "requestId": "fa6bc560-2783-4dc3-98a2-1214f3319f6b",
+          "startedAt": 1790513218876,
+          "expiresAt": 1790513220483
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-014-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-015-5-green.png",
+      "at": "2026-09-27T12:46:59.439Z",
+      "edges": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.status",
+          "requestId": "41938689-a3e9-4701-8548-43f6b769df3e",
+          "startedAt": 1790513218943,
+          "expiresAt": 1790513220550
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "requestId": "cc1970b1-f9a9-4966-bbe9-f762c25b4298",
+          "startedAt": 1790513218224,
+          "expiresAt": 1790513220641
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.status",
+          "requestId": "adb502e2-862b-4319-bc0b-71db0a1418d2",
+          "startedAt": 1790513218697,
+          "expiresAt": 1790513220303
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.status",
+          "requestId": "fa6bc560-2783-4dc3-98a2-1214f3319f6b",
+          "startedAt": 1790513218876,
+          "expiresAt": 1790513220483
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "5b97c3aa-165f-4224-bb07-cb106d963daf",
+          "startedAt": 1790513219151,
+          "expiresAt": 1790513221568
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-015-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-016-5-green.png",
+      "at": "2026-09-27T12:47:00.561Z",
+      "edges": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.status",
+          "requestId": "41938689-a3e9-4701-8548-43f6b769df3e",
+          "startedAt": 1790513218943,
+          "expiresAt": 1790513220550
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "requestId": "cc1970b1-f9a9-4966-bbe9-f762c25b4298",
+          "startedAt": 1790513218224,
+          "expiresAt": 1790513220641
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.status",
+          "requestId": "fa6bc560-2783-4dc3-98a2-1214f3319f6b",
+          "startedAt": 1790513218876,
+          "expiresAt": 1790513220483
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "5b97c3aa-165f-4224-bb07-cb106d963daf",
+          "startedAt": 1790513219151,
+          "expiresAt": 1790513221568
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "e588ae4f-e04c-4149-8c40-e7ad51c18982",
+          "startedAt": 1790513220266,
+          "expiresAt": 1790513222683
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-016-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-017-2-green.png",
+      "at": "2026-09-27T12:47:00.821Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "5b97c3aa-165f-4224-bb07-cb106d963daf",
+          "startedAt": 1790513219151,
+          "expiresAt": 1790513221568
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "e588ae4f-e04c-4149-8c40-e7ad51c18982",
+          "startedAt": 1790513220266,
+          "expiresAt": 1790513222683
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-017-2-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-018-3-green.png",
+      "at": "2026-09-27T12:47:01.376Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "requestId": "5b97c3aa-165f-4224-bb07-cb106d963daf",
+          "startedAt": 1790513219151,
+          "expiresAt": 1790513221568
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "e588ae4f-e04c-4149-8c40-e7ad51c18982",
+          "startedAt": 1790513220266,
+          "expiresAt": 1790513222683
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "934b3946-49ac-4fae-a8cb-191cf3636a20",
+          "startedAt": 1790513221138,
+          "expiresAt": 1790513223554
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-018-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-019-2-green.png",
+      "at": "2026-09-27T12:47:01.745Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "e588ae4f-e04c-4149-8c40-e7ad51c18982",
+          "startedAt": 1790513220266,
+          "expiresAt": 1790513222683
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "934b3946-49ac-4fae-a8cb-191cf3636a20",
+          "startedAt": 1790513221138,
+          "expiresAt": 1790513223554
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-019-2-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-020-4-green.png",
+      "at": "2026-09-27T12:47:02.575Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "e588ae4f-e04c-4149-8c40-e7ad51c18982",
+          "startedAt": 1790513220266,
+          "expiresAt": 1790513222683
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "934b3946-49ac-4fae-a8cb-191cf3636a20",
+          "startedAt": 1790513221138,
+          "expiresAt": 1790513223554
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "ca10a685-d6a4-4e9b-9014-34a725e6da02",
+          "startedAt": 1790513222277,
+          "expiresAt": 1790513223881
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "03feb2b9-b248-411b-b3f8-e2976cc716d6",
+          "startedAt": 1790513222343,
+          "expiresAt": 1790513223947
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-020-4-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-021-5-green.png",
+      "at": "2026-09-27T12:47:02.897Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "requestId": "e588ae4f-e04c-4149-8c40-e7ad51c18982",
+          "startedAt": 1790513220266,
+          "expiresAt": 1790513222683
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "934b3946-49ac-4fae-a8cb-191cf3636a20",
+          "startedAt": 1790513221138,
+          "expiresAt": 1790513223554
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "ca10a685-d6a4-4e9b-9014-34a725e6da02",
+          "startedAt": 1790513222277,
+          "expiresAt": 1790513223881
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "03feb2b9-b248-411b-b3f8-e2976cc716d6",
+          "startedAt": 1790513222343,
+          "expiresAt": 1790513223947
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "9dc6b162-2341-4540-97d3-1fe54cae7c4c",
+          "startedAt": 1790513222428,
+          "expiresAt": 1790513224032
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-021-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-022-4-green.png",
+      "at": "2026-09-27T12:47:03.166Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "requestId": "934b3946-49ac-4fae-a8cb-191cf3636a20",
+          "startedAt": 1790513221138,
+          "expiresAt": 1790513223554
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "ca10a685-d6a4-4e9b-9014-34a725e6da02",
+          "startedAt": 1790513222277,
+          "expiresAt": 1790513223881
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "03feb2b9-b248-411b-b3f8-e2976cc716d6",
+          "startedAt": 1790513222343,
+          "expiresAt": 1790513223947
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "9dc6b162-2341-4540-97d3-1fe54cae7c4c",
+          "startedAt": 1790513222428,
+          "expiresAt": 1790513224032
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-022-4-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-023-3-green.png",
+      "at": "2026-09-27T12:47:03.744Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "ca10a685-d6a4-4e9b-9014-34a725e6da02",
+          "startedAt": 1790513222277,
+          "expiresAt": 1790513223881
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "03feb2b9-b248-411b-b3f8-e2976cc716d6",
+          "startedAt": 1790513222343,
+          "expiresAt": 1790513223947
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "9dc6b162-2341-4540-97d3-1fe54cae7c4c",
+          "startedAt": 1790513222428,
+          "expiresAt": 1790513224032
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-023-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-024-2-green.png",
+      "at": "2026-09-27T12:47:07.810Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "8673f719-446c-4c5d-b581-8da7d39381c1",
+          "startedAt": 1790513227525,
+          "expiresAt": 1790513229129
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "bb37cf40-aeae-4028-a1f2-a7e3b5e15090",
+          "startedAt": 1790513227583,
+          "expiresAt": 1790513229187
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-024-2-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-025-3-green.png",
+      "at": "2026-09-27T12:47:08.094Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "8673f719-446c-4c5d-b581-8da7d39381c1",
+          "startedAt": 1790513227525,
+          "expiresAt": 1790513229129
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "bb37cf40-aeae-4028-a1f2-a7e3b5e15090",
+          "startedAt": 1790513227583,
+          "expiresAt": 1790513229187
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "946c1a66-6f18-4312-a19e-0dec40dbd4d2",
+          "startedAt": 1790513227642,
+          "expiresAt": 1790513229247
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-025-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-026-4-green.png",
+      "at": "2026-09-27T12:47:09.197Z",
+      "edges": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.status",
+          "requestId": "8673f719-446c-4c5d-b581-8da7d39381c1",
+          "startedAt": 1790513227525,
+          "expiresAt": 1790513229129
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.status",
+          "requestId": "bb37cf40-aeae-4028-a1f2-a7e3b5e15090",
+          "startedAt": 1790513227583,
+          "expiresAt": 1790513229187
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.status",
+          "requestId": "946c1a66-6f18-4312-a19e-0dec40dbd4d2",
+          "startedAt": 1790513227642,
+          "expiresAt": 1790513229247
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.status",
+          "requestId": "3b837941-38d9-49a8-a264-63f1bd0c9d23",
+          "startedAt": 1790513229022,
+          "expiresAt": 1790513230628
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-026-4-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-027-3-green.png",
+      "at": "2026-09-27T12:47:09.468Z",
+      "edges": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.status",
+          "requestId": "3b837941-38d9-49a8-a264-63f1bd0c9d23",
+          "startedAt": 1790513229022,
+          "expiresAt": 1790513230628
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.status",
+          "requestId": "b78cd5dc-d86f-4e90-8cac-ae811fdad1eb",
+          "startedAt": 1790513229185,
+          "expiresAt": 1790513230792
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.status",
+          "requestId": "f5e29bd4-1f91-4b06-b6c9-9642fdd04d09",
+          "startedAt": 1790513229250,
+          "expiresAt": 1790513230857
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-027-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-028-6-green.png",
+      "at": "2026-09-27T12:47:10.925Z",
+      "edges": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.transcript",
+          "requestId": "7fa19e5a-5666-403a-9935-cbf8c59dc73a",
+          "startedAt": 1790513229318,
+          "expiresAt": 1790513230921
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.transcript",
+          "requestId": "28c21369-a38a-4301-aa6e-0616849da953",
+          "startedAt": 1790513229457,
+          "expiresAt": 1790513231061
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.transcript",
+          "requestId": "22a4fab6-08d8-4d04-b70d-8d50b3869a8c",
+          "startedAt": 1790513229528,
+          "expiresAt": 1790513231131
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "requestId": "4a247559-29b0-43a7-a796-cb18d91623a3",
+          "startedAt": 1790513230602,
+          "expiresAt": 1790513233020
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "requestId": "d840dbb6-af68-4da8-9645-a289eb4b94aa",
+          "startedAt": 1790513230623,
+          "expiresAt": 1790513233041
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "requestId": "f5f152c7-08e0-4644-a92c-9769f5b3a183",
+          "startedAt": 1790513230646,
+          "expiresAt": 1790513233064
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-028-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-029-5-green.png",
+      "at": "2026-09-27T12:47:11.404Z",
+      "edges": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.transcript",
+          "requestId": "06a89286-1e72-44ce-b075-084bef1c14b0",
+          "startedAt": 1790513230907,
+          "expiresAt": 1790513232510
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "requestId": "4a247559-29b0-43a7-a796-cb18d91623a3",
+          "startedAt": 1790513230602,
+          "expiresAt": 1790513233020
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "requestId": "d840dbb6-af68-4da8-9645-a289eb4b94aa",
+          "startedAt": 1790513230623,
+          "expiresAt": 1790513233041
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "requestId": "f5f152c7-08e0-4644-a92c-9769f5b3a183",
+          "startedAt": 1790513230646,
+          "expiresAt": 1790513233064
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.transcript",
+          "requestId": "457178bc-8b7a-406e-aaba-f1144d6cbb1b",
+          "startedAt": 1790513231068,
+          "expiresAt": 1790513232671
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-029-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-030-6-green.png",
+      "at": "2026-09-27T12:47:11.670Z",
+      "edges": [
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zavg_x6wix7",
+          "command": "session.transcript",
+          "requestId": "06a89286-1e72-44ce-b075-084bef1c14b0",
+          "startedAt": 1790513230907,
+          "expiresAt": 1790513232510
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "requestId": "4a247559-29b0-43a7-a796-cb18d91623a3",
+          "startedAt": 1790513230602,
+          "expiresAt": 1790513233020
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "requestId": "d840dbb6-af68-4da8-9645-a289eb4b94aa",
+          "startedAt": 1790513230623,
+          "expiresAt": 1790513233041
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "requestId": "f5f152c7-08e0-4644-a92c-9769f5b3a183",
+          "startedAt": 1790513230646,
+          "expiresAt": 1790513233064
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.transcript",
+          "requestId": "457178bc-8b7a-406e-aaba-f1144d6cbb1b",
+          "startedAt": 1790513231068,
+          "expiresAt": 1790513232671
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.transcript",
+          "requestId": "47f49abf-3d11-4235-8d31-e8ca32653a65",
+          "startedAt": 1790513231391,
+          "expiresAt": 1790513232996
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-030-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-031-5-green.png",
+      "at": "2026-09-27T12:47:12.746Z",
+      "edges": [
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "requestId": "4a247559-29b0-43a7-a796-cb18d91623a3",
+          "startedAt": 1790513230602,
+          "expiresAt": 1790513233020
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "requestId": "d840dbb6-af68-4da8-9645-a289eb4b94aa",
+          "startedAt": 1790513230623,
+          "expiresAt": 1790513233041
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "requestId": "f5f152c7-08e0-4644-a92c-9769f5b3a183",
+          "startedAt": 1790513230646,
+          "expiresAt": 1790513233064
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zbvh_y42qhc",
+          "command": "session.transcript",
+          "requestId": "457178bc-8b7a-406e-aaba-f1144d6cbb1b",
+          "startedAt": 1790513231068,
+          "expiresAt": 1790513232671
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.transcript",
+          "requestId": "47f49abf-3d11-4235-8d31-e8ca32653a65",
+          "startedAt": 1790513231391,
+          "expiresAt": 1790513232996
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-031-5-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-032-4-green.png",
+      "at": "2026-09-27T12:47:13.140Z",
+      "edges": [
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "requestId": "4a247559-29b0-43a7-a796-cb18d91623a3",
+          "startedAt": 1790513230602,
+          "expiresAt": 1790513233020
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "requestId": "d840dbb6-af68-4da8-9645-a289eb4b94aa",
+          "startedAt": 1790513230623,
+          "expiresAt": 1790513233041
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "requestId": "f5f152c7-08e0-4644-a92c-9769f5b3a183",
+          "startedAt": 1790513230646,
+          "expiresAt": 1790513233064
+        },
+        {
+          "managerId": "s_muj728rq_x1ukbj",
+          "employeeId": "s_muj7zcla_iioznx",
+          "command": "session.transcript",
+          "requestId": "47f49abf-3d11-4235-8d31-e8ca32653a65",
+          "startedAt": 1790513231391,
+          "expiresAt": 1790513232996
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "afterSvg": [],
+      "arrows": [],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-032-4-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-033-3-green.png",
+      "at": "2026-09-27T12:47:15.838Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.transcript",
+          "requestId": "54b91fd1-395a-4ee9-8993-ad081321647e",
+          "startedAt": 1790513235139,
+          "expiresAt": 1790513236743
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.transcript",
+          "requestId": "65126e92-1c58-47cb-9671-7bc60aa0967d",
+          "startedAt": 1790513235200,
+          "expiresAt": 1790513236804
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.transcript",
+          "requestId": "b6b52bf8-0d0d-440d-8c3d-585b89f2c700",
+          "startedAt": 1790513235261,
+          "expiresAt": 1790513236865
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-033-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-034-9-green.png",
+      "at": "2026-09-27T12:47:26.242Z",
+      "edges": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.transcript",
+          "requestId": "54b91fd1-395a-4ee9-8993-ad081321647e",
+          "startedAt": 1790513235139,
+          "expiresAt": 1790513236743
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.transcript",
+          "requestId": "65126e92-1c58-47cb-9671-7bc60aa0967d",
+          "startedAt": 1790513235200,
+          "expiresAt": 1790513236804
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.transcript",
+          "requestId": "b6b52bf8-0d0d-440d-8c3d-585b89f2c700",
+          "startedAt": 1790513235261,
+          "expiresAt": 1790513236865
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.follow",
+          "requestId": "d2572b08-96c4-4a42-a745-6e798d16eb71",
+          "startedAt": 1790513235462
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.follow",
+          "requestId": "b20668de-8838-4894-aa6f-c12cb9b79a10",
+          "startedAt": 1790513235476
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.follow",
+          "requestId": "c6b9f272-cec0-459b-b5d8-4837e3832bdc",
+          "startedAt": 1790513235504
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "requestId": "b8508266-ec01-4100-83b9-f8144a79e186",
+          "startedAt": 1790513235514,
+          "expiresAt": 1790513237969
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "requestId": "caa409e6-c615-4bdc-8c75-3500e5a24f35",
+          "startedAt": 1790513235658,
+          "expiresAt": 1790513238112
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "requestId": "7ed60dff-dacd-468d-bd3d-b8067f2bc01c",
+          "startedAt": 1790513235756,
+          "expiresAt": 1790513238211
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-034-9-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-035-6-green.png",
+      "at": "2026-09-27T12:47:26.815Z",
+      "edges": [
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.follow",
+          "requestId": "d2572b08-96c4-4a42-a745-6e798d16eb71",
+          "startedAt": 1790513235462
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.follow",
+          "requestId": "b20668de-8838-4894-aa6f-c12cb9b79a10",
+          "startedAt": 1790513235476
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.follow",
+          "requestId": "c6b9f272-cec0-459b-b5d8-4837e3832bdc",
+          "startedAt": 1790513235504
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.follow",
+          "requestId": "9f695fdf-fbb6-42b2-bf41-b3d836aca974",
+          "startedAt": 1790513246021
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.follow",
+          "requestId": "0557d2d0-6287-456e-bde3-829162da1d8e",
+          "startedAt": 1790513246083
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.follow",
+          "requestId": "8d8b3a28-be8a-4ef2-9c64-28fff20fa45c",
+          "startedAt": 1790513246128
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-035-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-036-8-green.png",
+      "at": "2026-09-27T12:47:37.624Z",
+      "edges": [
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.follow",
+          "requestId": "d2572b08-96c4-4a42-a745-6e798d16eb71",
+          "startedAt": 1790513235462
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.follow",
+          "requestId": "b20668de-8838-4894-aa6f-c12cb9b79a10",
+          "startedAt": 1790513235476
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.follow",
+          "requestId": "9f695fdf-fbb6-42b2-bf41-b3d836aca974",
+          "startedAt": 1790513246021,
+          "expiresAt": 1790513258385
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.follow",
+          "requestId": "0557d2d0-6287-456e-bde3-829162da1d8e",
+          "startedAt": 1790513246083,
+          "expiresAt": 1790513258398
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.follow",
+          "requestId": "8d8b3a28-be8a-4ef2-9c64-28fff20fa45c",
+          "startedAt": 1790513246128
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "a95cfcf7-ba33-4c84-b0f6-cdd7ef6eda3c",
+          "startedAt": 1790513256668
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlej_iay2mp",
+          "command": "session.follow",
+          "requestId": "019866ab-fb37-43d0-b1af-7f328eeecec6",
+          "startedAt": 1790513256774
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zljw_rf4v7f",
+          "command": "session.follow",
+          "requestId": "d30834e5-265f-4321-9dcf-b400de83c955",
+          "startedAt": 1790513256861
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-036-8-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-037-6-green.png",
+      "at": "2026-09-27T12:47:41.325Z",
+      "edges": [
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.follow",
+          "requestId": "d2572b08-96c4-4a42-a745-6e798d16eb71",
+          "startedAt": 1790513235462
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.follow",
+          "requestId": "b20668de-8838-4894-aa6f-c12cb9b79a10",
+          "startedAt": 1790513235476
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.follow",
+          "requestId": "8d8b3a28-be8a-4ef2-9c64-28fff20fa45c",
+          "startedAt": 1790513246128
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "a95cfcf7-ba33-4c84-b0f6-cdd7ef6eda3c",
+          "startedAt": 1790513256668
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlej_iay2mp",
+          "command": "session.follow",
+          "requestId": "019866ab-fb37-43d0-b1af-7f328eeecec6",
+          "startedAt": 1790513256774
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zljw_rf4v7f",
+          "command": "session.follow",
+          "requestId": "d30834e5-265f-4321-9dcf-b400de83c955",
+          "startedAt": 1790513256861
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-037-6-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-038-3-green.png",
+      "at": "2026-09-27T12:47:44.557Z",
+      "edges": [
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "a95cfcf7-ba33-4c84-b0f6-cdd7ef6eda3c",
+          "startedAt": 1790513256668
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlej_iay2mp",
+          "command": "session.follow",
+          "requestId": "019866ab-fb37-43d0-b1af-7f328eeecec6",
+          "startedAt": 1790513256774
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zljw_rf4v7f",
+          "command": "session.follow",
+          "requestId": "d30834e5-265f-4321-9dcf-b400de83c955",
+          "startedAt": 1790513256861,
+          "expiresAt": 1790513265896
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-038-3-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-039-2-green.png",
+      "at": "2026-09-27T12:47:47.092Z",
+      "edges": [
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlh0_3xpyto",
+          "command": "session.follow",
+          "requestId": "a95cfcf7-ba33-4c84-b0f6-cdd7ef6eda3c",
+          "startedAt": 1790513256668,
+          "expiresAt": 1790513265931
+        },
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlej_iay2mp",
+          "command": "session.follow",
+          "requestId": "019866ab-fb37-43d0-b1af-7f328eeecec6",
+          "startedAt": 1790513256774
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工B",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-039-2-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    },
+    {
+      "file": "live-040-4-green.png",
+      "at": "2026-09-27T12:47:47.504Z",
+      "edges": [
+        {
+          "managerId": "s_muj729fz_uef975",
+          "employeeId": "s_muj7zlej_iay2mp",
+          "command": "session.follow",
+          "requestId": "019866ab-fb37-43d0-b1af-7f328eeecec6",
+          "startedAt": 1790513256774
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.follow",
+          "requestId": "918a681e-88d2-433e-9135-dba1ba7e6538",
+          "startedAt": 1790513267025,
+          "expiresAt": 1790513268667
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.follow",
+          "requestId": "9f672fd8-08de-4b52-b7f8-750f180a4156",
+          "startedAt": 1790513267041,
+          "expiresAt": 1790513268678
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.follow",
+          "requestId": "3e248ef0-c9b6-40bf-8daa-58fd1143e9eb",
+          "startedAt": 1790513267058,
+          "expiresAt": 1790513268686
+        }
+      ],
+      "beforeSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "afterSvg": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C",
+          "visible": true
+        }
+      ],
+      "arrows": [
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        },
+        {
+          "tag": "path",
+          "cls": "management-arrow",
+          "text": "",
+          "visible": true
+        }
+      ],
+      "shot": {
+        "path": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/实时绿线-方向箭头-封面/live-040-4-green.png",
+        "width": 2336,
+        "height": 2168,
+        "privacy": true
+      }
+    }
+  ],
+  "attempted": true,
+  "sent": {
+    "sent": true,
+    "messageId": "s_mujtc16t_iqr6ic"
+  },
+  "completedAt": "2026-09-27T12:48:05.855Z",
+  "maxSimultaneous": 9,
+  "layoutPreserved": true,
+  "pending": false
+}

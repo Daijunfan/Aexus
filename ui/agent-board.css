@@ -1,0 +1,130 @@
+#detail.agent-workbench,.agent-workbench{display:block!important;overflow-x:hidden!important;overflow-y:auto!important;background:#f0f4f9;padding:12px!important;min-width:0;min-height:0;box-sizing:border-box}
+.agent-board,.agent-grid{min-width:0;width:100%;box-sizing:border-box}
+.agent-heading{flex-wrap:wrap!important;position:sticky;top:-12px;background:#f0f4f9;z-index:2;padding:8px 0 10px;margin-bottom:0!important}
+.agent-heading>div{min-width:165px!important}.agent-heading>button{white-space:nowrap}.agent-count{font-size:11px;color:#61758d;white-space:nowrap}
+.agent-columns{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:11px;color:#526781;margin:0}
+.agent-columns select{font-size:11px;padding:6px;margin:0;width:auto;min-width:68px}
+.agent-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;color:#718399;font-size:11px;padding:3px 0 12px}
+.agent-legend>span{display:flex;gap:6px;align-items:center;min-width:0;flex:none}.agent-legend>span>span{white-space:nowrap}.agent-legend>span:last-child{margin-left:auto}.agent-legend .os-icon{width:18px;height:18px;background:transparent;padding:0}.agent-legend .agent-cloud{width:22px;height:18px}
+.agent-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))!important;align-items:stretch!important;align-content:start;overflow:visible;gap:12px}.agent-grid:not(.loaded):empty::before{content:'正在读取工作主机…'}
+.agent-role-grid .aexus-role{display:flex;flex-direction:column;gap:6px;width:100%;height:148px;min-width:0;max-width:220px;box-sizing:border-box;overflow:hidden;text-align:left;border:1px solid #9dbbb7;border-radius:9px;background:#fafffe;color:#2b5054;box-shadow:0 1px 4px #253b5510;padding:9px;cursor:pointer;font:11px/1.4 system-ui}
+.agent-role-grid .aexus-role:hover{background:#f2faf7;border-color:#6aa39b}
+.agent-role-grid .aexus-role:focus-visible{outline:2px solid #5f9b8a;outline-offset:-2px}
+.agent-role-grid .aexus-role .agent-origin{font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.agent-role-grid .aexus-role .agent-role-status i{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:#abb6c3}
+.agent-role-grid .aexus-role .agent-role-status i.is-busy{background:#698fce}
+.agent-role-grid .aexus-role .agent-role-status i.is-online{background:#459477}
+.agent-host-card{display:flex;flex-direction:column;min-width:0;overflow:hidden;background:#fff}
+.agent-host-card .board-card-top{flex:none;flex-wrap:nowrap;align-items:center;gap:5px;padding:9px 10px;border-bottom:1px solid #e7edf5}
+.agent-host-card .board-handle{flex:1 1 0;min-width:0}.agent-host-card .board-handle>.os-icon{width:28px;height:28px;flex:0 0 28px}
+.agent-host-card .board-handle strong{font-size:13px}.agent-host-card .board-handle>div>span:not(.os-icon):not(.drag-grip){font-size:10px;color:#7b8ea3;font-weight:400}
+.agent-host-card .board-card-top>button{font-size:15px;padding:3px 5px;flex:none}
+.agent-host-card .board-card-footer{height:auto;min-height:35px;padding:7px 10px;gap:6px;flex-wrap:wrap;flex:none;box-sizing:border-box}
+.agent-host-card .board-card-footer>span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:10px}.agent-host-card .board-card-footer>button{font-size:10px;white-space:nowrap}
+/* One compact Agent rectangle per session. Host panel scrolling is vertical. */
+.agent-role-viewport{height:270px;flex:none;min-width:0;max-width:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#a7b9ce #f0f4f9;background:#f6f8fc;box-sizing:border-box}
+.agent-role-viewport:focus-visible{outline:2px solid #7899ca;outline-offset:-2px}
+.agent-role-viewport::-webkit-scrollbar{width:10px;height:10px;background:#eef2f8}
+.agent-role-viewport::-webkit-scrollbar-thumb{background:#afc1d6;border:2px solid #eef2f8;border-radius:8px}
+.agent-role-viewport::-webkit-scrollbar-corner{background:#eef2f8}
+.agent-role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,176px),1fr));width:100%;min-width:0;min-height:100%;align-content:start;align-items:start;gap:12px;padding:12px;box-sizing:border-box}
+.agent-role{display:flex;flex-direction:column;gap:6px;width:100%;height:148px;min-width:0;max-width:220px;box-sizing:border-box;overflow:hidden;text-align:left;border:1px solid #dce4ef;border-radius:9px;background:#fff;color:#2c435c;box-shadow:0 1px 4px #253b5510;padding:9px;cursor:pointer;font:11px/1.4 system-ui;transition:border-color .14s,box-shadow .14s,background .14s}
+.agent-role:hover{border-color:#9cb7dc;background:#fbfdff;box-shadow:0 3px 11px #29486b20}.agent-role:focus-visible{outline:2px solid #729bcf;outline-offset:-2px}
+.agent-role-top{display:flex;align-items:center;gap:6px;flex:0 0 32px;height:32px;min-height:32px;min-width:0;justify-content:space-between;overflow:visible}
+.agent-role-kind{font-size:9px;font-weight:550;letter-spacing:.16px;color:#8292a8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agent-engine-native{width:31px;height:31px;min-width:31px;min-height:31px;max-width:31px;max-height:31px;flex:0 0 31px;object-fit:contain;object-position:center;display:block;overflow:visible}
+.agent-role-name{font-size:12px;font-weight:650;color:#2c425c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;width:100%;line-height:1.4}
+.agent-role-status{display:flex;gap:5px;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#7c8ca0}
+.agent-role-status i{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:#abb6c3}.agent-role-status .is-online{background:#459477}.agent-role-status .is-busy{background:#698fce}.agent-role-status .is-error{background:#bd7569}
+.agent-origin{display:flex;align-items:center;min-width:0;max-width:100%;gap:6px;margin-top:auto;padding-top:5px;border-top:1px solid #eef2f7;color:#7e9abb}
+.agent-origin>.os-icon{width:19px;height:19px;flex:0 0 19px;background:transparent;padding:1px;box-sizing:border-box}
+.agent-origin .agent-cloud{width:21px;height:17px;flex:0 0 21px;color:#7296bb}
+.agent-origin>span{flex:1;min-width:0;overflow:hidden}.agent-origin small{display:block;font-size:9px;font-weight:400;line-height:1.3;color:#8998ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-origin strong{display:block;font-size:10px;font-weight:650;line-height:1.45;color:#607c9a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.agent-origin.is-local strong{color:#526b81}
+.agent-host-empty{grid-column:1/-1;min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:18px;box-sizing:border-box;color:#8294aa}.agent-host-empty>span{font-size:12px}.agent-host-empty>small{font-size:10px;line-height:1.6}
+.agent-role-resize{flex:none;height:9px;cursor:ns-resize;border-top:1px solid #e5ebf4;background:#f7f9fd;position:relative;touch-action:none}
+.agent-role-resize::after{content:'';position:absolute;left:35%;right:35%;top:3px;height:2px;border-radius:2px;background:#b8c5d6}
+.agent-role-resize:hover::after,.agent-role-resize:focus-visible::after{background:#638dbf}
+.agent-role-resize:focus-visible{outline:2px solid #7e9fcc;outline-offset:-2px}
+.agent-session-surface{overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;scrollbar-color:#7d90a7 #233247}
+.agent-session-hscroll{width:100%;min-width:850px;height:100%;box-sizing:border-box}.agent-session-hscroll>.xterm{height:100%;min-width:0}
+@media(max-width:650px){.agent-role-grid{padding:8px;gap:9px}.agent-host-card .board-card-top{padding:7px}.agent-host-card .board-handle>.os-icon{width:24px;height:24px;flex-basis:24px}}
+@media(prefers-reduced-motion:reduce){.agent-role{transition:none}}
+
+.agent-dialog{border:1px solid #d9e3ef;border-radius:14px;box-shadow:0 24px 80px #1b304d40;padding:0;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);box-sizing:border-box;background:#fff;color:#334b64;font:13px/1.5 system-ui;overflow-x:hidden;overflow-y:auto}
+.agent-dialog::backdrop{background:#14243765}.agent-dialog[open]{display:flex;flex-direction:column}.agent-dialog [hidden]{display:none!important}
+.agent-dialog>header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:18px 20px;border-bottom:1px solid #e7edf4;flex:none}.agent-dialog>header>div{flex:1;min-width:0}.agent-dialog h2{font-size:18px;margin:0 0 4px;font-weight:650;overflow-wrap:anywhere}.agent-dialog header p{font-size:11px;color:#7a8da3;overflow-wrap:anywhere;margin:0}.agent-dialog button{font:12px system-ui;cursor:pointer}.agent-dialog button:disabled{cursor:default}
+.agent-dialog [data-close]{padding:4px 9px}.agent-dialog header>[data-close]{border:0;font-size:21px;color:#8291a4;background:transparent}.agent-dialog footer{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 20px;border-top:1px solid #e7edf4;flex:none;min-width:0}
+.agent-create-dialog{width:660px}.agent-create{margin:0}.agent-create-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;padding:18px 20px 4px}.agent-create-grid label{margin:0;min-width:0;font-size:11px;color:#647b94}.agent-create-grid input,.agent-create-grid select{width:100%;min-width:0;font:12px system-ui;padding:9px 10px;margin-top:6px!important;box-sizing:border-box}.agent-create-directory,.agent-permission{grid-column:1/-1}
+.agent-route-preview{margin:12px 20px 0;padding:9px 12px;border-radius:7px;background:#eff4fa;color:#5e7998;font-size:11px;overflow-wrap:anywhere}#agent-engine-status{font-size:11px;line-height:1.8;color:#74889e;margin:10px 20px 18px;overflow-wrap:anywhere}
+.agent-inspector{width:1060px;height:min(790px,calc(100vh - 32px));overflow:hidden}.agent-inspector>header{padding:12px 18px}.agent-inspector .agent-session-meta{display:flex;align-items:center;gap:18px;padding:9px 18px;border-bottom:1px solid #e9eef5;flex:none;min-width:0;font-size:11px;color:#8b9aac}.agent-session-meta .agent-origin{margin:0;border:0;padding:0;flex:none;max-width:35%}.agent-session-meta>span:last-child{min-width:0;overflow-wrap:anywhere;max-height:46px;overflow-y:auto}.agent-session-meta code{color:#687f97;font-size:11px}.agent-inspector>footer{padding:9px 16px}.agent-view-note{margin-right:auto;color:#8a9aaf;font-size:10px;min-width:0;overflow-wrap:anywhere}
+.agent-tui-notice{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:9px 17px;background:#f2f6fb;border-bottom:1px solid #e1e9f3;color:#5c7896;font-size:11px;flex:none;flex-wrap:wrap}
+.agent-tui-notice button,.agent-connect-panel>button{border:1px solid #ccdbed;border-radius:7px;background:#fff;color:#436c99;padding:6px 11px;font-size:11px;cursor:pointer}
+.agent-connect-panel details{margin-top:15px;text-align:left;color:#8b9cb0;font-size:10px}
+.agent-connect-panel pre{white-space:pre-wrap;overflow-wrap:anywhere;font:10px/1.5 ui-monospace,monospace;max-height:130px;overflow:auto}
+.agent-connect-panel>button{margin-top:8px}
+.agent-rename{display:flex;gap:8px;padding:9px 18px;background:#f7faff;flex:none}.agent-rename input{min-width:0;flex:1}.agent-session-view{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;position:relative;overflow:hidden}.agent-stopped{margin:auto;padding:30px;text-align:center;color:#7f91a8;max-width:90%;overflow-wrap:anywhere}.agent-stopped h3{font-size:17px;font-weight:550}.agent-stopped p{font-size:12px;line-height:1.8}
+.agent-session-surface{flex:1;min-height:0;min-width:0;overflow:hidden;background:#151d29;padding:10px 12px;box-sizing:border-box}.agent-session-surface .xterm{height:100%;min-width:0}.agent-card-foot{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;padding:6px 12px;background:#edf2f8;flex:none;font-size:11px;color:#647d99}.agent-card-foot>div{display:flex;gap:4px}.agent-card-foot button{font-size:10px;padding:4px 7px;background:transparent;border:0;color:#607992}.agent-card-state{min-width:0;overflow-wrap:anywhere}
+.agent-card-search{display:flex;gap:5px;align-items:center;padding:7px 12px;background:#edf2f8;flex:none}.agent-card-search input{min-width:0;flex:1;padding:6px;font-size:11px}.agent-card-search span{font-size:10px;color:#a27268}.agent-card-search button{padding:4px 7px}
+.agent-conversation-log{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:18px 22px;background:#fafcff;scrollbar-gutter:stable}.agent-conversation-log:empty::before{content:'会话已连接。发送任务后，原生工具会直接在所选工作主机执行。';display:block;color:#98a7b8;font-size:12px;text-align:center;padding:45px 15px;line-height:1.8}
+.agent-event{margin:0 0 15px;padding:0 0 12px;border-bottom:1px solid #e8eef6;min-width:0}.agent-event>small{font-size:10px;font-weight:600;color:#6c829d}.agent-event>pre{font:12px/1.75 system-ui;white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;color:#3d526d}.agent-event.is-tool{padding:10px 12px;background:#edf3f9;border:1px solid #e0e8f2;border-radius:7px}.agent-event.is-tool>pre{font:11px/1.65 ui-monospace,monospace}.agent-event.is-user{padding:12px 15px;background:#f0f5fc;border-radius:8px;border:0}.agent-event.is-user>small{color:#4f75a3}.agent-event.is-error>pre{color:#a56559}
+.agent-compose{padding:10px 16px;border-top:1px solid #e3ebf5;flex:none;margin:0;background:#fff}.agent-compose textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:55px;max-height:160px;font:12px/1.6 system-ui;padding:9px 11px;border:1px solid #d7e1ee;border-radius:8px;color:#38516e;outline-color:#99b3d6}.agent-compose>div{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:7px}.agent-send-state{font-size:10px;color:#8a9aaf;flex:1;min-width:0;overflow-wrap:anywhere}.agent-compose button{font-size:11px;padding:6px 12px}
+.agent-approvals{flex:none;max-height:35%;overflow-y:auto;overflow-x:hidden;padding:0 16px;background:#fffaf1}.agent-approval{padding:12px 0;margin:0;color:#816b42}.agent-approval strong{font-size:12px}.agent-approval pre{font:11px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:7px 0;max-height:110px;overflow-y:auto}.agent-approval-buttons{display:flex;gap:6px;flex-wrap:wrap}.agent-approval-buttons button{padding:6px 10px;font-size:11px}.agent-approval-fields label{font-size:11px;margin:8px 0}.agent-approval-fields input{width:100%;box-sizing:border-box;margin-top:5px;padding:7px;font-size:11px}.agent-jump{position:absolute;right:22px;top:12px;font-size:10px;padding:5px 10px;border:1px solid #d4e1f0;border-radius:20px;background:#fff;color:#547597;box-shadow:0 2px 7px #223c5518}
+@media(max-width:650px){.agent-heading>div{flex-basis:100%!important}.agent-heading p{display:block!important;font-size:11px}.agent-legend>span:last-child{margin-left:0}.agent-dialog>header{padding:12px}.agent-create-grid{grid-template-columns:1fr;padding:14px}.agent-route-preview,#agent-engine-status{margin-left:14px;margin-right:14px}.agent-dialog>footer{padding:9px 12px}.agent-inspector .agent-session-meta{gap:9px;padding:8px 12px}.agent-session-meta .agent-origin{max-width:45%}.agent-view-note{flex-basis:100%}.agent-dialog button{font-size:11px}.agent-dialog{max-width:calc(100vw - 16px)}}
+
+.agent-role-name,.agent-role-status,.agent-origin{flex-shrink:0}.agent-role-kind{max-width:calc(100% - 38px)}
+
+/* Session tiles occupy grid slots; visual swapping does not change work hosts. */
+.agent-role .agent-role-kind{font-size:9px;line-height:1.3}
+.agent-role .agent-role-name{font-size:12px;line-height:1.4}
+.agent-role .agent-role-status{font-size:10px;line-height:1.35;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-role .agent-origin{padding-top:4px;margin-top:auto;gap:5px}
+.agent-role .agent-origin .os-icon{width:16px;height:16px;flex-basis:16px}
+.agent-role .agent-origin .agent-cloud{width:18px;height:15px;flex-basis:18px}
+.agent-role-error{font-size:9px;color:#a5564c;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%}
+.agent-recovery-note{flex:none;font:11px/1.5 system-ui;color:#836745;background:#fff7e7;border-bottom:1px solid #eddfc8;padding:8px 18px;overflow-wrap:anywhere}
+.agent-recovery-note code{font-size:10px;color:#6f573a}
+
+[lang="en"] .agent-recovery-zh,[lang="zh-CN"] .agent-recovery-en{display:none}
+
+/* Fixed-position relative slots: drag one Agent onto another to swap the two slots. */
+.agent-host-card{position:relative}
+.agent-role-viewport{touch-action:auto;user-select:auto;cursor:default;scrollbar-width:thin}
+.agent-role-grid{position:relative;background-image:none}
+.agent-role-grid .agent-role{position:static;cursor:grab;touch-action:auto;will-change:auto}
+.agent-role-grid .agent-role:active{cursor:grabbing!important}
+.agent-role-grid .agent-moving{opacity:.62;box-shadow:0 4px 16px #315c8444}
+.agent-role-grid .agent-swap-target{outline:2px solid #6d9cda;outline-offset:-3px;background:#ecf3fd!important}
+.agent-role-grid .agent-host-empty{position:static;grid-column:1/-1}
+.agent-vertical-track{position:absolute;z-index:4;right:2px;width:12px;background:#e9f0f8b0;border:1px solid #d5e2f0;cursor:pointer;border-radius:7px;touch-action:none}
+.agent-vertical-track[hidden]{display:none!important}
+.agent-vertical-thumb{position:absolute;left:1px;right:1px;top:0;border-radius:5px;background:#9fb4d0;border:1px solid #7b9bca;cursor:grab;touch-action:none}
+.agent-vertical-track:hover .agent-vertical-thumb{background:#789dc7;cursor:grab}
+.agent-vertical-track.dragging,.agent-vertical-track.dragging .agent-vertical-thumb{cursor:grabbing;background:#628abd}
+.agent-vertical-track:focus-visible{outline:2px solid #497db6;outline-offset:1px}
+
+/* The global macOS icon rule uses a 22x24px image even in the 16px Agent
+   footer. Contain all operating-system badges inside their own box instead
+   of clipping the Apple silhouette at the card edge. */
+.agent-role-grid .agent-origin>.os-icon,
+.agent-inspector .agent-session-meta .agent-origin>.os-icon{
+ width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;
+ flex:0 0 22px!important;padding:1px!important;box-sizing:border-box;
+ background:transparent!important;overflow:visible!important;
+ display:inline-flex!important;align-items:center;justify-content:center;
+}
+.agent-role-grid .agent-origin>.os-icon img,
+.agent-inspector .agent-session-meta .agent-origin>.os-icon img{
+ width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;object-position:center!important;display:block!important;
+}
+.agent-role-grid .agent-origin>.agent-cloud{width:22px!important;height:17px!important;flex:0 0 22px!important}
+.agent-role-grid .agent-origin>span:last-child{flex:1;min-width:0;overflow:hidden}
+.agent-vertical-track{cursor:grab!important}
+.agent-vertical-track:active,.agent-vertical-track.dragging{cursor:grabbing!important}
+
+/* Responsive auto-fill is controlled by the actual host panel width above. */
+.agent-role-grid .agent-role-error{display:block;flex:0 0 auto;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-role-grid .agent-origin>span:last-child{min-width:0;max-width:calc(100% - 25px)}
+
+.agent-group-empty{padding:30px;text-align:center;color:#8294aa}

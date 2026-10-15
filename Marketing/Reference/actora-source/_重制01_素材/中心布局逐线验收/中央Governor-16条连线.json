@@ -1,0 +1,326 @@
+{
+  "checkedAt": "2026-09-27T02:41:36.154Z",
+  "count": 16,
+  "lines": [
+    {
+      "imageFile": "中央Governor-16条连线-01-星火-阿蓝.png",
+      "number": 1,
+      "id": "created-poster-manager-0",
+      "from": "星火",
+      "to": "阿蓝",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-02-阿蓝-前端开发.png",
+      "number": 2,
+      "id": "created-poster-employee-0-0",
+      "from": "阿蓝",
+      "to": "前端开发",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-03-阿蓝-接口服务.png",
+      "number": 3,
+      "id": "created-poster-employee-0-1",
+      "from": "阿蓝",
+      "to": "接口服务",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 1,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-04-阿蓝-代码审查.png",
+      "number": 4,
+      "id": "created-poster-employee-0-2",
+      "from": "阿蓝",
+      "to": "代码审查",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-05-星火-阿白.png",
+      "number": 5,
+      "id": "created-poster-manager-1",
+      "from": "星火",
+      "to": "阿白",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-06-阿白-自动化测试.png",
+      "number": 6,
+      "id": "created-poster-employee-1-0",
+      "from": "阿白",
+      "to": "自动化测试",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-07-阿白-兼容检查.png",
+      "number": 7,
+      "id": "created-poster-employee-1-1",
+      "from": "阿白",
+      "to": "兼容检查",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 1,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-08-阿白-体验评估.png",
+      "number": 8,
+      "id": "created-poster-employee-1-2",
+      "from": "阿白",
+      "to": "体验评估",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-09-星火-阿沐.png",
+      "number": 9,
+      "id": "created-poster-manager-2",
+      "from": "星火",
+      "to": "阿沐",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-10-阿沐-环境巡检.png",
+      "number": 10,
+      "id": "created-poster-employee-2-0",
+      "from": "阿沐",
+      "to": "环境巡检",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-11-阿沐-日志分析.png",
+      "number": 11,
+      "id": "created-poster-employee-2-1",
+      "from": "阿沐",
+      "to": "日志分析",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 1,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-12-阿沐-审查报告.png",
+      "number": 12,
+      "id": "created-poster-employee-2-2",
+      "from": "阿沐",
+      "to": "审查报告",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-13-星火-阿森.png",
+      "number": 13,
+      "id": "created-poster-manager-3",
+      "from": "星火",
+      "to": "阿森",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-14-阿森-资料整理.png",
+      "number": 14,
+      "id": "created-poster-employee-3-0",
+      "from": "阿森",
+      "to": "资料整理",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-15-阿森-文案创作.png",
+      "number": 15,
+      "id": "created-poster-employee-3-1",
+      "from": "阿森",
+      "to": "文案创作",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 1,
+      "status": "PASS"
+    },
+    {
+      "imageFile": "中央Governor-16条连线-16-阿森-设计协作.png",
+      "number": 16,
+      "id": "created-poster-employee-3-2",
+      "from": "阿森",
+      "to": "设计协作",
+      "checks": [
+        "exact source and target docking",
+        "downward head arrow or explicit anchor",
+        "axis-aligned segments with rounded corners",
+        "no employee or header crossings",
+        "no self/inter-line crossings or shared trunks",
+        "continuous Team boundary joins",
+        "no boundary dots",
+        "Core paths equal installed SVG"
+      ],
+      "parts": 1,
+      "segments": 3,
+      "status": "PASS"
+    }
+  ]
+}

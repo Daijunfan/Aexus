@@ -1,15 +1,6 @@
-# CLI manifests and generated Markdown have LF-sensitive contracts on all hosts.
-* text=auto eol=lf
-*.cmd text eol=crlf
-*.bat text eol=crlf
+* text=auto
 *.png binary
-*.jpg binary
-*.jpeg binary
-*.webp binary
-*.gif binary
-*.ico binary
 *.icns binary
-*.woff binary
-*.woff2 binary
-*.ttf binary
-*.wasm binary
+*.ico binary
+*.mp4 binary
+*.gif binary

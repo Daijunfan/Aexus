@@ -1,0 +1,4705 @@
+{
+  "groups": [
+    "Team-Managers",
+    "决策中枢",
+    "Project1",
+    "宣传总部",
+    "Mac 工作站",
+    "Windows 云端组",
+    "Ubuntu 云端一组",
+    "Ubuntu 云端二组",
+    "Kali 云端一组",
+    "Kali 云端二组"
+  ],
+  "rooms": {
+    "Team-Managers": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 1734.3757421132032,
+        "y": 922,
+        "width": 760,
+        "height": 520,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      },
+      "design": {
+        "theme": "amber",
+        "wall": "windows",
+        "desk": "walnut",
+        "pattern": "boards",
+        "plants": true,
+        "shelf": true,
+        "lamp": true,
+        "art": true,
+        "scenery": true,
+        "background": "",
+        "subtitle": "Good things are made together."
+      }
+    },
+    "决策中枢": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 3543.9662910716042,
+        "y": 919.0794979306555,
+        "width": 430,
+        "height": 530,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      },
+      "design": {
+        "theme": "ocean",
+        "pattern": "dots",
+        "scenery": false
+      }
+    },
+    "Project1": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 2601.6905197329015,
+        "y": 923.2837863282421,
+        "width": 760,
+        "height": 520,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      },
+      "design": {
+        "theme": "lavender",
+        "wall": "windows",
+        "desk": "walnut",
+        "pattern": "dots",
+        "plants": true,
+        "shelf": true,
+        "lamp": true,
+        "art": true,
+        "scenery": false,
+        "background": "",
+        "subtitle": "Good things are made together."
+      }
+    },
+    "宣传总部": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 2867.2638135351663,
+        "y": -2049.868502765804,
+        "width": 500,
+        "height": 530,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      },
+      "design": {
+        "theme": "amber",
+        "pattern": "plain",
+        "plants": true,
+        "shelf": false,
+        "lamp": true,
+        "art": false,
+        "scenery": true
+      }
+    },
+    "Mac 工作站": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 1813.6410609029494,
+        "y": -2526.4445340046664,
+        "width": 786,
+        "height": 862,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      }
+    },
+    "Windows 云端组": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 1630.6877885408917,
+        "y": -1604.4445340046664,
+        "width": 786,
+        "height": 862,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      }
+    },
+    "Ubuntu 云端一组": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 2637.420039002186,
+        "y": -1184.3839032320104,
+        "width": 786,
+        "height": 862,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      }
+    },
+    "Ubuntu 云端二组": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 2692.7873620584305,
+        "y": -3019.973605617967,
+        "width": 786,
+        "height": 862,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      }
+    },
+    "Kali 云端一组": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 3630.6331138023156,
+        "y": -2593.4593844126434,
+        "width": 786,
+        "height": 862,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      }
+    },
+    "Kali 云端二组": {
+      "col": 0,
+      "row": 0,
+      "w": 1,
+      "h": 1,
+      "bounds": {
+        "x": 3630.358345131381,
+        "y": -1509.526949201215,
+        "width": 786,
+        "height": 862,
+        "shape": "rounded",
+        "arrangement": "free",
+        "pinned": true
+      }
+    }
+  },
+  "employees": [
+    {
+      "id": "s_muial7gj_w3fb90",
+      "title": "火火",
+      "group": "决策中枢",
+      "cwd": "/Users/djf/develop/Agents-company-projects/决策中枢/火火",
+      "position": {
+        "x": 120,
+        "y": 210
+      },
+      "managementRole": "governor"
+    },
+    {
+      "id": "s_muiiox1y_nf6ltz",
+      "title": "hi-new",
+      "group": "Team-Managers",
+      "cwd": "/Users/djf/develop/CS/Agents-company/Agents-Managers/hi-new",
+      "position": {
+        "x": 48,
+        "y": 206
+      },
+      "managementRole": "governor"
+    },
+    {
+      "id": "s_muijwzn1_y2wytt",
+      "title": "t1",
+      "group": "Project1",
+      "cwd": "/Users/djf/develop/CS/Agents-company/PlugIns/margin-reader/workspaces/Project1/t1",
+      "position": {
+        "x": 18,
+        "y": 252
+      },
+      "managementRole": "governor"
+    },
+    {
+      "id": "s_muilspjd_bwfdvv",
+      "title": "hi-cloud",
+      "group": "Team-Managers",
+      "cwd": "/Users/djf/develop/CS/Agents-company/Agents-Managers/hi-cloud",
+      "position": {
+        "x": 264,
+        "y": 206
+      },
+      "managementRole": "governor"
+    },
+    {
+      "id": "s_muj4r8pz_55m0a8",
+      "title": "星火",
+      "group": "宣传总部",
+      "cwd": "/Users/Shared/AI公司/总部/星火",
+      "position": {
+        "x": 150.27502974871064,
+        "y": 199.9196788384365
+      },
+      "managementRole": "governor"
+    },
+    {
+      "id": "s_muj728em_bg1xv6",
+      "title": "Mac 经理",
+      "group": "Mac 工作站",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Mac 工作站/Mac 经理",
+      "position": {
+        "x": 298,
+        "y": 182
+      },
+      "managementRole": "manager"
+    },
+    {
+      "id": "s_muj728m5_qtswp2",
+      "title": "Win 经理",
+      "group": "Windows 云端组",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Windows 云端组/Win 经理",
+      "position": {
+        "x": 48,
+        "y": 412
+      },
+      "managementRole": "manager"
+    },
+    {
+      "id": "s_muj728rq_x1ukbj",
+      "title": "U1 经理",
+      "group": "Ubuntu 云端一组",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Ubuntu 云端一组/U1 经理",
+      "position": {
+        "x": 48,
+        "y": 412
+      },
+      "managementRole": "manager"
+    },
+    {
+      "id": "s_muj728yt_4w6nsy",
+      "title": "U2 经理",
+      "group": "Ubuntu 云端二组",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Ubuntu 云端二组/U2 经理",
+      "position": {
+        "x": 18,
+        "y": 392.7416676428097
+      },
+      "managementRole": "manager"
+    },
+    {
+      "id": "s_muj7299d_ku6lqj",
+      "title": "K1 经理",
+      "group": "Kali 云端一组",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Kali 云端一组/K1 经理",
+      "position": {
+        "x": 48,
+        "y": 412
+      },
+      "managementRole": "manager"
+    },
+    {
+      "id": "s_muj729fz_uef975",
+      "title": "K2 经理",
+      "group": "Kali 云端二组",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Kali 云端二组/K2 经理",
+      "position": {
+        "x": 48,
+        "y": 412
+      },
+      "managementRole": "manager"
+    },
+    {
+      "id": "s_muj7z7hw_wbiadk",
+      "title": "员工A",
+      "group": "Mac 工作站",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Mac 工作站/员工A",
+      "position": {
+        "x": 40,
+        "y": 496
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7z8ig_4kc4s0",
+      "title": "员工B",
+      "group": "Mac 工作站",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Mac 工作站/员工B",
+      "position": {
+        "x": 298,
+        "y": 496
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7z9i6_m3pwo0",
+      "title": "员工C",
+      "group": "Mac 工作站",
+      "cwd": "/Users/djf/develop/Agents-company-projects/Mac 工作站/员工C",
+      "position": {
+        "x": 556,
+        "y": 496
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zavg_x6wix7",
+      "title": "员工A",
+      "group": "Ubuntu 云端一组",
+      "cwd": "/home/lab/Ubuntu 云端一组/员工A",
+      "position": {
+        "x": 312.8296946491543,
+        "y": 290.1818468753161
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zbvh_y42qhc",
+      "title": "员工B",
+      "group": "Ubuntu 云端一组",
+      "cwd": "/home/lab/Ubuntu 云端一组/员工B",
+      "position": {
+        "x": 548,
+        "y": 260
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zcla_iioznx",
+      "title": "员工C",
+      "group": "Ubuntu 云端一组",
+      "cwd": "/home/lab/Ubuntu 云端一组/员工C",
+      "position": {
+        "x": 476.6833812007436,
+        "y": 558.2086291282914
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zdu6_ev9gbq",
+      "title": "员工A",
+      "group": "Kali 云端一组",
+      "cwd": "/home/kali/Kali 云端一组/员工A",
+      "position": {
+        "x": 314,
+        "y": 260
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zet7_2boei2",
+      "title": "员工B",
+      "group": "Kali 云端一组",
+      "cwd": "/home/kali/Kali 云端一组/员工B",
+      "position": {
+        "x": 548,
+        "y": 260
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zfr8_ow7pyl",
+      "title": "员工C",
+      "group": "Kali 云端一组",
+      "cwd": "/home/kali/Kali 云端一组/员工C",
+      "position": {
+        "x": 314,
+        "y": 564
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zkru_ka8ncj",
+      "title": "员工C",
+      "group": "Windows 云端组",
+      "cwd": "C:\\Users\\djf\\AgentsCompany\\Windows 云端组\\员工C",
+      "position": {
+        "x": 314,
+        "y": 260
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zks5_juensk",
+      "title": "员工B",
+      "group": "Windows 云端组",
+      "cwd": "C:\\Users\\djf\\AgentsCompany\\Windows 云端组\\员工B",
+      "position": {
+        "x": 548,
+        "y": 260
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zkse_p3zgiy",
+      "title": "员工A",
+      "group": "Windows 云端组",
+      "cwd": "C:\\Users\\djf\\AgentsCompany\\Windows 云端组\\员工A",
+      "position": {
+        "x": 314,
+        "y": 564
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zlej_iay2mp",
+      "title": "员工A",
+      "group": "Kali 云端二组",
+      "cwd": "/home/kali/Kali 云端二组/员工A",
+      "position": {
+        "x": 337.6230750988801,
+        "y": 266.0806029019121
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zlh0_3xpyto",
+      "title": "员工B",
+      "group": "Kali 云端二组",
+      "cwd": "/home/kali/Kali 云端二组/员工B",
+      "position": {
+        "x": 548,
+        "y": 260
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7zljw_rf4v7f",
+      "title": "员工C",
+      "group": "Kali 云端二组",
+      "cwd": "/home/kali/Kali 云端二组/员工C",
+      "position": {
+        "x": 493.28997925749695,
+        "y": 490.8844752112456
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7znn0_gd0fuo",
+      "title": "员工A",
+      "group": "Ubuntu 云端二组",
+      "cwd": "/home/lab/Ubuntu 云端二组/员工A",
+      "position": {
+        "x": 294.3301554483505,
+        "y": 190.08043374439808
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7znng_75x729",
+      "title": "员工B",
+      "group": "Ubuntu 云端二组",
+      "cwd": "/home/lab/Ubuntu 云端二组/员工B",
+      "position": {
+        "x": 578,
+        "y": 249.78328966050893
+      },
+      "managementRole": "employee"
+    },
+    {
+      "id": "s_muj7znnr_v0su5m",
+      "title": "员工C",
+      "group": "Ubuntu 云端二组",
+      "cwd": "/home/lab/Ubuntu 云端二组/员工C",
+      "position": {
+        "x": 505.21538285986816,
+        "y": 543.3391841924214
+      },
+      "managementRole": "employee"
+    }
+  ],
+  "connectorAnchors": {
+    "[\"s_muj4r8pz_55m0a8\",\"s_muj728em_bg1xv6\"]": {
+      "managerId": "s_muj4r8pz_55m0a8",
+      "employeeId": "s_muj728em_bg1xv6",
+      "source": {
+        "side": "left",
+        "offset": 0.9
+      },
+      "target": {
+        "side": "top",
+        "offset": 0.49999999999999994
+      }
+    },
+    "[\"s_muj728em_bg1xv6\",\"s_muj7z7hw_wbiadk\"]": {
+      "managerId": "s_muj728em_bg1xv6",
+      "employeeId": "s_muj7z7hw_wbiadk",
+      "source": {
+        "side": "bottom",
+        "offset": 0.5
+      },
+      "target": {
+        "side": "top",
+        "offset": 0.5
+      }
+    },
+    "[\"s_muj728em_bg1xv6\",\"s_muj7z8ig_4kc4s0\"]": {
+      "managerId": "s_muj728em_bg1xv6",
+      "employeeId": "s_muj7z8ig_4kc4s0",
+      "source": {
+        "side": "bottom",
+        "offset": 0.5
+      },
+      "target": {
+        "side": "top",
+        "offset": 0.5
+      }
+    },
+    "[\"s_muj728em_bg1xv6\",\"s_muj7z9i6_m3pwo0\"]": {
+      "managerId": "s_muj728em_bg1xv6",
+      "employeeId": "s_muj7z9i6_m3pwo0",
+      "source": {
+        "side": "bottom",
+        "offset": 0.5
+      },
+      "target": {
+        "side": "top",
+        "offset": 0.5
+      }
+    },
+    "[\"s_muj4r8pz_55m0a8\",\"s_muj728yt_4w6nsy\"]": {
+      "managerId": "s_muj4r8pz_55m0a8",
+      "employeeId": "s_muj728yt_4w6nsy",
+      "source": {
+        "side": "top",
+        "offset": 0.5
+      },
+      "target": {
+        "side": "bottom",
+        "offset": 0.1
+      },
+      "route": [
+        {
+          "x": 245.2750297487105,
+          "y": 199.91967883843654
+        },
+        {
+          "x": 245.2750297487105,
+          "y": -84.10510285216333
+        },
+        {
+          "x": -137.47645147673575,
+          "y": -84.10510285216333
+        },
+        {
+          "x": -137.47645147673575,
+          "y": -327.3634352093536
+        }
+      ]
+    },
+    "[\"s_muj728yt_4w6nsy\",\"s_muj7znnr_v0su5m\"]": {
+      "managerId": "s_muj728yt_4w6nsy",
+      "employeeId": "s_muj7znnr_v0su5m",
+      "source": {
+        "side": "auto"
+      },
+      "target": {
+        "side": "left",
+        "offset": 0.3
+      }
+    },
+    "[\"s_muj729fz_uef975\",\"s_muj7zlh0_3xpyto\"]": {
+      "managerId": "s_muj729fz_uef975",
+      "employeeId": "s_muj7zlh0_3xpyto",
+      "source": {
+        "side": "top",
+        "offset": 0.7
+      },
+      "target": {
+        "side": "top",
+        "offset": 0.5
+      },
+      "route": [
+        {
+          "x": 181,
+          "y": 412
+        },
+        {
+          "x": 181,
+          "y": 193.6294594612707
+        },
+        {
+          "x": 642.9999999999995,
+          "y": 193.6294594612707
+        },
+        {
+          "x": 642.9999999999995,
+          "y": 260
+        }
+      ]
+    },
+    "[\"s_muj729fz_uef975\",\"s_muj7zlej_iay2mp\"]": {
+      "managerId": "s_muj729fz_uef975",
+      "employeeId": "s_muj7zlej_iay2mp",
+      "source": {
+        "side": "right",
+        "offset": 0.72
+      },
+      "target": {
+        "side": "left",
+        "offset": 0.3
+      },
+      "route": [
+        {
+          "x": 238,
+          "y": 592
+        },
+        {
+          "x": 304.1744415637668,
+          "y": 592
+        },
+        {
+          "x": 304.1744415637668,
+          "y": 342.5420494883749
+        },
+        {
+          "x": 401.19960123215014,
+          "y": 342.5420494883749
+        }
+      ]
+    },
+    "[\"s_muj729fz_uef975\",\"s_muj7zljw_rf4v7f\"]": {
+      "managerId": "s_muj729fz_uef975",
+      "employeeId": "s_muj7zljw_rf4v7f",
+      "source": {
+        "side": "auto"
+      },
+      "target": {
+        "side": "left",
+        "offset": 0.5
+      }
+    },
+    "[\"s_muj728yt_4w6nsy\",\"s_muj7znn0_gd0fuo\"]": {
+      "managerId": "s_muj728yt_4w6nsy",
+      "employeeId": "s_muj7znn0_gd0fuo",
+      "source": {
+        "side": "auto"
+      },
+      "target": {
+        "side": "left",
+        "offset": 0.5
+      }
+    },
+    "[\"s_muj728rq_x1ukbj\",\"s_muj7zbvh_y42qhc\"]": {
+      "managerId": "s_muj728rq_x1ukbj",
+      "employeeId": "s_muj7zbvh_y42qhc",
+      "source": {
+        "side": "top",
+        "offset": 0.7
+      },
+      "target": {
+        "side": "auto"
+      }
+    },
+    "[\"s_muj728rq_x1ukbj\",\"s_muj7zavg_x6wix7\"]": {
+      "managerId": "s_muj728rq_x1ukbj",
+      "employeeId": "s_muj7zavg_x6wix7",
+      "source": {
+        "side": "right",
+        "offset": 0.72
+      },
+      "target": {
+        "side": "left",
+        "offset": 0.7
+      },
+      "route": [
+        {
+          "x": 238,
+          "y": 592
+        },
+        {
+          "x": 277.37343436891206,
+          "y": 592
+        },
+        {
+          "x": 277.37343436891206,
+          "y": 465.18184687531607
+        },
+        {
+          "x": 312.82969464915413,
+          "y": 465.18184687531607
+        }
+      ]
+    },
+    "[\"s_muj728rq_x1ukbj\",\"s_muj7zcla_iioznx\"]": {
+      "managerId": "s_muj728rq_x1ukbj",
+      "employeeId": "s_muj7zcla_iioznx",
+      "source": {
+        "side": "auto"
+      },
+      "target": {
+        "side": "left",
+        "offset": 0.9
+      }
+    }
+  },
+  "views": {
+    "activeId": "all",
+    "views": [
+      {
+        "id": "all",
+        "name": "All Team",
+        "teams": [
+          "Team-Managers",
+          "决策中枢",
+          "Project1",
+          "宣传总部",
+          "Mac 工作站",
+          "Windows 云端组",
+          "Ubuntu 云端一组",
+          "Ubuntu 云端二组",
+          "Kali 云端一组",
+          "Kali 云端二组"
+        ]
+      },
+      {
+        "id": "150e77c4-217c-46a6-a0bb-adc0afc2d0e0",
+        "name": "Mac",
+        "teams": []
+      },
+      {
+        "id": "6eff51ff-2d89-43fe-bcb3-df56b014b3ed",
+        "name": "Kali",
+        "teams": []
+      },
+      {
+        "id": "b6c95b2d-81fa-49fd-9c02-5874c973fb32",
+        "name": "Ubuntu",
+        "teams": []
+      },
+      {
+        "id": "43e38cc8-fdea-4954-a301-cdbb91e23311",
+        "name": "Windows",
+        "teams": []
+      },
+      {
+        "id": "e8990643-74a6-4a90-83ff-889a9f3ba2c3",
+        "name": "remote control",
+        "teams": []
+      },
+      {
+        "id": "d4e6896b-e30e-4d3f-96c0-d5e05a88550a",
+        "name": "Plugins",
+        "teams": []
+      },
+      {
+        "id": "f1cccbce-8d2d-4ae9-b330-9574300e0287",
+        "name": "宣传场景",
+        "teams": [
+          "决策中枢"
+        ],
+        "viewport": {
+          "x": -4030.4055636176,
+          "y": -515.0405828829656,
+          "zoom": 0.7101667071522306
+        }
+      },
+      {
+        "id": "f37a7d9d-a01d-4a97-9cce-3d751e9490cf",
+        "name": "宣传 · 第一篇",
+        "teams": [
+          "宣传总部"
+        ],
+        "viewport": {
+          "x": 34.38708550461399,
+          "y": 532.9900908258455,
+          "zoom": 0.08
+        }
+      }
+    ]
+  },
+  "layout": {
+    "connections": [
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "left",
+            "offset": 0.9
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.49999999999999994
+          }
+        },
+        "id": "created-s_muj728em_bg1xv6",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728em_bg1xv6",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Mac 工作站",
+        "sourceName": "星火",
+        "targetName": "Mac 经理",
+        "origin": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804
+        },
+        "points": [
+          {
+            "x": 3017.5388432838768,
+            "y": -1624.9488239273674
+          },
+          {
+            "x": 2895.2638135351663,
+            "y": -1624.9488239273674
+          },
+          {
+            "x": 2895.2638135351663,
+            "y": -1853.868502765804
+          },
+          {
+            "x": 2623.6410609029494,
+            "y": -1853.868502765804
+          },
+          {
+            "x": 2623.6410609029494,
+            "y": -2330.4445340046664
+          },
+          {
+            "x": 2571.6410609029494,
+            "y": -2330.4445340046664
+          },
+          {
+            "x": 2571.6410609029494,
+            "y": -2353.4445340046664
+          },
+          {
+            "x": 2206.6410609029494,
+            "y": -2353.4445340046664
+          },
+          {
+            "x": 2206.6410609029494,
+            "y": -2344.4445340046664
+          }
+        ],
+        "path": "M3017.539 -1624.949 H2903.264 Q2895.264 -1624.949 2895.264 -1632.949 V-1845.869 Q2895.264 -1853.869 2887.264 -1853.869 H2631.641 Q2623.641 -1853.869 2623.641 -1861.869 V-2322.445 Q2623.641 -2330.445 2615.641 -2330.445 H2579.641 Q2571.641 -2330.445 2571.641 -2338.445 V-2345.445 Q2571.641 -2353.445 2563.641 -2353.445 H2211.141 Q2206.641 -2353.445 2206.641 -2348.945 V-2344.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj728m5_qtswp2",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728m5_qtswp2",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Windows 云端组",
+        "sourceName": "星火",
+        "targetName": "Win 经理",
+        "origin": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804
+        },
+        "points": [
+          {
+            "x": 3055.5388432838768,
+            "y": -1599.9488239273674
+          },
+          {
+            "x": 3055.5388432838768,
+            "y": -1352.4445340046664
+          },
+          {
+            "x": 1811.6877885408917,
+            "y": -1352.4445340046664
+          },
+          {
+            "x": 1811.6877885408917,
+            "y": -1192.4445340046664
+          }
+        ],
+        "path": "M3055.539 -1599.949 V-1360.445 Q3055.539 -1352.445 3047.539 -1352.445 H1819.688 Q1811.688 -1352.445 1811.688 -1344.445 V-1192.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj728rq_x1ukbj",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728rq_x1ukbj",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Ubuntu 云端一组",
+        "sourceName": "星火",
+        "targetName": "U1 经理",
+        "origin": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804
+        },
+        "points": [
+          {
+            "x": 3055.5388432838768,
+            "y": -1599.9488239273674
+          },
+          {
+            "x": 3055.5388432838768,
+            "y": -1579.868502765804
+          },
+          {
+            "x": 2613.420039002186,
+            "y": -1579.868502765804
+          },
+          {
+            "x": 2613.420039002186,
+            "y": -796.3839032320104
+          },
+          {
+            "x": 2780.420039002186,
+            "y": -796.3839032320104
+          },
+          {
+            "x": 2780.420039002186,
+            "y": -772.3839032320104
+          }
+        ],
+        "path": "M3055.539 -1599.949 V-1587.869 Q3055.539 -1579.869 3047.539 -1579.869 H2621.42 Q2613.42 -1579.869 2613.42 -1571.869 V-804.384 Q2613.42 -796.384 2621.42 -796.384 H2772.42 Q2780.42 -796.384 2780.42 -788.384 V-772.384",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "top",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "bottom",
+            "offset": 0.1
+          }
+        },
+        "id": "created-s_muj728yt_4w6nsy",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728yt_4w6nsy",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Ubuntu 云端二组",
+        "sourceName": "星火",
+        "targetName": "U2 经理",
+        "origin": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804
+        },
+        "points": [
+          {
+            "x": 3112.5388432838768,
+            "y": -1849.9488239273674
+          },
+          {
+            "x": 3112.5388432838768,
+            "y": -2133.973605617967
+          },
+          {
+            "x": 2729.7873620584305,
+            "y": -2133.973605617967
+          },
+          {
+            "x": 2729.7873620584305,
+            "y": -2377.2319379751575
+          }
+        ],
+        "path": "M3112.539 -1849.949 V-2125.974 Q3112.539 -2133.974 3104.539 -2133.974 H2737.787 Q2729.787 -2133.974 2729.787 -2141.974 V-2377.232",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7299d_ku6lqj",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj7299d_ku6lqj",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Kali 云端一组",
+        "sourceName": "星火",
+        "targetName": "K1 经理",
+        "origin": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804
+        },
+        "points": [
+          {
+            "x": 3207.5388432838768,
+            "y": -1669.9488239273674
+          },
+          {
+            "x": 3670.6331138023156,
+            "y": -1669.9488239273674
+          },
+          {
+            "x": 3670.6331138023156,
+            "y": -2190.4593844126434
+          },
+          {
+            "x": 3735.6331138023156,
+            "y": -2190.4593844126434
+          },
+          {
+            "x": 3735.6331138023156,
+            "y": -2181.4593844126434
+          }
+        ],
+        "path": "M3207.539 -1669.949 H3662.633 Q3670.633 -1669.949 3670.633 -1677.949 V-2182.459 Q3670.633 -2190.459 3678.633 -2190.459 H3731.133 Q3735.633 -2190.459 3735.633 -2185.959 V-2181.459",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj729fz_uef975",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj729fz_uef975",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Kali 云端二组",
+        "sourceName": "星火",
+        "targetName": "K2 经理",
+        "origin": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804
+        },
+        "points": [
+          {
+            "x": 3207.5388432838768,
+            "y": -1624.9488239273674
+          },
+          {
+            "x": 3339.2638135351663,
+            "y": -1624.9488239273674
+          },
+          {
+            "x": 3339.2638135351663,
+            "y": -1579.868502765804
+          },
+          {
+            "x": 3606.358345131381,
+            "y": -1579.868502765804
+          },
+          {
+            "x": 3606.358345131381,
+            "y": -1121.526949201215
+          },
+          {
+            "x": 3773.358345131381,
+            "y": -1121.526949201215
+          },
+          {
+            "x": 3773.358345131381,
+            "y": -1097.526949201215
+          }
+        ],
+        "path": "M3207.539 -1624.949 H3331.264 Q3339.264 -1624.949 3339.264 -1616.949 V-1587.869 Q3339.264 -1579.869 3347.264 -1579.869 H3598.358 Q3606.358 -1579.869 3606.358 -1571.869 V-1129.527 Q3606.358 -1121.527 3614.358 -1121.527 H3765.358 Q3773.358 -1121.527 3773.358 -1113.527 V-1097.527",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-s_muj7z7hw_wbiadk",
+        "managerId": "s_muj728em_bg1xv6",
+        "employeeId": "s_muj7z7hw_wbiadk",
+        "sourceTeam": "Mac 工作站",
+        "targetTeam": "Mac 工作站",
+        "sourceName": "Mac 经理",
+        "targetName": "员工A",
+        "origin": {
+          "x": 1813.6410609029494,
+          "y": -2526.4445340046664
+        },
+        "points": [
+          {
+            "x": 2206.6410609029494,
+            "y": -2094.4445340046664
+          },
+          {
+            "x": 2206.6410609029494,
+            "y": -2054.4445340046664
+          },
+          {
+            "x": 1948.6410609029494,
+            "y": -2054.4445340046664
+          },
+          {
+            "x": 1948.6410609029494,
+            "y": -2030.4445340046664
+          }
+        ],
+        "path": "M2206.641 -2094.445 V-2062.445 Q2206.641 -2054.445 2198.641 -2054.445 H1956.641 Q1948.641 -2054.445 1948.641 -2046.445 V-2030.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-s_muj7z8ig_4kc4s0",
+        "managerId": "s_muj728em_bg1xv6",
+        "employeeId": "s_muj7z8ig_4kc4s0",
+        "sourceTeam": "Mac 工作站",
+        "targetTeam": "Mac 工作站",
+        "sourceName": "Mac 经理",
+        "targetName": "员工B",
+        "origin": {
+          "x": 1813.6410609029494,
+          "y": -2526.4445340046664
+        },
+        "points": [
+          {
+            "x": 2206.6410609029494,
+            "y": -2094.4445340046664
+          },
+          {
+            "x": 2206.6410609029494,
+            "y": -2030.4445340046664
+          }
+        ],
+        "path": "M2206.641 -2094.445 V-2030.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-s_muj7z9i6_m3pwo0",
+        "managerId": "s_muj728em_bg1xv6",
+        "employeeId": "s_muj7z9i6_m3pwo0",
+        "sourceTeam": "Mac 工作站",
+        "targetTeam": "Mac 工作站",
+        "sourceName": "Mac 经理",
+        "targetName": "员工C",
+        "origin": {
+          "x": 1813.6410609029494,
+          "y": -2526.4445340046664
+        },
+        "points": [
+          {
+            "x": 2206.6410609029494,
+            "y": -2094.4445340046664
+          },
+          {
+            "x": 2206.6410609029494,
+            "y": -2054.4445340046664
+          },
+          {
+            "x": 2464.6410609029494,
+            "y": -2054.4445340046664
+          },
+          {
+            "x": 2464.6410609029494,
+            "y": -2030.4445340046664
+          }
+        ],
+        "path": "M2206.641 -2094.445 V-2062.445 Q2206.641 -2054.445 2214.641 -2054.445 H2456.641 Q2464.641 -2054.445 2464.641 -2046.445 V-2030.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "right",
+            "offset": 0.72
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.7
+          }
+        },
+        "id": "created-s_muj7zavg_x6wix7",
+        "managerId": "s_muj728rq_x1ukbj",
+        "employeeId": "s_muj7zavg_x6wix7",
+        "sourceTeam": "Ubuntu 云端一组",
+        "targetTeam": "Ubuntu 云端一组",
+        "sourceName": "U1 经理",
+        "targetName": "员工A",
+        "origin": {
+          "x": 2637.420039002186,
+          "y": -1184.3839032320104
+        },
+        "points": [
+          {
+            "x": 2875.420039002186,
+            "y": -592.3839032320104
+          },
+          {
+            "x": 2914.793473371098,
+            "y": -592.3839032320104
+          },
+          {
+            "x": 2914.793473371098,
+            "y": -719.2020563566944
+          },
+          {
+            "x": 2950.24973365134,
+            "y": -719.2020563566944
+          }
+        ],
+        "path": "M2875.42 -592.384 H2906.793 Q2914.793 -592.384 2914.793 -600.384 V-711.202 Q2914.793 -719.202 2922.793 -719.202 H2950.25",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "top",
+            "offset": 0.7
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zbvh_y42qhc",
+        "managerId": "s_muj728rq_x1ukbj",
+        "employeeId": "s_muj7zbvh_y42qhc",
+        "sourceTeam": "Ubuntu 云端一组",
+        "targetTeam": "Ubuntu 云端一组",
+        "sourceName": "U1 经理",
+        "targetName": "员工B",
+        "origin": {
+          "x": 2637.420039002186,
+          "y": -1184.3839032320104
+        },
+        "points": [
+          {
+            "x": 2818.420039002186,
+            "y": -772.3839032320104
+          },
+          {
+            "x": 2818.420039002186,
+            "y": -933.3839032320104
+          },
+          {
+            "x": 3280.420039002186,
+            "y": -933.3839032320104
+          },
+          {
+            "x": 3280.420039002186,
+            "y": -924.3839032320104
+          }
+        ],
+        "path": "M2818.42 -772.384 V-925.384 Q2818.42 -933.384 2826.42 -933.384 H3275.92 Q3280.42 -933.384 3280.42 -928.884 V-924.384",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.9
+          }
+        },
+        "id": "created-s_muj7zcla_iioznx",
+        "managerId": "s_muj728rq_x1ukbj",
+        "employeeId": "s_muj7zcla_iioznx",
+        "sourceTeam": "Ubuntu 云端一组",
+        "targetTeam": "Ubuntu 云端一组",
+        "sourceName": "U1 经理",
+        "targetName": "员工C",
+        "origin": {
+          "x": 2637.420039002186,
+          "y": -1184.3839032320104
+        },
+        "points": [
+          {
+            "x": 2875.420039002186,
+            "y": -547.3839032320104
+          },
+          {
+            "x": 3090.1034202029296,
+            "y": -547.3839032320104
+          },
+          {
+            "x": 3090.1034202029296,
+            "y": -401.17527410371906
+          },
+          {
+            "x": 3114.1034202029296,
+            "y": -401.17527410371906
+          }
+        ],
+        "path": "M2875.42 -547.384 H3082.103 Q3090.103 -547.384 3090.103 -539.384 V-409.175 Q3090.103 -401.175 3098.103 -401.175 H3114.103",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zdu6_ev9gbq",
+        "managerId": "s_muj7299d_ku6lqj",
+        "employeeId": "s_muj7zdu6_ev9gbq",
+        "sourceTeam": "Kali 云端一组",
+        "targetTeam": "Kali 云端一组",
+        "sourceName": "K1 经理",
+        "targetName": "员工A",
+        "origin": {
+          "x": 3630.6331138023156,
+          "y": -2593.4593844126434
+        },
+        "points": [
+          {
+            "x": 3868.6331138023156,
+            "y": -2001.4593844126434
+          },
+          {
+            "x": 3935.6331138023156,
+            "y": -2001.4593844126434
+          },
+          {
+            "x": 3935.6331138023156,
+            "y": -2342.4593844126434
+          },
+          {
+            "x": 4039.6331138023156,
+            "y": -2342.4593844126434
+          },
+          {
+            "x": 4039.6331138023156,
+            "y": -2333.4593844126434
+          }
+        ],
+        "path": "M3868.633 -2001.459 H3927.633 Q3935.633 -2001.459 3935.633 -2009.459 V-2334.459 Q3935.633 -2342.459 3943.633 -2342.459 H4035.133 Q4039.633 -2342.459 4039.633 -2337.959 V-2333.459",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zet7_2boei2",
+        "managerId": "s_muj7299d_ku6lqj",
+        "employeeId": "s_muj7zet7_2boei2",
+        "sourceTeam": "Kali 云端一组",
+        "targetTeam": "Kali 云端一组",
+        "sourceName": "K1 经理",
+        "targetName": "员工B",
+        "origin": {
+          "x": 3630.6331138023156,
+          "y": -2593.4593844126434
+        },
+        "points": [
+          {
+            "x": 3678.6331138023156,
+            "y": -2001.4593844126434
+          },
+          {
+            "x": 3669.6331138023156,
+            "y": -2001.4593844126434
+          },
+          {
+            "x": 3669.6331138023156,
+            "y": -2357.4593844126434
+          },
+          {
+            "x": 4273.633113802316,
+            "y": -2357.4593844126434
+          },
+          {
+            "x": 4273.633113802316,
+            "y": -2333.4593844126434
+          }
+        ],
+        "path": "M3678.633 -2001.459 H3674.133 Q3669.633 -2001.459 3669.633 -2005.959 V-2349.459 Q3669.633 -2357.459 3677.633 -2357.459 H4265.633 Q4273.633 -2357.459 4273.633 -2349.459 V-2333.459",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zfr8_ow7pyl",
+        "managerId": "s_muj7299d_ku6lqj",
+        "employeeId": "s_muj7zfr8_ow7pyl",
+        "sourceTeam": "Kali 云端一组",
+        "targetTeam": "Kali 云端一组",
+        "sourceName": "K1 经理",
+        "targetName": "员工C",
+        "origin": {
+          "x": 3630.6331138023156,
+          "y": -2593.4593844126434
+        },
+        "points": [
+          {
+            "x": 3830.6331138023156,
+            "y": -1931.4593844126434
+          },
+          {
+            "x": 3830.6331138023156,
+            "y": -1770.4593844126434
+          },
+          {
+            "x": 4143.633113802316,
+            "y": -1770.4593844126434
+          },
+          {
+            "x": 4143.633113802316,
+            "y": -2038.4593844126434
+          },
+          {
+            "x": 4039.6331138023156,
+            "y": -2038.4593844126434
+          },
+          {
+            "x": 4039.6331138023156,
+            "y": -2029.4593844126434
+          }
+        ],
+        "path": "M3830.633 -1931.459 V-1778.459 Q3830.633 -1770.459 3838.633 -1770.459 H4135.633 Q4143.633 -1770.459 4143.633 -1778.459 V-2030.459 Q4143.633 -2038.459 4135.633 -2038.459 H4044.133 Q4039.633 -2038.459 4039.633 -2033.959 V-2029.459",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zkru_ka8ncj",
+        "managerId": "s_muj728m5_qtswp2",
+        "employeeId": "s_muj7zkru_ka8ncj",
+        "sourceTeam": "Windows 云端组",
+        "targetTeam": "Windows 云端组",
+        "sourceName": "Win 经理",
+        "targetName": "员工C",
+        "origin": {
+          "x": 1630.6877885408917,
+          "y": -1604.4445340046664
+        },
+        "points": [
+          {
+            "x": 1868.6877885408917,
+            "y": -1012.4445340046664
+          },
+          {
+            "x": 1935.6877885408917,
+            "y": -1012.4445340046664
+          },
+          {
+            "x": 1935.6877885408917,
+            "y": -1353.4445340046664
+          },
+          {
+            "x": 2039.6877885408917,
+            "y": -1353.4445340046664
+          },
+          {
+            "x": 2039.6877885408917,
+            "y": -1344.4445340046664
+          }
+        ],
+        "path": "M1868.688 -1012.445 H1927.688 Q1935.688 -1012.445 1935.688 -1020.445 V-1345.445 Q1935.688 -1353.445 1943.688 -1353.445 H2035.188 Q2039.688 -1353.445 2039.688 -1348.945 V-1344.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zks5_juensk",
+        "managerId": "s_muj728m5_qtswp2",
+        "employeeId": "s_muj7zks5_juensk",
+        "sourceTeam": "Windows 云端组",
+        "targetTeam": "Windows 云端组",
+        "sourceName": "Win 经理",
+        "targetName": "员工B",
+        "origin": {
+          "x": 1630.6877885408917,
+          "y": -1604.4445340046664
+        },
+        "points": [
+          {
+            "x": 1678.6877885408917,
+            "y": -1012.4445340046664
+          },
+          {
+            "x": 1669.6877885408917,
+            "y": -1012.4445340046664
+          },
+          {
+            "x": 1669.6877885408917,
+            "y": -1368.4445340046664
+          },
+          {
+            "x": 2273.6877885408917,
+            "y": -1368.4445340046664
+          },
+          {
+            "x": 2273.6877885408917,
+            "y": -1344.4445340046664
+          }
+        ],
+        "path": "M1678.688 -1012.445 H1674.188 Q1669.688 -1012.445 1669.688 -1016.945 V-1360.445 Q1669.688 -1368.445 1677.688 -1368.445 H2265.688 Q2273.688 -1368.445 2273.688 -1360.445 V-1344.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7zkse_p3zgiy",
+        "managerId": "s_muj728m5_qtswp2",
+        "employeeId": "s_muj7zkse_p3zgiy",
+        "sourceTeam": "Windows 云端组",
+        "targetTeam": "Windows 云端组",
+        "sourceName": "Win 经理",
+        "targetName": "员工A",
+        "origin": {
+          "x": 1630.6877885408917,
+          "y": -1604.4445340046664
+        },
+        "points": [
+          {
+            "x": 1830.6877885408917,
+            "y": -942.4445340046664
+          },
+          {
+            "x": 1830.6877885408917,
+            "y": -781.4445340046664
+          },
+          {
+            "x": 2143.6877885408917,
+            "y": -781.4445340046664
+          },
+          {
+            "x": 2143.6877885408917,
+            "y": -1049.4445340046664
+          },
+          {
+            "x": 2039.6877885408917,
+            "y": -1049.4445340046664
+          },
+          {
+            "x": 2039.6877885408917,
+            "y": -1040.4445340046664
+          }
+        ],
+        "path": "M1830.688 -942.445 V-789.445 Q1830.688 -781.445 1838.688 -781.445 H2135.688 Q2143.688 -781.445 2143.688 -789.445 V-1041.445 Q2143.688 -1049.445 2135.688 -1049.445 H2044.188 Q2039.688 -1049.445 2039.688 -1044.945 V-1040.445",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "right",
+            "offset": 0.72
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.3
+          }
+        },
+        "id": "created-s_muj7zlej_iay2mp",
+        "managerId": "s_muj729fz_uef975",
+        "employeeId": "s_muj7zlej_iay2mp",
+        "sourceTeam": "Kali 云端二组",
+        "targetTeam": "Kali 云端二组",
+        "sourceName": "K2 经理",
+        "targetName": "员工A",
+        "origin": {
+          "x": 3630.358345131381,
+          "y": -1509.526949201215
+        },
+        "points": [
+          {
+            "x": 3868.358345131381,
+            "y": -917.5269492012151
+          },
+          {
+            "x": 3934.532786695148,
+            "y": -917.5269492012151
+          },
+          {
+            "x": 3934.532786695148,
+            "y": -1168.446346299303
+          },
+          {
+            "x": 3967.9814202302614,
+            "y": -1168.446346299303
+          }
+        ],
+        "path": "M3868.358 -917.527 H3926.533 Q3934.533 -917.527 3934.533 -925.527 V-1160.446 Q3934.533 -1168.446 3942.533 -1168.446 H3967.981",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "top",
+            "offset": 0.7
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-s_muj7zlh0_3xpyto",
+        "managerId": "s_muj729fz_uef975",
+        "employeeId": "s_muj7zlh0_3xpyto",
+        "sourceTeam": "Kali 云端二组",
+        "targetTeam": "Kali 云端二组",
+        "sourceName": "K2 经理",
+        "targetName": "员工B",
+        "origin": {
+          "x": 3630.358345131381,
+          "y": -1509.526949201215
+        },
+        "points": [
+          {
+            "x": 3811.358345131381,
+            "y": -1097.526949201215
+          },
+          {
+            "x": 3811.358345131381,
+            "y": -1315.8974897399444
+          },
+          {
+            "x": 4273.358345131381,
+            "y": -1315.8974897399444
+          },
+          {
+            "x": 4273.358345131381,
+            "y": -1249.526949201215
+          }
+        ],
+        "path": "M3811.358 -1097.527 V-1307.897 Q3811.358 -1315.897 3819.358 -1315.897 H4265.358 Q4273.358 -1315.897 4273.358 -1307.897 V-1249.527",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "id": "created-s_muj7zljw_rf4v7f",
+        "managerId": "s_muj729fz_uef975",
+        "employeeId": "s_muj7zljw_rf4v7f",
+        "sourceTeam": "Kali 云端二组",
+        "targetTeam": "Kali 云端二组",
+        "sourceName": "K2 经理",
+        "targetName": "员工C",
+        "origin": {
+          "x": 3630.358345131381,
+          "y": -1509.526949201215
+        },
+        "points": [
+          {
+            "x": 3868.358345131381,
+            "y": -895.0269492012151
+          },
+          {
+            "x": 4099.648324388878,
+            "y": -895.0269492012151
+          },
+          {
+            "x": 4099.648324388878,
+            "y": -893.6424739899694
+          },
+          {
+            "x": 4123.648324388878,
+            "y": -893.6424739899694
+          }
+        ],
+        "path": "M3868.358 -895.027 H4098.956 Q4099.648 -895.027 4099.648 -894.335 V-894.335 Q4099.648 -893.642 4100.341 -893.642 H4123.648",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "id": "created-s_muj7znn0_gd0fuo",
+        "managerId": "s_muj728yt_4w6nsy",
+        "employeeId": "s_muj7znn0_gd0fuo",
+        "sourceTeam": "Ubuntu 云端二组",
+        "targetTeam": "Ubuntu 云端二组",
+        "sourceName": "U2 经理",
+        "targetName": "员工A",
+        "origin": {
+          "x": 2692.7873620584305,
+          "y": -3019.973605617967
+        },
+        "points": [
+          {
+            "x": 2900.7873620584305,
+            "y": -2447.2319379751575
+          },
+          {
+            "x": 2963.117517506781,
+            "y": -2447.2319379751575
+          },
+          {
+            "x": 2963.117517506781,
+            "y": -2704.8931718735694
+          },
+          {
+            "x": 2987.117517506781,
+            "y": -2704.8931718735694
+          }
+        ],
+        "path": "M2900.787 -2447.232 H2955.118 Q2963.118 -2447.232 2963.118 -2455.232 V-2696.893 Q2963.118 -2704.893 2971.118 -2704.893 H2987.118",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7znng_75x729",
+        "managerId": "s_muj728yt_4w6nsy",
+        "employeeId": "s_muj7znng_75x729",
+        "sourceTeam": "Ubuntu 云端二组",
+        "targetTeam": "Ubuntu 云端二组",
+        "sourceName": "U2 经理",
+        "targetName": "员工B",
+        "origin": {
+          "x": 2692.7873620584305,
+          "y": -3019.973605617967
+        },
+        "points": [
+          {
+            "x": 2900.7873620584305,
+            "y": -2424.7319379751575
+          },
+          {
+            "x": 3189.0027449182985,
+            "y": -2424.7319379751575
+          },
+          {
+            "x": 3189.0027449182985,
+            "y": -2779.190315957458
+          },
+          {
+            "x": 3365.7873620584305,
+            "y": -2779.190315957458
+          },
+          {
+            "x": 3365.7873620584305,
+            "y": -2770.190315957458
+          }
+        ],
+        "path": "M2900.787 -2424.732 H3181.003 Q3189.003 -2424.732 3189.003 -2432.732 V-2771.19 Q3189.003 -2779.19 3197.003 -2779.19 H3361.287 Q3365.787 -2779.19 3365.787 -2774.69 V-2770.19",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.3
+          }
+        },
+        "id": "created-s_muj7znnr_v0su5m",
+        "managerId": "s_muj728yt_4w6nsy",
+        "employeeId": "s_muj7znnr_v0su5m",
+        "sourceTeam": "Ubuntu 云端二组",
+        "targetTeam": "Ubuntu 云端二组",
+        "sourceName": "U2 经理",
+        "targetName": "员工C",
+        "origin": {
+          "x": 2692.7873620584305,
+          "y": -3019.973605617967
+        },
+        "points": [
+          {
+            "x": 2900.7873620584305,
+            "y": -2402.2319379751575
+          },
+          {
+            "x": 3174.0027449182985,
+            "y": -2402.2319379751575
+          },
+          {
+            "x": 3174.0027449182985,
+            "y": -2401.634421425546
+          },
+          {
+            "x": 3198.0027449182985,
+            "y": -2401.634421425546
+          }
+        ],
+        "path": "M2900.787 -2402.232 H3173.704 Q3174.003 -2402.232 3174.003 -2401.933 V-2401.933 Q3174.003 -2401.634 3174.302 -2401.634 H3198.003",
+        "active": false,
+        "temporary": false,
+        "manual": false
+      }
+    ],
+    "revision": 4402,
+    "crossTeamConnections": [
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "source": {
+            "side": "left",
+            "offset": 0.9
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.49999999999999994
+          }
+        },
+        "id": "created-s_muj728em_bg1xv6",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728em_bg1xv6",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Mac 工作站",
+        "sourceName": "星火",
+        "targetName": "Mac 经理",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 150.27502974871064,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 132.27502974871064,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 28,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 28,
+              "y": 393.42396876113753
+            },
+            {
+              "x": 28,
+              "y": 326.40911835316047
+            },
+            {
+              "x": 28,
+              "y": 291.5
+            },
+            {
+              "x": 28,
+              "y": 196
+            },
+            {
+              "x": 4,
+              "y": 196
+            }
+          ],
+          "path": "M150.275 424.92 H36 Q28 424.92 28 416.92 V204 Q28 196 20 196 H4",
+          "port": {
+            "x": 4,
+            "y": 196
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 782,
+              "y": 196
+            },
+            {
+              "x": 758,
+              "y": 196
+            },
+            {
+              "x": 758,
+              "y": 173
+            },
+            {
+              "x": 755,
+              "y": 173
+            },
+            {
+              "x": 688.7346812102537,
+              "y": 173
+            },
+            {
+              "x": 611.0467276379422,
+              "y": 173
+            },
+            {
+              "x": 547,
+              "y": 173
+            },
+            {
+              "x": 497,
+              "y": 173
+            },
+            {
+              "x": 405,
+              "y": 173
+            },
+            {
+              "x": 393,
+              "y": 173
+            },
+            {
+              "x": 393,
+              "y": 182
+            }
+          ],
+          "path": "M782 196 H766 Q758 196 758 188 V181 Q758 173 750 173 H397.5 Q393 173 393 177.5 V182",
+          "port": {
+            "x": 782,
+            "y": 196
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 2871.2638135351663,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 2843.2638135351663,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 2676.7873620584305,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 2623.6410609029494,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 2623.6410609029494,
+              "y": -2052.3445340046665
+            },
+            {
+              "x": 2623.6410609029494,
+              "y": -2065.868502765804
+            },
+            {
+              "x": 2623.6410609029494,
+              "y": -2141.973605617967
+            },
+            {
+              "x": 2623.6410609029494,
+              "y": -2330.4445340046664
+            },
+            {
+              "x": 2595.6410609029494,
+              "y": -2330.4445340046664
+            }
+          ],
+          "path": "M2871.264 -1853.869 H2631.641 Q2623.641 -1853.869 2623.641 -1861.869 V-2322.445 Q2623.641 -2330.445 2615.641 -2330.445 H2595.641"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj728m5_qtswp2",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728m5_qtswp2",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Windows 云端组",
+        "sourceName": "星火",
+        "targetName": "Win 经理",
+        "active": false,
+        "temporary": false,
+        "status": "blocked"
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728rq_x1ukbj",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj728rq_x1ukbj",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728rq_x1ukbj",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Ubuntu 云端一组",
+        "sourceName": "星火",
+        "targetName": "U1 经理",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 188.27502974871064,
+              "y": 449.91967883843654
+            },
+            {
+              "x": 188.27502974871064,
+              "y": 467.91967883843654
+            },
+            {
+              "x": 188.27502974871064,
+              "y": 470
+            },
+            {
+              "x": 162.27502974871064,
+              "y": 470
+            },
+            {
+              "x": 141.27502974871064,
+              "y": 470
+            },
+            {
+              "x": 132.27502974871064,
+              "y": 470
+            },
+            {
+              "x": 40,
+              "y": 470
+            },
+            {
+              "x": 28,
+              "y": 470
+            },
+            {
+              "x": 4,
+              "y": 470
+            }
+          ],
+          "path": "M188.275 449.92 V462 Q188.275 470 180.275 470 H4",
+          "port": {
+            "x": 4,
+            "y": 470
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 4,
+              "y": 388
+            },
+            {
+              "x": 28,
+              "y": 388
+            },
+            {
+              "x": 39,
+              "y": 388
+            },
+            {
+              "x": 47.36732305624446,
+              "y": 388
+            },
+            {
+              "x": 143,
+              "y": 388
+            },
+            {
+              "x": 143,
+              "y": 412
+            }
+          ],
+          "path": "M4 388 H135 Q143 388 143 396 V412",
+          "port": {
+            "x": 4,
+            "y": 388
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 2871.2638135351663,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2843.2638135351663,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2780.420039002186,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2676.7873620584305,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2635.6410609029494,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2621.420039002186,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2615.6410609029494,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2613.420039002186,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 2613.420039002186,
+              "y": -1525.526949201215
+            },
+            {
+              "x": 2613.420039002186,
+              "y": -1503.868502765804
+            },
+            {
+              "x": 2613.420039002186,
+              "y": -1495.868502765804
+            },
+            {
+              "x": 2613.420039002186,
+              "y": -1200.3839032320104
+            },
+            {
+              "x": 2613.420039002186,
+              "y": -796.3839032320104
+            },
+            {
+              "x": 2641.420039002186,
+              "y": -796.3839032320104
+            }
+          ],
+          "path": "M2871.264 -1579.869 H2621.42 Q2613.42 -1579.869 2613.42 -1571.869 V-804.384 Q2613.42 -796.384 2621.42 -796.384 H2641.42"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "source": {
+            "side": "top",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "bottom",
+            "offset": 0.1
+          },
+          "route": [
+            {
+              "x": 245.2750297487105,
+              "y": 199.91967883843654
+            },
+            {
+              "x": 245.2750297487105,
+              "y": -84.10510285216333
+            },
+            {
+              "x": -137.47645147673575,
+              "y": -84.10510285216333
+            },
+            {
+              "x": -137.47645147673575,
+              "y": -327.3634352093536
+            }
+          ]
+        },
+        "id": "created-s_muj728yt_4w6nsy",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj728yt_4w6nsy",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Ubuntu 云端二组",
+        "sourceName": "星火",
+        "targetName": "U2 经理",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 245.27502974871064,
+              "y": 199.9196788384365
+            },
+            {
+              "x": 245.27502974871064,
+              "y": 190.9196788384365
+            },
+            {
+              "x": 250,
+              "y": 190.9196788384365
+            },
+            {
+              "x": 349.2750297487106,
+              "y": 190.9196788384365
+            },
+            {
+              "x": 472,
+              "y": 190.9196788384365
+            },
+            {
+              "x": 472,
+              "y": 196
+            },
+            {
+              "x": 496,
+              "y": 196
+            }
+          ],
+          "path": "M245.275 199.92 V195.42 Q245.275 190.92 249.775 190.92 H469.46 Q472 190.92 472 193.46 V193.46 Q472 196 474.54 196 H496",
+          "port": {
+            "x": 496,
+            "y": 196
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 393,
+              "y": 858
+            },
+            {
+              "x": 393,
+              "y": 834
+            },
+            {
+              "x": 306.3301554483505,
+              "y": 834
+            },
+            {
+              "x": 285.3301554483505,
+              "y": 834
+            },
+            {
+              "x": 282.3301554483505,
+              "y": 834
+            },
+            {
+              "x": 258.3301554483505,
+              "y": 834
+            },
+            {
+              "x": 217,
+              "y": 834
+            },
+            {
+              "x": 196,
+              "y": 834
+            },
+            {
+              "x": 166.47645147673575,
+              "y": 834
+            },
+            {
+              "x": 113,
+              "y": 834
+            },
+            {
+              "x": 37,
+              "y": 834
+            },
+            {
+              "x": 37,
+              "y": 802.3391841924214
+            },
+            {
+              "x": 37,
+              "y": 802
+            },
+            {
+              "x": 37,
+              "y": 666.7416676428097
+            },
+            {
+              "x": 37,
+              "y": 642.7416676428097
+            }
+          ],
+          "path": "M393 858 V842 Q393 834 385 834 H45 Q37 834 37 826 V642.742",
+          "port": {
+            "x": 393,
+            "y": 858
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 3363.2638135351663,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 3391.2638135351663,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 3383.2638135351663,
+              "y": -1853.868502765804
+            },
+            {
+              "x": 3383.2638135351663,
+              "y": -1865.868502765804
+            },
+            {
+              "x": 3383.2638135351663,
+              "y": -2065.868502765804
+            },
+            {
+              "x": 3383.2638135351663,
+              "y": -2133.973605617967
+            },
+            {
+              "x": 3377.6905197329015,
+              "y": -2133.973605617967
+            },
+            {
+              "x": 3117.2638135351663,
+              "y": -2133.973605617967
+            },
+            {
+              "x": 3112.5388432838768,
+              "y": -2133.973605617967
+            },
+            {
+              "x": 3085.7873620584305,
+              "y": -2133.973605617967
+            },
+            {
+              "x": 3085.7873620584305,
+              "y": -2161.973605617967
+            }
+          ],
+          "path": "M3363.264 -1853.869 H3375.264 Q3383.264 -1853.869 3383.264 -1861.869 V-2125.974 Q3383.264 -2133.974 3375.264 -2133.974 H3093.787 Q3085.787 -2133.974 3085.787 -2141.974 V-2161.974"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj7299d_ku6lqj",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj7299d_ku6lqj",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Kali 云端一组",
+        "sourceName": "星火",
+        "targetName": "K1 经理",
+        "active": false,
+        "temporary": false,
+        "status": "blocked"
+      },
+      {
+        "anchors": {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "source": {
+            "side": "auto"
+          },
+          "target": {
+            "side": "auto"
+          }
+        },
+        "id": "created-s_muj729fz_uef975",
+        "managerId": "s_muj4r8pz_55m0a8",
+        "employeeId": "s_muj729fz_uef975",
+        "sourceTeam": "宣传总部",
+        "targetTeam": "Kali 云端二组",
+        "sourceName": "星火",
+        "targetName": "K2 经理",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 340.2750297487106,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 358.2750297487106,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 460,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 472,
+              "y": 424.91967883843654
+            },
+            {
+              "x": 472,
+              "y": 436.91967883843654
+            },
+            {
+              "x": 472,
+              "y": 437.42396876113753
+            },
+            {
+              "x": 472,
+              "y": 437.91967883843654
+            },
+            {
+              "x": 472,
+              "y": 458
+            },
+            {
+              "x": 472,
+              "y": 458.91967883843654
+            },
+            {
+              "x": 472,
+              "y": 467.91967883843654
+            },
+            {
+              "x": 472,
+              "y": 470
+            },
+            {
+              "x": 496,
+              "y": 470
+            }
+          ],
+          "path": "M340.275 424.92 H464 Q472 424.92 472 432.92 V462 Q472 470 480 470 H496",
+          "port": {
+            "x": 496,
+            "y": 470
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 4,
+              "y": 388
+            },
+            {
+              "x": 28,
+              "y": 388
+            },
+            {
+              "x": 39,
+              "y": 388
+            },
+            {
+              "x": 143,
+              "y": 388
+            },
+            {
+              "x": 143,
+              "y": 412
+            }
+          ],
+          "path": "M4 388 H135 Q143 388 143 396 V412",
+          "port": {
+            "x": 4,
+            "y": 388
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 3363.2638135351663,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3391.2638135351663,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3395.2638135351663,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3403.2638135351663,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3439.420039002186,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3494.7873620584305,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3527.9662910716042,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1579.868502765804
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1567.868502765804
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1525.526949201215
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1503.868502765804
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1495.868502765804
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1200.3839032320104
+            },
+            {
+              "x": 3606.358345131381,
+              "y": -1121.526949201215
+            },
+            {
+              "x": 3634.358345131381,
+              "y": -1121.526949201215
+            }
+          ],
+          "path": "M3363.264 -1579.869 H3598.358 Q3606.358 -1579.869 3606.358 -1571.869 V-1129.527 Q3606.358 -1121.527 3614.358 -1121.527 H3634.358"
+        }
+      }
+    ],
+    "coordinates": {
+      "team": "world pixels",
+      "employee": "pixels relative to its Team"
+    },
+    "rooms": [
+      {
+        "name": "Team-Managers",
+        "bounds": {
+          "x": 1734.3757421132032,
+          "y": 922,
+          "width": 760,
+          "height": 520,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "s_muiiox1y_nf6ltz",
+            "title": "hi-new",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 48,
+              "y": 206
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muilspjd_bwfdvv",
+            "title": "hi-cloud",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 264,
+              "y": 206
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "决策中枢",
+        "bounds": {
+          "x": 3543.9662910716042,
+          "y": 919.0794979306555,
+          "width": 430,
+          "height": 530,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "s_muial7gj_w3fb90",
+            "title": "火火",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 120,
+              "y": 210
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Project1",
+        "bounds": {
+          "x": 2601.6905197329015,
+          "y": 923.2837863282421,
+          "width": 760,
+          "height": 520,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "s_muijwzn1_y2wytt",
+            "title": "t1",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 18,
+              "y": 252
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "宣传总部",
+        "bounds": {
+          "x": 2867.2638135351663,
+          "y": -2049.868502765804,
+          "width": 500,
+          "height": 530,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "s_muj4r8pz_55m0a8",
+            "title": "星火",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 150.27502974871064,
+              "y": 199.9196788384365
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Mac 工作站",
+        "bounds": {
+          "x": 1813.6410609029494,
+          "y": -2526.4445340046664,
+          "width": 786,
+          "height": 862,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj7z7hw_wbiadk",
+            "managerId": "s_muj728em_bg1xv6",
+            "employeeId": "s_muj7z7hw_wbiadk",
+            "anchors": {
+              "managerId": "s_muj728em_bg1xv6",
+              "employeeId": "s_muj7z7hw_wbiadk",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 393,
+                "y": 432
+              },
+              {
+                "x": 393,
+                "y": 450
+              },
+              {
+                "x": 393,
+                "y": 472
+              },
+              {
+                "x": 289,
+                "y": 472
+              },
+              {
+                "x": 239,
+                "y": 472
+              },
+              {
+                "x": 135,
+                "y": 472
+              },
+              {
+                "x": 135,
+                "y": 496
+              }
+            ],
+            "path": "M393 432 V464 Q393 472 385 472 H143 Q135 472 135 480 V496"
+          },
+          {
+            "id": "created-s_muj7z8ig_4kc4s0",
+            "managerId": "s_muj728em_bg1xv6",
+            "employeeId": "s_muj7z8ig_4kc4s0",
+            "anchors": {
+              "managerId": "s_muj728em_bg1xv6",
+              "employeeId": "s_muj7z8ig_4kc4s0",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              }
+            },
+            "status": "blocked",
+            "layout": "obstacle-route",
+            "points": [],
+            "path": ""
+          },
+          {
+            "id": "created-s_muj7z9i6_m3pwo0",
+            "managerId": "s_muj728em_bg1xv6",
+            "employeeId": "s_muj7z9i6_m3pwo0",
+            "anchors": {
+              "managerId": "s_muj728em_bg1xv6",
+              "employeeId": "s_muj7z9i6_m3pwo0",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              }
+            },
+            "status": "blocked",
+            "layout": "obstacle-route",
+            "points": [],
+            "path": ""
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj728em_bg1xv6",
+            "title": "Mac 经理",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 298,
+              "y": 182
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7z7hw_wbiadk",
+            "title": "员工A",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 40,
+              "y": 496
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7z8ig_4kc4s0",
+            "title": "员工B",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 298,
+              "y": 496
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7z9i6_m3pwo0",
+            "title": "员工C",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 556,
+              "y": 496
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Windows 云端组",
+        "bounds": {
+          "x": 1630.6877885408917,
+          "y": -1604.4445340046664,
+          "width": 786,
+          "height": 862,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj7zkru_ka8ncj",
+            "managerId": "s_muj728m5_qtswp2",
+            "employeeId": "s_muj7zkru_ka8ncj",
+            "anchors": {
+              "managerId": "s_muj728m5_qtswp2",
+              "employeeId": "s_muj7zkru_ka8ncj",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 238,
+                "y": 592
+              },
+              {
+                "x": 256,
+                "y": 592
+              },
+              {
+                "x": 305,
+                "y": 592
+              },
+              {
+                "x": 305,
+                "y": 555
+              },
+              {
+                "x": 305,
+                "y": 519
+              },
+              {
+                "x": 305,
+                "y": 403
+              },
+              {
+                "x": 305,
+                "y": 251
+              },
+              {
+                "x": 409,
+                "y": 251
+              },
+              {
+                "x": 409,
+                "y": 260
+              }
+            ],
+            "path": "M238 592 H297 Q305 592 305 584 V259 Q305 251 313 251 H404.5 Q409 251 409 255.5 V260"
+          },
+          {
+            "id": "created-s_muj7zks5_juensk",
+            "managerId": "s_muj728m5_qtswp2",
+            "employeeId": "s_muj7zks5_juensk",
+            "anchors": {
+              "managerId": "s_muj728m5_qtswp2",
+              "employeeId": "s_muj7zks5_juensk",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 48,
+                "y": 592
+              },
+              {
+                "x": 39,
+                "y": 592
+              },
+              {
+                "x": 39,
+                "y": 580
+              },
+              {
+                "x": 39,
+                "y": 555
+              },
+              {
+                "x": 39,
+                "y": 519
+              },
+              {
+                "x": 39,
+                "y": 403
+              },
+              {
+                "x": 39,
+                "y": 272
+              },
+              {
+                "x": 39,
+                "y": 263
+              },
+              {
+                "x": 39,
+                "y": 251
+              },
+              {
+                "x": 39,
+                "y": 239
+              },
+              {
+                "x": 39,
+                "y": 236
+              },
+              {
+                "x": 86,
+                "y": 236
+              },
+              {
+                "x": 114.5,
+                "y": 236
+              },
+              {
+                "x": 143,
+                "y": 236
+              },
+              {
+                "x": 171.5,
+                "y": 236
+              },
+              {
+                "x": 200,
+                "y": 236
+              },
+              {
+                "x": 226,
+                "y": 236
+              },
+              {
+                "x": 247,
+                "y": 236
+              },
+              {
+                "x": 256,
+                "y": 236
+              },
+              {
+                "x": 293,
+                "y": 236
+              },
+              {
+                "x": 305,
+                "y": 236
+              },
+              {
+                "x": 317,
+                "y": 236
+              },
+              {
+                "x": 397,
+                "y": 236
+              },
+              {
+                "x": 421,
+                "y": 236
+              },
+              {
+                "x": 513,
+                "y": 236
+              },
+              {
+                "x": 539,
+                "y": 236
+              },
+              {
+                "x": 643,
+                "y": 236
+              },
+              {
+                "x": 643,
+                "y": 260
+              }
+            ],
+            "path": "M48 592 H43.5 Q39 592 39 587.5 V244 Q39 236 47 236 H635 Q643 236 643 244 V260"
+          },
+          {
+            "id": "created-s_muj7zkse_p3zgiy",
+            "managerId": "s_muj728m5_qtswp2",
+            "employeeId": "s_muj7zkse_p3zgiy",
+            "anchors": {
+              "managerId": "s_muj728m5_qtswp2",
+              "employeeId": "s_muj7zkse_p3zgiy",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 200,
+                "y": 662
+              },
+              {
+                "x": 200,
+                "y": 680
+              },
+              {
+                "x": 200,
+                "y": 823
+              },
+              {
+                "x": 226,
+                "y": 823
+              },
+              {
+                "x": 247,
+                "y": 823
+              },
+              {
+                "x": 256,
+                "y": 823
+              },
+              {
+                "x": 293,
+                "y": 823
+              },
+              {
+                "x": 305,
+                "y": 823
+              },
+              {
+                "x": 317,
+                "y": 823
+              },
+              {
+                "x": 397,
+                "y": 823
+              },
+              {
+                "x": 409,
+                "y": 823
+              },
+              {
+                "x": 421,
+                "y": 823
+              },
+              {
+                "x": 513,
+                "y": 823
+              },
+              {
+                "x": 513,
+                "y": 680
+              },
+              {
+                "x": 513,
+                "y": 671
+              },
+              {
+                "x": 513,
+                "y": 637
+              },
+              {
+                "x": 513,
+                "y": 625.75
+              },
+              {
+                "x": 513,
+                "y": 614.5
+              },
+              {
+                "x": 513,
+                "y": 604
+              },
+              {
+                "x": 513,
+                "y": 580
+              },
+              {
+                "x": 513,
+                "y": 555
+              },
+              {
+                "x": 421,
+                "y": 555
+              },
+              {
+                "x": 409,
+                "y": 555
+              },
+              {
+                "x": 409,
+                "y": 564
+              }
+            ],
+            "path": "M200 662 V815 Q200 823 208 823 H505 Q513 823 513 815 V563 Q513 555 505 555 H413.5 Q409 555 409 559.5 V564"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj728m5_qtswp2",
+            "title": "Win 经理",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 48,
+              "y": 412
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zkru_ka8ncj",
+            "title": "员工C",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 314,
+              "y": 260
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zks5_juensk",
+            "title": "员工B",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 548,
+              "y": 260
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zkse_p3zgiy",
+            "title": "员工A",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 314,
+              "y": 564
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Ubuntu 云端一组",
+        "bounds": {
+          "x": 2637.420039002186,
+          "y": -1184.3839032320104,
+          "width": 786,
+          "height": 862,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj7zavg_x6wix7",
+            "managerId": "s_muj728rq_x1ukbj",
+            "employeeId": "s_muj7zavg_x6wix7",
+            "anchors": {
+              "managerId": "s_muj728rq_x1ukbj",
+              "employeeId": "s_muj7zavg_x6wix7",
+              "source": {
+                "side": "right",
+                "offset": 0.72
+              },
+              "target": {
+                "side": "left",
+                "offset": 0.7
+              },
+              "route": [
+                {
+                  "x": 238,
+                  "y": 592
+                },
+                {
+                  "x": 277.37343436891206,
+                  "y": 592
+                },
+                {
+                  "x": 277.37343436891206,
+                  "y": 465.18184687531607
+                },
+                {
+                  "x": 312.82969464915413,
+                  "y": 465.18184687531607
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 238,
+                "y": 592
+              },
+              {
+                "x": 256,
+                "y": 592
+              },
+              {
+                "x": 288.8296946491543,
+                "y": 592
+              },
+              {
+                "x": 288.8296946491543,
+                "y": 549.2086291282914
+              },
+              {
+                "x": 288.8296946491543,
+                "y": 549.1818468753161
+              },
+              {
+                "x": 288.8296946491543,
+                "y": 519
+              },
+              {
+                "x": 288.8296946491543,
+                "y": 465.1818468753161
+              },
+              {
+                "x": 312.8296946491543,
+                "y": 465.1818468753161
+              }
+            ],
+            "path": "M238 592 H280.83 Q288.83 592 288.83 584 V473.182 Q288.83 465.182 296.83 465.182 H312.83"
+          },
+          {
+            "id": "created-s_muj7zbvh_y42qhc",
+            "managerId": "s_muj728rq_x1ukbj",
+            "employeeId": "s_muj7zbvh_y42qhc",
+            "anchors": {
+              "managerId": "s_muj728rq_x1ukbj",
+              "employeeId": "s_muj7zbvh_y42qhc",
+              "source": {
+                "side": "top",
+                "offset": 0.7
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 181,
+                "y": 412
+              },
+              {
+                "x": 181,
+                "y": 394
+              },
+              {
+                "x": 181,
+                "y": 281.1818468753161
+              },
+              {
+                "x": 181,
+                "y": 251
+              },
+              {
+                "x": 226,
+                "y": 251
+              },
+              {
+                "x": 247,
+                "y": 251
+              },
+              {
+                "x": 276.8296946491543,
+                "y": 251
+              },
+              {
+                "x": 300.8296946491543,
+                "y": 251
+              },
+              {
+                "x": 303.8296946491543,
+                "y": 251
+              },
+              {
+                "x": 324.8296946491543,
+                "y": 251
+              },
+              {
+                "x": 467.6833812007436,
+                "y": 251
+              },
+              {
+                "x": 511.8296946491543,
+                "y": 251
+              },
+              {
+                "x": 539,
+                "y": 251
+              },
+              {
+                "x": 643,
+                "y": 251
+              },
+              {
+                "x": 643,
+                "y": 260
+              }
+            ],
+            "path": "M181 412 V259 Q181 251 189 251 H638.5 Q643 251 643 255.5 V260"
+          },
+          {
+            "id": "created-s_muj7zcla_iioznx",
+            "managerId": "s_muj728rq_x1ukbj",
+            "employeeId": "s_muj7zcla_iioznx",
+            "anchors": {
+              "managerId": "s_muj728rq_x1ukbj",
+              "employeeId": "s_muj7zcla_iioznx",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "left",
+                "offset": 0.9
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 238,
+                "y": 637
+              },
+              {
+                "x": 256,
+                "y": 637
+              },
+              {
+                "x": 276.8296946491543,
+                "y": 637
+              },
+              {
+                "x": 300.8296946491543,
+                "y": 637
+              },
+              {
+                "x": 303.8296946491543,
+                "y": 637
+              },
+              {
+                "x": 324.8296946491543,
+                "y": 637
+              },
+              {
+                "x": 452.6833812007436,
+                "y": 637
+              },
+              {
+                "x": 452.6833812007436,
+                "y": 671
+              },
+              {
+                "x": 452.6833812007436,
+                "y": 680
+              },
+              {
+                "x": 452.6833812007436,
+                "y": 783.2086291282914
+              },
+              {
+                "x": 476.6833812007436,
+                "y": 783.2086291282914
+              }
+            ],
+            "path": "M238 637 H444.683 Q452.683 637 452.683 645 V775.209 Q452.683 783.209 460.683 783.209 H476.683"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj728rq_x1ukbj",
+            "title": "U1 经理",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 48,
+              "y": 412
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zavg_x6wix7",
+            "title": "员工A",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 312.8296946491543,
+              "y": 290.1818468753161
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zbvh_y42qhc",
+            "title": "员工B",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 548,
+              "y": 260
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zcla_iioznx",
+            "title": "员工C",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 476.6833812007436,
+              "y": 558.2086291282914
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Ubuntu 云端二组",
+        "bounds": {
+          "x": 2692.7873620584305,
+          "y": -3019.973605617967,
+          "width": 786,
+          "height": 862,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj7znn0_gd0fuo",
+            "managerId": "s_muj728yt_4w6nsy",
+            "employeeId": "s_muj7znn0_gd0fuo",
+            "anchors": {
+              "managerId": "s_muj728yt_4w6nsy",
+              "employeeId": "s_muj7znn0_gd0fuo",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "left",
+                "offset": 0.5
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 208,
+                "y": 572.7416676428097
+              },
+              {
+                "x": 226,
+                "y": 572.7416676428097
+              },
+              {
+                "x": 270.3301554483505,
+                "y": 572.7416676428097
+              },
+              {
+                "x": 270.3301554483505,
+                "y": 534.3391841924214
+              },
+              {
+                "x": 270.3301554483505,
+                "y": 508.7832896605089
+              },
+              {
+                "x": 270.3301554483505,
+                "y": 449.0804337443981
+              },
+              {
+                "x": 270.3301554483505,
+                "y": 383.7416676428097
+              },
+              {
+                "x": 270.3301554483505,
+                "y": 315.0804337443981
+              },
+              {
+                "x": 294.3301554483505,
+                "y": 315.0804337443981
+              }
+            ],
+            "path": "M208 572.742 H262.33 Q270.33 572.742 270.33 564.742 V323.08 Q270.33 315.08 278.33 315.08 H294.33"
+          },
+          {
+            "id": "created-s_muj7znng_75x729",
+            "managerId": "s_muj728yt_4w6nsy",
+            "employeeId": "s_muj7znng_75x729",
+            "anchors": {
+              "managerId": "s_muj728yt_4w6nsy",
+              "employeeId": "s_muj7znng_75x729",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 208,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 226,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 258.3301554483505,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 282.3301554483505,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 285.3301554483505,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 306.3301554483505,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 493.3301554483505,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 595.2416676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 584.7416676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 583.9916676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 572.7416676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 560.7416676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 534.3391841924214
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 508.7832896605089
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 449.0804337443981
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 383.7416676428097
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 327.0804337443981
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 303.0804337443981
+              },
+              {
+                "x": 496.21538285986816,
+                "y": 240.78328966050893
+              },
+              {
+                "x": 569,
+                "y": 240.78328966050893
+              },
+              {
+                "x": 673,
+                "y": 240.78328966050893
+              },
+              {
+                "x": 673,
+                "y": 249.78328966050893
+              }
+            ],
+            "path": "M208 595.242 H488.215 Q496.215 595.242 496.215 587.242 V248.783 Q496.215 240.783 504.215 240.783 H668.5 Q673 240.783 673 245.283 V249.783"
+          },
+          {
+            "id": "created-s_muj7znnr_v0su5m",
+            "managerId": "s_muj728yt_4w6nsy",
+            "employeeId": "s_muj7znnr_v0su5m",
+            "anchors": {
+              "managerId": "s_muj728yt_4w6nsy",
+              "employeeId": "s_muj7znnr_v0su5m",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "left",
+                "offset": 0.3
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 208,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 226,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 258.3301554483505,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 282.3301554483505,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 285.3301554483505,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 306.3301554483505,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 481.21538285986816,
+                "y": 617.7416676428097
+              },
+              {
+                "x": 481.21538285986816,
+                "y": 618.3391841924214
+              },
+              {
+                "x": 505.21538285986816,
+                "y": 618.3391841924214
+              }
+            ],
+            "path": "M208 617.742 H480.917 Q481.215 617.742 481.215 618.04 V618.04 Q481.215 618.339 481.514 618.339 H505.215"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj728yt_4w6nsy",
+            "title": "U2 经理",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 18,
+              "y": 392.7416676428097
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7znn0_gd0fuo",
+            "title": "员工A",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 294.3301554483505,
+              "y": 190.08043374439808
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7znng_75x729",
+            "title": "员工B",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 578,
+              "y": 249.78328966050893
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7znnr_v0su5m",
+            "title": "员工C",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 505.21538285986816,
+              "y": 543.3391841924214
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Kali 云端一组",
+        "bounds": {
+          "x": 3630.6331138023156,
+          "y": -2593.4593844126434,
+          "width": 786,
+          "height": 862,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj7zdu6_ev9gbq",
+            "managerId": "s_muj7299d_ku6lqj",
+            "employeeId": "s_muj7zdu6_ev9gbq",
+            "anchors": {
+              "managerId": "s_muj7299d_ku6lqj",
+              "employeeId": "s_muj7zdu6_ev9gbq",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 238,
+                "y": 592
+              },
+              {
+                "x": 256,
+                "y": 592
+              },
+              {
+                "x": 305,
+                "y": 592
+              },
+              {
+                "x": 305,
+                "y": 555
+              },
+              {
+                "x": 305,
+                "y": 519
+              },
+              {
+                "x": 305,
+                "y": 403
+              },
+              {
+                "x": 305,
+                "y": 251
+              },
+              {
+                "x": 409,
+                "y": 251
+              },
+              {
+                "x": 409,
+                "y": 260
+              }
+            ],
+            "path": "M238 592 H297 Q305 592 305 584 V259 Q305 251 313 251 H404.5 Q409 251 409 255.5 V260"
+          },
+          {
+            "id": "created-s_muj7zet7_2boei2",
+            "managerId": "s_muj7299d_ku6lqj",
+            "employeeId": "s_muj7zet7_2boei2",
+            "anchors": {
+              "managerId": "s_muj7299d_ku6lqj",
+              "employeeId": "s_muj7zet7_2boei2",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 48,
+                "y": 592
+              },
+              {
+                "x": 39,
+                "y": 592
+              },
+              {
+                "x": 39,
+                "y": 580
+              },
+              {
+                "x": 39,
+                "y": 555
+              },
+              {
+                "x": 39,
+                "y": 519
+              },
+              {
+                "x": 39,
+                "y": 403
+              },
+              {
+                "x": 39,
+                "y": 272
+              },
+              {
+                "x": 39,
+                "y": 263
+              },
+              {
+                "x": 39,
+                "y": 251
+              },
+              {
+                "x": 39,
+                "y": 239
+              },
+              {
+                "x": 39,
+                "y": 236
+              },
+              {
+                "x": 86,
+                "y": 236
+              },
+              {
+                "x": 114.5,
+                "y": 236
+              },
+              {
+                "x": 143,
+                "y": 236
+              },
+              {
+                "x": 171.5,
+                "y": 236
+              },
+              {
+                "x": 200,
+                "y": 236
+              },
+              {
+                "x": 226,
+                "y": 236
+              },
+              {
+                "x": 247,
+                "y": 236
+              },
+              {
+                "x": 256,
+                "y": 236
+              },
+              {
+                "x": 293,
+                "y": 236
+              },
+              {
+                "x": 305,
+                "y": 236
+              },
+              {
+                "x": 317,
+                "y": 236
+              },
+              {
+                "x": 397,
+                "y": 236
+              },
+              {
+                "x": 421,
+                "y": 236
+              },
+              {
+                "x": 513,
+                "y": 236
+              },
+              {
+                "x": 539,
+                "y": 236
+              },
+              {
+                "x": 643,
+                "y": 236
+              },
+              {
+                "x": 643,
+                "y": 260
+              }
+            ],
+            "path": "M48 592 H43.5 Q39 592 39 587.5 V244 Q39 236 47 236 H635 Q643 236 643 244 V260"
+          },
+          {
+            "id": "created-s_muj7zfr8_ow7pyl",
+            "managerId": "s_muj7299d_ku6lqj",
+            "employeeId": "s_muj7zfr8_ow7pyl",
+            "anchors": {
+              "managerId": "s_muj7299d_ku6lqj",
+              "employeeId": "s_muj7zfr8_ow7pyl",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "auto"
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 200,
+                "y": 662
+              },
+              {
+                "x": 200,
+                "y": 680
+              },
+              {
+                "x": 200,
+                "y": 823
+              },
+              {
+                "x": 226,
+                "y": 823
+              },
+              {
+                "x": 247,
+                "y": 823
+              },
+              {
+                "x": 256,
+                "y": 823
+              },
+              {
+                "x": 293,
+                "y": 823
+              },
+              {
+                "x": 305,
+                "y": 823
+              },
+              {
+                "x": 317,
+                "y": 823
+              },
+              {
+                "x": 397,
+                "y": 823
+              },
+              {
+                "x": 409,
+                "y": 823
+              },
+              {
+                "x": 421,
+                "y": 823
+              },
+              {
+                "x": 513,
+                "y": 823
+              },
+              {
+                "x": 513,
+                "y": 680
+              },
+              {
+                "x": 513,
+                "y": 671
+              },
+              {
+                "x": 513,
+                "y": 637
+              },
+              {
+                "x": 513,
+                "y": 625.75
+              },
+              {
+                "x": 513,
+                "y": 614.5
+              },
+              {
+                "x": 513,
+                "y": 604
+              },
+              {
+                "x": 513,
+                "y": 580
+              },
+              {
+                "x": 513,
+                "y": 555
+              },
+              {
+                "x": 421,
+                "y": 555
+              },
+              {
+                "x": 409,
+                "y": 555
+              },
+              {
+                "x": 409,
+                "y": 564
+              }
+            ],
+            "path": "M200 662 V815 Q200 823 208 823 H505 Q513 823 513 815 V563 Q513 555 505 555 H413.5 Q409 555 409 559.5 V564"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj7299d_ku6lqj",
+            "title": "K1 经理",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 48,
+              "y": 412
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zdu6_ev9gbq",
+            "title": "员工A",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 314,
+              "y": 260
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zet7_2boei2",
+            "title": "员工B",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 548,
+              "y": 260
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zfr8_ow7pyl",
+            "title": "员工C",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 314,
+              "y": 564
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Kali 云端二组",
+        "bounds": {
+          "x": 3630.358345131381,
+          "y": -1509.526949201215,
+          "width": 786,
+          "height": 862,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-s_muj7zlej_iay2mp",
+            "managerId": "s_muj729fz_uef975",
+            "employeeId": "s_muj7zlej_iay2mp",
+            "anchors": {
+              "managerId": "s_muj729fz_uef975",
+              "employeeId": "s_muj7zlej_iay2mp",
+              "source": {
+                "side": "right",
+                "offset": 0.72
+              },
+              "target": {
+                "side": "left",
+                "offset": 0.3
+              },
+              "route": [
+                {
+                  "x": 238,
+                  "y": 592
+                },
+                {
+                  "x": 304.1744415637668,
+                  "y": 592
+                },
+                {
+                  "x": 304.1744415637668,
+                  "y": 342.5420494883749
+                },
+                {
+                  "x": 401.19960123215014,
+                  "y": 342.5420494883749
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 238,
+                "y": 592
+              },
+              {
+                "x": 256,
+                "y": 592
+              },
+              {
+                "x": 313.6230750988801,
+                "y": 592
+              },
+              {
+                "x": 313.6230750988801,
+                "y": 525.080602901912
+              },
+              {
+                "x": 313.6230750988801,
+                "y": 519
+              },
+              {
+                "x": 313.6230750988801,
+                "y": 481.8844752112456
+              },
+              {
+                "x": 313.6230750988801,
+                "y": 403
+              },
+              {
+                "x": 313.6230750988801,
+                "y": 341.0806029019121
+              },
+              {
+                "x": 337.6230750988801,
+                "y": 341.0806029019121
+              }
+            ],
+            "path": "M238 592 H305.623 Q313.623 592 313.623 584 V349.081 Q313.623 341.081 321.623 341.081 H337.623"
+          },
+          {
+            "id": "created-s_muj7zlh0_3xpyto",
+            "managerId": "s_muj729fz_uef975",
+            "employeeId": "s_muj7zlh0_3xpyto",
+            "anchors": {
+              "managerId": "s_muj729fz_uef975",
+              "employeeId": "s_muj7zlh0_3xpyto",
+              "source": {
+                "side": "top",
+                "offset": 0.7
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 181,
+                  "y": 412
+                },
+                {
+                  "x": 181,
+                  "y": 193.6294594612707
+                },
+                {
+                  "x": 642.9999999999995,
+                  "y": 193.6294594612707
+                },
+                {
+                  "x": 642.9999999999995,
+                  "y": 260
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 181,
+                "y": 412
+              },
+              {
+                "x": 181,
+                "y": 394
+              },
+              {
+                "x": 181,
+                "y": 353.0806029019121
+              },
+              {
+                "x": 181,
+                "y": 329.0806029019121
+              },
+              {
+                "x": 181,
+                "y": 257.0806029019121
+              },
+              {
+                "x": 181,
+                "y": 251
+              },
+              {
+                "x": 226,
+                "y": 251
+              },
+              {
+                "x": 247,
+                "y": 251
+              },
+              {
+                "x": 301.6230750988801,
+                "y": 251
+              },
+              {
+                "x": 325.6230750988801,
+                "y": 251
+              },
+              {
+                "x": 328.6230750988801,
+                "y": 251
+              },
+              {
+                "x": 349.6230750988801,
+                "y": 251
+              },
+              {
+                "x": 484.28997925749695,
+                "y": 251
+              },
+              {
+                "x": 536.6230750988801,
+                "y": 251
+              },
+              {
+                "x": 539,
+                "y": 251
+              },
+              {
+                "x": 643,
+                "y": 251
+              },
+              {
+                "x": 643,
+                "y": 260
+              }
+            ],
+            "path": "M181 412 V259 Q181 251 189 251 H638.5 Q643 251 643 255.5 V260"
+          },
+          {
+            "id": "created-s_muj7zljw_rf4v7f",
+            "managerId": "s_muj729fz_uef975",
+            "employeeId": "s_muj7zljw_rf4v7f",
+            "anchors": {
+              "managerId": "s_muj729fz_uef975",
+              "employeeId": "s_muj7zljw_rf4v7f",
+              "source": {
+                "side": "auto"
+              },
+              "target": {
+                "side": "left",
+                "offset": 0.5
+              }
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 238,
+                "y": 614.5
+              },
+              {
+                "x": 256,
+                "y": 614.5
+              },
+              {
+                "x": 301.6230750988801,
+                "y": 614.5
+              },
+              {
+                "x": 325.6230750988801,
+                "y": 614.5
+              },
+              {
+                "x": 328.6230750988801,
+                "y": 614.5
+              },
+              {
+                "x": 349.6230750988801,
+                "y": 614.5
+              },
+              {
+                "x": 469.28997925749695,
+                "y": 614.5
+              },
+              {
+                "x": 469.28997925749695,
+                "y": 615.8844752112457
+              },
+              {
+                "x": 493.28997925749695,
+                "y": 615.8844752112457
+              }
+            ],
+            "path": "M238 614.5 H468.598 Q469.29 614.5 469.29 615.192 V615.192 Q469.29 615.884 469.982 615.884 H493.29"
+          }
+        ],
+        "employees": [
+          {
+            "id": "s_muj729fz_uef975",
+            "title": "K2 经理",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 48,
+              "y": 412
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zlej_iay2mp",
+            "title": "员工A",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 337.6230750988801,
+              "y": 266.0806029019121
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zlh0_3xpyto",
+            "title": "员工B",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 548,
+              "y": 260
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "s_muj7zljw_rf4v7f",
+            "title": "员工C",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 493.28997925749695,
+              "y": 490.8844752112456
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      }
+    ]
+  }
+}

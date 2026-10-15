@@ -1,0 +1,373 @@
+{
+  "project": "Avalon",
+  "repository": "https://github.com/Daijunfan/Avalon",
+  "createdAt": "2026-10-04T15:44:48.949241+00:00",
+  "source": "Actual authenticated Core Web renderer, Chrome headless, separate real-model profile",
+  "sourcePackageVersion": "0.58.0",
+  "actors": 19,
+  "workingActorsInHero": 18,
+  "sleepingActorsInHero": 1,
+  "managers": 6,
+  "reportsPerManager": 2,
+  "engines": [
+    "Codex",
+    "Claude Code",
+    "Cline",
+    "Pi"
+  ],
+  "sshEnvironments": [
+    "Linux Cloud",
+    "Windows Cloud",
+    "Ubuntu Lab",
+    "Kali Lab"
+  ],
+  "execution": "Coding engines run on the Mac Core; Cloud Teams use four actual SSH workspaces, including VMs. This is not a cloud-native engine claim.",
+  "codingModels": "gpt-6-luna; deepseek-flash; deepseek-v4-flash",
+  "realModels": true,
+  "fixtureImages": false,
+  "rendererStateOverrides": false,
+  "photoAt": "2026-10-04T15:19:28.960Z",
+  "lineAudit": {
+    "links": 18,
+    "orthogonal": true,
+    "mirroredSecretaryBranches": 3,
+    "symmetricEmployeeForks": 6,
+    "lineCrossings": 0,
+    "bubbleLineCollisions": 0,
+    "bubbleCardCollisions": 0,
+    "bubbleBubbleCollisions": 0,
+    "activeGreenLinksInHero": 16,
+    "movingDashOffsets": 18
+  },
+  "groupScene": {
+    "members": 6,
+    "mentionedResponders": 2,
+    "contextOnlyReaders": 4,
+    "allRead": true
+  },
+  "plan": {
+    "savedJobs": 38,
+    "actualManualRunsSucceeded": 2,
+    "layouts": 10,
+    "formImage": "Actual unsaved form draft"
+  },
+  "channel": "Three original retained public Telegram articles and images copied into the private photo profile; actual employee-generated summary",
+  "motion": {
+    "source": "Actual recorded Chrome frames, cropped in time, empty video padding removed, and resized only; no generated motion or frame recoloring",
+    "sourceVideoDuration": 4.96,
+    "start": 1.6800000000000002,
+    "duration": 0.45,
+    "fps": 20,
+    "greenCorridorMaximum": 192,
+    "sourceFrameIndex": 36
+  },
+  "cleanup": {
+    "all38JobsPaused": true,
+    "photoCoreStopped": true
+  },
+  "assets": [
+    {
+      "view": "Company",
+      "file": "Company/company-hierarchy-working.png",
+      "bytes": 1734901,
+      "sha256": "84bf219239f7adf3b7388a995664044ded6332fe4127e0d4ec5b33a51d8560b1",
+      "width": 3600,
+      "height": 4200,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/secretary-coordinates-teams.png",
+      "bytes": 643824,
+      "sha256": "b4c476e15a86caa29cace1140f2f4b6bac87a9bd71772d40dcdf1ba261211ca3",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/team-linux-build.png",
+      "bytes": 741771,
+      "sha256": "e1f2b1ea01b049b03da97e4386d93e0a666faaffd6b3e937e34bfa212c0d1bc3",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/team-linux-research.png",
+      "bytes": 811934,
+      "sha256": "2ae13e8d6ee463389029cce8db35be4d811e040e73c3b66bb834ea583e34de3f",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/team-windows-delivery.png",
+      "bytes": 853434,
+      "sha256": "d5f80b3bbd3c39a9d34114adbd3e682df851b0bc89da354a7b898a019445f4f9",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/team-kali-review.png",
+      "bytes": 803917,
+      "sha256": "fa02591bef1175585bd0f35b9f4fca037c9e096b65cc1165e25a8d91d24f2e83",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/team-ubuntu-editorial.png",
+      "bytes": 713681,
+      "sha256": "fa31f21dc91c0df81f64f07c646864199afcd7cdf9b5a8fa2f650199dd6a6195",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/team-ubuntu-analysis.png",
+      "bytes": 733469,
+      "sha256": "b60f0830ef79269ab911b86a744cf13852664a5e94fe4063e16550bf7b46d4c8",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Company",
+      "file": "Company/company-green-flow.gif",
+      "bytes": 580254,
+      "sha256": "83470f37898a634e77a1cdf664d4664c83eda44bdbff45e7c7791a8615f53e63",
+      "width": 720,
+      "height": 800,
+      "frames": 10
+    },
+    {
+      "view": "Company",
+      "file": "Company/company-green-flow.mp4",
+      "bytes": 111735,
+      "sha256": "968fd40f864e305570383cc35f27dac3c1754e7225a1b7f22d9d0127ceca64a5"
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/group-secretary-creates-weekend-team.png",
+      "bytes": 3474045,
+      "sha256": "580b54c68405b800825bcd27e10d13eef0e2ab9116fec17eeb8cd4703f7c8fe9",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/group-weekend-selective-mentions-and-replies.png",
+      "bytes": 3436706,
+      "sha256": "c430b0d4b7e6d1c353937047c71e4aa3e16da853df2d80faee399408782ed87b",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/group-weekend-everyone-informed.png",
+      "bytes": 3368037,
+      "sha256": "0280b8360ef5cd0d579ad18f6a830ce6c2b1d92194a5da865ce1d41782bb137e",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/group-shared-context-receipts-detail.png",
+      "bytes": 61496,
+      "sha256": "dd287dec232b883bcd1740ccddc2e96abb57345f68760a140f82079af4ca8b9e",
+      "width": 680,
+      "height": 1000,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/group-mention-picker.png",
+      "bytes": 3720996,
+      "sha256": "524f636bef27713fb9ef9a97d62b5aac3f8761d2a9ba094b1ab7eeb4145d5230",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/group-delivery-and-reviews.png",
+      "bytes": 3757559,
+      "sha256": "6d27cefd39b2d47142b04aa72eab8531abb6af9cecfc8f1f837e8c0ec701c9dc",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/channel-news-and-ai-summary.png",
+      "bytes": 3689713,
+      "sha256": "9cd7f817aa98e1a35f1e9d0ba095dda574a6bf1fccb1fb1baa4d462509243854",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/channel-news-with-source-images.png",
+      "bytes": 3874435,
+      "sha256": "6399b147630a41f3b87779ae1e4ddd84c87816e4981e7b6135c8b69d14dd6117",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Messages",
+      "file": "Messages/channel-posts-with-original-images.png",
+      "bytes": 5314294,
+      "sha256": "ee86d3edb69a97eb6d040945b4d3579438cf12b9498f817d2e641ce0d5cd896d",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-calendar.png",
+      "bytes": 717511,
+      "sha256": "08c796dd64ce72800ab362857a6d09438d05d1cfd8754afe1b5b16c5e07ff82c",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-calendar-day-agenda.png",
+      "bytes": 742557,
+      "sha256": "0b8d483b520cda8e9bf82fb037ed5627d0f1aa7689c39946142ab3b3b62dc343",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-week.png",
+      "bytes": 753003,
+      "sha256": "cbb84b899cef3b0f2cb52bbcecce3321395a7f8923fb4602d733ca11c60a176f",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-day.png",
+      "bytes": 414234,
+      "sha256": "c8bf8f49e1bfda88fbb10b78304704de59c20e9c8cd847a5e801a5492c453ba6",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-agenda.png",
+      "bytes": 550485,
+      "sha256": "38b5d75f8e32c682cebc8baa524718d7fd305874de75f5de794bf440b170f286",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-table.png",
+      "bytes": 895942,
+      "sha256": "b14f670a57bc08b35f85afb5cb8dceb3f8a5b04efedc0da7dd6f12ca56de41e4",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-board.png",
+      "bytes": 635059,
+      "sha256": "671e516e10fa06e9e9613db4eba2e959aa912bc62c432a0c1fc460f028380554",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-timeline.png",
+      "bytes": 504307,
+      "sha256": "7db70f5fac79b8fa89372dbfdb27b93236988cf7ff886f071d69a240818edc58",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-list.png",
+      "bytes": 750581,
+      "sha256": "4fa188625d9991e691b39c919e42faee02826ab1ab7d10d229496cf296bf870c",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-gallery.png",
+      "bytes": 1084306,
+      "sha256": "3dd04a27f1d703f0bb72304257015f4f534f1205ca86e56a9da41c9b2780bd07",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-chart.png",
+      "bytes": 276528,
+      "sha256": "4f5131ea94c9e026d60ddc5e12473445f0052c5673444bd9fbb187a6208f4eed",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-execution-feed.png",
+      "bytes": 326756,
+      "sha256": "122d642bb220c21e60f00b5474c18c00441e23cd33053493741d80bc9a15d08a",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-recorded-run-details.png",
+      "bytes": 400052,
+      "sha256": "8a9f7de7cc9ecd53f1652ebfff00732de9c4d7fdb80bf2b9e8439fdf9b074b22",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-task-owner-and-schedule.png",
+      "bytes": 736591,
+      "sha256": "94fcfff67dc9165c1c6409cd7479a6b49dd0381e71b7cd1bd0eb41a79a742a5f",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    },
+    {
+      "view": "Plan",
+      "file": "Plan/plan-form-filled-draft.png",
+      "bytes": 381440,
+      "sha256": "40f764b0757403031dd096da69e72188e7e9f99b48018b3ae870d4263fdd03ac",
+      "width": 2880,
+      "height": 3840,
+      "frames": 1
+    }
+  ]
+}

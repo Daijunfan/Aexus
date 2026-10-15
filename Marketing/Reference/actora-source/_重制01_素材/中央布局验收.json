@@ -1,0 +1,2617 @@
+{
+  "appVersion": "0.48.2",
+  "createdAt": "2026-09-27T02:41:37.459Z",
+  "candidate": "/Users/djf/develop/CS/Agents-company/宣传素材_小红书_2026-09-26/_重制01_素材/中央Governor-封面候选.png",
+  "disclosure": "已安装软件的隔离演示场景。没有连接真实云主机、运行模型或修改真实员工。隐藏目录、尺寸、休息符号等摄影辅助信息；连接线由公开 Core API 设置，并与渲染 SVG 逐一比对。",
+  "teams": [
+    {
+      "name": "Ubuntu · 研发中心",
+      "manager": "阿蓝",
+      "employees": [
+        "前端开发",
+        "接口服务",
+        "代码审查"
+      ]
+    },
+    {
+      "name": "Windows · 产品测试",
+      "manager": "阿白",
+      "employees": [
+        "自动化测试",
+        "兼容检查",
+        "体验评估"
+      ]
+    },
+    {
+      "name": "Kali · 安全研究",
+      "manager": "阿沐",
+      "employees": [
+        "环境巡检",
+        "日志分析",
+        "审查报告"
+      ]
+    },
+    {
+      "name": "macOS · 内容创作",
+      "manager": "阿森",
+      "employees": [
+        "资料整理",
+        "文案创作",
+        "设计协作"
+      ]
+    }
+  ],
+  "governor": "星火",
+  "lines": 16,
+  "allLinesPassed": true,
+  "layout": {
+    "connections": [
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "left",
+            "offset": 0.3
+          },
+          "target": {
+            "side": "right",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-manager-0",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-0",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "Ubuntu · 研发中心",
+        "sourceName": "星火",
+        "targetName": "阿蓝",
+        "origin": {
+          "x": 1165,
+          "y": 1445
+        },
+        "points": [
+          {
+            "x": 1350,
+            "y": 1740
+          },
+          {
+            "x": 1145,
+            "y": 1740
+          },
+          {
+            "x": 1145,
+            "y": 445
+          },
+          {
+            "x": 655,
+            "y": 445
+          }
+        ],
+        "path": "M1350 1740 H1153 Q1145 1740 1145 1732 V453 Q1145 445 1137 445 H655",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.1
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-0-0",
+        "managerId": "poster-manager-0",
+        "employeeId": "poster-employee-0-0",
+        "sourceTeam": "Ubuntu · 研发中心",
+        "targetTeam": "Ubuntu · 研发中心",
+        "sourceName": "阿蓝",
+        "targetName": "前端开发",
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 484,
+            "y": 570
+          },
+          {
+            "x": 484,
+            "y": 720
+          },
+          {
+            "x": 175,
+            "y": 720
+          },
+          {
+            "x": 175,
+            "y": 900
+          }
+        ],
+        "path": "M484 570 V712 Q484 720 476 720 H183 Q175 720 175 728 V900",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-0-1",
+        "managerId": "poster-manager-0",
+        "employeeId": "poster-employee-0-1",
+        "sourceTeam": "Ubuntu · 研发中心",
+        "targetTeam": "Ubuntu · 研发中心",
+        "sourceName": "阿蓝",
+        "targetName": "接口服务",
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 560,
+            "y": 570
+          },
+          {
+            "x": 560,
+            "y": 900
+          }
+        ],
+        "path": "M560 570 V900",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.9
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-0-2",
+        "managerId": "poster-manager-0",
+        "employeeId": "poster-employee-0-2",
+        "sourceTeam": "Ubuntu · 研发中心",
+        "targetTeam": "Ubuntu · 研发中心",
+        "sourceName": "阿蓝",
+        "targetName": "代码审查",
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 636,
+            "y": 570
+          },
+          {
+            "x": 636,
+            "y": 720
+          },
+          {
+            "x": 945,
+            "y": 720
+          },
+          {
+            "x": 945,
+            "y": 900
+          }
+        ],
+        "path": "M636 570 V712 Q636 720 644 720 H937 Q945 720 945 728 V900",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "right",
+            "offset": 0.3
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-manager-1",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-1",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "Windows · 产品测试",
+        "sourceName": "星火",
+        "targetName": "阿白",
+        "origin": {
+          "x": 1165,
+          "y": 1445
+        },
+        "points": [
+          {
+            "x": 1540,
+            "y": 1740
+          },
+          {
+            "x": 1745,
+            "y": 1740
+          },
+          {
+            "x": 1745,
+            "y": 445
+          },
+          {
+            "x": 2235,
+            "y": 445
+          }
+        ],
+        "path": "M1540 1740 H1737 Q1745 1740 1745 1732 V453 Q1745 445 1753 445 H2235",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.1
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-1-0",
+        "managerId": "poster-manager-1",
+        "employeeId": "poster-employee-1-0",
+        "sourceTeam": "Windows · 产品测试",
+        "targetTeam": "Windows · 产品测试",
+        "sourceName": "阿白",
+        "targetName": "自动化测试",
+        "origin": {
+          "x": 1770,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 2254,
+            "y": 570
+          },
+          {
+            "x": 2254,
+            "y": 720
+          },
+          {
+            "x": 1945,
+            "y": 720
+          },
+          {
+            "x": 1945,
+            "y": 900
+          }
+        ],
+        "path": "M2254 570 V712 Q2254 720 2246 720 H1953 Q1945 720 1945 728 V900",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-1-1",
+        "managerId": "poster-manager-1",
+        "employeeId": "poster-employee-1-1",
+        "sourceTeam": "Windows · 产品测试",
+        "targetTeam": "Windows · 产品测试",
+        "sourceName": "阿白",
+        "targetName": "兼容检查",
+        "origin": {
+          "x": 1770,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 2330,
+            "y": 570
+          },
+          {
+            "x": 2330,
+            "y": 900
+          }
+        ],
+        "path": "M2330 570 V900",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.9
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-1-2",
+        "managerId": "poster-manager-1",
+        "employeeId": "poster-employee-1-2",
+        "sourceTeam": "Windows · 产品测试",
+        "targetTeam": "Windows · 产品测试",
+        "sourceName": "阿白",
+        "targetName": "体验评估",
+        "origin": {
+          "x": 1770,
+          "y": 0
+        },
+        "points": [
+          {
+            "x": 2406,
+            "y": 570
+          },
+          {
+            "x": 2406,
+            "y": 720
+          },
+          {
+            "x": 2715,
+            "y": 720
+          },
+          {
+            "x": 2715,
+            "y": 900
+          }
+        ],
+        "path": "M2406 570 V712 Q2406 720 2414 720 H2707 Q2715 720 2715 728 V900",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "left",
+            "offset": 0.7
+          },
+          "target": {
+            "side": "right",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-manager-2",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-2",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "Kali · 安全研究",
+        "sourceName": "星火",
+        "targetName": "阿沐",
+        "origin": {
+          "x": 1165,
+          "y": 1445
+        },
+        "points": [
+          {
+            "x": 1350,
+            "y": 1840
+          },
+          {
+            "x": 1145,
+            "y": 1840
+          },
+          {
+            "x": 1145,
+            "y": 2645
+          },
+          {
+            "x": 655,
+            "y": 2645
+          }
+        ],
+        "path": "M1350 1840 H1153 Q1145 1840 1145 1848 V2637 Q1145 2645 1137 2645 H655",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.1
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-2-0",
+        "managerId": "poster-manager-2",
+        "employeeId": "poster-employee-2-0",
+        "sourceTeam": "Kali · 安全研究",
+        "targetTeam": "Kali · 安全研究",
+        "sourceName": "阿沐",
+        "targetName": "环境巡检",
+        "origin": {
+          "x": 0,
+          "y": 2200
+        },
+        "points": [
+          {
+            "x": 484,
+            "y": 2770
+          },
+          {
+            "x": 484,
+            "y": 2920
+          },
+          {
+            "x": 175,
+            "y": 2920
+          },
+          {
+            "x": 175,
+            "y": 3100
+          }
+        ],
+        "path": "M484 2770 V2912 Q484 2920 476 2920 H183 Q175 2920 175 2928 V3100",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-2-1",
+        "managerId": "poster-manager-2",
+        "employeeId": "poster-employee-2-1",
+        "sourceTeam": "Kali · 安全研究",
+        "targetTeam": "Kali · 安全研究",
+        "sourceName": "阿沐",
+        "targetName": "日志分析",
+        "origin": {
+          "x": 0,
+          "y": 2200
+        },
+        "points": [
+          {
+            "x": 560,
+            "y": 2770
+          },
+          {
+            "x": 560,
+            "y": 3100
+          }
+        ],
+        "path": "M560 2770 V3100",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.9
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-2-2",
+        "managerId": "poster-manager-2",
+        "employeeId": "poster-employee-2-2",
+        "sourceTeam": "Kali · 安全研究",
+        "targetTeam": "Kali · 安全研究",
+        "sourceName": "阿沐",
+        "targetName": "审查报告",
+        "origin": {
+          "x": 0,
+          "y": 2200
+        },
+        "points": [
+          {
+            "x": 636,
+            "y": 2770
+          },
+          {
+            "x": 636,
+            "y": 2920
+          },
+          {
+            "x": 945,
+            "y": 2920
+          },
+          {
+            "x": 945,
+            "y": 3100
+          }
+        ],
+        "path": "M636 2770 V2912 Q636 2920 644 2920 H937 Q945 2920 945 2928 V3100",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "right",
+            "offset": 0.7
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-manager-3",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-3",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "macOS · 内容创作",
+        "sourceName": "星火",
+        "targetName": "阿森",
+        "origin": {
+          "x": 1165,
+          "y": 1445
+        },
+        "points": [
+          {
+            "x": 1540,
+            "y": 1840
+          },
+          {
+            "x": 1745,
+            "y": 1840
+          },
+          {
+            "x": 1745,
+            "y": 2645
+          },
+          {
+            "x": 2235,
+            "y": 2645
+          }
+        ],
+        "path": "M1540 1840 H1737 Q1745 1840 1745 1848 V2637 Q1745 2645 1753 2645 H2235",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.1
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-3-0",
+        "managerId": "poster-manager-3",
+        "employeeId": "poster-employee-3-0",
+        "sourceTeam": "macOS · 内容创作",
+        "targetTeam": "macOS · 内容创作",
+        "sourceName": "阿森",
+        "targetName": "资料整理",
+        "origin": {
+          "x": 1770,
+          "y": 2200
+        },
+        "points": [
+          {
+            "x": 2254,
+            "y": 2770
+          },
+          {
+            "x": 2254,
+            "y": 2920
+          },
+          {
+            "x": 1945,
+            "y": 2920
+          },
+          {
+            "x": 1945,
+            "y": 3100
+          }
+        ],
+        "path": "M2254 2770 V2912 Q2254 2920 2246 2920 H1953 Q1945 2920 1945 2928 V3100",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.5
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-3-1",
+        "managerId": "poster-manager-3",
+        "employeeId": "poster-employee-3-1",
+        "sourceTeam": "macOS · 内容创作",
+        "targetTeam": "macOS · 内容创作",
+        "sourceName": "阿森",
+        "targetName": "文案创作",
+        "origin": {
+          "x": 1770,
+          "y": 2200
+        },
+        "points": [
+          {
+            "x": 2330,
+            "y": 2770
+          },
+          {
+            "x": 2330,
+            "y": 3100
+          }
+        ],
+        "path": "M2330 2770 V3100",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      },
+      {
+        "status": "routed",
+        "anchors": {
+          "source": {
+            "side": "bottom",
+            "offset": 0.9
+          },
+          "target": {
+            "side": "top",
+            "offset": 0.5
+          }
+        },
+        "id": "created-poster-employee-3-2",
+        "managerId": "poster-manager-3",
+        "employeeId": "poster-employee-3-2",
+        "sourceTeam": "macOS · 内容创作",
+        "targetTeam": "macOS · 内容创作",
+        "sourceName": "阿森",
+        "targetName": "设计协作",
+        "origin": {
+          "x": 1770,
+          "y": 2200
+        },
+        "points": [
+          {
+            "x": 2406,
+            "y": 2770
+          },
+          {
+            "x": 2406,
+            "y": 2920
+          },
+          {
+            "x": 2715,
+            "y": 2920
+          },
+          {
+            "x": 2715,
+            "y": 3100
+          }
+        ],
+        "path": "M2406 2770 V2912 Q2406 2920 2414 2920 H2707 Q2715 2920 2715 2928 V3100",
+        "active": false,
+        "temporary": false,
+        "manual": true
+      }
+    ],
+    "revision": 18,
+    "crossTeamConnections": [
+      {
+        "anchors": {
+          "managerId": "poster-governor",
+          "employeeId": "poster-manager-0",
+          "source": {
+            "side": "left",
+            "offset": 0.3
+          },
+          "target": {
+            "side": "right",
+            "offset": 0.5
+          },
+          "route": [
+            {
+              "x": 185,
+              "y": 295
+            },
+            {
+              "x": -20,
+              "y": 295
+            },
+            {
+              "x": -20,
+              "y": -1000
+            },
+            {
+              "x": -510,
+              "y": -1000
+            }
+          ]
+        },
+        "id": "created-poster-manager-0",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-0",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "Ubuntu · 研发中心",
+        "sourceName": "星火",
+        "targetName": "阿蓝",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 185,
+              "y": 295
+            },
+            {
+              "x": 167,
+              "y": 295
+            },
+            {
+              "x": 28,
+              "y": 295
+            },
+            {
+              "x": 28,
+              "y": 211
+            },
+            {
+              "x": 28,
+              "y": 196
+            },
+            {
+              "x": 4,
+              "y": 196
+            }
+          ],
+          "path": "M185 295 H36 Q28 295 28 287 V204 Q28 196 20 196 H4",
+          "port": {
+            "x": 4,
+            "y": 196
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 1116,
+              "y": 1190
+            },
+            {
+              "x": 1092,
+              "y": 1190
+            },
+            {
+              "x": 1092,
+              "y": 1159
+            },
+            {
+              "x": 1092,
+              "y": 912
+            },
+            {
+              "x": 1092,
+              "y": 891
+            },
+            {
+              "x": 1092,
+              "y": 888
+            },
+            {
+              "x": 1092,
+              "y": 864
+            },
+            {
+              "x": 1092,
+              "y": 687.5
+            },
+            {
+              "x": 1092,
+              "y": 579
+            },
+            {
+              "x": 1092,
+              "y": 558
+            },
+            {
+              "x": 1092,
+              "y": 445
+            },
+            {
+              "x": 1049,
+              "y": 445
+            },
+            {
+              "x": 957,
+              "y": 445
+            },
+            {
+              "x": 933,
+              "y": 445
+            },
+            {
+              "x": 841,
+              "y": 445
+            },
+            {
+              "x": 679,
+              "y": 445
+            },
+            {
+              "x": 655,
+              "y": 445
+            }
+          ],
+          "path": "M1116 1190 H1100 Q1092 1190 1092 1182 V453 Q1092 445 1084 445 H655",
+          "port": {
+            "x": 1116,
+            "y": 1190
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 1169,
+              "y": 1641
+            },
+            {
+              "x": 1141,
+              "y": 1641
+            },
+            {
+              "x": 1144,
+              "y": 1641
+            },
+            {
+              "x": 1144,
+              "y": 1429
+            },
+            {
+              "x": 1144,
+              "y": 1274
+            },
+            {
+              "x": 1144,
+              "y": 1266
+            },
+            {
+              "x": 1144,
+              "y": 1190
+            },
+            {
+              "x": 1116,
+              "y": 1190
+            }
+          ],
+          "path": "M1169 1641 H1152 Q1144 1641 1144 1633 V1198 Q1144 1190 1136 1190 H1116"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "poster-governor",
+          "employeeId": "poster-manager-1",
+          "source": {
+            "side": "right",
+            "offset": 0.3
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.5
+          },
+          "route": [
+            {
+              "x": 375,
+              "y": 295
+            },
+            {
+              "x": 580,
+              "y": 295
+            },
+            {
+              "x": 580,
+              "y": -1000
+            },
+            {
+              "x": 1070,
+              "y": -1000
+            }
+          ]
+        },
+        "id": "created-poster-manager-1",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-1",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "Windows · 产品测试",
+        "sourceName": "星火",
+        "targetName": "阿白",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 375,
+              "y": 295
+            },
+            {
+              "x": 393,
+              "y": 295
+            },
+            {
+              "x": 532,
+              "y": 295
+            },
+            {
+              "x": 532,
+              "y": 283
+            },
+            {
+              "x": 532,
+              "y": 211
+            },
+            {
+              "x": 532,
+              "y": 208
+            },
+            {
+              "x": 532,
+              "y": 196
+            },
+            {
+              "x": 556,
+              "y": 196
+            }
+          ],
+          "path": "M375 295 H524 Q532 295 532 287 V204 Q532 196 540 196 H556",
+          "port": {
+            "x": 556,
+            "y": 196
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 4,
+              "y": 1190
+            },
+            {
+              "x": 28,
+              "y": 1190
+            },
+            {
+              "x": 28,
+              "y": 1159
+            },
+            {
+              "x": 28,
+              "y": 912
+            },
+            {
+              "x": 28,
+              "y": 891
+            },
+            {
+              "x": 28,
+              "y": 888
+            },
+            {
+              "x": 28,
+              "y": 864
+            },
+            {
+              "x": 28,
+              "y": 687.5
+            },
+            {
+              "x": 28,
+              "y": 579
+            },
+            {
+              "x": 28,
+              "y": 558
+            },
+            {
+              "x": 28,
+              "y": 445
+            },
+            {
+              "x": 71,
+              "y": 445
+            },
+            {
+              "x": 163,
+              "y": 445
+            },
+            {
+              "x": 187,
+              "y": 445
+            },
+            {
+              "x": 279,
+              "y": 445
+            },
+            {
+              "x": 441,
+              "y": 445
+            },
+            {
+              "x": 465,
+              "y": 445
+            }
+          ],
+          "path": "M4 1190 H20 Q28 1190 28 1182 V453 Q28 445 36 445 H465",
+          "port": {
+            "x": 4,
+            "y": 1190
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 1721,
+              "y": 1641
+            },
+            {
+              "x": 1749,
+              "y": 1641
+            },
+            {
+              "x": 1746,
+              "y": 1641
+            },
+            {
+              "x": 1746,
+              "y": 1629
+            },
+            {
+              "x": 1746,
+              "y": 1429
+            },
+            {
+              "x": 1746,
+              "y": 1274
+            },
+            {
+              "x": 1746,
+              "y": 1266
+            },
+            {
+              "x": 1746,
+              "y": 1202
+            },
+            {
+              "x": 1746,
+              "y": 1190
+            },
+            {
+              "x": 1774,
+              "y": 1190
+            }
+          ],
+          "path": "M1721 1641 H1738 Q1746 1641 1746 1633 V1198 Q1746 1190 1754 1190 H1774"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "poster-governor",
+          "employeeId": "poster-manager-2",
+          "source": {
+            "side": "left",
+            "offset": 0.7
+          },
+          "target": {
+            "side": "right",
+            "offset": 0.5
+          },
+          "route": [
+            {
+              "x": 185,
+              "y": 395
+            },
+            {
+              "x": -20,
+              "y": 395
+            },
+            {
+              "x": -20,
+              "y": 1200
+            },
+            {
+              "x": -510,
+              "y": 1200
+            }
+          ]
+        },
+        "id": "created-poster-manager-2",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-2",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "Kali · 安全研究",
+        "sourceName": "星火",
+        "targetName": "阿沐",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 185,
+              "y": 395
+            },
+            {
+              "x": 167,
+              "y": 395
+            },
+            {
+              "x": 40,
+              "y": 395
+            },
+            {
+              "x": 28,
+              "y": 395
+            },
+            {
+              "x": 28,
+              "y": 479
+            },
+            {
+              "x": 28,
+              "y": 500
+            },
+            {
+              "x": 4,
+              "y": 500
+            }
+          ],
+          "path": "M185 395 H36 Q28 395 28 403 V492 Q28 500 20 500 H4",
+          "port": {
+            "x": 4,
+            "y": 500
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 1116,
+              "y": 296
+            },
+            {
+              "x": 1092,
+              "y": 296
+            },
+            {
+              "x": 1092,
+              "y": 311
+            },
+            {
+              "x": 1092,
+              "y": 445
+            },
+            {
+              "x": 1049,
+              "y": 445
+            },
+            {
+              "x": 957,
+              "y": 445
+            },
+            {
+              "x": 933,
+              "y": 445
+            },
+            {
+              "x": 841,
+              "y": 445
+            },
+            {
+              "x": 679,
+              "y": 445
+            },
+            {
+              "x": 655,
+              "y": 445
+            }
+          ],
+          "path": "M1116 296 H1100 Q1092 296 1092 304 V437 Q1092 445 1084 445 H655",
+          "port": {
+            "x": 1116,
+            "y": 296
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 1169,
+              "y": 1945
+            },
+            {
+              "x": 1141,
+              "y": 1945
+            },
+            {
+              "x": 1144,
+              "y": 1945
+            },
+            {
+              "x": 1144,
+              "y": 2021
+            },
+            {
+              "x": 1144,
+              "y": 2029
+            },
+            {
+              "x": 1144,
+              "y": 2184
+            },
+            {
+              "x": 1144,
+              "y": 2496
+            },
+            {
+              "x": 1116,
+              "y": 2496
+            }
+          ],
+          "path": "M1169 1945 H1152 Q1144 1945 1144 1953 V2488 Q1144 2496 1136 2496 H1116"
+        }
+      },
+      {
+        "anchors": {
+          "managerId": "poster-governor",
+          "employeeId": "poster-manager-3",
+          "source": {
+            "side": "right",
+            "offset": 0.7
+          },
+          "target": {
+            "side": "left",
+            "offset": 0.5
+          },
+          "route": [
+            {
+              "x": 375,
+              "y": 395
+            },
+            {
+              "x": 580,
+              "y": 395
+            },
+            {
+              "x": 580,
+              "y": 1200
+            },
+            {
+              "x": 1070,
+              "y": 1200
+            }
+          ]
+        },
+        "id": "created-poster-manager-3",
+        "managerId": "poster-governor",
+        "employeeId": "poster-manager-3",
+        "sourceTeam": "协作中枢",
+        "targetTeam": "macOS · 内容创作",
+        "sourceName": "星火",
+        "targetName": "阿森",
+        "active": false,
+        "temporary": false,
+        "status": "routed",
+        "source": {
+          "points": [
+            {
+              "x": 375,
+              "y": 395
+            },
+            {
+              "x": 393,
+              "y": 395
+            },
+            {
+              "x": 520,
+              "y": 395
+            },
+            {
+              "x": 532,
+              "y": 395
+            },
+            {
+              "x": 532,
+              "y": 407
+            },
+            {
+              "x": 532,
+              "y": 479
+            },
+            {
+              "x": 532,
+              "y": 488
+            },
+            {
+              "x": 532,
+              "y": 500
+            },
+            {
+              "x": 556,
+              "y": 500
+            }
+          ],
+          "path": "M375 395 H524 Q532 395 532 403 V492 Q532 500 540 500 H556",
+          "port": {
+            "x": 556,
+            "y": 500
+          }
+        },
+        "target": {
+          "points": [
+            {
+              "x": 4,
+              "y": 296
+            },
+            {
+              "x": 28,
+              "y": 296
+            },
+            {
+              "x": 28,
+              "y": 311
+            },
+            {
+              "x": 28,
+              "y": 445
+            },
+            {
+              "x": 71,
+              "y": 445
+            },
+            {
+              "x": 163,
+              "y": 445
+            },
+            {
+              "x": 187,
+              "y": 445
+            },
+            {
+              "x": 279,
+              "y": 445
+            },
+            {
+              "x": 441,
+              "y": 445
+            },
+            {
+              "x": 465,
+              "y": 445
+            }
+          ],
+          "path": "M4 296 H20 Q28 296 28 304 V437 Q28 445 36 445 H465",
+          "port": {
+            "x": 4,
+            "y": 296
+          }
+        },
+        "external": {
+          "points": [
+            {
+              "x": 1721,
+              "y": 1945
+            },
+            {
+              "x": 1749,
+              "y": 1945
+            },
+            {
+              "x": 1746,
+              "y": 1945
+            },
+            {
+              "x": 1746,
+              "y": 1957
+            },
+            {
+              "x": 1746,
+              "y": 2021
+            },
+            {
+              "x": 1746,
+              "y": 2029
+            },
+            {
+              "x": 1746,
+              "y": 2184
+            },
+            {
+              "x": 1746,
+              "y": 2484
+            },
+            {
+              "x": 1746,
+              "y": 2496
+            },
+            {
+              "x": 1774,
+              "y": 2496
+            }
+          ],
+          "path": "M1721 1945 H1738 Q1746 1945 1746 1953 V2488 Q1746 2496 1754 2496 H1774"
+        }
+      }
+    ],
+    "coordinates": {
+      "team": "world pixels",
+      "employee": "pixels relative to its Team"
+    },
+    "rooms": [
+      {
+        "name": "协作中枢",
+        "bounds": {
+          "x": 1165,
+          "y": 1445,
+          "width": 560,
+          "height": 560,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [],
+        "employees": [
+          {
+            "id": "poster-governor",
+            "title": "星火",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "governor",
+            "shape": "rectangle",
+            "position": {
+              "x": 185,
+              "y": 220
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Ubuntu · 研发中心",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1120,
+          "height": 1250,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-poster-employee-0-0",
+            "managerId": "poster-manager-0",
+            "employeeId": "poster-employee-0-0",
+            "anchors": {
+              "managerId": "poster-manager-0",
+              "employeeId": "poster-employee-0-0",
+              "source": {
+                "side": "bottom",
+                "offset": 0.1
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 484,
+                  "y": 570
+                },
+                {
+                  "x": 484,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 484,
+                "y": 570
+              },
+              {
+                "x": 484,
+                "y": 588
+              },
+              {
+                "x": 484,
+                "y": 876
+              },
+              {
+                "x": 456,
+                "y": 876
+              },
+              {
+                "x": 279,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 900
+              }
+            ],
+            "path": "M484 570 V868 Q484 876 476 876 H183 Q175 876 175 884 V900"
+          },
+          {
+            "id": "created-poster-employee-0-1",
+            "managerId": "poster-manager-0",
+            "employeeId": "poster-employee-0-1",
+            "anchors": {
+              "managerId": "poster-manager-0",
+              "employeeId": "poster-employee-0-1",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 560,
+                  "y": 570
+                },
+                {
+                  "x": 560,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 560,
+                "y": 570
+              },
+              {
+                "x": 560,
+                "y": 588
+              },
+              {
+                "x": 560,
+                "y": 864
+              },
+              {
+                "x": 560,
+                "y": 876
+              },
+              {
+                "x": 560,
+                "y": 900
+              }
+            ],
+            "path": "M560 570 V900"
+          },
+          {
+            "id": "created-poster-employee-0-2",
+            "managerId": "poster-manager-0",
+            "employeeId": "poster-employee-0-2",
+            "anchors": {
+              "managerId": "poster-manager-0",
+              "employeeId": "poster-employee-0-2",
+              "source": {
+                "side": "bottom",
+                "offset": 0.9
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 636,
+                  "y": 570
+                },
+                {
+                  "x": 636,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 636,
+                "y": 570
+              },
+              {
+                "x": 636,
+                "y": 588
+              },
+              {
+                "x": 636,
+                "y": 864
+              },
+              {
+                "x": 636,
+                "y": 876
+              },
+              {
+                "x": 664,
+                "y": 876
+              },
+              {
+                "x": 841,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 900
+              }
+            ],
+            "path": "M636 570 V868 Q636 876 644 876 H937 Q945 876 945 884 V900"
+          }
+        ],
+        "employees": [
+          {
+            "id": "poster-manager-0",
+            "title": "阿蓝",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 320
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-0-0",
+            "title": "前端开发",
+            "engine": "codex",
+            "kind": "cloud-native-worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 80,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-0-1",
+            "title": "接口服务",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-0-2",
+            "title": "代码审查",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 850,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Windows · 产品测试",
+        "bounds": {
+          "x": 1770,
+          "y": 0,
+          "width": 1120,
+          "height": 1250,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-poster-employee-1-0",
+            "managerId": "poster-manager-1",
+            "employeeId": "poster-employee-1-0",
+            "anchors": {
+              "managerId": "poster-manager-1",
+              "employeeId": "poster-employee-1-0",
+              "source": {
+                "side": "bottom",
+                "offset": 0.1
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 484,
+                  "y": 570
+                },
+                {
+                  "x": 484,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 484,
+                "y": 570
+              },
+              {
+                "x": 484,
+                "y": 588
+              },
+              {
+                "x": 484,
+                "y": 876
+              },
+              {
+                "x": 456,
+                "y": 876
+              },
+              {
+                "x": 279,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 900
+              }
+            ],
+            "path": "M484 570 V868 Q484 876 476 876 H183 Q175 876 175 884 V900"
+          },
+          {
+            "id": "created-poster-employee-1-1",
+            "managerId": "poster-manager-1",
+            "employeeId": "poster-employee-1-1",
+            "anchors": {
+              "managerId": "poster-manager-1",
+              "employeeId": "poster-employee-1-1",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 560,
+                  "y": 570
+                },
+                {
+                  "x": 560,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 560,
+                "y": 570
+              },
+              {
+                "x": 560,
+                "y": 588
+              },
+              {
+                "x": 560,
+                "y": 864
+              },
+              {
+                "x": 560,
+                "y": 876
+              },
+              {
+                "x": 560,
+                "y": 900
+              }
+            ],
+            "path": "M560 570 V900"
+          },
+          {
+            "id": "created-poster-employee-1-2",
+            "managerId": "poster-manager-1",
+            "employeeId": "poster-employee-1-2",
+            "anchors": {
+              "managerId": "poster-manager-1",
+              "employeeId": "poster-employee-1-2",
+              "source": {
+                "side": "bottom",
+                "offset": 0.9
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 636,
+                  "y": 570
+                },
+                {
+                  "x": 636,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 636,
+                "y": 570
+              },
+              {
+                "x": 636,
+                "y": 588
+              },
+              {
+                "x": 636,
+                "y": 864
+              },
+              {
+                "x": 636,
+                "y": 876
+              },
+              {
+                "x": 664,
+                "y": 876
+              },
+              {
+                "x": 841,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 900
+              }
+            ],
+            "path": "M636 570 V868 Q636 876 644 876 H937 Q945 876 945 884 V900"
+          }
+        ],
+        "employees": [
+          {
+            "id": "poster-manager-1",
+            "title": "阿白",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 320
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-1-0",
+            "title": "自动化测试",
+            "engine": "codex",
+            "kind": "cloud-native-worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 80,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-1-1",
+            "title": "兼容检查",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-1-2",
+            "title": "体验评估",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 850,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "Kali · 安全研究",
+        "bounds": {
+          "x": 0,
+          "y": 2200,
+          "width": 1120,
+          "height": 1250,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-poster-employee-2-0",
+            "managerId": "poster-manager-2",
+            "employeeId": "poster-employee-2-0",
+            "anchors": {
+              "managerId": "poster-manager-2",
+              "employeeId": "poster-employee-2-0",
+              "source": {
+                "side": "bottom",
+                "offset": 0.1
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 484,
+                  "y": 570
+                },
+                {
+                  "x": 484,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 484,
+                "y": 570
+              },
+              {
+                "x": 484,
+                "y": 588
+              },
+              {
+                "x": 484,
+                "y": 876
+              },
+              {
+                "x": 456,
+                "y": 876
+              },
+              {
+                "x": 279,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 900
+              }
+            ],
+            "path": "M484 570 V868 Q484 876 476 876 H183 Q175 876 175 884 V900"
+          },
+          {
+            "id": "created-poster-employee-2-1",
+            "managerId": "poster-manager-2",
+            "employeeId": "poster-employee-2-1",
+            "anchors": {
+              "managerId": "poster-manager-2",
+              "employeeId": "poster-employee-2-1",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 560,
+                  "y": 570
+                },
+                {
+                  "x": 560,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 560,
+                "y": 570
+              },
+              {
+                "x": 560,
+                "y": 588
+              },
+              {
+                "x": 560,
+                "y": 864
+              },
+              {
+                "x": 560,
+                "y": 876
+              },
+              {
+                "x": 560,
+                "y": 900
+              }
+            ],
+            "path": "M560 570 V900"
+          },
+          {
+            "id": "created-poster-employee-2-2",
+            "managerId": "poster-manager-2",
+            "employeeId": "poster-employee-2-2",
+            "anchors": {
+              "managerId": "poster-manager-2",
+              "employeeId": "poster-employee-2-2",
+              "source": {
+                "side": "bottom",
+                "offset": 0.9
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 636,
+                  "y": 570
+                },
+                {
+                  "x": 636,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 636,
+                "y": 570
+              },
+              {
+                "x": 636,
+                "y": 588
+              },
+              {
+                "x": 636,
+                "y": 864
+              },
+              {
+                "x": 636,
+                "y": 876
+              },
+              {
+                "x": 664,
+                "y": 876
+              },
+              {
+                "x": 841,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 900
+              }
+            ],
+            "path": "M636 570 V868 Q636 876 644 876 H937 Q945 876 945 884 V900"
+          }
+        ],
+        "employees": [
+          {
+            "id": "poster-manager-2",
+            "title": "阿沐",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 320
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-2-0",
+            "title": "环境巡检",
+            "engine": "codex",
+            "kind": "cloud-native-worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 80,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-2-1",
+            "title": "日志分析",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-2-2",
+            "title": "审查报告",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 850,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      },
+      {
+        "name": "macOS · 内容创作",
+        "bounds": {
+          "x": 1770,
+          "y": 2200,
+          "width": 1120,
+          "height": 1250,
+          "shape": "rounded",
+          "arrangement": "free",
+          "pinned": true
+        },
+        "editable": true,
+        "connections": [
+          {
+            "id": "created-poster-employee-3-0",
+            "managerId": "poster-manager-3",
+            "employeeId": "poster-employee-3-0",
+            "anchors": {
+              "managerId": "poster-manager-3",
+              "employeeId": "poster-employee-3-0",
+              "source": {
+                "side": "bottom",
+                "offset": 0.1
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 484,
+                  "y": 570
+                },
+                {
+                  "x": 484,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 720
+                },
+                {
+                  "x": 175,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 484,
+                "y": 570
+              },
+              {
+                "x": 484,
+                "y": 588
+              },
+              {
+                "x": 484,
+                "y": 876
+              },
+              {
+                "x": 456,
+                "y": 876
+              },
+              {
+                "x": 279,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 876
+              },
+              {
+                "x": 175,
+                "y": 900
+              }
+            ],
+            "path": "M484 570 V868 Q484 876 476 876 H183 Q175 876 175 884 V900"
+          },
+          {
+            "id": "created-poster-employee-3-1",
+            "managerId": "poster-manager-3",
+            "employeeId": "poster-employee-3-1",
+            "anchors": {
+              "managerId": "poster-manager-3",
+              "employeeId": "poster-employee-3-1",
+              "source": {
+                "side": "bottom",
+                "offset": 0.5
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 560,
+                  "y": 570
+                },
+                {
+                  "x": 560,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 560,
+                "y": 570
+              },
+              {
+                "x": 560,
+                "y": 588
+              },
+              {
+                "x": 560,
+                "y": 864
+              },
+              {
+                "x": 560,
+                "y": 876
+              },
+              {
+                "x": 560,
+                "y": 900
+              }
+            ],
+            "path": "M560 570 V900"
+          },
+          {
+            "id": "created-poster-employee-3-2",
+            "managerId": "poster-manager-3",
+            "employeeId": "poster-employee-3-2",
+            "anchors": {
+              "managerId": "poster-manager-3",
+              "employeeId": "poster-employee-3-2",
+              "source": {
+                "side": "bottom",
+                "offset": 0.9
+              },
+              "target": {
+                "side": "top",
+                "offset": 0.5
+              },
+              "route": [
+                {
+                  "x": 636,
+                  "y": 570
+                },
+                {
+                  "x": 636,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 720
+                },
+                {
+                  "x": 945,
+                  "y": 900
+                }
+              ]
+            },
+            "status": "routed",
+            "layout": "obstacle-route",
+            "points": [
+              {
+                "x": 636,
+                "y": 570
+              },
+              {
+                "x": 636,
+                "y": 588
+              },
+              {
+                "x": 636,
+                "y": 864
+              },
+              {
+                "x": 636,
+                "y": 876
+              },
+              {
+                "x": 664,
+                "y": 876
+              },
+              {
+                "x": 841,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 876
+              },
+              {
+                "x": 945,
+                "y": 900
+              }
+            ],
+            "path": "M636 570 V868 Q636 876 644 876 H937 Q945 876 945 884 V900"
+          }
+        ],
+        "employees": [
+          {
+            "id": "poster-manager-3",
+            "title": "阿森",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "manager",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 320
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-3-0",
+            "title": "资料整理",
+            "engine": "codex",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 80,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-3-1",
+            "title": "文案创作",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 465,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          },
+          {
+            "id": "poster-employee-3-2",
+            "title": "设计协作",
+            "engine": "claude",
+            "kind": "worker",
+            "managementRole": "employee",
+            "shape": "rectangle",
+            "position": {
+              "x": 850,
+              "y": 900
+            },
+            "width": 190,
+            "height": 250,
+            "editable": true
+          }
+        ]
+      }
+    ]
+  },
+  "originalOtherFiles": {
+    "02.png": "c17b12d732f4b338f737fa1977e33672f2c5e500c9d8baeeaa5098e91a744d58",
+    "03.png": "ecd6a1ac03d7312f1ae8b9c15d6fdc5218fd02f6c55086997eb3e3074b166e65",
+    "04.png": "c9b7df2b573ddfe80b70bebec14bc6d0861bae99e1b047ec63d249428afcaeaf",
+    "发布文案.md": "adc19f29fffe9977ae996dee094831127e81faf3fdaacff9dc4965a4ec802f3d"
+  }
+}

@@ -1,0 +1,12 @@
+Agents Company
+Copyright 2026 Agents Company contributors
+
+This complete distribution is offered under GNU GPL version 3, with matching
+source and build instructions. Original Apache-2.0 material retains its notices
+and license in licenses/host-original-Apache-2.0.txt. Independent plugin/library
+components retain their own compatible licenses and notices.
+
+Coding Agent SDKs and native executables are not part of the public runtime
+packages. Users may install their own permitted copies from the pinned official
+sources through an explicit installation action. No model-service credits or
+vendor trademark rights are granted by this project. See LICENSING.md.

@@ -1,0 +1,6649 @@
+{
+  "startedAt": "2026-09-28T03:02:11.476Z",
+  "prompt": "通知你的所有Manager，让他们手下的员工每人都写一首五言绝句",
+  "governor": "s_muj4r8pz_55m0a8",
+  "observer": "Operator-only observation. Green task edges are matched to real running message IDs and original delegation, no manufactured holds or subscriptions.",
+  "frames": [
+    {
+      "file": "verified-001-6-collaborations.png",
+      "from": 1790564581391,
+      "to": 1790564581629,
+      "activeBefore": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "2d83693d-1767-470f-9ecf-94d5a9961173",
+          "startedAt": 1790564580315
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "2d83693d-1767-470f-9ecf-94d5a9961173",
+          "startedAt": 1790564580315
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": false
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": false
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-002-6-collaborations.png",
+      "from": 1790564583815,
+      "to": 1790564584068,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": false
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": false
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-003-7-collaborations.png",
+      "from": 1790564585679,
+      "to": 1790564585947,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-004-11-collaborations.png",
+      "from": 1790564587541,
+      "to": 1790564587807,
+      "activeBefore": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "fbbb8158-70a3-4175-9b15-adfbca471661",
+          "startedAt": 1790564586802
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "9da7e87a-fe1e-459b-b545-185edc755dc7",
+          "startedAt": 1790564587191
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "fbbb8158-70a3-4175-9b15-adfbca471661",
+          "startedAt": 1790564586802
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj729fz_uef975",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "9da7e87a-fe1e-459b-b545-185edc755dc7",
+          "startedAt": 1790564587191
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-005-10-collaborations.png",
+      "from": 1790564588898,
+      "to": 1790564589133,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-006-11-collaborations.png",
+      "from": 1790564590317,
+      "to": 1790564590566,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-007-12-collaborations.png",
+      "from": 1790564595462,
+      "to": 1790564595721,
+      "activeBefore": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "c6851667-710d-4f8b-af6b-963f4e7cbc90",
+          "startedAt": 1790564594486
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "c6851667-710d-4f8b-af6b-963f4e7cbc90",
+          "startedAt": 1790564594486
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-008-12-collaborations.png",
+      "from": 1790564600009,
+      "to": 1790564600262,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxj92_0gmw06",
+          "requestId": "9f64a932-ec71-48ab-9335-5f51fb075b73",
+          "startedAt": 1790564599478
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znng_75x729",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxase_h3zbkh",
+          "requestId": "8bc55775-3a46-4049-9df0-7917508ea40a",
+          "startedAt": 1790564588510
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxj92_0gmw06",
+          "requestId": "9f64a932-ec71-48ab-9335-5f51fb075b73",
+          "startedAt": 1790564599478
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": true,
+          "messageId": "s_muknxj92_0gmw06",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": true,
+          "messageId": "s_muknxj92_0gmw06",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": true,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": true,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": true,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工C · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-009-8-collaborations.png",
+      "from": 1790564605470,
+      "to": 1790564605769,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znnr_v0su5m",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxbyq_95uqxa",
+          "requestId": "e77d2474-da39-40f9-b96a-6bbd636de77c",
+          "startedAt": 1790564590034
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false,
+          "messageId": "s_muknxj92_0gmw06",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": true,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": true,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false,
+          "messageId": "s_muknxj92_0gmw06",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": true,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": true,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Win 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工C · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-010-5-collaborations.png",
+      "from": 1790564610569,
+      "to": 1790564610826,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728yt_4w6nsy",
+          "employeeId": "s_muj7znn0_gd0fuo",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx9m1_ag0gw4",
+          "requestId": "63a3164d-cc52-4447-bf6c-7dec2bb3294d",
+          "startedAt": 1790564586985
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": false,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": false,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false,
+          "messageId": "s_muknxj92_0gmw06",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": false,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": true,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": false,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false,
+          "messageId": "s_muknxj92_0gmw06",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": true,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → U2 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "U2 经理 → 员工A · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-011-4-collaborations.png",
+      "from": 1790564616124,
+      "to": 1790564616379,
+      "activeBefore": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxuuv_ytg0oa",
+          "requestId": "80869ff8-0bac-44e7-a3c8-418865875e2c",
+          "startedAt": 1790564614519
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z9i6_m3pwo0",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknxuuv_ytg0oa",
+          "requestId": "80869ff8-0bac-44e7-a3c8-418865875e2c",
+          "startedAt": 1790564614519
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": false,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": false,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": false,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": true,
+          "messageId": "s_muknxuuv_ytg0oa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": false,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": true,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": false,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": false,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": true,
+          "messageId": "s_muknxuuv_ytg0oa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Mac 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "Mac 经理 → 员工C · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    },
+    {
+      "file": "verified-012-5-collaborations.png",
+      "from": 1790564630443,
+      "to": 1790564630716,
+      "activeBefore": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "4faf3016-d508-4dd0-9b42-285ff31395c3",
+          "startedAt": 1790564630213
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny5mj_5hjn7o",
+          "requestId": "f902676e-b555-451f-b5a1-94d285358131",
+          "startedAt": 1790564628475
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny6wt_2gvguj",
+          "requestId": "73ba1c27-8ee7-415d-bcb2-129c8845e298",
+          "startedAt": 1790564630141
+        }
+      ],
+      "activeAfter": [
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "4faf3016-d508-4dd0-9b42-285ff31395c3",
+          "startedAt": 1790564630213
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zdu6_ev9gbq",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny5mj_5hjn7o",
+          "requestId": "f902676e-b555-451f-b5a1-94d285358131",
+          "startedAt": 1790564628475
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny6wt_2gvguj",
+          "requestId": "73ba1c27-8ee7-415d-bcb2-129c8845e298",
+          "startedAt": 1790564630141
+        }
+      ],
+      "statesBefore": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": false,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": false,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": false,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": false,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false,
+          "messageId": "s_muknxuuv_ytg0oa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": true,
+          "messageId": "s_mukny5mj_5hjn7o",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj7299d_ku6lqj"
+          }
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": true,
+          "messageId": "s_mukny6wt_2gvguj",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj7299d_ku6lqj"
+          }
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "statesAfter": [
+        {
+          "id": "s_muj4r8pz_55m0a8",
+          "busy": false,
+          "messageId": "s_muknwtmv_3c85vs",
+          "issuer": {
+            "kind": "operator"
+          }
+        },
+        {
+          "id": "s_muj728em_bg1xv6",
+          "busy": false,
+          "messageId": "s_muknwxhe_hff19r",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728m5_qtswp2",
+          "busy": true,
+          "messageId": "s_muknwzsb_u9puja",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj728rq_x1ukbj",
+          "busy": false
+        },
+        {
+          "id": "s_muj728yt_4w6nsy",
+          "busy": false,
+          "messageId": "s_muknx4g8_3ptg7z",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj7299d_ku6lqj",
+          "busy": true,
+          "messageId": "s_muknx89g_hvrwmn",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj4r8pz_55m0a8"
+          }
+        },
+        {
+          "id": "s_muj729fz_uef975",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z7hw_wbiadk",
+          "busy": false,
+          "messageId": "s_muknx4d1_cy26ga",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7z8ig_4kc4s0",
+          "busy": false
+        },
+        {
+          "id": "s_muj7z9i6_m3pwo0",
+          "busy": false,
+          "messageId": "s_muknxuuv_ytg0oa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728em_bg1xv6"
+          }
+        },
+        {
+          "id": "s_muj7zavg_x6wix7",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zbvh_y42qhc",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zcla_iioznx",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zdu6_ev9gbq",
+          "busy": true,
+          "messageId": "s_mukny5mj_5hjn7o",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj7299d_ku6lqj"
+          }
+        },
+        {
+          "id": "s_muj7zet7_2boei2",
+          "busy": true,
+          "messageId": "s_mukny6wt_2gvguj",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj7299d_ku6lqj"
+          }
+        },
+        {
+          "id": "s_muj7zfr8_ow7pyl",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zkru_ka8ncj",
+          "busy": false,
+          "messageId": "s_muknx8w0_bfo3py",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zks5_juensk",
+          "busy": false,
+          "messageId": "s_muknx6y5_5408ru",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zkse_p3zgiy",
+          "busy": false,
+          "messageId": "s_muknx4n9_qo6pjt",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728m5_qtswp2"
+          }
+        },
+        {
+          "id": "s_muj7zlej_iay2mp",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zlh0_3xpyto",
+          "busy": false
+        },
+        {
+          "id": "s_muj7zljw_rf4v7f",
+          "busy": false
+        },
+        {
+          "id": "s_muj7znn0_gd0fuo",
+          "busy": false,
+          "messageId": "s_muknx9m1_ag0gw4",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znng_75x729",
+          "busy": false,
+          "messageId": "s_muknxase_h3zbkh",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        },
+        {
+          "id": "s_muj7znnr_v0su5m",
+          "busy": false,
+          "messageId": "s_muknxbyq_95uqxa",
+          "issuer": {
+            "kind": "agent",
+            "employeeId": "s_muj728yt_4w6nsy"
+          }
+        }
+      ],
+      "rendered": [
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → Win 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "星火 → K1 经理 · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工A · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工B · 协作中",
+          "visible": true
+        },
+        {
+          "tag": "g",
+          "cls": "management-connection",
+          "text": "K1 经理 → 员工C · 协作中",
+          "visible": true
+        }
+      ],
+      "noSleepingParticipants": true
+    }
+  ],
+  "rejected": [
+    {
+      "file": "candidate-001.png",
+      "reason": "Task set or rendered frame changed",
+      "before": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "2d83693d-1767-470f-9ecf-94d5a9961173",
+          "startedAt": 1790564580315
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        }
+      ],
+      "after": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "2d83693d-1767-470f-9ecf-94d5a9961173",
+          "startedAt": 1790564580315
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        }
+      ],
+      "sleeping": 0
+    },
+    {
+      "file": "candidate-005.png",
+      "reason": "Task set or rendered frame changed",
+      "before": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        }
+      ],
+      "after": [
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z8ig_4kc4s0",
+          "command": "session.send",
+          "kind": "request",
+          "requestId": "fbbb8158-70a3-4175-9b15-adfbca471661",
+          "startedAt": 1790564586802
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728em_bg1xv6",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwxhe_hff19r",
+          "requestId": "2621e5b5-c7fd-4a1e-8b7d-8b5430e86dce",
+          "startedAt": 1790564571266
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj728em_bg1xv6",
+          "employeeId": "s_muj7z7hw_wbiadk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4d1_cy26ga",
+          "requestId": "1dce7eca-7d65-4561-9afb-3dbc9706d3be",
+          "startedAt": 1790564580181
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728yt_4w6nsy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4g8_3ptg7z",
+          "requestId": "6a827b7e-9ee8-473b-a716-837b7f8358ae",
+          "startedAt": 1790564580296
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkse_p3zgiy",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx4n9_qo6pjt",
+          "requestId": "8924967b-384c-45a2-a4c7-e81c021504bd",
+          "startedAt": 1790564580549
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zks5_juensk",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx6y5_5408ru",
+          "requestId": "581e633d-e444-4478-95a9-c6b4e7445b72",
+          "startedAt": 1790564583533
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj728m5_qtswp2",
+          "employeeId": "s_muj7zkru_ka8ncj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx8w0_bfo3py",
+          "requestId": "f90038c6-a041-4dd7-88ea-1ec4e8ac0faf",
+          "startedAt": 1790564586048
+        }
+      ],
+      "sleeping": 0
+    },
+    {
+      "file": "candidate-015.png",
+      "reason": "Task set or rendered frame changed",
+      "before": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zet7_2boei2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny6wt_2gvguj",
+          "requestId": "73ba1c27-8ee7-415d-bcb2-129c8845e298",
+          "startedAt": 1790564630141
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny89j_nvw712",
+          "requestId": "4faf3016-d508-4dd0-9b42-285ff31395c3",
+          "startedAt": 1790564631895
+        }
+      ],
+      "after": [
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj728m5_qtswp2",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknwzsb_u9puja",
+          "requestId": "5858aadd-2d35-4c58-a55a-adc4c6e46dff",
+          "startedAt": 1790564574251
+        },
+        {
+          "managerId": "s_muj4r8pz_55m0a8",
+          "employeeId": "s_muj7299d_ku6lqj",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_muknx89g_hvrwmn",
+          "requestId": "088bdd22-4121-4955-880e-a757de971479",
+          "startedAt": 1790564585236
+        },
+        {
+          "managerId": "s_muj7299d_ku6lqj",
+          "employeeId": "s_muj7zfr8_ow7pyl",
+          "command": "session.send",
+          "kind": "task",
+          "messageId": "s_mukny89j_nvw712",
+          "requestId": "4faf3016-d508-4dd0-9b42-285ff31395c3",
+          "startedAt": 1790564631895
+        }
+      ],
+      "sleeping": 1
+    }
+  ],
+  "engines": {
+    "codex": 11,
+    "claude": 9,
+    "cline": 3,
+    "pi": 2
+  },
+  "modelsBefore": [
+    {
+      "id": "s_muj7299d_ku6lqj",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknw2sh_r3jwar"
+    },
+    {
+      "id": "s_muj7z7hw_wbiadk",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknw2td_bewttu"
+    },
+    {
+      "id": "s_muj7zkru_ka8ncj",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknw2u8_16297q"
+    },
+    {
+      "id": "s_muj7zks5_juensk",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknw8uv_whugdo"
+    },
+    {
+      "id": "s_muj7zkse_p3zgiy",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwe9z_j16v4w"
+    },
+    {
+      "id": "s_muj7zlej_iay2mp",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwl76_sfe870"
+    },
+    {
+      "id": "s_muj7zlh0_3xpyto",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwmmb_cgecff"
+    },
+    {
+      "id": "s_muj7zljw_rf4v7f",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwnt8_wm2jzo"
+    },
+    {
+      "id": "s_muj7znn0_gd0fuo",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwozi_jeb0i5"
+    },
+    {
+      "id": "s_muj7znng_75x729",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwqiz_pr1frk"
+    },
+    {
+      "id": "s_muj7znnr_v0su5m",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "liveId": "s_muknwrwp_rpgukp"
+    }
+  ],
+  "dispatchAttempted": true,
+  "sent": {
+    "sent": true,
+    "messageId": "s_muknwtmv_3c85vs"
+  },
+  "pending": false,
+  "modelsRestored": true,
+  "employeePositionsPreserved": false,
+  "completedAt": "2026-09-28T03:06:52.936Z",
+  "maxVerified": 12
+}
