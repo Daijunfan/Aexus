@@ -367,8 +367,28 @@ def workspace_files(root, operation, args):
             raise ValueError('不能将当前目录放入自身回收站')
         identity = str(uuid.uuid4())
         trash.mkdir(parents=True, exist_ok=True)
-        file.rename(trash / identity)
-        (trash/(identity+'.json')).write_text(json.dumps({'path':value}))
+        target = trash / identity
+        metadata = trash / (identity + '.json')
+        if target.exists() or target.is_symlink() or metadata.exists() or metadata.is_symlink():
+            raise ValueError('目标路径已存在')
+        # Publish recovery metadata durably before moving the data, so a failed
+        # metadata write leaves the source untouched and a failed move cannot
+        # leave an unlisted entry pretending the trash succeeded.
+        fd, temporary = tempfile.mkstemp(prefix='.cloud-hosts-trash-', dir=str(trash))
+        try:
+            with os.fdopen(fd, 'wb') as stream:
+                stream.write(json.dumps({'path': value}).encode('utf-8'))
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, metadata)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        try:
+            file.rename(target)
+        except Exception:
+            metadata.unlink(missing_ok=True)
+            raise
         return dict(id=identity, path=value)
     if operation == 'restore':
         identity = str(uuid.UUID(args['id']))

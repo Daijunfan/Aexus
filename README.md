@@ -9,7 +9,7 @@ Aexus 是统一管理原生 Coding Agent、协作角色与云主机的工作台�
 
 原 Aexus 的 Mini Notion、Margin Reader、Cloud Hosts 插件产品不再打包或加载；文档封面预览改由 Core 自身的预览 worker 独立渲染，不依赖 Margin Reader。主机管理与 VM Lab 软件独立。
 
-当前版本 **2.11.2**（build 50，构建标识 `5cf36f9b2d20…`），`/Applications/Aexus.app` 已同步安装。2.11.2 修复 Role Board 重新进入/刷新后的 `Invalid CSRF token`（会话 Cookie 现按 Core 实例与浏览器客户端分别命名，重新授权复用同一活动会话，不轮换 Cookie、不重放被拒写入），Company/Messages/Plan 切换改为单击直达、无需重试或再次点击；同时把图标外圈白边改为透明（现代 Assets.car + `CFBundleIconName` 优先加载，`Engine/App.swift` 仅在缺少该键时才回退旧版 icns）。macOS 应用沿用原 Aexus 图标。现有云主机数据仍沿用 `~/Library/Application Support/Toolbox/CloudHosts`，无需迁移凭据或会话；`cloud-hosts` 命令继续兼容，新的主命令为 `aexus`。验收证据见 [Agent / Role Board 拆分验收](docs/AGENT_ROLE_SPLIT.md)。
+当前版本 **2.11.3**（build 51，构建标识 `c5c7c1d93dd2…`），`/Applications/Aexus.app` 与 Toolbox 内嵌 Aexus 均已同步安装。2.11.3 修复文件回收站元数据先于数据原子写入（metadata-before-move）：元数据写入失败不再产生无法恢复的孤儿，两份工作区后端（CloudHosts `Runtime/workspace_files.py` 与内嵌 Role Core `AgentBoard/Aexus/Modules/Tunnel/workspace_files.py`）同步修复，验收见 [2.11.3 发布验收](docs/RELEASE_2.11.3_ACCEPTANCE.md)。2.11.2 修复 Role Board 重新进入/刷新后的 `Invalid CSRF token`（会话 Cookie 现按 Core 实例与浏览器客户端分别命名，重新授权复用同一活动会话，不轮换 Cookie、不重放被拒写入），Company/Messages/Plan 切换改为单击直达、无需重试或再次点击；同时把图标外圈白边改为透明（现代 Assets.car + `CFBundleIconName` 优先加载，`Engine/App.swift` 仅在缺少该键时才回退旧版 icns）。macOS 应用沿用原 Aexus 图标。现有云主机数据仍沿用 `~/Library/Application Support/Toolbox/CloudHosts`，无需迁移凭据或会话；`cloud-hosts` 命令继续兼容，新的主命令为 `aexus`。验收证据见 [Agent / Role Board 拆分验收](docs/AGENT_ROLE_SPLIT.md)。
 
 宣传海报、文案和可编辑源素材保存在 [Marketing](Marketing/README.md)，历史素材不能直接视为当前功能承诺。
 

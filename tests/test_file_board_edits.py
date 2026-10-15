@@ -1,5 +1,6 @@
 """CLI-isolated File Board mutations. All files live in temporary workspaces."""
 import concurrent.futures
+import errno
 import os
 import hashlib
 import tempfile
@@ -103,6 +104,66 @@ class FileBoardEdits(unittest.TestCase):
             self.call('write',path='../outside.txt',content='escape',create=True)
         with self.assertRaisesRegex(ValueError,'宿主|本身'):
             self.call('mkdir',path='.cloud-hosts')
+
+
+    def test_trash_metadata_fsync_failure_preserves_source_file(self):
+        source = self.root / 'keep.txt'
+        self.call('write', path='keep.txt', create=True, content='precious')
+        with patch.object(ws.os, 'fsync', side_effect=OSError(errno.ENOSPC, 'No space left on device')):
+            with self.assertRaisesRegex(OSError, 'No space left on device'):
+                self.call('trash', path='keep.txt')
+        self.assertEqual(source.read_text(encoding='utf-8'), 'precious')
+        trash = self.root / '.cloud-hosts' / 'trash'
+        self.assertEqual(list(trash.glob('*.json')), [])
+        self.assertEqual(list(trash.glob('.cloud-hosts-trash-*')), [])
+        self.assertEqual(self.call('trash-list')['items'], [])
+
+    def test_trash_metadata_fsync_failure_preserves_non_empty_directory(self):
+        self.call('write', path='folder/sub/note.txt', create=True, content='keep')
+        with patch.object(ws.os, 'fsync', side_effect=OSError(errno.ENOSPC, 'No space left on device')):
+            with self.assertRaisesRegex(OSError, 'No space left on device'):
+                self.call('trash', path='folder')
+        self.assertEqual((self.root / 'folder' / 'sub' / 'note.txt').read_text(encoding='utf-8'), 'keep')
+        self.assertEqual(self.call('trash-list')['items'], [])
+
+    def test_trash_metadata_publish_failure_preserves_source(self):
+        source = self.root / 'keep.txt'
+        self.call('write', path='keep.txt', create=True, content='precious')
+        with patch.object(ws.os, 'replace', side_effect=OSError('controlled disk failure')):
+            with self.assertRaisesRegex(OSError, 'controlled disk failure'):
+                self.call('trash', path='keep.txt')
+        self.assertEqual(source.read_text(encoding='utf-8'), 'precious')
+        trash = self.root / '.cloud-hosts' / 'trash'
+        self.assertEqual(list(trash.glob('*.json')), [])
+        self.assertEqual(list(trash.glob('.cloud-hosts-trash-*')), [])
+        self.assertEqual(self.call('trash-list')['items'], [])
+
+    def test_trash_data_move_failure_cleans_metadata_and_preserves_source(self):
+        source = self.root / 'keep.txt'
+        self.call('write', path='keep.txt', create=True, content='precious')
+        with patch.object(ws.os, 'rename', side_effect=OSError('controlled disk failure')):
+            with self.assertRaisesRegex(OSError, 'controlled disk failure'):
+                self.call('trash', path='keep.txt')
+        self.assertEqual(source.read_text(encoding='utf-8'), 'precious')
+        trash = self.root / '.cloud-hosts' / 'trash'
+        self.assertEqual(list(trash.glob('*.json')), [])
+        self.assertEqual(self.call('trash-list')['items'], [])
+
+    def test_trash_file_and_directory_roundtrip_lists_and_restores_content(self):
+        self.call('write', path='doc.txt', create=True, content='file body')
+        self.call('write', path='bundle/inner/deep.txt', create=True, content='dir body')
+        trashed_file = self.call('trash', path='doc.txt')
+        trashed_dir = self.call('trash', path='bundle')
+        items = {row['id']: row for row in self.call('trash-list')['items']}
+        self.assertEqual(items[trashed_file['id']]['path'], 'doc.txt')
+        self.assertEqual(items[trashed_dir['id']]['path'], 'bundle')
+        self.assertFalse((self.root / 'doc.txt').exists())
+        self.assertFalse((self.root / 'bundle').exists())
+        self.call('restore', id=trashed_file['id'])
+        self.call('restore', id=trashed_dir['id'])
+        self.assertEqual((self.root / 'doc.txt').read_text(encoding='utf-8'), 'file body')
+        self.assertEqual((self.root / 'bundle' / 'inner' / 'deep.txt').read_text(encoding='utf-8'), 'dir body')
+        self.assertEqual(self.call('trash-list')['items'], [])
 
 
 if __name__ == '__main__':
