@@ -86,7 +86,7 @@ export function buildOptions(args: {
     opts.pathToClaudeCodeExecutable=engineExecutable('claude',true)
     opts.model=deepSeekModel(provider,args.model||'deepseek-flash')
     delete opts.thinking;opts.settings={...opts.settings,alwaysThinkingEnabled:args.thinking===true}
-    opts.effort=(deepSeekEffort(args.effort)??'high') as Options['effort']
+    opts.effort=(deepSeekEffort(args.effort)??'low') as Options['effort']
     opts.settings={...opts.settings,...deepSeekPicker,fastMode:false}
   }
   if(args.employeeId){if(!args.nativeRemote)opts.spawnClaudeCodeProcess=options=>spawnEmployeeProcess(args.employeeId,options.command,options.args,{cwd:options.cwd,env:engineProcessEnvironment('claude',options.env),signal:options.signal});opts.disallowedTools=[...new Set([...(opts.disallowedTools??[]),'Agent','Task'])]}

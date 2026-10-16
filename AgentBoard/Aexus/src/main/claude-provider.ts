@@ -25,7 +25,7 @@ export type DeepSeekProvider=NonNullable<ReturnType<typeof deepSeekProvider>>
 export const deepSeekModels:ModelInfo[]=[
   {value:'deepseek-flash',displayName:'DeepSeek Flash',description:'Text & image input · 1M context · Thinking: off / low / high / max',inputModalities:['text','image']},
   {value:'deepseek-v4-pro',displayName:'DeepSeek V4 Pro',description:'Text only · 1M context · Thinking: off / low / high / max',inputModalities:['text']}
-].map(m=>({...m,supportsEffort:true,supportedEffortLevels:['low','high','max'],defaultEffort:'high',supportsAdaptiveThinking:true,supportsFastMode:false}))
+].map(m=>({...m,supportsEffort:true,supportedEffortLevels:['low','high','max'],defaultEffort:'low',supportsAdaptiveThinking:true,supportsFastMode:false}))
 
 export function deepSeekModel(provider:DeepSeekProvider,model?:string):string{
   let value=(model&&model!=='default'?model:provider.env.ANTHROPIC_MODEL||provider.defaultModel||'opus').replace(/\[1m\]$/i,'')
