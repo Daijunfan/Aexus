@@ -28,15 +28,20 @@ function changeBinding(enabled:boolean,args:BindingRequest){
     managerId=identifier(args.manager===undefined?(principal.kind==='agent'?principal.employeeId:undefined):args.manager,'manager')
     employeeId=identifier(args.employee,'employee')
   }
-  if(principal.kind==='agent'&&managerId!==principal.employeeId&&!isGlobal(principal))throw Error('Forbidden: Manager may change only its own outgoing bindings')
   const source=store.sessions.find(card=>card.id===managerId&&!card.deleting),target=store.sessions.find(card=>card.id===employeeId&&!card.deleting)
   if(!source||!target||managerId===employeeId)throw Error('Choose two existing, different employees')
   if(!isSupervisor(source.managementRole))throw Error('Binding source must be a Manager or Governor')
-  assertManagementKind(source,false,employeeSettings(store,source).mode==='cloud')
-  if(enabled&&!canControl({kind:'agent',employeeId:managerId},employeeId))throw Error('Forbidden: binding target is outside the source role scope')
   const samePair=(edge:{managerId:string;employeeId:string})=>edge.managerId===managerId&&edge.employeeId===employeeId
   const before=edges.find(samePair),previous=store.access?.bindings?.find(samePair)
   const creator=target.createdBy?.kind==='agent'&&target.createdBy.employeeId===managerId
+  // A team Manager may visually cancel an existing explicit Secretary/Governor binding whose target
+  // sits in the Manager's own Team; the global source already spans every Team. This never grants
+  // bind/enable, hides creator lines, or reaches other Teams/Managers.
+  const caller=principal.kind==='agent'?store.sessions.find(card=>card.id===principal.employeeId&&!card.deleting):undefined
+  const cancelsHigherSource=!enabled&&caller!==undefined&&caller.managementRole==='manager'&&managerId!==caller.id&&previous?.enabled===true&&(source.managementRole==='secretary'||source.managementRole==='governor')&&target.group===caller.group&&!isSupervisor(target.managementRole)&&!creator
+  if(principal.kind==='agent'&&managerId!==principal.employeeId&&!isGlobal(principal)&&!cancelsHigherSource)throw Error('Forbidden: Manager may change only its own outgoing bindings')
+  assertManagementKind(source,false,employeeSettings(store,source).mode==='cloud')
+  if(enabled&&!canControl({kind:'agent',employeeId:managerId},employeeId))throw Error('Forbidden: binding target is outside the source role scope')
   const result=(changed:boolean)=>({managerId,employeeId,bound:enabled,changed,relation:managementRelations(store.sessions,store.access?.bindings).find(samePair)??null,revision:store.revision??0})
   if((enabled&&before)||(!enabled&&(previous?.enabled===false||(!before&&!previous&&!creator))))return result(false)
   const now=Date.now(),binding:ManagementBinding={id:previous?.id??before?.id??'bound-'+randomUUID(),managerId,employeeId,enabled,requestedBy:principal,createdAt:previous?.createdAt??now,updatedAt:now}
