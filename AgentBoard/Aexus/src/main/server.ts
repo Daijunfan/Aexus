@@ -43,7 +43,7 @@ import {messageSourceView} from '../shared/message-source'
 import { queueEmployeeInitialization,retryEmployeeInitialization,cancelEmployeeInitialization } from './initialization'
 import { removeEmployeeWorkspace } from './employee-workspace-removal'
 import { engineModels,defaultEmployeeModel } from './engine-models'
-import { officeLayout } from './office'
+import { officeLayout, arrangeOffice } from './office'
 import { beginManagementInteraction,clearManagementInteraction,managementActivity,pruneManagementActivity } from './management-activity'
 import { acknowledgeReply } from './reply-receipts'
 import { pendingInitialization,assertEmployeeReady,assertInitializationRequest } from './initialization-state'
@@ -309,6 +309,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'api.docs': return apiDocumentation(requestContext(),readStore(),a.document)
     case 'avatar.list': return listAvatars(a)
     case 'office.layout': return officeLayout(a.team,a.viewId)
+    case 'office.arrange': return arrangeOffice(a)
     case 'session.acknowledge': return acknowledgeReply(s(a.employee??employeeId(a.id)),a.replyId)
     case 'management.team': return setManagerTeam(a.clear===true?null:a.team)
     case 'management.topology': return managementTopology(a.team,a.creator,a.teamsOnly)

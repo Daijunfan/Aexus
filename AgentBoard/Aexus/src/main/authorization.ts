@@ -139,7 +139,7 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
   }
   if(policy.permission==='layout.read'||policy.permission==='layout.write'){
     const store=readStore(),employeeId=command==='card.place'?String(args.id):undefined
-    const team=command==='card.place'?store.sessions.find(card=>card.id===employeeId)?.group:['office.layout','management.relayout'].includes(command)?args.team:args.name
+    const team=command==='card.place'?store.sessions.find(card=>card.id===employeeId)?.group:['office.layout','office.arrange','management.relayout'].includes(command)?args.team:args.name
     if(policy.permission==='layout.read'){
       if(team!==undefined&&!store.groups.includes(team))throw Error('Unknown Team')
       if(isGlobal(principal)||isSupervisor(caller!.managementRole)&&(team===undefined||team===caller!.group))return

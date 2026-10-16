@@ -1,0 +1,128 @@
+import type {OfficeConnection} from './office-connections'
+import type {CrossTeamRoute} from './cross-team-routing'
+import type {Point} from './canvas'
+
+const EPS = 1e-9
+
+export type OfficeCrossing = {
+  kind: 'cross' | 'overlap'
+  /** The two routed connection IDs whose paths intersect. */
+  connections: [string, string]
+  /** Approximate world-space intersection point (or midpoint of an overlap). */
+  point: Point
+  /** A crossing is always avoidable by repositioning rooms/employees or re-routing a segment. */
+  avoidable: boolean
+  reason: string
+}
+
+export type OfficeQuality = {
+  /** True interior line crossings (two lines passing through each other). */
+  crossingCount: number
+  /** Collinear overlaps of positive length, excluding shared trunks at a common node. */
+  overlapCount: number
+  /** Connections that could not route cleanly (blocked cross-Team legs or in-room warnings). */
+  blockedCount: number
+  crossings: OfficeCrossing[]
+  /** True when any issue above is reported. */
+  avoidable: boolean
+}
+
+const orient = (a: Point, b: Point, c: Point) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+
+const samePoint = (a: Point, b: Point) => Math.abs(a.x - b.x) <= EPS && Math.abs(a.y - b.y) <= EPS
+
+const onSegment = (a: Point, b: Point, p: Point) =>
+  Math.abs(orient(a, b, p)) <= EPS &&
+  p.x >= Math.min(a.x, b.x) - EPS && p.x <= Math.max(a.x, b.x) + EPS &&
+  p.y >= Math.min(a.y, b.y) - EPS && p.y <= Math.max(a.y, b.y) + EPS
+
+/** Exact right-angle intersection of two orthogonal segments (general fallback included). */
+function crossPoint(a: Point, b: Point, c: Point, d: Point): Point {
+  const vertical1 = Math.abs(a.x - b.x) <= EPS, vertical2 = Math.abs(c.x - d.x) <= EPS
+  if (vertical1 && !vertical2) return {x: a.x, y: c.y}
+  if (!vertical1 && vertical2) return {x: c.x, y: a.y}
+  const dx1 = b.x - a.x, dy1 = b.y - a.y, dx2 = d.x - c.x, dy2 = d.y - c.y
+  const denom = dx1 * dy2 - dy1 * dx2
+  if (Math.abs(denom) <= EPS) return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
+  const t = ((c.x - a.x) * dy2 - (c.y - a.y) * dx2) / denom
+  return {x: a.x + t * dx1, y: a.y + t * dy1}
+}
+
+/** Positive-length collinear overlap between two axis-aligned segments, or 0. */
+function collinearOverlap(a: Point, b: Point, c: Point, d: Point): {length: number; point: Point} {
+  const horizontal = Math.abs(a.y - b.y) <= EPS && Math.abs(c.y - d.y) <= EPS
+  const vertical = Math.abs(a.x - b.x) <= EPS && Math.abs(c.x - d.x) <= EPS
+  if (!horizontal && !vertical) return {length: 0, point: {x: 0, y: 0}}
+  if (horizontal) {
+    if (Math.abs(a.y - c.y) > EPS) return {length: 0, point: {x: 0, y: 0}}
+    const lo = Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x))
+    const hi = Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x))
+    const length = hi - lo
+    return length > EPS ? {length, point: {x: (lo + hi) / 2, y: a.y}} : {length: 0, point: {x: 0, y: 0}}
+  }
+  if (Math.abs(a.x - c.x) > EPS) return {length: 0, point: {x: 0, y: 0}}
+  const lo = Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y))
+  const hi = Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y))
+  const length = hi - lo
+  return length > EPS ? {length, point: {x: a.x, y: (lo + hi) / 2}} : {length: 0, point: {x: 0, y: 0}}
+}
+
+const sharesNode = (a: OfficeConnection, b: OfficeConnection) =>
+  a.managerId === b.managerId || a.managerId === b.employeeId || a.employeeId === b.managerId || a.employeeId === b.employeeId
+
+/**
+ * True interior crossings and collinear overlaps over the canonical routed paths.
+ * Shared endpoints, adjacent orthogonal corners and common trunks at a shared node
+ * are never reported; a genuine crossing between two fan lines is still reported.
+ */
+export function officeQuality(connections: OfficeConnection[], crossTeam: Array<Pick<CrossTeamRoute, 'status'>> = []): OfficeQuality {
+  const segments: {connection: OfficeConnection; a: Point; b: Point}[] = []
+  for (const connection of connections) {
+    const points = connection.points ?? []
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i]
+      if (!samePoint(a, b)) segments.push({connection, a, b})
+    }
+  }
+  const crossings: OfficeCrossing[] = []
+  const seen = new Set<string>()
+  for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
+    const A = segments[i], B = segments[j]
+    if (A.connection.id === B.connection.id) continue
+    const o1 = orient(A.a, A.b, B.a), o2 = orient(A.a, A.b, B.b)
+    const o3 = orient(B.a, B.b, A.a), o4 = orient(B.a, B.b, A.b)
+    const properCross = ((o1 > EPS && o2 < -EPS) || (o1 < -EPS && o2 > EPS)) && ((o3 > EPS && o4 < -EPS) || (o3 < -EPS && o4 > EPS))
+    const connectionIds: [string, string] = A.connection.id < B.connection.id ? [A.connection.id, B.connection.id] : [B.connection.id, A.connection.id]
+    if (properCross) {
+      const key = connectionIds.join('|') + ':cross'
+      if (seen.has(key)) continue
+      seen.add(key)
+      const manual = A.connection.manual || B.connection.manual
+      crossings.push({
+        kind: 'cross', connections: connectionIds, point: crossPoint(A.a, A.b, B.a, B.b), avoidable: true,
+        reason: `Lines ${A.connection.id} and ${B.connection.id} cross${manual ? ' (a manual route is involved)' : ''}; reposition the employees/rooms or drag the segment to remove the crossing`
+      })
+      continue
+    }
+    // Collinear (possibly overlapping) only when all four orientations vanish.
+    if (Math.abs(o1) <= EPS && Math.abs(o2) <= EPS && Math.abs(o3) <= EPS && Math.abs(o4) <= EPS) {
+      const overlap = collinearOverlap(A.a, A.b, B.a, B.b)
+      if (overlap.length > EPS && !sharesNode(A.connection, B.connection)) {
+        const key = connectionIds.join('|') + ':overlap'
+        if (seen.has(key)) continue
+        seen.add(key)
+        crossings.push({
+          kind: 'overlap', connections: connectionIds, point: overlap.point, avoidable: true,
+          reason: `Lines ${A.connection.id} and ${B.connection.id} overlap; drag a segment or reposition to separate them`
+        })
+      }
+      continue
+    }
+    // Endpoint touches (including T-junctions) are geometrically legal and ignored.
+    if (onSegment(A.a, A.b, B.a) || onSegment(A.a, A.b, B.b) || onSegment(B.a, B.b, A.a) || onSegment(B.a, B.b, A.b)) continue
+  }
+  const crossingCount = crossings.filter(c => c.kind === 'cross').length
+  const overlapCount = crossings.filter(c => c.kind === 'overlap').length
+  const blockedCount = connections.filter(c => !!c.warning).length + crossTeam.filter(r => r.status === 'blocked').length
+  return {crossingCount, overlapCount, blockedCount, crossings, avoidable: crossings.length > 0 || blockedCount > 0}
+}

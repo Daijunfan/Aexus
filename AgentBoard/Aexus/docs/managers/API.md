@@ -3241,7 +3241,7 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 <!-- BEGIN GENERATED CLI COMMAND INDEX -->
 ## 全部 CLI 命令索引
 
-下面 323 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
+下面 324 项来自共享协议 `src/shared/api-registry.ts`。命令名中的句点在终端中写成空格；每项都可附加 `--json`。参数、返回值和限制见上文对应章节。
 
 | 命令 | 参数 | 作用 | 对应界面 | 授权策略 |
 | --- | --- | --- | --- | --- |
@@ -3395,7 +3395,8 @@ Three automation contracts stay separate: `conversation.notice-*` posts timed li
 | <code>agents connector set</code> | <code>--manager ID --employee ID [--source auto&#124;top&#124;right&#124;bottom&#124;left --source-offset 0.5] [--target auto&#124;top&#124;right&#124;bottom&#124;left --target-offset 0.5] [--points JSON&#124;@file &#124; --auto-route]</code> | Persist endpoint sides and offsets; does not create management authority or a relation | 点击人物周围点位 / 拖动端点吸附 | layout.write |
 | <code>agents connector segment</code> | <code>--manager ID --employee ID --index N --x X --y Y</code> | Move an orthogonal segment in source-Team coordinates; preserve attached employees | 拖动任意折线段 | layout.write |
 | <code>agents connector reset</code> | <code>--manager ID --employee ID</code> | Restore automatic source and head-top target routing | 恢复自动连接点 | layout.write |
-| <code>agents office layout</code> | <code>[--team NAME] [--view VIEW_ID]</code> | Read authorized Team bounds, employee coordinates and permitted layout actions; no filesystem access | Agent 布局工具 | layout.read |
+| <code>agents office layout</code> | <code>[--team NAME] [--view VIEW_ID]</code> | Read authorized Team bounds, employee coordinates, connection quality and permitted layout actions; no filesystem access | Agent 布局工具 | layout.read |
+| <code>agents office arrange</code> | <code>--pattern circle&#124;rectangle&#124;grid [--scope teams&#124;employees&#124;all] [--team NAME] [--view VIEW_ID] [--around ID] [--avoid-crossings true&#124;false] [--order JSON&#124;@file]</code> | Arrange authorized Team rooms and employee seats in a circle, rectangle or grid; returns revision, rooms, employees and crossing quality | Agent 布局整理 | layout.write |
 | <code>agents session acknowledge</code> | <code>--employee ID --reply-id ID</code> | User-only acknowledgement of the exact displayed reply; stale acknowledgements do not clear newer replies | 可见回复已读 | operator |
 | <code>agents management relayout</code> | <code>--team NAME</code> | Group related employees and fit this Team without changing the viewport | 整理团队拓扑 | layout.write |
 | <code>agents management topology</code> | <code>[--team NAME] [--teams-only] [--creator self&#124;others&#124;operator&#124;unknown&#124;EMPLOYEE_ID]</code> | Read teams with isOwnTeam, employeeCount, governorIds, allowedActions and deleteBlockedReason; employee nodes include creation provenance and allowedActions | 管理与协同 | topology |

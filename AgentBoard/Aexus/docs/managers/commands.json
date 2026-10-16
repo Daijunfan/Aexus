@@ -6110,10 +6110,67 @@
   {
     "name": "office.layout",
     "args": "[--team NAME] [--view VIEW_ID]",
-    "summary": "Read authorized Team bounds, employee coordinates and permitted layout actions; no filesystem access",
+    "summary": "Read authorized Team bounds, employee coordinates, connection quality and permitted layout actions; no filesystem access",
     "gui": "Agent 布局工具",
     "readOnly": true,
     "permission": "layout.read",
+    "target": "request"
+  },
+  {
+    "name": "office.arrange",
+    "args": "--pattern circle|rectangle|grid [--scope teams|employees|all] [--team NAME] [--view VIEW_ID] [--around ID] [--avoid-crossings true|false] [--order JSON|@file]",
+    "summary": "Arrange authorized Team rooms and employee seats in a circle, rectangle or grid; returns revision, rooms, employees and crossing quality",
+    "gui": "Agent 布局整理",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "enum": [
+            "circle",
+            "rectangle",
+            "grid"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "teams",
+            "employees",
+            "all"
+          ]
+        },
+        "team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "viewId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "around": {
+          "type": "string",
+          "minLength": 1
+        },
+        "avoidCrossings": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 500
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "readOnly": false,
+    "permission": "layout.write",
     "target": "request"
   },
   {

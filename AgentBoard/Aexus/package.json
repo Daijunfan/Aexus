@@ -84,7 +84,7 @@
     "test:image-paste": "node test/image-paste-ui-test.mjs && python3 -m unittest Modules/Tunnel/tests/test_workspace_images.py",
     "test:initialization-engines": "node test/employee-initialization-engine-test.mjs codex build && node test/employee-initialization-engine-test.mjs codex work && node test/employee-initialization-engine-test.mjs claude build && node test/employee-initialization-engine-test.mjs claude work",
     "test:engine-models": "node test/engine-models-test.mjs",
-    "test:office-layout": "node test/office-layout-api-test.mjs && node test/office-collision-test.mjs && node test/team-room-drag-ui-test.mjs && node test/canvas-overview-ui-test.mjs",
+    "test:office-layout": "node test/office-layout-api-test.mjs && node test/office-arrange-test.mjs && node test/office-collision-test.mjs && node test/team-room-drag-ui-test.mjs && node test/canvas-overview-ui-test.mjs",
     "test:reply-receipts": "node test/reply-receipts-test.mjs && node test/layout-unread-ui-test.mjs",
     "test:room-resize": "node test/room-resize-test.mjs && node test/room-resize-ui-test.mjs",
     "test:manager-authority": "npm run test:governor",
