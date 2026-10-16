@@ -9,7 +9,7 @@ export type EmployeeKind = 'worker' | 'cloud-native-worker'
 export type WorkEnvironment = 'team' | 'local'
 export type NativeOrigin = {kind:'cloud';hostId:string;host:string;os:'linux'|'macos'|'windows';directory:string}
 export type NativeSession = {engine:Engine;id:string;profile?:string;origin?:NativeOrigin;ownership?:'external'}
-export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; hostId?:string; directory?:string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind' }
+export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; hostId?:string; directory?:string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind'; parent?: string }
 export const teamSettings = (store: Pick<Store,'teamSettings'>, name: string): TeamSettings => store.teamSettings?.[name] ?? {mode:'build'}
 /** Team is organizational membership; a local workspace may coexist with cloud teammates. */
 export function employeeSettings(store:Pick<Store,'teamSettings'>,card:{group:string;workEnvironment?:WorkEnvironment}):TeamSettings {
@@ -66,6 +66,7 @@ export const ENGINES: { value: Engine; label: string; hint: string }[] = [
   { value: 'claude', label: 'Claude Agent', hint: 'Anthropic Claude via the Agent SDK' },
   { value: 'codex', label: 'Codex', hint: 'OpenAI Codex CLI' },
   { value: 'cline', label: 'Cline', hint: 'Cline ACP · DeepSeek Flash' },
+  { value: 'opencode', label: 'OpenCode', hint: 'OpenCode ACP · DeepSeek' },
   { value: 'pi', label: 'Pi', hint: 'Pi RPC · DeepSeek Flash' }
 ]
 
@@ -115,6 +116,7 @@ export type StoredSession = {
   clineSessionId?: string
   clineConfigRoot?:string
   piSessionId?: string
+  opencodeSessionId?: string
   piSessionFile?:string
   piConfigRoot?:string
   claudeSessionId?: string
@@ -227,6 +229,7 @@ export type Session = {
   clineSessionId?: string
   clineConfigRoot?:string
   piSessionId?: string
+  opencodeSessionId?: string
   piSessionFile?:string
   piConfigRoot?:string
   claudeSessionId?: string
@@ -328,6 +331,7 @@ export function nativeSessionRefs(card:StoredSession):NativeSession[] {
   const refs=[...(card.nativeSessions??[])]
   if(card.clineSessionId)refs.push({engine:'cline',id:card.clineSessionId,profile:card.clineConfigRoot})
   if(card.piSessionId)refs.push({engine:'pi',id:card.piSessionId,profile:card.piConfigRoot})
+  if(card.opencodeSessionId)refs.push({engine:'opencode',id:card.opencodeSessionId})
   if(card.threadId)refs.push({engine:'codex',id:card.threadId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   if(card.claudeSessionId)refs.push({engine:'claude',id:card.claudeSessionId,profile:card.nativeConfigRoot,origin:card.nativeOrigin,ownership:card.nativeOwnership})
   return refs.filter((ref,i)=>refs.findIndex(other=>other.engine===ref.engine&&other.id===ref.id&&other.ownership===ref.ownership&&JSON.stringify(other.origin??null)===JSON.stringify(ref.origin??null))===i)

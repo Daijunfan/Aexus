@@ -57,6 +57,9 @@ function priorSelected() {
 const PAID = new Set(['deepseek-live-test.mjs', 'avatar-api-live-test.mjs']);
 const BUILD_NEEDS = new Set(['secretary-role-core-test.mjs', 'packaged-desktop-smoke-test.mjs', 'mac-launchservices-test.mjs']);
 const OPT_IN_ENGINES = new Set(['process-engines-native-test.mjs','cline-provider-native-test.mjs','pi-provider-native-test.mjs']);
+// Opt-in real OpenCode E2E: billed DeepSeek calls and/or the real GPU/Windows hosts.
+// Never auto-run in a sweep; only with explicit authorization, recorded as SKIP not PASS.
+const OPENCODE_LIVE = new Set(['opencode-real-e2e-test.mjs','opencode-cloud-e2e-test.mjs']);
 // Semantically removed-plugin suites whose filename does not say so: they assert
 // the three removed bundled plugins (cloud-hosts / mininotion / margin-reader)
 // still exist and open.
@@ -87,6 +90,9 @@ function classify(file, source) {
   }
   if (OPT_IN_ENGINES.has(name)) {
     return { category: 'skip:live', reason: 'opt-in installed-engine protocol test (AGENTS_TEST_CLINE_BIN / AGENTS_TEST_PI_BIN)' };
+  }
+  if (OPENCODE_LIVE.has(name)) {
+    return { category: 'skip:live', reason: 'opt-in real OpenCode E2E (billed DeepSeek calls / real GPU+Windows hosts); run only with explicit authorization' };
   }
   if (/-ui-test\.mjs$/.test(name) || /webkit/i.test(name) ||
       /from\s+['"]@playwright|require\(['"]@playwright|_electron|BrowserWindow|chrome-launcher|from\s+['"]electron['"]|require\(['"]electron['"]/.test(source)) {

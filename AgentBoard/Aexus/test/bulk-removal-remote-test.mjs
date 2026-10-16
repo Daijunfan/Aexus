@@ -13,7 +13,7 @@ if(args.includes('-R')){
  server.listen(0,'127.0.0.1',()=>process.stderr.write('Allocated port '+server.address().port+' for remote forward\\n'));process.on('SIGTERM',()=>process.exit(0));
 }else{const child=spawn('/bin/sh',['-c',args.at(-1)],{stdio:'inherit'});child.on('exit',code=>process.exit(code??1));process.on('SIGTERM',()=>child.kill('SIGTERM'))}
 `,{mode:0o755})
-const f=await fixtureCore({PATH:bin+path.delimiter+process.env.PATH})
+const f=await fixtureCore({PATH:bin+path.delimiter+process.env.PATH}),storeFile=path.join(f.env.AGENTS_COMPANY_HOME,'sessions.json'),setCard=(id,patch)=>{const state=JSON.parse(fs.readFileSync(storeFile,'utf8'));Object.assign(state.sessions.find(c=>c.id===id),patch);fs.writeFileSync(storeFile,JSON.stringify(state))}
 try{
  const host=await f.cli('host','create','--data',JSON.stringify({name:'SSH fixture',host:'fixture',os:'linux',defaultDirectory:remote}))
  await f.cli('group','add','Cloud','--mode','cloud','--host-id',host.id,'--remote-dir',remote)
@@ -23,12 +23,13 @@ try{
  await f.ready(child.id);await f.ready(shared.id);fs.writeFileSync(path.join(nested,'file.txt'),'remote data')
  await f.cli('card','remove',parent.id,child.id,shared.id,'--delete-workspace');assert.ok(!fs.existsSync(parent.cwd));assert.ok(fs.existsSync(remote))
  const worker=await f.create('Worker','Cloud'),manager=await f.cli('card','create','--title','Local Manager','--group','Cloud','--work-environment','local','--management-role','manager','--model','gpt-6-luna','--effort','low');await f.ready(manager.id)
- const rootCard=await f.cli('card','create','--title','Root','--group','Cloud','--cwd',remote,'--directory-mode','bind','--model','gpt-6-luna')
- await f.ready(rootCard.id);await f.stop();fs.writeFileSync(offline,'');await f.start()
+ await assert.rejects(()=>f.cli('card','create','--title','Root','--group','Cloud','--cwd',remote,'--directory-mode','bind','--model','gpt-6-luna'),/不能直接使用 Team 根目录/)
+ const rootCard=await f.create('Root','Cloud');setCard(rootCard.id,{cwd:remote,directoryMode:'bind'})
+ await f.stop();fs.writeFileSync(offline,'');await f.start()
  await assert.rejects(()=>f.cli('group','remove','Cloud','--delete-workspace'))
  assert.ok(fs.existsSync(worker.cwd)&&fs.existsSync(manager.cwd));assert.ok((await f.cli('session','list')).sessions.every(c=>!c.deleting))
  await f.stop();fs.unlinkSync(offline);await f.start()
  await f.cli('group','remove','Cloud','--delete-workspace')
  assert.ok(!fs.existsSync(rootCard.cwd)&&!fs.existsSync(manager.cwd));assert.equal((await f.cli('session','list')).sessions.length,0)
- console.log('PASS SSH batch deletion: nested/shared remote folders, mixed local Manager/cloud Employee Team, remote Team-root employee, disconnect preflight preserves the whole batch')
+ console.log('PASS SSH batch deletion: nested/shared remote folders, mixed local Manager/cloud Employee Team, remote Team-root binding rejection, legacy root-bound Team deletion, disconnect preflight preserves the whole batch')
 }finally{await f.close();fs.rmSync(temp,{recursive:true,force:true})}

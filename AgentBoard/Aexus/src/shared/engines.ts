@@ -2,6 +2,7 @@
 export const ENGINE_DEFINITIONS={
   codex:{label:'Codex',description:'Codex App Server',protocol:'app-server',capabilities:{streaming:true,images:true,approvals:true,resume:true,steer:true,plan:true,thinking:false,effort:true,background:true,clone:true}},
   cline:{label:'Cline',description:'Cline ACP · DeepSeek',protocol:'acp',capabilities:{streaming:true,images:true,approvals:true,resume:true,steer:false,plan:true,thinking:false,effort:false,background:false,clone:false}},
+  opencode:{label:'OpenCode',description:'OpenCode ACP · DeepSeek',protocol:'acp',capabilities:{streaming:true,images:true,approvals:true,resume:true,steer:false,plan:true,thinking:false,effort:true,background:false,clone:false}},
   pi:{label:'Pi',description:'Pi RPC · DeepSeek',protocol:'rpc',capabilities:{streaming:true,images:false,approvals:true,resume:true,steer:true,plan:false,thinking:false,effort:false,background:false,clone:false}},
   claude:{label:'Claude Agent',description:'Claude Agent SDK',protocol:'agent-sdk',capabilities:{streaming:true,images:true,approvals:true,resume:true,steer:true,plan:true,thinking:true,effort:true,background:true,clone:true}}
 } as const
@@ -12,11 +13,11 @@ export type EngineHealth={engine:EngineId;label:string;target:string;installed:b
 
 /** Creation-time discovery contains no paths, credentials or inference. */
 export function engineCapabilities(engine:EngineId){
-  const definition=engineDefinition(engine),processAdapter=engine==='cline'||engine==='pi'
+  const definition=engineDefinition(engine),processAdapter=engine==='cline'||engine==='pi'||engine==='opencode'
   return {engine,...definition,workspaceModes:['build','cloud','work'],employeeKinds:processAdapter?['worker']:['worker','cloud-native-worker'],cloudWorkerTransport:engine==='codex'?'remote-exec':'mcp-tunnel'}
 }
 export function assertEngineWorkspace(engine:EngineId,mode:'build'|'cloud'|'work',kind='worker'){
-  if(engine==='cline'||engine==='pi'){
+  if(engine==='cline'||engine==='pi'||engine==='opencode'){
     if(kind!=='worker')throw Error(`${ENGINE_DEFINITIONS[engine].label} supports kind:worker only; use the Core-local engine with Tunnel for cloud workspaces`)
   }
 }

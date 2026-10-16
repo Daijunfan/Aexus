@@ -10,7 +10,7 @@ async function deliver(task){
  if(task.requestedBy.startsWith('agent:')&&!company.canDelegate({kind:'agent',agentId:task.requestedBy.slice(6)},task.agentId)){
   company.change(task.id,['pending'],{status:'failed',error:'Delegation permission revoked'});return;
  }
- if(!['codex','claude','cline','pi'].includes(role.engine)||!['native','pty'].includes(role.transport)){
+ if(!['codex','claude','cline','pi','opencode'].includes(role.engine)||!['native','pty'].includes(role.transport)){
   company.change(task.id,['pending'],{status:'failed',error:'No structured native execution protocol for '+role.engine});return;
  }
  if(role.busy||occupancy.occupied({agentId:role.id,hostId:role.targetHostId,directory:role.cwd}))return;

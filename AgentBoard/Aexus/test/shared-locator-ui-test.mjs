@@ -37,7 +37,7 @@ try{
  await rpc('workspace.mkdir',{employee:card.id,path:'incoming'})
  await rpc('workspace.mkdir',{employee:card.id,path:'bundle'})
  fs.writeFileSync(path.join(card.cwd,'bundle','image.bin'),crypto.randomBytes(300000))
- await navigate({kind:'conversation',employee:card.id});await expect(page.locator('.employee-files [data-file="report.md"]')).toBeVisible()
+ await navigate({kind:'conversation',employee:card.id});await page.locator('[data-panel-toggle="files"]').click();await expect(page.locator('.employee-workbench')).toHaveAttribute('data-files-panel','open');await expect(page.locator('.employee-files [data-file="report.md"]')).toBeVisible()
  await page.locator('.directory-shared').click();await expect(page.locator('.shared-drawer')).toBeVisible()
  const list=page.locator('[data-asset-id=shared]'),source=page.locator('.employee-files [data-file="report.md"]')
  await source.dragTo(list)

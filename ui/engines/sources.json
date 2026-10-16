@@ -5,6 +5,13 @@
     "codex",
     "claude",
     "cline",
-    "pi"
-  ]
+    "pi",
+    "opencode"
+  ],
+  "opencode": {
+    "source": "https://raw.githubusercontent.com/anomalyco/opencode/dev/packages/console/app/src/asset/brand/opencode-logo-light-square.svg",
+    "repository": "https://github.com/anomalyco/opencode",
+    "license": "MIT",
+    "sha256": "b1c48d82ebd304eab820658387642bcf4c9b8350d6860894d0fe21ddca25ef3f"
+  }
 }

@@ -8,6 +8,34 @@ async function createClineSession(host,cwd,sessionId,knownHasInput){
  const worker=new (require('./native-executor.cjs').NativeExecutor)(host.id,cwd,source('cline_session.mjs'));
  try{return await worker.request('session',[{sessionId,knownHasInput}])}finally{worker.close()}
 }
+// Bind OpenCode's native session identity through its official ACP server, on
+// the same host where the TUI will run (local or same-host cloud). A fresh role
+// allocates one exact session; a resumed role verifies its stored id still
+// loads. No model prompt is submitted and the key stays in OpenCode's store.
+async function createOpenCodeSession(host,cwd,sessionId,recover=false){
+ if(recover&&!sessionId)throw Error('Exact OpenCode session ID is missing; refusing unrelated recovery.');
+ const hosts=require('./agent-hosts.cjs'),{JsonLines}=require('./agent-companion-protocol.cjs');
+ const transport=new JsonLines(hosts.processOn(host,'opencode',['acp'],{cwd}),()=>{});
+ try{
+  await transport.request('initialize',{protocolVersion:1,clientInfo:{name:'cloudhosts-native-session',version:'1'},clientCapabilities:{}},'acp',20000);
+  if(sessionId){await transport.request('session/load',{cwd,sessionId,mcpServers:[]},'acp',30000);return {sessionId}}
+  const created=await transport.request('session/new',{cwd,mcpServers:[]},'acp',30000);
+  if(!created?.sessionId)throw Error('OpenCode did not return a session identity');
+  return {sessionId:created.sessionId};
+ }finally{await transport.close()}
+}
+// OpenCode has no native tool-approval flag. The official per-process
+// OPENCODE_CONFIG_CONTENT override is the enforcement point for a same-host Ask
+// role: dangerous tools become "ask", so the TUI's own approval UI or the ACP
+// session/request_permission event fires. Full is never overridden and keeps
+// the host's native default (global opencode.json stays Full). The user's
+// global config and credentials are untouched.
+const OPENCODE_ASKED_TOOLS=['edit','bash','task','external_directory','todowrite','webfetch','websearch'];
+function opencodePermissionEnvironment(permission){
+ if(permission==='full')return {};
+ const asked=Object.fromEntries(OPENCODE_ASKED_TOOLS.map(tool=>[tool,'ask']));
+ return {OPENCODE_CONFIG_CONTENT:JSON.stringify({permission:asked,agent:{build:{permission:asked},plan:{permission:asked},general:{permission:asked},explore:{permission:asked}}})};
+}
 async function codexTuiTokenFile(host,token){
  const ssh=require('./ssh.cjs'),worker=new ssh.Workspace(host.id);
  try{
@@ -66,7 +94,16 @@ async function preparePiSession(role){
   await write(file,JSON.stringify(state));
   const extension=paths.join(root,'pi-session-state.mjs');
   await write(extension,fs.readFileSync(path.join(__dirname,'../Runtime/pi_session_state.mjs'),'utf8'));
-  return ['--session-id',state.sessionId,'--extension',extension];
+  const argv=['--session-id',state.sessionId,'--extension',extension];
+  // Same-host cloud ask mounts the native tool-approval gate. Full, local and
+  // routed Pi are untouched (routed keeps its own pi_route.mjs adapter), and no
+  // tools are removed: approval is the real pi.on("tool_call") + ctx.ui.confirm hook.
+  if(role.permission==='ask'&&role.targetHostId!=='local'&&role.engineHostId===role.targetHostId){
+    const gate=paths.join(root,'pi-permission.mjs');
+    await write(gate,fs.readFileSync(path.join(__dirname,'../Runtime/pi_permission.mjs'),'utf8'));
+    argv.push('--extension',gate);
+  }
+  return argv;
  });
 }
 function trustClaudeController(cwd){
@@ -85,4 +122,4 @@ function trustClaudeController(cwd){
  fs.mkdirSync(path.dirname(file),{recursive:true});const temporary=file+'.cloudhosts-tmp';
  fs.writeFileSync(temporary,JSON.stringify(settings,null,2)+'\n',{mode:0o600});fs.renameSync(temporary,file);
 }
-module.exports={createClineSession,codexTuiTokenFile,prepareClaudeSession,preparePiSession,source,trustClaudeController};
+module.exports={createClineSession,createOpenCodeSession,codexTuiTokenFile,prepareClaudeSession,preparePiSession,source,trustClaudeController,opencodePermissionEnvironment};

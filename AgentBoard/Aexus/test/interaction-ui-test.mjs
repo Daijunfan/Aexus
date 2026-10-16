@@ -63,8 +63,8 @@ try{
   }
   ok(true,'typed conversation text has readable contrast in white and black themes')
   await cli('settings','set','--view','company','--theme','white');await page.locator('.employee-details').click();await page.locator('.profile-quick-actions button').nth(1).click()
-  await expect(page.locator('select[name="kind"]')).toHaveValue('worker')
-  await expect(page.locator('select[name="kind"] option')).toHaveCount(2)
+  await expect(page.locator('.employee-form select[name="kind"]')).toHaveCount(0)
+  await expect(page.locator('.employee-form .profile-fixed-summary')).toHaveCount(1)
   await expect(page.locator('.color-field')).toHaveCount(0)
   await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);await page.locator('.employee-inspector .employee-back').click();await expect(page.locator('.employee-inspector')).toHaveCount(0)
   ok((await cli('session','list')).sessions.find(c=>c.id===fire.id).color==='#f8a52b','employee details keep the existing avatar color without an editable color picker')

@@ -1,6 +1,6 @@
 // Creation choices describe actual *permitted* execution paths, not arbitrary
 // cloud-to-cloud routing. The local controller is the only cross-host source.
-export const codingEngines=['codex','claude','cline','pi']
+export const codingEngines=['codex','claude','cline','pi','opencode']
 export function sourceChoices(hosts,targetId){
  const target=hosts.find(host=>host.id===targetId)
  if(!target)throw Error('Select a registered work host')

@@ -56,7 +56,7 @@ try{
  await cli('session','interrupt','--employee',child.id);await expect(createdLine).toHaveAttribute('data-active','false');await expect(temporaryLine).toHaveAttribute('data-active','true')
  await cli('session','interrupt','--employee',user.id);await expect(temporaryLine).toHaveCount(0)
  await expect(page.locator(`[data-card-id="${manager.id}"]`)).toHaveAttribute('data-state','sleeping')
- await cli('view','open','employee','--employee',manager.id);await expect(page.locator('.profile-company-identity')).toContainText('Manager');await expect(page.locator('.management-role-settings select')).toHaveCount(0);await expect(page.locator('.management-panel')).toHaveCount(0)
+ await cli('view','open','employee','--employee',manager.id);await expect(page.locator('.profile-badges')).toContainText('Manager');await expect(page.locator('.management-role-settings select')).toHaveCount(1);await expect(page.locator('.management-panel')).toHaveCount(0)
  await cli('view','close');await page.screenshot({path:path.join(root,'artifacts/mixed-team-creation-lines.png')})
  const before=await page.locator('.office-connections [data-relation]').getAttribute('d');await managerCall('card','place',child.id,'--x','470','--y','210','--snap','off');await expect.poll(()=>page.locator('.office-connections [data-relation]').getAttribute('d')).not.toBe(before)
  await cli('room','bounds','Cloud','--width','1100','--height','900')

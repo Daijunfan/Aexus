@@ -22,10 +22,10 @@ if(args.includes('app-server'))readline.createInterface({input:process.stdin}).o
 `,{mode:0o755})
 fs.writeFileSync(sdk,`import {initializeSdkInput} from ${JSON.stringify(path.join(root,'test/fixtures/sdk-initialization.mjs'))};export {tool,createSdkMcpServer} from ${JSON.stringify(path.join(root,'test/fixtures/sdk-initialization.mjs'))};import fs from 'node:fs';const record=(method,args)=>fs.appendFileSync(${JSON.stringify(log)},JSON.stringify({engine:'claude',method,args})+'\\n');
 export const deleteSession=async()=>{};export const forkSession=async()=>{throw new Error('Fork is not used by this fixture')};
-export function query({prompt,options}){record('start',options.settings);return {supportedCommands:async()=>[{name:'clear',description:'New native context',argumentHint:''},{name:'usage',description:'Native usage',argumentHint:'',aliases:['cost']},{name:'compact',description:'Native compact',argumentHint:''}],supportedModels:async()=>[{value:'fixture-claude',displayName:'Claude',description:'',supportsEffort:true,supportedEffortLevels:['low'],supportsFastMode:true}],mcpServerStatus:async()=>[{name:'sdk',status:'connected'}],accountInfo:async()=>({email:'fixture@example.invalid'}),setModel:async v=>record('setModel',v),setPermissionMode:async()=>{},setMaxThinkingTokens:async()=>{},applyFlagSettings:async v=>record('settings',v),close(){},async *[Symbol.asyncIterator](){yield {type:'system',subtype:'init',model:'fixture-claude',session_id:'fixture-claude-id',slash_commands:['usage','compact'],terminal_slash_commands:['model','theme']};for await(const item of prompt){if(await initializeSdkInput(item,options)){yield {type:'assistant',message:{content:[{type:'text',text:'OK'}]}};yield {type:'result',subtype:'success'};continue}if(typeof item.message.content==='string')item.message.content=item.message.content.split('[Current message]\\n').at(-1);record('prompt',item.message.content);if(item.message.content==='/clear')yield {type:'conversation_reset',new_conversation_id:'fixture-claude-new',session_id:'fixture-claude-id'};yield {type:'system',subtype:'local_command_output',content:'Official command result: '+item.message.content};yield {type:'system',subtype:'commands_changed',commands:[{name:'clear',description:'New native context',argumentHint:''},{name:'usage',description:'Native usage',argumentHint:'',aliases:['cost']},{name:'project-skill',description:'Discovered during session',argumentHint:'<text>'}]};yield {type:'result',subtype:'success'};}}}}`)
+export function query({prompt,options}){record('start',{settings:options.settings,permissionMode:options.permissionMode});return {supportedCommands:async()=>[{name:'clear',description:'New native context',argumentHint:''},{name:'usage',description:'Native usage',argumentHint:'',aliases:['cost']},{name:'compact',description:'Native compact',argumentHint:''}],supportedModels:async()=>[{value:'fixture-claude',displayName:'Claude',description:'',isDefault:true,supportsEffort:true,supportedEffortLevels:['low'],supportsFastMode:true}],mcpServerStatus:async()=>[{name:'sdk',status:'connected'}],accountInfo:async()=>({email:'fixture@example.invalid'}),setModel:async v=>record('setModel',v),setPermissionMode:async v=>record('setPermissionMode',v),setMaxThinkingTokens:async()=>{},applyFlagSettings:async v=>record('settings',v),close(){},async *[Symbol.asyncIterator](){yield {type:'system',subtype:'init',model:'fixture-claude',session_id:'fixture-claude-id',slash_commands:['usage','compact'],terminal_slash_commands:['model','theme']};for await(const item of prompt){if(await initializeSdkInput(item,options)){yield {type:'assistant',message:{content:[{type:'text',text:'OK'}]}};yield {type:'result',subtype:'success'};continue}if(typeof item.message.content==='string')item.message.content=item.message.content.split('[Current message]\\n').at(-1);record('prompt',item.message.content);if(item.message.content==='/clear')yield {type:'conversation_reset',new_conversation_id:'fixture-claude-new',session_id:'fixture-claude-id'};yield {type:'system',subtype:'local_command_output',content:'Official command result: '+item.message.content};yield {type:'system',subtype:'commands_changed',commands:[{name:'clear',description:'New native context',argumentHint:''},{name:'usage',description:'Native usage',argumentHint:'',aliases:['cost']},{name:'project-skill',description:'Discovered during session',argumentHint:'<text>'}]};yield {type:'result',subtype:'success'};}}}}`)
 const entry=path.join(temp,'daemon.cjs');await build({entryPoints:['src/main/daemon.ts'],bundle:true,platform:'node',format:'cjs',outfile:entry,alias:{'@anthropic-ai/claude-agent-sdk':sdk},logLevel:'silent'})
-const env={...process.env,AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),CLAUDE_CONFIG_DIR:path.join(temp,'claude'),CODEX_BIN:bin,CODEX_HOME:path.join(temp,'codex-home')}
-const service=spawn(process.execPath,[entry],{env,stdio:'ignore'}),done=new Promise(r=>service.once('exit',r))
+const env={...Object.fromEntries(Object.entries(process.env).filter(([k])=>!/^ANTHROPIC_/.test(k))),AGENTS_COMPANY_HOME:path.join(temp,'state'),AGENTS_COMPANY_PROJECTS:path.join(temp,'projects'),CLAUDE_CONFIG_DIR:path.join(temp,'claude'),CODEX_BIN:bin,CODEX_HOME:path.join(temp,'codex-home')}
+let service=spawn(process.execPath,[entry],{env,stdio:'ignore'}),done=new Promise(r=>service.once('exit',r))
 const cli=async(...args)=>{const r=JSON.parse((await run(process.execPath,[path.join(root,'bin/agents'),...args,'--json'],{env,timeout:12000})).stdout);assert.ok(r.ok,r.error);return r.data}
 const until=async(fn)=>{for(let n=0;n<100;n++){if(await fn())return;await new Promise(r=>setTimeout(r,40))}throw new Error('Timed out')}
 const calls=()=>fs.readFileSync(log,'utf8').trim().split('\n').map(JSON.parse)
@@ -71,7 +71,7 @@ try{
  console.log('PASS native plan mode, Skills/MCP/account/usage, ordered message queue and scoped export')
  console.log('PASS Codex official catalog, validation, Fast parameters/persistence, command dispatch, compact and review without prompt simulation')
  await cli('engine','configure','--engine','claude','--data',JSON.stringify({path:bin,sdkPath:sdk,apiKey:'fixture-only-no-network'}));
- const claude=await cli('card','create','--title','Claude','--group','Test','--engine','claude');await readyEmployee(cli,claude.id);const cid=(await cli('session','open',claude.id)).sessionId
+ const claude=await cli('card','create','--title','Claude','--group','Test','--engine','claude');await readyEmployee(cli,claude.id);let cid=(await cli('session','open',claude.id)).sessionId
  await until(async()=>(await cli('commands','list',cid)).some(c=>c.name==='usage'))
  assert.ok((await cli('commands','list',cid)).some(c=>c.name==='model'))
  await cli('commands','run',cid,'/cost');await until(async()=>!(await cli('session','snapshot',cid)).busy)
@@ -81,4 +81,27 @@ try{
  await cli('config','effort',cid,'low');await assert.rejects(()=>cli('config','effort',cid,'medium'))
  await cli('commands','run',cid,'/clear');await until(async()=>!(await cli('session','snapshot',cid)).busy);const newClaude=(await cli('session','list')).sessions.find(c=>c.id===claude.id);assert.equal(newClaude.claudeSessionId,'fixture-claude-new');assert.ok(newClaude.nativeSessions.some(ref=>ref.id==='fixture-claude-id'))
  console.log('PASS Claude SDK command aliases, dynamic discovery, native output and settings use shared CLI/Core')
+ // Claude restricted permission: startup Query options, the real driver
+ // setPermissionMode params and save/stop recovery all carry the mode, not
+ // just the persisted store field.
+ const claudeStarts=()=>calls().filter(c=>c.engine==='claude'&&c.method==='start')
+ assert.equal(claudeStarts().at(-1).args.permissionMode,'bypassPermissions')
+ await cli('commands','run',cid,'/permissions acceptEdits')
+ assert.equal(calls().filter(c=>c.engine==='claude'&&c.method==='setPermissionMode').at(-1).args,'acceptEdits')
+ assert.equal((await cli('session','info',cid)).permissionMode,'acceptEdits')
+ await cli('commands','run',cid,'/permissions default')
+ assert.equal(calls().filter(c=>c.engine==='claude'&&c.method==='setPermissionMode').at(-1).args,'default')
+ await cli('commands','run',cid,'/permissions acceptEdits')
+ // Save: closing and reopening the same employee hands acceptEdits to the real
+ // SDK query options, not merely restoring a store field.
+ await cli('session','close',cid);cid=(await cli('session','open',claude.id)).sessionId
+ assert.equal(claudeStarts().at(-1).args.permissionMode,'acceptEdits')
+ // Stop: restarting the daemon and recovering the employee keeps acceptEdits.
+ await cli('session','close',cid)
+ service.kill('SIGTERM');await done
+ service=spawn(process.execPath,[entry],{env,stdio:'ignore'});done=new Promise(r=>service.once('exit',r))
+ await until(async()=>{try{return (await cli('status')).running}catch{return false}})
+ cid=(await cli('session','open',claude.id)).sessionId
+ assert.equal(claudeStarts().at(-1).args.permissionMode,'acceptEdits')
+ console.log('PASS Claude restricted permission reaches startup Query options and setPermissionMode, and survives close/reopen and daemon restart; fixture only')
 }finally{service.kill('SIGTERM');await done;fs.rmSync(temp,{recursive:true,force:true})}

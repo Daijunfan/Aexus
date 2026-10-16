@@ -8,6 +8,8 @@ import sys
 import threading
 from pathlib import Path
 
+# Keep the signed application bundle read-only during helper execution.
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from transport import ssh_args, ssh_env
 

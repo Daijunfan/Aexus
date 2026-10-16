@@ -3,7 +3,7 @@ import path from 'node:path'
 import assert from 'node:assert/strict'
 import {fixtureCore} from './fixtures/headless-core.mjs'
 
-const f=await fixtureCore(),put=card=>fs.writeFileSync(path.join(card.cwd,'keep.txt'),'employee data')
+const f=await fixtureCore(),put=card=>fs.writeFileSync(path.join(card.cwd,'keep.txt'),'employee data'),storeFile=path.join(f.env.AGENTS_COMPANY_HOME,'sessions.json'),setCard=(id,patch)=>{const state=JSON.parse(fs.readFileSync(storeFile,'utf8'));Object.assign(state.sessions.find(c=>c.id===id),patch);fs.writeFileSync(storeFile,JSON.stringify(state))}
 const cards=async()=>(await f.cli('session','list')).sessions
 const bind=async(title,team,cwd)=>{const card=await f.cli('card','create','--title',title,'--group',team,'--cwd',cwd,'--directory-mode','bind','--model','gpt-6-luna','--effort','low');await f.ready(card.id);return card}
 try{
@@ -29,7 +29,8 @@ try{
  assert.equal((await f.raw(managerToken,'card','remove',own1.id,own2.id,'--delete-workspace')).ok,false)
  assert.ok((await cards()).some(c=>c.id===own1.id&&!c.deleting));assert.ok((await f.cli('group','list')).includes('A'))
  await f.call(managerToken,'card','remove',own1.id,own2.id);assert.ok(fs.existsSync(own1.cwd)&&fs.existsSync(own2.cwd))
- const state=await f.cli('session','list'),root=state.teamRoots.B,rootEmployee=await bind('Team root employee','B',root)
+ const state=await f.cli('session','list'),root=state.teamRoots.B;await assert.rejects(()=>bind('Team root employee','B',root),/子文件夹/)
+ const rootEmployee=await f.create('Team root employee','B');setCard(rootEmployee.id,{cwd:root,directoryMode:'bind'})
  const b=await f.create('B employee','B');put(b)
  const creatorChild=await f.call(governorToken,'card','create','--title','Created child','--group','A','--model','gpt-6-luna','--effort','low')
  await f.ready(creatorChild.id);await f.cli('session','send','--employee',creatorChild.id,'--text','fixture reply');await f.until(async()=>!(await f.status(creatorChild.id)).busy,'fixture answer')
@@ -48,5 +49,5 @@ try{
  assert.ok(!(await f.cli('management','topology')).edges.some(e=>e.employeeId===creatorChild.id))
  assert.equal((await f.raw(revoked,'auth','whoami')).ok,false);assert.equal((await f.cli('schedule','get',job.id)).disabledReason,'employee_removed')
  const protectedFolder=peer.cwd;await f.cli('group','remove','Protected');assert.ok(fs.existsSync(protectedFolder),'one folder choice also applies to Team deletion without files')
- console.log('PASS real CLI batch deletion: one request, full-batch authorization/preflight, shared/nested directories, Team-root employee, SSH protection, Manager/Governor boundaries, sessions/credentials/schedules/edges/view cleanup, keep-files option')
+ console.log('PASS real CLI batch deletion: one request, full-batch authorization/preflight, shared/nested directories, Team-root binding rejection, legacy root-bound Team deletion, SSH protection, Manager/Governor boundaries, sessions/credentials/schedules/edges/view cleanup, keep-files option')
 }finally{await f.close()}

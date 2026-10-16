@@ -60,7 +60,7 @@ try{
   await call(b,'group.add',{name:'C'});await f.until(()=>events.filter(e=>e.channel==='store:changed').length>=2,'state update')
   assert.ok(events.filter(e=>e.channel==='store:changed').every(e=>!e.payload.sessions));pass('persistent stream emits lightweight state invalidations')
   const employee=await f.create('Worker','A')
-  assert.equal((await f.cli('session','list')).sessions.find(c=>c.id===employee.id).permissionMode,'default');pass('fresh employees use safe default; existing permissions are not elevated')
+  assert.equal((await f.cli('session','list')).sessions.find(c=>c.id===employee.id).permissionMode,'bypassPermissions');pass('fresh employees inherit the Full access default; existing permissions are not elevated')
   const token=await f.token(employee.id)
   const denied=await fetch(url+'/api/rpc',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({cmd:'engine.install',args:{engine:'codex',confirm:true}})})
   assert.equal((await denied.json()).ok,false);pass('employee tokens cannot install software')

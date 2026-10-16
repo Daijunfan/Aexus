@@ -12,6 +12,8 @@ import signal
 import struct
 import sys
 import termios
+# Keep the signed application bundle read-only during helper execution.
+sys.dont_write_bytecode = True
 import transport
 
 config = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))

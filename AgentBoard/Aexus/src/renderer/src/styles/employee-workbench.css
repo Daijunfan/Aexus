@@ -53,5 +53,30 @@
 .conversation-layer :is(button,summary):focus-visible{outline:2px solid var(--accent);outline-offset:3px}.conversation-layer .employee-terminal header button{border-radius:8px}.conversation-layer .employee-terminal .terminal-action:last-child:hover{color:#efb4ae;background:#37282c}
 @container workbench-explorer (min-width:280px){.conversation-layer .employee-files .file-toolbar nav button{font-size:11px;gap:6px}}
 @media(max-width:950px){.conversation-layer .execution-badge{display:none}.conversation-layer .employee-details-toolbar .session-state{display:none}.conversation-layer .employee-details-toolbar .session-heading{min-width:60px}}
-@media(max-width:600px){.conversation-layer .toolbar.employee-details-toolbar{flex-wrap:nowrap;min-height:60px;padding:10px;gap:7px}.conversation-layer .employee-details-toolbar .employee-back.back{min-width:35px;height:35px;min-height:35px;padding:7px}.conversation-layer .employee-details-toolbar .employee-back.back>span{display:none}.conversation-layer .employee-details-toolbar .session-heading{flex-basis:auto;min-width:0}.conversation-layer .employee-details-toolbar .session-title-label{font-size:14px}.conversation-layer .employee-details-toolbar>button:not(.back){padding:8px;min-width:36px;min-height:36px}.conversation-layer .toolbar-action-label{display:none}.conversation-layer .employee-more>summary{width:36px;height:36px}.conversation-layer .session-settings.controls{padding:10px;gap:6px}.conversation-layer .session-settings .ctl{max-width:100%}.conversation-layer .session-settings .engine-readonly{width:100%}.conversation-layer .session-settings :is(.ctl,.toggle){font-size:11px;padding:7px}.conversation-layer .employee-workbench .composer{padding:8px}.conversation-layer .composer-box{flex-wrap:wrap}.conversation-layer .composer-box textarea{width:100%;flex-basis:100%}.conversation-layer .session-settings .cwd{font-size:9px}}
+@media(max-width:600px){.conversation-layer .toolbar.employee-details-toolbar{flex-wrap:nowrap;min-height:60px;padding:10px;gap:7px}.conversation-layer .employee-details-toolbar .employee-back.back{min-width:35px;height:35px;min-height:35px;padding:7px}.conversation-layer .employee-details-toolbar .employee-back.back>span:not(.codicon){display:none}.conversation-layer .employee-details-toolbar .session-heading{flex-basis:auto;min-width:0}.conversation-layer .employee-details-toolbar .session-title-label{font-size:14px}.conversation-layer .employee-details-toolbar>button:not(.back){padding:8px;min-width:36px;min-height:36px}.conversation-layer .toolbar-action-label{display:none}.conversation-layer .employee-more>summary{width:36px;height:36px}.conversation-layer .session-settings.controls{padding:10px;gap:6px}.conversation-layer .session-settings .ctl{max-width:100%}.conversation-layer .session-settings .engine-readonly{width:100%}.conversation-layer .session-settings :is(.ctl,.toggle){font-size:11px;padding:7px}.conversation-layer .employee-workbench .composer{padding:8px}.conversation-layer .composer-box{flex-wrap:wrap}.conversation-layer .composer-box textarea{width:100%;flex-basis:100%}.conversation-layer .session-settings .cwd{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.conversation-layer :is(button,summary){transition:none!important}}
+/* Collapsible file/terminal panels: a fresh conversation starts with the message area full width. */
+.workbench-panel-bar{display:flex;align-items:center;gap:14px;min-height:46px;padding:7px 14px;border-bottom:1px solid var(--border-soft);background:var(--bg-alt);flex:none;min-width:0}
+.workbench-panel-bar .employee-workspace-switch{padding:0;border-bottom:0;background:transparent;flex:1;min-width:0}
+.workbench-panel-toggles{display:flex;gap:6px;flex:none}
+.workbench-panel-toggles button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 11px;border:1px solid var(--border-soft);border-radius:9px;background:var(--bg-elev);color:var(--fg-dim);font-size:11px;font-weight:550;cursor:pointer}
+.workbench-panel-toggles button:hover{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 34%,var(--border));background:color-mix(in srgb,var(--accent) 5%,var(--bg-elev))}
+.workbench-panel-toggles button[aria-pressed=true]{color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg-elev));border-color:color-mix(in srgb,var(--accent) 34%,var(--border))}
+.workbench-panel-toggles button .codicon{font-size:15px}
+.employee-workbench[data-files-panel=closed] .employee-files .file-toolbar,
+.employee-workbench[data-files-panel=closed] .employee-files .file-list,
+.employee-workbench[data-files-panel=closed] .employee-files .panel-divider{display:none}
+.employee-workbench[data-files-panel=closed] .employee-files .file-split{grid-template-columns:minmax(0,1fr)}
+.employee-workbench[data-files-panel=closed] .workbench-tabs:not(:has(button:nth-child(2))){display:none}
+/* Keep the hosted connection pill above the composer footer so it never collides with it. */
+.web-connection{bottom:56px;right:14px}
+@media(max-width:600px){
+  .web-connection{bottom:7px}
+  .workbench-panel-bar{flex-wrap:wrap;gap:8px;padding:8px 10px}
+  .workbench-panel-bar .employee-workspace-switch{flex-basis:100%;min-width:0}
+  .workbench-panel-bar .employee-workspace-switch label{flex:1;min-width:0;display:flex;align-items:center}
+  .workbench-panel-bar .employee-workspace-switch select{flex:1;min-width:0;max-width:none;width:100%}
+  .workbench-panel-toggles{flex:none;margin-left:auto}
+  .conversation-layer .employee-details-toolbar .employee-back.back{width:36px;min-width:36px;padding:0;justify-content:center}
+  .conversation-layer .employee-details-toolbar .employee-back.back>.codicon{font-size:19px;color:var(--fg);display:inline-flex}
+}

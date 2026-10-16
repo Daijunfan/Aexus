@@ -98,6 +98,12 @@ async function prompt(r,text){
   else send({type:'extension_ui_request',id:permission.id,method:'confirm',title:'Agents Company tool permission',message:JSON.stringify({toolName:'write',toolCallId:permission.id,input})})
   return
  }
+ if(text.includes('EXEC_FIXTURE')){
+  permission={id:'permit-'+crypto.randomUUID(),file:path.join(process.cwd(),'command.txt'),command:true};const input={command:'echo permission-exec'}
+  if(acp)send({jsonrpc:'2.0',id:permission.id,method:'session/request_permission',params:{sessionId:sid,toolCall:{toolCallId:permission.id,title:'Execute: echo permission-exec',kind:'execute',rawInput:input},options:[{optionId:'allow_once',kind:'allow_once'},{optionId:'reject_once',kind:'reject_once'}]}})
+  else send({type:'extension_ui_request',id:permission.id,method:'confirm',title:'Agents Company tool permission',message:JSON.stringify({toolName:'execute',toolCallId:permission.id,input})})
+  return
+ }
  if(text.includes('HOLD_FIXTURE'))return
  timer=setTimeout(()=>finish(text.includes('[Agents Company private initialization]')?'OK':text.includes('UNICODE_FIXTURE')?'春\u2028雨\u2029秋':'山海皆可平'),text.includes('QUEUE_FIXTURE')?700:30)
 }
@@ -106,7 +112,7 @@ let buffer='';process.stdin.setEncoding('utf8');process.stdin.on('data',chunk=>{
   if(permission.discussionPermission){const receive=permission.receive;permission=undefined;receive(acp?r.result?.outcome?.optionId==='allow_once':!!r.confirmed);continue}
   if(permission.discussion){const receive=permission.receive;permission=undefined;let value;try{value=JSON.parse(r.value)}catch{value={error:r.value??'Missing discussion response'}}receive(value);continue}
   if(permission.tunnelReply){finish(r.value??'cancelled');continue}
-  const allow=acp?r.result?.outcome?.optionId==='allow_once':r.confirmed;if(permission.ack!==undefined){const reply=permission.ack;note('ack-tool-result',{allowed:!!allow});if(allow)fs.writeFileSync(permission.file,'must not run');permission=undefined;finishAck(reply);continue}if(permission.request){if(allow){permission.tunnelReply=true;send({type:'extension_ui_request',id:permission.id,method:'input',title:'Agents Company Tunnel',placeholder:JSON.stringify({...permission.request,toolCallId:permission.id})})}else finish('denied');continue}if(allow)fs.writeFileSync(permission.file,'approved');finish(allow?'approved':'denied');continue}
+  const allow=acp?r.result?.outcome?.optionId==='allow_once':r.confirmed;if(permission.ack!==undefined){const reply=permission.ack;note('ack-tool-result',{allowed:!!allow});if(allow)fs.writeFileSync(permission.file,'must not run');permission=undefined;finishAck(reply);continue}if(permission.request){if(allow){permission.tunnelReply=true;send({type:'extension_ui_request',id:permission.id,method:'input',title:'Agents Company Tunnel',placeholder:JSON.stringify({...permission.request,toolCallId:permission.id})})}else finish('denied');continue}if(allow)fs.writeFileSync(permission.file,permission.command?'ran':'approved');finish(allow?(permission.command?'ran':'approved'):'denied');continue}
  if(method==='initialize')result(r,{protocolVersion:1,agentInfo:{name:'cline-fixture',version:'3.0.65'},agentCapabilities:{loadSession:true}})
  else if(method==='session/load'&&!fs.existsSync(saved))send({jsonrpc:'2.0',id:r.id,error:{code:-32002,message:'Resource not found: '+p.sessionId}})
  else if(method==='session/new'||method==='session/load'){if(p.sessionId)sid=p.sessionId;mcpServers=p.mcpServers??[];result(r,models())}

@@ -97,10 +97,11 @@ class NativeAgent {
     this.mode = this.routed ? source.id === 'local' ? 'controller-remote' : 'legacy-crosshost' : 'same-host';
     this.controlCwd = this.routed ? source.defaultDirectory : this.role.cwd;
     this.environments = this.routed ? [{environmentId:'remote',cwd:this.role.cwd,runtimeWorkspaceRoots:[this.role.cwd]}] : [];
-    // Same-host sessions use the native profile's permissions, just like its
-    // CLI and editor. Only an explicitly selected routed policy overrides it.
+    // Cloud targets carry a deterministic policy from the role's permission:
+    // full -> no prompts, restricted -> on-request. The local Mac keeps its own
+    // native profile (no prompt injection), so same-host local runs untouched.
     this.threadOptions = {cwd:this.controlCwd,
-      ...(this.routed||this.role.permission==='full'?{approvalPolicy:'on-request',sandbox:this.role.permission === 'full' ? 'danger-full-access' : 'workspace-write'}:{}),
+      ...(target.id !== 'local' ? {approvalPolicy:this.role.permission === 'full' ? 'never' : 'on-request',sandbox:this.role.permission === 'full' ? 'danger-full-access' : 'workspace-write'} : {}),
       ...(this.routed ? {environments:this.environments}: {})};
     // Bind the persistent thread to its actual engine account and CODEX_HOME.
     // Existing legacy IDs are associated only after the old thread really

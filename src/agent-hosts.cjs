@@ -5,8 +5,9 @@ const path = require('node:path');
 const {spawn} = require('node:child_process');
 const registry = require('./registry.cjs');
 const ssh = require('./ssh.cjs');
-const ENGINES = Object.freeze(['codex', 'claude', 'cline', 'pi']);
+const ENGINES = Object.freeze(['codex', 'claude', 'cline', 'pi', 'opencode']);
 const POSIX_PATH = 'export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; ';
+const WINDOWS_PATH = '$env:PATH=(Join-Path $env:USERPROFILE ".local\\bin")+";"+(Join-Path $env:USERPROFILE ".npm-global\\bin")+";"+$env:PATH; ';
 const local = () => ({id:'local', name:'本地主机', host:os.hostname(), os:process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'macos' : 'linux', defaultDirectory:os.homedir(), local:true});
 function get(id) {return id === 'local' ? local() : registry.get(id);}
 function list() {return [local(), ...registry.list().map(h => ({...h, local:false}))];}
@@ -27,7 +28,7 @@ function binary(engine) {
 function remoteCommand(host, engine, argv, environment, cwd) {
   if (!ENGINES.includes(engine)) throw Error('不支持的 Agent 引擎');
   if (host.os === 'windows') {
-    const env = Object.entries(environment).map(([key,value]) => '$env:' + key + '=' + ssh.psquote(value) + '; ').join('');
+    const env = WINDOWS_PATH + Object.entries(environment).map(([key,value]) => '$env:' + key + '=' + ssh.psquote(value) + '; ').join('');
     return ssh.command({...host, directory:cwd}, env + '$program=(Get-Command -Name '+ssh.psquote(engine)+' -CommandType Application -ErrorAction Stop|Select-Object -First 1).Source; & $program ' + argv.map(ssh.psquote).join(' ') + '; exit $LASTEXITCODE');
   }
   const env = Object.entries(environment).map(([key,value]) => 'export ' + key + '=' + ssh.quote(value) + '; ').join('');
@@ -85,7 +86,7 @@ async function capabilities(id,targetHostId,selectedEngine) {
   let engines;
   if (host.id === 'local') engines = Object.fromEntries(ENGINES.map(engine => [engine, !!binary(engine)]));
   else {
-    const script = host.os === 'windows' ? ENGINES.map(engine => "if (Get-Command -Name '" + engine + "' -ErrorAction SilentlyContinue) { '" + engine + "' }").join('; ') : POSIX_PATH + 'for tool in ' + ENGINES.join(' ') + '; do if command -v "$tool" >/dev/null 2>&1; then printf "%s\\n" "$tool"; fi; done';
+    const script = host.os === 'windows' ? WINDOWS_PATH + ENGINES.map(engine => "if (Get-Command -Name '" + engine + "' -ErrorAction SilentlyContinue) { '" + engine + "' }").join('; ') : POSIX_PATH + 'for tool in ' + ENGINES.join(' ') + '; do if command -v "$tool" >/dev/null 2>&1; then printf "%s\\n" "$tool"; fi; done';
     const command = host.os === 'windows' ? script : 'exec "${SHELL:-/bin/bash}" -lic ' + ssh.quote(script);
     const result = await ssh.execute(host.id, command, undefined, 16);
     if (result.exit_code) throw Error(result.stderr?.trim() || '无法检测 Agent 引擎');

@@ -57,7 +57,7 @@ try{
  await expect(page.locator('.transcript')).toContainText('A new message from the messenger')
  assert.ok((await call('session.transcript',{id:aster.id})).text.includes('A new message from the messenger'))
  await call('engine.configure',{engine:'cline',patch:{apiKey:'fixture-only-not-real'}})
- const cline=await createReady(call,{title:'Cline QA',group:'Engineering',engine:'cline',avatar:'hoots',model:'deepseek-flash'})
+ const cline=await createReady(call,{title:'Cline QA',group:'Engineering',engine:'cline',avatar:'hoots',model:'deepseek-flash',permissionMode:'default'})
  await expect(page.locator('.message-contact')).toHaveCount(5);await page.getByRole('button',{name:'Message Cline QA',exact:true}).click();await expect(page.locator('.message-thread-header')).toContainText('Cline QA');await expect(composer).toBeEnabled()
  await composer.evaluate((element,base64)=>{const transfer=new DataTransfer();transfer.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],'screen.png',{type:'image/png'}));element.dispatchEvent(new ClipboardEvent('paste',{clipboardData:transfer,bubbles:true,cancelable:true}))},png)
  await expect(page.locator('.attachment-chips button')).toHaveCount(1);await composer.fill('Inspect the screenshot');await composer.press('Enter')

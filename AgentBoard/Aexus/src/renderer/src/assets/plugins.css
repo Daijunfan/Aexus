@@ -13,7 +13,7 @@
 
 /* Keep the application header intact; the workspace occupies the content area. */
 .team-workspace-wrap{top:var(--company-header-height,52px);padding:16px 20px 20px;z-index:20}.plugin-directory{z-index:25}
-.folder-input{display:flex;align-items:center;gap:8px;min-width:0}.folder-input input{flex:1;min-width:0}.folder-input button{flex:none;border:1px solid #78906b66;border-radius:7px;background:#344730;color:#d7e6cb;font:11px inherit;padding:9px 11px;cursor:pointer}.employee-form-error{padding:10px 12px;border:1px solid #c8876866;border-radius:7px;background:#ad604119;color:#e6b9a0;font-size:12px;line-height:1.6}
+.folder-input{display:flex;align-items:center;gap:8px;min-width:0}.folder-input input{flex:1;min-width:0}.folder-input button{flex:none;border:1px solid #78906b66;border-radius:7px;background:#344730;color:#d7e6cb;font:11px inherit;padding:9px 11px;cursor:pointer}.employee-form-error{padding:10px 12px;border:1px solid color-mix(in srgb,var(--red) 32%,var(--border));border-radius:7px;background:color-mix(in srgb,var(--red) 7%,var(--bg-elev));color:var(--red);font-size:12px;line-height:1.6}
 
 /* Direct plugin pages occupy the host content area, with no Team menu or modal frame. */
 .plugin-page-wrap { position:absolute;left:var(--directory-width);right:0;top:var(--company-header-height,52px);bottom:0;z-index:20;-webkit-app-region:no-drag; }

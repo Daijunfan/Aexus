@@ -11,9 +11,9 @@ try{
  await assert.rejects(()=>cli('group','add','Work','--mode','work','--plugin','mininotion'))
  const worker=await create('Clean Worker','Build'),buildWorker=await create('Build Worker','Build')
  let commonInstructions
- for(const [employee,profile] of [[worker,'agents-company-readonly'],[buildWorker,'agents-company-readonly']]){
+ for(const employee of [worker,buildWorker]){
   assert.equal((await f.status(employee.id)).initialization.status,'ready')
-  assert.equal(employee.permissionMode,'default')
+  assert.equal(employee.permissionMode,'bypassPermissions')
   assert.ok(fs.existsSync(path.join(control,employee.id+'-initializing.json')))
   const initial=read(employee,'initializing')
   assert.ok(initial.documentationTools);assert.match(initial.text,/identity/);assert.match(initial.text,/index/)
@@ -25,7 +25,7 @@ try{
   await until(async()=>!(await f.status(employee.id)).busy,'ordinary work finishes')
   const work=read(employee,'work'),launch=read(employee,'thread-start')
   assert.equal(work.thread,initial.thread,'work resumes the initialized native identity')
-  assert.equal(launch.permissions,profile);assert.equal(launch.sandbox,null)
+  assert.equal(launch.permissions,null);assert.equal(launch.sandbox,'danger-full-access')
   assert.match(launch.developerInstructions,/agents_company_documentation/)
   if(commonInstructions===undefined)commonInstructions=launch.developerInstructions
   else assert.equal(launch.developerInstructions,commonInstructions,'Build workers share the same router prompt')
@@ -44,5 +44,5 @@ try{
  legacy.fullAccessDefaultApplied=false;legacy.sessions.find(card=>card.id===worker.id).permissionMode='acceptEdits'
  fs.writeFileSync(stateFile,JSON.stringify(legacy));await f.start()
  assert.equal((await cli('session','list')).sessions.find(card=>card.id===worker.id).permissionMode,'acceptEdits')
- console.log('PASS shared native initialization with pristine public history, same-thread work, scoped Build permissions, role metadata and preserved upgrade preferences; deterministic fixtures only')
+ console.log('PASS shared native initialization with pristine public history, same-thread work, Full access default, role metadata and preserved upgrade preferences; deterministic fixtures only')
 }finally{await f.close()}

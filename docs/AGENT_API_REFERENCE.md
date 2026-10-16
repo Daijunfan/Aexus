@@ -1,10 +1,15 @@
-# CloudHosts Agent API (generated from executable Core contracts)
+# CloudHosts Agent API（派生自可执行 Core 契约）
 
 API version: 1.1.0
-Schema SHA-256: edf9ee6661a7c1a637d9a066baab97f329f375d80ba974cf6d6a764fc24723a5
-Product version: 2.9.20
+Schema SHA-256: 96887c1363fb7fcc08875749284cfbd648843fb2a6ab5e53e111813643724d13
+Product version: 2.12.1
 
-> These commands describe source-tagged CloudHosts legacy sessions. Agent Board Company/Messages/Plan use the original embedded Aexus Core, whose complete original API documentation is at AgentBoard/Aexus/docs/managers/API.md. Guardian and plugin products are excluded.
+> 上表值由 `src/api-contracts.cjs` 的真实命令注册表计算：`apiVersion` 为源码常量，
+> `schemaHash` 对当前命令注册表与 `schema.json` 命令求 SHA-256，`productVersion` 对应本次
+> 发布版本（package.json）；buildId 由构建时的 `release.json` 生成。可用 `aexus api info`
+> 复核。这些命令描述带来源标记的 CloudHosts 会话；Company/Messages/Plan 由 Role Board 使用
+> 原始内嵌 Aexus Core，其完整原版 API 文档见 AgentBoard/Aexus/docs/managers/API.md。
+> Guardian 与插件产品已排除。
 
 ## Native Agent call flow
 
@@ -13,6 +18,8 @@ Product version: 2.9.20
 3. `cloud_docs`: `{"operation":"describe","command":"plan.create"}` — read precise input/output schemas.
 4. `cloud_api`: `{"command":"plan.create","args":{...}}` — Core authorizes this native Agent and returns a structured result.
 5. Read the saved object through `cloud_api`. Retain the original call ID for uncertain transport outcomes; do not blindly reissue writes.
+
+`cloud_docs` 支持 `operation` = `identity` / `index` / `search` / `describe` / `document`，全部只读。
 
 Only `cloud_reply` publishes the result of the current assigned group turn. Legacy `cloud_group_reply`, `cloud_delegate`, `cloud_task_status`, and `cloud_plan_create` remain compatible adapters.
 
@@ -91,9 +98,14 @@ Every Agent-callable command declares a machine-readable input schema and output
 
 Scheduled Agent-created Plans retain a creator identity and recheck authority before dispatch. Fixed-text notices never invoke the model. Group Agent publications create public notes and do not fan out fresh Agent tasks.
 
-The CloudHosts CodeX engine uses its exact native thread ID; Claude/Pi/Cline companion conversations still have independent collaboration history. These cannot be represented as the same native conversation until supported seamless resume is verified.
+The CloudHosts Codex engine uses its exact native thread ID; Claude/Pi/Cline/OpenCode companion conversations still have independent collaboration history. These cannot be represented as the same native conversation until supported seamless resume is verified.
 
 The command registry also includes operator/legacy Core commands marked non-Agent-callable. A schema listing does not grant permission or imply that Aexus full business behavior is implemented.
+
+## Host 管理命令（operator，非 Agent 可调）
+
+`hosts.agent-configure` 更改已存在角色的目标主机权限（`ask`/`full`），运行中会话拒绝修改、
+下次启动生效；不删除角色、不静默重启会话。CLI：`aexus agent-configure WORK_HOST --session ID --permission ask|full`。
 
 ## Scenarios
 

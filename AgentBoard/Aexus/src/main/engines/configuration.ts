@@ -5,12 +5,12 @@ import {randomBytes,createCipheriv,createDecipheriv} from 'node:crypto'
 import {APP_HOME} from '../../shared/protocol'
 import {isEngine,type EngineId} from '../../shared/engines'
 import {atomicJson,readJson} from '../atomic-file'
-type Config={path?:string;managedPath?:string;sdkPath?:string;baseUrl?:string;model?:string;secret?:string;sharedClineConfig?:boolean;sharedPiConfig?:boolean}
+type Config={path?:string;managedPath?:string;sdkPath?:string;baseUrl?:string;model?:string;secret?:string;sharedClineConfig?:boolean;sharedPiConfig?:boolean;sharedOpenCodeConfig?:boolean}
 const directory=path.join(APP_HOME,'engines'),file=path.join(directory,'settings.json'),keyFile=path.join(directory,'credential.key')
 const all=()=>readJson<Partial<Record<EngineId,Config>>>(file,()=>({}))
 function key(){if(!fs.existsSync(keyFile)){fs.mkdirSync(directory,{recursive:true,mode:0o700});fs.writeFileSync(keyFile,randomBytes(32),{mode:0o600,flag:'wx'})};return fs.readFileSync(keyFile)}
 export const engineConfiguration=(engine:EngineId):Config=>({
-  ...(process.env.AGENTS_COMPANY_EMBEDDED==='1'?(engine==='cline'?{sharedClineConfig:true}:engine==='pi'?{sharedPiConfig:true}:{}):{}),
+  ...(process.env.AGENTS_COMPANY_EMBEDDED==='1'?(engine==='cline'?{sharedClineConfig:true}:engine==='pi'?{sharedPiConfig:true}:engine==='opencode'?{sharedOpenCodeConfig:true}:{}):{}),
   ...all()[engine]
 })
 /** Read provider credentials at launch; employee tools and history stay isolated. */
@@ -30,16 +30,27 @@ export function engineNativeProfile(engine:EngineId){
     if(!provider||!settings.defaultModel)throw Error('Configure a provider and default model in native Pi first')
     return {provider:String(provider),model:String(settings.defaultModel),baseUrl:definition?.baseUrl as string|undefined,apiKey:auth[provider]?.key,models:definition?.models??[],definition,thinkingLevel:settings.defaultThinkingLevel||'off'}
   }
+  // OpenCode reuses the single native auth/config source shared by the CLI and
+  // official VSCode integration: no second key copy or app-private secret is
+  // required. The deepseek key lives in the native credential store, never here.
+  if(engine==='opencode'&&config.sharedOpenCodeConfig){
+    const configPath=path.join(os.homedir(),'.config','opencode','opencode.json')
+    const authPath=path.join(os.homedir(),'.local','share','opencode','auth.json')
+    const cfg=readJson<any>(configPath,()=>({})),credentials=readJson<any>(authPath,()=>({}))
+    const deepseek=credentials.deepseek,apiKey=typeof deepseek==='string'?deepseek:deepseek?.key
+    if(!apiKey)return
+    return {provider:'deepseek',model:String(cfg.model||'deepseek/deepseek-v4-pro'),baseUrl:undefined,apiKey,models:[],thinkingLevel:'off'}
+  }
 }
 export function processProvider(engine:'cline'|'pi'){
   const config=engineConfiguration(engine),native=engineNativeProfile(engine),custom=!!config.baseUrl
   return {provider:native?.provider??(custom?(engine==='cline'?'openai-compatible':'agents-company'):'deepseek'),model:native?.model??(custom?config.model||'deepseek-flash':'deepseek-flash'),baseUrl:native?.baseUrl??config.baseUrl,managedReasoning:native?native.provider!=='deepseek'||native.thinkingLevel!=='off':custom,modelIds:native?.models.map((m:any)=>m.id),thinkingLevel:native?.thinkingLevel??'off'}
 }
 export function publicEngineConfiguration(engine:EngineId){const {secret,...config}=engineConfiguration(engine),native=engineNativeProfile(engine);return {...config,...(native?{baseUrl:native.baseUrl,model:native.model}:{}),hasApiKey:!!secret||!!native?.apiKey}}
-export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:string;baseUrl?:string;model?:string;apiKey?:string;sharedClineConfig?:boolean;sharedPiConfig?:boolean}){
-  if(!isEngine(engine)||!patch||Object.keys(patch).some(k=>!['path','sdkPath','baseUrl','model','apiKey','sharedClineConfig','sharedPiConfig'].includes(k)))throw Error('Invalid engine configuration')
+export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:string;baseUrl?:string;model?:string;apiKey?:string;sharedClineConfig?:boolean;sharedPiConfig?:boolean;sharedOpenCodeConfig?:boolean}){
+  if(!isEngine(engine)||!patch||Object.keys(patch).some(k=>!['path','sdkPath','baseUrl','model','apiKey','sharedClineConfig','sharedPiConfig','sharedOpenCodeConfig'].includes(k)))throw Error('Invalid engine configuration')
   const data=all(),value={...data[engine]}
-  for(const flag of ['sharedClineConfig','sharedPiConfig'] as const)if(patch[flag]!==undefined){if(engine!==(flag==='sharedClineConfig'?'cline':'pi')||typeof patch[flag]!=='boolean')throw Error('Invalid native configuration selection');value[flag]=patch[flag]}
+  for(const flag of ['sharedClineConfig','sharedPiConfig','sharedOpenCodeConfig'] as const)if(patch[flag]!==undefined){if(engine!==(flag==='sharedClineConfig'?'cline':flag==='sharedPiConfig'?'pi':'opencode')||typeof patch[flag]!=='boolean')throw Error('Invalid native configuration selection');value[flag]=patch[flag]}
   if(patch.path!==undefined){if(patch.path&&(!path.isAbsolute(patch.path)||!fs.existsSync(patch.path)||!fs.statSync(patch.path).isFile()))throw Error('Choose an existing executable on the Core host');value.path=patch.path||undefined}
   if(patch.sdkPath!==undefined){if(engine!=='claude'||patch.sdkPath&&(!path.isAbsolute(patch.sdkPath)||!fs.existsSync(patch.sdkPath)||!fs.statSync(patch.sdkPath).isFile()))throw Error('Choose an existing Claude Agent SDK module on the Core host');value.sdkPath=patch.sdkPath||undefined}
   if(patch.baseUrl!==undefined){if(patch.baseUrl){const url=new URL(patch.baseUrl);if(url.username||url.password||url.search||url.hash||url.protocol!=='https:'&&!(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)))throw Error('Provider URL must use HTTPS (HTTP is allowed only for loopback development)')};value.baseUrl=patch.baseUrl||undefined}
@@ -58,7 +69,7 @@ export function configureEngine(engine:EngineId,patch:{path?:string;sdkPath?:str
 export function setManagedEngine(engine:EngineId,executable:string,sdkPath?:string){const data=all();data[engine]={...data[engine],path:undefined,managedPath:executable,...(sdkPath?{sdkPath}:{})};atomicJson(file,data,true)}
 /** Provider credentials never cross engine boundaries. Process adapters use saved keys only. */
 export function engineProcessEnvironment(engine:EngineId,base:NodeJS.ProcessEnv):NodeJS.ProcessEnv{
-  const env={...base},processAdapter=engine==='cline'||engine==='pi'
+  const env={...base},processAdapter=engine==='cline'||engine==='pi'||engine==='opencode'
   for(const name of Object.keys(env)){
     const claude=/^(ANTHROPIC_|CLAUDE_CODE_USE_|CLAUDE_CONFIG_DIR$|CLAUDE_API_KEY$|CLAUDE_CODE_API_KEY$)/.test(name)
     const openai=name.startsWith('OPENAI_'),processKey=['CLINE_API_KEY','DEEPSEEK_API_KEY','PI_API_KEY'].includes(name)
@@ -69,7 +80,7 @@ export function engineProcessEnvironment(engine:EngineId,base:NodeJS.ProcessEnv)
 export function engineEnvironment(engine:EngineId):NodeJS.ProcessEnv{
   const config=engineConfiguration(engine),env:NodeJS.ProcessEnv={},native=engineNativeProfile(engine)
   if(native){if(native.baseUrl)env.OPENAI_BASE_URL=native.baseUrl;if(native.apiKey)env[engine==='cline'?'CLINE_API_KEY':'DEEPSEEK_API_KEY']=native.apiKey;return env}
-  if(config.baseUrl)env[engine==='claude'?'ANTHROPIC_BASE_URL':'OPENAI_BASE_URL']=config.baseUrl
-  if(config.secret){const bytes=Buffer.from(config.secret,'base64'),cipher=createDecipheriv('aes-256-gcm',key(),bytes.subarray(0,12));cipher.setAuthTag(bytes.subarray(12,28));const secret=Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]).toString('utf8');env[engine==='cline'?'CLINE_API_KEY':engine==='pi'?'DEEPSEEK_API_KEY':engine==='claude'?'ANTHROPIC_API_KEY':'OPENAI_API_KEY']=secret;if(engine==='claude')env.ANTHROPIC_AUTH_TOKEN=''}
+  if(config.baseUrl&&engine!=='opencode')env[engine==='claude'?'ANTHROPIC_BASE_URL':'OPENAI_BASE_URL']=config.baseUrl
+  if(config.secret){const bytes=Buffer.from(config.secret,'base64'),cipher=createDecipheriv('aes-256-gcm',key(),bytes.subarray(0,12));cipher.setAuthTag(bytes.subarray(12,28));const secret=Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]).toString('utf8');env[engine==='cline'?'CLINE_API_KEY':engine==='pi'||engine==='opencode'?'DEEPSEEK_API_KEY':engine==='claude'?'ANTHROPIC_API_KEY':'OPENAI_API_KEY']=secret;if(engine==='claude')env.ANTHROPIC_AUTH_TOKEN=''}
   return env
 }

@@ -112,7 +112,7 @@ setRoom,
 writeStore
 } from './store'
 import { renameGroup,designRoom,updateEmployee,employeeFields,setTeamRoot,bindTeamRoot,setBounds,placeEmployee,setViewport,configureTeam,validateTeamSettings,teamViewList,createTeamView,updateTeamView,removeTeamView,selectTeamView,canvasViewport } from './store'
-import { teamSettings,employeeSettings,nativeSessionRefs,canBindNativeSession,type StoredSession } from '../shared/types'
+import { teamSettings,employeeSettings,nativeSessionRefs,canBindNativeSession,type StoredSession,type TeamSettings } from '../shared/types'
 import { workspaceFiles } from './files'
 import {revealWorkspaceFile} from './file-reveal'
 import { employeeRoot,employeeWorkspace,executionEmployee,cloudDirectory,cloudRelative,workspaceStatus,teamRoot,managedTeamRoot,chooseTeamRoot,defaultPluginWorkspace,legacyPluginWorkspace,inside } from './workspaces'
@@ -471,7 +471,11 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       if(a.workEnvironment==='local'&&config.mode==='cloud')return {path:employeeRoot(store,{group:s(a.team),workEnvironment:'local'})}
       if(a.mode==='cloud'||(!a.mode&&config.mode==='cloud')){const remote=remoteTarget(a.remote??config.remote);if(!remote)throw new Error('请在云主机 Team 中填写远端工作目录');return {path:remote.directory}}
       if(!a.mode&&store.groups.includes(a.team)&&store.teamRoots?.[a.team])return {path:store.teamRoots[a.team]}
-      return {path:!a.mode&&config.directoryMode==='bind'?store.teamRoots?.[a.team]:managedTeamRoot(s(a.team||'workspace'),a.mode?{mode:a.mode,pluginId:a.pluginId}:config)}
+      if(!a.mode&&config.directoryMode==='bind')return {path:store.teamRoots?.[a.team]}
+      const settings:TeamSettings=a.mode?{mode:a.mode,pluginId:a.pluginId}:{...config}
+      if(a.parent!==undefined)settings.parent=a.parent
+      const path=managedTeamRoot(s(a.team||'workspace'),settings)
+      return {path,parent:dirname(path)}
     }
     case 'workspace.choose':
       return askRenderer('choose-folder',{path:a.path})
@@ -721,14 +725,15 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       const name=s(a.name??'').trim();if(!name)throw new Error('Team 名称不能为空')
       if(readStore().groups.includes(name))throw Error('Team 已存在；名称可修改，工作目录创建后不可更换')
       assertTeamAvailable(name)
-      const config=validateTeamSettings({mode:a.mode??(a.hostId?'cloud':'build'),pluginId:a.pluginId,directoryMode:a.directoryMode,hostId:a.hostId,directory:a.directory,remote:a.remote})
+      const config=validateTeamSettings({mode:a.mode??(a.hostId?'cloud':'build'),pluginId:a.pluginId,directoryMode:a.directoryMode,hostId:a.hostId,directory:a.directory,remote:a.remote,parent:a.parent})
       const os=config.remote?.os??(process.platform==='darwin'?'macos':process.platform==='win32'?'windows':'linux')
       if(a.os!==undefined&&a.os!==os||a.distribution!==undefined&&a.distribution!==config.remote?.distribution)throw Error('目标操作系统与实际 Team 主机不符；先用 host list --summary 按 os/distribution 选择已登记主机，不要用 Team 名称代替主机绑定')
       if(config.mode==='cloud'){
         const create=a.directoryMode==='default'
-        if(create&&(a.directory||a.remote?.directory))throw Error('默认生成远端 Team 目录时不要传 remote-dir；绑定已有目录请使用 directory-mode bind')
+        if(create&&(a.directory||a.remote?.directory))throw Error('默认生成远端 Team 目录时请使用 --parent 指定父目录，不要传 remote-dir；绑定已有目录请使用 directory-mode bind')
         if(create&&(name==='.'||name==='..'||/[\\/\0]/.test(name)))throw Error('Team 名称不能包含路径分隔符或使用 . / ..')
-        const directory=(await remoteFiles(teamConnectionId(name),config.remote!,'directory',{path:create?directoryName(name,'team'):'.',...(create?{create:true,exclusive:true}:{})})).path
+        const target=create?{...config.remote!,directory:a.parent??config.remote!.directory}:config.remote!
+        const directory=(await remoteFiles(teamConnectionId(name),target,'directory',{path:create?directoryName(name,'team'):'.',...(create?{create:true,exclusive:true}:{})})).path
         config.directory=directory;config.remote={...config.remote!,directory}
         closeRemote(teamConnectionId(name))
       }

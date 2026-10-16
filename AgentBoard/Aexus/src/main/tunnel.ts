@@ -87,9 +87,10 @@ export async function resolveEmployeeWorkspace(store:Store,group:string,title:st
   if(mode!==undefined&&!['default','bind','create','existing'].includes(mode))throw new Error('请选择默认生成或绑定已有文件夹')
   const generated=mode==='default'||(!mode&&!input)
   const name=directoryName(title,'employee')
-  if(!generated&&!input?.trim())throw new Error('请选择云端工作文件夹，绑定团队根目录请使用 .')
+  if(!generated&&!input?.trim())throw new Error('请选择云端工作文件夹（Team 根目录下的子文件夹）')
   if(generated&&(!name||name==='.'||name==='..'||/[\\/\0]/.test(name)))throw new Error('默认文件夹必须与员工同名，名字不能包含路径分隔符')
   const target=cloudDirectory(config,generated?name:input||''),own=store.sessions.some(c=>c.id===id&&c.group===group&&c.cwd===target)
+  if(!generated&&cloudRelative(config,target)==='.')throw new Error('员工必须绑定 Team 根目录下的子文件夹，不能直接使用 Team 根目录')
   if(generated&&input&&cloudDirectory(config,input)!==target)throw new Error('默认工作目录由员工名字生成')
   const result=await remoteFiles(teamConnectionId(group),config.remote,'directory',{path:cloudRelative(config,target),create:generated||mode==='create',exclusive:!own,preview})
   return result.path

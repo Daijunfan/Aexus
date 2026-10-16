@@ -49,7 +49,9 @@ export function defaultTeamRoot(name:string,settings:TeamSettings={mode:'build'}
     return join(pluginWorkspaceBase(settings.pluginId||''),directoryName(clean||'default','team'))
   }
   if(!clean||clean==='.'||clean==='..'||/[\\/\0]/.test(clean))throw new Error('Team 名称不能包含路径分隔符或使用 . / ..')
-  return join(process.env.AGENTS_COMPANY_PROJECTS||join(homedir(),'develop','Agents-company-projects'),directoryName(clean,'team'))
+  const parent=settings.parent
+  if(parent!==undefined&&parent!==''&&!isAbsolute(parent))throw new Error('Team 父目录必须是绝对路径')
+  return join(parent||process.env.AGENTS_COMPANY_PROJECTS||join(homedir(),'develop','Agents-company-projects'),directoryName(clean,'team'))
 }
 
 export function managedTeamRoot(name:string,settings:TeamSettings,path?:string):string {
@@ -97,10 +99,13 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
   while (!existsSync(ancestor)) ancestor = dirname(ancestor)
   const actualAncestor = realpathSync(ancestor)
   if(!statSync(actualAncestor).isDirectory()) throw new Error('员工工作空间必须是文件夹')
-  if ((work||manager) && actualAncestor !== root && !inside(root, actualAncestor)) throw new Error('工作目录超出所属 Team 的范围，请选择 Team 根目录或其子目录')
   const prospective=resolve(actualAncestor,relative(ancestor,target))
-  if((work||manager)&&prospective===root)throw new Error('员工必须使用 Team 根目录中的子文件夹，不能直接使用 Team 根目录')
-  if((work||manager)&&prospective!==root&&!inside(root,prospective))throw new Error('员工工作空间必须位于 Team 根目录或其子文件夹中')
+  // Unchanged reopen of a persisted local Build/standalone card keeps its stored canonical cwd;
+  // every new or explicit rebind still enforces the strict child rule below. A swapped symlink
+  // resolves away from the stored cwd, so it is treated as changed and rejected, not silently allowed.
+  const legacyUnchanged = !work && !manager && existing!==undefined && existing.group===group && !!existing.cwd && directoryMode===undefined && prospective===existing.cwd
+  if (!legacyUnchanged && directoryMode!=='create' && actualAncestor !== root && !inside(root, actualAncestor)) throw new Error('工作目录超出所属 Team 的范围，请选择 Team 根目录或其子目录')
+  if(!legacyUnchanged && (prospective===root||!inside(root,prospective)))throw new Error('员工工作空间必须是 Team 根目录下的子文件夹，不能使用根目录或外部链接')
   const appHome=existsSync(APP_HOME)?realpathSync(APP_HOME):resolve(APP_HOME)
   if((prospective===appHome||inside(appHome,prospective))&&!(work&&inside(pluginWorkspaceBase(teamSettings(store,group).pluginId!),prospective))) throw new Error('员工工作空间不能使用应用数据目录')
   for (const card of store.sessions) {
@@ -119,7 +124,7 @@ export function employeeWorkspace(store: Store, group: string, input: string, id
   if (create) mkdirSync(target, { recursive: true })
   if(!existsSync(target))throw new Error('员工工作目录已不存在，请在员工资料中重新选择目录')
   const cwd = realpathSync(target)
-  if ((work&&cwd!==root&&!inside(root, cwd)) || !statSync(cwd).isDirectory()) throw new Error('工作空间必须是 Team 内部的真实文件夹')
+  if ((!legacyUnchanged && !inside(root, cwd)) || !statSync(cwd).isDirectory()) throw new Error('工作空间必须是 Team 内部的真实文件夹')
   if((cwd===appHome||inside(appHome,cwd))&&!(work&&inside(pluginWorkspaceBase(teamSettings(store,group).pluginId!),cwd))) throw new Error('员工工作空间不能使用应用数据目录')
   return cwd
 }

@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import pty
+import re
 import selectors
 import shlex
 import signal
@@ -23,7 +24,7 @@ config = json.loads(config_file.read_text(encoding='utf-8'))
 config_file.unlink(missing_ok=True)
 target = config.get('remote')
 agent = config.get('command')
-if agent is not None and agent not in ('codex', 'claude', 'cline', 'pi'):
+if agent is not None and agent not in ('codex', 'claude', 'cline', 'pi', 'opencode'):
     raise ValueError('Invalid agent executable')
 tui_token = config.get('tuiToken')
 tui_token_file = config.get('tuiTokenFile')
@@ -35,12 +36,18 @@ if tui_token is not None:
 agent_args = config.get('commandArgs', [])
 if not isinstance(agent_args, list) or len(agent_args)>24 or any(not isinstance(arg,str) or len(arg)>4096 or '\n' in arg or '\r' in arg for arg in agent_args):
     raise ValueError('Invalid native Agent startup arguments')
+config_env = config.get('environment') or {}
+if not isinstance(config_env, dict) or any(not isinstance(key,str) or not isinstance(value,str) or not re.fullmatch(r'[A-Z][A-Z0-9_]*', key) or '\n' in value or '\r' in value or '\x00' in value for key,value in config_env.items()):
+    raise ValueError('Invalid terminal environment')
 if target:
     args = transport.ssh_args(target)
     args[args.index('-T')] = '-tt'
     if target['os'] == 'windows':
         directory = target['directory'].replace("'", "''")
         script = "try { Set-Location -LiteralPath '" + directory + "' -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
+        env_assign = ''.join("$env:" + key + "='" + value.replace("'", "''") + "'; " for key, value in config_env.items())
+        if env_assign:
+            script += '; ' + env_assign
         # -EncodedCommand does not reliably auto-load PSReadLine. Import it
         # explicitly in this interactive session, retaining the user's profile.
         if agent:
@@ -53,7 +60,8 @@ if target:
         args += ['powershell.exe -NoLogo ' + ('' if agent else '-NoExit ') + '-EncodedCommand ' + base64.b64encode(script.encode('utf-16le')).decode()]
     else:
         handoff = ('IFS= read -r CLOUD_HOSTS_TUI_AUTH_TOKEN < ' + shlex.quote(tui_token_file) + '; export CLOUD_HOSTS_TUI_AUTH_TOKEN; rm -f -- ' + shlex.quote(tui_token_file) + '; ') if tui_token_file else ''
-        startup = (' -lic ' + shlex.quote('export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; ' + handoff + 'exec ' + agent + ''.join(' ' + shlex.quote(arg) for arg in agent_args))) if agent else ' -il'
+        env_exports = ''.join('export ' + key + '=' + shlex.quote(value) + '; ' for key, value in config_env.items())
+        startup = (' -lic ' + shlex.quote('export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; ' + env_exports + handoff + 'exec ' + agent + ''.join(' ' + shlex.quote(arg) for arg in agent_args))) if agent else ' -il'
         args += ['cd -- ' + shlex.quote(target['directory']) + ' && exec "${SHELL:-/bin/bash}"' + startup]
 else:
     args = [config.get('executable') or agent, *agent_args] if agent else [os.environ.get('SHELL', '/bin/bash'), '-l']
@@ -65,6 +73,8 @@ if pid == 0:
     environment = transport.ssh_env(target) if target else os.environ.copy()
     if tui_token:
         environment['CLOUD_HOSTS_TUI_AUTH_TOKEN'] = tui_token
+    for key, value in config_env.items():
+        environment[key] = value
     os.execvpe(args[0], args, environment)
 
 def send(value):

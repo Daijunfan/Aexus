@@ -6,11 +6,11 @@ const fixture=path.resolve('test/fixtures/process-adapter.cjs'),test=await fixtu
 const rpc=async(cmd,args)=>{const result=await request(null,cmd,args);assert.ok(result.ok,result.error);return result.data}
 try{
  await cli('group','add','A')
- assert.deepEqual((await cli('engine','list')).map(e=>e.engine).sort(),['claude','cline','codex','pi'])
+ assert.deepEqual((await cli('engine','list')).map(e=>e.engine).sort(),['claude','cline','codex','opencode','pi'])
  for(const engine of ['cline','pi']){
   await rpc('engine.configure',{engine,patch:{apiKey:'fixture-key-not-real'}})
   const models=await cli('engine','models','--engine',engine);assert.equal(models.defaultModel,'deepseek-flash');assert.ok(models.models.every(m=>m.supportsEffort===false))
-  const card=await cli('card','create','--title',engine,'--group','A','--engine',engine)
+  const card=await cli('card','create','--title',engine,'--group','A','--engine',engine,'--permission','default')
   assert.equal(card.model,'deepseek-flash');assert.equal(card.thinking,false)
   await test.ready(card.id)
   const opened=await cli('session','open',card.id),send=async text=>{const accepted=await rpc('session.send',{employee:card.id,text});assert.ok(accepted.messageId);await until(async()=>!(await status(card.id)).busy,'turn completed');return await cli('session','transcript','--employee',card.id)}

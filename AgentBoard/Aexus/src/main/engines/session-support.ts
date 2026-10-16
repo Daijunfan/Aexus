@@ -10,7 +10,7 @@ export function sandboxFor(mode:PermissionMode):SandboxMode {
 export const codexEffort=(effort?:EffortLevel):string|undefined=>effort
 
 /** Preserve the native protocol's terminal status; a cancelled or failed turn is never success. */
-export function nativeTurnFailure(engine:'codex'|'cline',status:unknown,diagnostic?:unknown):Error|undefined {
+export function nativeTurnFailure(engine:'codex'|'cline'|'opencode',status:unknown,diagnostic?:unknown):Error|undefined {
   const completed=engine==='codex'?'completed':'end_turn'
   if(status===completed)return undefined
   const reason=typeof diagnostic==='string'&&diagnostic.trim()?diagnostic:`${engine} turn ended with status ${typeof status==='string'?status:'unknown'}`

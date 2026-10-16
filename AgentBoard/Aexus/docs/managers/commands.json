@@ -9297,8 +9297,8 @@
   },
   {
     "name": "group.add",
-    "args": "<name> [--mode work|build|cloud] [--plugin ID] [--host-id ID] [--directory-mode default|bind] [--remote-dir PATH] [--os linux|macos|windows] [--distribution ID]",
-    "summary": "Create a real cloud Team with host-id; directory-mode default creates a new remote child folder; os/distribution assert actual host, never labels",
+    "args": "<name> [--mode work|build|cloud] [--plugin ID] [--host-id ID] [--directory-mode default|bind] [--parent PATH] [--remote-dir PATH] [--os linux|macos|windows] [--distribution ID]",
+    "summary": "Create a Team; directory-mode default generates a new folder under --parent (default: project/cloud-host base); directory-mode bind binds --remote-dir/--root; os/distribution assert actual host, never labels",
     "gui": "“+ Department”",
     "readOnly": false,
     "permission": "operator",
@@ -9708,7 +9708,7 @@
   },
   {
     "name": "workspace.suggest",
-    "args": "--team NAME [--work-environment team|local]",
+    "args": "--team NAME [--work-environment team|local] [--parent PATH]",
     "summary": "Suggest an external workspace directory without changing files",
     "gui": "默认工作目录",
     "readOnly": true,

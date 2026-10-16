@@ -37,7 +37,7 @@ async function deliver(row){
   try{group=permitted(row)}catch(error){store.change(row.messageId,row.agentId,['pending'],{status:'failed',error:error.message});return}
   let role=agents.sessions().find(item=>item.id===row.agentId);
   if(!role){store.change(row.messageId,row.agentId,['pending'],{status:'failed',error:'Agent identity is missing'});return}
-  if(!['codex','claude','pi','cline'].includes(role.engine)||!['native','pty'].includes(role.transport)){
+  if(!['codex','claude','pi','cline','opencode'].includes(role.engine)||!['native','pty'].includes(role.transport)){
    store.change(row.messageId,row.agentId,['pending'],{status:'failed',error:'No structured native execution protocol for '+role.engine});return;
   }
   if(role.busy||agents.sessions().some(other=>other.id!==role.id&&other.busy&&other.targetHostId===role.targetHostId&&other.cwd===role.cwd))return;

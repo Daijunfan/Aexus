@@ -2,7 +2,7 @@ import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../
 import {useEffect,useState} from 'react'
 import {api} from '../api'
 import type {EngineHealth,EngineId} from '../../../shared/engines'
-type Descriptor={engine:EngineId;label:string;target:string;configuration:{path?:string;baseUrl?:string;model?:string;hasApiKey:boolean;sharedClineConfig?:boolean;sharedPiConfig?:boolean}}
+type Descriptor={engine:EngineId;label:string;target:string;configuration:{path?:string;baseUrl?:string;model?:string;hasApiKey:boolean;sharedClineConfig?:boolean;sharedPiConfig?:boolean;sharedOpenCodeConfig?:boolean}}
 export function EngineSettings(){
   useI18n()
 
@@ -13,7 +13,7 @@ export function EngineSettings(){
 function EngineCard({descriptor}:{descriptor:Descriptor}){
   useI18n()
 
-  const shared=!!(descriptor.configuration.sharedClineConfig||descriptor.configuration.sharedPiConfig)
+  const shared=!!(descriptor.configuration.sharedClineConfig||descriptor.configuration.sharedPiConfig||descriptor.configuration.sharedOpenCodeConfig)
   const [health,setHealth]=useState<EngineHealth>(),[checking,setChecking]=useState(false),[error,setError]=useState('')
   const [editing,setEditing]=useState(false),[executable,setExecutable]=useState(descriptor.configuration.path??''),[baseUrl,setBaseUrl]=useState(descriptor.configuration.baseUrl??''),[apiKey,setApiKey]=useState(''),[model,setModel]=useState(descriptor.configuration.model??'')
   const [plan,setPlan]=useState<any>(),[job,setJob]=useState<any>(),[login,setLogin]=useState<any>(),[saving,setSaving]=useState(false)
@@ -48,8 +48,8 @@ function EngineCard({descriptor}:{descriptor:Descriptor}){
     {testResult&&<p role="status">{uiText("Test passed ·")} {testResult.model} · {testResult.elapsedMs}  {uiText("ms · Reply:")}{testResult.text}</p>}
     {shared&&<small>{uiText('Uses the native CLI provider, API key and model catalog. Change these in the native client; new sessions read the latest configuration.')}</small>}
     {shared&&<small>{baseUrl} · {model}</small>}
-    {!shared&&(descriptor.engine==='cline'||descriptor.engine==='pi')&&<small>{uiText(baseUrl?"Uses the configured compatible endpoint. Reasoning is controlled by the provider.":"Uses a DeepSeek API key; defaults to Flash with thinking off. Supports local working directories on the Core host.")}</small>}
-    {!shared&&(descriptor.engine==='cline'||descriptor.engine==='pi')&&<small>{uiText('This engine uses only its own saved API key and provider URL. Claude Agent credentials are never reused.')}</small>}
+    {!shared&&(descriptor.engine==='cline'||descriptor.engine==='pi'||descriptor.engine==='opencode')&&<small>{uiText(baseUrl&&descriptor.engine!=='opencode'?"Uses the configured compatible endpoint. Reasoning is controlled by the provider.":descriptor.engine==='opencode'?"Uses a DeepSeek API key; defaults to V4 Pro with reasoning depth set by effort. Supports local working directories on the Core host.":"Uses a DeepSeek API key; defaults to Flash with thinking off. Supports local working directories on the Core host.")}</small>}
+    {!shared&&(descriptor.engine==='cline'||descriptor.engine==='pi'||descriptor.engine==='opencode')&&<small>{uiText('This engine uses only its own saved API key and provider URL. Claude Agent credentials are never reused.')}</small>}
     {descriptor.engine==='claude'&&<small>{uiText("Claude Agent uses an API key or an approved provider configuration. Existing native configuration stays unchanged; this app does not offer claude.ai subscription sign-in.")}</small>}
     {editing&&<div><label>{uiText("Backend executable path (leave empty to detect)")}<input aria-label={uiText("{0} executable path",[descriptor.label])} value={executable} onChange={event=>setExecutable(event.target.value)}/></label><label>{uiText("Provider URL (leave empty for the engine’s configuration)")}<input aria-label={uiText("{0} provider URL",[descriptor.label])} value={baseUrl} onChange={event=>setBaseUrl(event.target.value)} disabled={shared} placeholder="https://…"/></label>{(['cline','pi'] as string[]).includes(descriptor.engine)&&baseUrl&&<label>{uiText("Compatible model ID")}<input aria-label={uiText("Compatible model ID")} value={model} onChange={event=>setModel(event.target.value)} disabled={shared}/></label>}<label>{uiText("API key (leave empty to keep)")}<input aria-label={uiText("{0} API key",[descriptor.label])} type="password" autoComplete="new-password" disabled={shared} value={apiKey} onChange={event=>setApiKey(event.target.value)}/></label><p><button type="button" disabled={saving} onClick={()=>void save()}>{saving?uiText("Saving…"):uiText("Save configuration")}</button></p></div>}
     {plan&&<div><p>{uiText("Install")} {plan.package}@{plan.version}  {uiText("to the backend application directory without changing the global PATH.")}</p><code>{plan.directory}</code>{!!plan.requires?.length&&<small>{uiText("Requirements:")}{plan.requires.join('；')}</small>}<p><button type="button" disabled={job?.state==='running'} onClick={()=>{setPlan(undefined);void api.call('engine.install',{engine:descriptor.engine,confirm:true}).then(setJob).catch(cause=>setError(cause.message))}}>{uiText("Confirm download and installation")}</button><button type="button" onClick={()=>setPlan(undefined)}>{uiText("Cancel")}</button></p></div>}

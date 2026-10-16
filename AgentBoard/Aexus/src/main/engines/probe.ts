@@ -13,7 +13,7 @@ import {assertEngineExecutable} from './registry'
 export async function probeEngine(engine:EngineId,confirm:boolean,model?:string){
   if(!isEngine(engine))throw Error('Unknown Coding Agent engine')
   if(confirm!==true)throw Error('测试调用可能产生模型费用；请明确确认后重试 (--confirm)')
-  if(engine==='cline'||engine==='pi'){await assertEngineExecutable(engine);return (await import('./process-probe')).probeProcessEngine(engine,model)}
+  if(engine==='cline'||engine==='pi'||engine==='opencode'){await assertEngineExecutable(engine);return (await import('./process-probe')).probeProcessEngine(engine,model)}
   const executable=await assertEngineExecutable(engine),cwd=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'agents-engine-probe-')))
   const selected=model||(engine==='codex'?'gpt-6-luna':deepSeekProvider()?'deepseek-flash':'haiku')
   const prompt='Reply with exactly OK. Do not use tools, inspect files, or perform any other task.'

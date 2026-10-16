@@ -83,7 +83,7 @@ async function forward(args={}){
  if(destAgent){
   if(destAgent.busy||require('./agent-occupancy.cjs').occupied({agentId:destAgent.id,hostId:destAgent.targetHostId,directory:destAgent.cwd}))
    throw Error('Native Agent session or workspace is busy');
-  if(!['codex','claude','pi','cline'].includes(destAgent.engine)||!['native','pty'].includes(destAgent.transport))
+  if(!['codex','claude','pi','cline','opencode'].includes(destAgent.engine)||!['native','pty'].includes(destAgent.transport))
    throw Error('Native destination cannot accept a structured task');
  }
  const downstream='forward:'+hash(args.clientMessageId);

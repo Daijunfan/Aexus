@@ -7,7 +7,7 @@ import {workCodexConfig} from './scope'
 export async function inspectEngine(id:string,section:string){
   const s=getLive(id);if(!s)throw new Error('请先打开员工会话')
   const meta=sessionInfo(id)!
-  if(s.engine==='cline'||s.engine==='pi'){
+  if(s.engine==='cline'||s.engine==='pi'||s.engine==='opencode'){
     const capabilities=engineCapabilities(s.engine)
     if(section==='capabilities')return {...capabilities,sections:['mcp','usage','config'],operations:['session.enqueue','session.queue','session.export','approval.respond',...(capabilities.capabilities.images?['workspace.image']:[]),...(capabilities.capabilities.plan?['config.plan']:[]),...(capabilities.capabilities.steer?['session.steer']:[])],nativeCommands:meta.commands}
     if(section==='config')return meta

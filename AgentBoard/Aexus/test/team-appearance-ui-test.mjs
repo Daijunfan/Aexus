@@ -21,13 +21,10 @@ try{
  await expect.poll(async()=>(await cli('session','status')).every(item=>item.initialization?.status==='ready')).toBe(true)
  await cli('canvas','set','--x','80','--y','120','--zoom','.8');await expect(page.locator('.infinite-canvas')).toHaveAttribute('data-zoom','0.800')
  await cli('view','open','team','--name','Studio');await expect(page.locator('input[name="team-name"]')).toBeEditable()
- await expect(page.locator('.appearance-settings')).toBeVisible()
- await page.locator('input[aria-label="Team 背景颜色"]').fill('#d8e9f3');await page.locator('select[name="pattern"]').selectOption('grid');await page.locator('input[name="scenery"]').uncheck()
- await page.locator('input[name="subtitle"]').fill('DESIGN & BUILD');await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)
+ await expect(page.locator('.appearance-settings')).toHaveCount(0)
+ await page.locator('.save-team').click();await expect(page.locator('.office-panel')).toHaveCount(0)
  const room=page.locator('[data-department="Studio"]'),layout=()=>cli('room','layout','Studio')
- await expect.poll(()=>room.evaluate(e=>e.style.getPropertyValue('--room-floor-top'))).toBe('#d8e9f3')
- ok(await room.locator('.room-scenery').count()===0&&(await cli('session','list')).rooms.Studio.design.pattern==='grid','custom background color, texture and scene visibility are saved through the CLI')
- await cli('view','open','employee','--employee',first.id);await page.getByRole('button',{name:'编辑资料',exact:true}).click();await expect(page.locator('input[name="title"]')).toBeEditable();await expect(page.locator('select[name="kind"]')).toHaveValue('worker');await page.locator('.profile-change-character').click();await page.locator('.avatar-options button').nth(1).click();await page.locator('.save-employee').click();await cli('view','close');await expect(page.locator('.office-panel')).toHaveCount(0)
+ await cli('view','open','employee','--employee',first.id);await page.getByRole('button',{name:'编辑资料',exact:true}).click();await expect(page.locator('input[name="title"]')).toBeEditable();await expect(page.locator('.employee-form select[name="kind"]')).toHaveCount(0);await page.locator('.profile-edit-avatar').click();await page.locator('.avatar-options button').nth(1).click();await page.locator('.save-employee').click();await cli('view','close');await expect(page.locator('.office-panel')).toHaveCount(0)
  ok((await cli('session','list')).sessions.find(c=>c.id===first.id).avatar==='dewey','employee profile name and character remain editable while job type is fixed')
  await expect(room.locator('.room-resize-handle,.department-sign')).toHaveCount(0);await expect(room.locator('.team-title')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
  const beforeMove=(await layout()).bounds,rbox=await room.boundingBox(),blank={x:rbox.x+30*.8,y:rbox.y+480*.8};await page.mouse.move(blank.x,blank.y);await page.mouse.down();await page.mouse.move(blank.x+40,blank.y+24,{steps:10});await page.mouse.up();await expect.poll(async()=>(await layout()).bounds.x).toBe(beforeMove.x+50);await expect(page.locator('.team-workspace,.conversation-dialog')).toHaveCount(0);ok(true,'team interior drags the whole Team without opening a page; title has no plaque and no corner button');
@@ -55,9 +52,9 @@ try{
  await cli('room','bounds','Studio','--shape','rounded','--width','1040','--height','760');await cli('card','place',first.id,'--x','210','--y','190','--snap','off');await cli('card','place',second.id,'--x','540','--y','190','--snap','off')
  await expect.poll(()=>page.locator(`[data-card-id="${second.id}"]`).evaluate(e=>parseFloat(e.parentElement.style.left))).toBe(540)
  await page.screenshot({path:path.join(project,'artifacts/team-appearance-0.11.png')})
- await cli('view','open','team','--name','Studio');await expect(page.locator('input[aria-label="Team 背景颜色"]')).toHaveValue('#d8e9f3');await expect(page.locator('select[name="pattern"]')).toHaveValue('grid');await expect(page.locator('input[name="width"]')).toHaveValue('1040')
- await page.locator('.appearance-settings').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(project,'artifacts/team-settings-0.11.png')});await page.locator('.panel-close').click()
- ok(true,'background settings and manually resized dimensions reopen correctly')
+ await cli('view','open','team','--name','Studio');await expect(page.locator('input[name="team-name"]')).toBeEditable();assert.equal((await layout()).bounds.width,1040)
+ await page.screenshot({path:path.join(project,'artifacts/team-settings-0.11.png')});await page.locator('.panel-close').click()
+ ok(true,'team name and manually resized dimensions reopen correctly')
  ok(!errors.length,'no renderer exceptions: '+errors.join('; '));console.log(`PASS=${n} FAIL=0 — hidden native pointer tests, no model calls`)
 }catch(error){console.error(error);if(!page.isClosed()){console.error(await page.locator('body').innerText());await page.screenshot({path:path.join(project,'artifacts/team-appearance-error.png')})}throw error}
 finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

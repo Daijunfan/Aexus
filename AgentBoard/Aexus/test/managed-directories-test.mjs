@@ -60,9 +60,10 @@ try{
   await assert.rejects(()=>hire('Link','outward/escape'))
   ok(!fs.existsSync(path.join(pluginRoot,'missing'))&&!fs.existsSync(path.join(projects,'escape')),'root ownership, duplicates, missing selections and symlink escapes are blocked before writing')
   }else{await assert.rejects(()=>cli('group','add','Plans','--mode','work','--plugin','mininotion'));await assert.rejects(()=>cli('group','add','../escape','--mode','build'));await assert.rejects(()=>cli('group','add','Escape','--root',temp));ok(!fs.existsSync(path.join(temp,'escape')),'arbitrary roots and path-like Build names remain rejected');console.log('SKIP removed Mini Notion Work workspace, copied docs and scoped launcher scenarios')}
-  const builder=await hire('Builder','.','existing','project1')
+  await assert.rejects(()=>hire('Root','.','existing','project1'))
+  const builder=await hire('Builder','src','create','project1')
   const nested=await hire('Builder child','src/employee','create','project1')
-  ok(builder.cwd===path.join(projects,'project1')&&nested.cwd.startsWith(builder.cwd+'/'),'Build accepts its project root or nested employee folders')
+  ok(builder.cwd===path.join(projects,'project1','src')&&nested.cwd.startsWith(builder.cwd+'/'),'Build accepts strict employee subfolders, never the project root')
   await cli('group','rename','project1','project renamed')
   const renamed=(await cli('session','list')).sessions.find(c=>c.id===nested.id)
   ok(renamed.group==='project renamed'&&renamed.cwd===path.join(projects,'project1','src/employee')&&fs.realpathSync(nested.cwd)===renamed.cwd&&!fs.existsSync(path.join(projects,'project renamed')),'Build Team display name changes while existing paths remain intact')

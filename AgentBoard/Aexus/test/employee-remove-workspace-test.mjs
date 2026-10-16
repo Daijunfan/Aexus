@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 import {fixtureCore} from './fixtures/headless-core.mjs'
-const f=await fixtureCore(),put=card=>{fs.mkdirSync(path.join(card.cwd,'nested'),{recursive:true});fs.writeFileSync(path.join(card.cwd,'nested/file.txt'),'keep or delete exactly this workspace')}
+const f=await fixtureCore(),put=card=>{fs.mkdirSync(path.join(card.cwd,'nested'),{recursive:true});fs.writeFileSync(path.join(card.cwd,'nested/file.txt'),'keep or delete exactly this workspace')},storeFile=path.join(f.env.AGENTS_COMPANY_HOME,'sessions.json'),setCard=(id,patch)=>{const state=JSON.parse(fs.readFileSync(storeFile,'utf8'));Object.assign(state.sessions.find(c=>c.id===id),patch);fs.writeFileSync(storeFile,JSON.stringify(state))}
 try{
  await f.cli('group','add','A')
  const keep=await f.create('Keep');put(keep);await f.cli('card','remove',keep.id)
@@ -11,8 +11,8 @@ try{
  const outside=path.join(f.temp,'outside');fs.mkdirSync(outside);fs.writeFileSync(path.join(outside,'safe.txt'),'safe');fs.symlinkSync(outside,path.join(both.cwd,'outside-link'))
  await f.cli('card','remove',both.id,'--delete-workspace')
  assert.ok(!fs.existsSync(both.cwd));assert.ok(fs.existsSync(path.join(outside,'safe.txt')))
- const bound=await f.cli('card','create','--title','Bound','--group','A','--directory-mode','bind','--cwd',outside,'--model','gpt-6-luna');await f.ready(bound.id)
- await f.cli('card','remove',bound.id,'--delete-workspace');assert.ok(!fs.existsSync(outside))
+ await assert.rejects(()=>f.cli('card','create','--title','External binder','--group','A','--directory-mode','bind','--cwd',outside,'--model','gpt-6-luna'),/超出所属 Team 的范围/)
+ const bound=await f.create('Bound','A');setCard(bound.id,{cwd:outside,directoryMode:'bind'});await f.cli('card','remove',bound.id,'--delete-workspace');assert.ok(!fs.existsSync(outside))
  const parent=await f.create('Parent'),nested=path.join(parent.cwd,'child');fs.mkdirSync(nested)
  const child=await f.cli('card','create','--title','Child','--group','A','--directory-mode','bind','--cwd',nested,'--model','gpt-6-luna');await f.ready(child.id)
  await assert.rejects(()=>f.cli('card','remove',parent.id,'--delete-workspace'),/其他员工/)
@@ -27,9 +27,9 @@ try{
  const denied=await f.raw(token,'card','remove',managed.id,'--delete-workspace');assert.equal(denied.ok,false);assert.ok(fs.existsSync(managed.cwd))
  await f.call(token,'card','remove',managed.id);assert.ok(fs.existsSync(managed.cwd))
  const retry=await f.create('Retry'),root=(await f.cli('session','list')).teamRoots.A
- const rootEmployee=await f.cli('card','create','--title','Root','--group','A','--directory-mode','bind','--cwd',root,'--model','gpt-6-luna');await f.ready(rootEmployee.id)
+ const rootEmployee=await f.create('Root','A');setCard(rootEmployee.id,{cwd:root,directoryMode:'bind'})
  await assert.rejects(()=>f.cli('card','remove',rootEmployee.id,'--delete-workspace'),/Team/)
- assert.ok(fs.existsSync(retry.cwd));await f.cli('card','remove',rootEmployee.id)
+ assert.ok(fs.existsSync(retry.cwd)&&fs.existsSync(root));await f.cli('card','remove',rootEmployee.id)
  for(const field of ['identityFile','knownHosts','sshConfig']){
   const owner=await f.create('SSH '+field),file=path.join(owner.cwd,'shared-ssh-file');fs.writeFileSync(file,'fixture SSH dependency')
   const host=await f.cli('host','create','--data',JSON.stringify({name:'Shared '+field,host:'unused.invalid',os:'linux',defaultDirectory:'/tmp',[field]:file}))

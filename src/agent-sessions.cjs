@@ -9,7 +9,7 @@ const hosts = require('./agent-hosts.cjs');
 const native = require('./agent-native.cjs');
 const {Companion}=require('./agent-companion.cjs');
 const ENGINES = hosts.ENGINES;
-const labels = {codex:'Codex',claude:'Claude Code',cline:'Cline',pi:'Pi'};
+const labels = {codex:'Codex',claude:'Claude Code',cline:'Cline',pi:'Pi',opencode:'OpenCode'};
 const file = path.join(registry.home,'agents.json');
 const records = new Map(), live = new Map(), companions=new Map(), ptyRoutes=new Map(), opening = new Set();
 let loaded = false, shuttingDown = false;
@@ -43,10 +43,24 @@ function cliArguments(item,{recover=false,fresh=false}={}){
     if(!item.nativeSessionId)throw Error('Exact Cline session ID is missing; refusing to start another conversation.');
     return ['--id',item.nativeSessionId,'--tui'];
   }
+  if(item.engine==='opencode'){
+    if(!item.nativeSessionId)throw Error('Exact OpenCode session ID is missing; refusing to start a different conversation.');
+    return ['--session',item.nativeSessionId];
+  }
   if(item.engine==='codex'&&recover){
     if(!item.nativeSessionId)throw Error('This legacy Codex TUI role has no exact session ID. Refusing resume --last because it could open another session.');
     return ['resume',item.nativeSessionId];
   }
+  return [];
+}
+// Native CLI permission flags for a same-host cloud role (no routing adapter).
+// Restricted must stay deterministic even when the host profile defaults to
+// full. Pi and OpenCode have no native tool-approval flag, so they return
+// nothing here: Pi stays on its own TUI and OpenCode's per-process override is
+// applied as a launch environment in launchRole below.
+function nativePermissionArgs(engine, permission) {
+  if (engine === 'claude') return ['--permission-mode', permission === 'full' ? 'bypassPermissions' : 'manual'];
+  if (engine === 'cline') return ['--auto-approve', permission === 'full' ? 'true' : 'false'];
   return [];
 }
 
@@ -174,15 +188,34 @@ async function launchRole(item, args = {}) {
         item.nativeSessionId=state.sessionId;item.nativeHasInput=state.hasInput;
         save();
       }
+      if(item.engine==='opencode'&&source.id===target.id){
+        const state=await require('./agent-cli.cjs').createOpenCodeSession(target,item.cwd,item.nativeSessionId,args.recover===true);
+        item.nativeSessionId=state.sessionId;save();
+      }
       let cliArgs=cliArguments(item,{recover:args.recover===true,fresh:args.fresh===true});
       if(item.engine==='claude')cliArgs=await require('./agent-cli.cjs').prepareClaudeSession(item,{recover:args.recover===true});
       if(item.engine==='pi')cliArgs=await require('./agent-cli.cjs').preparePiSession(item);
+      // Same-host cloud roles have no routing adapter, so the role permission
+      // must reach the native CLI directly. This keeps restricted/full
+      // deterministic even after the host's native profile defaults to full.
+      // Pi has no native tool-approval switch, so it stays on its own TUI.
+      if(!route && target.id !== 'local')cliArgs.push(...nativePermissionArgs(item.engine,item.permission));
       if(route?.args)cliArgs.push(...route.args);
       if(route&&item.engine==='pi')cliArgs.push('--no-builtin-tools','--no-extensions','--no-skills','--no-context-files','--no-prompt-templates',
         '--tools',['read',target.os==='windows'?'powershell':'bash','edit','write','ls','find','grep'].join(','),
         '--extension',path.join(__dirname,'../Runtime/pi_route.mjs'));
+      // OpenCode has no native tool-approval flag. A same-host cloud Ask role
+      // gets the official per-process OPENCODE_CONFIG_CONTENT override so its
+      // own approval UI asks for dangerous tools; Full and local keep the
+      // host's native default. Routed OpenCode is unsupported, so the override
+      // only applies to the direct same-host TUI.
+      const environment = route ? route.environment
+        : item.engine==='opencode'&&target.id!=='local'&&item.permission==='ask'
+          ? require('./agent-cli.cjs').opencodePermissionEnvironment('ask')
+          : undefined;
       const terminal = terminals.openTerminal(owner,args.cols ?? 100,args.rows ?? 28,{kind:'agent',engine:item.engine,command:item.engine,args:cliArgs,
-        ...(route ? {environment:route.environment,onClose:()=>{void route.close().finally(()=>{if(ptyRoutes.get(item.id)===route)ptyRoutes.delete(item.id)})}} : {}),...(source.id === 'local' ? {executable:hosts.binary(item.engine)} : {})});
+        ...(route ? {onClose:()=>{void route.close().finally(()=>{if(ptyRoutes.get(item.id)===route)ptyRoutes.delete(item.id)})}} : {}),
+        ...(environment ? {environment} : {}),...(source.id === 'local' ? {executable:hosts.binary(item.engine)} : {})});
       item.terminalId = terminal.id;
       route?.onExit?.(error=>{
         item.error=error.message;item.status=failureState(error);save();
@@ -222,7 +255,7 @@ async function open(args) {
       throw Error(support.routingNote||'The selected remote execution protocol is not available');
   }
   const cwd = hosts.directory(target,args.directory);
-  const permission = args.permission ?? 'ask';
+  const permission = args.permission ?? (target.id === 'local' ? 'ask' : 'full');
   if (!['ask','full'].includes(permission)) throw Error('Invalid Agent permission');
   const creationId = args.creationId;
   if (creationId !== undefined && (typeof creationId !== 'string' || !/^[a-zA-Z0-9_-]{8,100}$/.test(creationId))) throw Error('Invalid Agent creation ID');
@@ -258,6 +291,22 @@ function rename(args) {
   const item = identify(args), name = title(args.name);
   if (!records.has(item.id)) records.set(item.id,item);
   records.get(item.id).name = name;save();return view(records.get(item.id));
+}
+// Change an existing Agent's target-host permission without deleting the role.
+// The value persists and reaches the native CLI on the next launch; a running
+// session is never silently relaunched, and local roles keep their own config.
+function configure(args) {
+  const item = identify(args);
+  const permission = args.permission ?? item.permission;
+  if (!['ask','full'].includes(permission)) throw Error('Invalid Agent permission');
+  // The launch/reconnect await window bakes the permission into the engine
+  // session (Codex initialize, Pi gate upload, same-host CLI args). A change
+  // accepted mid-flight would leave the persisted field diverging from the
+  // process that is starting, so reuse the existing opening/activations states.
+  if (opening.has(item.id) || activations.has(item.id)) throw Error('会话仍在启动，请待启动完成后再更改目标主机权限');
+  if (view(item).running) throw Error('停止会话后才能更改目标主机权限，更改将在下次启动时生效');
+  if (!records.has(item.id)) records.set(item.id,item);
+  records.get(item.id).permission = permission;save();return view(records.get(item.id));
 }
 async function activate(args){
  const item=identify(args);
@@ -440,7 +489,8 @@ async function shutdown() {
  }
  await Promise.all([...live.values(),...companions.values(),...ptyRoutes.values()].map(client => client.close()));live.clear();companions.clear();ptyRoutes.clear();
 }
-module.exports = {ENGINES,capabilities:(args,targetHostId)=>typeof args==='string'?hosts.capabilities(args,targetHostId):hosts.capabilities(args.id,args.targetHostId),hosts:hosts.list,open,sessions,session,order,swap,close,rename,restart,activate,tui,remove,assertHostIdle,assertHostRemovable,shutdown,
+module.exports = {ENGINES,capabilities:(args,targetHostId)=>typeof args==='string'?hosts.capabilities(args,targetHostId):hosts.capabilities(args.id,args.targetHostId),hosts:hosts.list,open,sessions,session,order,swap,close,rename,configure,restart,activate,tui,remove,assertHostIdle,assertHostRemovable,shutdown,
   executionIdentity,
   read:args => executionClient(args).read(args.cursor),send:args => executionClient(args).send(args.text,args.scope),
-  respond:args => executionClient(args).respond(args),interrupt:args => executionClient(args).interrupt()};
+  respond:args => executionClient(args).respond(args),interrupt:args => executionClient(args).interrupt(),
+  nativePermissionArgs};

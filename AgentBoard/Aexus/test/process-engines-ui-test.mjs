@@ -18,7 +18,7 @@ try{
   if(engine==='cline'||engine==='pi')await call('engine.configure',{engine,patch:{apiKey:'fixture-no-real-key'}})
   cards.push(await createReady(call,{title:engine,group:'Mixed Coding Agents',engine,avatar}))
  }
- await page.locator('.add-employee').click();await expect(page.locator('.engine-choices button')).toHaveCount(4);await page.locator('.engine-choices').screenshot({path:out+'/engine-picker.png'})
+ await page.locator('.add-employee').click();await expect(page.locator('.engine-choices button')).toHaveCount(5);await page.locator('.engine-choices').screenshot({path:out+'/engine-picker.png'})
  // Closing a product view also leaves native card identities intact.
  await page.keyboard.press('Escape');await call('view.open',{kind:'home'});await page.locator('.employee-form').waitFor({state:'detached'})
  for(const theme of ['white','black']){
@@ -37,7 +37,7 @@ try{
  for(const card of cards.filter(c=>['cline','pi'].includes(c.engine))){
   await call('view.open',{kind:'conversation',employee:card.id});await page.locator('.composer textarea').waitFor();await expect(page.locator('.session-settings')).toContainText(card.engine==='cline'?'Cline':'Pi');await expect(page.locator('.session-settings')).toContainText('Thinking off')
   const engineControl=page.locator('.session-settings [data-control="engine"]');assert.equal(await engineControl.evaluate(el=>el.tagName),'SPAN');await expect(engineControl).toHaveAttribute('title',/engine is fixed/);
-  await page.getByRole('button',{name:'Employee details',exact:true}).click();await page.getByRole('button',{name:'Edit profile',exact:true}).click();await expect(page.locator('.employee-form .engine-choices')).toHaveCount(0);await expect(page.locator('.employee-engine-fixed')).toContainText('engine is fixed');await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);await cliBack();
+  await page.getByRole('button',{name:'Employee details',exact:true}).click();await page.getByRole('button',{name:'Edit profile',exact:true}).click();await expect(page.locator('.employee-form .engine-choices')).toHaveCount(0);await expect(page.locator('.employee-form .profile-fixed-summary')).toContainText(card.engine==='cline'?'Cline':'Pi');await page.locator('.save-employee').click();await expect(page.locator('.employee-form')).toHaveCount(0);await cliBack();
   await page.locator('.composer textarea').fill('UNICODE_FIXTURE');await page.locator('.composer textarea').press('Enter');await expect(page.locator('.transcript')).toContainText('春')
   if(card.engine==='cline'){
    const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII='
@@ -52,5 +52,5 @@ try{
   await call('view.close')
  }
  assert.deepEqual(errors,[]);assert.ok(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(w=>!w.isVisible())))
- console.log('PASS hidden UI: 4 creation-only engine choices/marks in both themes; existing engine read-only; sidebar tools have equal dimensions and gaps; Cline/Pi normalized chat, defaults and capability controls; Cline pasted screenshot sent as image data; fixture only')
+ console.log('PASS hidden UI: 5 creation-only engine choices/marks in both themes; existing engine read-only; sidebar tools have equal dimensions and gaps; Cline/Pi normalized chat, defaults and capability controls; Cline pasted screenshot sent as image data; fixture only')
 }finally{await app.close();fs.rmSync(temp,{recursive:true,force:true})}

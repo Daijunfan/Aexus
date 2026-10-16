@@ -6,7 +6,7 @@ const tools=require('./collaboration-mcp.cjs'),{JsonLines}=require('./agent-comp
 const apiApprovals=require('./api-approvals.cjs');
 class Companion {
  constructor(role,changed){
-  if(!['claude','pi','cline'].includes(role.engine)||!/^[\w-]{1,128}$/.test(role.id))throw Error('Invalid companion engine or Agent ID');
+  if(!['claude','pi','cline','opencode'].includes(role.engine)||!/^[\w-]{1,128}$/.test(role.id))throw Error('Invalid companion engine or Agent ID');
   this.role=role;this.changed=changed;this.busy=false;this.active=null;this.approvals=new Map();this.cursor=0;this.events=[];
   this.dead=false;this.failed=null;this.ready=null;this.transport=null;this.endpoint=null;
   role.collaborationSessionId??=randomUUID();role.collaborationMode='independent';
@@ -52,6 +52,7 @@ class Companion {
     this.changed();return;
    }catch(error){await this.transport.close();this.transport=null;throw error}
   }
+  if(this.role.engine==='opencode'){await this.openOpenCode();return}
   const dirCline=path.join(dir,'cline');fs.mkdirSync(dirCline,{recursive:true,mode:0o700});
   this.transport=new JsonLines(hosts.processOn(machine,'cline',['--acp','--auto-approve','false','--config',dirCline,'--data-dir',path.join(dirCline,'data')],{cwd}),
    event=>this.onCline(event));
@@ -63,6 +64,35 @@ class Companion {
    if(!result?.sessionId&&!existing||existing&&result?.sessionId&&result.sessionId!==existing)throw Error('Exact Cline ACP conversation changed');
    this.role.collaborationAcpSessionId=existing||result.sessionId;this.changed();
   }catch(error){await this.transport.close();this.transport=null;throw error}
+  return;
+ }
+ // OpenCode shares Cline's ACP lifecycle (initialize, session/new|load,
+ // session/prompt, session/cancel, session/request_permission). Only the spawn
+ // command differs, and OpenCode acknowledges session/load with an empty result
+ // instead of echoing the id, so the stored id is the exact-identity anchor.
+ async openOpenCode(){
+  if(this.dead)throw Error('Companion is closed');
+  const machine=this.machine();
+  if(machine.id!=='local')throw Error('Structured OpenCode requires a controller-local engine; remote PTY remains available');
+  const cwd=this.role.cwd;
+  await hosts.checkDirectory(hosts.get(this.role.targetHostId),cwd);
+  this.endpoint??=await tools.open(this);
+  // Full keeps the host's native default (no approval). Ask injects the
+  // official per-process override so dangerous tools emit
+  // session/request_permission, handled by onCline below.
+  const environment=require('./agent-cli.cjs').opencodePermissionEnvironment(this.role.permission);
+  this.transport=new JsonLines(hosts.processOn(machine,'opencode',['acp'],{cwd,environment}),event=>this.onCline(event));
+  try{
+   await this.transport.request('initialize',{protocolVersion:1,clientInfo:{name:'cloudhosts',version:'3'},clientCapabilities:{}},'acp',18000);
+   const existing=this.role.collaborationAcpSessionId;
+   const method=existing?'session/load':'session/new';
+   const result=await this.transport.request(method,{cwd,...(existing?{sessionId:existing}:{}),
+    mcpServers:[{name:'cloudhosts_core',type:'http',url:this.endpoint.url}]},'acp',24000);
+   // OpenCode's session/load succeeds with {}; session/new returns the new id.
+   if(existing){if(result?.sessionId&&result.sessionId!==existing)throw Error('Exact OpenCode ACP conversation changed')}
+   else{if(!result?.sessionId)throw Error('OpenCode ACP session could not be created');this.role.collaborationAcpSessionId=result.sessionId}
+   this.changed();
+  }catch(error){await this.transport.close();this.transport=null;throw error}
  }
  onPi(event){
   if(event.type==='extension_ui_request'){
@@ -73,6 +103,7 @@ class Companion {
     this.transport?.write({type:'extension_ui_response',id:event.id,value:JSON.stringify(response)});})();return;
    }
    if(event.method==='confirm'&&event.title==='CloudHosts approval'){
+    if(this.role.permission==='full'){this.transport?.write({type:'extension_ui_response',id:event.id,confirmed:true});return}
     try{this.requestApproval('pi',event.id,JSON.parse(event.message))}catch{this.transport?.write({type:'extension_ui_response',id:event.id,cancelled:true})}
     return;
    }
@@ -99,7 +130,9 @@ class Companion {
   if(event.type==='transport_error')this.finish('failed',event.error);
  }
  onCline(event){
-  if(event.method==='session/request_permission'&&event.id!==undefined){this.requestApproval('cline',event.id,event.params?.toolCall||{},event.params?.options||[]);return}
+  if(event.method==='session/request_permission'&&event.id!==undefined){
+   if(this.role.permission==='full'){const option=event.params?.options?.find(item=>item.kind==='allow_once');this.transport?.write({jsonrpc:'2.0',id:event.id,result:{outcome:option?{outcome:'selected',optionId:option.optionId}:{outcome:'cancelled'}}});return}
+   this.requestApproval('cline',event.id,event.params?.toolCall||{},event.params?.options||[]);return}
   if(event.method==='session/update'&&this.active){
    const update=event.params?.update||{};
    if(update.sessionUpdate==='agent_message_chunk'&&update.content?.type==='text'){const text=update.content.text||'';this.active.output+=text;this.emit('delta',text,{turnId:this.active.id})}
@@ -151,7 +184,7 @@ class Companion {
    }else{
     this.transport.request('session/prompt',{sessionId:this.role.collaborationAcpSessionId,prompt:[{type:'text',text}]},'acp',0)
      .then(result=>this.finish(result?.stopReason==='cancelled'?'interrupted':'completed',
-      result?.stopReason==='cancelled'?'Cline cancelled':null)).catch(error=>this.finish('failed',error.message));
+      result?.stopReason==='cancelled'?'Agent cancelled':null)).catch(error=>this.finish('failed',error.message));
    }
    journal.accepted({id:this.role.id,threadId:this.threadId},id,text);
    return {accepted:true,turnId:id,sessionId:this.role.id,engineSessionId:this.threadId};
@@ -192,7 +225,7 @@ class Companion {
  async interrupt(){
   if(!this.active)return {interrupted:false};
   if(this.role.engine==='pi')this.transport?.write({type:'abort'});
-  else if(this.role.engine==='cline')this.transport?.write({jsonrpc:'2.0',method:'session/cancel',params:{sessionId:this.role.collaborationAcpSessionId}});
+  else if(this.role.engine==='cline'||this.role.engine==='opencode')this.transport?.write({jsonrpc:'2.0',method:'session/cancel',params:{sessionId:this.role.collaborationAcpSessionId}});
   else this.active.child?.kill('SIGTERM');
   this.finish('interrupted','Interrupted by operator');return {interrupted:true};
  }

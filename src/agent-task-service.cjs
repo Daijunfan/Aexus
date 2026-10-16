@@ -3,7 +3,7 @@
 // binds exact Agent identity, session activation, authorization and receipt.
 const agents=require('./agent-sessions.cjs'),journal=require('./session-journal.cjs');
 const sources=new Set(['private','message','group','company','plan','delegation']);
-const engines=new Set(['codex','claude','pi','cline']);
+const engines=new Set(['codex','claude','pi','cline','opencode']);
 function sameIdentity(before,current){
  return !!current&&['id','engine','transport','targetHostId','engineHostId','cwd'].every(key=>before[key]===current[key])&&
   (!before.threadId||before.threadId===current.threadId)&&

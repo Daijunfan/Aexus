@@ -49,7 +49,7 @@ export async function withCodexSessionApi<T>(action:(call:Call)=>Promise<T>,opti
 /** Fork only the active native context. Never share deletion ownership with the source. */
 export async function forkEmployeeContext(source:StoredSession,cwd:string,title:string,workRoot?:string){
   if(source.nativeConfigRoot)throw Error('Isolated native-history cloning is not supported by the current adapter')
-  if((source.engine==='cline'||source.engine==='pi')&&nativeSessionRefs(source).some(ref=>ref.engine===source.engine))throw Error(source.engine+' native-session cloning is not supported; the existing history was not copied')
+  if((source.engine==='cline'||source.engine==='pi'||source.engine==='opencode')&&nativeSessionRefs(source).some(ref=>ref.engine===source.engine))throw Error(source.engine+' native-session cloning is not supported; the existing history was not copied')
   if(source.kind==='cloud-native-worker'&&source.engine==='claude')throw new Error('云端 Claude Code 会话克隆尚未提供可靠的原生复制接口；原会话保持不变')
   if(source.engine==='claude'&&source.claudeSessionId){
     const result=await (await loadClaudeSdk()).forkSession(source.claudeSessionId,{title})
@@ -83,7 +83,8 @@ function removeLines(file:string,ids:Set<string>,key:string) {
 }
 
 export async function deleteNativeSessions(refs:NativeSession[]):Promise<void> {
-  for(const ref of refs)if(!(ref.engine==='cline'?/^[A-Za-z0-9_-]{1,128}$/:/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i).test(ref.id))throw new Error(`无效的 ${ref.engine} 原生会话 ID，未移除员工`)
+  const nativeIdPattern=(ref:NativeSession)=>ref.engine==='cline'?/^[A-Za-z0-9_-]{1,128}$/:ref.engine==='opencode'?/^ses_[A-Za-z0-9_-]{1,128}$/:/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
+  for(const ref of refs)if(!nativeIdPattern(ref).test(ref.id))throw new Error(`无效的 ${ref.engine} 原生会话 ID，未移除员工`)
   const allOwned=refs.filter(ref=>ref.ownership!=='external')
   for(const profile of new Set(allOwned.flatMap(ref=>ref.profile?[ref.profile]:[]))){if(!path.resolve(profile).startsWith(path.join(APP_HOME,'agent-access')+path.sep))throw Error('Invalid isolated engine profile');fs.rmSync(profile,{recursive:true,force:true})}
   const owned=allOwned.filter(ref=>!ref.profile)

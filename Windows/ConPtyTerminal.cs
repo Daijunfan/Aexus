@@ -60,13 +60,27 @@ class ConPtyTerminal {
   }
   return result;
  }
+ static Dictionary<string,string> ConfigEnvironment(Dictionary<string,object> config){
+  var result=new Dictionary<string,string>();
+  if(!config.ContainsKey("environment")||config["environment"]==null)return result;
+  var env=config["environment"] as Dictionary<string,object>;
+  if(env==null)throw new Exception("Invalid terminal environment");
+  foreach(var pair in env){
+   var key=Convert.ToString(pair.Key);var value=pair.Value==null?null:Convert.ToString(pair.Value);
+   if(key==null||value==null||key.Length==0||!char.IsUpper(key[0]))throw new Exception("Invalid terminal environment");
+   foreach(char c in key)if(!(char.IsUpper(c)||char.IsDigit(c)||c=='_'))throw new Exception("Invalid terminal environment");
+   if(value.Contains("\n")||value.Contains("\r")||value.Contains("\0"))throw new Exception("Invalid terminal environment");
+   result[key]=value;
+  }
+  return result;
+ }
  static string PSArg(string value){return "'"+value.Replace("'","''")+"'";}
  static string POSIXArg(string text){return "'"+text.Replace("'","'\\''")+"'";}
  static string Remote(Dictionary<string,object> config){
   if(!config.ContainsKey("remote")||config["remote"]==null){
    string localAgent=Str(config,"command");
    if(localAgent=="")return "powershell.exe -NoLogo";
-   if(localAgent!="codex"&&localAgent!="claude"&&localAgent!="cline"&&localAgent!="pi")throw new Exception("Invalid agent executable");
+   if(localAgent!="codex"&&localAgent!="claude"&&localAgent!="cline"&&localAgent!="pi"&&localAgent!="opencode")throw new Exception("Invalid agent executable");
    string executable=Str(config,"executable",localAgent);
    // Native .exe engines should own the ConPTY session directly. Routing them
    // through PowerShell can leave a shell alive after Ctrl+C exits the Agent,
@@ -89,17 +103,19 @@ class ConPtyTerminal {
   string agent=Str(config,"command");
   string tokenFile=Str(config,"tuiTokenFile");
   if(tokenFile!=""&&(agent!="codex"||tokenFile.Contains("\0")||tokenFile.Contains("\n")||tokenFile.Contains("\r")))throw new Exception("Invalid native TUI token file");
-  if(agent!="" && agent!="codex" && agent!="claude" && agent!="cline" && agent!="pi")throw new Exception("Invalid agent executable");
+  if(agent!="" && agent!="codex" && agent!="claude" && agent!="cline" && agent!="pi" && agent!="opencode")throw new Exception("Invalid agent executable");
   if(String.IsNullOrWhiteSpace(host)||host.StartsWith("-"))throw new Exception("Invalid remote SSH host");
   args.Add(host);
   if(Str(t,"os")=="windows"){
    string script="try { Set-Location -LiteralPath '"+directory.Replace("'","''")+"' -ErrorAction Stop } catch { Write-Error $_; exit 1 }; if (Get-Module -ListAvailable PSReadLine) { Import-Module PSReadLine -ErrorAction SilentlyContinue }";
    if(tokenFile!="")script+="; $env:CLOUD_HOSTS_TUI_AUTH_TOKEN=([IO.File]::ReadAllText("+PSArg(tokenFile)+")).Trim(); Remove-Item -LiteralPath "+PSArg(tokenFile)+" -Force";
+   foreach(var pair in ConfigEnvironment(config))script+="; $env:"+pair.Key+"='"+pair.Value.Replace("'","''")+"'";
    if(agent!="")script+="; $program=(Get-Command -Name "+PSArg(agent)+" -CommandType Application -ErrorAction Stop|Select-Object -First 1).Source; & $program "+String.Join(" ",AgentArgs(config).ConvertAll(PSArg))+"; exit $LASTEXITCODE";
    args.Add("powershell.exe -NoLogo "+(agent==""?"-NoExit ":"")+"-EncodedCommand "+Convert.ToBase64String(Encoding.Unicode.GetBytes(script)));
   }else{
    string dir="'"+directory.Replace("'","'\\''")+"'";
    string shellAgent="export PATH=\"$HOME/.npm-global/bin:$HOME/.local/bin:$PATH\"; ";
+   foreach(var pair in ConfigEnvironment(config))shellAgent+="export "+pair.Key+"="+POSIXArg(pair.Value)+"; ";
    if(tokenFile!="")shellAgent+="IFS= read -r CLOUD_HOSTS_TUI_AUTH_TOKEN < "+POSIXArg(tokenFile)+"; export CLOUD_HOSTS_TUI_AUTH_TOKEN; rm -f -- "+POSIXArg(tokenFile)+"; ";
    shellAgent+="exec "+agent;
    foreach(string argument in AgentArgs(config))shellAgent+=" "+POSIXArg(argument);

@@ -301,7 +301,7 @@ async function main() {
     case 'terminal.input': {const p=parse(rest),data=p.file?readInputFile(p.file):p.data??p._[1]??'';return out(await call('terminal.input',{id:p._[0],data:data+(p.enter?'\r':'')}))}
     case 'terminal.resize': {const p=parse(rest);return out(await call('terminal.resize',{id:p._[0],cols:Number(p.cols),rows:Number(p.rows)}))}
     case 'workspace.suggest':case 'workspace.choose': {
-      const p=parse(rest);return out(await call(`workspace.${sub}`,{team:p.team,path:p.path,workEnvironment:p['work-environment'],mode:p.mode,pluginId:p.plugin,remote:remoteFlags(p)}))
+      const p=parse(rest);return out(await call(`workspace.${sub}`,{team:p.team,path:p.path,workEnvironment:p['work-environment'],mode:p.mode,pluginId:p.plugin,parent:p.parent,remote:remoteFlags(p)}))
     }
     case 'workspace.image':case 'workspace.list':case 'workspace.read':case 'workspace.write':case 'workspace.mkdir':case 'workspace.move':case 'workspace.trash':case 'workspace.restore': {
       const p=parse(rest),content=p.file?readInputFile(p.file):p.content
@@ -541,7 +541,7 @@ async function main() {
     case 'engine.remote-check': {const p=parse(rest);return out(await call('engine.remote-check',{team:p.team,engine:p.engine,directory:p.directory}))}
     case 'engine.remote-sessions': {const p=parse(rest);return out(await call('engine.remote-sessions',{team:p.team,engine:p.engine}))}
     case 'group.add':
-      {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p),os:p.os,distribution:p.distribution }), (s) => s.groups.join('\n'))}
+      {const p=parse(rest);return out(await call('group.add', { name: rest[0], root:p.root,mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],parent:p.parent,remote:remoteFlags(p),os:p.os,distribution:p.distribution }), (s) => s.groups.join('\n'))}
     case 'group.configure':
       {const p=parse(rest);return out(await call('group.configure',{name:p._[0],mode:p.mode,pluginId:p.plugin,directoryMode:p['directory-mode'],root:p.root,hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p)}))}
     case 'group.root':

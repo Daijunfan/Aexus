@@ -145,7 +145,7 @@ export function agentBoardPane(root,initialHosts,rpc,message,initialHost,state={
   const host=hostById(targetId)||hosts[0]
   const options=hosts.map(h=>`<option data-no-i18n value="${esc(h.id)}">${esc(h.id==='local'?sourceLabel(h):h.name)} · ${esc(osName(h))}</option>`).join('')
   const origins=sourceChoices(hosts,host.id).map(h=>`<option value="${esc(h.id)}" ${h.id==='local'?'':'data-no-i18n'}>${esc(sourceLabel(h))}</option>`).join('')
-  const modal=dialog('agent-create-dialog',`<header><div><h2>新建 Coding Agent</h2><p>原生 CLI · 使用引擎自己的配置与会话</p></div><button type="button" data-close aria-label="关闭新建 Agent">×</button></header><form class="agent-create"><div class="agent-create-grid"><label>会话名称<input id="agent-name" required maxlength="100" value="Agent ${sessions.length+1}" autocomplete="off"></label><label>引擎来源<select id="agent-source">${origins}</select></label><label>Coding Agent 引擎<select id="agent-engine">${Object.entries(names).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>工作主机<select id="agent-target">${options}</select></label><label class="agent-create-directory">工作目录<input id="agent-directory" required autocomplete="off" spellcheck="false" value="${esc(host.defaultDirectory)}" placeholder="工作主机上的绝对路径"></label><label class="agent-permission" hidden>跨主机权限<select id="agent-permission"><option value="ask">按原生引擎请求确认</option><option value="full">完整权限 · 使用目标账号的权限</option></select></label></div><p class="agent-route-preview"></p><p id="agent-engine-status" role="status">正在检测引擎…</p><footer><button type="button" data-probe>重新检测</button><button type="button" data-close>取消</button><button class="primary" type="submit" id="agent-start" disabled>创建并连接</button></footer></form>`)
+  const modal=dialog('agent-create-dialog',`<header><div><h2>新建 Coding Agent</h2><p>原生 CLI · 使用引擎自己的配置与会话</p></div><button type="button" data-close aria-label="关闭新建 Agent">×</button></header><form class="agent-create"><div class="agent-create-grid"><label>会话名称<input id="agent-name" required maxlength="100" value="Agent ${sessions.length+1}" autocomplete="off"></label><label>引擎来源<select id="agent-source">${origins}</select></label><label>Coding Agent 引擎<select id="agent-engine">${Object.entries(names).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>工作主机<select id="agent-target">${options}</select></label><label class="agent-create-directory">工作目录<input id="agent-directory" required autocomplete="off" spellcheck="false" value="${esc(host.defaultDirectory)}" placeholder="工作主机上的绝对路径"></label><label class="agent-permission" hidden>目标主机权限<select id="agent-permission"><option value="full">完整权限 · 使用目标账号的权限</option><option value="ask">按原生引擎请求确认</option></select></label></div><p class="agent-route-preview"></p><p id="agent-engine-status" role="status">正在检测引擎…</p><footer><button type="button" data-probe>重新检测</button><button type="button" data-close>取消</button><button class="primary" type="submit" id="agent-start" disabled>创建并连接</button></footer></form>`)
   const el=modal.element,find=s=>el.querySelector(s),source=find('#agent-source'),target=find('#agent-target'),engine=find('#agent-engine'),start=find('#agent-start'),status=find('#agent-engine-status')
   let alive=true,checking=0,found,submitting=false,creationId,creationSignature
   // Work host A permits exactly two origins: A's own native CLI and the
@@ -177,7 +177,7 @@ export function agentBoardPane(root,initialHosts,rpc,message,initialHost,state={
    changed(engine)
    const verified=canCreateAgent(source.value,target.value,engine.value,found)
    start.disabled=submitting||!verified
-   find('.agent-permission').hidden=!routed
+   find('.agent-permission').hidden=target.value==='local'
    const engineHost=hosts.find(h=>h.id===source.value),workHost=hosts.find(h=>h.id===target.value)
    const origin=engineHost?sourceLabel(engineHost):'',work=workHost?.name||''
    const engineName=names[engine.value]||'Coding Agent'
@@ -214,7 +214,8 @@ export function agentBoardPane(root,initialHosts,rpc,message,initialHost,state={
   find('form').onsubmit=async event=>{
    event.preventDefault();if(submitting||start.disabled||!find('form').reportValidity())return
    submitting=true;start.disabled=true;status.textContent='正在验证工作目录并连接引擎…'
-   const args={engineHostId:source.value,targetHostId:target.value,engine:engine.value,name:find('#agent-name').value,directory:find('#agent-directory').value,permission:find('#agent-permission').value}
+   const args={engineHostId:source.value,targetHostId:target.value,engine:engine.value,name:find('#agent-name').value,directory:find('#agent-directory').value}
+   if(target.value!=='local')args.permission=find('#agent-permission').value
    const signature=JSON.stringify(args)
    if(signature!==creationSignature){creationSignature=signature;creationId=crypto.randomUUID()}
    args.creationId=creationId
@@ -228,12 +229,13 @@ export function agentBoardPane(root,initialHosts,rpc,message,initialHost,state={
  async function openSession(id){
   let item=sessions.find(row=>row.id===id);if(!item||disposed)return
   inspectorClose?.()
-  const modal=dialog('agent-inspector',`<header><div><h2 data-no-i18n>${esc(item.name)}</h2><p data-no-i18n>${esc(names[item.engine])} · ${esc(item.engineHost.name)} → ${esc(item.targetHost.name)}</p></div><button type="button" class="agent-rename-toggle">重命名</button><button type="button" data-close aria-label="关闭会话视图">×</button></header><form class="agent-rename" hidden><input aria-label="会话名称" required maxlength="100" value="${esc(item.name)}"><button type="submit">保存名称</button><button type="button" class="agent-rename-cancel">取消</button></form><div class="agent-session-meta">${origin(item)}<span>工作目录 <code>${esc(item.cwd)}</code></span></div><div class="agent-session-view"><div class="agent-stopped" role="status">正在连接此会话…</div></div><footer><span class="agent-view-note">关闭视图保留会话 · 停止会话终止引擎</span><button type="button" class="danger agent-end">停止会话</button><button type="button" class="danger agent-remove">移除会话</button></footer>`)
+  const permissionControl=item.targetHostId!=='local'?`<label data-agent-permission>目标主机权限 <select data-agent-permission-select><option value="full"${item.permission==='full'?' selected':''}>完整权限 · 使用目标账号的权限</option><option value="ask"${item.permission==='ask'?' selected':''}>按原生引擎请求确认</option></select><small>更改将在下次启动时生效</small></label>`:''
+  const modal=dialog('agent-inspector',`<header><div><h2 data-no-i18n>${esc(item.name)}</h2><p data-no-i18n>${esc(names[item.engine])} · ${esc(item.engineHost.name)} → ${esc(item.targetHost.name)}</p></div><button type="button" class="agent-rename-toggle">重命名</button><button type="button" data-close aria-label="关闭会话视图">×</button></header><form class="agent-rename" hidden><input aria-label="会话名称" required maxlength="100" value="${esc(item.name)}"><button type="submit">保存名称</button><button type="button" class="agent-rename-cancel">取消</button></form><div class="agent-session-meta">${origin(item)}<span>工作目录 <code>${esc(item.cwd)}</code></span></div><div class="agent-session-view"><div class="agent-stopped" role="status">正在连接此会话…</div></div><footer>${permissionControl}<span class="agent-view-note">关闭视图保留会话 · 停止会话终止引擎</span><button type="button" class="danger agent-end">停止会话</button><button type="button" class="danger agent-remove">移除会话</button></footer>`)
   inspectorClose=modal.close
-  const el=modal.element,view=el.querySelector('.agent-session-view'),end=el.querySelector('.agent-end'),remove=el.querySelector('.agent-remove')
+  const el=modal.element,view=el.querySelector('.agent-session-view'),end=el.querySelector('.agent-end'),remove=el.querySelector('.agent-remove'),permissionSelect=el.querySelector('[data-agent-permission-select]')
   let disposeView=()=>{},alive=true,pending=false,connecting=true,removed=false
   const current=()=>alive&&!disposed
-  const controls=()=>{if(!current())return;end.hidden=removed||!item.running;remove.hidden=removed||item.running;end.disabled=remove.disabled=pending||connecting}
+  const controls=()=>{if(!current())return;end.hidden=removed||!item.running;remove.hidden=removed||item.running;end.disabled=remove.disabled=pending||connecting;if(permissionSelect)permissionSelect.disabled=pending||connecting||item.running}
   controls()
   modal.onClose(()=>{alive=false;disposeView();if(inspectorClose===modal.close)inspectorClose=undefined})
   const rename=el.querySelector('.agent-rename')
@@ -244,6 +246,13 @@ export function agentBoardPane(root,initialHosts,rpc,message,initialHost,state={
    const submit=rename.querySelector('[type=submit]');submit.disabled=true
    try{const result=await rpc('hosts.agent-rename',{id:item.targetHostId,session:item.id,name:rename.querySelector('input').value});if(!current())return;item.name=result.name;el.querySelector('h2').textContent=item.name;rename.hidden=true;await refresh()}
    catch(error){if(current())message(error.message,'error')}finally{if(current())submit.disabled=false}
+  }
+  if(permissionSelect)permissionSelect.onchange=async()=>{
+   if(pending||connecting)return
+   pending=true;controls()
+   try{const result=await rpc('hosts.agent-configure',{id:item.targetHostId,session:item.id,permission:permissionSelect.value});if(!current())return;item.permission=result.permission;await refresh()}
+   catch(error){if(current())message(error.message,'error')}
+   finally{pending=false;controls()}
   }
   async function action(method,button){
    if(pending||connecting)return

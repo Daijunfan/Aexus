@@ -2,6 +2,22 @@
 
 更新日期：2026-10-15。用户已授权抽测 DeepSeek，并进一步要求深入验收 Role Board 的合作关系、三个视图和群聊；中转站故障不再作为软件验收阻塞项。
 
+## 2.12.1 现状
+
+版本 2.12.1（build 53），发布验收见 [RELEASE_2.12.1_ACCEPTANCE.md](RELEASE_2.12.1_ACCEPTANCE.md)；构建标识以仓库根 `release.json` 为唯一来源。最终架构要点：
+
+- 顶层四入口不变：Single Host、Hosts Board、Agent Board、Role Board。Agent Board 只管理原生 Coding Agent（Codex、Claude Code、Pi、Cline、OpenCode）；Role Board 独立承载 Company、Messages、Plan。会话与角色身份分离，不向 Agent Board 的模型上下文注入协作或路由提示词。
+- 工作组按主机组织，各组独立保存排序与 1–6 列数。
+- Team 云端自动生成/绑定/改名，选中远端 parent 保留、不被覆盖或当作 remote-dir 发送。
+- 员工目录严格子目录化；Secretary 支持 Build / Cloud-Core-local 创建与后续职位管理（ManagementPanel）。
+- OpenCode 成为第 5 个原生 CLI，CLI/Role/IDE 共享原生鉴权；云端 Codex/Claude 全局 Full 默认且可配置。
+- 区分：NativeAgent = `src/agent-*`（外层原生会话）；真正 Role = `AgentBoard/Aexus/src`（内嵌原版 Core 0.66.2）。`src/agent-companion.cjs` 是 legacyCompanion，不是 Role Board 群聊/Plan 后端。
+- 界面只修角色/设置/对话等页面（个人资料、编辑、对话、设置、表单）；看板与外壳保持原样、系统图标沿用原图标，无全应用主题或深色改动。
+- 主机管理与 VM Lab 软件独立。
+- 2.12.1 补丁：内嵌 Role Core 的 Python 传输入口（`agent_process.py` / `native_executor.py` / `terminal.py`）现在于导入 `transport` 前先 `sys.dont_write_bytecode = True`，避免运行时向已签名应用包写入 `__pycache__` 字节码缓存导致 `codesign --strict` 失效；新增 `Modules/Tunnel/tests/test_no_bytecode.py`（含负对照）在普通可写目录、无 `-B`/环境变量遮蔽下证明不再生成缓存。
+
+2.11.2 的验收与实现描述保留在下方各节。
+
 ## 2.11.2 验收
 
 版本 2.11.2（build 50，构建标识 `5cf36f9b2d20c9e60e6822b970dcc4bcd01e859524c3b405ab2153bd32f15c3d`）；候选包已冻结、重新构建并重跑原生验收，`/Applications/Aexus.app` 已安装该版本。逐项集成结果见 `artifacts/full-acceptance-20261015/integration-r2/`（10/10 通过），发布期汇总见 [RELEASE_2.11.2_ACCEPTANCE.md](RELEASE_2.11.2_ACCEPTANCE.md)。

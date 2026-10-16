@@ -493,6 +493,25 @@
       "mutates": true
     },
     {
+      "method": "hosts.agent-configure",
+      "description": "更改已存在角色的目标主机权限（ask/full），运行中会话拒绝修改并在下次启动时生效",
+      "options": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "permission": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "mutates": true
+    },
+    {
       "method": "hosts.agent-restart",
       "description": "显式启动停止的角色；原生 Codex 恢复已有线程",
       "options": {

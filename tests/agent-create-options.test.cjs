@@ -39,7 +39,7 @@ test('same-host choices include only installed engines without gray disabled opt
  const {permittedEngines,canCreateAgent}=await load();
  const caps={engines:{codex:true,claude:true,cline:false,pi:true}};
  assert.deepEqual(permittedEngines('gpu','gpu',caps),['codex','claude','pi']);
- assert.deepEqual(permittedEngines('gpu','gpu',undefined),['codex','claude','cline','pi']);
+ assert.deepEqual(permittedEngines('gpu','gpu',undefined),['codex','claude','cline','pi','opencode']);
  assert.deepEqual(permittedEngines('local','local',{engines:{codex:true,claude:true,cline:true,pi:true}}),['codex','claude','cline','pi']);
  assert.equal(canCreateAgent('gpu','gpu','cline',caps),false);
  assert.ok(canCreateAgent('gpu','gpu','pi',caps));

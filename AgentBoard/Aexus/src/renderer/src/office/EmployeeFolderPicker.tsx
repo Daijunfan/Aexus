@@ -30,11 +30,11 @@ export function EmployeeFolderPicker({team,cloud,windows,selected,onSelect,onClo
     <header><strong>{cloud?uiText("Cloud"):uiText("Team")}  {uiText("Folder")}</strong><button type="button" onClick={onClose}>{uiText("Done")}</button></header>
     <nav><button type="button" disabled={busy||listing?.path==='.'} onClick={()=>void browse(parent)}>{uiText("↑ Parent folder")}</button><code title={listing?.root}>{listing?absolute(listing.path):uiText("Reading…")}</code></nav>
     <div className="employee-directory-list" role="listbox" aria-label={uiText("Choose employee working folder")}>
-      {listing&&(cloud||listing.path!=='.')&&<button type="button" role="option" aria-selected={selected===absolute(listing.path)} className="directory-current" onClick={()=>onSelect(absolute(listing.path))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();onSelect(absolute(listing.path));onClose()}}}>{uiText("Use current folder")}</button>}
+      {listing&&listing.path!=='.'&&<button type="button" role="option" aria-selected={selected===absolute(listing.path)} className="directory-current" onClick={()=>onSelect(absolute(listing.path))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();onSelect(absolute(listing.path));onClose()}}}>{uiText("Use current folder")}</button>}
       {folders.map(entry=><button type="button" role="option" aria-selected={selected===absolute(entry.path)} key={entry.path} onClick={()=>onSelect(absolute(entry.path))} onDoubleClick={()=>{onSelect(absolute(entry.path));void browse(entry.path)}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();onSelect(absolute(entry.path));onClose()}else if(e.key==='ArrowRight'){e.preventDefault();void browse(entry.path)}}}>▱ {entry.name}</button>)}
-      {listing&&!folders.length&&<small>{uiText("No subfolders here.")}{cloud?uiText("You can choose the current folder."):uiText("Go up to choose another subfolder.")}</small>}
+      {listing&&!folders.length&&<small>{uiText("No subfolders here.")}{uiText("Enter a subfolder to select it, or go up to choose another subfolder.")}</small>}
     </div>
-    <small>{uiText("Click to select; double-click to enter a subfolder; press Enter to confirm.")}{!cloud&&uiText("Plugin employees can only use subfolders of their Team root.")}</small>
+    <small>{uiText("Click to select; double-click to enter a subfolder; press Enter to confirm.")}{uiText("Employees must use a subfolder of their Team root, never the root itself.")}</small>
     {error&&<p role="alert">{error}</p>}
   </div>
 }

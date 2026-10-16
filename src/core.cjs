@@ -80,6 +80,7 @@ async function dispatch(method, args = {}, signal) {
   if (method === 'hosts.agent-open') return agents.open(args);
   if (method === 'hosts.agent-close') return agents.close(args);
   if (method === 'hosts.agent-rename') return agents.rename(args);
+  if (method === 'hosts.agent-configure') return agents.configure(args);
   if (method === 'hosts.agent-restart') return agents.restart(args);
   if (method === 'hosts.agent-activate') return agents.activate(args);
   if (method === 'hosts.agent-tui') return agents.tui(args);

@@ -173,6 +173,7 @@ export type StartArgs = {
   effort?: EffortLevel
   clineSessionId?:string
   piSessionId?:string
+  opencodeSessionId?:string
   claudeSessionId?: string
   threadId?: string
 }
@@ -221,7 +222,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!,card?.id??sessionId)
   const controlBin=remote&&card?await prepareRemoteAgentAccess(card.id,remote):undefined
   if(remote&&card&&!controlBin)await prepareRemoteEmployeeDocuments(card.id,remote)
-  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),['claude','cline','pi'].includes(args.engine??'claude')?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
+  const remoteLaunch=remote&&!nativeRemote?(await checkRemote(remote),['claude','cline','pi','opencode'].includes(args.engine??'claude')?await prepareRemote(card?.id??sessionId,'claude',{...remote,cliBin:controlBin}):undefined):undefined
   assertTeamAvailable(args.group)
   const latest=readStore(),latestConfig=employeeSettings(latest,identity)
   if(employeeRoot(latest,identity)!==root||latestConfig.mode!==config.mode||latestConfig.pluginId!==config.pluginId||JSON.stringify(latestConfig.remote)!==JSON.stringify(config.remote))throw new Error('Team 配置已变更，请重新打开会话')
@@ -601,6 +602,7 @@ export type SessionInfo = {
   busy: boolean
   clineSessionId?:string
   piSessionId?:string
+  opencodeSessionId?:string
   claudeSessionId?: string
   threadId?: string
 }
