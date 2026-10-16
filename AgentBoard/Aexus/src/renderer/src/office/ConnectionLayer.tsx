@@ -2,7 +2,7 @@ import {translate as uiText,useI18n,interfaceLocale,interfaceLanguage} from '../
 import {useContext,useEffect,useId,useRef,useState,type PointerEvent,type CSSProperties} from 'react'
 import type {PlannedRoom,Point} from '../../../shared/canvas'
 import {connectorSetting,connectorPoints,nearestConnectorPoint,anchorForDock,type ConnectorSetting,type ConnectorSettings} from '../../../shared/connector'
-import {movePathSegment} from '../../../shared/connector-path'
+import {movePathSegmentByPointer} from '../../../shared/connector-path'
 import {connectionNodes,nodePorts,type OfficeConnection} from '../../../shared/office-connections'
 import {ConnectorSelection} from './ConnectorEditor'
 type Gesture={pointerId:number;connection:OfficeConnection;kind:'source'|'target'|'segment';index:number;start:Point;setting:ConnectorSetting;moved:boolean}
@@ -22,7 +22,9 @@ export function ConnectionLayer({connections,rooms,settings,zoom,bounds,onPrevie
   if(!g.moved&&Math.hypot(p.x-g.start.x,p.y-g.start.y)*zoom<3)return;g.moved=true
   if(g.kind==='segment'){
    const source=nodes.get(r.managerId)!,target=nodes.get(r.employeeId)!,current=connectorSetting(settings,r.managerId,r.employeeId)
-   g.setting={...current,source:current.source.side==='auto'?anchorForDock(source.box,r.points[0]):current.source,target:current.target.side==='auto'?anchorForDock(target.box,r.points.at(-1)!):current.target,route:movePathSegment(r.points,g.index,p,8/zoom).map(p=>({x:p.x-r.origin.x,y:p.y-r.origin.y}))}
+   // Keep snapping in screen-pixel units without letting a low zoom turn a
+   // nearby terminal rail into a 20px world-space jump.
+   g.setting={...current,source:current.source.side==='auto'?anchorForDock(source.box,r.points[0]):current.source,target:current.target.side==='auto'?anchorForDock(target.box,r.points.at(-1)!):current.target,route:movePathSegmentByPointer(r.points,g.index,g.start,p,3/zoom).map(p=>({x:p.x-r.origin.x,y:p.y-r.origin.y}))}
   }else{
    const n=nodes.get(g.kind==='source'?r.managerId:r.employeeId)!,pins=connectorPoints.map(anchor=>({anchor,point:nodePorts(n,anchor,g.kind==='target')[0].point}));g.setting={...g.setting,[g.kind]:nearestConnectorPoint(pins,p).anchor}
   }

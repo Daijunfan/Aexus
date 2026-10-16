@@ -63,3 +63,16 @@ export function movePathSegment(input:Point[],index:number,position:Point,tolera
   if(index===p.length-2){const lead={...b,[other]:b[other]-Math.sign(b[other]-a[other])*Math.min(24,Math.abs(b[other]-a[other])/3)};result.push({...lead,[axis]:value},lead,b)}else result.push(movedB,...p.slice(index+2))
   return simplifyPath(result)
 }
+
+/**
+ * Move a segment from the pointer's initial grab point. Hit rectangles are
+ * intentionally wider than the line, so using the pointer coordinate as the
+ * new rail would make the path jump when the grab starts off the rail. Keep
+ * that initial offset and apply only the pointer delta to the original rail.
+ */
+export function movePathSegmentByPointer(input:Point[],index:number,start:Point,pointer:Point,tolerance=8):Point[]{
+ const path=simplifyPath(input),a=path[index],b=path[index+1]
+ if(!a||!b)return movePathSegment(path,index,pointer,tolerance)
+ const axis=a.x===b.x?'x':'y',position={...pointer,[axis]:a[axis]+pointer[axis]-start[axis]}
+ return movePathSegment(path,index,position,tolerance)
+}
