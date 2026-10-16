@@ -29,6 +29,7 @@ import { planRequest } from './plan'
 import { APP_VIEWS,appView } from '../shared/app-views'
 import { listChatGroups,getChatGroup,groupMediaRoot } from './chat-groups'
 import { assertEngineWorkspace } from '../shared/engines'
+import { normalizeExecutionMode,executionSummary } from '../shared/execution-mode'
 import { hostTerminals,openHostTerminal,requireHostTerminal,listHostDesktops,connectHostDesktop,launchHostDesktop,closeHostDesktop,assertHostIdle,closeHostTerminals } from './host-connections'
 import { isEngine } from '../shared/engines'
 import { runtimeInfo } from './platform'
@@ -191,6 +192,15 @@ export async function handleRequest(req:Request,context?:RequestContext&{signal?
   for(const field of ['crossReply','chat','connectorAnchors','localWorkspaceRoot','createdBy','requestedBy','approvedBy','delegation','access','managerTeam','globalManagerIds','globalGrants','deleting','initialization','lastReply'])if(field in a||a.patch&&field in a.patch||a.spec&&field in a.spec)throw Error('Internal field cannot be supplied: '+field)
   if(a.patch&&'managementRole' in a.patch||a.managementRole!==undefined&&!['card.create','session.new'].includes(req.cmd))throw Error('Use card.management-role to assign roles')
   if(req.cmd==='card.create'&&a.group===undefined&&caller.principal.kind==='agent')a.group=callerEmployee(caller.principal)!.group
+  // Resolve the explicit executionMode contract into the legacy kind/workEnvironment
+  // fields before authorization, so random-role resolution and role boundaries see
+  // the same effective kind/workEnvironment the card will actually be created with.
+  if(req.cmd==='card.create'||req.cmd==='session.new'){
+    const normalized=normalizeExecutionMode(a,teamSettings(readStore(),a.group??'').mode,a.engine)
+    a.kind=normalized.kind
+    a.workEnvironment=normalized.workEnvironment
+    a.executionMode=normalized.executionMode
+  }
   // Conversation members are not Company employee-control targets.
   let target=CONVERSATION_CONTROL_APIS.has(req.cmd)||MESSAGE_COLLABORATION_APIS.has(req.cmd)?undefined:employeeId(a.employee??a.cardId??a.id)
   if(['card.','session.','config.'].some(prefix=>req.cmd.startsWith(prefix))&&new Set([a.employee,a.cardId,a.id].filter(value=>value!==undefined).map(employeeId).filter(Boolean)).size>1)throw Error('Forbidden: conflicting employee identifiers')
@@ -613,7 +623,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       const info = sessionInfo(s(a.id))
       if (!info){const card=readStore().sessions.find(c=>c.id===a.id);if(card)return {...publicEmployee(card),lastReply:card.lastReply,busy:false,sessionId:null};throw new Error(`unknown session ${s(a.id)}`)}
       const card=readStore().sessions.find(card=>card.id===info.cardId)
-      return {...info,...(card?employeeAppearance(card):{})}
+      return {...info,...(card?{...employeeAppearance(card),...executionSummary(card,teamSettings(readStore(),card.group).mode)}:{})}
     }
 
     case 'session.interrupt': {
@@ -887,7 +897,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       const id = newSessionId()
       const origin=kind==='cloud-native-worker'?{kind:'cloud' as const,hostId:config.hostId!,host:config.remote!.host,os:config.remote!.os,directory:cwd}:undefined
       authorize('card.create',a);
-      const employee:StoredSession = { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,workEnvironment:a.workEnvironment,directoryMode:a.directoryMode??(a.cwd?'bind':'default'),localWorkspaceRoot:a.workEnvironment==='local'&&teamSettings(store,a.group).mode==='cloud'?employeeRoot(store,identity):undefined,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
+      const employee:StoredSession = { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,executionMode:a.executionMode,workEnvironment:a.workEnvironment,directoryMode:a.directoryMode??(a.cwd?'bind':'default'),localWorkspaceRoot:a.workEnvironment==='local'&&teamSettings(store,a.group).mode==='cloud'?employeeRoot(store,identity):undefined,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
         model,
         thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??(engine==='codex'?'high':'low'), permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
       employee.initialization=pendingInitialization()

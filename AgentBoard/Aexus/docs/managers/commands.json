@@ -8502,9 +8502,90 @@
   },
   {
     "name": "session.new",
-    "args": "[--engine codex|cline|opencode|pi|claude] [--group NAME] [--model M] [--management-role employee|manager|governor|secretary|random]",
-    "summary": "Create a session; management-role defaults to employee and random resolves to a role the caller may create here",
+    "args": "[--engine codex|cline|opencode|pi|claude] [--group NAME] [--execution-mode default|local|cloud] [--work-environment team|local] [--model M] [--management-role employee|manager|governor|secretary|random]",
+    "summary": "Create and open a session; executionMode maps to the same default/local/cloud contract as card.create (default resolves to cloud-native on Cloud Teams), management-role defaults to employee and random resolves to a role the caller may create here",
     "gui": "“+ Hire employee”",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": [
+            "codex",
+            "cline",
+            "opencode",
+            "pi",
+            "claude"
+          ]
+        },
+        "group": {
+          "type": "string",
+          "minLength": 1
+        },
+        "executionMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "local",
+            "cloud"
+          ],
+          "description": "default: cloud-native engine on the Cloud Team host; local: Core-host engine and workspace; cloud: Core engine in the Team cloud workspace over Tunnel"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "worker",
+            "cloud-native-worker"
+          ],
+          "description": "Legacy compatibility; prefer executionMode"
+        },
+        "workEnvironment": {
+          "type": "string",
+          "enum": [
+            "team",
+            "local"
+          ],
+          "description": "Legacy compatibility; prefer executionMode"
+        },
+        "model": {
+          "type": "string"
+        },
+        "managementRole": {
+          "type": "string",
+          "enum": [
+            "employee",
+            "manager",
+            "governor",
+            "secretary",
+            "random"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "directoryMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "bind"
+          ]
+        },
+        "permissionMode": {
+          "type": "string"
+        },
+        "effort": {
+          "type": "string"
+        },
+        "thinking": {
+          "type": "boolean"
+        }
+      },
+      "required": []
+    },
     "readOnly": false,
     "permission": "operator",
     "target": "session-or-employee"
@@ -9435,8 +9516,8 @@
   },
   {
     "name": "card.create",
-    "args": "--title NAME [--group TEAM] [--character random|NAME --avatar-style anime|chibi | --avatar random|ID] [--profession TEXT] [--management-role employee|manager|governor|secretary|random] [--kind worker|cloud-native-worker] [--work-environment team|local] [--engine E] [--model ID] [--thinking on|off] [--effort LEVEL]",
-    "summary": "Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; pass random to let the Core choose a creatable role or selectable appearance; discover appearances with avatar.list and verify via session.status",
+    "args": "--title NAME [--group TEAM] [--execution-mode default|local|cloud] [--character random|NAME --avatar-style anime|chibi | --avatar random|ID] [--profession TEXT] [--management-role employee|manager|governor|secretary|random] [--kind worker|cloud-native-worker] [--work-environment team|local] [--engine E] [--model ID] [--thinking on|off] [--effort LEVEL]",
+    "summary": "Create an employee: title=name, executionMode=where the engine runs (default resolves to cloud-native on Cloud Teams, local keeps the Core host, cloud uses Tunnel), character/avatar=appearance, managementRole=rank, profession=duties; pass random to let the Core choose a creatable role or selectable appearance; legacy kind/workEnvironment remain accepted; discover appearances with avatar.list and verify via session.status",
     "gui": "添加员工",
     "inputSchema": {
       "type": "object",
@@ -9451,6 +9532,15 @@
         "group": {
           "type": "string",
           "description": "Existing Team; Manager defaults to own Team and cannot hire elsewhere"
+        },
+        "executionMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "local",
+            "cloud"
+          ],
+          "description": "Where the engine and workspace run. default: cloud-native engine on the Cloud Team host (recommended; codex/claude) and Tunnel fallback for other engines; local: Core-host engine and workspace; cloud: Core engine in the Team cloud workspace over Tunnel (Cloud Team only). Omitting it on a new Cloud Team defaults to cloud-native; explicit legacy kind/workEnvironment still wins"
         },
         "character": {
           "type": "string",
@@ -9489,14 +9579,16 @@
           "enum": [
             "worker",
             "cloud-native-worker"
-          ]
+          ],
+          "description": "Legacy compatibility; prefer executionMode. worker=Core engine, cloud-native-worker=cloud-native engine"
         },
         "workEnvironment": {
           "type": "string",
           "enum": [
             "team",
             "local"
-          ]
+          ],
+          "description": "Legacy compatibility; prefer executionMode. team=Team workspace, local=Core-local workspace inside a cloud Team"
         },
         "engine": {
           "type": "string",

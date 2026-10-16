@@ -12,7 +12,8 @@ const coreDocuments=[
  ['core/conversation-controls','docs/CONVERSATION_CONTROLS.md'],
  ['core/message-collaboration','docs/MESSAGE_COLLABORATION.md'],
  ['core/secretary-api','docs/SECRETARY_API_PARITY.md'],
- ['core/layout','docs/OFFICE_LAYOUT.md']
+ ['core/layout','docs/OFFICE_LAYOUT.md'],
+ ['core/agents','docs/AGENTS.md']
 ] as const
 
 type DocumentEntry={file:string;text:string}

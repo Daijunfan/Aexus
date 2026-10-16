@@ -46,6 +46,7 @@ import { patchSession,readStore } from './store'
 import { conversation,forget,restoreTranscript,saveTranscript,resolveMessageReply } from './transcripts'
 import { approvalsFor,cancelApprovals } from './approvals'
 import { teamSettings,employeeSettings,nativeSessionRefs,type Session,type StoredSession } from '../shared/types'
+import { deriveExecutionMode } from '../shared/execution-mode'
 import { employeeRoot,employeeWorkspace,executionEmployee,cloudRelative } from './workspaces'
 import { provisionEmployee,ensureEmployeeBootstrap,employeeInstructions,employeeRolePrompt } from './plugins/documents'
 import { checkCloudNative,cloudNativeTarget } from './cloud-native'
@@ -157,6 +158,7 @@ export type StartArgs = {
   cardId?: string
   kind?:EmployeeKind
   workEnvironment?:import('../shared/types').WorkEnvironment
+  executionMode?:import('../shared/types').ExecutionMode
   remote?:RemoteTarget|null
   title?: string
   directoryMode?: string
@@ -214,11 +216,26 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const identity={group:args.group??'',workEnvironment:card?.workEnvironment??args.workEnvironment,localWorkspaceRoot:card?.localWorkspaceRoot},config=employeeSettings(readStore(),identity),root=employeeRoot(readStore(),identity)
   if(!card)assertManagementKind({kind:args.kind??'worker',managementRole:args.managementRole??'employee'},false,config.mode==='cloud')
   if(args.remote!==undefined&&args.remote!==null)throw new Error('云主机连接由 Team 统一配置')
-  const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode,undefined,false,args.workEnvironment)
-  assertEngineWorkspace(card?.engine??args.engine??'claude',config.mode,card?.kind??args.kind??'worker')
+  const requestedEngine=card?.engine??args.engine??'claude'
+  const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${requestedEngine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode,undefined,false,args.workEnvironment)
+  const kind=card?.kind??args.kind??'worker'
+  assertEngineWorkspace(requestedEngine,config.mode,kind)
   const remote=config.mode==='cloud'?{...config.remote!,directory:cwd}:null
-  const kind=card?.kind??'worker',nativeRemote=kind==='cloud-native-worker'?cloudNativeTarget(card!).target:undefined
-  if(nativeRemote)await checkCloudNative(card!.group,card!.engine,cloudRelative(config,cwd))
+  let nativeRemote:RemoteTarget|undefined,nativeOrigin:NativeOrigin|undefined
+  if(kind==='cloud-native-worker'){
+    const group=card?.group??args.group??''
+    const settings=teamSettings(readStore(),group)
+    if(settings.mode!=='cloud'||!settings.hostId||!settings.remote)throw new Error('Cloud Native Worker 必须属于已绑定主机的 Cloud Team')
+    if(card){
+      const target=cloudNativeTarget(card)
+      nativeRemote=target.target
+      nativeOrigin=card.nativeOrigin??target.origin
+    }else{
+      nativeRemote={...settings.remote,directory:cwd}
+      nativeOrigin={kind:'cloud',hostId:settings.hostId,host:settings.remote.host,os:settings.remote.os,directory:cwd}
+    }
+    await checkCloudNative(group,requestedEngine,cloudRelative(config,cwd))
+  }
   if(!remote)provisionEmployee(cwd,root!,config)
   const workRoot=config.mode==='work'?root:undefined,permissionRoot=workRoot?dirname(workRoot):undefined
   if(workRoot)await prepareWorkspacePlugins(cwd,config.pluginId!,card?.id??sessionId)
@@ -245,7 +262,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const cardId = card?.id ?? sessionId
   validateDelegation(openingDelegation,cardId)
   patchSession(cardId, {
-    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:args.managementRole??'employee',accessMode:'trusted' as const}:{}), engine, cwd,workEnvironment:identity.workEnvironment,localWorkspaceRoot:identity.workEnvironment==='local'&&teamSettings(readStore(),identity.group).mode==='cloud'?root:undefined, remote:undefined, group: args.group ?? '', seat: args.seat,
+    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:args.managementRole??'employee',accessMode:'trusted' as const,kind,nativeOrigin,executionMode:args.executionMode??deriveExecutionMode(kind,identity.workEnvironment,teamSettings(readStore(),identity.group).mode)}:{}), engine, cwd,workEnvironment:identity.workEnvironment,localWorkspaceRoot:identity.workEnvironment==='local'&&teamSettings(readStore(),identity.group).mode==='cloud'?root:undefined, remote:undefined, group: args.group ?? '', seat: args.seat,
     threadId:args.threadId,claudeSessionId:args.claudeSessionId,
     title: args.title || `New ${engine === 'codex' ? 'Codex' : 'Claude'} session`,
     createdAt: card?.createdAt ?? Date.now(), model: args.model, effort: args.effort,

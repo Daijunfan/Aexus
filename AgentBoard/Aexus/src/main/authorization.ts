@@ -13,6 +13,7 @@ import {RETIRED_APIS} from '../shared/api-effects'
 import {assertManagementKind,hasGlobalRole,RANDOM_MANAGEMENT_ROLE,resolveManagementRole,type Delegation,type RequestContext,type PrincipalRef} from '../shared/management'
 import {MANAGEMENT_ROLES,rolePolicy,roleAllows,isSupervisor,isManagementRole,roleDescription} from '../shared/roles'
 import {employeeSettings,teamSettings,type StoredSession,type Store} from '../shared/types'
+import {executionSummary} from '../shared/execution-mode'
 import {readStore} from './store'
 import {employeeAppearance} from '../shared/avatars'
 import {readApiDocument} from './api-documents'
@@ -184,7 +185,7 @@ export function canDeleteEmployee(principal:PrincipalRef,id:string){
 }
 
 export function visibleEmployees(principal=requestContext().principal){return readStore().sessions.filter(card=>!card.deleting&&canReadEmployee(principal,card.id))}
-export function publicEmployee(card:StoredSession){return {id:card.id,title:card.title,group:card.group,kind:card.kind??'worker',workEnvironment:card.workEnvironment??'team',engine:card.engine,...employeeAppearance(card),managementRole:card.managementRole??'employee',createdBy:card.createdBy??null,createdAt:card.createdAt,deleting:!!card.deleting,initialization:card.initialization}}
+export function publicEmployee(card:StoredSession){const {executionMode,executionOrigin,executionTarget}=executionSummary(card,teamSettings(readStore(),card.group).mode);return {id:card.id,title:card.title,group:card.group,kind:card.kind??'worker',workEnvironment:card.workEnvironment??'team',executionMode,executionOrigin,executionTarget,engine:card.engine,...employeeAppearance(card),managementRole:card.managementRole??'employee',createdBy:card.createdBy??null,createdAt:card.createdAt,deleting:!!card.deleting,initialization:card.initialization}}
 /** Full documentation discovery never changes execution authorization. */
 export function allowedCommands(context=requestContext(),store=readStore(),all=false){
   if(typeof all!=='boolean')throw Error('all must be boolean')

@@ -64,7 +64,7 @@ try{
   // ---- B: employee bind must be a strict subdirectory, never the root or outside ----
   const outside=path.join(f.temp,'outside');fs.mkdirSync(outside)
   await assert.rejects(()=>cli('card','create','--title','Escape','--group','LocalGen','--engine','codex','--model','gpt-6-luna','--effort','low','--directory-mode','bind','--cwd',outside),/Team 根目录下的子文件夹|超出所属 Team 的范围/,'local Build employee cannot bind an external folder')
-  await assert.rejects(()=>cli('card','create','--title','RootBind','--group','CloudBind','--engine','codex','--model','gpt-6-luna','--effort','low','--directory-mode','bind','--cwd',remoteBase),/Team 根目录下的子文件夹/,'cloud employee cannot bind the Team root itself')
+  await assert.rejects(()=>cli('card','create','--title','RootBind','--group','CloudBind','--kind','worker','--engine','codex','--model','gpt-6-luna','--effort','low','--directory-mode','bind','--cwd',remoteBase),/Team 根目录下的子文件夹/,'cloud employee cannot bind the Team root itself')
 
   // ---- C: Secretary on a Core-local workspace of a cloud Team is creatable ----
   const secretary=await cli('card','create','--title','Secretary','--group','CloudBind','--engine','codex','--model','gpt-6-luna','--effort','low','--management-role','secretary','--work-environment','local')

@@ -357,7 +357,7 @@ async function main() {
       const d = await call('session.new', {
         engine: p.engine,
         group: p.group,
-        model: p.model,workEnvironment:p['work-environment'],
+        model: p.model,workEnvironment:p['work-environment'],executionMode:p['execution-mode'],kind:p.kind,
         cwd: p.cwd,
         directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p),
         title: p.title,
@@ -577,7 +577,7 @@ async function main() {
       const p = parse(rest)
       if(p.thinking!==undefined&&!['on','off'].includes(p.thinking))throw new Error('--thinking must be on or off')
       if(p.kind!==undefined&&!['worker','cloud-native-worker'].includes(p.kind)||p['chat-provider']!==undefined||p['chat-mode']!==undefined||p['chrome-profile']!==undefined)throw new Error('Only Local or Cloud Native Worker employees are supported')
-      return out(await call('card.create', { ...p, thinking:p.thinking===undefined?undefined:p.thinking==='on', permissionMode:p.permission, avatarStyle:p['avatar-style'], workEnvironment:p['work-environment'],managementRole:p['management-role'],accessMode:p['access-mode'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
+      return out(await call('card.create', { ...p, thinking:p.thinking===undefined?undefined:p.thinking==='on', permissionMode:p.permission, avatarStyle:p['avatar-style'], workEnvironment:p['work-environment'],executionMode:p['execution-mode'],managementRole:p['management-role'],accessMode:p['access-mode'],directoryMode:p['directory-mode'],hostId:p['host-id'],directory:p['remote-dir'],remote:remoteFlags(p), _: undefined }))
     }
     case 'card.update': {
       const p = parse(rest)

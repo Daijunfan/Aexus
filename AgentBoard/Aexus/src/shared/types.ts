@@ -7,6 +7,8 @@ import type {ManagementRole,ManagementAccess,PrincipalRef,CurrentTask,Delegation
 export type Engine = import('./engines').EngineId
 export type EmployeeKind = 'worker' | 'cloud-native-worker'
 export type WorkEnvironment = 'team' | 'local'
+/** Public creation/readback contract; the persisted kind/workEnvironment stay the source of truth. */
+export type ExecutionMode = 'default' | 'local' | 'cloud'
 export type NativeOrigin = {kind:'cloud';hostId:string;host:string;os:'linux'|'macos'|'windows';directory:string}
 export type NativeSession = {engine:Engine;id:string;profile?:string;origin?:NativeOrigin;ownership?:'external'}
 export type TeamSettings = { mode: 'work' | 'build' | 'cloud'; pluginId?: string; hostId?:string; directory?:string; remote?: import('./remote').RemoteTarget; directoryMode?: 'default'|'bind'; parent?: string }
@@ -103,6 +105,8 @@ export type StoredSession = {
   kind?: EmployeeKind
   /** Default inherits Team; local keeps a Mac workspace inside a cloud Team. */
   workEnvironment?: WorkEnvironment
+  /** Cached at creation from the explicit contract; readback derives it from kind/workEnvironment. */
+  executionMode?: ExecutionMode
   /** Host-generated local root, preserved when a cloud Team is renamed. */
   localWorkspaceRoot?: string
   title: string
