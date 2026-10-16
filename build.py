@@ -91,7 +91,7 @@ shutil.copy2(icon_stage/'Assets.car',resources/'Assets.car')
 release_version=json.loads((root/'package.json').read_text())['version']
 release_id=json.loads((root/'release.json').read_text())['buildId']
 with (bundle/'Contents/Info.plist').open('wb') as f:
-    plistlib.dump({'CFBundleIdentifier':'com.agentscompany.app','CFBundleName':'Aexus','CFBundleDisplayName':'Aexus','CFBundleExecutable':'Aexus','CFBundlePackageType':'APPL','CFBundleShortVersionString':release_version.split('-')[0],'CFBundleVersion':'53','CFBundleGetInfoString':release_version+' · '+release_id[:12],'CloudHostsBuildID':release_id,'CFBundleIconFile':'Aexus','CFBundleIconName':'Aexus','NSPrincipalClass':'NSApplication','LSUIElement':True,'NSHighResolutionCapable':True,'NSAppTransportSecurity':{'NSAllowsLocalNetworking':True}},f)
+    plistlib.dump({'CFBundleIdentifier':'com.agentscompany.app','CFBundleName':'Aexus','CFBundleDisplayName':'Aexus','CFBundleExecutable':'Aexus','CFBundlePackageType':'APPL','CFBundleShortVersionString':release_version.split('-')[0],'CFBundleVersion':'54','CFBundleGetInfoString':release_version+' · '+release_id[:12],'CloudHostsBuildID':release_id,'CFBundleIconFile':'Aexus','CFBundleIconName':'Aexus','NSPrincipalClass':'NSApplication','LSUIElement':True,'NSHighResolutionCapable':True,'NSAppTransportSecurity':{'NSAllowsLocalNetworking':True}},f)
 # The existing CloudHosts release uses an ad-hoc signature. Keep that
 # self-contained identity instead of depending on another Toolbox app's keychain.
 subprocess.run(['codesign','--force','--sign','-','--identifier','com.agentscompany.app.node',str(resources/'node')],check=True)
