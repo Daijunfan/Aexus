@@ -30,6 +30,9 @@
 .avatar-options .avatar-label { display: block; padding: 0 3px; line-height: 14px; }
 .avatar-options button.selected { border-color: #c0c8a2; background: #b3c99715; color: #e4e9d2; }
 .avatar-options button:hover { border-color: #cbd7b5; }
+.avatar-options .avatar-random-mark { display: flex; align-items: center; justify-content: center; border: 1px dashed #7d8d6f37; border-radius: 12px; background: #17262a55; color: #c8d1bc; }
+.avatar-options .avatar-random-mark .codicon { font-size: 22px; }
+.avatar-options button.selected .avatar-random-mark { border-color: #c0c8a2; color: #e4e9d2; }
 .color-field { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 23px; font-size: 11px; color: #c8d1bc; }
 .color-options { display: flex; gap: 9px; align-items: center; }
 .color-options button, .color-options input { width: 20px; height: 20px; border-radius: 50%; border: 0; padding: 0; }

@@ -189,7 +189,7 @@ export async function handleRequest(req:Request,context?:RequestContext&{signal?
   const caller=requestContext(),a={...(req.args??{})} as Record<string,any>
   if(req.cmd.startsWith('guardian.'))throw Object.assign(Error('Guardian is excluded from the embedded Core'),{code:'GUARDIAN_DISABLED'})
   for(const field of ['crossReply','chat','connectorAnchors','localWorkspaceRoot','createdBy','requestedBy','approvedBy','delegation','access','managerTeam','globalManagerIds','globalGrants','deleting','initialization','lastReply'])if(field in a||a.patch&&field in a.patch||a.spec&&field in a.spec)throw Error('Internal field cannot be supplied: '+field)
-  if(a.patch&&'managementRole' in a.patch||a.managementRole!==undefined&&req.cmd!=='card.create')throw Error('Use card.management-role to assign roles')
+  if(a.patch&&'managementRole' in a.patch||a.managementRole!==undefined&&!['card.create','session.new'].includes(req.cmd))throw Error('Use card.management-role to assign roles')
   if(req.cmd==='card.create'&&a.group===undefined&&caller.principal.kind==='agent')a.group=callerEmployee(caller.principal)!.group
   // Conversation members are not Company employee-control targets.
   let target=CONVERSATION_CONTROL_APIS.has(req.cmd)||MESSAGE_COLLABORATION_APIS.has(req.cmd)?undefined:employeeId(a.employee??a.cardId??a.id)
@@ -865,7 +865,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       if (!isEngine(engine)) throw new Error('Unknown engine')
       let model=a.model||defaultEmployeeModel(engine,kind)
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
-      const avatar=resolveAvatar(a),appearance=employeeFields({...a,...(avatar!==undefined?{avatar}:{}),role:professionValue(a)})
+      const avatar=resolveAvatar(a),appearance=employeeFields({...a,...(avatar!==undefined?{avatar}:{}),...(a.avatar==='random'||a.character==='random'?{color:avatarDescription(avatar!).color}:{}),role:professionValue(a)})
       const store=readStore(),identity={group:s(a.group??''),workEnvironment:a.workEnvironment},config=employeeSettings(store,identity)
       assertEngineWorkspace(engine,config.mode,kind)
       if(a.workEnvironment!==undefined&&!['team','local'].includes(a.workEnvironment))throw Error('工作环境必须为 team 或 local')
@@ -888,7 +888,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       authorize('card.create',a);
       const employee:StoredSession = { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,workEnvironment:a.workEnvironment,directoryMode:a.directoryMode??(a.cwd?'bind':'default'),localWorkspaceRoot:a.workEnvironment==='local'&&teamSettings(store,a.group).mode==='cloud'?employeeRoot(store,identity):undefined,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
         model,
-        thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??'low', permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
+        thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??(engine==='codex'?'high':'low'), permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
       employee.initialization=pendingInitialization()
       ensureEmployeeBootstrap(employee,latest)
       const saved=patchSession(id,employee)

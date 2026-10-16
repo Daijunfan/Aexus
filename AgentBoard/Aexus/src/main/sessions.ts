@@ -21,7 +21,7 @@ import { hasGlobalRole,assertManagementKind } from '../shared/management'
 import { prepareRemoteAgentAccess,prepareRemoteEmployeeDocuments,closeRemoteAgentAccess } from './remote-agent-access'
 import { employeeProcessOptions } from './agent-process-isolation'
 import { delegationFor,validateDelegation,authorizeSlash,requestContext } from './authorization'
-import type { Delegation,CurrentTask } from '../shared/management'
+import type { Delegation,CurrentTask,ManagementRole } from '../shared/management'
 import { activityPreview,employeeActivity } from '../shared/activity'
 import { dirname } from 'node:path'
 import { closeNativeCodexSession } from './codex-native'
@@ -165,6 +165,7 @@ export type StartArgs = {
   engine?: Engine
   cwd?: string
   model?: string
+  managementRole?:ManagementRole
   permissionMode?: PermissionMode
   thinking?: boolean
   planMode?: boolean
@@ -211,6 +212,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   }
   const sessionId = newSessionId()
   const identity={group:args.group??'',workEnvironment:card?.workEnvironment??args.workEnvironment,localWorkspaceRoot:card?.localWorkspaceRoot},config=employeeSettings(readStore(),identity),root=employeeRoot(readStore(),identity)
+  if(!card)assertManagementKind({kind:args.kind??'worker',managementRole:args.managementRole??'employee'},false,config.mode==='cloud')
   if(args.remote!==undefined&&args.remote!==null)throw new Error('云主机连接由 Team 统一配置')
   const cwd = card?employeeWorkspace(readStore(),card.group,card.cwd,card.id):await resolveEmployeeWorkspace(readStore(),args.group??'',args.title||`New ${args.engine==='codex'?'Codex':'Claude'} session`,args.cwd,args.directoryMode,undefined,false,args.workEnvironment)
   assertEngineWorkspace(card?.engine??args.engine??'claude',config.mode,card?.kind??args.kind??'worker')
@@ -233,7 +235,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const engine: Engine = args.engine ?? 'claude'
   if(!nativeRemote)await assertEngineExecutable(engine)
   if (!isEngine(engine)) throw new Error(`Unknown engine: ${engine}`)
-  if (engine === 'codex') args = { ...args, effort: card?args.effort:(args.effort??'low') }
+  if (engine === 'codex') args = { ...args, effort: card?args.effort:(args.effort??'high') }
   const native=engineNativeProfile(engine)
   // A saved model from the previous provider cannot be resumed with the new key.
   if(card&&native?.models.length&&!native.models.some((model:any)=>model.id===args.model))args={...args,model:native.model}
@@ -243,7 +245,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const cardId = card?.id ?? sessionId
   validateDelegation(openingDelegation,cardId)
   patchSession(cardId, {
-    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:'employee' as const,accessMode:'trusted' as const}:{}), engine, cwd,workEnvironment:identity.workEnvironment,localWorkspaceRoot:identity.workEnvironment==='local'&&teamSettings(readStore(),identity.group).mode==='cloud'?root:undefined, remote:undefined, group: args.group ?? '', seat: args.seat,
+    ...card,...(!card?{initialization:pendingInitialization(),createdBy:requestContext().principal,managementRole:args.managementRole??'employee',accessMode:'trusted' as const}:{}), engine, cwd,workEnvironment:identity.workEnvironment,localWorkspaceRoot:identity.workEnvironment==='local'&&teamSettings(readStore(),identity.group).mode==='cloud'?root:undefined, remote:undefined, group: args.group ?? '', seat: args.seat,
     threadId:args.threadId,claudeSessionId:args.claudeSessionId,
     title: args.title || `New ${engine === 'codex' ? 'Codex' : 'Claude'} session`,
     createdAt: card?.createdAt ?? Date.now(), model: args.model, effort: args.effort,

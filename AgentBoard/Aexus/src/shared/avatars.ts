@@ -28,6 +28,13 @@ export function listAvatars(options:{query?:string;style?:string;all?:boolean}={
 export function resolveAvatar(input:AvatarSelection):AvatarKind|undefined{
   if(input.avatar===undefined&&input.character===undefined&&input.avatarStyle===undefined)return
   const style=styleValue(input.avatarStyle)
+  if(input.avatar==='random'||input.character==='random'){
+    if(input.avatar!==undefined&&input.avatar!=='random')throw Error('random cannot be combined with an explicit avatar ID')
+    if(input.character!==undefined&&input.character!=='random')throw Error('random cannot be combined with an explicit character')
+    const candidates=SELECTABLE_AVATARS.filter(id=>!style||avatarDescription(id).style===style)
+    if(!candidates.length)throw Error('No selectable avatar matches this avatarStyle')
+    return candidates[Math.floor(Math.random()*candidates.length)] as AvatarKind
+  }
   let selected:AvatarKind|undefined
   if(input.avatar!==undefined){
     if(typeof input.avatar!=='string'||!AVATARS.some(id=>id===input.avatar))throw Error('Unknown avatar ID; use agents avatar list --json to choose an exact id, or pass character and avatarStyle')

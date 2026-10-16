@@ -10,8 +10,8 @@ import {requestContext,operatorContext,withCaller} from './request-context'
 export {requestContext,operatorContext,withCaller} from './request-context'
 import {COMMANDS} from '../shared/api-registry'
 import {RETIRED_APIS} from '../shared/api-effects'
-import {assertManagementKind,hasGlobalRole,type Delegation,type RequestContext,type PrincipalRef} from '../shared/management'
-import {rolePolicy,roleAllows,isSupervisor,isManagementRole,roleDescription} from '../shared/roles'
+import {assertManagementKind,hasGlobalRole,RANDOM_MANAGEMENT_ROLE,resolveManagementRole,type Delegation,type RequestContext,type PrincipalRef} from '../shared/management'
+import {MANAGEMENT_ROLES,rolePolicy,roleAllows,isSupervisor,isManagementRole,roleDescription} from '../shared/roles'
 import {employeeSettings,teamSettings,type StoredSession,type Store} from '../shared/types'
 import {readStore} from './store'
 import {employeeAppearance} from '../shared/avatars'
@@ -28,6 +28,15 @@ export function canReadHostCredentials(id:string,principal=requestContext().prin
   return caller?.managementRole==='manager'&&teamSettings(readStore(),caller.group).hostId===id
 }
 export function callerEmployee(principal=requestContext().principal){if(principal.kind!=='agent')return undefined;const card=readStore().sessions.find(c=>c.id===principal.employeeId&&!c.deleting);if(!card)throw Error('Agent identity revoked');return card}
+/** Resolve the `random` managementRole sentinel into a concrete role for the current caller. */
+export function resolveRandomManagementRole(args:Record<string,any>,context=requestContext()){
+  if(args.managementRole!==RANDOM_MANAGEMENT_ROLE)return
+  const principal=context.principal
+  const creates=principal.kind==='operator'?Object.keys(MANAGEMENT_ROLES):rolePolicy(callerEmployee(principal)!.managementRole).creates
+  const kind=args.kind??'worker'
+  const cloudWorkspace=employeeSettings(readStore(),{group:args.group??'',workEnvironment:args.workEnvironment}).mode==='cloud'
+  args.managementRole=resolveManagementRole(args.managementRole,creates,kind,cloudWorkspace)
+}
 /** Identity discovery is shared by CLI and the read-only native documentation tool. */
 export function callerIdentity(context=requestContext(),store=readStore()){
   const principal=context.principal,card=principal.kind==='agent'?store.sessions.find(value=>value.id===principal.employeeId&&!value.deleting):undefined
@@ -108,6 +117,7 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
   const principal=context.principal
   if(principal.kind==='agent'&&context.credentialHash&&!credentialActive(principal.employeeId,context.credentialHash))throw Error('Agent credential revoked')
   const caller=callerEmployee(principal)
+  if(command==='card.create'||command==='session.new')resolveRandomManagementRole(args,context)
   if(caller){
     assertManagementKind(caller,isGlobal(principal),employeeSettings(readStore(),caller).mode==='cloud')
     if(caller.initialization&&caller.initialization.status!=='ready'){

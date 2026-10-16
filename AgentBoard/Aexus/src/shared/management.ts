@@ -1,4 +1,4 @@
-import {rolePolicy,type ManagementRole} from './roles'
+import {MANAGEMENT_ROLES,rolePolicy,type ManagementRole} from './roles'
 export type {ManagementRole} from './roles'
 export type PrincipalRef={kind:'operator'}|{kind:'agent';employeeId:string}
 export type Delegation={requestedBy:PrincipalRef;relationId?:string;globalGrantId?:string;requestId:string;credentialHash?:string;selfSchedule?:true;channelTrigger?:{channelId:string;entryId:string;batchId:string;employeeId:string};schedule?:{channelId?:string;eventChannelId?:string};groupNotice?:{groupId:string;messageId:string;employeeId:string};channelNotice?:{channelId:string;entryId:string;employeeId:string}}
@@ -42,6 +42,22 @@ export function managementRelations(cards:Parameters<typeof creationRelations>[0
 /** Only roles explicitly marked requiresLocal constrain engine/workspace location. */
 export function assertManagementKind(card:{kind?:string;group?:string;managementRole?:ManagementRole},global=false,cloudWorkspace=false){
   if((card.kind==='cloud-native-worker'||cloudWorkspace)&&rolePolicy(card.managementRole).requiresLocal)throw new Error('Secretary 必须在 Core 所在主机本地运行且使用本地工作区；Manager / Governor 可使用云端环境')
+}
+/** The `random` sentinel lets a caller defer the role choice to the Core. */
+export const RANDOM_MANAGEMENT_ROLE='random'
+/** Every role the caller may create that also passes the cloud/Core-local and kind constraints. */
+export function randomCreatableRoles(creates:readonly string[],kind:string,cloudWorkspace:boolean):ManagementRole[]{
+  return (Object.keys(MANAGEMENT_ROLES) as ManagementRole[]).filter(role=>{
+    if(!creates.includes(role))return false
+    try{assertManagementKind({kind,managementRole:role},false,cloudWorkspace);return true}catch{return false}
+  })
+}
+/** Resolve an explicit role, or the `random` sentinel into one concrete creatable role. Explicit values pass through unchanged. */
+export function resolveManagementRole(role:unknown,creates:readonly string[],kind:string,cloudWorkspace:boolean):ManagementRole{
+  if(role!==RANDOM_MANAGEMENT_ROLE)return role as ManagementRole
+  const candidates=randomCreatableRoles(creates,kind,cloudWorkspace)
+  if(!candidates.length)throw Error('No management role is available to create here')
+  return candidates[Math.floor(Math.random()*candidates.length)]
 }
 export function hasGlobalRole(_access:ManagementAccess|undefined,card:ManagedIdentity|undefined){
   return !!card&&!card.deleting&&rolePolicy(card.managementRole).scope==='global'

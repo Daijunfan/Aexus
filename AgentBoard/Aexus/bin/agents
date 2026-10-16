@@ -364,6 +364,7 @@ async function main() {
         seat: p.seat,
         permissionMode: p.permission,
         effort: p.effort,
+        managementRole:p['management-role'],
         thinking: p.thinking === undefined ? undefined : p.thinking === 'on'
       })
       return out(d, (x) => `${x.sessionId}  ${x.engine}  ${x.cwd}`)

@@ -5776,7 +5776,7 @@
   },
   {
     "name": "engine.capabilities",
-    "args": "--engine codex|claude|cline|pi",
+    "args": "--engine codex|cline|opencode|pi|claude",
     "summary": "Read adapter capabilities, workspace modes and employee kinds before hiring; no credentials or inference",
     "gui": "创建员工能力检查",
     "readOnly": true,
@@ -8133,7 +8133,7 @@
   },
   {
     "name": "engine.models",
-    "args": "--engine codex|claude|cline|pi [--kind worker|cloud-native-worker] [--team NAME]",
+    "args": "--engine codex|cline|opencode|pi|claude [--kind worker|cloud-native-worker] [--team NAME]",
     "summary": "List available models before employee creation, without inference; Cloud Native reads the selected host",
     "gui": "创建员工和默认模型设置",
     "readOnly": true,
@@ -8445,8 +8445,8 @@
   },
   {
     "name": "session.new",
-    "args": "[--engine claude|codex] [--group NAME] [--model M]",
-    "summary": "Create a session",
+    "args": "[--engine codex|cline|opencode|pi|claude] [--group NAME] [--model M] [--management-role employee|manager|governor|secretary|random]",
+    "summary": "Create a session; management-role defaults to employee and random resolves to a role the caller may create here",
     "gui": "“+ Hire employee”",
     "readOnly": false,
     "permission": "operator",
@@ -9378,8 +9378,8 @@
   },
   {
     "name": "card.create",
-    "args": "--title NAME [--group TEAM] [--character NAME --avatar-style anime|chibi | --avatar ID] [--profession TEXT] [--management-role employee|manager|governor|secretary] [--kind worker|cloud-native-worker] [--work-environment team|local] [--engine E] [--model ID] [--thinking on|off] [--effort LEVEL]",
-    "summary": "Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; discover appearances with avatar.list and verify via session.status",
+    "args": "--title NAME [--group TEAM] [--character random|NAME --avatar-style anime|chibi | --avatar random|ID] [--profession TEXT] [--management-role employee|manager|governor|secretary|random] [--kind worker|cloud-native-worker] [--work-environment team|local] [--engine E] [--model ID] [--thinking on|off] [--effort LEVEL]",
+    "summary": "Create an employee: title=name, character/avatar=appearance, managementRole=rank, profession=duties; pass random to let the Core choose a creatable role or selectable appearance; discover appearances with avatar.list and verify via session.status",
     "gui": "添加员工",
     "inputSchema": {
       "type": "object",
@@ -9397,7 +9397,7 @@
         },
         "character": {
           "type": "string",
-          "description": "Exact characterId/name/alias from avatar.list; e.g. 英雄王 or gilgamesh"
+          "description": "Exact characterId/name/alias from avatar.list, or random for any selectable official avatar; e.g. 英雄王 or gilgamesh"
         },
         "avatarStyle": {
           "type": "string",
@@ -9406,11 +9406,11 @@
             "anime",
             "chibi"
           ],
-          "description": "Original-series anime or cute chibi; explicit when character has multiple appearances"
+          "description": "Original-series anime or cute chibi; explicit when character has multiple appearances; still limits a random character"
         },
         "avatar": {
           "type": "string",
-          "description": "Exact avatar.list id, as an alternative to character + avatarStyle; e.g. fate-gilgamesh-chibi"
+          "description": "Exact avatar.list id, or random for any selectable official avatar; as an alternative to character + avatarStyle; e.g. fate-gilgamesh-chibi"
         },
         "profession": {
           "type": "string",
@@ -9422,9 +9422,10 @@
             "employee",
             "manager",
             "governor",
-            "secretary"
+            "secretary",
+            "random"
           ],
-          "description": "Manager creates own-Team employees; Governor creates employees/managers; Secretary also creates Governors and administers the app; only user creates Secretaries"
+          "description": "Manager creates own-Team employees; Governor creates employees/managers; Secretary also creates Governors and administers the app; only user creates Secretaries; random resolves to a role the caller may create here and persists the real role"
         },
         "kind": {
           "type": "string",
@@ -9444,9 +9445,10 @@
           "type": "string",
           "enum": [
             "codex",
-            "claude",
             "cline",
-            "pi"
+            "opencode",
+            "pi",
+            "claude"
           ]
         },
         "model": {
