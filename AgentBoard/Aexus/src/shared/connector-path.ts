@@ -16,12 +16,15 @@ export function simplifyPath(input:Point[]):Point[]{
   return points
 }
 const elbow=(a:Point,b:Point,horizontal:boolean):Point[]=>a.x===b.x||a.y===b.y?[b]:[horizontal?{x:b.x,y:a.y}:{x:a.x,y:b.y},b]
+const near=(a:number,b:number)=>Math.abs(a-b)<1e-6
 export function directPath(source:Endpoint,target:Endpoint){
  const s=source.point,t=target.point,a=source.exit,b=target.exit,v=a.x===s.x,w=b.x===t.x
  const toward=(p:Point,q:Point,z:Point)=>(q.x-p.x)*(z.x-p.x)+(q.y-p.y)*(z.y-p.y)>0
  if((s.x===t.x||s.y===t.y)&&toward(s,t,a)&&toward(t,s,b))return [s,t]
- if(v&&w){const x=a.x===b.x?a.x+48:(a.x+b.x)/2;return simplifyPath([s,a,{x,y:a.y},{x,y:b.y},b,t])}
- if(!v&&!w){const y=a.y===b.y?a.y+48:(a.y+b.y)/2;return simplifyPath([s,a,{x:a.x,y},{x:b.x,y},b,t])}
+ // Near-equal columns (float noise from circle placement) must share the same
+ // bend column, or simplifyPath drops the bend and leaves a forbidden diagonal.
+ if(v&&w){const x=near(a.x,b.x)?a.x+48:(a.x+b.x)/2;return simplifyPath([s,a,{x,y:a.y},{x,y:b.y},b,t])}
+ if(!v&&!w){const y=near(a.y,b.y)?a.y+48:(a.y+b.y)/2;return simplifyPath([s,a,{x:a.x,y},{x:b.x,y},b,t])}
  const bend=v?{x:b.x,y:a.y}:{x:a.x,y:b.y}
  if(!samePoint(a,bend)&&!samePoint(b,bend))return simplifyPath([s,a,bend,b,t])
  return v?simplifyPath([s,a,{x:a.x+48,y:a.y},{x:a.x+48,y:b.y+48},{x:b.x,y:b.y+48},b,t]):simplifyPath([s,a,{x:a.x,y:a.y+48},{x:b.x+48,y:a.y+48},{x:b.x+48,y:b.y},b,t])

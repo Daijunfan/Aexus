@@ -13,7 +13,9 @@
 3. 再读：`agents office layout --json`，检查返回的 `quality`
 4. 有交叉时按 `quality.crossings` 调整：重新 `arrange`，或用 `connector.segment` 拖动具体线段
 
-`office.arrange` 一次原子写入房间与工位，返回 `{revision, pattern, scope, rooms, employees, quality}`。`avoidCrossings` 默认开启；当前算法把房间/工位放到尽量宽松的位置，**并不保证零交叉**，剩余交叉会诚实地列在 `quality.crossings` 里，由你决定是否继续调整。
+`office.arrange` 一次原子写入房间与工位，返回 `{revision, pattern, scope, rooms, employees, quality}`。`avoidCrossings` 默认开启：先按选中的 `pattern`/`scope` 摆放房间与工位（工位先排，房间后排，房间围绕已成长的 Team 外框），再用**有界、确定性的环旋转**逐 Team 旋转工位环、再旋转整体房间环，只在 `crossingCount`（其次 `overlapCount`、`blockedCount`）严格变好时保留候选，交叉清零即提前停止。它**不承诺通用平面化**，也不隐藏或丢弃任何走线；剩余交叉会诚实地列在 `quality.crossings` 里，由你决定是否继续调整。
+
+`--avoid-crossings false` 关闭搜索，直接采用旋转 0 的基准摆放，便于对照。
 
 ## `office.layout` 返回
 
@@ -31,9 +33,11 @@
 | `overlapCount` | 共线重叠数量（正长度重叠；共享节点上的公共主干不算） |
 | `blockedCount` | 无法干净走线的数量（`warning` 连接 + `blocked` 跨 Team 腿） |
 | `crossings[]` | 每个问题的 `kind`（cross/overlap）、`connections`（两条连接 ID）、`point`（近似交叉/重叠点，世界像素）、`avoidable`、`reason` |
-| `avoidable` | 是否存在任何可继续优化的问题 |
+| `avoidable` | 是否存在任何可由自动几何清除的问题（至少一个交叉/重叠的 `avoidable` 为 true） |
 
 不要为 `crossingCount` 为 0 之外的值编造“已修复”；如实汇报剩余交叉并给出可操作的下一步。
+
+单个问题的 `avoidable` 语义：**手工路由（`manual`）涉及的交叉不可自动清除**（`avoidable: false`），自动几何只能清掉自动走线；`reason` 会注明 `manual`。共线重叠只在“同一经理、两条线共享真实公共前缀（相同起点的连续相同线段）近源主干”时豁免为不算问题，任意下游重叠仍如实上报。
 
 ## `office.arrange` 参数
 
@@ -43,11 +47,11 @@
 | `--scope` | `teams` `employees` `all` | 默认 `all`；`teams` 只排房间，`employees` 只排工位 |
 | `--team` | Team 名 | 只排此 Team（可省略，作用范围按权限） |
 | `--view` | 视图 ID | 只排视图内的 Team |
-| `--around` | 员工或 Team ID | 作为中心/锚点（circle 时成为圆心） |
+| `--around` | 员工或 Team ID | 作为中心/锚点（circle **和 rectangle** 都让该员工/Team 居中；grid 不适用） |
 | `--avoid-crossings` | `true`/`false` | 默认 `true` |
-| `--order` | 员工 ID 数组 JSON | 工位顺序偏好；越级 ID 会被拒绝 |
+| `--order` | 员工 ID 数组 JSON | 工位顺序偏好；越级 ID 会被拒绝，重复 ID 会被拒绝 |
 
-`--order` 只接受目标 Team 内的员工 ID，例如 `--order '["EMP_A","EMP_B"]'` 或 `--order @file.json`。Secretary 自己也是普通员工节点，可以直接列入 `--order` 或作为 `--around`。
+`--order` 只接受目标 Team 内的员工 ID，例如 `--order '["EMP_A","EMP_B"]'` 或 `--order @file.json`。**显式 `--order` 按调用者给出的顺序照单执行**，不强制按角色重排，因此 Secretary 可以放在任意指定位置（含末尾）；未给出时默认主管（supervisor）在前。Secretary 自己也是普通员工节点，可以直接列入 `--order` 或作为 `--around`。
 
 ## 常见命令
 

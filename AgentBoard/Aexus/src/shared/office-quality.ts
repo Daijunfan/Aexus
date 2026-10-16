@@ -10,7 +10,7 @@ export type OfficeCrossing = {
   connections: [string, string]
   /** Approximate world-space intersection point (or midpoint of an overlap). */
   point: Point
-  /** A crossing is always avoidable by repositioning rooms/employees or re-routing a segment. */
+  /** False when a manual route is involved; automatic geometry can only clear auto-routed lines. */
   avoidable: boolean
   reason: string
 }
@@ -18,12 +18,12 @@ export type OfficeCrossing = {
 export type OfficeQuality = {
   /** True interior line crossings (two lines passing through each other). */
   crossingCount: number
-  /** Collinear overlaps of positive length, excluding shared trunks at a common node. */
+  /** Collinear overlaps of positive length, excluding a same-source shared trunk near the source. */
   overlapCount: number
   /** Connections that could not route cleanly (blocked cross-Team legs or in-room warnings). */
   blockedCount: number
   crossings: OfficeCrossing[]
-  /** True when any issue above is reported. */
+  /** True when at least one crossing is clearable by automatic geometry (not manual/blocked). */
   avoidable: boolean
 }
 
@@ -67,21 +67,65 @@ function collinearOverlap(a: Point, b: Point, c: Point, d: Point): {length: numb
   return length > EPS ? {length, point: {x: a.x, y: (lo + hi) / 2}} : {length: 0, point: {x: 0, y: 0}}
 }
 
-const sharesNode = (a: OfficeConnection, b: OfficeConnection) =>
-  a.managerId === b.managerId || a.managerId === b.employeeId || a.employeeId === b.managerId || a.employeeId === b.employeeId
+/** Straight-line (Manhattan) distance of each vertex from the path start. */
+const cumulative = (points: Point[]) => {
+  const d = [0]
+  for (let i = 1; i < points.length; i++) d.push(d[i - 1] + Math.abs(points[i].x - points[i - 1].x) + Math.abs(points[i].y - points[i - 1].y))
+  return d
+}
+
+/**
+ * Length of the geometric prefix both orthogonal polylines travel together from
+ * their common start, in path distance. Point-index equality is deliberately not
+ * used: the same trunk may be subdivided into different segment runs in the two
+ * paths, so a vertex-by-vertex comparison would undercount the shared prefix.
+ */
+const commonPrefixLength = (a: Point[], b: Point[]) => {
+  if (a.length < 2 || b.length < 2 || !samePoint(a[0], b[0])) return 0
+  let i = 1, j = 1, length = 0, posA = a[0], posB = b[0]
+  while (i < a.length && j < b.length) {
+    const qa = a[i], qb = b[j]
+    const aHorizontal = Math.abs(qa.x - posA.x) > EPS && Math.abs(qa.y - posA.y) <= EPS
+    const bHorizontal = Math.abs(qb.x - posB.x) > EPS && Math.abs(qb.y - posB.y) <= EPS
+    if (aHorizontal !== bHorizontal) break
+    if (aHorizontal) {
+      if (Math.abs(posA.y - posB.y) > EPS) break
+      const dir = Math.sign(qa.x - posA.x), other = Math.sign(qb.x - posB.x)
+      if (dir !== other) break
+      const la = Math.abs(qa.x - posA.x), lb = Math.abs(qb.x - posB.x), advance = Math.min(la, lb)
+      length += advance
+      posA = {x: posA.x + dir * advance, y: posA.y}
+      posB = {x: posB.x + dir * advance, y: posB.y}
+      if (la <= lb + EPS) i++
+      if (lb <= la + EPS) j++
+    } else {
+      if (Math.abs(posA.x - posB.x) > EPS) break
+      const dir = Math.sign(qa.y - posA.y), other = Math.sign(qb.y - posB.y)
+      if (dir !== other) break
+      const la = Math.abs(qa.y - posA.y), lb = Math.abs(qb.y - posB.y), advance = Math.min(la, lb)
+      length += advance
+      posA = {x: posA.x, y: posA.y + dir * advance}
+      posB = {x: posB.x, y: posB.y + dir * advance}
+      if (la <= lb + EPS) i++
+      if (lb <= la + EPS) j++
+    }
+  }
+  return length
+}
 
 /**
  * True interior crossings and collinear overlaps over the canonical routed paths.
- * Shared endpoints, adjacent orthogonal corners and common trunks at a shared node
- * are never reported; a genuine crossing between two fan lines is still reported.
+ * Shared endpoints, adjacent orthogonal corners and a same-source trunk on the
+ * actual common prefix are never reported; arbitrary downstream overlap between
+ * two fan lines is still reported even when they share a node.
  */
 export function officeQuality(connections: OfficeConnection[], crossTeam: Array<Pick<CrossTeamRoute, 'status'>> = []): OfficeQuality {
-  const segments: {connection: OfficeConnection; a: Point; b: Point}[] = []
+  const segments: {connection: OfficeConnection; index: number; a: Point; b: Point}[] = []
   for (const connection of connections) {
     const points = connection.points ?? []
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1], b = points[i]
-      if (!samePoint(a, b)) segments.push({connection, a, b})
+      if (!samePoint(a, b)) segments.push({connection, index: i - 1, a, b})
     }
   }
   const crossings: OfficeCrossing[] = []
@@ -93,28 +137,35 @@ export function officeQuality(connections: OfficeConnection[], crossTeam: Array<
     const o3 = orient(B.a, B.b, A.a), o4 = orient(B.a, B.b, A.b)
     const properCross = ((o1 > EPS && o2 < -EPS) || (o1 < -EPS && o2 > EPS)) && ((o3 > EPS && o4 < -EPS) || (o3 < -EPS && o4 > EPS))
     const connectionIds: [string, string] = A.connection.id < B.connection.id ? [A.connection.id, B.connection.id] : [B.connection.id, A.connection.id]
+    const manual = A.connection.manual || B.connection.manual
     if (properCross) {
       const key = connectionIds.join('|') + ':cross'
       if (seen.has(key)) continue
       seen.add(key)
-      const manual = A.connection.manual || B.connection.manual
       crossings.push({
-        kind: 'cross', connections: connectionIds, point: crossPoint(A.a, A.b, B.a, B.b), avoidable: true,
-        reason: `Lines ${A.connection.id} and ${B.connection.id} cross${manual ? ' (a manual route is involved)' : ''}; reposition the employees/rooms or drag the segment to remove the crossing`
+        kind: 'cross', connections: connectionIds, point: crossPoint(A.a, A.b, B.a, B.b), avoidable: !manual,
+        reason: `Lines ${A.connection.id} and ${B.connection.id} cross${manual ? ' (a manual route is involved; it is not auto-avoidable)' : ''}; reposition the employees/rooms or drag the segment to remove the crossing`
       })
       continue
     }
     // Collinear (possibly overlapping) only when all four orientations vanish.
     if (Math.abs(o1) <= EPS && Math.abs(o2) <= EPS && Math.abs(o3) <= EPS && Math.abs(o4) <= EPS) {
       const overlap = collinearOverlap(A.a, A.b, B.a, B.b)
-      if (overlap.length > EPS && !sharesNode(A.connection, B.connection)) {
-        const key = connectionIds.join('|') + ':overlap'
-        if (seen.has(key)) continue
-        seen.add(key)
-        crossings.push({
-          kind: 'overlap', connections: connectionIds, point: overlap.point, avoidable: true,
-          reason: `Lines ${A.connection.id} and ${B.connection.id} overlap; drag a segment or reposition to separate them`
-        })
+      if (overlap.length > EPS) {
+        const sameSource = A.connection.managerId === B.connection.managerId
+        const aPath = A.connection.points ?? [], bPath = B.connection.points ?? []
+        const trunk = sameSource ? commonPrefixLength(aPath, bPath) : 0
+        const sharedTrunk = trunk > EPS && cumulative(aPath)[A.index] < trunk - EPS && cumulative(bPath)[B.index] < trunk - EPS
+        if (!sharedTrunk) {
+          const key = connectionIds.join('|') + ':overlap'
+          if (!seen.has(key)) {
+            seen.add(key)
+            crossings.push({
+              kind: 'overlap', connections: connectionIds, point: overlap.point, avoidable: !manual,
+              reason: `Lines ${A.connection.id} and ${B.connection.id} overlap${manual ? ' (a manual route is involved; it is not auto-avoidable)' : ''}; drag a segment or reposition to separate them`
+            })
+          }
+        }
       }
       continue
     }
@@ -124,5 +175,5 @@ export function officeQuality(connections: OfficeConnection[], crossTeam: Array<
   const crossingCount = crossings.filter(c => c.kind === 'cross').length
   const overlapCount = crossings.filter(c => c.kind === 'overlap').length
   const blockedCount = connections.filter(c => !!c.warning).length + crossTeam.filter(r => r.status === 'blocked').length
-  return {crossingCount, overlapCount, blockedCount, crossings, avoidable: crossings.length > 0 || blockedCount > 0}
+  return {crossingCount, overlapCount, blockedCount, crossings, avoidable: crossings.some(c => c.avoidable)}
 }

@@ -5399,5 +5399,31 @@
         "offset": 40
       }
     }
+  },
+  {
+    "args": [
+      "office",
+      "arrange",
+      "--pattern",
+      "circle",
+      "--scope",
+      "all",
+      "--avoid-crossings",
+      "false",
+      "--order",
+      "[\"a\",\"b\"]"
+    ],
+    "expected": {
+      "cmd": "office.arrange",
+      "args": {
+        "pattern": "circle",
+        "scope": "all",
+        "avoidCrossings": false,
+        "order": [
+          "a",
+          "b"
+        ]
+      }
+    }
   }
 ]

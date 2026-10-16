@@ -3,8 +3,8 @@ import {fixtureCore} from './fixtures/headless-core.mjs'
 
 // --- Part A: pure geometry (quality detection + arrangement shapes), no daemon ---
 const root=path.resolve(import.meta.dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'ac-office-arrange-')),file=path.join(temp,'geometry.cjs')
-await build({stdin:{contents:"export * from './src/shared/office-quality';export * from './src/shared/office-arrange';export * from './src/shared/canvas';export * from './src/shared/office-layout';export * from './src/shared/roles';",resolveDir:root,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:file,logLevel:'silent'})
-const {officeQuality,arrangeTeamEmployees,arrangeRoomBounds,orderedTeamMembers,EMPLOYEE_SIZE,EMPLOYEE_TOP,MIN_ROOM_HEIGHT,employeeFits,roomsOverlap}=createRequire(import.meta.url)(file)
+await build({stdin:{contents:"export * from './src/shared/office-quality';export * from './src/shared/office-arrange';export * from './src/shared/canvas';export * from './src/shared/office-layout';export * from './src/shared/roles';export * from './src/shared/office-connections';export * from './src/shared/connector';",resolveDir:root,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:file,logLevel:'silent'})
+const {officeQuality,arrangeTeamEmployees,arrangeRoomBounds,orderedTeamMembers,officeConnectionPlan,connectionNodes,nodePorts,connectorSetting,EMPLOYEE_SIZE,EMPLOYEE_TOP,MIN_ROOM_HEIGHT,employeeFits,roomsOverlap}=createRequire(import.meta.url)(file)
 const W=EMPLOYEE_SIZE.width,H=EMPLOYEE_SIZE.height
 const card=(id,role='employee',createdAt=1,deleting=false)=>({id,title:id,engine:'codex',managementRole:role,kind:'worker',group:'A',createdAt,cwd:'/fixture',deleting})
 const room=(name,members,bounds={x:0,y:0,width:760,height:520,shape:'rounded',arrangement:'grid'})=>({name,bounds,employees:members.map(m=>({card:m,position:{x:300,y:220}}))})
@@ -37,6 +37,18 @@ try{
   const single=arrangeTeamEmployees(room('A',[card('only')]),'circle')
   assert.equal(single.employees.length,1);assertSeats(single)
 
+  // 4b. rectangle with --around centers the Secretary exactly like circle
+  const rectCenter=arrangeTeamEmployees(secTeam,'rectangle',undefined,'sec')
+  assert.equal(rectCenter.employees[0].card.id,'sec')
+  const rcx=rectCenter.bounds.width/2-W/2,rcy=(EMPLOYEE_TOP+rectCenter.bounds.height-18)/2-H/2
+  assert.ok(Math.abs(rectCenter.employees[0].position.x-rcx)<1&&Math.abs(rectCenter.employees[0].position.y-rcy)<1,'Secretary at rectangle center')
+  assertSeats(rectCenter)
+
+  // 4c. an explicit order may place the Secretary anywhere, including last, with no role re-sorting
+  const explicitLast=arrangeTeamEmployees(secTeam,'circle',['w1','w2','sec'])
+  assert.deepEqual(explicitLast.employees.map(e=>e.card.id),['w1','w2','sec'])
+  assertSeats(explicitLast)
+
   // 5. room arrangement: grid and circle both produce non-overlapping rooms; --around pins the anchor
   const three=[room('A',[]),room('B',[]),room('C',[])]
   assertRooms(arrangeRoomBounds(three,'grid',{x:0,y:0}))
@@ -53,17 +65,47 @@ try{
   const near=officeQuality([seg('a','m1','e1',[{x:0,y:0},{x:100,y:0}]),seg('b','m2','e2',[{x:100,y:10},{x:100,y:50}])])
   assert.equal(near.crossingCount,0);assert.deepEqual(near.crossings,[])
 
-  // 8. collinear overlap: reported between unrelated lines, suppressed on a shared trunk
+  // 8. collinear overlap: reported on unrelated or downstream same-source lines, suppressed only on a true shared trunk
   const overlap=officeQuality([seg('a','m1','e1',[{x:0,y:0},{x:100,y:0}]),seg('b','m2','e2',[{x:50,y:0},{x:150,y:0}])])
   assert.equal(overlap.overlapCount,1);assert.equal(overlap.crossingCount,0);assert.equal(overlap.crossings[0].kind,'overlap');assert.deepEqual(overlap.crossings[0].point,{x:75,y:0})
-  const trunk=officeQuality([seg('a','m','e1',[{x:0,y:0},{x:100,y:0}]),seg('b','m','e2',[{x:50,y:0},{x:150,y:0}])])
+  const downstream=officeQuality([seg('a','m','e1',[{x:0,y:0},{x:100,y:0}]),seg('b','m','e2',[{x:50,y:0},{x:150,y:0}])])
+  assert.equal(downstream.overlapCount,1);assert.equal(downstream.crossings[0].kind,'overlap')
+  const trunk=officeQuality([seg('a','m','e1',[{x:0,y:0},{x:50,y:0},{x:50,y:50}]),seg('b','m','e2',[{x:0,y:0},{x:50,y:0},{x:100,y:0}])])
   assert.equal(trunk.overlapCount,0);assert.deepEqual(trunk.crossings,[])
 
   // 9. blockedCount sums warnings + blocked cross-Team legs; manual crossing names its route
   assert.equal(officeQuality([seg('a','m1','e1',[{x:0,y:0},{x:100,y:0}],{warning:'no clear path'})],[{status:'blocked'}]).blockedCount,2)
   assert.ok(officeQuality([seg('a','m1','e1',[{x:0,y:0},{x:100,y:0}],{manual:true}),seg('b','m2','e2',[{x:50,y:-50},{x:50,y:50}])]).crossings[0].reason.includes('manual'))
   assert.equal(officeQuality([seg('a','m1','e1',[{x:0,y:0},{x:100,y:0}]),seg('b','m2','e2',[{x:200,y:0},{x:300,y:0}])]).avoidable,false)
-  console.log('PASS geometry: member ordering, circle/grid/rectangle seating, room shapes, crossing/overlap/trunk/blocked detection')
+
+  // 10. shared trunk is exempt even when the same rail is subdivided differently
+  const subTrunk=officeQuality([seg('a','m','e1',[{x:0,y:0},{x:0,y:100},{x:50,y:100}]),seg('b','m','e2',[{x:0,y:0},{x:0,y:50},{x:0,y:100},{x:100,y:100}])])
+  assert.equal(subTrunk.overlapCount,0,'differing subdivision of one shared trunk is not misreported')
+  // 10b. a genuine re-merge after divergence is still reported downstream
+  const remerge=officeQuality([seg('c','m','e3',[{x:0,y:0},{x:0,y:100},{x:50,y:100},{x:50,y:200}]),seg('d','m','e4',[{x:0,y:0},{x:0,y:100},{x:100,y:100},{x:100,y:200},{x:50,y:200},{x:50,y:150}])])
+  assert.equal(remerge.overlapCount,1,'downstream re-merge overlap remains reported')
+
+  // 11. circle star fallback never throws on float-noise ports and keeps every edge orthogonal
+  const nearPoint=(p,q)=>Math.abs(p.x-q.x)<1e-6&&Math.abs(p.y-q.y)<1e-6
+  const scard=(id,role,group,createdAt)=>({id,title:id,engine:'codex',managementRole:role,kind:'worker',group,createdAt,cwd:'/fixture',deleting:false})
+  const hub={name:'Hub',bounds:{x:0,y:0,width:760,height:520,shape:'rounded',arrangement:'grid'},employees:[{card:scard('sec','secretary','Hub',0),position:{x:(760-W)/2,y:(520-H)/2}}]}
+  const star=[hub]
+  for(let i=0;i<8;i++){const nm='T'+i;star.push({name:nm,bounds:{x:2000+Math.cos(i/8*2*Math.PI)*2000,y:2000+Math.sin(i/8*2*Math.PI)*2000,width:760,height:520,shape:'rounded',arrangement:'grid'},employees:[{card:scard('emp'+i,'employee',nm,i+1),position:{x:(760-W)/2,y:(520-H)/2}}]})}
+  const starRels=Array.from({length:8},(_,i)=>({id:'cr'+i,managerId:'sec',employeeId:'emp'+i,state:'active',requestedBy:{kind:'agent',employeeId:'sec'},createdAt:0,updatedAt:0}))
+  const starArranged=arrangeRoomBounds(star,'circle',{x:0,y:0},'Hub')
+  const starPlan=officeConnectionPlan(starArranged,starRels,[],new Set(star.map(r=>r.name)))
+  const starNodes=connectionNodes(starArranged)
+  assert.equal(starPlan.connections.length,8,'every cross-Team edge stays visible')
+  for(const c of starPlan.connections){
+    assert.ok(c.points.length>=2,'edge '+c.id+' has a real path')
+    for(let k=1;k<c.points.length;k++)assert.ok(c.points[k].x===c.points[k-1].x||c.points[k].y===c.points[k-1].y,'diagonal segment on '+c.id+': '+JSON.stringify(c.points))
+    assert.ok(c.path&&!c.path.includes('NaN'),'edge '+c.id+' renders an SVG path')
+    const s=starNodes.get(c.managerId),t=starNodes.get(c.employeeId)
+    const a=connectorSetting(undefined,c.managerId,c.employeeId).source,b=connectorSetting(undefined,c.managerId,c.employeeId).target
+    assert.ok(nodePorts(s,a,false).some(p=>nearPoint(p.point,c.points[0])),'source endpoint preserved on '+c.id)
+    assert.ok(nodePorts(t,b,true).some(p=>nearPoint(p.point,c.points.at(-1))),'target endpoint preserved on '+c.id)
+  }
+  console.log('PASS geometry: member ordering, circle/grid/rectangle seating, room shapes, crossing/overlap/trunk/blocked detection, subdivided trunk, circle-star orthogonal fallback')
 }finally{fs.rmSync(temp,{recursive:true,force:true})}
 
 // --- Part B: authenticated Core API + CLI + authorization + persistence ---
@@ -119,9 +161,10 @@ try{
   await cli('office','arrange','--pattern','circle','--scope','teams','--around','A')
   clean((await cli('office','layout')).rooms)
 
-  // 9. invalid pattern and out-of-Team order are rejected
+  // 9. invalid pattern, out-of-Team order and duplicate order are rejected
   assert.equal((await raw(m,'office','arrange','--pattern','bogus')).ok,false)
   assert.equal((await raw(m,'office','arrange','--pattern','grid','--scope','employees','--team','A','--order',JSON.stringify([other.id]))).ok,false)
+  assert.equal((await raw(m,'office','arrange','--pattern','grid','--scope','employees','--team','A','--order',JSON.stringify([sec.id,sec.id]))).ok,false)
 
   // 10. nothing outside visual geometry changed
   const after=snap(JSON.parse(fs.readFileSync(stateFile,'utf8')))
@@ -131,6 +174,35 @@ try{
   assert.deepEqual(after.teamRoots,before.teamRoots)
   assert.deepEqual(after.groups,before.groups)
 
-  fs.writeFileSync(path.join(f.root,'artifacts/office-arrange.json'),JSON.stringify({passed:true,pattern:'circle',quality:arranged.quality,arranged:[sec.id,lead.id,child.id]},null,2))
-  console.log('PASS layout API: quality shape, docs/discoverability, global Secretary vs team-scoped Manager, centered Secretary, persistence, bounds, CLI parse, no business-logic mutation')
+  // 11. avoidCrossings materially reduces crossings on a solvable star of cross-Team edges
+  for(const name of ['C','D','E','F','G','H','I','J']) await cli('group','add',name)
+  const hub1=await create('Hub1','A','secretary'),hub2=await create('Hub2','A','governor'),satellites={}
+  for(const team of ['C','D','E','F','G','H','I','J']) satellites[team]=await create('e'+team,team)
+  const bind=async(manager,teams)=>{for(const team of teams)await cli('management','bind','--employee',satellites[team].id,'--manager',manager)}
+  await bind(hub1.id,['C','E','G','I']);await bind(hub2.id,['D','F','H','J'])
+  const starRaw=fs.readFileSync(stateFile,'utf8')
+  const noAvoid=await call(s,'office','arrange','--pattern','rectangle','--scope','teams','--around','A','--avoid-crossings','false')
+  assert.ok(noAvoid.quality.crossingCount>0,'star base layout has interior crossings')
+  fs.writeFileSync(stateFile,starRaw)
+  const avoided=await call(s,'office','arrange','--pattern','rectangle','--scope','teams','--around','A')
+  assert.ok(avoided.quality.crossingCount<noAvoid.quality.crossingCount,'avoidCrossings reduces crossings on the star: '+noAvoid.quality.crossingCount+' -> '+avoided.quality.crossingCount)
+  const starAfter=snap(JSON.parse(fs.readFileSync(stateFile,'utf8')))
+  assert.deepEqual(starAfter,snap(JSON.parse(starRaw)),'star arrange keeps roles/bindings/workspaces unchanged')
+
+  // 12. --around <employee> centers the employee itself, not merely its Team's room
+  const beforeA=(await call(m,'office','layout','--team','A')).rooms.find(r=>r.name==='A').bounds
+  const allArr=await call(m,'office','arrange','--pattern','circle','--scope','all','--team','A','--around',sec.id)
+  const roomA2=allArr.rooms.find(r=>r.name==='A').bounds,emp2=allArr.employees.find(e=>e.id===sec.id)
+  const anchor={x:beforeA.x+roomA2.width/2,y:beforeA.y+roomA2.height/2}
+  const empCenter={x:roomA2.x+emp2.position.x+W/2,y:roomA2.y+emp2.position.y+H/2}
+  assert.ok(Math.abs(empCenter.x-anchor.x)<1&&Math.abs(empCenter.y-anchor.y)<1,'around employee lands on the arrangement anchor, not offset below it')
+
+  // 13. arranging one Team leaves every non-selected Team's room exactly where it was
+  const othersBefore=new Map((await call(s,'office','layout')).rooms.map(r=>[r.name,JSON.stringify(r.bounds)]))
+  await call(s,'office','arrange','--pattern','circle','--scope','teams','--team','B')
+  const othersAfter=new Map((await call(s,'office','layout')).rooms.map(r=>[r.name,JSON.stringify(r.bounds)]))
+  for(const name of ['A','C','D','E','F','G','H','I','J'])assert.equal(othersAfter.get(name),othersBefore.get(name),'non-selected Team room moved: '+name)
+
+  fs.writeFileSync(path.join(f.root,'artifacts/office-arrange.json'),JSON.stringify({passed:true,pattern:'circle',quality:arranged.quality,arranged:[sec.id,lead.id,child.id],avoidCrossings:{before:noAvoid.quality.crossingCount,after:avoided.quality.crossingCount}},null,2))
+  console.log('PASS layout API: quality shape, docs/discoverability, global Secretary vs team-scoped Manager, centered Secretary, persistence, bounds, CLI parse, no business-logic mutation, crossing reduction')
 }finally{await f.close()}
