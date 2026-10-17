@@ -26,7 +26,7 @@ if not (aexus_source/'out/main/daemon.js').is_file() or not (aexus_source/'out/r
 aexus_package=backend/'AgentBoard/Aexus'
 aexus_package.parent.mkdir(parents=True,exist_ok=True)
 def ignored(directory,names):
-    excluded=shutil.ignore_patterns('node_modules','test','artifacts','out-tsc','__pycache__','.DS_Store','*.tsbuildinfo','.git')(directory,names)
+    excluded=shutil.ignore_patterns('node_modules','test','artifacts','release','.dist','dist','test-results','*.app','out-tsc','__pycache__','.DS_Store','*.tsbuildinfo','.git')(directory,names)
     if Path(directory)==aexus_source:excluded.add('PlugIns')
     if Path(directory)==aexus_source/'build':excluded.add('plugins')
     return excluded
@@ -91,7 +91,7 @@ shutil.copy2(icon_stage/'Assets.car',resources/'Assets.car')
 release_version=json.loads((root/'package.json').read_text())['version']
 release_id=json.loads((root/'release.json').read_text())['buildId']
 with (bundle/'Contents/Info.plist').open('wb') as f:
-    plistlib.dump({'CFBundleIdentifier':'com.agentscompany.app','CFBundleName':'Aexus','CFBundleDisplayName':'Aexus','CFBundleExecutable':'Aexus','CFBundlePackageType':'APPL','CFBundleShortVersionString':release_version.split('-')[0],'CFBundleVersion':'54','CFBundleGetInfoString':release_version+' · '+release_id[:12],'CloudHostsBuildID':release_id,'CFBundleIconFile':'Aexus','CFBundleIconName':'Aexus','NSPrincipalClass':'NSApplication','LSUIElement':True,'NSHighResolutionCapable':True,'NSAppTransportSecurity':{'NSAllowsLocalNetworking':True}},f)
+    plistlib.dump({'CFBundleIdentifier':'com.agentscompany.app','CFBundleName':'Aexus','CFBundleDisplayName':'Aexus','CFBundleExecutable':'Aexus','CFBundlePackageType':'APPL','CFBundleShortVersionString':release_version.split('-')[0],'CFBundleVersion':'55','CFBundleGetInfoString':release_version+' · '+release_id[:12],'CloudHostsBuildID':release_id,'CFBundleIconFile':'Aexus','CFBundleIconName':'Aexus','NSPrincipalClass':'NSApplication','LSUIElement':True,'NSHighResolutionCapable':True,'NSAppTransportSecurity':{'NSAllowsLocalNetworking':True}},f)
 # The existing CloudHosts release uses an ad-hoc signature. Keep that
 # self-contained identity instead of depending on another Toolbox app's keychain.
 subprocess.run(['codesign','--force','--sign','-','--identifier','com.agentscompany.app.node',str(resources/'node')],check=True)

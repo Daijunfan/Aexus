@@ -8,4 +8,6 @@ Aexus 不再附带旧版的 Mini Notion、Margin Reader、Cloud Hosts 插件产�
 
 测试用隔离数据；用户明确停止测试时不再启动功能测试。部署前完成构建，检查活动任务，退出旧应用后再替换包。保留用户工作，只有明确授权时才删除旧项目、历史包或推送远端。
 
+macOS 产品仅使用根目录 `python3 build.py` 打包，内部 `AgentBoard/Aexus` 不单独打包安装。安装验证成功后仅保留 `/Applications/Aexus.app`，清理同产品的历史与构建 APP 副本；只删除核对过 Bundle ID 的应用包，保留源码、宣传素材、配置及数据备份。
+
 GitHub 主仓库为 Daijunfan/Aexus。Marketing/Reference 保存用户要求保留的宣传参考素材；不能删掉，也不能把旧海报当作当前功能承诺。

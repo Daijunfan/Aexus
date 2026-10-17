@@ -1,6 +1,6 @@
 {
-  "version": "2.12.2",
-  "buildId": "41c397bb026b679e758c441fcf1b6089b5a2404cbf171a1d1754234f27a2f5db",
+  "version": "2.12.3",
+  "buildId": "b04e6c3b544a191843f2af601a9a131fdeace7e97c4d316c204ab80e27b0fae3",
   "algorithm": "sha256",
   "files": {
     "AgentBoard/Aexus/.gitattributes": "babbaf2897bdfd7840daf4259365217d34043d0632ca8c3456e6374ff074bd25",
@@ -1065,7 +1065,7 @@
     "dist/ui/files.bundle.js": "e2fd7e0868822fe6f4d2fca6567f92f280ef2d2e56ceeb4cb331f95d942818ae",
     "dist/ui/guacamole-LICENSE.txt": "3c7f148c26065e0a581b5dda114e68e16243bf5ae0b4f6209749a0e3373201d5",
     "dist/ui/guacamole-NOTICE.txt": "9f1ec0252c59b209f5470b739039fcb5d29f51d832cef643000bf5e1d3dd29ff",
-    "dist/ui/index.html": "16715a3715bacbad700af8f1a34aab2ab67f96a42ff43a9efff12a37095fc835",
+    "dist/ui/index.html": "881c0755b50ec7f88e25f2eacf50de7d8d5f301cb77d1604f98412f1a0618738",
     "dist/ui/info.bundle.js": "dfe218fec9ea5149db02ff04057f15ab27cdab6320a50bd5e13c2583075175db",
     "dist/ui/novnc-LICENSE.txt": "3ccd2242d7f5b6c5ae831a486f63cce1f18d8cd11c511f6a7a7251673763b2d1",
     "dist/ui/os/debian.svg": "45242a7f89c775b9ba9bfd9f8c4ddc8969288187367919303549c397188c2cd0",
@@ -1092,7 +1092,7 @@
     "docs/RELEASE_2.11.2_ACCEPTANCE.md": "1ebc241720d135a40058f4ad9b7cc758b0f655ce6258b37c908106adf71f40c6",
     "docs/RELEASE_2.11.3_ACCEPTANCE.md": "14e7b311b0f6543ce7c06c50c8ee22addfb98a539e950b1ea86e83e74340619a",
     "docs/RELEASE_2.12.1_ACCEPTANCE.md": "7d404fd0496001cfd9c5fc02412d529bda92ea9ec81033499cec34c953a49b16",
-    "package.json": "6660a133eaee7d4a12ce0933ef05d1336ce843340888c987a3f6532744fecb43",
+    "package.json": "e361e953933e9a038c60da8219efb5f4f9debeb795cf006c0c97f667ce1345ba",
     "Runtime/claude_exec.mjs": "d8dd1ae0f6600b0b1cbce9b411684a15e9ad10c8a0c530f1b6cf6cda98f233b7",
     "Runtime/claude_executor_mod.mjs": "87904f3ebc305b24ea901d7f39d8432d9621d120bdd0d1768756ab92e98d501d",
     "Runtime/claude_route.mjs": "e55f9c7bebca770310c3ff50f9f8fddf7f9f17ec7b1daa7d4a29ed477702945b",
