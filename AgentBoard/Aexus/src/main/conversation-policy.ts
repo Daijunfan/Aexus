@@ -1,3 +1,4 @@
+import {isApplicationAdministrator} from './application-administrator'
 import {channelOffices,saveChannelOffices} from './channel-members'
 import {catalog,indexFile} from './chat-group-store'
 import {atomicJson} from './atomic-file'
@@ -27,7 +28,7 @@ export function conversationIdentity(value:unknown){
 }
 export function requireConversation(value:unknown,capability:'read'|'admin'|'owner'='read',principal:PrincipalRef=requestContext().principal){
  const current=conversationIdentity(value)
- if(principal.kind==='operator')return current
+ if(principal.kind==='operator'||isApplicationAdministrator(principal))return current
  const role=current.role(principal.employeeId)
  if(!role)throw Error('Forbidden: not a member of this conversation')
  if(capability==='owner'&&role!=='owner'||capability==='admin'&&role!=='admin'&&role!=='owner')throw Error('Forbidden: conversation '+(capability==='owner'?'Owner':'Owner/Admin')+' required; Company rank does not grant this office')
@@ -54,9 +55,9 @@ function revise(value:ReturnType<typeof conversationIdentity>,expected:unknown,u
 }
 export function conversationPolicy(value:unknown):ConversationPolicy{return projectPolicy(requireConversation(value))}
 function projectPolicy(current:ReturnType<typeof conversationIdentity>):ConversationPolicy{
- const principal=requestContext().principal,role=principal.kind==='operator'?'operator':current.role(principal.employeeId)??null,admin=['operator','owner','admin'].includes(role??'')
+ const principal=requestContext().principal,role=principal.kind==='operator'?'operator':isApplicationAdministrator(principal)?'secretary':current.role(principal.employeeId)??null,admin=['operator','secretary','owner','admin'].includes(role??'')
  const cards=readStore().sessions
- return {conversation:current.conversation,name:current.name,kind:current.kind,revision:current.revision,ownerId:current.ownerId,silent:current.silent,mutes:current.mutes,actorRole:role,members:current.members.map(id=>({id,name:cards.find(card=>card.id===id)!.title,role:current.role(id)!,mutedUntil:conversationMuted(current.conversation,id)})),allowedActions:[...(admin?['members','roles','mute','silence','notices','audit']:[]),...((role==='operator'||role==='owner')?['transfer-owner',...(current.kind==='group'?['delete-group']:[])]:[])]}
+ return {conversation:current.conversation,name:current.name,kind:current.kind,revision:current.revision,ownerId:current.ownerId,silent:current.silent,mutes:current.mutes,actorRole:role,members:current.members.map(id=>({id,name:cards.find(card=>card.id===id)!.title,role:current.role(id)!,mutedUntil:conversationMuted(current.conversation,id)})),allowedActions:[...(admin?['members','roles','mute','silence','notices','audit']:[]),...((role==='operator'||role==='secretary'||role==='owner')?['transfer-owner',...(current.kind==='group'?['delete-group']:[])]:[])]}
 }
 export function changeConversationRole(args:Record<string,any>){
  const current=requireConversation(args.conversation,'admin'),principal=requestContext().principal,id=args.employee,role=args.role
@@ -82,7 +83,7 @@ export function moderateConversation(args:Record<string,any>,silence=false){
  else{
   if(typeof args.member!=='string'||args.member!=='all'&&!current.members.includes(args.member))throw Error('Choose a current member or all')
   if(typeof args.muted!=='boolean')throw Error('muted must be boolean')
-  if(args.member===current.ownerId&&principal.kind==='agent'&&principal.employeeId!==current.ownerId)throw Error('An Admin cannot mute the Owner')
+  if(args.member===current.ownerId&&!isApplicationAdministrator(principal)&&principal.kind==='agent'&&principal.employeeId!==current.ownerId)throw Error('An Admin cannot mute the Owner')
   if(args.durationSeconds!==undefined&&(!args.muted||!Number.isSafeInteger(args.durationSeconds)||args.durationSeconds<1||args.durationSeconds>31536000))throw Error('Mute duration must be 1–31536000 seconds')
   if(args.muted)mutes[args.member]=args.durationSeconds===undefined?null:Date.now()+args.durationSeconds*1000;else delete mutes[args.member]
  }

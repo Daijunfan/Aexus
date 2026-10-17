@@ -11,8 +11,10 @@ exports.commandInput = (command, argv, parse, jsonArgument) => {
       ? (contract.rawPositionals ? raw : parsed._)[source] : parsed[source]
     const input = value === undefined ? contract.defaults?.[name] : value
     if ((input === undefined && !required) || (truthy && !input)) continue
-    if(type === 'boolean-value' && input !== true && input !== false && input !== 'true' && input !== 'false')throw Error('--'+source+' requires true or false')
-    result[name] = type === 'boolean-value' ? input === true || input === 'true' : type === 'number' ? Number(input) : type === 'boolean' ? !!input
+    const label=typeof source==='number'?name:'--'+source
+    if(type === 'boolean-switch' && ![true,false,'true','false','on','off'].includes(input))throw Error(label+' requires on, off, true or false')
+    if(type === 'boolean-value' && input !== true && input !== false && input !== 'true' && input !== 'false')throw Error(label+' requires true or false')
+    result[name] = type === 'boolean-switch' ? input === true || input === 'true' || input === 'on' : type === 'boolean-value' ? input === true || input === 'true' : type === 'number' ? Number(input) : type === 'boolean' ? !!input
       : type === 'json' ? jsonArgument(input) : input
   }
   return result

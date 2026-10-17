@@ -1,13 +1,70 @@
-# Secretary：Plan 与 GUI/API 对齐
+# Secretary：Company / Messages / Plan 的完整管理 API
+
+Secretary 是最高应用管理员。三个视图共享同一员工、工作区、会话、任务和认证 Core；秘书使用自己的 Agent key 执行管理，不把自身 key 换成用户身份。它管理软件与组织委派，不直接编辑 Aexus 自身项目源码。
 
 ## 任务处理入口
 
-员工通过两个原生工具完成发现与操作：
+1. `auth.whoami` 确认真实身份；`api.capabilities` 获取全部注册命令、可调用状态、限制与替代入口。
+2. `api.list {prefix,search}` 缩小目录；`api.describe {command}` 读取确切参数 schema。不要根据按钮文字猜参数。
+3. 调用规范业务 API；使用查询返回的 ID、revision、文件 hash 和幂等键。
+4. 通过同一查询回读结果；接受任务、上传开始、模型排队均不等于完成。
 
-- `agents_company_documentation`：真实身份、共享索引、Core 单命令 schema、插件单方法 schema。
-- `agents_company_api {command,args?}`：以本人已绑定凭据调用现有 Core dispatcher。与 UI、CLI 使用同一业务实现和目标权限检查，无需 shell。
+原生 `agents_company_documentation` 用于发现，`agents_company_api {command,args}` 用于执行。CLI 的 `agents api call COMMAND --args JSON|@file --json` 原样传输同一命令，没有第二套权限或 CRUD。原生写入遵循 Ask/Full access，planning 只读；审批等待后复核身份和当前任务。查询不运行模型、不伪造已读。
 
-共享场景中的 `agents_company_discussion_post` 保留其窄范围发布用途；不把它作为通用任务工具。初始化仅允许读取身份和索引；静默阅读阶段不开放通用操作。查询不触发模型、任务或已读确认。修改遵循 Ask/Full access 和原生 planning 设置，批准后复核当前轮次与身份。
+```sh
+agents api capabilities --json
+agents api list --prefix config. --json
+agents api describe config.effort --json
+agents api call config.get --args '{"id":"EMPLOYEE_ID"}' --json
+```
+
+## 三个视图的逐域操作对照
+
+| 用户操作 | 规范 API | Secretary 实际边界 |
+| --- | --- | --- |
+| Company 切换视图、Team、搜索、画布与位置 | `view.*`、`team-view.*`、`group.*`、`office.*`、`room.*`、`canvas.*`、`card.place` | 全局应用范围；导航按客户端保存 |
+| 创建、改名、资料、形象、克隆、删除员工 | `card.*`、`avatar.list`、`management.topology` | 所有职级；稳定 ID/引擎/工作区身份不靠更名改变 |
+| 任命、降级、删除 Secretary/Governor 与管理关系 | `card.management-role`、`card.remove`、`management.bind/unbind` | 可管理全部职级；批量预检，必须保留一个 ready Secretary |
+| 私聊、排队、停止、背景任务、审批、会话设置 | `session.*`、`approval.*`、`config.*` | 所有职级；busy/调度占用和原生执行模式仍检查 |
+| Messages 全局群组/频道发现与历史 | `chat.list/get/history/context`、`channel.list/get/history/context/timeline`、`messenger.directory/search/gallery` | 无须先加入每个会话；读取不确认用户已读 |
+| 群名、成员、Owner/Admin、禁言、静音、解散群组 | `chat.update/delete`、`conversation.policy/member/role/mute/silence` | 全局；actorRole 如实是 secretary，不伪装会话 Owner |
+| 发送、附件、跨会话引用和转发 | `chat.send/post`、`channel.message-send`、`session.send/enqueue`、`messenger.reference/forward/forward-*` | 保留本人作者；转发幂等回执按 actor 隔离 |
+| 修正已发布用户文字/标题 | `chat.edit` | 保留原作者、原任务；记录 editedBy 并校验 editRevision |
+| 草稿、头像、分类、排序、收藏、归档与未读提醒 | `messenger.*` | 可管理共享应用偏好；不冒充用户亲自阅读 |
+| 频道引擎、来源、订阅、头像、文章、保存、删除、导出、collector key | `channel.*` | 明确管理入口与来源范围；普通发布仍有真实来源/发布者 |
+| 固定正文通知与每 N 篇文章触发成员提示词 | `conversation.notice-*`、`channel.post-trigger-*` | 全局治理；通知发布者必须是合法身份，创建者保持秘书；不混入 Plan |
+| 全局文件库、预览、元信息、命名迁移、Finder | `assets.*`、`workspace.reveal` | 应用管理范围；路径/版本/软链接检查继续生效 |
+| 所有员工/团队/会话根与成员目录的文件编辑、复制、恢复 | `workspace.*`、`conversation.workspace/workspaces/file/copy/transfer`、`transfer.*` | 管理所有工作区；固定成员目录身份保护、原件/同名保护仍生效 |
+| 上传、下载与媒体预览 | `messenger.upload-begin`、`transfer.upload-*`、`transfer.download-*`、`messenger.media-*`、`channel.file-download` | principal/客户端绑定，不接管其他身份的进行中能力 |
+| 为指定员工发现工作目录、下载发布附件 | `workspace.catalog`、`conversation.entry/download/download-status` | 可选择其他员工；目标仍须是真实成员/工作区，源文件保留 |
+| 全局默认模型、思考、界面、引擎、主机、终端与插件 | `settings.*`、`engine.*`、`host.*`、`terminal.*`、`plugin.*` | 同一管理权限；外部登录/安装/连接必须真实成功 |
+| 签发/撤销员工 key 与管理审计 | `auth.agent-token/revoke`、`administration.audit` | 签发只返回元信息给秘书；不返回别人明文key；最后ready管理员受保护 |
+| Plan 全部任务、视图、规则、运行、历史与清理 | 下表的 `plan.*` / `schedule.*` | 所有职级含其他Secretary；孤立记录可管理，缺失目标不能运行 |
+
+每条注册命令的完整参数和界面来源见 `api.describe` 与生成索引。`api.capabilities.callable` 是入口能力；文件、成员、修订、运行状态及外部服务在实际调用时仍重新验证。
+
+## Coding Agent 思考与默认值
+
+`config.get/effort/thinking` 接受稳定员工 ID 或 live session ID。关闭会话也可管理，不为了改配置开启模型轮次。非默认 effort 使用实际目标引擎模型目录，异步查询后重查配置和角色。忙碌或调度占用时拒绝变更。
+
+```sh
+agents config get EMPLOYEE_ID --json
+agents config effort EMPLOYEE_ID default --json
+agents config thinking CLAUDE_EMPLOYEE_ID off --json
+agents api call settings.set --args '{"defaultCodexEffort":"default","defaultClaudeEffort":"default","defaultOpenCodeEffort":"default","defaultClaudeThinking":false}' --json
+```
+
+| 范围 | 行为 |
+| --- | --- |
+| 已有员工 | 配置保存到原员工；重开保持，`default` 明确清除覆盖 |
+| 之后创建的全部职级 | 使用 defaultCodex/Claude/OpenCodeEffort 与 defaultClaudeThinking；显式创建参数优先，包括 false/default |
+| 模型能力 | `engine.models` 的 supportedEffortLevels 是依据；支持时包含 none/minimal/low/medium/high/xhigh/max/ultra，不把所有档位假装适用于所有模型 |
+| Claude | effort + thinking；实际兼容provider继续决定合法档位 |
+| Codex/OpenCode | effort；无独立 thinking 开关 |
+| Cline/Pi | 当前适配器未暴露 effort/thinking；请求不支持能力会明确失败 |
+| 单次 Plan 任务 | action.effort/thinking 临时覆盖，结束恢复员工设置；省略是继承员工，effort:default 是该模型原生默认 |
+
+Employee可配置自己，Manager可配置自己与本Team下属，Governor保留自己的管理范围，Secretary可配置全部角色。Settings的Employee defaults与Plan编辑器读取同一模型目录，不能从静态标签推断能力。升级不改已有员工的模型、思考或OS权限。
 
 ### Plan 最短闭环
 
@@ -60,37 +117,22 @@
 | Calendar/Timeline/Planner、图表、活动流 | `plan.calendar/timeline/analytics/feed` |
 | 保存、命名、布局/分组/筛选/排序/时区选项、删除用户数据库视图 | `plan.views/view-create/view-update/view-delete` |
 
-来源为已删除员工的旧任务仍是可管理记录。Secretary 可列出、读详情、看保留历史、暂停、删除或编辑停用记录；改派时必须提交当前合法目标。记录访问和清理不放宽执行资格。其他在职 Secretary 的任务仍受同级排期限制；不可运行的任务不会因为能查询到而获得运行权限。
+来源为已删除员工的旧任务仍是可管理记录。Secretary 可列出、读详情、看保留历史、暂停、删除或编辑停用记录；改派时必须提交当前合法目标。记录访问和清理不放宽执行资格。Secretary 可给其他在职 Secretary 排期；缺失目标、无合法发布权限或运行条件不满足时仍拒绝执行。
 
-## 其他界面对照
+## 保留的真实身份与设备语义
 
-| 区域 | 规范入口与边界 |
-| --- | --- |
-| Company：Team、员工、形象、位置、关系、资料 | `group.*`、`card.*`、`office.*`、`room.*`、`connector.*`、`management.*`、`team-view.*`；保留职级与生命周期限制 |
-| 私聊：发现、正文、排队、停止、设置 | `session.*`、`config.*`；使用真实稳定员工身份 |
-| 群组、成员、禁言和固定通知 | `chat.*` / `conversation.policy/role/mute/silence/notice-*`；要求实际会话 Owner/Admin，Company Secretary 无豁免；解散要求 Owner；公开发言继续检查成员及委派 |
-| 频道、发布引擎、来源、头像、管理员、订阅、文章 | `channel.*`；不冒充用户/其他作者，不绕过成员或发布身份 |
-| 分类、排序、归档与偏好 | `messenger.*`；保留本人阅读与跨会话分享的用户专属边界 |
-| 个人/共享/会话工作区 | `workspace.*`、`conversation.*`、`transfer.*`；不绕过本人目录、共享原件与其他成员目录的权限 |
-| 设置、主机、后台终端 | `settings.*`、`host.*`、`terminal.*`；主机和原生引擎权限独立生效 |
-| 插件 | 文档工具读 `plugin/ID/command/METHOD`，执行 `plugin.call {id,method,employee?/team?/workspace?,params}`，使用当前授权工作区 |
+只有七条注册操作保留人类身份：`session.acknowledge`、`chat.acknowledge`、`channel.acknowledge` 是用户实际阅读确认；`ui.click/type/drag/wheel` 会从用户renderer产生身份行为。秘书以规范业务API完成相应管理，不能制造人类阅读或借设备事件伪装用户。文件选择、麦克风、剪贴板依赖设备提供字节/许可；API不虚构尚未上传的文件。
 
-浏览器文件选择、麦克风、剪贴板、临时悬停和弹窗开关属于当前设备交互。持久化业务效果必须有 Core API；上传下载许可仍绑定客户端。Secretary 无法从未上传的浏览器文件取得字节，也不会模拟用户点击来绕过身份。
-
-## 保留的用户专属边界
-
-人类阅读确认、修改用户作者消息、跨会话引用/转发授权、用户/员工凭据签发与撤销、客户端上传下载/媒体许可、频道根目录原件导入（channel.file-download）、模拟用户点击以及 Secretary 任免保留既有限制。Secretary作为实际成员可以通过conversation.file维护会话根直属文件，仍不能修改他人成员目录；conversation.download可将已发布附件复制到本人选定工作区，区别于旧channel.file-download的共享根导入。权限、引擎执行许可、工作目录和成员资格不能通过通用工具自报；无权限时返回真实拒绝。
+`auth.agent-token` 对Secretary返回签发元信息，不返回operator token或别人明文凭据。目标员工原生环境获取自己的受限key。`chat.edit.editedBy`、消息作者、conversation.audit与administration.audit保持真实actor。审计不保存token、正文或文件内容。
 
 ## 接口精简与兼容
 
-不新增第二套 `plan.task-*` CRUD，不新增重复的逐按钮 MCP 工具。通用 CLI `agents api call COMMAND --args JSON|@file --json` 原样传输规范参数，涵盖未设置短标志的参数；Core 不存在嵌套 api.call 接口。
+不新增第二套 plan.task CRUD，不新增逐按钮 MCP。`management.request/decide/team/global` 与 `config.engine` 从默认发现移除，`--all` 返回替代入口。规范关系操作用bind/unbind，任免用card.management-role，已有员工编码引擎保持固定。
 
-`management.request/decide/team/global` 与 `config.engine` 从默认 API 发现中移除，`--all` 返回替代指引。保留必要的旧协议兼容/明确拒绝，不偷偷改变旧调用含义。规范关系操作使用 bind/unbind，任免使用 card.management-role，已有员工编码引擎固定。
+## 可重复验证与实际限制
 
-## 可重复检查
+`test/secretary-api-parity-test.mjs` 扫描renderer真实注册命令引用，逐条对照Secretary可调用集合；只允许上面七条有解释的例外和明确退休接口。生成 `artifacts/secretary-plan-api/gui-api-inventory.json`，记录源码文件和行号。所有payload必须可由通用CLI原样表示。
 
-`test/secretary-api-parity-test.mjs` 对照 renderer 的注册命令引用、Secretary 能力、逐项例外、原始 CLI 参数以及插件目录。生成 `artifacts/secretary-plan-api/gui-api-inventory.json`，包含每条命令对应的源码文件和行号；没有解释的权限缺口使测试失败。
+`test/secretary-administration-test.mjs` 使用临时状态和真实Core dispatcher验证真实身份、跨视图能力、关闭会话配置、默认值、非成员治理、资产、员工key元信息、任免及整批最后管理员保护、脱敏审计。`reasoning-defaults-unit-test` 验证默认和显式覆盖。`api-tool-boundary-test` 覆盖原生工作轮次、审批、planning及撤销。`secretary-plan-api-test` 连接确定性原生协议夹具，验证查询→修改→运行/删除→回读、peer任务与孤立记录，不调用收费模型。
 
-`test/coverage-test.mjs` 独立检查 UI→CLI→Core 分发覆盖，通用 api.call 仅按真实转发语义识别。`secretary-plan-api-test`、`secretary-plan-ui-test`、`api-tool-boundary-test` 和两组 `secretary-api-*-test` 验证运行行为、三项缺失目标记录的复现、实际原生工具调用、审批及并发修订边界。
-
-静态可达性不等于每个外部服务已执行。所有开发测试使用临时状态；原生 Codex/Claude 测试连接本机确定性 HTTP 响应，Cline/Pi 使用注册协议夹具，不调用收费模型。安装结果和实际运行项目单独记录在 progress/Agents-company2.md 与 artifacts/secretary-plan-api/。
+静态可达性与模拟协议通过，不证明所有外部provider、云主机或真实浏览器设备都已实测。发布记录必须分别列出typecheck、行为测试、打包、安装和Git推送结果，不能把代码实现称作实际安装或保证绝对无缺陷。

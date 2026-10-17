@@ -187,7 +187,7 @@ Saved-job preview accepts `{id,patch?,after?,count?}`. A patch is temporary and 
 
 ## Plan extension (additive v1)
 
-Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; scheduling others requires a strictly lower role within the existing Team/global control scope. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
+Plan is now a first-class view over this same scheduler. `afterSeconds`, `employeeId:"self"`, monthly rules, `maxOccurrences`, Plan metadata, creation idempotency and revision checks are documented in [PLAN.md](PLAN.md). All previous job IDs and schedules remain valid. Ordinary Employees may schedule themselves through a self-target-only delegation; Secretary may schedule all roles; other roles require a strictly lower target within existing Team/global scope. `schedule:changed` broadcasts saved database changes. The host must remain online and awake.
 
 ## Read-model layout extension
 
@@ -195,7 +195,7 @@ Plan is now a first-class view over this same scheduler. `afterSeconds`, `employ
 
 ## Plan 统一调度与严格下行权限
 
-所有角色的定时、重复、事件触发员工工作统一使用本 API，并能在 Core Plan 中查询和调整。Employee 只能给自己排期；Manager 可给自己及本 Team 的 Employee 排期；Governor 可给自己及全局 Employee/Manager 排期；Secretary 可给自己及全局 Employee/Manager/Governor 排期。任何 Agent 均不能给其他同级或上级安排任务。用户可调整全部员工规划。一般管理/消息权限不因这一独立的调度规则改变。
+所有角色的定时、重复、事件触发员工工作统一使用本 API，并能在 Core Plan 中查询和调整。Employee 只能给自己排期；Manager 可给自己及本 Team 的 Employee 排期；Governor 可给自己及全局 Employee/Manager 排期；Secretary 可给全局所有职级（含其他 Secretary）排期。其他职级不能给同级或上级安排任务。用户可调整全部员工规划。一般管理/消息权限不因这一独立的调度规则改变。
 
 `schedule.create/update/preview/run/resume/trigger` 等目标操作均受同一权限边界保护；原委派在实际执行和异步准备之后再次复核。新增 `action.channelId` 明确关联员工引擎频道，要求目标持续具有发布成员身份。旧 UI 的 `source:channel:ID` 仅迁移为经过校验的频道引用，不授予权限。移除成员会停用关联任务。
 
@@ -222,4 +222,4 @@ also accept `--expected-revision` to guard against a changed task.
 
 ## Conversation notices are separate from Plan
 
-Current conversation offices (Group Owner/Admin/Member, channel Admin) are independent of Company managementRole. Only actual conversation Owner/Admin configures mute, quiet mode and fixed-text notifications; Company Secretary has no conversation-office bypass. Owner alone dissolves groups or transfers ownership, with the human user's external recovery override. `conversation.notice-*` posts saved text through an independent Core timer/storage without running an Agent or entering Plan. Plan `schedule.*` remains the exclusive API for scheduled employee work. See [CONVERSATION_CONTROLS.md](docs/CONVERSATION_CONTROLS.md) for the current, detailed boundary.
+Current conversation offices (Group Owner/Admin/Member, channel Admin) are independent of Company managementRole. User/Secretary administer all conversations; actual Owner/Admin retain their scoped moderation and notice capabilities. Owner, user or Secretary may dissolve groups or transfer ownership. Secretary administration preserves its real Agent identity. `conversation.notice-*` posts saved text through an independent Core timer/storage without running an Agent or entering Plan. Plan `schedule.*` remains the exclusive API for scheduled employee work. See [CONVERSATION_CONTROLS.md](docs/CONVERSATION_CONTROLS.md) for the current, detailed boundary.

@@ -14,9 +14,9 @@ npm run test:release-core
 npm run dev
 ```
 
-Keep Node/npm within the supported versions in `package.json`. Validate Mac and Windows desktop packages on their respective systems. Linux validation covers the Core/Web backend and a browser client on another computer; a remote Windows host test is not equivalent to testing a Windows Core.
+Keep Node/npm within the supported versions in `package.json`. Package the current macOS Aexus product only with the repository root `python3 build.py`; the embedded Electron shell is not a separate install. Validate other targets only on their actual systems. Linux validation covers the Core/Web backend and a browser client on another computer; a remote Windows host test is not equivalent to testing a Windows Core.
 
-All three bundled plugin source trees are versioned with this repository. Change the plugin in `PlugIns/<name>`, preserve its license and update `plugins.lock.json` when its version changes. Use `examples/plugin-starter` for a new plugin. Do not include working documents, credentials, browser profiles, dependency directories or generated runtime state.
+Aexus does not bundle the former Mini Notion, Margin Reader or Cloud Hosts products. Retained generic plugin interfaces do not mean those products ship with the native app. Use `examples/plugin-starter` for a new plugin. Do not include working documents, credentials, browser profiles, dependency directories or generated runtime state.
 
 ## Changes and tests
 

@@ -19,6 +19,7 @@ export function authenticate(token:unknown):RequestContext{
   if(!entry||!readStore().sessions.some(card=>card.id===entry.employeeId&&!card.deleting))throw Error('Invalid or revoked Agent credential')
   return {principal:{kind:'agent',employeeId:entry.employeeId},requestId:randomUUID(),credentialHash:digest}
 }
+export function credentialIssued(employeeId:string){return tokens().some(value=>value.employeeId===employeeId)}
 export function credentialActive(employeeId:string,digest:string){return tokens().some(value=>value.employeeId===employeeId&&value.hash===digest)}
 export function agentCredential(employeeId:string){
   if(!readStore().sessions.some(card=>card.id===employeeId&&!card.deleting))throw Error('Unknown employee')

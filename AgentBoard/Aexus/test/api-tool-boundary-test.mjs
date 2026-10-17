@@ -18,7 +18,7 @@ try{
  state.running=false;await assert.rejects(call('settings.get'),/current employee work turn/);state.running=true
  const originalTask=state.currentTask;delete state.currentTask;await assert.rejects(call('settings.get'),/current employee work turn/);state.currentTask=originalTask
  for(const input of [{command:'settings.get',auth:'operator'},{command:'settings.set',args:[]},{command:44}])await assert.rejects(core.invokeApiTool(state,input,'bad'),/Provide|Choose/)
- state.permissionMode='bypassPermissions';await assert.rejects(call('auth.agent-token',{id:'secretary'}),/not available/);await assert.rejects(call('settings.set',{createdBy:{kind:'operator'}}),/internal|reserved|cannot|Forbidden/i);await assert.rejects(call('not.real'),/not available/)
+ state.permissionMode='bypassPermissions';const provisioned=await call('auth.agent-token',{id:'secretary'});assert.equal(provisioned.data.credentialReturned,false);assert.equal(provisioned.data.token,undefined);await assert.rejects(call('session.acknowledge',{employee:'secretary'}),/not available/);await assert.rejects(call('settings.set',{createdBy:{kind:'operator'}}),/internal|reserved|cannot|Forbidden/i);await assert.rejects(call('not.real'),/not available/)
  const lateWrite=call('settings.set',{language:'zh-CN'});state.planMode=true;await assert.rejects(lateWrite,/permissions changed/);state.planMode=false
  const revokedBypass=call('settings.set',{language:'zh-CN'});state.permissionMode='default';await assert.rejects(revokedBypass,/permissions changed/)
  state.permissionMode='dontAsk';await assert.rejects(call('settings.set',{language:'zh-CN'}),/disabled/);state.permissionMode='default'

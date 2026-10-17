@@ -1,4 +1,33 @@
 {
+  "api.capabilities": {
+    "fields": [],
+    "rawPositionals": true
+  },
+  "administration.audit": {
+    "fields": [
+      [
+        "limit",
+        "limit",
+        "number",
+        false,
+        false
+      ],
+      [
+        "before",
+        "before",
+        "number",
+        false,
+        false
+      ],
+      [
+        "beforeId",
+        "before-id",
+        "text",
+        false,
+        false
+      ]
+    ]
+  },
   "plan.schema": {
     "fields": []
   },
@@ -3215,6 +3244,18 @@
     ],
     "rawPositionals": true
   },
+  "config.get": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "rawPositionals": true
+  },
   "config.thinking": {
     "fields": [
       [
@@ -3227,12 +3268,33 @@
       [
         "enabled",
         1,
-        "text",
+        "boolean-switch",
         false,
         false
       ]
     ],
     "rawPositionals": true
+  },
+  "config.effort": {
+    "fields": [
+      [
+        "id",
+        0,
+        "text",
+        true,
+        false
+      ],
+      [
+        "effort",
+        1,
+        "text",
+        false,
+        false
+      ]
+    ],
+    "defaults": {
+      "effort": "default"
+    }
   },
   "external.open": {
     "fields": [

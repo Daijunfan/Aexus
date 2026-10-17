@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,retainSecretary} from './application-administrator'
 import {CHANNEL_POST_TRIGGER_APIS} from '../shared/message-collaboration'
 import {validatePostTriggerDelegation} from './channel-post-triggers'
 import {channelMemberIds} from './channel-members'
@@ -21,7 +22,7 @@ import {catalog as chatCatalog,messages as chatMessages} from './chat-group-stor
 
 export const isGlobal=(principal:PrincipalRef)=>{if(principal.kind==='operator')return true;const store=readStore();return hasGlobalRole(store.access,store.sessions.find(card=>card.id===principal.employeeId))}
 /** Application administration preserves the Agent principal; it never impersonates the user. */
-export function isAppAdministrator(principal=requestContext().principal){return principal.kind==='operator'||!!rolePolicy(callerEmployee(principal)?.managementRole).appAdministrator}
+export const isAppAdministrator=isApplicationAdministrator
 export function requireAppAdministrator(){if(!isAppAdministrator())throw Error('Only the user or a Secretary may administer the application')}
 export function canReadHostCredentials(id:string,principal=requestContext().principal){
   if(isGlobal(principal))return true
@@ -57,7 +58,7 @@ export function canControl(principal:PrincipalRef,targetId:string){
   return policy.controls.includes(target.managementRole??'employee')&&(policy.scope==='global'||policy.scope==='team'&&caller.group===target.group)
 }
 
-/** Scheduling is strictly self or downward; general administration may still include peers. */
+/** Secretary schedules every rank; other Agents schedule self or downward. */
 export function canSchedule(principal:PrincipalRef,targetId:string){
   if(principal.kind==='operator')return true
   const index=managementIndex(),caller=index.cards.get(principal.employeeId),target=index.cards.get(targetId)
@@ -77,14 +78,14 @@ export function validateDelegation(delegation:Delegation|undefined,targetId:stri
     const notice=delegation.channelNotice,current=channelRow('SELECT admin_ids FROM channels WHERE id=?',notice.channelId),admins: string[]=current?channelMemberIds(notice.channelId):[],delivery=channelRow('SELECT kind,mode FROM channel_deliveries WHERE channel_id=? AND entry_id=? AND employee_id=?',notice.channelId,notice.entryId,targetId)
     if(notice.employeeId!==targetId||!admins.includes(targetId)||delivery?.mode!=='awareness'||!readStore().sessions.some(card=>card.id===targetId&&!card.deleting))throw Error('Channel notification is no longer authorized')
     if(delivery.kind==='news'){const post=liveChannelPost(notice.entryId);if(delegation.requestedBy.kind!=='operator'||post.channel_id!==notice.channelId)throw Error('News notification is no longer authorized')}
-    else{authorize('channel.context',{},undefined,context);const message=channelRow('SELECT author FROM channel_messages WHERE channel_id=? AND id=?',notice.channelId,notice.entryId),author=message&&JSON.parse(message.author),sender=delegation.requestedBy;if(!author||author.kind!==sender.kind||sender.kind==='agent'&&(author.employeeId!==sender.employeeId||!admins.includes(sender.employeeId)))throw Error('Channel sender is no longer authorized')}
+    else{authorize('channel.context',{},undefined,context);const message=channelRow('SELECT author FROM channel_messages WHERE channel_id=? AND id=?',notice.channelId,notice.entryId),author=message&&JSON.parse(message.author),sender=delegation.requestedBy;if(!author||author.kind!==sender.kind||sender.kind==='agent'&&(author.employeeId!==sender.employeeId||!admins.includes(sender.employeeId)&&!isAppAdministrator(sender)))throw Error('Channel sender is no longer authorized')}
     return
   }
   if(delegation.groupNotice){
     authorize('chat.context',{},undefined,context)
     const notice=delegation.groupNotice,group=chatCatalog().groups.find(group=>group.id===notice.groupId),message=chatMessages(notice.groupId).find(message=>message.id===notice.messageId)
     const author=message?.author,sender=delegation.requestedBy
-    if(notice.employeeId!==targetId||!group?.memberIds.includes(targetId)||!message?.deliveries.some(delivery=>delivery.employeeId===targetId&&delivery.mode==='awareness')||author?.kind!==sender.kind||sender.kind==='agent'&&(author?.kind!=='agent'||author.employeeId!==sender.employeeId||!group.memberIds.includes(sender.employeeId))||!readStore().sessions.some(card=>card.id===targetId&&!card.deleting))throw Error('Group notification is no longer authorized')
+    if(notice.employeeId!==targetId||!group?.memberIds.includes(targetId)||!message?.deliveries.some(delivery=>delivery.employeeId===targetId&&delivery.mode==='awareness')||author?.kind!==sender.kind||sender.kind==='agent'&&(author?.kind!=='agent'||author.employeeId!==sender.employeeId||!group.memberIds.includes(sender.employeeId)&&!isAppAdministrator(sender))||!readStore().sessions.some(card=>card.id===targetId&&!card.deleting))throw Error('Group notification is no longer authorized')
     return
   }
   if(delegation.schedule){
@@ -110,9 +111,10 @@ export function canEditOffice(store:Store,principal:PrincipalRef,team:string,emp
   const target=store.sessions.find(card=>card.id===employeeId&&!card.deleting)
   return !!target&&target.group===caller.group&&policy.controls.includes(target.managementRole??'employee')
 }
-const USER_ONLY_APIS=new Set([...COMMANDS.filter(command=>(command.name.startsWith('messenger.')||command.name.startsWith('channel.')&&!CHANNEL_POST_TRIGGER_APIS.has(command.name)&&!['channel.list','channel.get','channel.context','channel.history','channel.timeline','channel.post','channel.image','channel.message-post','channel.publish','channel.media-put'].includes(command.name))).map(command=>command.name),'chat.edit','chat.acknowledge',"system.directories","engine.list","engine.check","engine.configure","engine.install-plan","engine.install","engine.install-status","engine.cancel-install","engine.login","engine.login-status","engine.cancel-login","transfer.upload-begin","transfer.upload-chunk","transfer.upload-commit","transfer.upload-abort","transfer.download-save","transfer.download-info","transfer.download-chunk",'auth.agent-token','auth.revoke','management.global','management.team','session.acknowledge','ui.click','ui.type','ui.drag','ui.wheel'])
-const HUMAN_ONLY_APIS=new Set(['workspace.reveal','assets.naming','assets.info','assets.preview','assets.browse','assets.tree','assets.children','assets.locate','assets.search','assets.file','channel.file-download','transfer.upload-begin','transfer.upload-chunk','transfer.upload-commit','transfer.upload-abort','transfer.download-save','transfer.download-info','transfer.download-chunk','auth.agent-token','auth.revoke','session.acknowledge','chat.acknowledge','channel.acknowledge','chat.edit','messenger.profile','messenger.profile-image','messenger.forward','messenger.forward-draft','messenger.forward-status','messenger.reference','messenger.media-open','messenger.media-info','messenger.media-read','messenger.media-close','ui.click','ui.type','ui.drag','ui.wheel'])
-const humanOnly=(command:string)=>HUMAN_ONLY_APIS.has(command)||command.startsWith('messenger.upload-')
+const USER_ONLY_APIS=new Set(['administration.audit','assets.naming','assets.info','assets.preview','assets.browse','assets.tree','assets.children','assets.locate','assets.search','assets.file','workspace.reveal',...COMMANDS.filter(command=>(command.name.startsWith('messenger.')||command.name.startsWith('channel.')&&!CHANNEL_POST_TRIGGER_APIS.has(command.name)&&!['channel.list','channel.get','channel.context','channel.history','channel.timeline','channel.post','channel.image','channel.message-post','channel.publish','channel.media-put'].includes(command.name))).map(command=>command.name),'chat.edit','chat.acknowledge',"system.directories","engine.list","engine.check","engine.configure","engine.install-plan","engine.install","engine.install-status","engine.cancel-install","engine.login","engine.login-status","engine.cancel-login","transfer.upload-begin","transfer.upload-chunk","transfer.upload-commit","transfer.upload-abort","transfer.download-save","transfer.download-info","transfer.download-chunk",'auth.agent-token','auth.revoke','management.global','management.team','session.acknowledge','ui.click','ui.type','ui.drag','ui.wheel'])
+export const HUMAN_ONLY_APIS=new Set(['session.acknowledge','chat.acknowledge','channel.acknowledge','ui.click','ui.type','ui.drag','ui.wheel'])
+export const humanOnly=(command:string)=>HUMAN_ONLY_APIS.has(command)
+const SELF_REASONING_APIS=new Set(['config.effort','config.thinking'])
 function authorizeAccess(command:string,args:Record<string,any>={},targetId?:string,context=requestContext()){
   const policy=COMMANDS.find(c=>c.name===command);if(!policy)throw Error('Unknown API command')
   const principal=context.principal
@@ -122,7 +124,7 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
   if(caller){
     assertManagementKind(caller,isGlobal(principal),employeeSettings(readStore(),caller).mode==='cloud')
     if(caller.initialization&&caller.initialization.status!=='ready'){
-      const reading=['card.profile','avatar.list','engine.capabilities','auth.whoami','api.list','api.describe','api.docs','management.roles','management.topology','host.list','plugin.list','plugin.describe','session.status','session.info'].includes(command)||['workspace.list','workspace.read'].includes(command)&&args.employee===caller.id
+      const reading=['card.profile','avatar.list','engine.capabilities','auth.whoami','api.capabilities','api.list','api.describe','api.docs','management.roles','management.topology','host.list','plugin.list','plugin.describe','session.status','session.info'].includes(command)||['workspace.list','workspace.read'].includes(command)&&args.employee===caller.id
       if(!reading)throw new EmployeeInitializationError(caller.initialization.status==='failed')
     }
   }
@@ -130,7 +132,7 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
   if(['chat.update','chat.mute','chat.delete'].includes(command)){requireConversation('group:'+args.id,command==='chat.delete'?'owner':'admin',principal);return}
   const administrator=isAppAdministrator(principal)
   if(humanOnly(command)||!administrator&&(USER_ONLY_APIS.has(command)||command.startsWith('ui.')))throw Error('Only the user may call '+command)
-  if(!roleAllows(caller!.managementRole,policy.permission))throw Error('Forbidden: '+command)
+  if(!roleAllows(caller!.managementRole,policy.permission)&&!(SELF_REASONING_APIS.has(command)&&targetId===caller!.id))throw Error('Forbidden: '+command)
   assertRoleBoundaries(command,args,targetId,caller!)
   if(policy.permission==='schedule'&&targetId&&!canSchedule(principal,targetId))throw Error('Forbidden schedule target: choose yourself or a subordinate within your role scope')
   if(administrator)return
@@ -158,7 +160,8 @@ function authorizeAccess(command:string,args:Record<string,any>={},targetId?:str
     case 'host.read':if(canReadHostCredentials(String(args.id),principal))return;return deny()
     case 'relation':if(isSupervisor(caller!.managementRole))return;return deny()
     case 'employee.read':if(command==='session.list'||command==='session.inbox'||command==='session.status'&&!args.employee&&!args.id||own||targetId&&canControl(principal,targetId))return;return deny()
-    case 'employee.message':case 'employee.configure':if(targetId&&canControl(principal,targetId))return;return deny()
+    case 'employee.message':if(targetId&&canControl(principal,targetId))return;return deny()
+    case 'employee.configure':if(own&&SELF_REASONING_APIS.has(command)||targetId&&canControl(principal,targetId))return;return deny()
     case 'employee.create':if(args.group===caller!.group&&rolePolicy(caller!.managementRole).creates.includes(args.managementRole??'employee'))return;return deny()
     case 'employee.delete':if(targetId&&canDeleteEmployee(principal,targetId))return;return deny()
     case 'workspace':if(args.employee===caller!.id&&!args.team&&!args.shared)return;return deny()
@@ -192,7 +195,7 @@ export function allowedCommands(context=requestContext(),store=readStore(),all=f
   const principal=context.principal,card=principal.kind==='agent'?store.sessions.find(c=>c.id===principal.employeeId&&!c.deleting):undefined
   if(principal.kind==='agent'&&!card)return []
   if(all)return COMMANDS
-  return COMMANDS.filter(command=>!Object.hasOwn(RETIRED_APIS,command.name)).filter(command=>principal.kind==='operator'||!humanOnly(command.name)&&(!!rolePolicy(card?.managementRole).appAdministrator||!USER_ONLY_APIS.has(command.name)&&!command.name.startsWith('ui.'))&&roleAllows(card?.managementRole,command.permission))
+  return COMMANDS.filter(command=>!Object.hasOwn(RETIRED_APIS,command.name)).filter(command=>principal.kind==='operator'||!humanOnly(command.name)&&(!!rolePolicy(card?.managementRole).appAdministrator||!USER_ONLY_APIS.has(command.name)&&!command.name.startsWith('ui.'))&&(roleAllows(card?.managementRole,command.permission)||SELF_REASONING_APIS.has(command.name)))
 }
 export function apiDocumentation(context=requestContext(),store=readStore(),document?:string){
   if(context.principal.kind==='agent'&&!store.sessions.some(card=>card.id===(context.principal as {employeeId:string}).employeeId&&!card.deleting))throw Error('Unknown employee for API documentation')
@@ -206,7 +209,13 @@ export function permissionDocumentation(_context:RequestContext,_store:Store){
 /** All lifecycle entrances share these boundaries, before side effects or global shortcuts. */
 function assertRoleBoundaries(command:string,args:Record<string,any>,targetId:string|undefined,caller:StoredSession){
   const store=readStore(),policy=rolePolicy(caller.managementRole),target=store.sessions.find(card=>card.id===targetId)
-  const deny=()=>{throw Error('Forbidden: Secretary 的任免仅允许用户；Governor 的任免需要用户或 Secretary')}
+  if(policy.appAdministrator){
+    if(command==='card.remove')retainSecretary(args.ids??(target?[target.id]:[]))
+    if(command==='group.remove')retainSecretary(store.sessions.filter(card=>(args.names??[args.name]).includes(card.group)).map(card=>card.id))
+    if(command==='card.management-role'&&args.role!=='secretary'&&target)retainSecretary([target.id])
+    if(command==='auth.revoke'&&target)retainSecretary([target.id])
+  }
+  const deny=()=>{throw Error('Forbidden: 任免此职级需要用户或 Secretary 管理权限')}
   if(command==='card.create'||command==='session.new'){
     const role=args.managementRole??'employee'
     if(!isManagementRole(role))throw Error('Invalid management role')

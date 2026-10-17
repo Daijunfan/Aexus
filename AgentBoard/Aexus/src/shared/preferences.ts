@@ -1,3 +1,4 @@
+import {REASONING_DEFAULTS,EFFORT_SCHEMA,type ReasoningPreferences} from './reasoning-defaults.ts'
 import {DEFAULT_MESSAGE_WALLPAPER,MESSAGE_WALLPAPER_SCHEMA,type MessageWallpaperSettings} from './message-wallpaper.ts'
 
 export const SIDEBAR_MIN = 56, SIDEBAR_MAX = 96
@@ -10,9 +11,9 @@ export type PresentationView=typeof PRESENTATION_VIEWS[number]
 export type ViewAppearance={theme:typeof THEMES[number];themeColor:string}
 export type ViewAppearanceMap=Record<PresentationView,ViewAppearance>
 export const DEFAULT_VIEW_APPEARANCE:ViewAppearanceMap={company:{theme:'white',themeColor:'#526dc3'},messages:{theme:'white',themeColor:'#7953ce'},plan:{theme:'white',themeColor:'#526dc3'}}
-export type Preferences = {messageWallpaper:MessageWallpaperSettings;language:InterfaceLanguage;defaultPermissionMode:'default'|'acceptEdits'|'bypassPermissions';theme:typeof THEMES[number];themeColor:string;viewAppearance:ViewAppearanceMap;zoomSensitivity:number;panSensitivity:number;sidebarWidth:number;snapEmployees:boolean;showTeamOverview:boolean;pageZoom:number;explorerWidth:number;assetDrawerWidth:number;terminalHeight:number;defaultCodexModel:string;defaultClaudeModel:string;defaultClineModel:string;defaultPiModel:string}
+export type Preferences = ReasoningPreferences & {messageWallpaper:MessageWallpaperSettings;language:InterfaceLanguage;defaultPermissionMode:'default'|'acceptEdits'|'bypassPermissions';theme:typeof THEMES[number];themeColor:string;viewAppearance:ViewAppearanceMap;zoomSensitivity:number;panSensitivity:number;sidebarWidth:number;snapEmployees:boolean;showTeamOverview:boolean;pageZoom:number;explorerWidth:number;assetDrawerWidth:number;terminalHeight:number;defaultCodexModel:string;defaultClaudeModel:string;defaultClineModel:string;defaultPiModel:string;defaultOpenCodeModel:string}
 export type PreferencesPatch=Omit<Partial<Preferences>,'viewAppearance'|'messageWallpaper'>&{messageWallpaper?:Partial<MessageWallpaperSettings>;viewAppearance?:Partial<Record<PresentationView,Partial<ViewAppearance>>>}
-export const DEFAULT_PREFERENCES:Preferences = {messageWallpaper:DEFAULT_MESSAGE_WALLPAPER,language:'en',defaultPermissionMode:'bypassPermissions',theme:'white',themeColor:'#7953ce',viewAppearance:DEFAULT_VIEW_APPEARANCE,zoomSensitivity:2.5,panSensitivity:1,sidebarWidth:64,snapEmployees:true,showTeamOverview:false,pageZoom:1,explorerWidth:230,assetDrawerWidth:320,terminalHeight:220,defaultCodexModel:'gpt-6.1-sol',defaultClaudeModel:'',defaultClineModel:'deepseek-flash',defaultPiModel:'deepseek-flash'}
+export const DEFAULT_PREFERENCES:Preferences = {...REASONING_DEFAULTS,messageWallpaper:DEFAULT_MESSAGE_WALLPAPER,language:'en',defaultPermissionMode:'bypassPermissions',theme:'white',themeColor:'#7953ce',viewAppearance:DEFAULT_VIEW_APPEARANCE,zoomSensitivity:2.5,panSensitivity:1,sidebarWidth:64,snapEmployees:true,showTeamOverview:false,pageZoom:1,explorerWidth:230,assetDrawerWidth:320,terminalHeight:220,defaultCodexModel:'gpt-6.1-sol',defaultClaudeModel:'',defaultClineModel:'deepseek-flash',defaultPiModel:'deepseek-flash',defaultOpenCodeModel:''}
 export const THEME_LABELS:Record<Preferences['theme'],string> = {violet:'Violet',blue:'Blue',mint:'Green',teal:'Teal',cyan:'Cyan',rose:'Rose',coral:'Coral',amber:'Amber',indigo:'Indigo',graphite:'Graphite',custom:'Custom color',white:'White',light:'Light',space:'Space gray',black:'Black',midnight:'Midnight blue',sage:'Sage'}
 
 /** Legacy color fields remain Messages aliases; a partial edit never recolors another view. */
@@ -34,13 +35,14 @@ export function presentationForView(view:{kind:string;returnTo?:{kind:string}}):
 
 const appearanceSchema={type:'object',additionalProperties:false,properties:{theme:{enum:THEMES},themeColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'}}}
 export const PREFERENCES_PATCH_SCHEMA={type:'object',additionalProperties:false,properties:{
+  defaultCodexEffort:EFFORT_SCHEMA,defaultClaudeEffort:EFFORT_SCHEMA,defaultOpenCodeEffort:EFFORT_SCHEMA,defaultClaudeThinking:{type:'boolean'},
   messageWallpaper:MESSAGE_WALLPAPER_SCHEMA,
   language:{enum:LANGUAGES},defaultPermissionMode:{enum:['default','acceptEdits','bypassPermissions']},
   theme:{enum:THEMES,description:'Legacy alias for Messages appearance only'},themeColor:appearanceSchema.properties.themeColor,
   viewAppearance:{type:'object',additionalProperties:false,properties:Object.fromEntries(PRESENTATION_VIEWS.map(view=>[view,appearanceSchema])),description:'Partial per-view changes; omitted views and fields are retained'},
   zoomSensitivity:{type:'number',minimum:.25,maximum:8},panSensitivity:{type:'number',minimum:.25,maximum:4},sidebarWidth:{type:'number',minimum:SIDEBAR_MIN,maximum:SIDEBAR_MAX},
   snapEmployees:{type:'boolean'},showTeamOverview:{type:'boolean'},pageZoom:{type:'number',minimum:.75,maximum:1.5},explorerWidth:{type:'number',minimum:140,maximum:520},assetDrawerWidth:{type:'number',minimum:260,maximum:600},terminalHeight:{type:'number',minimum:120,maximum:600},
-  ...Object.fromEntries(['defaultCodexModel','defaultClaudeModel','defaultClineModel','defaultPiModel'].map(key=>[key,{type:'string'}]))
+  ...Object.fromEntries(['defaultCodexModel','defaultClaudeModel','defaultClineModel','defaultPiModel','defaultOpenCodeModel'].map(key=>[key,{type:'string'}]))
 }}
 
 /** Preserve the chosen hue while keeping accent text readable on white cards. */

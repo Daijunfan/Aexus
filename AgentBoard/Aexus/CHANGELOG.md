@@ -1,6 +1,14 @@
 # Changelog
 
-> 项目当前名称为 **Avalon**，分享地址：[Daijunfan/Avalon](https://github.com/Daijunfan/Avalon)。下文 Anexus 为当时的发布名称；安装包、命令和历史路径按实际记录保留。
+> 本目录现在是 Aexus 的内嵌 Role Core，独立于 Agent Board。旧发布名称与历史条目保留，不代表当前原生产品包含 Guardian 或旧插件。
+
+## 0.66.3 — Secretary 全应用管理与思考配置
+
+- Secretary 以本人 Agent key 管理 Company、Messages、Plan 的所有角色、群组/频道治理、资产、文件、整理、媒体、员工凭据与计划；任免/删除/撤销保留至少一个 ready 且有有效已签发 key 的管理员。
+- 原作者、实际编辑者、转发幂等、会话与全局管理审计保留真实身份；人类阅读回执和原始用户设备事件不伪造。
+- config.get/effort/thinking 支持稳定员工 ID 与已关闭的会话；默认模型/effort/Claude thinking 在之后创建的全部角色生效，已有员工不重置。
+- Plan 临时覆盖复用真实引擎能力目录，包括受支持的 ultra/default；配置入口不运行模型，busy 和调度占用仍拒绝修改。
+- 重构 API、权限、Secretary逐操作对照及会话文档；增加真实dispatcher、原生工具权限、最后管理员与默认值回归验证。
 
 ## 0.66.2 — Guardian 主机防护可视化工作台
 

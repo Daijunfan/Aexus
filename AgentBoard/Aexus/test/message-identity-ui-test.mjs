@@ -24,11 +24,11 @@ try{
  const uploaded=await rpc('messenger.profile',{image}),hash=uploaded.profile.image.sha256
  assert.equal((await rpc('messenger.profile-image',{sha256:hash})).data,image.data);assert.equal((await rpc('messenger.profile',{image})).revision,uploaded.revision)
  assert.ok(!JSON.stringify(await rpc('messenger.state')).includes(image.data),'profile bytes are separate from messenger state')
- for(const token of [agentToken,secretaryToken]){await deny('messenger.profile',{avatar:'seedy'},token);await deny('messenger.profile-image',{sha256:hash},token)}
+ await deny('messenger.profile',{avatar:'seedy'},agentToken);await deny('messenger.profile-image',{sha256:hash},agentToken);assert.equal((await rpc('messenger.profile-image',{sha256:hash},secretaryToken)).data,image.data);await rpc('messenger.profile',{image},secretaryToken)
  for(const value of [{image:{...image,mimeType:'image/jpeg'}},{image:{...image,data:'not-base64'}},{avatar:'unknown'},{avatar:'byte',image}])await deny('messenger.profile',value)
  assert.equal((await rpc('messenger.state')).profile.image.sha256,hash);assert.equal((await rpc('api.describe',{command:'messenger.profile-image'})).readOnly,true)
  await f.stop();await f.start();assert.equal((await rpc('messenger.profile-image',{sha256:hash})).data,image.data)
- checks.push('Profile ID and uploaded PNG persist, exact-hash reads reject stale data, invalid content cannot replace it, both ordinary and Secretary Agents are denied, and state excludes image bytes.')
+ checks.push('Profile ID and uploaded PNG persist, exact-hash reads reject stale data, invalid content cannot replace it, ordinary Agents are denied and Secretary administers the same profile without changing authors, and state excludes image bytes.')
  if(native){await f.stop();const env={...f.env,AGENTS_COMPANY_HIDDEN:'1',AGENTS_COMPANY_WIDTH:'1440',AGENTS_COMPANY_HEIGHT:'1000'};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:require('electron'),args:[application.directory],env});page=await app.firstWindow()}
  else{browser=await chromium.launch({headless:true,...(process.platform==='darwin'?{channel:'chrome'}:{})});page=await browser.newPage({viewport:{width:1440,height:1000}});await page.goto('http://127.0.0.1:'+port);await page.locator('.web-login input').fill(fs.readFileSync(path.join(f.env.AGENTS_COMPANY_HOME,'control.token'),'utf8').trim());await page.getByRole('button',{name:'Enter workspace',exact:true}).click()}
  page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));await expect(page.locator('.infinite-canvas')).toBeVisible();await page.getByRole('button',{name:'Messages',exact:true}).click();await page.getByRole('button',{name:'Open group '+group.name,exact:true}).click()

@@ -1,7 +1,7 @@
 {
   "name": "aexus",
   "productName": "Aexus",
-  "version": "0.66.2",
+  "version": "0.66.3",
   "description": "Aexus: Company, Messages, Plan and local Mac Guardian",
   "main": "./out/main/index.js",
   "author": {
@@ -129,7 +129,8 @@
     "test:plan-parity": "node test/plan-parity-core-test.mjs && node test/plan-parity-ui-test.mjs",
     "test:plan-refresh-stability": "node test/plan-time-refresh-stability-ui-test.mjs",
     "test:slimming": "node scripts/sync-manager-docs.mjs --check && node test/cli-contract-test.mjs && node test/architecture-boundaries-test.mjs && node test/slimming-domains-test.mjs && node test/message-index-test.mjs && node test/message-index-worker-test.mjs && node test/slimming-read-model-test.mjs && node test/api-documents-test.mjs && node test/slimming-performance-test.mjs",
-    "test:guardian:ui": "node test/guardian-ui-test.mjs"
+    "test:guardian:ui": "node test/guardian-ui-test.mjs",
+    "test:administration": "node test/reasoning-defaults-unit-test.mjs && node test/secretary-administration-test.mjs && node test/secretary-api-parity-test.mjs && node test/api-tool-boundary-test.mjs"
   },
   "build": {
     "appId": "com.agentscompany.app",

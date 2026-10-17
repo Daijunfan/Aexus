@@ -1,3 +1,4 @@
+import type {DefaultEffort} from './reasoning-defaults'
 import type {Delegation} from './management'
 /** Host-owned scheduling contract. No renderer or plugin dependencies. */
 export type ScheduleRule =
@@ -16,7 +17,7 @@ export type ScheduledAction = {
   /** Explicit employee publishing destination; membership is checked again at execution. */
   channelId?: string
   model?: string
-  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+  effort?: DefaultEffort
   thinking?: boolean
 }
 export type PlanMetadata = { priority: 'low' | 'normal' | 'high' | 'urgent'; tags: string[]; notes: string; /** Presentation estimate only. Never a timeout or automatic stop rule. */ durationMinutes?: number }

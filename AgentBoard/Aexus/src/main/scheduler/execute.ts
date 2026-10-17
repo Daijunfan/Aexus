@@ -32,7 +32,7 @@ export async function executeTask(action: ScheduledAction, owner: string, signal
       if ((getLive(id!)!.fastMode??false)!==original.fastMode) await setFastMode(id!,original.fastMode,owner)
     }
     if (action.model !== undefined) await setModel(id, action.model, owner)
-    if (action.effort !== undefined) await setEffort(id, action.effort, owner)
+    if (action.effort !== undefined) await setEffort(id, action.effort==='default'?null:action.effort, owner)
     if (action.thinking !== undefined && !await setThinking(id, action.thinking, owner)) throw new Error('Codex uses effort; thinking is a Claude-only setting')
     signal.throwIfAborted()
     await new Promise<void>((resolve, reject) => {

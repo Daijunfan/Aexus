@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import {socialElements,socialIdentity,categoryRule} from './message-categories'
 import {inCategory,matchesConversationType,matchesConversationQuery,uniqueConversations,CONVERSATION_TYPES,type CategoryEntry,type ConversationType} from '../shared/message-categories'
 import {resolveAvatar} from '../shared/avatars'
@@ -44,7 +45,7 @@ const liveEpoch=randomUUID()
 function messageSource(ref:ReturnType<typeof resolve>):MessageSource{
  if(ref.kind==='channel')return channelMessageSources(ref.id)[0]
  const version=ref.kind==='group'?chatMessagesVersion(ref.id):transcriptVersion(ref.id)
- return {id:ref.key,version:JSON.stringify([typeof version==='number'?[liveEpoch,version]:version,ref.card?.lastReply?.id,ref.card?.lastReply?.createdAt,ref.card?.lastReply?.itemId]),read:()=>ref.kind==='group'?readChatMessages(ref.id).map(message=>({conversation:ref.key,id:message.id,author:message.authorName,authorIdentity:message.author,role:message.author.kind==='operator'?'user':'assistant',text:message.text,images:message.attachments?.filter(file=>file.kind==='image').map(file=>file.path)??[],files:message.attachments?.filter(file=>file.kind==='file'),createdAt:message.createdAt,editedAt:message.editedAt,editRevision:message.editRevision})):transcriptItems(ref.id).flatMap(item=>{
+ return {id:ref.key,version:JSON.stringify([typeof version==='number'?[liveEpoch,version]:version,ref.card?.lastReply?.id,ref.card?.lastReply?.createdAt,ref.card?.lastReply?.itemId]),read:()=>ref.kind==='group'?readChatMessages(ref.id).map(message=>({conversation:ref.key,id:message.id,author:message.authorName,authorIdentity:message.author,role:message.author.kind==='operator'?'user':'assistant',text:message.text,images:message.attachments?.filter(file=>file.kind==='image').map(file=>file.path)??[],files:message.attachments?.filter(file=>file.kind==='file'),createdAt:message.createdAt,editedAt:message.editedAt,editedBy:message.editedBy,editRevision:message.editRevision})):transcriptItems(ref.id).flatMap(item=>{
   if(item.role==='notice')return []
   const text=item.role==='user'?item.text:item.blocks.filter(block=>block.kind==='text').map(block=>block.text).join('\n\n'),images=item.role==='user'?item.images??[]:[]
   if(!text.trim()&&!images.length&&!(item.role==='user'&&item.files?.length))return []
@@ -63,7 +64,7 @@ function publicMessages(value:string,state:MessengerState,ids?:string[]):Messeng
 export function readMessengerMessages(conversation:string,ids?:string[]){authorize('messenger.search');const ref=resolve(conversation);if(ref.kind==='channel'&&ids){const state=read();return ids.map(id=>channelMessage(ref.id,id,state))};return publicMessages(conversation,read(),ids)}
 /** A user-approved excerpt can be shared; it never grants access to its source. */
 export function resolveConversationReply(conversation:unknown,id:unknown,quote?:MessageQuote,textOnly?:boolean):MessageReply{
- authorize('messenger.reference');if(requestContext().principal.kind!=='operator')throw Error('Only the user may quote another conversation')
+ authorize('messenger.reference');if(!isApplicationAdministrator())throw Error('Only the user may quote another conversation')
  if(typeof id!=='string'||!id)throw Error('Choose a source message')
  if(textOnly!==undefined&&typeof textOnly!=='boolean')throw Error('textOnly must be boolean')
  const ref=resolve(conversation),state=read(),source=ref.kind==='channel'?channelMessage(ref.id,id,state):publicMessages(ref.key,state).find(message=>message.id===id)
@@ -80,7 +81,7 @@ export function messengerRequest(command:string,args:Record<string,any>={}){
  const state=read()
  switch(command){
   case 'messenger.profile':{
-   if(requestContext().principal.kind!=='operator')throw Error('Only the user may change their message avatar')
+   if(!isApplicationAdministrator())throw Error('Only the user may change their message avatar')
    if(Object.keys(args).some(key=>!['avatar','image'].includes(key))||(args.avatar===undefined)===(args.image===undefined))throw Error('Choose a message avatar')
    if(args.image!==undefined){
     if(!args.image||typeof args.image!=='object'||Array.isArray(args.image)||Object.keys(args.image).some(key=>!['name','mimeType','data'].includes(key)))throw Error('Unknown avatar image field')
@@ -94,7 +95,7 @@ export function messengerRequest(command:string,args:Record<string,any>={}){
    state.profile=avatar?{avatar}:{};const result=write(state);atomicJson(profileImageFile,null);return result
   }
   case 'messenger.profile-image':{
-   if(requestContext().principal.kind!=='operator')throw Error('Only the user may read their message avatar')
+   if(!isApplicationAdministrator())throw Error('Only the user may read their message avatar')
    if(Object.keys(args).some(key=>key!=='sha256')||typeof args.sha256!=='string'||args.sha256!==state.profile?.image?.sha256)throw Error('Message avatar changed. Reload the profile.')
    const image=readJson<{sha256:string;name:string;mimeType:string;data:string}|null>(profileImageFile,()=>null)
    if(!image||image.sha256!==args.sha256)throw Error('Message avatar is unavailable')
@@ -122,7 +123,7 @@ export function messengerRequest(command:string,args:Record<string,any>={}){
    return write(state)
   }
   case 'messenger.forward-draft':{
-   if(requestContext().principal.kind!=='operator')throw Error('Only the user may manage forwarding attempts')
+   if(!isApplicationAdministrator())throw Error('Only the user may manage forwarding attempts')
    const {value,expectedClientMessageId}=args,current=state.pendingForward
    if(expectedClientMessageId!==undefined&&(typeof expectedClientMessageId!=='string'||!expectedClientMessageId||expectedClientMessageId.length>160))throw Error('Invalid forwarding request ID')
    if(expectedClientMessageId!==undefined&&current?.clientMessageId!==expectedClientMessageId)return state

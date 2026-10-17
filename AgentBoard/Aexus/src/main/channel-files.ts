@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import fs from 'node:fs'
 import path from 'node:path'
 import {createHash} from 'node:crypto'
@@ -48,7 +49,7 @@ export function channelFileStatus(postId:string,fileId:string):ChannelFileStatus
  return {...status}
 }
 export async function downloadChannelFile(postId:string,fileId:string):Promise<ChannelFileStatus>{
- if(requestContext().principal.kind!=='operator')throw Error('Only the user may download cloud documents into a channel')
+ if(!isApplicationAdministrator())throw Error('Only the user may download cloud documents into a channel')
  const existing=channelFileStatus(postId,fileId)
  if(existing.error==='The cloud document cache has expired')throw Error(existing.error)
  if(['queued','running','completed'].includes(existing.state))return existing

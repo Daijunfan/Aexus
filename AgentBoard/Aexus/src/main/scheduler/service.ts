@@ -1,3 +1,6 @@
+import {isApplicationAdministrator} from '../application-administrator'
+import {EFFORT_LEVELS,validateEffort} from '../../shared/reasoning-defaults'
+import {ENGINE_DEFINITIONS} from '../../shared/engines'
 import {validateScheduleChannels} from './channel-policy'
 import {scheduleAccess} from './access'
 import {taskViewId} from '../task-view'
@@ -47,8 +50,8 @@ function validate(input: ScheduleSpec,orphan=false): ScheduleSpec {
   if (card&&a.engine && a.engine !== card.engine) throw new Error('Schedule engine must match the employee')
   if (typeof a.prompt !== 'string' || !a.prompt.trim()||a.prompt.length>64000) throw new Error('action.prompt must contain 1–64000 characters')
   if (a.model !== undefined && (typeof a.model !== 'string' || !a.model.trim())) throw new Error('model must be a nonempty string')
-  if (a.effort !== undefined && !['low', 'medium', 'high', 'xhigh', 'max'].includes(a.effort)) throw new Error('Invalid effort level')
-  if (a.thinking !== undefined && (typeof a.thinking !== 'boolean' || card?.engine==='codex' || (card?.engine==='cline'||card?.engine==='pi')&&a.thinking)) throw new Error('thinking must be boolean; Cline/Pi support off only, Codex uses effort')
+  if(a.effort!==undefined){validateEffort(a.effort);if(card&&!ENGINE_DEFINITIONS[card.engine].capabilities.effort)throw Error('This engine does not support configurable effort')}
+  if(a.thinking!==undefined&&(typeof a.thinking!=='boolean'||card&&!ENGINE_DEFINITIONS[card.engine].capabilities.thinking))throw Error('thinking must be boolean and requires a supported engine; use effort where available')
   const channelId=a.channelId??(input.source?.startsWith('channel:')?input.source.slice(8):undefined)
   if(channelId!==undefined&&(typeof channelId!=='string'||!channelId.trim()))throw Error('Use a valid publishing channel ID')
   const rule=validateRule(input.rule)
@@ -242,7 +245,7 @@ export async function stopScheduler() {
 
 export async function scheduleRequest(method: string, args: Record<string, any>) {
   if (method === 'schema') return {
-    version: 1, inputSchema:SCHEDULE_SPEC_SCHEMA,hostTimezone:Intl.DateTimeFormat().resolvedOptions().timeZone,now:stamp(),selfScheduling:'All roles schedule themselves; other targets must be strictly lower roles within the existing Team/global control scope',relativeTime:'afterSeconds is resolved by Core once; use clientRequestId for retry-safe creation',maxOccurrences:'Optional limit on scheduled occurrences including skips; manual runs do not consume it',action: { type: 'agent', employeeId: 'required saved employee ID', engine: 'inferred on create, pinned afterwards', prompt: 'required instruction; shell/CLI commands are performed by this employee', model: 'optional engine model ID', effort: ['low','medium','high','xhigh','max'], thinking: 'optional boolean, Claude only', viewId:'required for Governor tasks; explicit stable Team view ID, never resolved from the active tab at execution' },
+    version: 1, inputSchema:SCHEDULE_SPEC_SCHEMA,hostTimezone:Intl.DateTimeFormat().resolvedOptions().timeZone,now:stamp(),selfScheduling:'Secretary schedules every role including peers; other roles schedule self or strictly lower roles within existing Team/global scope',relativeTime:'afterSeconds is resolved by Core once; use clientRequestId for retry-safe creation',maxOccurrences:'Optional limit on scheduled occurrences including skips; manual runs do not consume it',action: { type: 'agent', employeeId: 'required saved employee ID', engine: 'inferred on create, pinned afterwards', prompt: 'required instruction; shell/CLI commands are performed by this employee', model: 'optional engine model ID', effort: ['default',...EFFORT_LEVELS], thinking: 'optional boolean, Claude only', viewId:'required for Governor tasks; explicit stable Team view ID, never resolved from the active tab at execution' },
     rule: { once: {at:'ISO timestamp with offset'}, interval:{everySeconds:'integer 1..31536000',anchor:'ISO timestamp with offset'}, weekly:{time:'HH:mm',days:'1=Monday..7=Sunday; all days means daily',timezone:'IANA zone'},monthly:{time:'HH:mm',day:'1..31 or last; missing dates skip that month',timezone:'IANA zone'},event:{event:'signal or channel.posted',channelId:'required only for channel.posted',cooldownSeconds:'0..86400; default 60; nextAt is null while waiting; use schedule.trigger only for signal'} },
     window: {start:'HH:mm inclusive',end:'HH:mm exclusive; may cross midnight',days:'optional weekdays of window start',timezone:'IANA zone'},
     defaults:{timeoutSeconds:1800,graceSeconds:60,enabled:true}, source:'optional plugin/caller namespace', until:'optional exclusive ISO end time',
@@ -275,7 +278,7 @@ export async function scheduleRequest(method: string, args: Record<string, any>)
   if(target&&method!=='cancel')revisionCheck(target as ScheduledJob,args.expectedRevision)
   const finishInteraction=beginManagementInteraction('schedule.'+method,args.spec?.action?.employeeId??target?.action.employeeId??args.employee,context)
   try{
-  if(method==='status'&&context.principal.kind!=='operator')return {running:ready&&!loadError,jobs:state.jobs.filter(visible).length,active:state.runs.filter(run=>visible(run)&&run.status==='running').map(run=>run.id)}
+  if(method==='status'&&!isApplicationAdministrator(context.principal))return {running:ready&&!loadError,jobs:state.jobs.filter(visible).length,active:state.runs.filter(run=>visible(run)&&run.status==='running').map(run=>run.id)}
   if (method === 'status') return { running: ready && !loadError, error: loadError, jobs: state.jobs.length, enabled: state.jobs.filter(j => j.enabled && (j.nextAt || j.rule.kind==='event'&&(!j.until||Date.parse(j.until)>Date.now())&&(!j.maxOccurrences||(j.occurrences??0)<j.maxOccurrences))).length, active: [...active.keys()], file }
   requireReady()
   switch (method) {

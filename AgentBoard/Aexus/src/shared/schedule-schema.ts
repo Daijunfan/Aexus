@@ -1,3 +1,5 @@
+import {EFFORT_SCHEMA} from './reasoning-defaults.ts'
+import {ENGINE_DEFINITIONS} from './engines.ts'
 import {booleanSchema,nonemptySchema,objectSchema} from './api-schema.ts'
 // Machine-readable inputs shared by Core discovery and API documentation.
 const string=nonemptySchema,zone={...string,description:'IANA time zone, for example Asia/Shanghai; never a floating browser local time'}
@@ -10,7 +12,7 @@ export const SCHEDULE_RULE_SCHEMA={oneOf:[
  objectSchema({kind:{const:'event'},event:{enum:['signal','channel.posted']},channelId:{...string,description:'Required only for channel.posted; both the caller and target must have current channel access'},cooldownSeconds:{type:'integer',minimum:0,maximum:86400,default:60}},['kind','event'])
 ]}
 export const SCHEDULE_SPEC_SCHEMA={type:'object',required:['name','action'],additionalProperties:false,properties:{
- name:{...string,maxLength:160},action:objectSchema({type:{const:'agent'},employeeId:{...string,description:'Stable employee ID; self resolves from authenticated Agent identity, not a display name'},engine:{enum:['codex','claude','cline','pi']},prompt:{...string,maxLength:64000},viewId:{...string,description:'Explicit company subview ID required for Governor targets'},channelId:{...string,description:'Employee-engine publishing channel; the target must remain a publisher'},model:string,effort:{enum:['low','medium','high','xhigh','max']},thinking:booleanSchema},['type','employeeId','prompt']),
+ name:{...string,maxLength:160},action:objectSchema({type:{const:'agent'},employeeId:{...string,description:'Stable employee ID; self resolves from authenticated Agent identity, not a display name'},engine:{enum:Object.keys(ENGINE_DEFINITIONS)},prompt:{...string,maxLength:64000},viewId:{...string,description:'Explicit company subview ID required for Governor targets'},channelId:{...string,description:'Employee-engine publishing channel; the target must remain a publisher'},model:string,effort:EFFORT_SCHEMA,thinking:booleanSchema},['type','employeeId','prompt']),
  rule:SCHEDULE_RULE_SCHEMA,afterSeconds:{type:'integer',minimum:1,maximum:31536000,description:'One-time delay from Core acceptance; mutually exclusive with rule'},
  window:{type:['object','null'],required:['start','end','timezone'],additionalProperties:false,properties:{start:clock,end:clock,timezone:zone,days:{type:'array',minItems:1,items:{type:'integer',minimum:1,maximum:7}}}},
  until:{type:['string','null'],description:'Exclusive absolute end instant'},maxOccurrences:{type:['integer','null'],minimum:1,maximum:1000000,description:'Scheduled occurrences, including skips; manual runs do not consume this limit'},timeoutSeconds:{type:'integer',minimum:1,maximum:86400,default:1800},graceSeconds:{type:'integer',minimum:1,maximum:86400,default:60},enabled:{type:'boolean',default:true},source:string,

@@ -3,7 +3,7 @@ export const READ_ONLY_APIS=new Set(`
 workspace.catalog conversation.entry conversation.download-status channel.post-trigger-list channel.post-trigger-history channel.post-trigger-batch
 conversation.policy conversation.audit conversation.notice-list conversation.notice-get conversation.notice-preview conversation.notice-history
 assets.browse assets.info assets.preview assets.tree assets.children assets.locate assets.search
-status auth.whoami api.list api.describe api.docs avatar.list management.roles management.topology management.activity
+administration.audit api.capabilities config.get status auth.whoami api.list api.describe api.docs avatar.list management.roles management.topology management.activity
 system.info system.directories settings.get engine.list engine.check engine.capabilities engine.models engine.inspect engine.install-plan engine.install-status engine.login-status
 session.list session.status session.info session.snapshot session.activity session.transcript session.inbox session.queue session.background session.search commands.list commands.complete
 card.profile group.list office.layout room.layout canvas.view team-view.list connector.get

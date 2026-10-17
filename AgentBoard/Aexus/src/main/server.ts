@@ -1,3 +1,9 @@
+import {isApplicationAdministrator,retainSecretary} from './application-administrator'
+import {recordAdministration,administrationAudit} from './administration-audit'
+import {apiReadOnly} from '../shared/api-effects'
+import {employeeReasoning} from '../shared/reasoning-defaults'
+import {employeeConfiguration,configureReasoning} from './reasoning-controls'
+import {validateReasoningPreferences} from './reasoning-preferences'
 import {employeeReady} from '../shared/types'
 import {directoryName} from '../shared/directory-names'
 import {assetNaming} from './asset-naming'
@@ -51,7 +57,7 @@ import { pendingInitialization,assertEmployeeReady,assertInitializationRequest }
 import { assertManagementKind,hasGlobalRole } from '../shared/management'
 import { isManagementRole,isSupervisor,managementRoles } from '../shared/roles'
 import { authenticate,initializeAccessChannel,agentCredential,revokeAgentCredential,removeAgentAccessData } from './agent-access'
-import { authorize,requestContext,withCaller,isGlobal,canReadHostCredentials,canReadEmployee,callerEmployee,visibleEmployees,publicEmployee,callerIdentity,allowedCommands,apiDocumentation,delegationFor } from './authorization'
+import { authorize,requestContext,withCaller,isGlobal,canReadHostCredentials,canReadEmployee,callerEmployee,visibleEmployees,publicEmployee,callerIdentity,allowedCommands,humanOnly,apiDocumentation,delegationFor } from './authorization'
 import { setManagerTeam,relayoutManagement,managementTopology,requestManagement,decideManagement,bindManagement,unbindManagement,setManagementRole,setGlobalManager,creationAuthority } from './management'
 import type { RequestContext } from '../shared/management'
 import { updateStore } from './store'
@@ -187,6 +193,12 @@ const RENDERED_CHANNELS = new Set([
 function employeeId(value:unknown){const id=String(value??'');return readStore().sessions.some(card=>card.id===id)?id:sessionInfo(id)?.cardId}
 export async function handleRequest(req:Request,context?:RequestContext&{signal?:AbortSignal}):Promise<any>{
   if(context)return withCaller(context,()=>handleRequest(req))
+  const audited=isApplicationAdministrator()&&!apiReadOnly(req.cmd,req.args??{})
+  const target=employeeId(req.args?.id??req.args?.employee??req.args?.cardId)
+  try{const result=await authorizeAndDispatch(req);if(audited)recordAdministration(req.cmd,target,'succeeded');return result}
+  catch(error){if(audited)recordAdministration(req.cmd,target,'failed');throw error}
+}
+async function authorizeAndDispatch(req:Request):Promise<any>{
   const caller=requestContext(),a={...(req.args??{})} as Record<string,any>
   if(req.cmd.startsWith('guardian.'))throw Object.assign(Error('Guardian is excluded from the embedded Core'),{code:'GUARDIAN_DISABLED'})
   for(const field of ['crossReply','chat','connectorAnchors','localWorkspaceRoot','createdBy','requestedBy','approvedBy','delegation','access','managerTeam','globalManagerIds','globalGrants','deleting','initialization','lastReply'])if(field in a||a.patch&&field in a.patch||a.spec&&field in a.spec)throw Error('Internal field cannot be supplied: '+field)
@@ -216,6 +228,7 @@ export async function handleRequest(req:Request,context?:RequestContext&{signal?
     if(!Array.isArray(values)||!values.length||values.some(value=>typeof value!=='string'||!value.trim()))throw Error('Choose at least one valid deletion target')
     a[many]=[...new Set(values)]
     if(a.deleteWorkspace!==undefined&&typeof a.deleteWorkspace!=='boolean')throw Error('deleteWorkspace must be boolean')
+    if(caller.principal.kind==='agent')retainSecretary(req.cmd==='card.remove'?a[many]:readStore().sessions.filter(card=>a[many].includes(card.group)).map(card=>card.id))
     for(const value of a[many])authorize(req.cmd,{...a,[single]:value},req.cmd==='card.remove'?value:undefined,caller)
     if(a.deleteWorkspace&&!isGlobal(caller.principal))throw Error('删除工作文件夹需要用户或全局管理授权；管理关系只允许移除员工')
   }else authorize(req.cmd,a,target,caller)
@@ -232,8 +245,8 @@ async function handleAuthorizedRequest(req:Request,a:Record<string,any>,target:s
   if(['session.send','session.enqueue','chat.send','chat.post'].includes(req.cmd)&&a.replyConversation!==undefined){
     const destination=req.cmd.startsWith('session.')?'employee:'+target:'group:'+a.id
     if(a.replyConversation!==destination){
-      if(caller.principal.kind!=='operator')throw Error('Only the user may quote another conversation')
-      const previous=req.cmd.startsWith('chat.')&&typeof a.clientMessageId==='string'?readChatMessages(a.id).find(message=>message.author.kind==='operator'&&message.clientMessageId===a.clientMessageId):undefined
+      if(!isApplicationAdministrator(caller.principal))throw Error('Application administration is required to quote another conversation')
+      const previous=req.cmd.startsWith('chat.')&&typeof a.clientMessageId==='string'?readChatMessages(a.id).find(message=>JSON.stringify(message.author)===JSON.stringify(caller.principal)&&message.clientMessageId===a.clientMessageId):undefined
       const savedReply=previous?.reply
       a.crossReply=savedReply&&savedReply.conversation===a.replyConversation&&savedReply.id===a.replyTo?savedReply:resolveConversationReply(a.replyConversation,a.replyTo,a.replyQuote,a.replyTextOnly)
     }
@@ -253,7 +266,8 @@ async function handleAuthorizedRequest(req:Request,a:Record<string,any>,target:s
     if(['session.send','session.enqueue','session.steer','session.open'].includes(req.cmd)&&!live){const opened=await startSession({cardId:a.employee,delegation:delegationFor(a.employee,caller)});authorize(req.cmd,a,target,caller);a.id=opened.sessionId}
   }
   if(req.cmd==='session.send'||req.cmd==='session.enqueue')a.delegation=delegationFor(target??employeeId(a.id)!,caller)
-  const result=await dispatchRequest({...req,args:a},privateSend)
+  let result:any
+  result=await dispatchRequest({...req,args:a},privateSend)
   if(caller.principal.kind==='operator')return result?.sessions&&result?.groups?clientStore(result):result
   if(req.cmd==='session.search')return result.filter((card:StoredSession)=>canReadEmployee(caller.principal,card.id))
   if(req.cmd==='session.list'&&isGlobal(caller.principal)){const ids=new Set(visibleEmployees(caller.principal).map(card=>card.id));return a.live?result.filter((item:any)=>ids.has(item.cardId)):{...result,sessions:result.sessions.filter((item:StoredSession)=>ids.has(item.id))}}
@@ -308,8 +322,13 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'transfer.download-chunk': return downloadChunk(fileEndpoint(a.from,false),Number(a.offset),a.modifiedAt)
 
     case 'auth.whoami': return callerIdentity()
-    case 'auth.agent-token': return agentCredential(s(a.id))
+    case 'auth.agent-token': {const credential=agentCredential(s(a.id));return requestContext().principal.kind==='operator'?credential:{employeeId:s(a.id),issued:true,scope:'employee',credentialReturned:false}}
+    case 'administration.audit': return administrationAudit(a)
     case 'auth.revoke': {const result=revokeAgentCredential(s(a.id));clearManagementInteraction(s(a.id));pruneManagementActivity();revokeInvalidDelegations();reconcileSchedules();reconcileConversationNotices();publishEvent('access:changed',{});return result}
+    case 'api.capabilities': {
+      const callable=new Set(allowedCommands().map(command=>command.name))
+      return {identity:callerIdentity(),views:APP_VIEWS,commands:allowedCommands(requestContext(),readStore(),true).map(command=>({...command,callable:callable.has(command.name),restriction:callable.has(command.name)?null:humanOnly(command.name)?'Human reading receipt or UI identity boundary; use the equivalent business API':command.replacement?'Retired; use '+command.replacement:'Outside the current role',targetAuthorization:'Rechecked on every call'}))}
+    }
     case 'api.list': {
       for(const [key,max] of [['prefix',120],['search',200]] as const)if(a[key]!==undefined&&(typeof a[key]!=='string'||a[key].length>max))throw Error('Invalid API '+key)
       if(Object.keys(a).some(key=>!['all','prefix','search'].includes(key)))throw Error('Unknown API discovery field')
@@ -405,7 +424,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       return scheduleRequest(req.cmd.slice('schedule.'.length), a)
     case 'plan.schema':case 'plan.query':case 'plan.calendar':case 'plan.timeline':case 'plan.analytics':case 'plan.feed':case 'plan.views':case 'plan.view-create':case 'plan.view-update':case 'plan.view-delete':return planRequest(req.cmd.slice(5),a)
     case 'settings.get': return getPreferences()
-    case 'settings.set': return setPreferences(a) // Includes pageZoom and pane sizes; usable without a desktop.
+    case 'settings.set': await validateReasoningPreferences(a);authorize('settings.set',a);return setPreferences(a) // Includes pageZoom and pane sizes; usable without a desktop.
 
     case 'view.list': return {views:APP_VIEWS,current:getView(),company:teamViewList(),shared:{employees:'session.list',conversations:'session.transcript',inbox:'session.inbox',readReceipts:'session.acknowledge',groups:'chat.list',bindings:'management.topology',schedules:'schedule.list',plans:'plan.query',planViews:'plan.views'}}
     case 'view.select': {
@@ -654,17 +673,9 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
     case 'config.fast':
       if(typeof a.enabled!=='boolean')throw new Error('enabled must be boolean')
       return {ok:await setFastMode(s(a.id),a.enabled)}
-    case 'config.thinking':
-      return { ok: await setThinking(s(a.id), a.enabled === true || a.enabled === 'on') }
-    case 'config.effort':
-      // 'default' (or omitting the value) clears the override, matching the
-      // "Default" entry in the GUI's effort dropdown.
-      return {
-        ok: await setEffort(
-          s(a.id),
-          !a.effort || a.effort === 'default' ? null : (a.effort as EffortLevel)
-        )
-      }
+    case 'config.get': return employeeConfiguration(s(a.id))
+    case 'config.thinking': return configureReasoning('config.thinking',a)
+    case 'config.effort': return configureReasoning('config.effort',a)
 
     // ---- UI inspection: what is actually on screen ----
     case 'ui.view':
@@ -874,6 +885,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       if(a.permissionMode!==undefined&&!['default','acceptEdits','plan','auto','dontAsk','bypassPermissions'].includes(a.permissionMode))throw Error('Invalid engine permission mode')
       const engine = a.engine ?? 'codex'
       if (!isEngine(engine)) throw new Error('Unknown engine')
+      const reasoning=employeeReasoning(engine,getPreferences(),a)
       let model=a.model||defaultEmployeeModel(engine,kind)
       if (!String(a.title ?? '').trim()) throw new Error('Employee name is required')
       const avatar=resolveAvatar(a),appearance=employeeFields({...a,...(avatar!==undefined?{avatar}:{}),...(a.avatar==='random'||a.character==='random'?{color:avatarDescription(avatar!).color}:{}),role:professionValue(a)})
@@ -899,7 +911,7 @@ async function dispatchRequest(req: Request,privateSend?:PrivateSendAttempt): Pr
       authorize('card.create',a);
       const employee:StoredSession = { ...appearance,...creationAuthority(requestContext().principal),managementRole:isGlobal(requestContext().principal)?a.managementRole??'employee':'employee',accessMode:isGlobal(requestContext().principal)?a.accessMode??'trusted':callerEmployee()!.accessMode??'trusted',id, title: s(a.title).trim(), engine,kind,executionMode:a.executionMode,workEnvironment:a.workEnvironment,directoryMode:a.directoryMode??(a.cwd?'bind':'default'),localWorkspaceRoot:a.workEnvironment==='local'&&teamSettings(store,a.group).mode==='cloud'?employeeRoot(store,identity):undefined,nativeOrigin:origin,cwd, group: a.group ?? '', createdAt: Date.now(),
         model,
-        thinking: a.thinking??false,effort: engine==='cline'||engine==='pi'?undefined:a.effort??(engine==='codex'?'high':'low'), permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
+        ...reasoning, permissionMode:a.permissionMode??getPreferences().defaultPermissionMode }
       employee.initialization=pendingInitialization()
       ensureEmployeeBootstrap(employee,latest)
       const saved=patchSession(id,employee)
@@ -996,6 +1008,8 @@ async function removeEmployees(ids:string[],deleteWorkspace=false,teams:string[]
     }
     const folders=new Map<string,{id:string;path:string}>(),scope={employees:wanted,teams:new Set(teams)}
     if(deleteWorkspace)for(const id of wanted){const folder=await removeEmployeeWorkspace(id,true,scope);folders.set(folder.key,{id,path:folder.path})}
+    // Filesystem preflight may yield: recheck the whole batch before marking any removal.
+    retainSecretary([...wanted])
     for(const id of wanted)authorize('card.remove',{id},id)
     updateStore(store=>{for(const card of store.sessions)if(wanted.has(card.id))card.deleting=true})
     for(const id of wanted){await cancelEmployeeInitialization(id);revokeAgentCredential(id);await closeEmployeeTerminals(id);closeRemote(id)}
@@ -1069,8 +1083,8 @@ function fileEndpoint(ref:FileLocation,destination:boolean):FileEndpoint {
   if(!ref||typeof ref.path!=='string'||[!!ref.shared,!!ref.team,!!ref.employee,!!ref.local,!!ref.group,!!ref.channel,!!ref.conversation].filter(Boolean).length!==1)throw Error('File location requires one shared/team/employee/local/group/channel scope and path')
   if(ref.conversation)return conversationFileEndpoint(ref.conversation,ref.path,destination)
   if((ref.group||ref.channel)&&ref.path.startsWith(WORKSPACE_FILE_PREFIX))return conversationFileEndpoint((ref.group?'group:'+ref.group:'channel:'+ref.channel),ref.path,destination)
-  if(ref.channel){if(destination)throw Error('Channel files are read-only');if(requestContext().principal.kind!=='operator')throw Error('Only the user may download channel files');return channelFileEndpoint({channelId:ref.channel,path:ref.path})}
-  if(ref.group){if(requestContext().principal.kind!=='operator')throw Error('Use chat.file for published group attachments');return {root:groupMediaRoot(ref.group),path:ref.path||'.'}}
+  if(ref.channel){if(destination)throw Error('Channel files are read-only');if(!isApplicationAdministrator())throw Error('Application administration is required to download channel files');return channelFileEndpoint({channelId:ref.channel,path:ref.path})}
+  if(ref.group){if(!isApplicationAdministrator())throw Error('Use chat.file for published group attachments');return {root:groupMediaRoot(ref.group),path:ref.path||'.'}}
   if(ref.shared)return {root:sharedDirectory(),path:ref.path||'.'}
   if(ref.local){
     if(!isAbsolute(ref.path))throw Error('本地路径必须为绝对路径')

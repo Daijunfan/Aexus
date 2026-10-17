@@ -1,3 +1,4 @@
+import {isApplicationAdministrator} from '../application-administrator'
 import {mediaResponse} from '../media-response'
 import {mediaAvailable,closeMedia} from '../media'
 import {Readable as NodeReadable} from 'node:stream'
@@ -156,7 +157,7 @@ export async function startWebServer(options:Options={}){
           const source=NodeReadable.fromWeb(response.body as any);trackStream(res,valid,()=>{source.destroy();res.end()});pipeAuthorized(source,res,valid);return
         }
         if(url.pathname==='/api/download'&&req.method==='GET'){
-          if(current.context.principal.kind!=='operator')throw failure('Only the user may download a file',403)
+          if(!isApplicationAdministrator(current.context.principal))throw failure('Only the user or a Secretary may download a file',403)
           let from:any;try{from=JSON.parse(url.searchParams.get('from')??'null')}catch{throw failure('Invalid download source')}
           const info=await handleRequest({cmd:'transfer.download-info',args:{from}},current.context)
           const name=info.name??(String(from?.path??'download').split(/[\\/]/).pop()||'download')

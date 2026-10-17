@@ -1,3 +1,4 @@
+import {isApplicationAdministrator} from './application-administrator'
 import fs from 'node:fs'
 import path from 'node:path'
 import {DatabaseSync,type SQLInputValue} from 'node:sqlite'
@@ -54,7 +55,7 @@ function spec(value:unknown):NoticeSpec{
  return {name:value.name,text:value.text,publisherId:value.publisherId,rule:noticeRule(value.rule),enabled:value.enabled}
 }
 const revision=(job:RecordNotice,value:unknown)=>{if(!Number.isSafeInteger(value)||value!==job.revision)throw Error('Notification changed; reload before saving')}
-function validatePublisher(conversation:string,publisherId:string,caller:RequestContext){requireConversationPublisher(conversation,publisherId);if(caller.principal.kind==='agent'&&caller.principal.employeeId!==publisherId)throw Error('Agents publish their own notifications; choose your own employee ID')}
+function validatePublisher(conversation:string,publisherId:string,caller:RequestContext){requireConversationPublisher(conversation,publisherId);if(caller.principal.kind==='agent'&&!isApplicationAdministrator(caller.principal)&&caller.principal.employeeId!==publisherId)throw Error('Agents publish their own notifications; choose your own employee ID')}
 /** Public dispatcher is separate from conversation files and from every Plan command. */
 export function conversationControlRequest(command:string,args:Record<string,any>){
  if(!CONVERSATION_CONTROL_APIS.has(command))throw Error('Unknown conversation control command')

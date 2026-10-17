@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import {randomUUID} from 'node:crypto'
 import {requestContext} from './request-context'
 import {downloadInfo,downloadChunk} from './uploads'
@@ -5,7 +6,7 @@ import {fileMime} from '../shared/message-attachments'
 import {mediaKind,type MediaInfo} from '../shared/media'
 import type {FileEndpoint} from './transfers'
 const previews=new Map<string,{info:MediaInfo;owner:string;target:FileEndpoint;resolve:()=>FileEndpoint}>(),TTL=8*60*60*1000
-const owner=()=>{const context=requestContext();if(context.principal.kind!=='operator')throw Error('Only the user may preview media');return context.clientId??'cli'}
+const owner=()=>{const context=requestContext();if(!isApplicationAdministrator(context.principal))throw Error('Only the user may preview media');return JSON.stringify([context.principal,context.clientId??'cli'])}
 const get=(id:string)=>{const value=previews.get(id);if(!value||value.owner!==owner()||value.info.expiresAt<=Date.now())throw Error('Media preview expired or belongs to another client');if(JSON.stringify(value.resolve())!==JSON.stringify(value.target))throw Error('Media workspace changed; reopen the preview');return value}
 function supportedHeader(bytes:Buffer,mime:string){
  if(mime==='audio/wav')return bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WAVE'

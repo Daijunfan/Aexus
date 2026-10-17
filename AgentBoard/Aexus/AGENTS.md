@@ -1,4 +1,4 @@
-# Avalon contributor instructions
+# Aexus embedded Role Core contributor instructions
 
 Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIBUTING.md`, `SECURITY.md`, `API.md` and `PERMISSIONS.md` before changing execution or authority. Do not launch child Agents unless the task explicitly requests them.
 
@@ -8,11 +8,11 @@ Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIB
 - Update the command registry, Core dispatch, CLI parser, API documentation and tests together. Run `npm run docs:managers` after changing API or permission documentation.
 - Keep Team, employee, native-session and workspace identities stable. Employee engines are fixed at creation; using another engine requires deleting the employee and creating a new one. Preserve archived native references from older versions. Never silently change execution host or elevate permissions.
 - “Local” means the Core host. Browser-local files must be uploaded, not treated as server paths. Client navigation/cameras are separate from shared company geometry.
-- Secretary/Governor/Manager authority comes from the role policy. Secretary is the highest Agent application-administration role; only the user may appoint, demote or delete Secretaries. Creation lines, directory names and view membership do not grant permissions.
+- Secretary/Governor/Manager authority comes from the role policy. Secretary is the highest Agent application-administration role; Secretaries may administer all roles while retaining a ready Secretary; the human retains recovery authority. Creation lines, directory names and view membership do not grant permissions.
 
 ## Plugins and engines
 
-- All three first-release plugins are source-versioned under `PlugIns/`. Keep their licenses, CLI, runtime, schema, UI and build inputs together; update `plugins.lock.json` deliberately.
+- Aexus no longer bundles the former Mini Notion, Margin Reader or Cloud Hosts products. Retain generic plugin compatibility without restoring removed product bundles.
 - User workspaces and credentials are not source. Portable plugin workspaces live outside application binaries; existing bound directories are never moved automatically.
 - An engine adapter handles its documented execution protocol and normalizes results. It cannot bypass Core permissions. Unsupported capabilities must fail explicitly.
 - Never mark a pending redistribution review approved without actual evidence. Attribution does not establish permission to redistribute vendor artwork or runtimes.
@@ -26,7 +26,7 @@ Keep changes small and preserve the existing CLI-first boundaries. Read `CONTRIB
 - Test desktop rendering in hidden windows and Web rendering in headless browsers. Do not claim another operating system passed based on a local build.
 - Preserve existing edits. Never reset the repository, clear credentials, overwrite user documents, or publish a repository/tag/package without explicit permission.
 - Builds do not imply installation. Do not stop or replace another developer's running app automatically. When a user explicitly requests installation, inspect active tasks, back up state and stop the old process before replacing its ASAR.
-- For an authorized macOS installation, use `npm run install:mac -- --source '/path/Avalon.app'`, then verify the installed app in an isolated hidden-window test. Do not hand-roll hot replacement.
+- The root Aexus app owns macOS packaging and installation: use the repository root `python3 build.py`, then install the verified native Aexus bundle at `/Applications/Aexus.app`. Never install this embedded Electron shell as a separate product. Follow root `AGENTS.md` for app cleanup; preserve all user state.
 
 ## Release
 

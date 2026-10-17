@@ -2,17 +2,17 @@
 
 ## Scope and authority
 
-Message groups and channels use independent Agent offices: `owner`, `admin`, `member`, displayed as **Owner / Admin / Member** in every interface language. Company offices remain Employee / Manager / Governor / Secretary. Owning a conversation never grants Company employee-control, Team deletion, credentials, or Plan access. The human user retains administration and recovery access.
+Message groups and channels use independent Agent offices: `owner`, `admin`, `member`, displayed as **Owner / Admin / Member** in every interface language. Company offices remain Employee / Manager / Governor / Secretary. Owning a conversation never grants Company employee-control, Team deletion, credentials, or Plan access. User/Secretary retain application-wide administration, with true actor provenance.
 
 `group.*` addresses Company Teams. Message groups use `chat.*`. Always use exact returned IDs, never a displayed name or whichever view is currently open.
 
-`conversation.policy {conversation}` is the current source of membership, role, moderation, revision, and `allowedActions`. Owner and Admin can add/remove members, appoint/demote Admins, mute, configure static notices, and configure channel post-count rules. Admin may appoint or demote another Admin, including an Agent with a higher Company office. Admin cannot demote, remove or individually mute Owner. Owner can transfer ownership; the previous Owner becomes Admin. Only Owner or the human user dissolves a group. Channel ownership is supported; this API does not implement channel deletion.
+`conversation.policy {conversation}` is the current source of membership, role, moderation, revision, and `allowedActions`. Owner and Admin can add/remove members, appoint/demote Admins, mute, configure static notices, and configure channel post-count rules. Admin may appoint or demote another Admin, including an Agent with a higher Company office. Admin cannot demote, remove or individually mute Owner. Owner can transfer ownership; the previous Owner becomes Admin. Owner, user or Secretary may dissolve a group. Channel ownership is supported; this API does not implement channel deletion.
 
 Use `conversation.member {conversation,employee,action:"add"|"remove",expectedRevision}` for membership. Add gives Member; removal revokes content/workspace access and retains the Agent, history and files. Use `conversation.role {conversation,employee,role,expectedRevision}` for an office. Demotion to Member keeps membership and its workspace. These are deliberately separate operations. Legacy `channel.update {adminIds}` remains a publisher-roster replacement and may remove former publishers; use the explicit member/role tools for new integrations.
 
 `conversation.audit {conversation,before?,limit?}` exposes paged governance events to Owner/Admin. Each event has the actual actor, action, details and timestamp. `nextBefore` is the next page cursor; limit is 1–100. It contains no private model trace. Revision mismatches reject stale changes; reload and reconsider the operation.
 
-Legacy channels retain existing Admin assignments. New membership storage does not infer an Owner from Company seniority or a person's name. The human user can explicitly appoint the first Owner.
+Legacy channels retain existing Admin assignments. New membership storage does not infer an Owner from Company seniority or a person's name. User/Secretary can explicitly appoint the first Owner.
 
 ## Three independent kinds of automation
 
@@ -28,7 +28,7 @@ See [Conversation controls](CONVERSATION_CONTROLS.md) for one-time, interval, da
 
 ## Workspace discovery
 
-`workspace.catalog {employee?:"self"|EMPLOYEE_ID}` returns the authenticated Agent's Company workspace and every currently joined Message member workspace. Agent callers can query only themselves. The human user supplies an employee ID explicitly. This query creates no directory, changes no working directory, and invokes no model.
+`workspace.catalog {employee?:"self"|EMPLOYEE_ID}` returns the authenticated Agent's Company workspace and every currently joined Message member workspace. Ordinary Agent callers query themselves; user/Secretary may select any employee ID explicitly. This query creates no directory, changes no working directory, and invokes no model.
 
 Response:
 
@@ -64,12 +64,12 @@ The catalog describes available locations and access. It does not mandate where 
 | Caller | Own member subtree | Direct files at conversation root | Other members' folders |
 | --- | --- | --- | --- |
 | Member / Admin / Owner Agent | Read/write/create/move/trash/restore | Read | Read |
-| Agent with Company Secretary office, currently a member | Same | Read/write/create/move/trash/restore | Read |
+| Secretary, with or without membership | Read/write | Read/write/create/move/trash/restore | Read/write |
 | Human user | Full | Full | Full |
 
-The Secretary root-file exception is explicit Company authority, separate from conversation governance. A Secretary who is not a current member cannot use it. A Member Secretary may maintain root files without being Admin; a Company Employee who owns the group cannot. The exception permits direct regular files only, not arbitrary shared directories or another employee's subtree.
+Secretary has explicit application-wide workspace management, including nonmember roots and member folders. Conversation Owner/Admin offices alone never expand ordinary member file access. Fixed member-directory identities, path traversal, symlink, hash and source protection checks remain enforced.
 
-`conversation.file` supports `list`, `read`, `image`, `info`, `chunk`, `write`, `mkdir`, `move`, `trash`, and `restore`. Paths are relative to the shared root and own writes use the returned `memberDirectory` prefix. User originals and peer files never need to be moved in order to work on an editable copy. Host-managed metadata, parent traversal and escaped symlinks are rejected. Root-file trash receipts created by Secretary use `root:TRASH_ID`; restore rechecks the Secretary office, original direct-file destination and stored file type. Use returned IDs unchanged.
+`conversation.file` supports `list`, `read`, `image`, `info`, `chunk`, `write`, `mkdir`, `move`, `trash`, and `restore`. Paths are relative to the shared root and own writes use the returned `memberDirectory` prefix. User originals and peer files never need to be moved in order to work on an editable copy. Host-managed metadata, parent traversal and escaped symlinks are rejected. Legacy root-file trash receipts use `root:TRASH_ID`; restore still validates current administration and stored type/scope. Use returned IDs unchanged.
 
 `conversation.copy` handles explicit existing-file copies into an own member workspace or personal Company workspace. `conversation.transfer` reports/cancels those copy jobs. Reading/writing a workspace does not change native engine permissions or OS identity. These are Core API boundaries, not a claim that arbitrary trusted same-account shell processes are an OS sandbox.
 
@@ -106,7 +106,7 @@ The source remains intact. Downloads stream bounded chunks through staging, rech
 
 Retries with the same caller/key and identical arguments return the same receipt. Changed arguments with that key reject. After restart, a completed receipt remains completed. An unknown in-flight transfer becomes `interrupted`; it is not automatically replayed. Inspect the destination before issuing a new key. Cloud file availability still depends on the collector's retention window and configured connection; downloading a local copy before expiry preserves that copy independently.
 
-The older human-only `channel.file-download` imports into the channel root and remains available for the user's UI. Agent document work should use the own-workspace download API instead; no human token or filesystem credential is returned.
+User/Secretary may use `channel.file-download` to import into the channel root. Ordinary Agent document work uses the own-workspace download API. Secretary may also select any current member employee for that API; no human token or filesystem credential is returned.
 
 ```sh
 agents workspace catalog --json
@@ -127,7 +127,7 @@ The GUI's **Copy to Agent workspace** button chooses the same employee/catalog d
 
 `channel.post-trigger-list {id:CHANNEL_ID}` returns `{channelId,rules,canManage}`. Owner/Admin sees all rules; a Member sees its own. Rule fields include stable `id`, `employeeId`, `everyPosts`, editable `prompt`, `enabled`, config `revision`, `pendingCount`, `remaining`, timestamps and any disabling reason. Counting progress does not increment the configuration revision.
 
-`channel.post-trigger-set` requires `id`, `employee`, `everyPosts` (1–10000), nonempty `prompt` (up to 16000 characters), `enabled` and `expectedRevision`. Use revision **0** to create and the exact current revision to edit/pause/resume. Each channel/member pair has at most one current rule. The human user or current Owner/Admin can configure a rule for a ready member, regardless of Company hierarchy. This is narrowly scoped authorization for that saved channel prompt; it does not permit arbitrary `session.send` or Plan operations on that employee.
+`channel.post-trigger-set` requires `id`, `employee`, `everyPosts` (1–10000), nonempty `prompt` (up to 16000 characters), `enabled` and `expectedRevision`. Use revision **0** to create and the exact current revision to edit/pause/resume. Each channel/member pair has at most one current rule. The user, Secretary or current Owner/Admin can configure a rule for a ready member, regardless of Company hierarchy. This is narrowly scoped authorization for that saved channel prompt; it does not permit arbitrary `session.send` or Plan operations on that employee.
 
 Counting starts after configuration. Saving or resuming starts a fresh counter for that Agent, cancels its unstarted previous batches, and leaves other Agents untouched. Only newly accepted article IDs count. Duplicate deliveries, edits, timestamp ordering, source moves, static notices and discussion replies do not add a count. The target's own article publications do not count towards its own rule. Multiple files in one post still count as one post; separately published items in an album count by their actual post IDs.
 
@@ -155,6 +155,6 @@ These example rules are paused until explicitly enabled. Users edit prompts in *
 
 ## Verification
 
-`node test/message-collaboration-core-test.mjs` exercises real authenticated Core/CLI calls with disposable native and SSH fixtures, including streamed PDF/image data, Secretary root restrictions, independent roles/workspaces, exact-count work and Plan isolation.
+`node test/message-collaboration-core-test.mjs` exercises real authenticated Core/CLI calls with disposable native and SSH fixtures, including streamed PDF/image data, Secretary administration and ordinary member restrictions, independent roles/workspaces, exact-count work and Plan isolation.
 
 `node test/message-collaboration-ui-test.mjs` builds an isolated application and exercises the real browser and hidden Electron UI, with screenshot checks for roles, document destinations, per-member rules and batch history. Fixtures do not call paid providers or use production state. Actual installed application behavior must be checked separately from a source build.

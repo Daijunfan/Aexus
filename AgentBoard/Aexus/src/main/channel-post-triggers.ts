@@ -1,3 +1,4 @@
+import {isApplicationAdministrator} from './application-administrator'
 import {randomUUID} from 'node:crypto'
 import {one,all,run,transaction,changed,liveChannelPost,projectChannelPost} from './channel-store'
 import {requireConversation,controlChanged} from './conversation-policy'
@@ -53,7 +54,7 @@ export function validatePostTriggerDelegation(delegation:Delegation,targetId:str
 }
 export function postBatchMetadata(batch:PostBatch):PostBatchReceipt{return {ruleId:batch.ruleId,batchId:batch.id,employeeId:batch.employeeId,postCount:batch.postIds.length,automatic:true}}
 function readScope(channelId:string,employee?:string){
- const scope=requireConversation('channel:'+channelId),principal=requestContext().principal,admin=principal.kind==='operator'||['owner','admin'].includes(scope.role(principal.employeeId)??'')
+ const scope=requireConversation('channel:'+channelId),principal=requestContext().principal,admin=principal.kind==='operator'||isApplicationAdministrator(principal)||['owner','admin'].includes(scope.role(principal.employeeId)??'')
  if(!admin&&employee!==undefined&&principal.kind==='agent'&&employee!==principal.employeeId)throw Error('Members may read only their own post-count configuration')
  return {scope,employee:admin?employee:principal.kind==='agent'?principal.employeeId:undefined,admin}
 }

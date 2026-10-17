@@ -33,7 +33,7 @@ try{
   const commands=await rpc('api.list',{},token);for(const name of ['schedule.create','schedule.update','schedule.trigger','plan.query','plan.view-create'])assert.ok(commands.some(command=>command.name===name),actor.title+' discovers '+name)
   const targets=(await rpc('plan.schema',{},token)).targets
   for(const target of people){
-   const allowed=actor.id===target.id||rank[actor.managementRole]>rank[target.managementRole]
+   const allowed=actor.managementRole==='secretary'||actor.id===target.id||rank[actor.managementRole]>rank[target.managementRole]
    assert.equal(targets.some(item=>item.id===target.id),allowed,actor.title+' target discovery '+target.title)
    if(allowed){const job=await rpc('schedule.create',{spec:spec(target)},token);assert.equal(job.delegation.requestedBy.employeeId,actor.id);assert.ok(job.delegation.schedule);accepted++}
    else{await deny('schedule.create',{spec:spec(target)},token);await deny('schedule.preview',{spec:spec(target)},token);rejected++}
@@ -43,7 +43,7 @@ try{
  }
  await deny('schedule.create',{spec:spec(outside)},tokens.get(m.id))
  await rpc('schedule.create',{spec:spec(outside)},tokens.get(g.id))
- for(const [actor,target] of [[a,m],[m,peerManager],[g,peerGovernor],[s,peerSecretary],[g,s]]){
+ for(const [actor,target] of [[a,m],[m,peerManager],[g,peerGovernor],[g,s]]){
   const token=tokens.get(actor.id),job=await rpc('schedule.create',{spec:spec(target,{rule:{kind:'event',event:'signal',cooldownSeconds:0}})})
   if(actor.managementRole==='secretary')assert.equal((await rpc('schedule.get',{id:job.id},token)).id,job.id);else await deny('schedule.get',{id:job.id},token)
   for(const cmd of ['pause','resume','delete','run'])await deny('schedule.'+cmd,{id:job.id},token)

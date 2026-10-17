@@ -1,3 +1,4 @@
+import {validateEffort} from '../shared/reasoning-defaults'
 import {storeChanges,type StoreChanges} from '../shared/store-changes'
 import { isEngine } from '../shared/engines'
 import { clientStore,setClientView } from './client-state'
@@ -460,6 +461,8 @@ export function setPreferences(patch:PreferencesPatch):Preferences {
     for(const change of Object.values(appearance))if(!change||typeof change!=='object'||Array.isArray(change)||Object.keys(change).some(key=>!['theme','themeColor'].includes(key)))throw Error('View appearance accepts theme and themeColor')
   }
   const value=mergePreferences(getPreferences(),patch)
+  for(const key of ['defaultCodexEffort','defaultClaudeEffort','defaultOpenCodeEffort'] as const)validateEffort(value[key])
+  if(typeof value.defaultClaudeThinking!=='boolean')throw Error('defaultClaudeThinking must be boolean')
   if(!['default','acceptEdits','bypassPermissions'].includes(value.defaultPermissionMode))throw Error('Invalid default engine permission')
   if(!LANGUAGES.includes(value.language))throw new Error('Interface language must be en or zh-CN')
   for(const chosen of [patch,...Object.values(appearance??{}),...Object.values(value.viewAppearance)]){
@@ -475,7 +478,7 @@ export function setPreferences(patch:PreferencesPatch):Preferences {
   if(!Number.isFinite(value.terminalHeight)||value.terminalHeight<120||value.terminalHeight>600)throw new Error('Terminal height must be between 120 and 600')
   if(typeof value.snapEmployees!=='boolean')throw new Error('snapEmployees must be boolean')
   if(typeof value.showTeamOverview!=='boolean')throw new Error('showTeamOverview must be boolean')
-  for(const key of ['defaultCodexModel','defaultClaudeModel','defaultClineModel','defaultPiModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
+  for(const key of ['defaultCodexModel','defaultClaudeModel','defaultClineModel','defaultPiModel','defaultOpenCodeModel'] as const){if(typeof value[key]!=='string')throw new Error(key+' must be a model ID');value[key]=value[key].trim()}
   const store=readStore();store.preferences=value;writeStore(store);return value
 }
 

@@ -7,7 +7,7 @@ import type {Live} from './sessions'
 
 export const API_TOOL={
  name:'agents_company_api',
- description:'Call a documented Avalon Core command as your authenticated employee. Discover schemas with api.list and api.describe. Core checks role, membership, workspace and execution permission. plan.query/schedule.* manage Plan. conversation.notice-* posts timed fixed text without Agent work; channel.post-trigger-* runs per-member saved prompts after N new posts. Both Message features are independent of Plan. workspace.catalog lists your Company/Message workspaces; conversation.entry reads complete published posts and attachments; conversation.download/download-status copies attachments into your own selected workspace and reports completion. Queries need no approval; writes follow Ask/Full access and native planning mode.',
+ description:'Call a documented Aexus Core command as your authenticated employee. Discover schemas with api.list, api.describe and api.capabilities. Secretary administers all three views as its real Agent identity; administration.audit records mutations. config.get/config.effort/config.thinking accept stable employee IDs; settings.set manages reasoning defaults for future employees. Never edit the Aexus application source code. Core checks role, membership, workspace and execution permission. plan.query/schedule.* manage Plan. conversation.notice-* posts timed fixed text without Agent work; channel.post-trigger-* runs per-member saved prompts after N new posts. Both Message features are independent of Plan. workspace.catalog lists your Company/Message workspaces; conversation.entry reads complete published posts and attachments; conversation.download/download-status copies attachments into an authorized selected employee workspace and reports completion. Queries need no approval; writes follow Ask/Full access and native planning mode.',
  inputSchema:{type:'object',additionalProperties:false,required:['command'],properties:{command:{type:'string',minLength:1,description:'Exact existing Core command, e.g. plan.query, schedule.delete or plugin.call'},args:{type:'object',additionalProperties:true,description:'That command’s API arguments; no token, identity or wrapper. Omit for {}.'}}}
 } as const
 const approvals=new WeakMap<Live,ReturnType<typeof approvalHandler>>()
@@ -29,7 +29,7 @@ export async function invokeApiTool(state:Live,input:unknown,callId:string,signa
   if(state.permissionMode==='dontAsk')throw Error('Write approval is disabled in this execution mode')
   if(state.permissionMode!=='bypassPermissions'){
    const approve=approvals.get(state);if(!approve)throw Error('Employee API approval is unavailable; reopen this employee')
-   const answer=await approve(API_TOOL.name,{command,args},{signal:signal??new AbortController().signal,toolUseID:callId+':'+randomUUID(),requestId:callId,title:'Avalon: '+command})
+   const answer=await approve(API_TOOL.name,{command,args},{signal:signal??new AbortController().signal,toolUseID:callId+':'+randomUUID(),requestId:callId,title:'Aexus: '+command})
    if(answer?.behavior!=='allow')throw Error('Declined by user')
    approved=true;active();available()
    if(state.planMode||['plan','dontAsk'].includes(state.permissionMode))throw Error('Execution permissions changed while awaiting approval')

@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import {assetHost,localAssetHost} from './asset-hosts'
 import {channelEngine} from './channel-engines'
 import fs from 'node:fs'
@@ -20,7 +21,7 @@ import {assetIndex} from './asset-index'
 
 type Call=(command:string,args:Record<string,unknown>)=>Promise<any>
 export type AssetMount={host?:AssetHost;id:string;name:string;label:string;root:string;scope:Omit<FileLocation,'path'>;owner:AssetOwner;remote?:boolean;readOnly?:boolean;members?:Record<string,string>;memberOwners?:Record<string,AssetOwner>;kind?:string}
-const operator=()=>{if(requestContext().principal.kind!=='operator')throw Error('Only the user may browse all company assets')}
+const operator=()=>{if(!isApplicationAdministrator())throw Error('Only the user may browse all company assets')}
 const folder=(id:string,name:string,children:AssetNode[]=[]):AssetNode=>({id,name,directory:true,locked:true,children})
 const mountNode=(mount:AssetMount):AssetNode=>({...folder(mount.id,mount.name),host:mount.host,label:mount.label,kind:mount.kind,storage:mount.remote?'remote':'local',owner:mount.owner,readOnly:mount.readOnly,location:{asset:mount.id,path:'.'},children:undefined})
 

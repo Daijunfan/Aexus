@@ -19,29 +19,13 @@ try{
   const visit=node=>{if(ts.isStringLiteralLike(node)&&known.has(node.text)){const sites=references.get(node.text)??new Set();sites.add(path.relative(root,file)+':'+(source.getLineAndCharacterOfPosition(node.pos).line+1));references.set(node.text,sites)}ts.forEachChild(node,visit)};visit(source)
  }}};walk(path.join(root,'src/renderer/src'))
  const exclusions={
-  'assets.browse':'User-owned cross-company library; Agents retain own workspace.catalog discovery',
-  'assets.info':'Explicit user filesystem information; no expansion of Agent access',
-  'assets.preview':'Derived user file covers; no Agent-wide file access',
-  'assets.locate':'Human asset-index navigation; Agents use workspace.catalog and member-scoped conversation/workspace file tools',
-  'workspace.reveal':'Human desktop file manager navigation', 'messenger.profile':'Human personal avatar', 'messenger.profile-image':'Human personal avatar image', 'assets.tree':'Human global filesystem catalog', 'assets.children':'Human global filesystem catalog', 'assets.search':'Human global filesystem catalog', 'assets.file':'Human scoped asset operations', 'assets.naming':'Human filesystem and binding migration',
-  'guardian.event-create':'Human-originated investigation creation; an Agent cannot manufacture observations',
-  'guardian.event-change':'Human review and dismissal decisions; Agents cannot close investigations',
-  'guardian.event-note':'Human investigation audit trail; Agent publication uses its own message identity',
-  'guardian.event-sample':'Explicit user-only system snapshot verification; no Agent-initiated host monitoring',
-  'guardian.settings-set':'User-only consent for IP geolocation and background sampling',
-  'guardian.storage-start':'Human-only local directory metadata enumeration',
-  'guardian.storage-status':'Human-only directory scan results may disclose private paths and filenames',
-  'guardian.storage-cancel':'Human-only control of explicitly authorized directory scans',
-  'auth.agent-token':'User credential issuance','auth.revoke':'User credential revocation',
   'session.acknowledge':'Human private reading receipt','chat.acknowledge':'Human group reading receipt','channel.acknowledge':'Human news reading receipt',
-  'chat.edit':'Cannot change the human author’s message',
-  'channel.file-download':'User-owned shared-original import; channel root writes remain user-only',
-  'messenger.forward':'Human cross-conversation publication','messenger.forward-draft':'Human cross-conversation forwarding intent','messenger.forward-status':'Human forwarding receipt','messenger.reference':'Human cross-conversation quote permission',
-  'messenger.media-open':'Client-owned media capability','messenger.media-info':'Client-owned media capability','messenger.media-read':'Client-owned media capability','messenger.media-close':'Client-owned media capability',
-  'transfer.download-save':'User native download destination','transfer.download-info':'Client-owned download capability','transfer.download-chunk':'Client-owned download capability',
-  'transfer.upload-begin':'Client-owned upload capability','transfer.upload-chunk':'Client-owned upload capability','transfer.upload-commit':'Client-owned upload capability','transfer.upload-abort':'Client-owned upload capability'
+  'ui.click':'Device pointer input would execute as the renderer user; use the canonical business API',
+  'ui.type':'Device keyboard input would execute as the renderer user; use the canonical business API',
+  'ui.drag':'Device pointer input would execute as the renderer user; use layout/position APIs',
+  'ui.wheel':'Device wheel input is presentation state; use paged query APIs'
  }
- const inventory=[...references].sort(([a],[b])=>a.localeCompare(b)).map(([command,sites])=>({command,gui:known.get(command).gui,sites:[...sites],secretary:allowed.has(command),exception:allowed.has(command)?null:RETIRED_APIS[command]?'Retired compatibility interface: '+RETIRED_APIS[command]:exclusions[command]??(command.startsWith('messenger.upload-')?'Client-owned upload capability':null)}))
+ const inventory=[...references].sort(([a],[b])=>a.localeCompare(b)).map(([command,sites])=>({command,gui:known.get(command).gui,sites:[...sites],secretary:allowed.has(command),exception:allowed.has(command)?null:RETIRED_APIS[command]?'Retired compatibility interface: '+RETIRED_APIS[command]:exclusions[command]??null}))
  const missing=inventory.filter(item=>!item.secretary&&!item.exception);assert.deepEqual(missing,[],'Unexplained GUI operations unavailable to Secretary')
  for(const command of READ_ONLY_APIS)assert.ok(known.has(command),'Unknown read-only classification '+command)
  for(const command of ['group.root','workspace.write','schedule.create','schedule.delete','settings.set','plugin.call','auth.agent-token','session.send','channel.publish','not.real'])assert.equal(apiReadOnly(command),false,command+' must not bypass native write policy')
@@ -49,9 +33,9 @@ try{
  assert.equal(apiReadOnly('conversation.file',{operation:'read'}),true);assert.equal(apiReadOnly('channel.settings',{patch:{enabled:true}}),false)
  for(const command of Object.keys(RETIRED_APIS)){assert.ok(!allowed.has(command));assert.ok(allowedCommands(context,store,true).find(c=>c.name===command)?.replacement)}
  // Every renderer-referenced registered payload is representable without a flag-specific branch.
- for(const item of inventory){const args={fixture:'原样 JSON',nested:{values:[1,true,null]}},result=spawnSync(process.execPath,[path.join(root,'bin/agents'),'api','call',item.command,'--args',JSON.stringify(args),'--json'],{env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8'});assert.equal(result.status,0,item.command+': '+result.stderr+result.stdout);assert.deepEqual(JSON.parse(result.stdout),{cmd:item.command,args})}
+ for(const item of inventory){const args={fixture:'原样 JSON',nested:{values:[1,true,null]}},result=spawnSync(process.execPath,[path.join(root,'bin/agents'),'api','call',item.command,'--args',JSON.stringify(args),'--json'],{env:{...process.env,AGENTS_COMPANY_PARSE_ONLY:'1'},encoding:'utf8',timeout:10000});assert.equal(result.status,0,item.command+': '+result.stderr+result.stdout);assert.deepEqual(JSON.parse(result.stdout),{cmd:item.command,args})}
  const plugins=[] // Removed products have no shipped method schemas to audit.
  assert.ok(!fs.existsSync(path.join(root,'build/plugins/cloud-hosts/schema.json')))
  fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'gui-api-inventory.json'),JSON.stringify({passed:true,registered:COMMANDS.length,referenced:inventory.length,secretaryCallable:inventory.filter(i=>i.secretary).length,explicitExclusions:inventory.filter(i=>!i.secretary).length,unexplained:missing,plugins,inventory,limits:'Literal inventory and parse-only transport parity; not a claim that every operation or external service was executed.'},null,2))
- console.log(`PASS GUI API inventory: ${inventory.length} referenced commands, ${inventory.filter(i=>i.secretary).length} Secretary-callable, ${inventory.filter(i=>!i.secretary).length} explicit identity/client exceptions, no unexplained gap; raw CLI preserves every payload; conservative read classification; legacy replacements; three plugin catalogs`)
+ console.log(`PASS GUI API inventory: ${inventory.length} referenced commands, ${inventory.filter(i=>i.secretary).length} Secretary-callable, ${inventory.filter(i=>!i.secretary).length} explicit identity/client exceptions, no unexplained gap; raw CLI preserves every payload; conservative read classification; legacy replacements; no removed plugin catalogs`)
 }finally{if(home===undefined)delete process.env.AGENTS_COMPANY_HOME;else process.env.AGENTS_COMPANY_HOME=home;fs.rmSync(temp,{recursive:true,force:true})}

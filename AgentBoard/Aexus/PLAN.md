@@ -24,7 +24,7 @@ agents schedule create --name 'Sunday review' --employee EMPLOYEE_ID --time 17:0
 agents schedule preview JOB_ID --count 5 --json
 ```
 
-Every employee can schedule itself. `self` resolves from the authenticated Agent ID, never a name, directory or caller-supplied identity. A user must provide an explicit employee ID. A Manager may schedule only its own Team’s Employees; a Governor may schedule Employees and Managers globally; a Secretary may schedule Employees, Managers and Governors globally. Every role may schedule itself. No Agent may schedule a different peer or a superior, including another Secretary. Ordinary employees gain no authority over other employees. Non-global callers retain their own authored-job scope. Secretary can read the complete Plan database, including missing-target records; mutation and execution capabilities are returned per row.
+Every employee can schedule itself. `self` resolves from the authenticated Agent ID, never a name, directory or caller-supplied identity. A user must provide an explicit employee ID. A Manager may schedule only its own Team’s Employees; a Governor may schedule Employees and Managers globally; a Secretary may schedule all roles globally, including other Secretaries. Every role may schedule itself. Only Secretary may schedule another peer; other roles cannot schedule peers or superiors. Ordinary employees gain no authority over other employees. Non-global callers retain their own authored-job scope. Secretary can read the complete Plan database, including missing-target records; mutation and execution capabilities are returned per row.
 
 Self scheduling carries a Core-created, self-target-only delegation. This does not open direct `session.send` authority for Employees or let callers supply delegation fields. Roles and credential revocation are rechecked before a run starts and after asynchronous startup. A removed employee or revoked authority disables affected future work. Governor targets still require `action.viewId` / `--view` with a stable Company subview ID.
 ## When to run
@@ -124,7 +124,7 @@ Calendar calculations reuse the existing Temporal-based scheduler. Plan borrows 
 
 Messaging and planning use dedicated static portraits derived from the original character assets, not a moving canvas pose squeezed into a small box. Human characters focus on head/shoulders; animal and robot silhouettes retain their recognizable features. The source artwork, palette tinting, selectable character IDs and all canvas animation frames remain intact. `scripts/build-avatar-portraits.mjs` regenerates these 256-pixel images during the existing preview build step.
 
-Application view navigation (`view.list/select/open`) remains user-only. Agents use the business `plan.*` and `schedule.*` APIs without needing a visible interface.
+Application view navigation (`view.list/select/open`) is available to the user and Secretary. Agents use the business `plan.*` and `schedule.*` APIs without needing a visible interface.
 
 ## Safe edits and previewing a draft
 
@@ -213,7 +213,7 @@ requiring the missing employee to execute anything.
 
 Secretary can read other Secretaries' schedules for application administration, but
 cannot modify or execute a different live same-rank target. Existing strict downward
-scheduling and explicit user-only permissions remain enforced. `allowedActions` is a
+scheduling and authentic human reading receipts remain enforced. `allowedActions` is a
 current preflight hint, not an authorization token; mutations recheck current state.
 
 ` schedule.delete {id,expectedRevision?}` preserves the single-record contract.

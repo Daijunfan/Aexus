@@ -46,7 +46,7 @@ const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{con
  const secretary=await f.create('Application helper','A','secretary'),worker=await f.create('Worker','A'),manager=await f.create('Manager','A','manager'),governor=await f.create('Governor','B','governor'),named=await f.create('Secretary','B','governor'),other=await f.create('Other worker','B')
  const token=await f.token(secretary.id),workerToken=await f.token(worker.id),managerToken=await f.token(manager.id),governorToken=await f.token(governor.id),namedToken=await f.token(named.id)
  const roles=await rpc('management.roles'),policy=roles.find(role=>role.value==='secretary'),who=await rpc('auth.whoami',{},token),read=JSON.parse(fs.readFileSync(path.join(f.control,secretary.id+'-read.json'),'utf8'))
- assert.deepEqual(roles.map(role=>role.value),['employee','manager','governor','secretary']);assert.equal(policy.appAdministrator,true);assert.equal(policy.requiresLocal,true);assert.equal(policy.userManaged,true)
+ assert.deepEqual(roles.map(role=>role.value),['employee','manager','governor','secretary']);assert.equal(policy.appAdministrator,true);assert.equal(policy.requiresLocal,true);assert.equal(policy.userManaged,false)
  assert.equal(who.principal.kind,'agent');assert.equal(who.principal.employeeId,secretary.id);assert.equal(who.managementRole,'secretary');assert.equal(who.appAdministrator,true);assert.equal(who.roleDescription,policy.description);assert.match(who.roleDescription,/软件|插件/);assert.match(who.roleDescription,/其他员工|委派/)
  assert.deepEqual(read.operations,['identity','index']);assert.deepEqual(read.identity,who);assert.equal((await rpc('session.transcript',{employee:secretary.id})).items.length,0)
  const trace=(card,stage)=>JSON.parse(fs.readFileSync(path.join(f.control,card.id+'-'+stage+'.json'),'utf8'))
@@ -63,10 +63,10 @@ const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{con
   await deny(auth,'card.remove',{ids:[secretary.id]});await deny(auth,'session.send',{employee:secretary.id,text:'No upward delegation'})
   const ownGroup=await rpc('chat.create',{name:'Self-owned '+actor.id,members:[actor.id]},auth);assert.equal(ownGroup.ownerId,actor.id);await rpc('chat.delete',{id:ownGroup.id},auth);await deny(auth,'channel.create',{name:'Forbidden channel'})
  }
- for(const [cmd,args] of [['card.create',{title:'Peer secretary',group:'A',managementRole:'secretary'}],['card.management-role',{id:secretary.id,role:'employee'}],['card.remove',{ids:[secretary.id]}],['group.remove',{name:'A'}]])await deny(token,cmd,args)
+ for(const [cmd,args] of [['card.management-role',{id:secretary.id,role:'employee'}],['card.remove',{ids:[secretary.id]}],['group.remove',{name:'A'}]])await deny(token,cmd,args)
  await deny(governorToken,'card.create',{title:'Peer Governor',group:'B',managementRole:'governor'});await deny(governorToken,'card.management-role',{id:named.id,role:'employee'});await deny(governorToken,'card.remove',{ids:[named.id]});await deny(managerToken,'card.remove',{ids:[other.id]})
  assert.deepEqual(await identity(),initial)
- checks.push('Real Secretary identity/initialization declares software administration; names confer no role; lower roles and Secretary itself cannot grant or remove the protected Secretary role, and prior Governor/Manager boundaries remain')
+ checks.push('Real Secretary identity/initialization declares software administration; names confer no role; lower roles cannot grant Secretary; Secretary lifecycle preserves a ready administrator, and prior Governor/Manager boundaries remain')
 
  const child=await rpc('card.create',{title:'Managed Governor',group:'Disposable',engine:'codex',model:'gpt-6-luna',managementRole:'governor'},token);await f.ready(child.id);assert.deepEqual(child.createdBy,{kind:'agent',employeeId:secretary.id})
  await rpc('card.management-role',{id:child.id,role:'manager'},token);assert.equal((await rpc('session.list')).sessions.find(card=>card.id===child.id).managementRole,'manager')
@@ -81,9 +81,9 @@ const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{con
 
  await rpc('settings.set',{pageZoom:1.1},token);assert.equal((await rpc('settings.get',{},token)).pageZoom,1.1)
  await rpc('settings.set',{pageZoom:1},governorToken);assert.equal((await rpc('settings.get')).pageZoom,1,'existing Governor settings ability is retained')
- await deny(token,'chat.create',{name:'Cannot own as a nonmember',members:[worker.id]})
+ const nonmemberGroup=await rpc('chat.create',{name:'Managed as a nonmember',members:[worker.id],ownerId:worker.id},token);assert.equal(nonmemberGroup.ownerId,worker.id);await rpc('chat.delete',{id:nonmemberGroup.id},token)
  const group=await rpc('chat.create',{name:'Secretary managed group',members:[worker.id,other.id],ownerId:worker.id})
- await deny(token,'chat.update',{id:group.id,name:'Company rank grants no office'});await deny(token,'chat.post',{id:group.id,text:'Cannot speak without membership'})
+ await rpc('chat.update',{id:group.id,name:'Application administration without membership'},token);assert.equal((await rpc('conversation.policy',{conversation:'group:'+group.id},token)).actorRole,'secretary')
  await rpc('chat.update',{id:group.id,members:[secretary.id,worker.id,other.id]});const groupPolicy=await rpc('conversation.policy',{conversation:'group:'+group.id});await rpc('conversation.role',{conversation:'group:'+group.id,employee:secretary.id,role:'admin',expectedRevision:groupPolicy.revision})
  await rpc('chat.update',{id:group.id,name:'Managed members'},token);await rpc('chat.mute',{id:group.id,member:other.id,muted:true},token)
  assert.deepEqual((await rpc('chat.get',{id:group.id},token)).memberIds,[secretary.id,worker.id,other.id]);assert.equal((await rpc('chat.get',{id:group.id},token)).mutes[other.id],null)
@@ -95,7 +95,7 @@ const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{con
  const x=await rpc('channel.source-add',{plugin:'x',locator:'https://x.com/SecretaryTest',channelId:channel.id},token),youtube=await rpc('channel.source-add',{plugin:'youtube',locator:'@SecretaryFixture',channelId:channel.id},token)
  await rpc('channel.source-remove',{id:x.id},token);assert.equal((await rpc('channel.sources',{includeDisabled:true},token)).find(source=>source.id===x.id).enabled,false)
  await rpc('channel.source-update',{id:x.id,patch:{enabled:true,channelId:destination.id}},token);assert.equal((await rpc('channel.sources',{includeDisabled:true},token)).find(source=>source.id===x.id).channelId,destination.id);assert.equal((await rpc('channel.sources',{},token)).find(source=>source.id===youtube.id).plugin,'youtube')
- await deny(token,'channel.update',{id:channel.id,adminIds:[worker.id,other.id]});await rpc('channel.update',{id:channel.id,adminIds:[worker.id,other.id]});await deny(token,'channel.message-send',{id:channel.id,text:'No publishing without admin',mentions:[worker.id]})
+ await rpc('channel.update',{id:channel.id,adminIds:[worker.id,other.id]},token);assert.equal((await rpc('conversation.policy',{conversation:'channel:'+channel.id},token)).actorRole,'secretary')
  await rpc('channel.update',{id:channel.id,adminIds:[secretary.id,worker.id,other.id]})
  const request=await rpc('channel.message-send',{id:channel.id,text:'A real administrator coordination request.',mentions:[worker.id],clientMessageId:'secretary-admin-request'},token)
  assert.deepEqual(request.author,{kind:'agent',employeeId:secretary.id});assert.equal(request.requestId,request.id);assert.deepEqual(request.deliveries.map(value=>[value.employeeId,value.mode]),[[worker.id,'work'],[other.id,'awareness']])
@@ -103,9 +103,9 @@ const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{con
  await deny(workerToken,'channel.message-send',{id:channel.id,text:'Employees cannot create management requests'});await deny(token,'channel.message-post',{id:channel.id,replyTo:request.id,text:'Forged root',requestId:'forged'})
  await f.until(async()=>{const info=await rpc('channel.context',{id:channel.id,entryId:reply.id},token);return info.deliveries.every(value=>value.status==='completed')},'Secretary silent awareness')
  await rpc('channel.update',{id:channel.id,adminIds:[worker.id,other.id]},token)
- await deny(token,'channel.context',{id:channel.id,entryId:reply.id});await deny(token,'channel.message-post',{id:channel.id,replyTo:reply.id,text:null})
+ await rpc('channel.context',{id:channel.id,entryId:reply.id},token);await deny(token,'channel.message-post',{id:channel.id,replyTo:reply.id,text:null})
  await rpc('messenger.conversation',{conversations:['employee:'+worker.id],patch:{archived:true}},token);assert.equal((await rpc('messenger.state',{},token)).conversations['employee:'+worker.id].archived,true)
- checks.push('Secretary manages group/channel offices only after explicit conversation appointment; X/YouTube deployment, settings and personal organization keep original application permissions; publication and history require actual membership and retain Agent authorship')
+ checks.push('Secretary manages group/channel offices without requiring its own membership; X/YouTube deployment, settings and personal organization keep original application permissions; administrative publication and history retain actual Agent authorship')
 
  const cloudHost=await rpc('host.create',{name:'Fixture cloud',host:'fixture',os:'linux',defaultDirectory:remoteBase});await rpc('group.add',{name:'Cloud',mode:'cloud',hostId:cloudHost.id})
  const localRoot=path.join(f.env.AGENTS_COMPANY_PROJECTS,'cloud')
@@ -124,11 +124,11 @@ const stop=()=>{if(closing)return;closing=true;void started.then(async app=>{con
  // assertions that required them are SKIPPED (retained scope, see secretary-retained-report).
  // The retained probe plugin still exercises the real plugin host on both sides of the boundary.
  const direct=await pluginCall(pluginId,'identity');assert.deepEqual(direct.principal,{kind:'agent',employeeId:secretary.id})
- const through=await pluginCall(pluginId,'create-chat',{name:'Plugin administered chat',members:[secretary.id,worker.id]});assert.ok((await rpc('chat.list',{},token)).some(value=>value.id===through.id));await deny(token,'plugin.call',{id:pluginId,method:'human-token',params:{id:secretary.id}})
+ const through=await pluginCall(pluginId,'create-chat',{name:'Plugin administered chat',members:[secretary.id,worker.id]});assert.ok((await rpc('chat.list',{},token)).some(value=>value.id===through.id));assert.equal((await pluginCall(pluginId,'human-token',{id:secretary.id})).credentialReturned,false)
  const pluginView=await rpc('plugin.view',{id:pluginId},token),viewRpc=async(method,params={})=>{const response=await fetch(new URL('./rpc',pluginView.url),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:method,method,params})});return response.json()}
- assert.deepEqual((await viewRpc('identity')).result.principal,{kind:'agent',employeeId:secretary.id});assert.ok((await viewRpc('human-token',{id:secretary.id})).error)
- for(const [cmd,args] of [['auth.agent-token',{id:worker.id}],['auth.revoke',{id:worker.id}],['session.acknowledge',{employee:worker.id,replyId:'not-human-read'}],['chat.acknowledge',{id:group.id,messageId:note.id}],['ui.click',{selector:'body'}],['ui.type',{selector:'body',text:'No simulation'}]])await deny(token,cmd,args)
- checks.push('The retained probe plugin is usable in authorized global scopes; direct and view-HTTP plugin host calls retain the Secretary principal and cannot mint human credentials or fabricate user reads/UI actions; removed mininotion/margin-reader/cloud-hosts calls are skipped')
+ assert.deepEqual((await viewRpc('identity')).result.principal,{kind:'agent',employeeId:secretary.id});assert.equal((await viewRpc('human-token',{id:secretary.id})).result.credentialReturned,false)
+ for(const [cmd,args] of [['session.acknowledge',{employee:worker.id,replyId:'not-human-read'}],['chat.acknowledge',{id:group.id,messageId:note.id}],['ui.click',{selector:'body'}],['ui.type',{selector:'body',text:'No simulation'}]])await deny(token,cmd,args)
+ checks.push('The retained probe plugin is usable in authorized global scopes; direct and view-HTTP plugin host calls retain the Secretary principal and can provision employee credentials without plaintext and cannot fabricate user reads/UI actions; removed mininotion/margin-reader/cloud-hosts calls are skipped')
 
  await rpc('card.management-role',{id:secretary.id,role:'governor'})
  assert.equal((await rpc('auth.whoami',{},token)).appAdministrator,false);await rpc('chat.update',{id:through.id,name:'Owned group after Company downgrade'},token);await deny(token,'channel.sources',{})

@@ -22,7 +22,7 @@ The ID parent separates conversations with the same name. Current members have n
 agents conversation workspaces --json
 agents conversation workspace group:GROUP_ID --json
 agents conversation workspace channel:CHANNEL_ID --json
-# User: inspect the member folder belonging to a specific employee.
+# User/Secretary: inspect the member folder belonging to a specific employee.
 agents conversation workspace group:GROUP_ID --employee EMPLOYEE_ID --json
 ```
 
@@ -30,10 +30,9 @@ The descriptor includes `root`, `folderName`, `members`, and, for a selected emp
 
 ## Member access
 
-A current group or channel member may read shared files, including originals and other members' working files. Agents can edit their own named subtree. An Agent whose Company office is Secretary and who currently belongs to this conversation can additionally maintain direct regular files at the shared root. This exception never permits writing another employee's folder. Owner/Admin conversation offices alone do not grant root-file write access. The human user retains full access. No Company office substitutes for membership. Copying to another employee's private workspace is not allowed by the member copy API.
+Current members may read shared files and write their own named subtree. User/Secretary administer all application conversation roots and member folders, including nonmember administration. Owner/Admin offices alone do not expand ordinary member file writes. Secretary may select another employee's Company workspace or member folder when managing an explicit copy.
 
-Direct root originals are read-only to ordinary Agents; a current-member Secretary can maintain those files through the same Core APIs. This is application authorization, not an operating-system sandbox for arbitrary shell processes running as the same trusted macOS account. Native tools keep their existing access/approval mode. No engine is granted a broader execution sandbox by joining a conversation.
-
+This is application authorization, not an operating-system sandbox for arbitrary trusted same-account shell processes. Engine access/approval modes and cloud host identity remain independent of conversation membership.
 ```sh
 agents conversation file group:GROUP_ID --operation list --json
 agents conversation file group:GROUP_ID --operation read --path brief.txt --json
@@ -41,7 +40,7 @@ agents conversation file group:GROUP_ID --operation image --path reference.png -
 agents conversation file group:GROUP_ID --operation write --path 'Alice/result.md' --content 'Review completed.' --create --json
 ```
 
-Use the returned file `hash` to update an existing text file. Text writes are limited to 4 MiB; `chunk` reads bounded binary data. Absolute paths, parent traversal, symlinks and internal transfer/trash paths are rejected. Managed member-root directories cannot be renamed or removed through this API. Ordinary member trash and restore operate inside that member directory. Secretary direct-root file trash returns a `root:…` receipt; restoration checks both the current office and the original file scope.
+Use the returned file `hash` to update an existing text file. Text writes are limited to 4 MiB; `chunk` reads bounded binary data. Absolute paths, parent traversal, symlinks and internal transfer/trash paths are rejected. Managed member-root directories cannot be renamed or removed through this API. Ordinary member trash and restore operate inside that member directory. Legacy `root:…` trash receipts remain readable; restoration rechecks current administration and stored scope.
 
 ## Explicit copies and work location
 
@@ -62,7 +61,7 @@ A destination is an existing directory. Transfers preserve source files, never o
 
 ## Published content and document downloads
 
-`conversation.entry {conversation,id}` returns complete stored public text, links, reply data, images, document descriptors and available platform metadata. Its attachment IDs are accepted by `conversation.download`, which streams a copy into the authenticated employee's chosen own workspace. `conversation.download-status` reports the committed path or failure. Existing originals are never overwritten; membership and SHA-256 are checked during transfer. The old human-only `channel.file-download` still imports into the shared root. See [Message collaboration](MESSAGE_COLLABORATION.md) for exact schemas, retry keys, remote-host semantics and per-Agent channel post-count rules.
+`conversation.entry {conversation,id}` returns complete stored public text, links, reply data, images, document descriptors and available platform metadata. Its attachment IDs are accepted by `conversation.download`, which streams a copy into the authenticated employee's chosen own workspace. `conversation.download-status` reports the committed path or failure. Existing originals are never overwritten; membership and SHA-256 are checked during transfer. User/Secretary may use `channel.file-download` to import into the shared root. See [Message collaboration](MESSAGE_COLLABORATION.md) for exact schemas, retry keys, remote-host semantics and per-Agent channel post-count rules.
 
 ## User attachments and task routing
 
@@ -73,7 +72,7 @@ Published attachments keep stable `@workspace/relative-path` references and file
 Each addressed employee receives one **text-only task** containing the original user text plus a structured list of uploaded filenames, references, byte sizes and types. No image/file array is added to the employee's private transcript, no attachment bytes are automatically sent to its native model, and no automatic employee-workspace copy occurs. Non-addressed recipients keep the existing context-only behavior. An employee reads or copies files explicitly when needed. Legacy group attachments remain readable through their existing `chat.file` references; this feature does not move or delete old attachment storage.
 
 ```sh
-# User or UI: begin one upload. Complete it with the existing transfer upload protocol.
+# User/Secretary: begin one upload. Complete it with the existing transfer upload protocol.
 agents messenger upload-begin group:GROUP_ID --name brief.txt --bytes 120 --json
 # After successful upload, use the returned destination references.
 agents chat send GROUP_ID --text 'Review these materials.' --files '["@workspace/brief.txt"]' --images '["@workspace/reference.png"]' --mentions all --json

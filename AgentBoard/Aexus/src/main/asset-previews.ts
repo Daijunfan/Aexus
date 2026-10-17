@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import fs from 'node:fs'
 import path from 'node:path'
 import {createHash} from 'node:crypto'
@@ -16,7 +17,7 @@ const version=(stat:fs.Stats)=>createHash('sha256').update(`${stat.dev}:${stat.i
 const fallback=(reason:string):AssetPreview=>({kind:'fallback',reason})
 /** Core owns bounded document covers independently of installed plugins. */
 export async function assetPreview(id:string,call:(command:string,args:Record<string,any>)=>Promise<any>,resolve:(location:FileLocation,destination:boolean)=>FileEndpoint):Promise<AssetPreview>{
- if(requestContext().principal.kind!=='operator')throw Error('Only the user may preview all company assets')
+ if(!isApplicationAdministrator())throw Error('Only the user may preview all company assets')
  if(closed)return fallback('Preview service is closed')
  const catalog=assetCatalog(),ref=assetReference(id)
  if(catalog.mounts.find(mount=>mount.id===ref.asset)?.remote)return fallback('Remote original not fetched for a thumbnail')

@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import {SingleFlight} from './single-flight'
 import {createHash} from 'node:crypto'
 import {join} from 'node:path'
@@ -13,20 +14,22 @@ import type {MessengerMessage,ForwardStatus,ForwardResult} from '../shared/messe
 
 type Receipt={fingerprint:string;status:'preparing'|'sent'|'failed'|'uncertain'|'interrupted';stage?:'copying'|'dispatch';to?:string;count?:number;downstreamKey?:string;result?:ForwardResult;error?:string;createdAt:number}
 const file=join(APP_HOME,'message-forwards.json'),active=new SingleFlight<ForwardResult>()
+const actorKey=()=>{const principal=requestContext().principal;return principal.kind==='operator'?'':'agent:'+principal.employeeId+':' }
+const sameActor=(author:unknown)=>JSON.stringify(author)===JSON.stringify(requestContext().principal)
 const receipts=()=>readJson<Record<string,Receipt>>(file,()=>({}))
 const save=(key:string,value:Receipt)=>{const state=receipts();state[key]=value;atomicJson(file,state,true)}
 function requestId(value:unknown):asserts value is string{if(typeof value!=='string'||!value||value.length>160)throw Error('Provide a stable forwarding request ID')}
 /** A status check may recover an existing acceptance, but never dispatches work. */
 export function forwardStatus(args:Record<string,any>):ForwardStatus{
- authorize('messenger.forward-status',args);if(requestContext().principal.kind!=='operator')throw Error('Only the user may check forwarding attempts')
+ authorize('messenger.forward-status',args);if(!isApplicationAdministrator())throw Error('Only the user may check forwarding attempts')
  requestId(args.clientMessageId)
- const key='forward:'+args.clientMessageId,receipt=receipts()[key],running=active.has(key)
+ const key='forward:'+actorKey()+args.clientMessageId,receipt=receipts()[key],running=active.has(key)
  if(!receipt)return {clientMessageId:args.clientMessageId,status:'not-found',active:false,retryable:true}
  let status:ForwardStatus['status']=receipt.status,result=receipt.result,error=receipt.error
  if(receipt.stage==='dispatch'&&receipt.to&&receipt.downstreamKey){
   const [kind,id]=receipt.to.split(':')
   try{
-   const found=kind==='employee'?lookupPrivateSendReceipt(id,receipt.downstreamKey,privateSendQueued):status!=='sent'?readChatMessages(id).find(message=>message.author.kind==='operator'&&message.clientMessageId===receipt.downstreamKey):undefined
+   const found=kind==='employee'?lookupPrivateSendReceipt(id,receipt.downstreamKey,privateSendQueued):status!=='sent'?readChatMessages(id).find(message=>sameActor(message.author)&&message.clientMessageId===receipt.downstreamKey):undefined
    if(found){status='sent';result=receipt.result??{to:receipt.to,count:receipt.count!,status:kind==='group'?'posted':'queued',messageId:('messageId' in found?found.messageId:undefined)??found.id??null};error=undefined}
   }catch(cause){const code=(cause as {code?:string}).code;if(code==='PRIVATE_SEND_UNCERTAIN'||code==='PRIVATE_SEND_INTERRUPTED'){status=code==='PRIVATE_SEND_INTERRUPTED'?'interrupted':'uncertain';error=(cause as Error).message}else throw cause}
  }
@@ -36,14 +39,14 @@ export function forwardStatus(args:Record<string,any>):ForwardStatus{
 }
 /** Dispatch only through Core's existing authenticated send/upload operations. */
 export async function forwardMessages(args:Record<string,any>,call:(command:string,args:Record<string,unknown>)=>Promise<any>){
- authorize('messenger.forward',args);if(requestContext().principal.kind!=='operator')throw Error('Only the user may forward messages')
+ authorize('messenger.forward',args);if(!isApplicationAdministrator())throw Error('Only the user may forward messages')
  if(!Array.isArray(args.messages)||!args.messages.length||args.messages.length>50)throw Error('Choose 1–50 messages')
  if(typeof args.to!=='string'||!/^(employee|group):[a-zA-Z0-9_-]+$/.test(args.to))throw Error('Choose a destination conversation')
  if(args.comment!==undefined&&(typeof args.comment!=='string'||args.comment.length>16000))throw Error('A forwarding note supports up to 16000 characters')
  if(args.retry!==undefined&&typeof args.retry!=='boolean')throw Error('retry must be boolean')
  if(args.textOnly!==undefined&&typeof args.textOnly!=='boolean')throw Error('textOnly must be boolean')
  requestId(args.clientMessageId)
- const key='forward:'+args.clientMessageId,fingerprint=createHash('sha256').update(JSON.stringify([args.to,args.messages,args.comment??'',!!args.textOnly])).digest('hex'),previous=receipts()[key]
+ const key='forward:'+actorKey()+args.clientMessageId,fingerprint=createHash('sha256').update(JSON.stringify([args.to,args.messages,args.comment??'',!!args.textOnly])).digest('hex'),previous=receipts()[key]
  if(previous){if(previous.fingerprint!==fingerprint)throw Error('Forwarding request ID already used for different content');const pending=active.get(key);if(pending)return pending;const known=forwardStatus({clientMessageId:args.clientMessageId});if(known.status==='sent')return known.result;if(!known.retryable)throw Error(known.status==='interrupted'?'The queued forward was interrupted. It will not be sent again automatically.':'The earlier forwarding result is uncertain. Check the destination before creating a new request.');if(!args.retry)throw Error(previous.error??'The earlier forwarding failed. Retry the same request.')}
  const [kind,id]=args.to.split(':')
  if(kind==='group')getChatGroup(id);else {const card=visibleEmployees().find(card=>card.id===id);if(!card||!employeeReady(card))throw Error('Destination employee is not ready')}
@@ -59,7 +62,7 @@ export async function forwardMessages(args:Record<string,any>,call:(command:stri
  if(attachments.length>16)throw Error('A forwarded message supports at most 16 attachments')
  const text=[args.comment?.trim(),...selected.map(message=>`Forwarded from ${message.author} · ${message.conversationTitle}\n${message.text||(message.files?.length?message.files.map(file=>file.name).join(', '):'Photo')}`)].filter(Boolean).join('\n\n——\n\n')
  if(kind==='group'&&text.length>16000)throw Error('The forwarded group message exceeds 16000 characters. Select fewer messages.')
- const receipt:Receipt={fingerprint,status:'preparing',stage:'copying',to:args.to,count:selected.length,downstreamKey:'forward:'+createHash('sha256').update(args.clientMessageId).digest('hex'),createdAt:Date.now()};save(key,receipt)
+ const receipt:Receipt={fingerprint,status:'preparing',stage:'copying',to:args.to,count:selected.length,downstreamKey:'forward:'+createHash('sha256').update(actorKey()+args.clientMessageId).digest('hex'),createdAt:Date.now()};save(key,receipt)
  let accepted=false
  return active.run(key,async()=>{try{
   const images:string[]=[],files:string[]=[]

@@ -3698,11 +3698,8 @@
       "ignored"
     ],
     "expected": {
-      "cmd": "config.thinking",
-      "args": {
-        "id": "sample",
-        "enabled": "value"
-      }
+      "ok": false,
+      "error": "enabled requires on, off, true or false"
     }
   },
   {
@@ -3716,7 +3713,7 @@
       "cmd": "config.thinking",
       "args": {
         "id": "--looks-like-a-flag",
-        "enabled": "off"
+        "enabled": false
       }
     }
   },
@@ -5423,6 +5420,120 @@
           "a",
           "b"
         ]
+      }
+    }
+  },
+  {
+    "args": [
+      "api",
+      "capabilities"
+    ],
+    "expected": {
+      "cmd": "api.capabilities",
+      "args": {}
+    }
+  },
+  {
+    "args": [
+      "administration",
+      "audit",
+      "--limit",
+      "2",
+      "--before-id",
+      "cursor"
+    ],
+    "expected": {
+      "cmd": "administration.audit",
+      "args": {
+        "limit": 2,
+        "beforeId": "cursor"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "get",
+      "employee"
+    ],
+    "expected": {
+      "cmd": "config.get",
+      "args": {
+        "id": "employee"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "effort",
+      "employee"
+    ],
+    "expected": {
+      "cmd": "config.effort",
+      "args": {
+        "id": "employee",
+        "effort": "default"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "effort",
+      "employee",
+      "ultra"
+    ],
+    "expected": {
+      "cmd": "config.effort",
+      "args": {
+        "id": "employee",
+        "effort": "ultra"
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "thinking",
+      "employee",
+      "on"
+    ],
+    "expected": {
+      "cmd": "config.thinking",
+      "args": {
+        "id": "employee",
+        "enabled": true
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "thinking",
+      "employee",
+      "true"
+    ],
+    "expected": {
+      "cmd": "config.thinking",
+      "args": {
+        "id": "employee",
+        "enabled": true
+      }
+    }
+  },
+  {
+    "args": [
+      "config",
+      "thinking",
+      "employee",
+      "false"
+    ],
+    "expected": {
+      "cmd": "config.thinking",
+      "args": {
+        "id": "employee",
+        "enabled": false
       }
     }
   }

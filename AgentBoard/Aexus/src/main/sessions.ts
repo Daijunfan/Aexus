@@ -1,3 +1,7 @@
+import {isApplicationAdministrator} from './application-administrator'
+import {getPreferences} from './store'
+import {employeeReasoning} from '../shared/reasoning-defaults'
+import {defaultEmployeeModel} from './engine-models'
 import { attachmentPaths,attachmentInfo } from '../shared/message-attachments'
 import type { MessageReply } from '../shared/types'
 import type { MessageQuote } from '../shared/message-quotes'
@@ -252,7 +256,7 @@ async function startSessionInner(args: StartArgs = {}, owner?: string): Promise<
   const engine: Engine = args.engine ?? 'claude'
   if(!nativeRemote)await assertEngineExecutable(engine)
   if (!isEngine(engine)) throw new Error(`Unknown engine: ${engine}`)
-  if (engine === 'codex') args = { ...args, effort: card?args.effort:(args.effort??'high') }
+  if(!card)args={...args,model:args.model||defaultEmployeeModel(engine,kind),...employeeReasoning(engine,getPreferences(),args)}
   const native=engineNativeProfile(engine)
   // A saved model from the previous provider cannot be resumed with the new key.
   if(card&&native?.models.length&&!native.models.some((model:any)=>model.id===args.model))args={...args,model:native.model}
@@ -305,7 +309,7 @@ export function enqueueMessage(id:string,text:string,images:string[]=[],delegati
   if(!notice)authorizeSlash(text,s.cardId,delegation)
   sourceView=messageSourceView(sourceView)
   viewId=notice?undefined:taskViewId(s.cardId,viewId)
-  if(crossReply){if(delegation.requestedBy.kind!=='operator')throw Error('Only the user may quote another conversation')}else resolveMessageReply(id,replyTo,replyQuote)
+  if(crossReply){if(!isApplicationAdministrator(delegation.requestedBy))throw Error('Only the user may quote another conversation')}else resolveMessageReply(id,replyTo,replyQuote)
   if(replyTo!==undefined&&text.startsWith('/'))throw Error('Replies require a regular message, not a slash command')
   const entry={id:newSessionId(),text,images,...(filePaths.length?{files:filePaths}:{}),delegation,viewId,...(sourceView?{sourceView}:{}),chat,...(replyTo!==undefined?{replyTo,replyQuote,...(crossReply?{crossReply}:{})}:{})}
   if(privateSend){privateSend.queued(entry.id);queuedPrivateSends.set(entry.id,privateSend)}
@@ -421,7 +425,7 @@ export async function sendMessage(sessionId: string, text: string, owner?: strin
   if (s.running||s.acknowledging) throw new Error('Session is busy; wait for completion or interrupt it first')
   if(!s.privateInitialization&&card.initialization?.nativeBindId)patchSession(card.id,{initialization:{...card.initialization,nativeBindId:undefined}})
   if(replyTo!==undefined&&text.startsWith('/'))throw Error('Replies require a regular message, not a slash command')
-  if(crossReply&&delegation.requestedBy.kind!=='operator')throw Error('Only the user may quote another conversation')
+  if(crossReply&&!isApplicationAdministrator(delegation.requestedBy))throw Error('Only the user may quote another conversation')
   const reply=crossReply??resolveMessageReply(sessionId,replyTo,replyQuote)
   if(!notice&&(imagePaths.length||filePaths.length)&&text.startsWith('/'))throw new Error('请使用普通消息发送图片附件')
   if(!chat&&text.startsWith('/')&&await runSessionCommand(sessionId,text,owner,delegation,viewId,sourceView)){s.currentTask={messageId:newSessionId(),delegation,startedAt:Date.now(),runId:owner,viewId,...(sourceView?{sourceView}:{}),chat};rememberMeta(sessionId,{currentTask:s.currentTask});return true}
@@ -524,6 +528,7 @@ export async function setPermissionMode(
 export async function setThinking(sessionId: string, enabled: boolean, owner?: string): Promise<boolean> {
   const s = require_(sessionId)
   assertEmployeeControl(s.cardId, owner)
+  if(s.running)throw Error('请等待当前任务结束后再切换思考设置')
   await s.driver.setThinking(enabled)
   s.thinkingEnabled = enabled
   if (!owner) patchSession(s.cardId, { thinking: enabled })

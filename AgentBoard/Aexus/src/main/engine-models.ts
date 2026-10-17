@@ -15,7 +15,7 @@ import {spawnRemoteAgent} from './remote-agent-process'
 
 export function defaultEmployeeModel(engine:Engine,kind:EmployeeKind='worker'){
   const settings=getPreferences()
-  if(engine==='opencode')return opencodeDefaultModel
+  if(engine==='opencode')return settings.defaultOpenCodeModel||opencodeDefaultModel
   if((engine==='cline'||engine==='pi')&&processProvider(engine).baseUrl)return processProvider(engine).model
   return (engine==='codex'?settings.defaultCodexModel:engine==='claude'?settings.defaultClaudeModel:engine==='cline'?settings.defaultClineModel:settings.defaultPiModel)||(engine==='codex'?'gpt-6.1-sol':engine==='cline'||engine==='pi'||engine==='claude'&&deepSeekProvider()?'deepseek-flash':undefined)
 }

@@ -1,3 +1,4 @@
+import {isApplicationAdministrator,requireApplicationAdministrator} from './application-administrator'
 import fs from 'node:fs'
 import path from 'node:path'
 import {assetCatalog,assetLocation,assetReference,locateAsset} from './assets'
@@ -15,7 +16,7 @@ import type {AssetInfo} from '../shared/asset-schema'
 type Resolve=(location:FileLocation,destination:boolean)=>FileEndpoint
 /** Physical paths are opt-in information, never row subtitles or implicit host probes. */
 export async function assetInfo(id:string,call:(command:string,args:Record<string,any>)=>Promise<any>,resolve:Resolve):Promise<AssetInfo>{
- if(requestContext().principal.kind!=='operator')throw Error('Only the user may inspect all company assets')
+ if(!isApplicationAdministrator())throw Error('Only the user may inspect all company assets')
  const catalog=assetCatalog(),located=await locateAsset(id,catalog,call),node=located.node
  const base={node,host:node.host,readOnly:!!node.readOnly,logicalLocation:located.breadcrumbs.map(item=>item.name),fileCount:node.fileCount}
  if(node.document){

@@ -8,7 +8,7 @@ export function groupRole(group:{ownerId?:string|null;adminIds?:string[];memberI
  if(!group.memberIds.includes(id))return undefined
  return group.ownerId===id?'owner':group.adminIds?.includes(id)?'admin':'member'
 }
-export type ConversationPolicy={conversation:string;name:string;kind:'group'|'channel';revision:number;ownerId:string|null;silent:boolean;mutes:Record<string,number|null>;actorRole:ConversationRole|'operator'|null;members:{id:string;name:string;role:ConversationRole;mutedUntil?:number|null}[];allowedActions:string[]}
+export type ConversationPolicy={conversation:string;name:string;kind:'group'|'channel';revision:number;ownerId:string|null;silent:boolean;mutes:Record<string,number|null>;actorRole:ConversationRole|'operator'|'secretary'|null;members:{id:string;name:string;role:ConversationRole;mutedUntil?:number|null}[];allowedActions:string[]}
 export type NoticeRule={kind:'once';at:string}|{kind:'interval';everySeconds:number;anchor:string}|{kind:'weekly';time:string;days:number[];timezone:string}
 export type NoticeSpec={name:string;text:string;publisherId:string;rule:NoticeRule;enabled:boolean}
 export type ConversationNotice=NoticeSpec&{id:string;conversation:string;revision:number;createdAt:number;updatedAt:number;createdBy:PrincipalRef;nextAt:string|null;disabledReason?:string;status:'scheduled'|'paused'|'completed'|'attention'}
