@@ -5,6 +5,7 @@ import {connectorSetting,connectorPoints,nearestConnectorPoint,anchorForDock,typ
 import {movePathSegmentByPointer} from '../../../shared/connector-path'
 import {connectionNodes,nodePorts,type OfficeConnection} from '../../../shared/office-connections'
 import {ConnectorSelection} from './ConnectorEditor'
+import {svgCoordinates} from './svg-coordinates'
 type Gesture={pointerId:number;connection:OfficeConnection;kind:'source'|'target'|'segment';index:number;start:Point;setting:ConnectorSetting;moved:boolean}
 export function ConnectionLayer({connections,rooms,settings,zoom,bounds,onPreview,onSave}:{connections:OfficeConnection[];rooms:PlannedRoom[];settings?:ConnectorSettings;zoom:number;bounds:Point&{width:number;height:number};onPreview:(s:ConnectorSetting|null)=>void;onSave:(s:ConnectorSetting)=>Promise<unknown>}){
   useI18n()
@@ -13,7 +14,7 @@ export function ConnectionLayer({connections,rooms,settings,zoom,bounds,onPrevie
  const [hover,setHover]=useState(''),[dragging,setDragging]=useState(false),[error,setError]=useState('')
  useEffect(()=>{document.body.classList.toggle('is-connector-dragging',dragging);return()=>document.body.classList.remove('is-connector-dragging')},[dragging])
  useEffect(()=>{const cancel=(e:KeyboardEvent)=>{if(e.key!=='Escape'||!gesture.current)return;const id=gesture.current.pointerId;gesture.current=null;epoch.current++;setDragging(false);if(svg.current?.hasPointerCapture(id))svg.current.releasePointerCapture(id);onPreview(null)};window.addEventListener('keydown',cancel);return()=>window.removeEventListener('keydown',cancel)},[onPreview])
- const coordinate=(e:PointerEvent)=>{const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.current!.getScreenCTM()!.inverse());return {x:p.x,y:p.y}}
+ const coordinate=(e:PointerEvent)=>svgCoordinates(svg.current!,e.clientX,e.clientY)
  const begin=(e:PointerEvent,r:OfficeConnection,kind:Gesture['kind'],index=0)=>{
   if(e.button!==0)return;e.preventDefault();e.stopPropagation();epoch.current++;select(r);setError('');gesture.current={pointerId:e.pointerId,connection:r,kind,index,start:coordinate(e),setting:connectorSetting(settings,r.managerId,r.employeeId),moved:false};svg.current!.setPointerCapture(e.pointerId);setDragging(true)
  }

@@ -8,6 +8,7 @@ import {employeePorts} from '../../../shared/management-routing'
 import type {ManagementRelation,ManagementInteraction} from '../../../shared/management'
 import type {CrossTeamRoute} from '../../../shared/cross-team-routing'
 import {AppSelect} from '../components/AppSelect'
+import {svgCoordinates} from './svg-coordinates'
 export type ConnectionSelection={managerId:string;employeeId:string}
 export const ConnectorSelection=createContext<{selected:ConnectionSelection|null;select:(value:ConnectionSelection)=>void}>({selected:null,select:()=>{}})
 const sides=[['auto','自动'],['top','头顶 / 上方'],['right','右侧'],['bottom','脚下 / 下方'],['left','左侧']]
@@ -29,7 +30,7 @@ export function ConnectorEditor({selected,connections,rooms,settings,relations,i
   const fixedPoint=(end:'source'|'target',anchor:ConnectorAnchor)=>{const n=nodes[end]!,p=employeePorts({...n.item.position,...EMPLOYEE_SIZE},anchor,end==='target')[0].point;return {x:n.room.bounds.x+p.x,y:n.room.bounds.y+p.y}}
   const pins=(end:'source'|'target')=>connectorPoints.map(anchor=>({anchor,point:fixedPoint(end,anchor)}))
   const point=(end:'source'|'target')=>{if(current[end].side!=='auto')return fixedPoint(end,current[end]);return (end==='source'?displayed?.points[0]:displayed?.points.at(-1))??fixedPoint(end,current[end])}
-  const coords=(e:PointerEvent<SVGCircleElement>)=>{const svg=e.currentTarget.ownerSVGElement!,matrix=svg.getScreenCTM()!;return new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse())}
+  const coords=(e:PointerEvent<SVGCircleElement>)=>svgCoordinates(e.currentTarget.ownerSVGElement!,e.clientX,e.clientY)
   const begin=(end:'source'|'target',e:PointerEvent<SVGCircleElement>,anchor?:ConnectorAnchor)=>{e.preventDefault();e.stopPropagation();if(saving)return;const next=anchor?{...current,[end]:anchor}:current;moving.current={end,setting:next};setDragging(end);e.currentTarget.setPointerCapture(e.pointerId);if(anchor)onPreview(next)}
   const move=(e:PointerEvent<SVGCircleElement>)=>{if(!moving.current)return;e.preventDefault();e.stopPropagation();const {end}=moving.current,{anchor}=nearestConnectorPoint(pins(end),coords(e)),next={...moving.current.setting,[end]:anchor};moving.current.setting=next;onPreview(next)}
   const finish=(e:PointerEvent<SVGCircleElement>,cancel=false)=>{if(!moving.current)return;e.stopPropagation();const next=moving.current.setting;moving.current=null;setDragging(null);if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(cancel)onPreview(null);else void save(next)}
