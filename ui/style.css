@@ -474,10 +474,25 @@ main>aside .search-label,main>aside .list-heading,main>aside .fleet-status,main>
 .role-host-pane>header{display:flex;align-items:center;gap:8px;margin-bottom:16px}
 .role-host-pane>header>div{flex:1;min-width:0}.role-host-pane h2{margin:0;font-size:18px}
 .role-host-pane header p,.role-host-status{font-size:12px;color:#73839b}
-.role-host-table{width:100%;border-collapse:collapse;background:#fff;font-size:12px;text-align:left}
-.role-host-table th,.role-host-table td{padding:12px;border-bottom:1px solid #e2e8f0}
-.role-host-table th{color:#73839b;font-weight:500}.role-host-table td:last-child{max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.role-host-table small{display:block;margin-top:4px;color:#73839b}
+.role-host-status{margin:0 0 12px}
+.role-host-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.role-host-card{border:1px solid #dbe5f1;border-radius:10px;background:#fff;min-width:0;overflow:hidden}
+.role-host-card:hover{background:#f2f7fd;border-color:#aac3df}
+.role-host-card>button{display:flex;align-items:center;gap:11px;width:100%;padding:13px;border:0;background:transparent;text-align:left;cursor:pointer}
+.role-host-engine-icon{width:32px;height:32px;min-width:32px;object-fit:contain;flex:none}
+.role-host-card-main{display:block;min-width:0;flex:1}
+.role-host-card-title{display:flex;align-items:center;gap:7px;min-width:0}
+.role-host-card-title strong{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#2d455e;font-size:13px}
+.role-host-card-title em{flex:none;font-style:normal;font-size:10px;color:#5c789d;background:#eaf1fa;border-radius:5px;padding:2px 6px}
+.role-host-card-state{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11px;color:#7e8fa3}
+.role-host-card-state i{flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:#a9b5c6}
+.role-host-card-state[data-state="online"] i{background:#42977b}
+.role-host-card-state[data-state="working"] i{background:#c98a3b}
+.role-host-card-state[data-state="attention"] i{background:#b0524a}
+.role-host-card-state[data-state="starting"] i{background:#5b8ac6}
+.role-host-card-meta{display:block;margin-top:8px}
+.role-host-card-meta small{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#607f9c}
+.role-host-card-meta small:first-child{font-family:"SFMono-Regular",Consolas,monospace;color:#5c727a}
 
 #detail.agent-groups{padding:0!important;overflow:hidden;display:flex;flex-direction:column;min-width:0}
 .agent-groups>.board-groups,.agent-groups>.board-new-form,.agent-groups>.board-settings{flex:none;margin:0;padding:10px 16px}

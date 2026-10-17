@@ -1,6 +1,6 @@
 {
   "name": "aexus",
-  "version": "2.12.4",
+  "version": "2.12.5",
   "private": true,
   "description": "Native Coding Agents, independent Roles, and cloud host workspaces",
   "bin": {
